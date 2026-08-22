@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   try {
     const { message, prompt, model } = req.body || {};
     const userPrompt = message || prompt;
-    const targetModel = model || 'gemini-2.5-flash';
+    const targetModel = model || 'gemini-3.6-flash';
 
     if (!userPrompt) {
       return res.status(400).json({ error: 'Message is required.' });
