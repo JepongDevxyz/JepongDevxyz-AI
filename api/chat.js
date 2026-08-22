@@ -9,10 +9,13 @@ export default async function handler(req) {
 
   try {
     const { message, file, model } = await req.json();
-    const apiKey = process.env.GEMINI_API_KEY;
+    
+    // Babasahin ang mga keys na hiwalay ng comma (e.g., KEY1,KEY2,KEY3)
+    const rawKeys = process.env.GEMINI_API_KEY || '';
+    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'API key missing' }), { status: 500 });
+    if (apiKeys.length === 0) {
+      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { status: 500 });
     }
 
     const modelMapping = {
@@ -34,36 +37,41 @@ export default async function handler(req) {
     }
     if (message) parts.push({ text: message });
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: systemInstruction,
-          contents: [{ parts }]
-        })
-      }
-    );
+    let geminiRes = null;
+    let lastErrorText = '';
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      return new Response(JSON.stringify({ error: errText }), { status: geminiRes.status });
+    // Susubukan ang bawat API key kapag nag-429 error
+    for (const apiKey of apiKeys) {
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: systemInstruction,
+            contents: [{ parts }]
+          })
+        }
+      );
+
+      if (geminiRes.ok) break; // Kapag gumana, ititigil na ang loop
+
+      lastErrorText = await geminiRes.text();
+      if (geminiRes.status !== 429) break; // Kung hindi quota error, huwag nang mag-retry
+    }
+
+    if (!geminiRes || !geminiRes.ok) {
+      return new Response(JSON.stringify({ error: lastErrorText }), { status: geminiRes ? geminiRes.status : 500 });
     }
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    // Stream reader na kayang humawak ng napuputol na JSON chunks
     const transformStream = new TransformStream({
-      start() {
-        this.buffer = '';
-      },
+      start() { this.buffer = ''; },
       async transform(chunk, controller) {
         this.buffer += decoder.decode(chunk, { stream: true });
         const lines = this.buffer.split('\n');
-        
-        // Itabi ang huling hindi pa kumpletong linya sa buffer
         this.buffer = lines.pop() || '';
 
         for (const line of lines) {
@@ -78,22 +86,8 @@ export default async function handler(req) {
               if (textChunk) {
                 controller.enqueue(encoder.encode(textChunk));
               }
-            } catch (e) {
-              // Hindi pa kumpletong JSON frame, antayin ang susunod
-            }
+            } catch (e) {}
           }
-        }
-      },
-      flush(controller) {
-        if (this.buffer.startsWith('data:')) {
-          const jsonStr = this.buffer.slice(5).trim();
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (textChunk) {
-              controller.enqueue(encoder.encode(textChunk));
-            }
-          } catch (e) {}
         }
       }
     });
@@ -102,7 +96,6 @@ export default async function handler(req) {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
       },
     });
 
