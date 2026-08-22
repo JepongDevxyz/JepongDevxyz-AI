@@ -70,21 +70,20 @@
         .msg li { margin-bottom: 6px; }
 
         .tts-btn {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             cursor: pointer;
             padding: 6px 12px;
             border-radius: 8px;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             display: inline-flex;
             align-items: center;
             gap: 6px;
             align-self: flex-start;
-            transition: all 0.2s ease;
+            font-weight: 500;
         }
-        .tts-btn svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
-        .tts-btn:hover { background: rgba(255, 255, 255, 0.15); }
+        .tts-btn:hover { background: rgba(255, 255, 255, 0.2); }
 
         .code-block-wrapper { background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; margin: 10px 0; overflow: hidden; }
         .code-header { background: #1e293b; color: #94a3b8; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; }
@@ -98,36 +97,31 @@
         
         input[type="text"] { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 0.9rem; min-width: 0; padding: 4px 0; }
         
-        /* Direct Inline SVG Button Styling */
-        .action-icon-btn { 
-            background: transparent; 
-            border: none; 
+        /* Action buttons with enhanced animations */
+        .action-icon-btn, .mic-btn { 
+            background: rgba(255, 255, 255, 0.08); 
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
             cursor: pointer; 
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
             display: flex; 
             align-items: center; 
             justify-content: center; 
             flex-shrink: 0;
-            color: var(--text-main);
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
         }
-        .action-icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
-        .action-icon-btn:hover { opacity: 0.8; }
-
-        .mic-btn { 
-            background: transparent; 
-            border: none; 
-            cursor: pointer; 
-            width: 32px;
-            height: 32px;
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            flex-shrink: 0;
-            color: var(--text-main);
+        .action-icon-btn:hover, .mic-btn:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
+        
+        /* Active recording state with pulse animation */
+        .mic-btn.listening { 
+            background-color: rgba(239, 68, 68, 0.3); 
+            border-color: #ef4444; 
+            color: #fca5a5; 
+            animation: micPulse 1.2s infinite; 
         }
-        .mic-btn svg { width: 20px; height: 20px; fill: currentColor; }
-        .mic-btn.listening { background-color: rgba(239, 68, 68, 0.15); border-radius: 50%; color: #ef4444; animation: micPulse 1.5s infinite; }
 
         .send-btn { 
             background: var(--accent-gradient); 
@@ -141,14 +135,17 @@
             align-items: center; 
             justify-content: center; 
             flex-shrink: 0;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: transform 0.2s ease;
         }
+        .send-btn:hover { transform: scale(1.05); }
         .send-btn:active { transform: scale(0.92); }
-        .send-btn svg { width: 14px; height: 14px; fill: currentColor; transform: translateX(1px); flex-shrink: 0; }
 
         @keyframes micPulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); transform: scale(1); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); transform: scale(1.08); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: scale(1); }
         }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
@@ -206,21 +203,16 @@
             <div class="input-wrapper">
                 <input type="file" id="fileInput" hidden onchange="handleFileSelect(event)">
                 
-                <!-- Attach File Button with Inline SVG -->
-                <button class="action-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">
-                    <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.1.9 2 2 2s2-.9 2-2V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-                </button>
+                <!-- Attachment Button -->
+                <button class="action-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">📎</button>
                 
                 <input type="text" id="userInput" placeholder="Type a message or use mic..." onkeydown="if(event.key==='Enter') sendMessage()">
                 
-                <!-- Mic Button with Inline SVG -->
-                <button class="mic-btn" id="micBtn" onclick="toggleSpeech()" aria-label="Voice Input">
-                    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-                </button>
+                <!-- Microphone Button with Pulse Animation support -->
+                <button class="mic-btn" id="micBtn" onclick="toggleSpeech()" title="Voice Input">🎤</button>
 
-                <button class="send-btn" onclick="sendMessage()" aria-label="Send">
-                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                </button>
+                <!-- Send Button -->
+                <button class="send-btn" onclick="sendMessage()" title="Send">➤</button>
             </div>
         </div>
     </div>
@@ -327,7 +319,7 @@
                     <div class="code-header">
                         <span>${lang}</span>
                         <div class="code-actions">
-                            ${isHTML ? `<button onclick="previewLiveCode('${blockId}')">▶ Run / Play</button>` : ''}
+                            ${isHTML ? `<button onclick="previewLiveCode('${blockId}')">▶ Run</button>` : ''}
                             <button onclick="copyCode('${blockId}', this)">📋 Copy</button>
                         </div>
                     </div>
@@ -466,8 +458,7 @@
                     botMsgElem.innerHTML = `
                         <div>${parsedHtml}</div>
                         <button class="tts-btn" onclick="speakText(\`${escapeQuotes(fullResponse)}\`)">
-                            <svg viewBox="0 0 24 24"><path d="M12 3v18m-4-14v10m8-12v14m-4-16v18m-4-6v4m8-6v8"/></svg>
-                            Listen
+                            🔊 Listen
                         </button>
                     `;
                     scrollToBottom();
@@ -483,7 +474,7 @@
 
         function copyCode(blockId, btn) {
             navigator.clipboard.writeText(document.getElementById(blockId).innerText);
-            btn.innerText = '✅ Copied!';
+            btn.innerText = '✓ Copied!';
             setTimeout(() => btn.innerText = '📋 Copy', 2000);
         }
 
