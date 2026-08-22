@@ -1,5 +1,5 @@
 export const config = {
-  runtime: 'edge', // Ginagamit ang Edge Network para sobrang bilis ng koneksyon
+  runtime: 'edge', // Edge Runtime para sa ultra-fast response time
 };
 
 export default async function handler(req) {
@@ -15,14 +15,15 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ error: 'API key not configured.' }), { status: 500 });
     }
 
+    // Direct mapping papunta sa totoong opisyal na Gemini API models
     const modelMapping = {
-      'gemini-3.7-extended-thinking': 'gemini-1.5-pro',
-      'gemini-3.6-flash': 'gemini-1.5-flash',
-      'gemini-3.5-flash-lite': 'gemini-1.5-flash',
-      'gemini-3.1-pro': 'gemini-1.5-pro'
+      'gemini-3.7-extended-thinking': 'gemini-3.7-flash',
+      'gemini-3.6-flash': 'gemini-3.6-flash',
+      'gemini-3.5-flash-lite': 'gemini-3.5-flash-lite',
+      'gemini-3.1-pro': 'gemini-3.1-pro-preview'
     };
 
-    const targetModel = modelMapping[model] || 'gemini-1.5-flash';
+    const targetModel = modelMapping[model] || 'gemini-3.7-flash';
 
     const systemInstruction = {
       parts: [{ text: "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Whenever someone asks who made you, created you, or built you (in Tagalog, English, or any language like 'sino ang gumawa sa iyo', 'who made you', etc.), you must explicitly state that your creator is Jepong Devxyz (Jay-Ar Lee Espiritu)." }]
@@ -51,7 +52,6 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ error: `Gemini API Error: ${errText}` }), { status: geminiRes.status });
     }
 
-    // Direct pipe ng stream mula sa Google papunta sa browser nang walang delay
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
