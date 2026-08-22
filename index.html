@@ -97,7 +97,6 @@
         
         input[type="text"] { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 0.9rem; min-width: 0; padding: 4px 0; }
         
-        /* Action buttons with enhanced animations */
         .action-icon-btn, .mic-btn { 
             background: rgba(255, 255, 255, 0.08); 
             border: 1px solid var(--border-color);
@@ -115,7 +114,6 @@
         }
         .action-icon-btn:hover, .mic-btn:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
         
-        /* Active recording state with pulse animation */
         .mic-btn.listening { 
             background-color: rgba(239, 68, 68, 0.3); 
             border-color: #ef4444; 
@@ -203,15 +201,12 @@
             <div class="input-wrapper">
                 <input type="file" id="fileInput" hidden onchange="handleFileSelect(event)">
                 
-                <!-- Attachment Button -->
                 <button class="action-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">📎</button>
                 
                 <input type="text" id="userInput" placeholder="Type a message or use mic..." onkeydown="if(event.key==='Enter') sendMessage()">
                 
-                <!-- Microphone Button with Pulse Animation support -->
                 <button class="mic-btn" id="micBtn" onclick="toggleSpeech()" title="Voice Input">🎤</button>
 
-                <!-- Send Button -->
                 <button class="send-btn" onclick="sendMessage()" title="Send">➤</button>
             </div>
         </div>
@@ -237,7 +232,7 @@
                 document.getElementById('bar1'),
                 document.getElementById('bar2'),
                 document.getElementById('bar3'),
-                document.getElementById('bar4')
+                document.getElementById('bar4']
             ];
 
             if (!navigator.onLine) {
@@ -247,33 +242,23 @@
                 return;
             }
 
-            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (connection && typeof connection.rtt === 'number' && connection.rtt > 0) {
-                let rttPing = connection.rtt;
-                if (rttPing <= 45) {
-                    rttPing = Math.floor(Math.random() * 12) + 18;
-                }
-                updatePingUI(rttPing, pingText, bars);
-                return;
-            }
-
             const start = performance.now();
             const img = new Image();
-            img.src = "https://1.1.1.1/cdn-cgi/images/trace/jscheck/1x1.gif?t=" + Date.now();
+            // True latency check using a tiny resource fetch
+            img.src = "https://www.cloudflare.com/favicon.ico?" + Date.now();
 
             const timeout = setTimeout(() => {
-                updatePingUI(Math.floor(Math.random() * 20) + 22, pingText, bars);
-            }, 2000);
+                // Fallback kung medyo mabagal mag-load ang ping test image
+                updatePingUI(120, pingText, bars);
+            }, 3000);
 
             img.onload = img.onerror = () => {
                 clearTimeout(timeout);
                 const rawDuration = performance.now() - start;
-                
-                let calculatedPing = Math.round(rawDuration * 0.22);
-                calculatedPing = Math.max(16, Math.min(calculatedPing, 150));
-                calculatedPing += Math.floor(Math.random() * 6) - 3;
+                let calculatedPing = Math.round(rawDuration);
+                calculatedPing = Math.max(10, Math.min(calculatedPing, 300));
 
-                updatePingUI(Math.abs(calculatedPing), pingText, bars);
+                updatePingUI(calculatedPing, pingText, bars);
             };
         }
 
@@ -281,11 +266,11 @@
             pingText.innerText = `${ping} ms`;
             pingText.style.color = 'var(--text-muted)';
 
-            if (ping <= 50) {
+            if (ping <= 60) {
                 setBarColor(bars, 4, 'var(--sig-good)');
-            } else if (ping <= 90) {
+            } else if (ping <= 120) {
                 setBarColor(bars, 3, '#f59e0b');
-            } else if (ping <= 140) {
+            } else if (ping <= 200) {
                 setBarColor(bars, 2, '#f97316');
             } else {
                 setBarColor(bars, 1, 'var(--sig-bad)');
@@ -305,7 +290,7 @@
         }
 
         checkLivePing();
-        setInterval(checkLivePing, 1000);
+        setInterval(checkLivePing, 5000); // Check every 5 seconds to avoid spamming
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -331,10 +316,24 @@
 
         const chatBox = document.getElementById('chatBox');
         const scrollBtn = document.getElementById('scrollBtn');
+
         chatBox.onscroll = () => {
-            scrollBtn.style.display = (chatBox.scrollHeight - chatBox.scrollTop > 600) ? 'block' : 'none';
+            const isScrolledUp = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight > 150;
+            scrollBtn.style.display = isScrolledUp ? 'block' : 'none';
         };
-        function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+
+        function scrollToBottom() { 
+            chatBox.scrollTop = chatBox.scrollHeight; 
+        }
+
+        // Smart auto-scroll: Iba-baba lang kung malapit sa dulo ang user
+        function smartScrollToBottom() {
+            const threshold = 150;
+            const isNearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight <= threshold;
+            if (isNearBottom) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
 
         function loadHistory() {
             const saved = localStorage.getItem('jepong_chat_history');
@@ -437,6 +436,7 @@
             botMsgElem.className = 'msg bot';
             botMsgElem.innerText = 'Thinking...';
             chatBox.appendChild(botMsgElem);
+            scrollToBottom();
 
             try {
                 const response = await fetch('/api/chat', {
@@ -461,7 +461,8 @@
                             🔊 Listen
                         </button>
                     `;
-                    scrollToBottom();
+                    // Ginamit na natin ang smartScroll para hindi ka maistorbo sa pagbabasa sa taas
+                    smartScrollToBottom();
                 }
 
                 document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
@@ -474,7 +475,7 @@
 
         function copyCode(blockId, btn) {
             navigator.clipboard.writeText(document.getElementById(blockId).innerText);
-            btn.innerText = '✓ Copied!';
+            btn.innerText = '✅ Copied!';
             setTimeout(() => btn.innerText = '📋 Copy', 2000);
         }
 
