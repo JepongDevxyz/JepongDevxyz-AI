@@ -10,18 +10,20 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured on server.' });
   }
 
+  // I-map ang UI options papunta sa totoong opisyal na Google Gemini API models
   const modelMapping = {
-    'gemini-3.7-flash': 'gemini-3.7-flash',
-    'gemini-3.6-flash': 'gemini-3.6-flash',
-    'gemini-3.5-flash-lite': 'gemini-3.5-flash-lite',
-    'gemini-3.1-pro': 'gemini-3.1-pro'
+    'gemini-3.7-extended-thinking': 'gemini-2.5-pro',
+    'gemini-3.6-flash': 'gemini-2.5-flash',
+    'gemini-3.5-flash-lite': 'gemini-2.5-flash',
+    'gemini-3.1-pro': 'gemini-2.5-pro',
+    'gemini-3.7-flash': 'gemini-2.5-flash'
   };
 
-  const targetModel = modelMapping[model] || 'gemini-3.6-flash';
+  const targetModel = modelMapping[model] || 'gemini-2.5-flash';
 
-  // System instruction para kilalanin ka bilang tagalikha
+  // System instruction para kilalanin ka bilang creator
   const systemInstruction = {
-    parts: [{ text: "Ikaw si JepongDevxyz AI, isang AI assistant na binuo, nilikha, at ginawa ni Jepong Devxyz (Jay-Ar Lee Espiritu). Kapag tinanong ka kung sino ang gumawa sa iyo, sabihin mong si Jepong ang lumikha sa iyo." }]
+    parts: [{ text: "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Whenever someone asks who made you, created you, or built you (in Tagalog, English, or any language like 'sino ang gumawa sa iyo', 'who made you', etc.), you must explicitly state that your creator is Jepong Devxyz (Jay-Ar Lee Espiritu)." }]
   };
 
   try {
