@@ -415,7 +415,7 @@
 
                     buffer += decoder.decode(value, { stream: true });
                     const lines = buffer.split('\n');
-                    buffer = lines.pop(); // Keep the last incomplete line in buffer
+                    buffer = lines.pop();
 
                     for (const line of lines) {
                         const trimmedLine = line.trim();
@@ -456,7 +456,13 @@
 
         function clearChat() {
             if (confirm("Are you sure you want to clear the conversation?")) {
-                document.getElementById('chatBox').innerHTML = '<div class="msg bot">Chat has been reset. How can I help you?</div>';
+                const chatBox = document.getElementById('chatBox');
+                chatBox.innerHTML = ''; // Ligtas na pag-clear nang hindi sinisira ang container
+                
+                const welcomeMsg = document.createElement('div');
+                welcomeMsg.className = 'msg bot';
+                welcomeMsg.innerText = "Hello, Jepong! Welcome to JepongDevxyz AI. How can I help you today?";
+                chatBox.appendChild(welcomeMsg);
             }
         }
 
