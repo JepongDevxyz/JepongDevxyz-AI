@@ -221,6 +221,11 @@
             border-bottom-left-radius: 4px;
         }
 
+        .thinking {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
         .input-container {
             padding: 12px 16px;
             border-top: 1px solid var(--border-color);
@@ -379,10 +384,12 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             const botMsgElem = document.createElement('div');
-            botMsgElem.className = 'msg bot';
-            botMsgElem.innerText = '...';
+            botMsgElem.className = 'msg bot thinking';
+            botMsgElem.innerText = 'Thinking...';
             chatBox.appendChild(botMsgElem);
             chatBox.scrollTop = chatBox.scrollHeight;
+
+            let hasStartedReceiving = false;
 
             try {
                 const response = await fetch('/api/chat', {
@@ -393,31 +400,54 @@
 
                 if (!response.ok) {
                     const errData = await response.json();
+                    botMsgElem.className = 'msg bot';
                     botMsgElem.innerText = `Error: ${errData.error || 'Failed to fetch response'}`;
                     return;
                 }
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                botMsgElem.innerText = '';
+                let buffer = '';
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep the last incomplete line in buffer
 
                     for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const text = line.replace('data: ', '');
-                            if (text === '[DONE]') break;
-                            botMsgElem.innerText += JSON.parse(text);
-                            chatBox.scrollTop = chatBox.scrollHeight;
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith('data:')) {
+                            const dataContent = trimmedLine.replace('data:', '').trim();
+                            if (dataContent === '[DONE]') break;
+                            
+                            try {
+                                const parsedText = JSON.parse(dataContent);
+                                if (parsedText) {
+                                    if (!hasStartedReceiving) {
+                                        botMsgElem.className = 'msg bot';
+                                        botMsgElem.innerText = '';
+                                        hasStartedReceiving = true;
+                                    }
+                                    botMsgElem.innerText += parsedText;
+                                    chatBox.scrollTop = chatBox.scrollHeight;
+                                }
+                            } catch (e) {
+                                // Skip parsing error on partial chunks
+                            }
                         }
                     }
                 }
+
+                if (!hasStartedReceiving) {
+                    botMsgElem.className = 'msg bot';
+                    botMsgElem.innerText = 'No response received from model.';
+                }
+
             } catch (err) {
+                botMsgElem.className = 'msg bot';
                 botMsgElem.innerText = 'Unable to connect to the backend server.';
             }
 
