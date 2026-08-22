@@ -68,56 +68,71 @@
         }
 
         .header {
-            padding: 14px 16px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(11, 15, 25, 0.4);
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(11, 15, 25, 0.6);
             flex-shrink: 0;
-            gap: 10px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             min-width: 0;
-            flex: 1;
         }
 
         .brand-icon {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             background: var(--accent-gradient);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 16px;
+            font-size: 14px;
             box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
             flex-shrink: 0;
         }
 
         .brand-title {
-            font-size: 0.98rem;
+            font-size: 0.9rem;
             font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        .header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+        }
+
         .model-select {
+            flex: 1;
             background: rgba(30, 41, 59, 0.8);
             color: var(--text-main);
             border: 1px solid var(--border-color);
             padding: 6px 10px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 0.75rem;
             font-weight: 500;
             cursor: pointer;
             outline: none;
+            min-width: 0;
         }
 
         .model-select option {
@@ -125,23 +140,17 @@
             color: #fff;
         }
 
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
         .network-status {
             display: flex;
             align-items: center;
             gap: 6px;
             background: rgba(255, 255, 255, 0.05);
-            padding: 5px 10px;
-            border-radius: 20px;
+            padding: 5px 8px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
+            flex-shrink: 0;
         }
 
         .signal-bars {
@@ -167,16 +176,12 @@
             background: rgba(239, 68, 68, 0.15);
             color: #fca5a5;
             border: 1px solid rgba(239, 68, 68, 0.3);
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 500;
-            transition: background 0.2s ease;
-        }
-
-        .clear-btn:hover {
-            background: rgba(239, 68, 68, 0.3);
+            flex-shrink: 0;
         }
 
         .chat-box {
@@ -189,15 +194,6 @@
             scroll-behavior: smooth;
         }
 
-        .chat-box::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .chat-box::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
         .msg {
             max-width: 85%;
             padding: 12px 16px;
@@ -206,6 +202,7 @@
             line-height: 1.5;
             word-break: break-word;
             animation: fadeIn 0.25s ease-out;
+            white-space: pre-wrap;
         }
 
         .user {
@@ -255,9 +252,9 @@
         }
 
         .send-btn {
-            background: #1e293b;
-            color: #e2e8f0;
-            border: 1px solid var(--border-color);
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
             width: 42px;
             height: 42px;
             border-radius: 12px;
@@ -265,14 +262,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s ease;
             flex-shrink: 0;
-        }
-
-        .send-btn:hover {
-            background: var(--accent-gradient);
-            color: white;
-            border-color: transparent;
         }
 
         .send-btn svg {
@@ -292,18 +282,11 @@
 
     <div class="app-container">
         <div class="header">
-            <div class="brand">
-                <div class="brand-icon">✦</div>
-                <div class="brand-title">JepongDevxyz AI</div>
-            </div>
-
-            <div class="header-controls">
-                <select id="modelSelect" class="model-select">
-                    <option value="gemini-3.6-flash">3.6 Flash (All-around)</option>
-                    <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Fastest)</option>
-                    <option value="gemini-3.1-pro">3.1 Pro (Reasoning)</option>
-                </select>
-
+            <div class="header-top">
+                <div class="brand">
+                    <div class="brand-icon">✦</div>
+                    <div class="brand-title">JepongDevxyz AI</div>
+                </div>
                 <div class="network-status" id="networkStatus">
                     <div class="signal-bars">
                         <div class="bar bar-1"></div>
@@ -313,7 +296,16 @@
                     </div>
                     <span id="pingText">-- ms</span>
                 </div>
+            </div>
 
+            <div class="header-controls">
+                <select id="modelSelect" class="model-select">
+                    <option value="gemini-3.7-extended-thinking">3.7 Extended Thinking (Deep Analysis)</option>
+                    <option value="gemini-3.6-flash">3.6 Flash (All-around)</option>
+                    <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Fastest)</option>
+                    <option value="gemini-3.1-pro">3.1 Pro (Reasoning)</option>
+                    <option value="gemini-2.5-flash">2.5 Flash (Legacy)</option>
+                </select>
                 <button class="clear-btn" onclick="clearChat()">Clear</button>
             </div>
         </div>
@@ -362,11 +354,7 @@
                 }
 
                 bars.forEach((bar, index) => {
-                    if (index < activeBars) {
-                        bar.style.backgroundColor = color;
-                    } else {
-                        bar.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-                    }
+                    bar.style.backgroundColor = index < activeBars ? color : 'rgba(255, 255, 255, 0.2)';
                 });
 
             } catch (err) {
@@ -391,8 +379,10 @@
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            const loadingId = 'loading-' + Date.now();
-            chatBox.innerHTML += `<div class="msg bot" id="${loadingId}">Thinking...</div>`;
+            const botMsgElem = document.createElement('div');
+            botMsgElem.className = 'msg bot';
+            botMsgElem.innerText = '...';
+            chatBox.appendChild(botMsgElem);
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
@@ -402,19 +392,34 @@
                     body: JSON.stringify({ message, model: selectedModel })
                 });
 
-                const data = await response.json();
-                const loadingElem = document.getElementById(loadingId);
-                if (loadingElem) loadingElem.remove();
+                if (!response.ok) {
+                    const errData = await response.json();
+                    botMsgElem.innerText = `Error: ${errData.error || 'Failed to fetch response'}`;
+                    return;
+                }
 
-                if (data.reply) {
-                    chatBox.innerHTML += `<div class="msg bot">${escapeHTML(data.reply)}</div>`;
-                } else {
-                    chatBox.innerHTML += `<div class="msg bot">An error occurred: ${escapeHTML(data.error || 'Unknown error')}</div>`;
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                botMsgElem.innerText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const text = line.replace('data: ', '');
+                            if (text === '[DONE]') break;
+                            botMsgElem.innerText += JSON.parse(text);
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                        }
+                    }
                 }
             } catch (err) {
-                const loadingElem = document.getElementById(loadingId);
-                if (loadingElem) loadingElem.remove();
-                chatBox.innerHTML += `<div class="msg bot">Unable to connect to the backend server.</div>`;
+                botMsgElem.innerText = 'Unable to connect to the backend server.';
             }
 
             chatBox.scrollTop = chatBox.scrollHeight;
