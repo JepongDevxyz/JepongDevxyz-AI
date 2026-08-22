@@ -39,7 +39,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No message or file provided.' });
   }
 
-  // Function para mag-call sa Gemini API
   async function fetchFromGemini(selectedModel) {
     return await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
@@ -57,7 +56,6 @@ export default async function handler(req, res) {
   try {
     let response = await fetchFromGemini(primaryModel);
 
-    // Kapag nag-503 (High Demand) o 429 (Rate Limit), gagamitin ang fallback model
     if (!response.ok && (response.status === 503 || response.status === 429) && primaryModel !== fallbackModel) {
       response = await fetchFromGemini(fallbackModel);
     }
@@ -67,9 +65,11 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: `Gemini API Error: ${errText}` });
     }
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    // Headers para pigilan ang buffering at maging totoong instant stream
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Pinipigilan ang buffering sa reverse proxies
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -94,9 +94,10 @@ export default async function handler(req, res) {
             const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             if (textChunk) {
               res.write(textChunk);
+              if (typeof res.flush === 'function') res.flush(); // Agad ipinapadala ang chunk sa client
             }
           } catch (e) {
-            // Skip invalid JSON
+            // Skip invalid JSON chunks
           }
         }
       }
