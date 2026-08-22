@@ -1,70 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jepong AI Chat</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-    header { padding: 15px; background: #1e1e1e; text-align: center; border-bottom: 1px solid #333; }
-    #chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-    .msg { padding: 10px 14px; border-radius: 8px; max-width: 80%; line-height: 1.4; word-break: break-word; }
-    .user { background: #0070f3; align-self: flex-end; }
-    .bot { background: #222; align-self: flex-start; border: 1px solid #444; }
-    form { display: flex; padding: 10px; background: #1e1e1e; border-top: 1px solid #333; }
-    input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; outline: none; }
-    button { padding: 10px 15px; margin-left: 8px; background: #0070f3; color: white; border: none; border-radius: 4px; cursor: pointer; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JepongDevxyz AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(21, 29, 45, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --user-msg: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            --bot-msg: rgba(30, 41, 59, 0.7);
+            --sig-good: #10b981;
+            --sig-medium: #f59e0b;
+            --sig-bad: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%);
+            color: var(--text-main);
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .app-container {
+                max-width: 900px;
+                height: 90vh;
+                border: 1px solid var(--border-color);
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                overflow: hidden;
+            }
+        }
+
+        .header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(11, 15, 25, 0.4);
+            flex-shrink: 0;
+            gap: 10px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+            flex-shrink: 0;
+        }
+
+        .brand-title {
+            font-size: 0.98rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .network-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .signal-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 10px;
+        }
+
+        .bar {
+            width: 2.5px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 1px;
+            transition: background-color 0.3s ease;
+        }
+
+        .bar-1 { height: 25%; }
+        .bar-2 { height: 50%; }
+        .bar-3 { height: 75%; }
+        .bar-4 { height: 100%; }
+
+        .clear-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .clear-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .msg {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            word-break: break-word;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: var(--user-msg);
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: var(--bot-msg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
+
+        .input-container {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            background: rgba(11, 15, 25, 0.6);
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 4px 4px 4px 16px;
+            border-radius: 18px;
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 0.92rem;
+            min-width: 0;
+        }
+
+        input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid var(--border-color);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: var(--accent-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            margin-left: -2px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h2>Jepong AI Assistant</h2>
-  </header>
-  <div id="chat-box"></div>
-  <form id="chat-form">
-    <input type="text" id="user-input" placeholder="Magtanong dito..." required />
-    <button type="submit">Send</button>
-  </form>
 
-  <script>
-    const form = document.getElementById('chat-form');
-    const input = document.getElementById('user-input');
-    const chatBox = document.getElementById('chat-box');
+    <div class="app-container">
+        <div class="header">
+            <div class="brand">
+                <div class="brand-icon">✦</div>
+                <div class="brand-title">JepongDevxyz AI</div>
+            </div>
 
-    function appendMessage(sender, text) {
-      const msgDiv = document.createElement('div');
-      msgDiv.classList.add('msg', sender);
-      msgDiv.textContent = text;
-      chatBox.appendChild(msgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
+            <div class="header-controls">
+                <div class="network-status" id="networkStatus">
+                    <div class="signal-bars">
+                        <div class="bar bar-1"></div>
+                        <div class="bar bar-2"></div>
+                        <div class="bar bar-3"></div>
+                        <div class="bar bar-4"></div>
+                    </div>
+                    <span id="pingText">-- ms</span>
+                </div>
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
+                <button class="clear-btn" onclick="clearChat()">Clear</button>
+            </div>
+        </div>
 
-      appendMessage('user', text);
-      input.value = '';
+        <div class="chat-box" id="chatBox">
+            <div class="msg bot">Hello, Jepong! Welcome to JepongDevxyz AI. How can I help you today?</div>
+        </div>
 
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
-        });
+        <div class="input-container">
+            <div class="input-wrapper">
+                <input type="text" id="userInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <button class="send-btn" onclick="sendMessage()" aria-label="Send">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
 
-        const data = await res.json();
-        if (data.reply) {
-          appendMessage('bot', data.reply);
-        } else {
-          appendMessage('bot', 'Error: ' + (data.error || 'May nangyaring mali.'));
+    <script>
+        async function checkNetworkSpeed() {
+            const startTime = performance.now();
+            const pingText = document.getElementById('pingText');
+            const bars = document.querySelectorAll('.bar');
+
+            try {
+                await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-store' });
+                const endTime = performance.now();
+                const latency = Math.round(endTime - startTime);
+
+                pingText.innerText = `${latency} ms`;
+
+                let color = 'var(--sig-good)';
+                let activeBars = 4;
+
+                if (latency > 300) {
+                    color = 'var(--sig-bad)';
+                    activeBars = 1;
+                } else if (latency > 150) {
+                    color = 'var(--sig-medium)';
+                    activeBars = 2;
+                } else if (latency > 80) {
+                    color = 'var(--sig-good)';
+                    activeBars = 3;
+                }
+
+                bars.forEach((bar, index) => {
+                    if (index < activeBars) {
+                        bar.style.backgroundColor = color;
+                    } else {
+                        bar.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                    }
+                });
+
+            } catch (err) {
+                pingText.innerText = 'Offline';
+                bars.forEach(bar => bar.style.backgroundColor = 'rgba(255, 255, 255, 0.2)');
+            }
         }
-      } catch (err) {
-        appendMessage('bot', 'Error sa pag-connect sa server.');
-      }
-    });
-  </script>
+
+        setInterval(checkNetworkSpeed, 5000);
+        checkNetworkSpeed();
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const chatBox = document.getElementById('chatBox');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            chatBox.innerHTML += `<div class="msg user">${escapeHTML(message)}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const loadingId = 'loading-' + Date.now();
+            chatBox.innerHTML += `<div class="msg bot" id="${loadingId}">Thinking...</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                const loadingElem = document.getElementById(loadingId);
+                if (loadingElem) loadingElem.remove();
+
+                if (data.reply) {
+                    chatBox.innerHTML += `<div class="msg bot">${escapeHTML(data.reply)}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="msg bot">An error occurred: ${escapeHTML(data.error || 'Unknown error')}</div>`;
+                }
+            } catch (err) {
+                const loadingElem = document.getElementById(loadingId);
+                if (loadingElem) loadingElem.remove();
+                chatBox.innerHTML += `<div class="msg bot">Unable to connect to the backend server.</div>`;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function clearChat() {
+            if (confirm("Are you sure you want to clear the conversation?")) {
+                document.getElementById('chatBox').innerHTML = '<div class="msg bot">Chat has been reset. How can I help you?</div>';
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+
 </body>
 </html>
