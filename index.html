@@ -221,6 +221,13 @@
             border-bottom-left-radius: 4px;
         }
 
+        .msg img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
         .thinking {
             color: var(--text-muted);
             font-style: italic;
@@ -231,6 +238,36 @@
             border-top: 1px solid var(--border-color);
             background: rgba(11, 15, 25, 0.6);
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-preview {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            width: fit-content;
+        }
+
+        .file-preview img {
+            width: 30px;
+            height: 30px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .remove-file {
+            cursor: pointer;
+            color: #ef4444;
+            font-weight: bold;
+            margin-left: 6px;
         }
 
         .input-wrapper {
@@ -239,11 +276,26 @@
             gap: 8px;
             background: rgba(30, 41, 59, 0.8);
             border: 1px solid var(--border-color);
-            padding: 4px 4px 4px 16px;
+            padding: 4px 4px 4px 12px;
             border-radius: 18px;
         }
 
-        input {
+        .attach-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+
+        .attach-btn:hover {
+            color: var(--text-main);
+        }
+
+        input[type="text"] {
             flex: 1;
             background: transparent;
             border: none;
@@ -305,12 +357,11 @@
 
             <div class="header-controls">
                 <select id="modelSelect" class="model-select">
-    <option value="gemini-3.7-flash" selected>3.7 Flash (Latest & Smartest)</option>
-    <option value="gemini-3.6-flash">3.6 Flash (All-around help)</option>
-    <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Fastest)</option>
-    <option value="gemini-3.1-pro">3.1 Pro (Advanced reasoning)</option>
+                    <option value="gemini-3.7-extended-thinking">3.7 Extended Thinking (Smartest)</option>
+                    <option value="gemini-3.6-flash" selected>3.6 Flash (All-around help)</option>
+                    <option value="gemini-3.5-flash-lite">3.5 Flash-Lite (Fastest)</option>
+                    <option value="gemini-3.1-pro">3.1 Pro (Advanced reasoning)</option>
                 </select>
-                
                 <button class="clear-btn" onclick="clearChat()">Clear</button>
             </div>
         </div>
@@ -320,8 +371,19 @@
         </div>
 
         <div class="input-container">
+            <div class="file-preview" id="filePreview">
+                <img id="previewImg" src="" alt="" style="display:none;">
+                <span id="fileName"></span>
+                <span class="remove-file" onclick="removeAttachment()">✕</span>
+            </div>
             <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <input type="file" id="fileInput" hidden onchange="handleFileSelect(event)">
+                <button class="attach-btn" onclick="document.getElementById('fileInput').click()" aria-label="Attach File">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                </button>
+                <input type="text" id="userInput" placeholder="Type a message or send a file..." onkeydown="if(event.key==='Enter') sendMessage()">
                 <button class="send-btn" onclick="sendMessage()" aria-label="Send">
                     <svg viewBox="0 0 24 24">
                         <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -332,6 +394,8 @@
     </div>
 
     <script>
+        let selectedFileData = null;
+
         async function checkNetworkSpeed() {
             const startTime = performance.now();
             const pingText = document.getElementById('pingText');
@@ -371,6 +435,42 @@
         setInterval(checkNetworkSpeed, 5000);
         checkNetworkSpeed();
 
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result.split(',')[1];
+                selectedFileData = {
+                    mimeType: file.type || 'application/octet-stream',
+                    data: base64Data,
+                    name: file.name,
+                    isImage: file.type.startsWith('image/')
+                };
+
+                const previewContainer = document.getElementById('filePreview');
+                const previewImg = document.getElementById('previewImg');
+                const fileName = document.getElementById('fileName');
+
+                fileName.innerText = file.name;
+                if (selectedFileData.isImage) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                } else {
+                    previewImg.style.display = 'none';
+                }
+                previewContainer.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeAttachment() {
+            selectedFileData = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+        }
+
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const chatBox = document.getElementById('chatBox');
@@ -378,9 +478,20 @@
             const message = input.value.trim();
             const selectedModel = modelSelect.value;
 
-            if (!message) return;
+            if (!message && !selectedFileData) return;
 
-            chatBox.innerHTML += `<div class="msg user">${escapeHTML(message)}</div>`;
+            let userMsgContent = '';
+            if (selectedFileData && selectedFileData.isImage) {
+                userMsgContent += `<img src="data:${selectedFileData.mimeType};base64,${selectedFileData.data}">`;
+            } else if (selectedFileData) {
+                userMsgContent += `📎 <b>${escapeHTML(selectedFileData.name)}</b><br>`;
+            }
+            if (message) userMsgContent += escapeHTML(message);
+
+            chatBox.innerHTML += `<div class="msg user">${userMsgContent}</div>`;
+            
+            const payloadFile = selectedFileData;
+            removeAttachment();
             input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -390,13 +501,11 @@
             chatBox.appendChild(botMsgElem);
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            let hasStartedReceiving = false;
-
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, model: selectedModel })
+                    body: JSON.stringify({ message, file: payloadFile, model: selectedModel })
                 });
 
                 if (!response.ok) {
@@ -408,48 +517,32 @@
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let buffer = '';
+                let isFirstChunk = true;
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop();
-
-                    for (const line of lines) {
-                        const trimmedLine = line.trim();
-                        if (trimmedLine.startsWith('data:')) {
-                            const dataContent = trimmedLine.replace('data:', '').trim();
-                            if (dataContent === '[DONE]') break;
-                            
-                            try {
-                                const parsedText = JSON.parse(dataContent);
-                                if (parsedText) {
-                                    if (!hasStartedReceiving) {
-                                        botMsgElem.className = 'msg bot';
-                                        botMsgElem.innerText = '';
-                                        hasStartedReceiving = true;
-                                    }
-                                    botMsgElem.innerText += parsedText;
-                                    chatBox.scrollTop = chatBox.scrollHeight;
-                                }
-                            } catch (e) {
-                                // Skip parsing error on partial chunks
-                            }
+                    const textChunk = decoder.decode(value, { stream: true });
+                    if (textChunk) {
+                        if (isFirstChunk) {
+                            botMsgElem.className = 'msg bot';
+                            botMsgElem.innerText = '';
+                            isFirstChunk = false;
                         }
+                        botMsgElem.innerText += textChunk;
+                        chatBox.scrollTop = chatBox.scrollHeight;
                     }
                 }
 
-                if (!hasStartedReceiving) {
+                if (isFirstChunk) {
                     botMsgElem.className = 'msg bot';
                     botMsgElem.innerText = 'No response received from model.';
                 }
 
             } catch (err) {
                 botMsgElem.className = 'msg bot';
-                botMsgElem.innerText = 'Unable to connect to the backend server.';
+                botMsgElem.innerText = 'Unable to connect to server.';
             }
 
             chatBox.scrollTop = chatBox.scrollHeight;
@@ -458,12 +551,7 @@
         function clearChat() {
             if (confirm("Are you sure you want to clear the conversation?")) {
                 const chatBox = document.getElementById('chatBox');
-                chatBox.innerHTML = ''; // Ligtas na pag-clear nang hindi sinisira ang container
-                
-                const welcomeMsg = document.createElement('div');
-                welcomeMsg.className = 'msg bot';
-                welcomeMsg.innerText = "Hello, Jepong! Welcome to JepongDevxyz AI. How can I help you today?";
-                chatBox.appendChild(welcomeMsg);
+                chatBox.innerHTML = '<div class="msg bot">Hello, Jepong! Welcome to JepongDevxyz AI. How can I help you today?</div>';
             }
         }
 
