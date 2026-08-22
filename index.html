@@ -358,17 +358,17 @@
             const modal = document.getElementById('previewModal');
             const frame = document.getElementById('previewFrame');
             const modalTitle = document.getElementById('modalTitle');
-            if (modalTitle) modalTitle.innerText = `Live Preview (${lang.toUpperCase()})`;
-            modal.style.display = 'flex';
-
+            
+            const lowerLang = (lang || '').toLowerCase();
             let finalHtml = code;
-            const lowerLang = lang.toLowerCase();
 
-            if (['html', 'htm', 'xml', 'svg'].includes(lowerLang)) {
-                if (!code.toLowerCase().includes('<html')) {
+            if (['html', 'htm', 'xml', 'svg'].includes(lowerLang) || (code.includes('<') && code.includes('>'))) {
+                if (modalTitle) modalTitle.innerText = `Live Web Preview`;
+                if (!code.toLowerCase().includes('<!doctype') && !code.toLowerCase().includes('<html')) {
                     finalHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body { font-family: sans-serif; padding: 16px; color: #111; background: #fff; }</style></head><body>${code}</body></html>`;
                 }
             } else {
+                if (modalTitle) modalTitle.innerText = `Code Preview (${lang.toUpperCase()})`;
                 finalHtml = `
                     <!DOCTYPE html>
                     <html lang="en">
@@ -382,38 +382,14 @@
                         </style>
                     </head>
                     <body>
-                        <h3>⚙️ Code Preview & Output (${lang.toUpperCase()})</h3>
-                        <pre id="output">Loading code view...</pre>
-                        <script>
-                            const output = document.getElementById('output');
-                            const rawCode = ${JSON.stringify(code)};
-                            
-                            if ('${lowerLang}'.includes('js') || '${lowerLang}'.includes('javascript') || '${lowerLang}'.includes('node')) {
-                                let logs = [];
-                                console.log = (...args) => {
-                                    logs.push(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' '));
-                                    output.innerText = logs.join('\\n');
-                                };
-                                try {
-                                    const require = (mod) => ({ use:()=>{}, get:()=>{}, post:()=>{}, listen:(p,cb)=>{if(cb)cb();} });
-                                    const process = { env: { PORT: 3000 } };
-                                    
-                                    eval(rawCode);
-                                    if (logs.length === 0) {
-                                        output.innerText = "Script loaded successfully.\\n\\n--- Source Code ---\\n" + rawCode;
-                                    }
-                                } catch(e) {
-                                    output.innerText = "Output / Code View:\\n\\n" + rawCode;
-                                }
-                            } else {
-                                output.innerText = rawCode;
-                            }
-                        <\/script>
+                        <h3>⚙️ Code Output (${lang.toUpperCase()})</h3>
+                        <pre>${escapeHTML(code)}</pre>
                     </body>
                     </html>
                 `;
             }
 
+            modal.style.display = 'flex';
             const blob = new Blob([finalHtml], { type: 'text/html;charset=utf-8' });
             frame.src = URL.createObjectURL(blob);
         }
