@@ -10,7 +10,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured on server.' });
   }
 
-  // Gamitin ang mga opisyal na 3.x models
   const modelMapping = {
     'gemini-3.7-extended-thinking': 'gemini-3.7-flash',
     'gemini-3.6-flash': 'gemini-3.6-flash',
@@ -18,14 +17,14 @@ export default async function handler(req, res) {
     'gemini-3.1-pro': 'gemini-3.7-flash'
   };
 
-  const targetModel = modelMapping[model] || 'gemini-3.6-flash';
+  const primaryModel = modelMapping[model] || 'gemini-3.6-flash';
+  const fallbackModel = 'gemini-3.6-flash';
 
   const systemInstruction = {
     parts: [{ text: "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Whenever someone asks who made you, created you, or built you (in Tagalog, English, or any language like 'sino ang gumawa sa iyo', 'who made you', etc.), you must explicitly state that your creator is Jepong Devxyz (Jay-Ar Lee Espiritu)." }]
   };
 
   const parts = [];
-
   if (file && file.data && file.mimeType) {
     parts.push({
       inline_data: {
@@ -34,18 +33,16 @@ export default async function handler(req, res) {
       }
     });
   }
-
-  if (message) {
-    parts.push({ text: message });
-  }
+  if (message) parts.push({ text: message });
 
   if (parts.length === 0) {
     return res.status(400).json({ error: 'No message or file provided.' });
   }
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+  // Function para mag-call sa Gemini API
+  async function fetchFromGemini(selectedModel) {
+    return await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,6 +52,15 @@ export default async function handler(req, res) {
         })
       }
     );
+  }
+
+  try {
+    let response = await fetchFromGemini(primaryModel);
+
+    // Kapag nag-503 (High Demand) o 429 (Rate Limit), gagamitin ang fallback model
+    if (!response.ok && (response.status === 503 || response.status === 429) && primaryModel !== fallbackModel) {
+      response = await fetchFromGemini(fallbackModel);
+    }
 
     if (!response.ok) {
       const errText = await response.text();
