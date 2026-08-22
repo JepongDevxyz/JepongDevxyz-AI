@@ -3,28 +3,45 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { message, model } = req.body;
+  const { message, file, model } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({ error: 'API key not configured on server.' });
   }
 
-  // I-map ang UI options papunta sa totoong opisyal na Google Gemini API models
   const modelMapping = {
     'gemini-3.7-extended-thinking': 'gemini-2.5-pro',
     'gemini-3.6-flash': 'gemini-2.5-flash',
     'gemini-3.5-flash-lite': 'gemini-2.5-flash',
-    'gemini-3.1-pro': 'gemini-2.5-pro',
-    'gemini-3.7-flash': 'gemini-2.5-flash'
+    'gemini-3.1-pro': 'gemini-2.5-pro'
   };
 
   const targetModel = modelMapping[model] || 'gemini-2.5-flash';
 
-  // System instruction para kilalanin ka bilang creator
   const systemInstruction = {
     parts: [{ text: "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Whenever someone asks who made you, created you, or built you (in Tagalog, English, or any language like 'sino ang gumawa sa iyo', 'who made you', etc.), you must explicitly state that your creator is Jepong Devxyz (Jay-Ar Lee Espiritu)." }]
   };
+
+  // Ihanda ang parts (text at file kapag may ibinigay)
+  const parts = [];
+
+  if (file && file.data && file.mimeType) {
+    parts.push({
+      inline_data: {
+        mime_type: file.mimeType,
+        data: file.data
+      }
+    });
+  }
+
+  if (message) {
+    parts.push({ text: message });
+  }
+
+  if (parts.length === 0) {
+    return res.status(400).json({ error: 'No message or file provided.' });
+  }
 
   try {
     const response = await fetch(
@@ -34,7 +51,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system_instruction: systemInstruction,
-          contents: [{ parts: [{ text: message }] }]
+          contents: [{ parts }]
         })
       }
     );
@@ -73,7 +90,7 @@ export default async function handler(req, res) {
               res.write(textChunk);
             }
           } catch (e) {
-            // Skip invalid JSON chunks
+            // Skip invalid JSON
           }
         }
       }
