@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JepongDevxyz AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Marked.js para sa Markdown at Code Block parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
@@ -235,13 +234,14 @@
             font-style: italic;
         }
 
-        /* Styling para sa Code Blocks na may Copy/Download Buttons */
+        /* Styling para sa Code Blocks */
         .code-block-wrapper {
             background: #0f172a !important;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             margin: 10px 0;
             overflow: hidden;
+            text-align: left;
         }
 
         .code-header {
@@ -277,6 +277,7 @@
             color: #e2e8f0;
             font-family: monospace;
             font-size: 0.85rem;
+            white-space: pre-wrap;
         }
 
         .input-container {
@@ -442,7 +443,6 @@
     <script>
         let selectedFileData = null;
 
-        // Custom Marked Renderer para sa Code Blocks
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
             const codeContent = typeof code === 'object' ? code.text : code;
@@ -474,7 +474,6 @@
         window.copyCodeContent = function(blockId, btn) {
             const codeElem = document.getElementById(blockId);
             if (!codeElem) return;
-
             navigator.clipboard.writeText(codeElem.innerText).then(() => {
                 const origText = btn.innerText;
                 btn.innerText = '✅ Copied!';
@@ -485,12 +484,10 @@
         window.downloadCodeContent = function(blockId, lang) {
             const codeElem = document.getElementById(blockId);
             if (!codeElem) return;
-
             const text = codeElem.innerText;
             const extensions = { html: 'html', js: 'js', css: 'css', python: 'py', py: 'py', json: 'json', cpp: 'cpp', java: 'java', sql: 'sql', txt: 'txt' };
             const ext = extensions[lang.toLowerCase()] || 'txt';
             const filename = `script-${Date.now()}.${ext}`;
-
             const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -506,20 +503,16 @@
             const startTime = performance.now();
             const pingText = document.getElementById('pingText');
             const bars = document.querySelectorAll('.bar');
-
             try {
                 await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-store' });
                 const endTime = performance.now();
                 const latency = Math.round(endTime - startTime);
-
                 pingText.innerText = `${latency} ms`;
                 let color = 'var(--sig-good)';
                 let activeBars = 4;
-
                 if (latency > 300) { color = 'var(--sig-bad)'; activeBars = 1; }
                 else if (latency > 150) { color = 'var(--sig-medium)'; activeBars = 2; }
                 else if (latency > 80) { color = 'var(--sig-good)'; activeBars = 3; }
-
                 bars.forEach((bar, index) => {
                     bar.style.backgroundColor = index < activeBars ? color : 'rgba(255, 255, 255, 0.2)';
                 });
@@ -528,14 +521,12 @@
                 bars.forEach(bar => bar.style.backgroundColor = 'rgba(255, 255, 255, 0.2)');
             }
         }
-
         setInterval(checkNetworkSpeed, 5000);
         checkNetworkSpeed();
 
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const base64Data = e.target.result.split(',')[1];
@@ -545,11 +536,9 @@
                     name: file.name,
                     isImage: file.type.startsWith('image/')
                 };
-
                 const previewContainer = document.getElementById('filePreview');
                 const previewImg = document.getElementById('previewImg');
                 const fileName = document.getElementById('fileName');
-
                 fileName.innerText = file.name;
                 if (selectedFileData.isImage) {
                     previewImg.src = e.target.result;
@@ -605,16 +594,29 @@
                     body: JSON.stringify({ message, file: payloadFile, model: selectedModel })
                 });
 
-                const responseText = await response.text();
-
                 if (!response.ok) {
+                    const errText = await response.text();
                     botMsgElem.className = 'msg bot';
-                    botMsgElem.innerText = `Error: ${responseText}`;
+                    botMsgElem.innerText = `Error: ${errText}`;
                     return;
                 }
 
                 botMsgElem.className = 'msg bot';
-                botMsgElem.innerHTML = marked.parse(responseText);
+                botMsgElem.innerText = ''; // Alisin ang "Thinking..."
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    fullResponse += chunk;
+                    botMsgElem.innerHTML = marked.parse(fullResponse);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
 
             } catch (err) {
                 botMsgElem.className = 'msg bot';
@@ -626,8 +628,7 @@
 
         function clearChat() {
             if (confirm("Are you sure you want to clear the conversation?")) {
-                const chatBox = document.getElementById('chatBox');
-                chatBox.innerHTML = '<div class="msg bot">Hello, Welcome to JepongDevxyz AI. How can I help you today? I can answer your questions in any Language!</div>';
+                document.getElementById('chatBox').innerHTML = '<div class="msg bot">Hello, Welcome to JepongDevxyz AI. How can I help you today? I can answer your questions in any Language!</div>';
             }
         }
 
@@ -637,6 +638,5 @@
             );
         }
     </script>
-
 </body>
 </html>
