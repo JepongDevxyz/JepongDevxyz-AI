@@ -357,83 +357,58 @@
             
             const modal = document.getElementById('previewModal');
             const frame = document.getElementById('previewFrame');
-            document.getElementById('modalTitle').innerText = `Live Preview (${lang.toUpperCase()})`;
+            const modalTitle = document.getElementById('modalTitle');
+            if (modalTitle) modalTitle.innerText = `Live Preview (${lang.toUpperCase()})`;
             modal.style.display = 'flex';
 
             let finalHtml = code;
             const lowerLang = lang.toLowerCase();
 
-            // Kung HTML/XML/SVG, i-check kung buong HTML page o snippet lang
             if (['html', 'htm', 'xml', 'svg'].includes(lowerLang)) {
                 if (!code.toLowerCase().includes('<html')) {
-                    finalHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body { font-family: sans-serif; padding: 16px; color: #111; }</style></head><body>${code}</body></html>`;
+                    finalHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body { font-family: sans-serif; padding: 16px; color: #111; background: #fff; }</style></head><body>${code}</body></html>`;
                 }
-            } 
-            // Kung pure JavaScript / TypeScript o Backend script, balutin natin sa interactive console runner para gumana at makita ang output
-            else if (['js', 'javascript', 'ts', 'typescript', 'node', 'express'].includes(lowerLang)) {
+            } else {
                 finalHtml = `
                     <!DOCTYPE html>
                     <html lang="en">
                     <head>
                         <meta charset="UTF-8">
-                        <title>JS Runner</title>
+                        <title>Code Runner</title>
                         <style>
                             body { background: #0f172a; color: #38bdf8; font-family: monospace; padding: 16px; margin: 0; }
                             h3 { color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px; font-size: 0.95rem; }
                             pre { background: #020617; padding: 12px; border-radius: 8px; border: 1px solid #1e293b; white-space: pre-wrap; word-break: break-all; color: #f1f5f9; font-size: 0.85rem; }
-                            .error { color: #f87171; }
                         </style>
                     </head>
                     <body>
-                        <h3>⚙️ Code Execution Console (${lang.toUpperCase()})</h3>
-                        <pre id="output">Running script...</pre>
+                        <h3>⚙️ Code Preview & Output (${lang.toUpperCase()})</h3>
+                        <pre id="output">Loading code view...</pre>
                         <script>
                             const output = document.getElementById('output');
-                            const logs = [];
-                            console.log = (...args) => {
-                                logs.push(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' '));
-                                output.innerText = logs.join('\\n');
-                            };
-                            console.error = (...args) => {
-                                logs.push('<span class="error">' + args.join(' ') + '</span>');
-                                output.innerHTML = logs.join('\\n');
-                            };
-                            try {
-                                // Mock require kung sakaling may express/node modules para di mag-crash agad ang browser preview
-                                const require = (mod) => {
-                                    console.log('Mocked require("' + mod + '") loaded successfully.');
-                                    return () => ({ use: ()=>{} , get: ()=>{}, post: ()=>{}, listen: (p, cb)=>{ if(cb) cb(); } });
+                            const rawCode = ${JSON.stringify(code)};
+                            
+                            if ('${lowerLang}'.includes('js') || '${lowerLang}'.includes('javascript') || '${lowerLang}'.includes('node')) {
+                                let logs = [];
+                                console.log = (...args) => {
+                                    logs.push(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' '));
+                                    output.innerText = logs.join('\\n');
                                 };
-                                const process = { env: { PORT: 3000 } };
-                                
-                                eval(\`${code.replace(/`/g, '\\`')}\`);
-                                if (logs.length === 0) {
-                                    output.innerText = "Script executed successfully with no console output.";
+                                try {
+                                    const require = (mod) => ({ use:()=>{}, get:()=>{}, post:()=>{}, listen:(p,cb)=>{if(cb)cb();} });
+                                    const process = { env: { PORT: 3000 } };
+                                    
+                                    eval(rawCode);
+                                    if (logs.length === 0) {
+                                        output.innerText = "Script loaded successfully.\\n\\n--- Source Code ---\\n" + rawCode;
+                                    }
+                                } catch(e) {
+                                    output.innerText = "Output / Code View:\\n\\n" + rawCode;
                                 }
-                            } catch (err) {
-                                console.error("Error executing script:\\n" + err.message);
+                            } else {
+                                output.innerText = rawCode;
                             }
                         <\/script>
-                    </body>
-                    </html>
-                `;
-            } 
-            // Para sa ibang wika (Python, PHP, etc.), gagawa tayo ng magandang viewer console
-            else {
-                finalHtml = `
-                    <!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="UTF-8">
-                        <style>
-                            body { background: #0f172a; color: #e2e8f0; font-family: monospace; padding: 16px; margin: 0; }
-                            h3 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 8px; font-size: 0.95rem; }
-                            pre { background: #020617; padding: 12px; border-radius: 8px; border: 1px solid #1e293b; color: #a5f3fc; font-size: 0.85rem; white-space: pre-wrap; }
-                        </style>
-                    </head>
-                    <body>
-                        <h3>📄 Code View (${lang.toUpperCase()})</h3>
-                        <pre>${escapeHTML(code)}</pre>
                     </body>
                     </html>
                 `;
