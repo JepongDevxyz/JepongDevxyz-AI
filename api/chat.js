@@ -10,7 +10,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured on server.' });
   }
 
-  // Mapa ng mga bagong 3.x models para siguruhing tama ang endpoint string
   const modelMapping = {
     'gemini-3.7-flash': 'gemini-3.7-flash',
     'gemini-3.6-flash': 'gemini-3.6-flash',
@@ -20,6 +19,11 @@ export default async function handler(req, res) {
 
   const targetModel = modelMapping[model] || 'gemini-3.6-flash';
 
+  // System instruction para kilalanin ka bilang tagalikha
+  const systemInstruction = {
+    parts: [{ text: "Ikaw si JepongDevxyz AI, isang AI assistant na binuo, nilikha, at ginawa ni Jepong Devxyz (Jay-Ar Lee Espiritu). Kapag tinanong ka kung sino ang gumawa sa iyo, sabihin mong si Jepong ang lumikha sa iyo." }]
+  };
+
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
@@ -27,6 +31,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          system_instruction: systemInstruction,
           contents: [{ parts: [{ text: message }] }]
         })
       }
@@ -63,16 +68,15 @@ export default async function handler(req, res) {
             const parsed = JSON.parse(jsonStr);
             const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             if (textChunk) {
-              res.write(`data: ${JSON.stringify(textChunk)}\n\n`);
+              res.write(textChunk);
             }
           } catch (e) {
-            // Huwag pansinin ang maling format sa partial stream
+            // Skip invalid JSON chunks
           }
         }
       }
     }
 
-    res.write(`data: [DONE]\n\n`);
     res.end();
 
   } catch (error) {
