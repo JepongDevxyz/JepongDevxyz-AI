@@ -242,17 +242,14 @@
                 return;
             }
 
-            // Ginamit ang fetch sa sariling origin para maiwasan ang CORS blocking at maging mabilis at totoo ang test
             const start = performance.now();
             fetch(window.location.href, { method: 'HEAD', cache: 'no-store' })
                 .then(() => {
                     const duration = Math.round(performance.now() - start);
-                    // Magbigay ng makatotohanang minimum latency para sa mobile/web host
                     const finalPing = Math.max(15, Math.min(duration, 350));
                     updatePingUI(finalPing, pingText, bars);
                 })
                 .catch(() => {
-                    // Fallback kung sakaling ma-block ng network
                     updatePingUI(45, pingText, bars);
                 });
         }
@@ -285,7 +282,7 @@
         }
 
         checkLivePing();
-        setInterval(checkLivePing, 6000); // Check every 6 seconds
+        setInterval(checkLivePing, 6000);
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -358,9 +355,14 @@
             const code = document.getElementById(blockId).innerText;
             const modal = document.getElementById('previewModal');
             const frame = document.getElementById('previewFrame');
+            
             modal.style.display = 'flex';
-            frame.srcdoc = code;
+            
+            // Gamit na ang Blob URL para gumana nang maayos ang render sa iframe
+            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+            frame.src = URL.createObjectURL(blob);
         }
+
         function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
 
         function speakText(text) {
