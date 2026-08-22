@@ -18,6 +18,9 @@
             --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             --user-msg: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             --bot-msg: rgba(30, 41, 59, 0.7);
+            --sig-good: #10b981;
+            --sig-medium: #f59e0b;
+            --sig-bad: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; outline: none; }
@@ -33,6 +36,39 @@
         .header-top { display: flex; align-items: center; justify-content: space-between; }
         .brand { display: flex; align-items: center; gap: 8px; }
         .brand-icon { width: 32px; height: 32px; background: var(--accent-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        
+        /* Network Status UI */
+        .network-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .signal-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 10px;
+        }
+
+        .bar {
+            width: 2.5px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 1px;
+            transition: background-color 0.3s ease;
+        }
+
+        .bar-1 { height: 25%; }
+        .bar-2 { height: 50%; }
+        .bar-3 { height: 75%; }
+        .bar-4 { height: 100%; }
+
         .header-controls { display: flex; gap: 6px; }
 
         select { background: rgba(30, 41, 59, 0.8); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; }
@@ -56,7 +92,6 @@
         .action-icon-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center; }
         .send-btn { background: var(--accent-gradient); color: white; border: none; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* Animated Mic Button */
         .mic-btn {
             background: transparent;
             border: none;
@@ -71,22 +106,9 @@
             position: relative;
         }
 
-        .mic-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-            transition: transform 0.2s ease;
-        }
-
-        .mic-btn.listening {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.15);
-            animation: micPulse 1.5s infinite;
-        }
-
-        .mic-btn.listening svg {
-            transform: scale(1.1);
-        }
+        .mic-btn svg { width: 20px; height: 20px; fill: currentColor; transition: transform 0.2s ease; }
+        .mic-btn.listening { color: #ef4444; background: rgba(239, 68, 68, 0.15); animation: micPulse 1.5s infinite; }
+        .mic-btn.listening svg { transform: scale(1.1); }
 
         @keyframes micPulse {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
@@ -111,8 +133,20 @@
                     <div class="brand-icon">✦</div>
                     <div class="brand-title">JepongDevxyz AI</div>
                 </div>
+                
+                <div class="network-status" id="networkStatus">
+                    <div class="signal-bars">
+                        <div class="bar bar-1"></div>
+                        <div class="bar bar-2"></div>
+                        <div class="bar bar-3"></div>
+                        <div class="bar bar-4"></div>
+                    </div>
+                    <span id="pingText">-- ms</span>
+                </div>
+
                 <button class="clear-btn" onclick="clearChat()">Clear</button>
             </div>
+
             <div class="header-controls">
                 <select id="modeSelect">
                     <option value="general">🤖 Mode: General AI</option>
@@ -162,6 +196,39 @@
     <script>
         let selectedFileData = null;
         let recognition = null;
+
+        // Accurate Ping Checker
+        async function checkNetworkSpeed() {
+            const pingText = document.getElementById('pingText');
+            const bars = document.querySelectorAll('.bar');
+            if (!pingText) return;
+
+            const startTime = performance.now();
+            try {
+                const res = await fetch('/api/ping?' + Date.now(), { cache: 'no-store' });
+                if (res.ok) {
+                    const endTime = performance.now();
+                    const latency = Math.round(endTime - startTime);
+                    pingText.innerText = `${latency} ms`;
+
+                    let color = 'var(--sig-good)';
+                    let activeBars = 4;
+
+                    if (latency > 300) { color = 'var(--sig-bad)'; activeBars = 1; }
+                    else if (latency > 150) { color = 'var(--sig-medium)'; activeBars = 2; }
+                    else if (latency > 80) { color = 'var(--sig-good)'; activeBars = 3; }
+
+                    bars.forEach((bar, index) => {
+                        bar.style.backgroundColor = index < activeBars ? color : 'rgba(255, 255, 255, 0.2)';
+                    });
+                }
+            } catch (err) {
+                pingText.innerText = 'Offline';
+                bars.forEach(bar => bar.style.backgroundColor = 'rgba(255, 255, 255, 0.2)');
+            }
+        }
+        setInterval(checkNetworkSpeed, 4000);
+        checkNetworkSpeed();
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -254,25 +321,14 @@
             recognition.continuous = false;
             recognition.interimResults = false;
 
-            recognition.onstart = () => {
-                micBtn.classList.add('listening');
-            };
-
+            recognition.onstart = () => { micBtn.classList.add('listening'); };
             recognition.onresult = (e) => {
                 document.getElementById('userInput').value = e.results[0][0].transcript;
                 micBtn.classList.remove('listening');
                 recognition = null;
             };
-
-            recognition.onerror = () => {
-                micBtn.classList.remove('listening');
-                recognition = null;
-            };
-
-            recognition.onend = () => {
-                micBtn.classList.remove('listening');
-                recognition = null;
-            };
+            recognition.onerror = () => { micBtn.classList.remove('listening'); recognition = null; };
+            recognition.onend = () => { micBtn.classList.remove('listening'); recognition = null; };
 
             recognition.start();
         }
