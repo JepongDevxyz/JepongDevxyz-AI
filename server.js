@@ -1,62 +1,51 @@
 import express from 'express';
-import { GoogleGenAI } from '@google/genai';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Initialize Google GenAI
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// API Route para sa chat
 app.post('/api/chat', async (req, res) => {
-    try {
-        const { prompt, history } = req.body;
+  try {
+    const { message } = req.body;
 
-        if (!prompt) {
-            return res.status(400).json({ error: 'Prompt is required.' });
-        }
-
-        const chat = ai.chats.create({
-            model: 'gemini-2.5-flash',
-            history: history || [],
-            config: {
-                systemInstruction: `
-                    You are JepongDevxyz AI, a helpful, smart, and friendly AI Assistant.
-                    
-                    LANGUAGE RULES:
-                    1. Primary/Default Language: Respond in clear English.
-                    2. Language Matching: If the user speaks or asks in Tagalog, Filipino, or Taglish, respond naturally in Tagalog/Taglish. Match the language used by the user.
-                `,
-                tools: [{ googleSearch: {} }],
-            }
-        });
-
-        const result = await chat.sendMessage({ message: prompt });
-
-        res.json({
-            result: result.text,
-            history: await chat.getHistory()
-        });
-
-    } catch (error) {
-        console.error("Backend Error:", error);
-        res.status(500).json({ error: error.message || 'Internal Server Error' });
+    if (!message) {
+      return res.status(400).json({ error: 'Kailangan ng message parameter.' });
     }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'Walang GEMINI_API_KEY na nakatabi sa Environment Variables.' });
+    }
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: message,
+    });
+
+    return res.json({ reply: response.text });
+  } catch (error) {
+    console.error('Server error:', error);
+    return res.status(500).json({ error: 'Nagkaroon ng problema sa pag-proseso ng AI request.', details: error.message });
+  }
 });
 
+// Fallback route para sa frontend (public/index.html)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+export default app;
