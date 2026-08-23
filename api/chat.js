@@ -13,17 +13,16 @@ export default async function handler(req) {
   try {
     const { message, files = [], model, mode, customPrompt } = await req.json();
 
-    // Valid 3.x series models na tugma sa mga opisyal na API endpoint string
+    // Mga totoong working models sa opisyal na Google Gemini API ngayon
     const VALID_MODELS = [
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-pro-preview',
-      'gemini-3.7-extended-thinking'
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro'
     ];
 
-    // Fallback: Kapag wala sa listahan, gamitin ang gemini-3.6-flash
-    const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
+    // Fallback sa gemini-2.5-flash kapag hindi tugma
+    const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-2.5-flash';
 
     // System Prompts batay sa napiling Mode
     let systemInstruction = "You are JepongDevxyz AI, a helpful, precise, and friendly AI assistant.";
