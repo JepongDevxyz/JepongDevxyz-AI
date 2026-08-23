@@ -18,7 +18,6 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            /* Pinalitan na natin ang user-msg para maging clean dark slate theme */
             --user-msg: rgba(30, 41, 59, 0.9);
             --bot-msg: rgba(30, 41, 59, 0.7);
             --sig-good: #10b981;
@@ -129,12 +128,17 @@
         .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; margin: 0; line-height: 1; }
         .welcome-lottie-bottom { width: 100%; max-width: 260px; height: auto; aspect-ratio: 16 / 9; margin-top: -55px; }
 
-        .msg { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; word-break: break-word; position: relative; }
-        .user { align-self: flex-end; background: var(--user-msg); border: 1px solid var(--border-color); color: #fff; border-bottom-right-radius: 4px; }
-        .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+        .msg { max-width: 88%; font-size: 0.92rem; line-height: 1.5; word-break: break-word; position: relative; }
         
-        /* Ginawa nating clickable/interactive ang mga larawan sa chat */
-        .msg img { max-width: 100%; max-height: 250px; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border-color); object-fit: cover; cursor: pointer; transition: transform 0.2s; display: block; }
+        /* User bubble kapag may kasamang text */
+        .msg.user.has-bubble { padding: 12px 16px; border-radius: 16px; background: var(--user-msg); border: 1px solid var(--border-color); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
+        
+        /* User wrapper kapag image/file lang (walang background container) */
+        .msg.user.no-bubble { align-self: flex-end; background: transparent; border: none; padding: 0; }
+
+        .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 16px; border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+        
+        .msg img { max-width: 100%; max-height: 250px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; cursor: pointer; transition: transform 0.2s; display: block; }
         .msg img:hover { transform: scale(1.02); opacity: 0.95; }
 
         .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap; }
@@ -252,7 +256,6 @@
             background: #000;
         }
 
-        /* Modal para sa pag-zoom ng image kapag pinindot */
         .image-lightbox-overlay {
             display: none;
             position: fixed;
@@ -596,14 +599,18 @@
                         if (msg.files && msg.files.length > 0) {
                             msg.files.forEach(file => {
                                 if (file.mimeType.startsWith('image/')) {
-                                    attHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" onclick="openLightbox('${file.fullData}')" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block; cursor: pointer;"></div>`;
+                                    attHTML += `<div style="margin-top: 4px;"><img src="${file.fullData}" onclick="openLightbox('${file.fullData}')" style="max-width: 220px; max-height: 220px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; display: block; cursor: pointer;"></div>`;
                                 } else {
-                                    attHTML += `<div style="margin-top: 6px; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">📄 ${escapeHTML(file.name)}</div>`;
+                                    attHTML += `<div style="margin-top: 4px; font-size: 0.8rem; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color);">📄 ${escapeHTML(file.name)}</div>`;
                                 }
                             });
                         }
-                        const content = (msg.text ? `<div>${escapeHTML(msg.text)}</div>` : '') + attHTML;
-                        chatBox.innerHTML += `<div class="msg user">${content}</div>`;
+                        
+                        const hasText = msg.text && msg.text.trim().length > 0;
+                        const bubbleClass = hasText ? 'msg user has-bubble' : 'msg user no-bubble';
+                        const content = (hasText ? `<div>${escapeHTML(msg.text)}</div>` : '') + attHTML;
+                        
+                        chatBox.innerHTML += `<div class="${bubbleClass}">${content}</div>`;
                     } else {
                         const botDiv = document.createElement('div');
                         botDiv.className = 'msg bot';
@@ -615,7 +622,6 @@
                         chatBox.appendChild(botDiv);
                     }
                 });
-                // Gawing clickable ang mga images na na-render mula sa past messages
                 chatBox.querySelectorAll('.msg img').forEach(img => {
                     img.onclick = () => openLightbox(img.src);
                 });
@@ -713,14 +719,17 @@
             let attachmentsHTML = '';
             tempFiles.forEach(file => {
                 if (file.mimeType.startsWith('image/')) {
-                    attachmentsHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" onclick="openLightbox('${file.fullData}')" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block; cursor: pointer;"></div>`;
+                    attachmentsHTML += `<div style="margin-top: 4px;"><img src="${file.fullData}" onclick="openLightbox('${file.fullData}')" style="max-width: 220px; max-height: 220px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; display: block; cursor: pointer;"></div>`;
                 } else {
-                    attachmentsHTML += `<div style="margin-top: 6px; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">📄 ${escapeHTML(file.name)}</div>`;
+                    attachmentsHTML += `<div style="margin-top: 4px; font-size: 0.8rem; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color);">📄 ${escapeHTML(file.name)}</div>`;
                 }
             });
 
-            const userBubbleContent = (message ? `<div>${escapeHTML(message)}</div>` : '') + attachmentsHTML;
-            chatBox.innerHTML += `<div class="msg user">${userBubbleContent}</div>`;
+            const hasText = message.length > 0;
+            const bubbleClass = hasText ? 'msg user has-bubble' : 'msg user no-bubble';
+            const userBubbleContent = (hasText ? `<div>${escapeHTML(message)}</div>` : '') + attachmentsHTML;
+
+            chatBox.innerHTML += `<div class="${bubbleClass}">${userBubbleContent}</div>`;
             
             chatSessions[currentSessionId].messages.push({ 
                 role: 'user', 
@@ -766,7 +775,6 @@
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
                         </div>`;
                     
-                    // Gawing clickable ang anumang images na lumalabas sa stream/bot response
                     botMsgElem.querySelectorAll('img').forEach(img => {
                         img.onclick = () => openLightbox(img.src);
                     });
