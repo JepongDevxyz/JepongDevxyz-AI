@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Jay-Ar Lee Espiritu -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -57,7 +58,7 @@
         .bar { width: 2.5px; background-color: var(--sig-good); border-radius: 1px; transition: background-color 0.3s ease; }
         .bar-1 { height: 25%; } .bar-2 { height: 50%; } .bar-3 { height: 75%; } .bar-4 { height: 100%; }
 
-        .header-controls { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; align-items: center; }
+        .header-controls { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; align-items: center; }
         .custom-prompt-input { flex: 1; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; min-width: 100%; display: none; margin-top: 4px; }
         
         .header-btn { background: transparent; color: var(--text-main); border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.72rem; flex-shrink: 0; transition: background 0.2s; }
@@ -65,14 +66,38 @@
         .clear-btn { color: #fca5a5; }
         .clear-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
-        .selector-wrapper { position: relative; flex: 1; min-width: 130px; }
-        .dropdown-btn { width: 100%; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .selector-wrapper { position: relative; flex: 1; min-width: 140px; }
+        .dropdown-btn { width: 100%; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 7px 10px; border-radius: 8px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dropdown-btn span:first-child { overflow: hidden; text-overflow: ellipsis; }
         
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 1000; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; }
         .modal-overlay.open { display: flex; align-items: center; justify-content: center; }
         
         .floating-modal { background: #151d2d; border: 1px solid var(--border-color); border-radius: 20px; width: 90%; max-width: 340px; padding: 10px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: modalPop 0.2s ease-out; max-height: 85vh; overflow-y: auto; }
         @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .custom-alert-card {
+            background: rgba(18, 24, 38, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 340px;
+            padding: 20px 20px 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .alert-header { display: flex; align-items: center; gap: 10px; }
+        .alert-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        .alert-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.2px; }
+        .alert-body { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; word-break: break-word; }
+        .alert-footer { display: flex; justify-content: flex-end; margin-top: 4px; }
+        .alert-btn { background: var(--accent-gradient); color: #ffffff; border: none; padding: 8px 18px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: transform 0.15s ease, opacity 0.15s ease; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25); }
+        .alert-btn:hover { opacity: 0.92; transform: translateY(-1px); }
 
         .option-item { background: transparent; border: none; border-radius: 12px; padding: 10px 12px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); width: 100%; }
         .option-item:hover { background: rgba(255, 255, 255, 0.05); }
@@ -145,7 +170,6 @@
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; text-decoration: none; }
         .bot-action-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
 
-        /* Minimalist Error Card Design */
         .minimal-error-card {
             display: flex;
             align-items: center;
@@ -248,6 +272,12 @@
         .image-lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 3000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .image-lightbox-overlay.open { display: flex; }
         .image-lightbox-content { max-width: 100%; max-height: 90vh; border-radius: 12px; object-fit: contain; border: 1px solid var(--border-color); }
+
+        .commands-modal-content { background: #151d2d; border: 1px solid var(--border-color); width: 90%; max-width: 420px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: modalPop 0.2s ease-out; }
+        .commands-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; }
+        .command-row { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 10px 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
+        .command-name { font-weight: 600; font-size: 0.85rem; color: #a855f7; font-family: monospace; }
+        .command-desc { font-size: 0.78rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -257,7 +287,7 @@
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>💬 Chat History</h2>
+                <h3>💬 Chat History</h3>
                 <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
             </div>
             <button class="new-chat-btn" onclick="createNewChat()"><span>➕</span> New Chat</button>
@@ -278,7 +308,7 @@
             <div class="header-top">
                 <div class="brand">
                     <button class="brand-icon" onclick="toggleSidebar(true)">✦</button>
-                    <div class="brand-title">JepongDevxyz AI</div>
+                    <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
                 </div>
                 <div class="header-tools-group">
                     <div class="network-status" id="networkStatus">
@@ -297,7 +327,7 @@
             <div class="header-controls">
                 <div class="selector-wrapper">
                     <button class="dropdown-btn" onclick="toggleModal('modeModalOverlay', true)">
-                        <span id="selectedModeText">🤖 Mode: General AI</span>
+                        <span id="selectedModeText">🤖 General AI</span>
                         <span>▼</span>
                     </button>
                 </div>
@@ -316,28 +346,32 @@
         <!-- Mode Modal -->
         <div class="modal-overlay" id="modeModalOverlay" onclick="if(event.target === this) toggleModal('modeModalOverlay', false)">
             <div class="floating-modal">
-                <button class="option-item active" onclick="selectMode('general', '🤖 Mode: General AI')">
-                    <div class="option-info"><span class="option-name">🤖 Mode: General AI</span></div>
+                <button class="option-item active" onclick="selectMode('general', '🤖 General AI')">
+                    <div class="option-info"><span class="option-name">🤖 General AI</span></div>
                     <div class="radio-icon"></div>
                 </button>
-                <button class="option-item" onclick="selectMode('school', '🎓 Mode: School Purpose')">
-                    <div class="option-info"><span class="option-name">🎓 Mode: School Purpose</span></div>
+                <button class="option-item" onclick="selectMode('school', '🎓 School Purpose')">
+                    <div class="option-info"><span class="option-name">🎓 School Purpose</span></div>
                     <div class="radio-icon"></div>
                 </button>
-                <button class="option-item" onclick="selectMode('coder', '💻 Mode: Expert Coder')">
-                    <div class="option-info"><span class="option-name">💻 Mode: Expert Coder</span></div>
+                <button class="option-item" onclick="selectMode('coder', '💻 Expert Coder')">
+                    <div class="option-info"><span class="option-name">💻 Expert Coder</span></div>
                     <div class="radio-icon"></div>
                 </button>
-                <button class="option-item" onclick="selectMode('tagalog', '🇵🇭 Mode: Pure Tagalog Friend')">
-                    <div class="option-info"><span class="option-name">🇵🇭 Mode: Pure Tagalog Friend</span></div>
+                <button class="option-item" onclick="selectMode('tagalog', '🇵🇭 Tagalog Friend')">
+                    <div class="option-info"><span class="option-name">🇵🇭 Tagalog Friend</span></div>
                     <div class="radio-icon"></div>
                 </button>
-                <button class="option-item" onclick="selectMode('affiliate', '🛒 Mode: Affiliate Marketer')">
-                    <div class="option-info"><span class="option-name">🛒 Mode: Affiliate Marketer</span></div>
+                <button class="option-item" onclick="selectMode('affiliate', '🛒 Affiliate Marketer')">
+                    <div class="option-info"><span class="option-name">🛒 Affiliate Marketer</span></div>
                     <div class="radio-icon"></div>
                 </button>
-                <button class="option-item" onclick="selectMode('custom', '✏️ Mode: Custom Persona')">
-                    <div class="option-info"><span class="option-name">✏️ Mode: Custom Persona</span></div>
+                <button class="option-item" onclick="selectMode('imagen', '🎨 Image Generator')">
+                    <div class="option-info"><span class="option-name">🎨 Image Generator</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('custom', '✏️ Custom Persona')">
+                    <div class="option-info"><span class="option-name">✏️ Custom Persona</span></div>
                     <div class="radio-icon"></div>
                 </button>
             </div>
@@ -350,8 +384,8 @@
                     <div class="option-info"><div class="option-name">3.5 Flash-Lite</div><div class="option-desc">Fastest answers</div></div>
                     <div class="radio-icon"></div>
                 </button>
-                <button class="option-item active" onclick="selectModel('gemini-3.6-flash', 'Gemini 3.6 Flash')">
-                    <div class="option-info"><div class="option-name">Gemini 3.6 Flash</div><div class="option-desc">All-around help</div></div>
+                <button class="option-item active" onclick="selectModel('gemini-3.6-flash', '3.6 Flash')">
+                    <div class="option-info"><div class="option-name">3.6 Flash</div><div class="option-desc">All-around help</div></div>
                     <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectModel('gemini-3.1-pro', '3.1 Pro')">
@@ -379,7 +413,7 @@
                 <input type="file" id="fileInput" hidden multiple onchange="handleFileSelect(event)">
                 <button class="pill-plus-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">+</button>
                 
-                <input type="text" class="pill-input" id="userInput" placeholder="Ask JepongDevxyz AI..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <input type="text" class="pill-input" id="userInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter') sendMessage()">
                 
                 <div class="wave-container" id="waveContainer">
                     <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
@@ -402,7 +436,23 @@
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Modern Custom Alert Popup -->
+    <div class="modal-overlay" id="customAlertOverlay" onclick="if(event.target === this) closeCustomAlert()">
+        <div class="custom-alert-card">
+            <div class="alert-header">
+                <div class="alert-icon" id="customAlertIcon">✨</div>
+                <div class="alert-title" id="customAlertTitle">Notice</div>
+            </div>
+            <div class="alert-body" id="customAlertMessage">
+                Notification message goes here.
+            </div>
+            <div class="alert-footer">
+                <button class="alert-btn" onclick="closeCustomAlert()">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Preview Modal -->
     <div class="preview-modal-overlay" id="codePreviewModal" onclick="if(event.target === this) closeCodePreview()">
         <div class="preview-modal-content">
             <div class="preview-modal-header">
@@ -410,6 +460,19 @@
                 <button class="preview-close-btn" onclick="closeCodePreview()">✕ Close</button>
             </div>
             <iframe class="preview-iframe" id="previewIframe"></iframe>
+        </div>
+    </div>
+
+    <!-- DYNAMIC COMMANDS MODAL -->
+    <div class="modal-overlay" id="commandsModalOverlay" onclick="if(event.target === this) toggleCommandsModal(false)">
+        <div class="commands-modal-content">
+            <div class="preview-modal-header">
+                <span id="commandsModalTitle" style="font-weight: 600; color: #fff;">⚡ Available Commands</span>
+                <button class="preview-close-btn" onclick="toggleCommandsModal(false)" style="cursor: pointer; background: none; border: none; color: #aaa; font-size: 1.1rem;">✕ Close</button>
+            </div>
+            <div class="commands-list" id="commandsListContainer" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Dynamic Content loaded via JS -->
+            </div>
         </div>
     </div>
 
@@ -423,10 +486,41 @@
         let currentSessionId = null;
         let currentSelectedModel = 'gemini-3.6-flash';
         let currentSelectedMode = 'general';
+        let isIncognito = false;
+        let inactivityTimer = null;
         let isRecording = false;
         let recognition = null;
         let userScrolledUp = false;
         let systemVoices = [];
+
+        // BIBLE MODE SYSTEM & STORAGE STATE
+        let isBibleMode = false;
+        let bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
+        let currentBibleSessionId = null;
+
+        function showAlert(message, title = 'Notice', icon = '💡') {
+            document.getElementById('customAlertTitle').innerText = title;
+            document.getElementById('customAlertMessage').innerText = message;
+            document.getElementById('customAlertIcon').innerText = icon;
+            document.getElementById('customAlertOverlay').classList.add('open');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertOverlay').classList.remove('open');
+        }
+
+        function resetInactivityTimer() {
+            if (!isIncognito) return;
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                showAlert('Incognito session expired due to 30 minutes of inactivity.', 'Session Expired', '⏳');
+                setTimeout(() => window.location.reload(), 2000);
+            }, 30 * 60 * 1000);
+        }
+
+        window.addEventListener('mousemove', resetInactivityTimer);
+        window.addEventListener('keydown', resetInactivityTimer);
+        window.addEventListener('click', resetInactivityTimer);
 
         function loadVoices() {
             if (!('speechSynthesis' in window)) return;
@@ -461,6 +555,7 @@
         const chatBox = document.getElementById('chatBox');
 
         function saveSessions() {
+            if (isIncognito) return;
             localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
             renderSidebarHistory();
         }
@@ -480,6 +575,44 @@
 
         function toggleModal(modalId, show) {
             document.getElementById(modalId).classList.toggle('open', show);
+        }
+
+        // Dynamic Commands Modal Handler
+        function toggleCommandsModal(show) {
+            const modal = document.getElementById('commandsModalOverlay');
+            const container = document.getElementById('commandsListContainer');
+            const title = document.getElementById('commandsModalTitle');
+
+            if (!modal || !container || !title) return;
+
+            if (show) {
+                if (isBibleMode) {
+                    title.innerText = '📖 Bible Mode Commands';
+                    container.innerHTML = `
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/story [topic/person]</span><span class="command-desc"> - Ikwento nang buo at lively ang kwento mula sa Biblia (auto Text-To-Speech).</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/verse [verse]</span><span class="command-desc"> - Kukuha ng salin (NIV/Tagalog) at magbibigay ng malalim na paliwanag.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/pray [topic]</span><span class="command-desc"> - Gagawan ka ng taos-pusong panalangin na may kaugnay na talata.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/bnew</span><span class="command-desc"> - Magbubukas ng bagong Bible conversation thread.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/bclear</span><span class="command-desc"> - Buburahin ang saved history sa Bible Mode lamang.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/commands</span><span class="command-desc"> - Ipapakita ang listahang ito ng Bible commands.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/exit</span><span class="command-desc"> - Lalabas sa Bible Mode at babalik sa Normal Mode (safe at naka-save ang Bible history).</span></div>
+                    `;
+                } else {
+                    title.innerText = '⚡ Normal Slash Commands';
+                    container.innerHTML = `
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/bible [topic]</span><span class="command-desc"> - Magbubukas ng Dedicated Bible Mode Tab (hiwalay ang storage at may auto Text-To-Speech).</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/newchat</span><span class="command-desc"> - Gumagawa ng bagong conversation tab.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/delete</span><span class="command-desc"> - Buburahin ang kasalukuyang active conversation.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/refresh</span><span class="command-desc"> - Irerefresh ang buong website.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/clearcache</span><span class="command-desc"> - Buburahin ang lahat ng saved chats sa localStorage.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/incognito</span><span class="command-desc"> - Magbubukas ng pribadong session (walang save).</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/exit</span><span class="command-desc"> - Lalabas sa incognito mode pabalik sa normal mode.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/commands</span><span class="command-desc"> - Ipapakita ang listahang ito ng Normal commands.</span></div>
+                    `;
+                }
+            }
+
+            modal.classList.toggle('open', show);
         }
 
         function selectMode(modeKey, modeDisplayName) {
@@ -509,7 +642,7 @@
             chatBox.innerHTML = `
                 <div class="welcome-screen">
                     <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
-                    <div class="welcome-title">JepongDevxyz AI</div>
+                    <div class="welcome-title">${isIncognito ? '🕵️‍♂️ Incognito Mode' : 'JepongDevxyz AI'}</div>
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
@@ -518,12 +651,25 @@
         }
 
         function toggleSidebar(show) {
+            if (isIncognito) {
+                showAlert('Sidebar history is disabled in Incognito mode.', 'Incognito Mode', '🕵️‍♂️');
+                return;
+            }
             document.getElementById('sidebar').classList.toggle('open', show);
             document.getElementById('sidebarOverlay').classList.toggle('open', show);
             if (show) renderSidebarHistory();
         }
 
         function createNewChat() {
+            if (isBibleMode) {
+                createBibleChatSession();
+                return;
+            }
+            if (isIncognito) {
+                showAlert('You are currently in Incognito mode. Type /exit to return to normal mode.', 'Incognito Active', '🕵️‍♂️');
+                return;
+            }
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
             currentSessionId = 'session_' + Date.now();
             chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
             saveSessions();
@@ -531,7 +677,38 @@
             toggleSidebar(false);
         }
 
+        function startIncognitoChat() {
+            if (isIncognito) {
+                showAlert('You are already in Incognito mode.', 'Notice', '🕵️‍♂️');
+                return;
+            }
+            isIncognito = true;
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
+            currentSessionId = 'incognito_' + Date.now();
+            chatSessions = {};
+            renderWelcomeScreen();
+            toggleSidebar(false);
+            resetInactivityTimer();
+        }
+
+        function exitIncognitoChat() {
+            if (!isIncognito) {
+                showAlert('You are not in any mode.', 'Notice', 'ℹ️');
+                return;
+            }
+            isIncognito = false;
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
+            if (Object.keys(chatSessions).length > 0) {
+                loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
+            } else {
+                createNewChat();
+            }
+        }
+
         function loadChatSession(id) {
+            if (isIncognito) return;
             currentSessionId = id;
             const session = chatSessions[id];
             if (!session) return;
@@ -578,13 +755,18 @@
         }
 
         function deleteChatSession(id, e) {
-            e.stopPropagation();
+            if(e) e.stopPropagation();
+            if (isIncognito) {
+                showAlert('Command not available in Incognito mode.', 'Incognito Active', '🕵️‍♂️');
+                return;
+            }
             delete chatSessions[id];
             saveSessions();
             if (currentSessionId === id) createNewChat();
         }
 
         function renderSidebarHistory(filter = '') {
+            if (isIncognito) return;
             const list = document.getElementById('chatHistoryList');
             list.innerHTML = '';
             Object.values(chatSessions).reverse().forEach(session => {
@@ -642,14 +824,293 @@
             renderFilePreviews();
         }
 
+        // ==========================================
+        // BIBLE MODE SYSTEM LOGIC
+        // ==========================================
+        function handleBibleCommands(message) {
+            const cmdLine = message.trim();
+            const parts = cmdLine.split(' ');
+            const mainCmd = parts[0].toLowerCase();
+            const args = parts.slice(1).join(' ');
+
+            if (mainCmd === '/exit') {
+                exitBibleMode();
+                return true;
+            }
+
+            if (mainCmd === '/bnew') {
+                createBibleChatSession();
+                return true;
+            }
+
+            if (mainCmd === '/bclear') {
+                localStorage.removeItem('jepong_bible_chats');
+                bibleChatSessions = {};
+                createBibleChatSession();
+                showAlert('Nabura na ang lahat ng history sa Bible Mode.', 'Bible Storage Cleared', '🧹');
+                return true;
+            }
+
+            if (mainCmd === '/commands' || mainCmd === '/bcommands') {
+                toggleCommandsModal(true);
+                return true;
+            }
+
+            if (mainCmd === '/verse') {
+                if (!args) {
+                    showAlert('Maglagay ng verse pagkatapos ng command.\nHalimbawa: /verse John 3:16', 'Bible Command', '📖');
+                    return true;
+                }
+                processBiblePrompt(`Magbigay ng malalim na paliwanag, eksaktong teksto (Tagalog/English), at life application para sa verse na ito: ${args}`);
+                return true;
+            }
+
+            if (mainCmd === '/story') {
+                if (!args) {
+                    showAlert('Maglagay ng pangalan ng tauhan o kwento.\nHalimbawa: /story Kwento ni David at Goliath', 'Bible Command', '📜');
+                    return true;
+                }
+                processBiblePrompt(`Ikwento mo nang buo, detalyado, at lively ang kwentong ito mula sa Biblia na parang isang master storyteller: ${args}`);
+                return true;
+            }
+
+            if (mainCmd === '/pray') {
+                const topic = args || 'pangkalahatang gabay at kapayapaan';
+                processBiblePrompt(`Gumawa ng isang taos-pusong panalangin (prayer) base sa paksang ito: ${topic}. Isama rin ang angkop na Bible verse.`);
+                return true;
+            }
+
+            return false;
+        }
+
+        function startBibleMode(initialTopic = '') {
+            isBibleMode = true;
+            const titleElem = document.getElementById('brandTitleText');
+            if (titleElem) titleElem.innerText = 'JepongDevxyz AI';
+            
+            bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
+            
+            if (Object.keys(bibleChatSessions).length > 0) {
+                currentBibleSessionId = Object.keys(bibleChatSessions)[Object.keys(bibleChatSessions).length - 1];
+                loadBibleSession(currentBibleSessionId);
+            } else {
+                createBibleChatSession();
+            }
+
+            if (initialTopic) {
+                processBiblePrompt(initialTopic);
+            } else {
+                showAlert('Nasa dedicated Bible Mode ka na!\nType /commands para sa mga commands.', '📖 Bible Mode', '🕊️');
+            }
+        }
+
+        function exitBibleMode() {
+            if (!isBibleMode) return;
+            isBibleMode = false;
+            const titleElem = document.getElementById('brandTitleText');
+            if (titleElem) titleElem.innerText = 'JepongDevxyz AI';
+            
+            chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
+            if (Object.keys(chatSessions).length > 0) {
+                loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
+            } else {
+                createNewChat();
+            }
+            showAlert('Nakalabas ka na sa Bible Mode. Safe at saved pa rin ang dati mong Bible topics pagbalik mo!', 'Normal Mode', '🔙');
+        }
+
+        function createBibleChatSession() {
+            currentBibleSessionId = 'bsession_' + Date.now();
+            bibleChatSessions[currentBibleSessionId] = { id: currentBibleSessionId, title: 'Bible Session', messages: [] };
+            saveBibleSessions();
+            renderBibleWelcomeScreen();
+        }
+
+        function saveBibleSessions() {
+            localStorage.setItem('jepong_bible_chats', JSON.stringify(bibleChatSessions));
+        }
+
+        function loadBibleSession(id) {
+            currentBibleSessionId = id;
+            const session = bibleChatSessions[id];
+            if (!session || !chatBox) return;
+
+            if (session.messages.length === 0) {
+                renderBibleWelcomeScreen();
+            } else {
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
+                session.messages.forEach(msg => {
+                    if (msg.role === 'user') {
+                        chatBox.innerHTML += `<div class="msg user has-bubble"><div>${escapeHTML(msg.text)}</div></div>`;
+                    } else {
+                        const botDiv = document.createElement('div');
+                        botDiv.className = 'msg bot';
+                        botDiv.innerHTML = `<div>${marked.parse(msg.text)}</div>
+                            <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                                <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>
+                            </div>`;
+                        chatBox.appendChild(botDiv);
+                    }
+                });
+            }
+            scrollToBottom(true);
+        }
+
+        function renderBibleWelcomeScreen() {
+            if (!chatBox) return;
+            chatBox.innerHTML = `
+                <div class="welcome-screen" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 3.5rem; margin-bottom: 8px;">📖🕊️</div>
+                    <div class="welcome-title" style="font-size: 1.5rem; font-weight: bold; background: linear-gradient(90deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bible Scholar & Storyteller</div>
+                    <p style="color: #aaa; font-size: 0.85rem; margin-top: 8px; max-width: 320px; margin-left: auto; margin-right: auto;">
+                        I-type ang iyong paksa o gumamit ng commands tulad ng <b>/story</b>, <b>/verse</b>, o <b>/pray</b>. Naka-auto Text-to-Speech ang bawat sagot!
+                    </p>
+                </div>
+                <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
+            `;
+        }
+
+        async function processBiblePrompt(userText) {
+            if (!chatBox) return;
+
+            if (!currentBibleSessionId || !bibleChatSessions[currentBibleSessionId]) {
+                createBibleChatSession();
+            }
+
+            if (bibleChatSessions[currentBibleSessionId].messages.length === 0) {
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
+                bibleChatSessions[currentBibleSessionId].title = userText.substring(0, 25);
+            }
+
+            chatBox.innerHTML += `<div class="msg user has-bubble"><div>${escapeHTML(userText)}</div></div>`;
+            bibleChatSessions[currentBibleSessionId].messages.push({ role: 'user', text: userText });
+            saveBibleSessions();
+
+            const botMsgElem = document.createElement('div');
+            botMsgElem.className = 'msg bot';
+            botMsgElem.innerText = 'Naghahanap sa Banal na Kasulatan...';
+            chatBox.appendChild(botMsgElem);
+            scrollToBottom(true);
+
+            const bibleSystemInstruction = "You are a warm, wise, and highly articulate Biblical Scholar and Master Storyteller. Your purpose is to explain Bible verses, tell vivid biblical stories, provide context, and offer prayers/reflections. ALWAYS detect the language of the user (Tagalog/Filipino or English) and reply FULLY in that language. Ensure your responses sound fluid and natural when read aloud via Text-to-Speech.";
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: userText, 
+                        files: [], 
+                        model: currentSelectedModel || 'gemini-3.6-flash', 
+                        mode: 'custom', 
+                        customPrompt: bibleSystemInstruction 
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to connect to AI');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    fullResponse += decoder.decode(value, { stream: true });
+                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
+                        <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                            <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>
+                        </div>`;
+                    scrollToBottom(false);
+                }
+
+                bibleChatSessions[currentBibleSessionId].messages.push({ role: 'bot', text: fullResponse });
+                saveBibleSessions();
+
+                speakRawText(fullResponse);
+
+            } catch (err) {
+                botMsgElem.innerHTML = `<div class="minimal-error-card"><span class="minimal-error-text">⚠️ ${escapeHTML(err.message)}</span></div>`;
+            }
+        }
+
+        // ==========================================
+        // MAIN SEND MESSAGE DISPATCHER
+        // ==========================================
         async function sendMessage() {
             const input = document.getElementById('userInput');
+            if (!input) return;
             const message = input.value.trim();
+            if (!message && selectedFilesData.length === 0) return;
+
+            if (message.toLowerCase() === '/commands') {
+                input.value = '';
+                toggleCommandsModal(true);
+                return;
+            }
+
+            if (!isBibleMode && message.toLowerCase().startsWith('/bible')) {
+                const topic = message.replace(/\/bible/i, '').trim();
+                input.value = '';
+                startBibleMode(topic);
+                return;
+            }
+
+            if (isBibleMode) {
+                input.value = '';
+                const isCmd = handleBibleCommands(message);
+                if (!isCmd) {
+                    processBiblePrompt(message);
+                }
+                return;
+            }
+
+            // Normal Mode Slash Commands
+            if (message.startsWith('/')) {
+                const cmd = message.toLowerCase();
+                input.value = '';
+                
+                if (cmd === '/newchat') {
+                    createNewChat();
+                    return;
+                } else if (cmd === '/delete') {
+                    if (isIncognito) {
+                        showAlert('You are in Incognito mode. Type /exit to leave.', 'Incognito Mode', '🕵️‍♂️');
+                    } else if (currentSessionId) {
+                        deleteChatSession(currentSessionId);
+                    }
+                    return;
+                } else if (cmd === '/refresh') {
+                    window.location.reload();
+                    return;
+                } else if (cmd === '/clearcache') {
+                    if (isIncognito) {
+                        showAlert('Cannot clear cache while in Incognito mode.', 'Incognito Mode', '🕵️‍♂️');
+                        return;
+                    }
+                    localStorage.removeItem('jepong_ai_chats');
+                    chatSessions = {};
+                    createNewChat();
+                    return;
+                } else if (cmd === '/incognito') {
+                    startIncognitoChat();
+                    return;
+                } else if (cmd === '/exit') {
+                    exitIncognitoChat();
+                    return;
+                } else {
+                    showAlert('Unknown command: ' + message + '\nType /commands to see available commands.', 'Command Error', '⚠️');
+                    return;
+                }
+            }
+
             const mode = currentSelectedMode;
             const model = currentSelectedModel;
 
-            if (!message && selectedFilesData.length === 0) return;
-            if (!currentSessionId || !chatSessions[currentSessionId]) createNewChat();
+            if (!isIncognito && (!currentSessionId || !chatSessions[currentSessionId])) createNewChat();
+            if (isIncognito && !chatSessions[currentSessionId]) {
+                chatSessions[currentSessionId] = { id: currentSessionId, title: 'Incognito', messages: [] };
+            }
 
             const tempFiles = [...selectedFilesData];
 
@@ -688,13 +1149,35 @@
 
             const botMsgElem = document.createElement('div');
             botMsgElem.className = 'msg bot';
-            botMsgElem.innerText = 'Thinking...';
+            botMsgElem.innerText = mode === 'imagen' ? 'Generating image with Imagen 4...' : 'Thinking...';
             chatBox.appendChild(botMsgElem);
             scrollToBottom(true);
 
             const customPrompt = document.getElementById('customPromptInput').value;
 
             try {
+                if (mode === 'imagen') {
+                    const res = await fetch('/api/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: message })
+                    });
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.error || 'Failed to generate image');
+
+                    const imgHtml = `<div><img src="${data.imageUrl}" onclick="openLightbox('${data.imageUrl}')" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer;"></div>`;
+                    botMsgElem.innerHTML = imgHtml + `
+                        <div class="bot-actions">
+                            <a class="bot-action-btn" href="${data.imageUrl}" download="imagen4.jpg">📥 Download</a>
+                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy Prompt</button>
+                        </div>`;
+                    
+                    chatSessions[currentSessionId].messages.push({ role: 'bot', text: `![Generated Image](${data.imageUrl})` });
+                    saveSessions();
+                    scrollToBottom(false);
+                    return;
+                }
+
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -734,7 +1217,7 @@
             } catch (err) {
                 botMsgElem.innerHTML = `
                     <div class="minimal-error-card">
-                        <span class="minimal-error-text">⚠️ Connection Error or Timeout.</span>
+                        <span class="minimal-error-text">⚠️ ${escapeHTML(err.message || 'Connection Error')}</span>
                         <button class="minimal-retry-btn" onclick="retryLastMessage(this)" title="Try Again">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.63-5.19"/>
@@ -748,11 +1231,9 @@
 
         function retryLastMessage(btn) {
             btn.classList.add('spinning');
-            
             setTimeout(() => {
                 if (currentSessionId && chatSessions[currentSessionId]) {
                     const messages = chatSessions[currentSessionId].messages;
-                    
                     let lastUserMsgIndex = -1;
                     for (let i = messages.length - 1; i >= 0; i--) {
                         if (messages[i].role === 'user') {
@@ -763,11 +1244,7 @@
 
                     if (lastUserMsgIndex !== -1) {
                         const lastMsg = messages[lastUserMsgIndex];
-                        
-                        if (chatBox.lastChild) {
-                            chatBox.removeChild(chatBox.lastChild);
-                        }
-                        
+                        if (chatBox.lastChild) chatBox.removeChild(chatBox.lastChild);
                         document.getElementById('userInput').value = lastMsg.text || '';
                         
                         selectedFilesData = [];
@@ -785,7 +1262,6 @@
 
                         chatSessions[currentSessionId].messages.splice(lastUserMsgIndex);
                         saveSessions();
-
                         sendMessage();
                     } else {
                         btn.classList.remove('spinning');
@@ -797,6 +1273,12 @@
         }
 
         function clearCurrentChat() {
+            if (isBibleMode && currentBibleSessionId && bibleChatSessions[currentBibleSessionId]) {
+                bibleChatSessions[currentBibleSessionId].messages = [];
+                saveBibleSessions();
+                renderBibleWelcomeScreen();
+                return;
+            }
             if (currentSessionId && chatSessions[currentSessionId]) {
                 chatSessions[currentSessionId].messages = [];
                 saveSessions();
@@ -831,7 +1313,7 @@
 
         function copyCode(id, btn) {
             navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => {
-                btn.innerText = '✅ Copied!';
+                btn.innerText = '✓ Copied!';
                 setTimeout(() => btn.innerText = '📋 Copy', 2000);
             });
         }
@@ -851,35 +1333,36 @@
         function speakRawText(text) {
             if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
-            systemVoices = window.speechSynthesis.getVoices();
-            if (systemVoices.length === 0) {
-                setTimeout(() => speakRawText(text), 150);
-                return;
-            }
-            const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~]/g, '');
+            
+            const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~>\[\]\(\)]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
-            const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano)\b/i;
+            
+            systemVoices = window.speechSynthesis.getVoices();
+            const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano|diyos|panginoon)\b/i;
             const isTagalog = tagalogWords.test(cleanText);
+            
             let targetVoice = null;
-            if (isTagalog) {
+            if (isTagalog && systemVoices.length > 0) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
                     const name = (v.name || '').toLowerCase();
                     return lang === 'fil-ph' || lang === 'tl-ph' || name.includes('filipino') || name.includes('tagalog');
                 });
             }
-            if (!targetVoice) {
+            if (!targetVoice && systemVoices.length > 0) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
                     return lang === 'en-us' || lang === 'en-gb' || lang.startsWith('en');
                 });
             }
+            
             if (targetVoice) {
                 utterance.voice = targetVoice;
                 utterance.lang = targetVoice.lang;
             } else {
-                utterance.lang = isTagalog ? 'fil-PH' : 'en-US';
+                utterance.lang = isTagalog ? 'tl-PH' : 'en-US';
             }
+            
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
@@ -889,7 +1372,7 @@
             const userInput = document.getElementById('userInput');
             const waveContainer = document.getElementById('waveContainer');
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('Speech recognition is not supported in this browser.');
+                showAlert('Speech recognition is not supported in this browser.', 'Browser Restriction', '⚠️');
                 return;
             }
             if (isRecording) {
@@ -939,7 +1422,9 @@
         setInterval(checkPing, 5000);
         checkPing();
 
-        function escapeHTML(s) { return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t])); }
+        function escapeHTML(s) { 
+            return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t)); 
+        }
 
         if (Object.keys(chatSessions).length > 0) {
             loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
