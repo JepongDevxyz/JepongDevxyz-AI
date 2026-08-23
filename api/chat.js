@@ -5,7 +5,7 @@ export const config = {
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 45 Mag-post,
+      status: 405,
       headers: { 'Content-Type': 'application/json' },
     });
   }
