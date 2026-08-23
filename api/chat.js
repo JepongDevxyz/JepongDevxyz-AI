@@ -8,7 +8,7 @@ export default async function handler(req) {
   }
 
   try {
-    const { message, file, model } = await req.json();
+    const { message, file, files, model } = await req.json();
     
     // Babasahin ang mga keys na hiwalay ng comma (e.g., KEY1,KEY2,KEY3)
     const rawKeys = process.env.GEMINI_API_KEY || '';
@@ -18,29 +18,34 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ error: 'No API keys configured.' }), { status: 500 });
     }
 
-    const modelMapping = {
-      'gemini-3.7-extended-thinking': 'gemini-3.6-flash',
-      'gemini-3.6-flash': 'gemini-3.6-flash',
-      'gemini-3.5-flash-lite': 'gemini-3.6-flash',
-      'gemini-3.1-pro': 'gemini-3.6-flash'
-    };
-
-    const targetModel = modelMapping[model] || 'gemini-3.6-flash';
+    // Siguraduhing valid ang model name
+    const targetModel = model || 'gemini-3.6-flash';
 
     const systemInstruction = {
       parts: [{ text: "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks." }]
     };
 
     const parts = [];
-    if (file && file.data && file.mimeType) {
+
+    // Suporta para sa multiple files (mula sa bagong index.html)
+    if (files && Array.isArray(files) && files.length > 0) {
+      files.forEach(f => {
+        if (f.data && f.mimeType) {
+          parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
+        }
+      });
+    } 
+    // Suporta para sa lumang single file format
+    else if (file && file.data && file.mimeType) {
       parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
     }
+
     if (message) parts.push({ text: message });
 
     let geminiRes = null;
     let lastErrorText = '';
 
-    // Susubukan ang bawat API key kapag nag-429 error
+    // Susubukan ang bawat API key kapag nag-429 (Quota Limit) error
     for (const apiKey of apiKeys) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
@@ -54,10 +59,10 @@ export default async function handler(req) {
         }
       );
 
-      if (geminiRes.ok) break; // Kapag gumana, ititigil na ang loop
+      if (geminiRes.ok) break;
 
       lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break; // Kung hindi quota error, huwag nang mag-retry
+      if (geminiRes.status !== 429) break; // Kapag hindi quota error, huwag nang subukan ang susunod na key
     }
 
     if (!geminiRes || !geminiRes.ok) {
