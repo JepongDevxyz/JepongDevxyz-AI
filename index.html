@@ -44,7 +44,7 @@
         .network-status { display: flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.05); padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.7rem; color: var(--text-muted); }
 
         .signal-bars { display: flex; align-items: flex-end; gap: 2px; height: 10px; }
-        .bar { width: 2.5px; background-color: var(--sig-good); border-radius: 1px; }
+        .bar { width: 2.5px; background-color: var(--sig-good); border-radius: 1px; transition: background-color 0.3s ease; }
         .bar-1 { height: 25%; } .bar-2 { height: 50%; } .bar-3 { height: 75%; } .bar-4 { height: 100%; }
 
         .header-controls { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; }
@@ -68,6 +68,8 @@
         .history-item { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
         .history-item.active { border-color: #6366f1; background: rgba(99, 102, 241, 0.15); }
         .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; }
+        .delete-hist-btn:hover { color: #ef4444; }
 
         .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; position: relative; }
         
@@ -105,6 +107,9 @@
         .input-actions-left, .input-actions-right { display: flex; align-items: center; gap: 6px; }
 
         .action-icon-btn, .mic-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+        .mic-btn.recording { color: #ef4444; background: rgba(239, 68, 68, 0.2); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
         .send-btn { background: #2563eb; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
 
         #scrollBtn { display: none; position: absolute; bottom: 85px; right: 20px; background: var(--accent-gradient); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 10; }
@@ -113,6 +118,7 @@
 <body>
 
     <div class="app-container">
+        <!-- Sidebar -->
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -124,6 +130,7 @@
             <div class="chat-history-list" id="chatHistoryList"></div>
         </div>
 
+        <!-- Header -->
         <div class="header">
             <div class="header-top">
                 <div class="brand">
@@ -147,8 +154,11 @@
             <div class="header-controls">
                 <select id="modeSelect" onchange="checkCustomMode()">
                     <option value="general">🤖 Mode: General AI</option>
+                    <option value="school">🎓 Mode: School Purpose</option>
                     <option value="coder">💻 Mode: Expert Coder</option>
-                    <option value="image_gen">🎨 Mode: Image Generator</option>
+                    <option value="tagalog">🇵🇭 Mode: Pure Tagalog Friend</option>
+                    <option value="affiliate">🛒 Mode: Affiliate Marketer</option>
+                    <option value="image_gen">🎨 Mode: Imagen 3 (Google Engine)</option>
                     <option value="custom">✏️ Mode: Custom Persona</option>
                 </select>
                 <select id="modelSelect">
@@ -159,10 +169,12 @@
             </div>
         </div>
 
+        <!-- Chat Area -->
         <div class="chat-box" id="chatBox">
             <button id="scrollBtn" onclick="scrollToBottom()">↓</button>
         </div>
 
+        <!-- Input Box -->
         <div class="input-container">
             <div class="chat-input-card">
                 <div class="file-preview-row" id="filePreviewContainer"></div>
@@ -174,7 +186,8 @@
                 <div class="input-actions-row">
                     <div class="input-actions-left">
                         <input type="file" id="fileInput" hidden multiple onchange="handleFileSelect(event)">
-                        <button class="action-icon-btn" onclick="document.getElementById('fileInput').click()">➕</button>
+                        <button class="action-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">➕</button>
+                        <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice input">🎙️</button>
                     </div>
                     <div class="input-actions-right">
                         <button class="send-btn" onclick="sendMessage()">➔</button>
@@ -186,8 +199,10 @@
 
     <script>
         let selectedFilesData = [];
-        let chatSessions = {};
+        let chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
         let currentSessionId = null;
+        let isRecording = false;
+        let recognition = null;
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -207,7 +222,26 @@
         marked.use({ renderer });
 
         const chatBox = document.getElementById('chatBox');
-        function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+
+        function saveSessions() {
+            localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
+            renderSidebarHistory();
+        }
+
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        chatBox.addEventListener('scroll', () => {
+            const scrollBtn = document.getElementById('scrollBtn');
+            if (scrollBtn) {
+                if (chatBox.scrollTop < chatBox.scrollHeight - chatBox.clientHeight - 100) {
+                    scrollBtn.style.display = 'block';
+                } else {
+                    scrollBtn.style.display = 'none';
+                }
+            }
+        });
 
         function checkCustomMode() {
             const mode = document.getElementById('modeSelect').value;
@@ -228,13 +262,72 @@
         function toggleSidebar(show) {
             document.getElementById('sidebar').classList.toggle('open', show);
             document.getElementById('sidebarOverlay').classList.toggle('open', show);
+            if (show) renderSidebarHistory();
         }
 
         function createNewChat() {
             currentSessionId = 'session_' + Date.now();
             chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
+            saveSessions();
             renderWelcomeScreen();
             toggleSidebar(false);
+        }
+
+        function loadChatSession(id) {
+            currentSessionId = id;
+            const session = chatSessions[id];
+            if (!session) return;
+
+            if (session.messages.length === 0) {
+                renderWelcomeScreen();
+            } else {
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom()">↓</button>';
+                session.messages.forEach(msg => {
+                    if (msg.role === 'user') {
+                        chatBox.innerHTML += `<div class="msg user">${escapeHTML(msg.text)}</div>`;
+                    } else {
+                        const botDiv = document.createElement('div');
+                        botDiv.className = 'msg bot';
+                        botDiv.innerHTML = `<div>${marked.parse(msg.text)}</div>
+                            <div class="bot-actions">
+                                <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
+                                <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
+                            </div>`;
+                        chatBox.appendChild(botDiv);
+                    }
+                });
+                document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+            }
+            scrollToBottom();
+            toggleSidebar(false);
+            renderSidebarHistory();
+        }
+
+        function deleteChatSession(id, e) {
+            e.stopPropagation();
+            delete chatSessions[id];
+            saveSessions();
+            if (currentSessionId === id) createNewChat();
+        }
+
+        function renderSidebarHistory(filter = '') {
+            const list = document.getElementById('chatHistoryList');
+            list.innerHTML = '';
+            Object.values(chatSessions).reverse().forEach(session => {
+                if (filter && !session.title.toLowerCase().includes(filter.toLowerCase())) return;
+                const item = document.createElement('div');
+                item.className = 'history-item' + (session.id === currentSessionId ? ' active' : '');
+                item.onclick = () => loadChatSession(session.id);
+                item.innerHTML = `
+                    <span class="history-item-text">${escapeHTML(session.title)}</span>
+                    <button class="delete-hist-btn" onclick="deleteChatSession('${session.id}', event)">🗑️</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function filterChatHistory() {
+            renderSidebarHistory(document.getElementById('searchChatInput').value);
         }
 
         function handleFileSelect(e) {
@@ -287,11 +380,12 @@
 
             if (chatSessions[currentSessionId].messages.length === 0) {
                 chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom()">↓</button>';
-                chatSessions[currentSessionId].title = message.substring(0, 25);
+                chatSessions[currentSessionId].title = message ? message.substring(0, 25) : 'File Attachment';
             }
 
             chatBox.innerHTML += `<div class="msg user">${escapeHTML(message)}</div>`;
             chatSessions[currentSessionId].messages.push({ role: 'user', text: message });
+            saveSessions();
             input.value = '';
 
             const botMsgElem = document.createElement('div');
@@ -300,7 +394,7 @@
             chatBox.appendChild(botMsgElem);
             scrollToBottom();
 
-            // 🎨 IMAGEN 3 GENERATOR
+            // 🎨 IMAGEN 3 GENERATOR MODE
             if (mode === 'image_gen') {
                 botMsgElem.innerText = '🎨 Generating image via Imagen 3...';
                 try {
@@ -313,7 +407,11 @@
                     if (data.success) {
                         const imageMarkdown = `Here is your generated image:\n\n![Generated Image](${data.imageUrl})`;
                         botMsgElem.innerHTML = `<div>${marked.parse(imageMarkdown)}</div>
-                            <div class="bot-actions"><a href="${data.imageUrl}" download="imagen.jpg" class="bot-action-btn">📥 Download</a></div>`;
+                            <div class="bot-actions">
+                                <a href="${data.imageUrl}" download="imagen.jpg" class="bot-action-btn">📥 Download</a>
+                            </div>`;
+                        chatSessions[currentSessionId].messages.push({ role: 'bot', text: imageMarkdown });
+                        saveSessions();
                     } else {
                         botMsgElem.innerText = '⚠️ Error generating image.';
                     }
@@ -325,16 +423,18 @@
                 return;
             }
 
-            // 🤖 TEXT CHAT STREAMING
+            // 🤖 TEXT CHAT STREAMING MODE
             const tempFiles = [...selectedFilesData];
             selectedFilesData = [];
             renderFilePreviews();
+
+            const customPrompt = document.getElementById('customPromptInput').value;
 
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, files: tempFiles, model })
+                    body: JSON.stringify({ message, files: tempFiles, model, mode, customPrompt })
                 });
 
                 const reader = response.body.getReader();
@@ -345,11 +445,16 @@
                     const { done, value } = await reader.read();
                     if (done) break;
                     fullResponse += decoder.decode(value, { stream: true });
-                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>`;
+                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
+                        <div class="bot-actions">
+                            <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
+                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
+                        </div>`;
                     scrollToBottom();
                 }
 
                 chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
+                saveSessions();
                 document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
 
             } catch (err) {
@@ -360,20 +465,116 @@
         function clearCurrentChat() {
             if (currentSessionId && chatSessions[currentSessionId]) {
                 chatSessions[currentSessionId].messages = [];
+                saveSessions();
                 renderWelcomeScreen();
             }
         }
 
         function copyCode(id, btn) {
             navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => {
-                btn.innerText = '✓ Copied!';
+                btn.innerText = '✅ Copied!';
                 setTimeout(() => btn.innerText = '📋 Copy', 2000);
             });
         }
 
+        function copyText(btn) {
+            const text = btn.closest('.msg').querySelector('div').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.innerText = '✅ Copied!';
+                setTimeout(() => btn.innerText = '📋 Copy', 2000);
+            });
+        }
+
+        function speakText(btn) {
+            const text = btn.closest('.msg').querySelector('div').innerText;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleSpeechRecognition() {
+            const micBtn = document.getElementById('micBtn');
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition is not supported in this browser.');
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                micBtn.classList.remove('recording');
+            } else {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = () => {
+                    isRecording = true;
+                    micBtn.classList.add('recording');
+                };
+
+                recognition.onresult = (event) => {
+                    document.getElementById('userInput').value = event.results[0][0].transcript;
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                };
+
+                recognition.onerror = () => {
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                };
+
+                recognition.start();
+            }
+        }
+
+        // Live Network Ping Check Function
+        async function checkPing() {
+            const start = Date.now();
+            const pingText = document.getElementById('pingText');
+            const bars = [
+                document.getElementById('bar1'),
+                document.getElementById('bar2'),
+                document.getElementById('bar3'),
+                document.getElementById('bar4')
+            ];
+
+            try {
+                const res = await fetch('/api/ping', { cache: 'no-store' });
+                if (res.ok) {
+                    const ping = Date.now() - start;
+                    pingText.innerText = ping + ' ms';
+                    
+                    // Signal color update
+                    bars.forEach(bar => bar.style.backgroundColor = 'var(--sig-good)');
+                } else {
+                    pingText.innerText = 'Error';
+                    bars.forEach(bar => bar.style.backgroundColor = 'var(--sig-bad)');
+                }
+            } catch (e) {
+                pingText.innerText = 'Offline';
+                bars.forEach(bar => bar.style.backgroundColor = 'var(--sig-bad)');
+            }
+        }
+
+        setInterval(checkPing, 8000);
+        checkPing();
+
         function escapeHTML(s) { return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t])); }
 
-        createNewChat();
+        if (Object.keys(chatSessions).length > 0) {
+            const firstId = Object.keys(chatSessions)[Object.keys(chatSessions).length - 1];
+            loadChatSession(firstId);
+        } else {
+            createNewChat();
+        }
     </script>
 </body>
 </html>
