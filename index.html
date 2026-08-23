@@ -189,6 +189,65 @@
         .chip-close-btn { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; background: rgba(0, 0, 0, 0.75); border: none; color: #ffffff; border-radius: 50%; font-size: 0.65rem; cursor: pointer; }
 
         #scrollBtn { display: none; position: absolute; bottom: 85px; right: 20px; background: var(--accent-gradient); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 10; }
+
+        /* In-App Code Preview Modal */
+        .preview-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        .preview-modal-overlay.open {
+            display: flex;
+        }
+        .preview-modal-content {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            height: 100%;
+            max-width: 1000px;
+            max-height: 95vh;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            animation: modalPop 0.2s ease-out;
+        }
+        .preview-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.7);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .preview-close-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .preview-close-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+        .preview-iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #000;
+        }
     </style>
 </head>
 <body>
@@ -352,6 +411,17 @@
                     </svg>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- In-App Code Preview Modal -->
+    <div class="preview-modal-overlay" id="codePreviewModal" onclick="if(event.target === this) closeCodePreview()">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <span>🎮 Live App / Game Preview</span>
+                <button class="preview-close-btn" onclick="closeCodePreview()">✕ Close</button>
+            </div>
+            <iframe class="preview-iframe" id="previewIframe"></iframe>
         </div>
     </div>
 
@@ -660,10 +730,19 @@
 
         function runCode(id) {
             const codeText = document.getElementById(id).innerText;
-            const newWindow = window.open();
-            newWindow.document.open();
-            newWindow.document.write(codeText);
-            newWindow.document.close();
+            const modal = document.getElementById('codePreviewModal');
+            const iframe = document.getElementById('previewIframe');
+            
+            modal.classList.add('open');
+            iframe.srcdoc = codeText;
+        }
+
+        function closeCodePreview() {
+            const modal = document.getElementById('codePreviewModal');
+            const iframe = document.getElementById('previewIframe');
+            
+            modal.classList.remove('open');
+            iframe.srcdoc = '';
         }
 
         function copyCode(id, btn) {
@@ -690,7 +769,6 @@
             const cleanText = text.replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
             
-            // Auto detect kung Tagalog ba o English ang text para sa tamang boses (tl-PH / en-US)
             const tagalogWords = /\b(ang|mga|at|sa|na|ng|ay|ko|mo|niya|ito|yan|iyon|ka|ako|kami|tayo|sila|ba|rin|din|kung|para|kayo|po|opo)\b/i;
             if (tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog') {
                 utterance.lang = 'tl-PH';
