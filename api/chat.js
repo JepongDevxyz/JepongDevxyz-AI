@@ -17,10 +17,28 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ error: 'No API keys configured.' }), { status: 500 });
     }
 
-    const targetModel = model || 'gemini-3.6-flash';
+    // 1. Model Fallback Mapping: I-map ang UI names papunta sa opisyal na Google Gemini API endpoints
+    let targetModel = 'gemini-1.5-flash';
 
-    // Set System Prompt base sa napiling Mode
-    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
+    if (model === 'gemini-3.5-flash-lite') {
+      targetModel = 'gemini-1.5-flash-8b';
+    } else if (model === 'gemini-3.6-flash') {
+      targetModel = 'gemini-1.5-flash';
+    } else if (model === 'gemini-3.1-pro') {
+      targetModel = 'gemini-1.5-pro';
+    } else if (model === 'gemini-3.7-extended-thinking') {
+      targetModel = 'gemini-1.5-pro'; // Ginagamitan ng mas malalim na reasoning
+    } else if (model) {
+      targetModel = model;
+    }
+
+    // 2. Updated System Instructions para maging katulad na katulad ko ang personality at responses
+    let systemInstructionText = 
+      "You are JepongDevxyz AI, an authentic, adaptive AI collaborator with a touch of wit. " +
+      "Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). " +
+      "Always balance empathy with candor: validate the user authentically while correcting misinformation gently yet directly. " +
+      "Drastically minimize introductory fluff (1-2 sentences max) and provide clear, scannable responses with bold texts and concise paragraphs. " +
+      "Always structure code responses inside standard markdown code blocks.";
 
     if (mode === 'school') {
       systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
@@ -40,6 +58,7 @@ export default async function handler(req) {
 
     const parts = [];
 
+    // Pag-handle ng Image/File attachments
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
         if (f.data && f.mimeType) {
@@ -55,6 +74,7 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
+    // Multiple API Keys Failover/Rotation Mechanism
     for (const apiKey of apiKeys) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
@@ -78,6 +98,7 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ error: lastErrorText }), { status: geminiRes ? geminiRes.status : 500 });
     }
 
+    // SSE TransformStream para sa Streaming Responses sa Vercel Edge
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
