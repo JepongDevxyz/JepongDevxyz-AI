@@ -433,7 +433,7 @@
         let currentSelectedMode = 'general';
         let isRecording = false;
         let recognition = null;
-        let userScrolledUp = false; // Smart scroll control flag
+        let userScrolledUp = false;
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -462,7 +462,6 @@
             renderSidebarHistory();
         }
 
-        // Smart scroll detection
         chatBox.addEventListener('scroll', () => {
             const scrollBtn = document.getElementById('scrollBtn');
             const isNearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 100;
@@ -775,6 +774,7 @@
             speakRawText(btn.closest('.msg').querySelector('div').innerText);
         }
 
+        // Tumpak na Language Separation (Tagalog vs English) para sa boses
         function speakRawText(text) {
             if (!('speechSynthesis' in window)) {
                 alert('Text-to-speech is not supported in this browser.');
@@ -786,26 +786,25 @@
             const utterance = new SpeechSynthesisUtterance(cleanText);
             
             const voices = window.speechSynthesis.getVoices();
-            const tagalogWords = /\b(ang|mga|at|sa|na|ng|ay|ko|mo|niya|ito|yan|iyon|ka|ako|kami|tayo|sila|ba|rin|din|kung|para|kayo|po|opo)\b/i;
+            const tagalogWords = /\b(ang|mga|at|sa|na|ng|ay|ko|mo|niya|ito|yan|iyon|ka|ako|kami|tayo|sila|ba|rin|din|kung|para|kayo|po|opo|paano|bakit|ano|sino|saan|meron|wala|ha)\b/i;
             
-            let targetLang = 'en-US';
-            if (tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog') {
-                targetLang = 'tl-PH';
-            }
+            let isTagalog = tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog';
+            
+            let selectedVoice = null;
 
-            let selectedVoice = voices.find(v => v.lang === targetLang || v.lang.startsWith(targetLang.substring(0, 2)));
-            
-            if (!selectedVoice && targetLang === 'tl-PH') {
-                selectedVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+            if (isTagalog) {
+                utterance.lang = 'tl-PH';
+                selectedVoice = voices.find(v => v.lang.toLowerCase().includes('fil') || v.lang.toLowerCase().includes('tl'));
+            } else {
+                utterance.lang = 'en-US';
+                selectedVoice = voices.find(v => v.lang.startsWith('en'));
             }
 
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
             }
-            
-            utterance.lang = selectedVoice ? selectedVoice.lang : targetLang;
+
             utterance.rate = 1.0;
-            
             window.speechSynthesis.speak(utterance);
         }
 
