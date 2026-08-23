@@ -256,7 +256,7 @@
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>💬 Chat History - JepongDevxyz AI</h2>
+                <h3>💬 Chat History - Devxyz AI</h3>
                 <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
             </div>
             <button class="new-chat-btn" onclick="createNewChat()"><span>➕</span> New Chat</button>
@@ -354,7 +354,7 @@
                 </button>
                 <button class="option-item active" onclick="selectModel('gemini-3.6-flash', 'Gemini 3.6 Flash')">
                     <div class="option-info">
-                        <div class="option-name">Gemini 3.6 Flash</div>
+                        <div class="option-name">3.6 Flash</div>
                         <div class="option-desc">All-around help</div>
                     </div>
                     <div class="radio-icon"></div>
@@ -441,10 +441,9 @@
         }
 
         loadVoices();
-        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = loadVoices;
-            setTimeout(loadVoices, 300);
-            setTimeout(loadVoices, 1000);
+        if ('speechSynthesis' in window) {
+            loadVoices();
+            window.speechSynthesis.onvoiceschanged = loadVoices;
         }
 
         const renderer = new marked.Renderer();
@@ -788,48 +787,57 @@
 
         function speakRawText(text) {
             if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
             
-            // Laging i-refresh ang boses bago magsalita para makuha ang mga na-download sa system
+            window.speechSynthesis.cancel();
             systemVoices = window.speechSynthesis.getVoices();
             
+            // Kung sakaling kosong pa ang listahan dahil nagloload pa, maghintay ng konti
+            if (systemVoices.length === 0) {
+                setTimeout(() => speakRawText(text), 150);
+                return;
+            }
+
             const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
 
-            const tagalogWords = /\b(ang|mga|at|sa|na|ay|ako|ka|mo|niya|ito|yan|iyon|ba|pa|talaga|kung|para|nang|mismo|kamusta|magandang|oo|hindi|wala|meron|sige|bakit|paano)\b/i;
-            const isTagalog = tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog';
+            // Comprehensive Tagalog detector para matiyak na ma-detect ang tagalog chat
+            const tagalogKeywords = /\b(ang|mga|at|sa|na|ay|ako|ka|mo|niya|ito|yan|iyon|ba|pa|talaga|kung|para|nang|mismo|kamusta|magandang|oo|hindi|wala|meron|sige|bakit|paano|gusto|pwede|naman|kasi|nga|pala|tulungan|ko|namin|natin|nyo|nila)\b/i;
+            const isTagalog = tagalogKeywords.test(cleanText) || currentSelectedMode === 'tagalog';
 
             let targetVoice = null;
 
             if (isTagalog) {
-                // Pinahusay na pag-filter para makuha ang Filipino o Tagalog voice sa device
+                // Hanapin ang fil-PH, tl-PH, o boses na may pangalang Tagalog/Filipino
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
                     const name = (v.name || '').toLowerCase();
-                    return lang.startsWith('fil') || lang.startsWith('tl') || name.includes('tagalog') || name.includes('filipino');
+                    return lang === 'fil-ph' || lang === 'tl-ph' || lang.startsWith('fil') || lang.startsWith('tl') || name.includes('tagalog') || name.includes('filipino');
                 });
 
-                // Sakaling walang saktong match sa fil/tl, hanapin ang may 'ph' sa bansa
                 if (!targetVoice) {
-                    targetVoice = systemVoices.find(v => (v.lang || '').toLowerCase().includes('ph'));
+                    targetVoice = systemVoices.find(v => (v.lang || '').toLowerCase().includes('ph') || (v.lang || '').toLowerCase().includes('fil'));
                 }
             } else {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
-                    return lang.startsWith('en');
+                    return lang.startsWith('en') || lang.includes('us') || lang.includes('gb');
                 });
             }
 
             if (targetVoice) {
                 utterance.voice = targetVoice;
                 utterance.lang = targetVoice.lang;
+            } else if (isTagalog) {
+                // Piliting i-set sa fil-PH kung walang saktong voice profile na makuha sa device
+                utterance.lang = 'fil-PH';
+            } else {
+                utterance.lang = 'en-US';
             }
 
-            utterance.rate = 1.0; 
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
 
-            setTimeout(() => {
-                window.speechSynthesis.speak(utterance);
-            }, 100);
+            window.speechSynthesis.speak(utterance);
         }
 
         function toggleSpeechRecognition() {
@@ -849,7 +857,7 @@
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
-                recognition.lang = currentSelectedMode === 'tagalog' ? 'tl-PH' : 'en-US';
+                recognition.lang = currentSelectedMode === 'tagalog' ? 'fil-PH' : 'en-US';
 
                 recognition.onstart = () => {
                     isRecording = true;
