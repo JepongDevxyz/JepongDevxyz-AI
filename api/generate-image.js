@@ -11,18 +11,18 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Missing GEMINI_API_KEY in Environment Variables' });
     }
 
-    // Direct REST API Call sa Google AI Studio para sa Imagen 3
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+    // GAMITIN ITONG ENDPOINT NA ITO (Google AI Studio Endpoint para sa API Keys)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        instances: [{ prompt: prompt }],
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: "1:1",
-          outputMimeType: "image/jpeg"
+        prompt: prompt,
+        config: {
+          numberOfImages: 1,
+          outputMimeType: "image/jpeg",
+          aspectRatio: "1:1"
         }
       })
     });
@@ -31,12 +31,12 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       return res.status(response.status).json({ 
-        error: data.error?.message || 'Failed to generate image from Google API' 
+        error: data.error?.message || 'Failed to generate image' 
       });
     }
 
-    // Ang ibinabalik ng Imagen ay Base64 string
-    const base64ImageBytes = data.predictions[0].bytesBase64Encoded;
+    // Kukunin ang base64 image galing sa generateImages response
+    const base64ImageBytes = data.generatedImages[0].image.imageBytes;
     const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
 
     return res.status(200).json({ image: imageUrl });
