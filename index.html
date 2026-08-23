@@ -786,15 +786,15 @@
             speakRawText(btn.closest('.msg').querySelector('div').innerText);
         }
 
-        /* Strict Language Separation (Tagalog vs English) para sa boses */
         function speakRawText(text) {
             if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
             
+            // Laging i-refresh ang boses bago magsalita para makuha ang mga na-download sa system
+            systemVoices = window.speechSynthesis.getVoices();
+            
             const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
-
-            loadVoices(); // Refresh bago basahin
 
             const tagalogWords = /\b(ang|mga|at|sa|na|ay|ako|ka|mo|niya|ito|yan|iyon|ba|pa|talaga|kung|para|nang|mismo|kamusta|magandang|oo|hindi|wala|meron|sige|bakit|paano)\b/i;
             const isTagalog = tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog';
@@ -802,39 +802,34 @@
             let targetVoice = null;
 
             if (isTagalog) {
-                // Humanap LAMANG ng Tagalog / Filipino voice
+                // Pinahusay na pag-filter para makuha ang Filipino o Tagalog voice sa device
                 targetVoice = systemVoices.find(v => {
-                    const lang = v.lang.toLowerCase();
-                    const name = v.name.toLowerCase();
-                    return lang.includes('tl') || lang.includes('fil') || name.includes('tagalog') || name.includes('filipino');
+                    const lang = (v.lang || '').toLowerCase();
+                    const name = (v.name || '').toLowerCase();
+                    return lang.startsWith('fil') || lang.startsWith('tl') || name.includes('tagalog') || name.includes('filipino');
                 });
 
-                // KUNG WALANG TAGALOG VOICE, HUWAG NA LANG MAGSALITA PARA HINDI MAG-ENGLISH
+                // Sakaling walang saktong match sa fil/tl, hanapin ang may 'ph' sa bansa
                 if (!targetVoice) {
-                    console.warn("Wala kang Tagalog/Filipino voice sa device mo, kaya hindi ko muna babasahin.");
-                    return; 
+                    targetVoice = systemVoices.find(v => (v.lang || '').toLowerCase().includes('ph'));
                 }
             } else {
-                // Humanap LAMANG ng English voice para sa English text
                 targetVoice = systemVoices.find(v => {
-                    const lang = v.lang.toLowerCase();
-                    return lang.includes('en-us') || lang.includes('en-gb') || lang.startsWith('en');
+                    const lang = (v.lang || '').toLowerCase();
+                    return lang.startsWith('en');
                 });
-
-                // KUNG WALANG ENGLISH VOICE, HUWAG NA LANG MAGSALITA
-                if (!targetVoice) {
-                    console.warn("Wala kang English voice sa device mo.");
-                    return;
-                }
             }
 
-            utterance.voice = targetVoice;
-            utterance.lang = targetVoice.lang;
+            if (targetVoice) {
+                utterance.voice = targetVoice;
+                utterance.lang = targetVoice.lang;
+            }
+
             utterance.rate = 1.0; 
 
             setTimeout(() => {
                 window.speechSynthesis.speak(utterance);
-            }, 50);
+            }, 100);
         }
 
         function toggleSpeechRecognition() {
