@@ -1,5 +1,5 @@
 export const config = {
-  maxDuration: 60, // Pinahabang timeout duration sa Vercel (hanggang 60 segundo)
+  runtime: 'edge',
 };
 
 export default async function handler(req, res) {
