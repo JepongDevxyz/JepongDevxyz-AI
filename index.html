@@ -55,7 +55,6 @@
         .clear-btn { color: #fca5a5; }
         .clear-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
-        /* Custom Floating Modal Dropdown para sa Mode at Model */
         .selector-wrapper { position: relative; flex: 1; min-width: 130px; }
         .dropdown-btn { width: 100%; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         
@@ -73,13 +72,11 @@
         .option-name { font-weight: 600; font-size: 0.88rem; }
         .option-desc { font-size: 0.72rem; color: var(--text-muted); }
         
-        /* Radio button style */
         .radio-icon { width: 18px; height: 18px; border: 2px solid var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
         .option-item.active .radio-icon { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2); box-shadow: inset 0 0 0 3px #8b5cf6; }
         
         .divider { height: 1px; background: var(--border-color); margin: 6px 0; }
 
-        /* Sidebar Styling */
         .sidebar-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 900; }
         .sidebar { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #0f172a; border-right: 1px solid var(--border-color); z-index: 901; transition: left 0.3s ease; display: flex; flex-direction: column; padding: 16px; gap: 14px; }
         .sidebar.open { left: 0; }
@@ -117,16 +114,17 @@
         .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
         .bot img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border-color); }
 
-        .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap; }
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; text-decoration: none; }
         .bot-action-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
 
         .code-block-wrapper { background: #131722; border: 1px solid var(--border-color); border-radius: 10px; margin: 8px 0; overflow: hidden; }
         .code-header { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 6px 12px; font-size: 0.75rem; color: var(--text-muted); }
+        .code-actions { display: flex; gap: 6px; }
         .code-actions button { background: rgba(255, 255, 255, 0.1); border: none; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+        .code-actions button:hover { background: rgba(255, 255, 255, 0.2); }
         pre { padding: 12px; overflow-x: auto; font-size: 0.85rem; }
 
-        /* Input Container Pill UI */
         .input-container { padding: 12px 16px 18px 16px; background: transparent; }
         .chat-input-pill {
             background: #1f222a;
@@ -139,14 +137,8 @@
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .pill-plus-btn {
-            background: transparent; border: none; color: #e2e8f0; font-size: 1.4rem; font-weight: 300; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-        }
-
-        .pill-input {
-            flex: 1; background: transparent; border: none; color: #ffffff !important; font-size: 0.95rem; caret-color: #3b82f6; padding: 4px 6px; min-width: 0;
-        }
+        .pill-plus-btn { background: transparent; border: none; color: #e2e8f0; font-size: 1.4rem; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+        .pill-input { flex: 1; background: transparent; border: none; color: #ffffff !important; font-size: 0.95rem; caret-color: #3b82f6; padding: 4px 6px; min-width: 0; }
         .pill-input::placeholder { color: #94a3b8; font-weight: 400; }
 
         .wave-container { display: none; flex: 1; align-items: center; justify-content: center; gap: 4px; height: 32px; padding: 0 8px; }
@@ -225,7 +217,6 @@
             </div>
 
             <div class="header-controls">
-                <!-- Mode Selector Floating Modal Wrapper -->
                 <div class="selector-wrapper">
                     <button class="dropdown-btn" onclick="toggleModal('modeModalOverlay', true)">
                         <span id="selectedModeText">🤖 Mode: General AI</span>
@@ -233,7 +224,6 @@
                     </button>
                 </div>
 
-                <!-- Model Selector Floating Modal Wrapper -->
                 <div class="selector-wrapper">
                     <button class="dropdown-btn" onclick="toggleModal('modelModalOverlay', true)">
                         <span id="selectedModelText">Gemini 3.6 Flash</span>
@@ -245,7 +235,7 @@
             </div>
         </div>
 
-        <!-- Mode Floating Modal Overlay -->
+        <!-- Mode Modal Overlay -->
         <div class="modal-overlay" id="modeModalOverlay" onclick="if(event.target === this) toggleModal('modeModalOverlay', false)">
             <div class="floating-modal">
                 <button class="option-item active" onclick="selectMode('general', '🤖 Mode: General AI')">
@@ -279,7 +269,7 @@
             </div>
         </div>
 
-        <!-- Model Floating Modal Overlay -->
+        <!-- Model Modal Overlay -->
         <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
             <div class="floating-modal">
                 <button class="option-item" onclick="selectModel('gemini-3.5-flash-lite', '3.5 Flash-Lite')">
@@ -360,7 +350,6 @@
         let recognition = null;
 
         const micSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" ry="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
-        const stopSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -371,7 +360,10 @@
                 <div class="code-block-wrapper">
                     <div class="code-header">
                         <span>${lang}</span>
-                        <button onclick="copyCode('${blockId}', this)">📋 Copy</button>
+                        <div class="code-actions">
+                            <button onclick="runCode('${blockId}')">▶ Run</button>
+                            <button onclick="copyCode('${blockId}', this)">📋 Copy</button>
+                        </div>
                     </div>
                     <pre><code id="${blockId}" class="language-${lang}">${escapeHTML(codeContent)}</code></pre>
                 </div>
@@ -413,7 +405,6 @@
                 }
             });
             toggleModal('modeModalOverlay', false);
-            
             document.getElementById('customPromptInput').style.display = modeKey === 'custom' ? 'block' : 'none';
         }
 
@@ -577,34 +568,6 @@
             chatBox.appendChild(botMsgElem);
             scrollToBottom();
 
-            if (mode === 'image_gen') {
-                botMsgElem.innerText = '🎨 Generating image...';
-                try {
-                    const res = await fetch('/api/generate-image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: message, model: 'imagen-3.0-generate-002' })
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        const imageMarkdown = `Here is your generated image:\n\n![Generated Image](${data.imageUrl})`;
-                        botMsgElem.innerHTML = `<div>${marked.parse(imageMarkdown)}</div>
-                            <div class="bot-actions">
-                                <a href="${data.imageUrl}" download="imagen.jpg" class="bot-action-btn">📥 Download</a>
-                            </div>`;
-                        chatSessions[currentSessionId].messages.push({ role: 'bot', text: imageMarkdown });
-                        saveSessions();
-                    } else {
-                        botMsgElem.innerText = '⚠️ Error generating image.';
-                    }
-                } catch (err) {
-                    botMsgElem.innerText = '⚠️ Connection Error.';
-                }
-                selectedFilesData = [];
-                renderFilePreviews();
-                return;
-            }
-
             const tempFiles = [...selectedFilesData];
             selectedFilesData = [];
             renderFilePreviews();
@@ -653,6 +616,14 @@
                 saveSessions();
                 renderWelcomeScreen();
             }
+        }
+
+        function runCode(id) {
+            const codeText = document.getElementById(id).innerText;
+            const newWindow = window.open();
+            newWindow.document.open();
+            newWindow.document.write(codeText);
+            newWindow.document.close();
         }
 
         function copyCode(id, btn) {
@@ -705,7 +676,6 @@
                     isRecording = true;
                     userInput.style.display = 'none';
                     waveContainer.classList.add('active');
-                    micBtn.innerHTML = stopSvg;
                 };
 
                 recognition.onresult = (event) => {
@@ -724,7 +694,6 @@
             isRecording = false;
             document.getElementById('userInput').style.display = 'block';
             document.getElementById('waveContainer').classList.remove('active');
-            document.getElementById('micBtn').innerHTML = micSvg;
         }
 
         async function checkPing() {
