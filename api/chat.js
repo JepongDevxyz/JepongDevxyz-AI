@@ -1,20 +1,20 @@
 export const config = {
-  runtime: 'edge',
+  maxDuration: 60, // Pinahabang timeout duration sa Vercel (hanggang 60 segundo)
 };
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { message, file, files, model, mode, customPrompt } = await req.json();
+    const { message, file, files, model, mode, customPrompt } = req.body || {};
     
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { status: 500 });
+      return res.status(500).json({ error: 'No API keys configured.' });
     }
 
     // Listahan ng mga opisyal na model ID na tugma sa UI dropdown mo
@@ -22,10 +22,10 @@ export default async function handler(req) {
       'gemini-3.7-flash',
       'gemini-3.6-flash',
       'gemini-3.5-flash-lite',
-      'gemini-3.1-pro-preview'
+      'gemini-3.1-pro',
+      'gemini-3.7-extended-thinking'
     ];
 
-    // Kung ang napili sa UI ay tugma, gamitin iyon; kung hindi, fallback sa gemini-3.6-flash
     const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
     // Set System Prompt base sa napiling Mode
@@ -84,45 +84,44 @@ export default async function handler(req) {
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText }), { status: geminiRes ? geminiRes.status : 500 });
+      return res.status(geminiRes ? geminiRes.status : 500).json({ error: lastErrorText });
     }
 
-    const encoder = new TextEncoder();
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+
+    const reader = geminiRes.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = '';
 
-    const transformStream = new TransformStream({
-      start() { this.buffer = ''; },
-      async transform(chunk, controller) {
-        this.buffer += decoder.decode(chunk, { stream: true });
-        const lines = this.buffer.split('\n');
-        this.buffer = lines.pop() || '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data:')) {
-            const jsonStr = trimmed.slice(5).trim();
-            if (jsonStr === '[DONE]') continue;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
 
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (textChunk) {
-                controller.enqueue(encoder.encode(textChunk));
-              }
-            } catch (e) {}
-          }
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          const jsonStr = trimmed.slice(5).trim();
+          if (jsonStr === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textChunk) {
+              res.write(textChunk);
+            }
+          } catch (e) {}
         }
       }
-    });
+    }
 
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-      },
-    });
+    res.end();
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return res.status(500).json({ error: error.message });
   }
 }
