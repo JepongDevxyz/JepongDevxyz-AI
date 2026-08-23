@@ -4,137 +4,139 @@ export const config = {
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 45 Mag-post,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    const { message, file, files, model, mode, customPrompt } = await req.json();
-    
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+    const { message, files = [], model, mode, customPrompt } = await req.json();
 
-    if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { status: 500 });
-    }
+    // Valid 3.x series models
+    const VALID_MODELS = [
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-pro',
+      'gemini-3.7-extended-thinking'
+    ];
 
-    // 1. Model Fallback Mapping: I-map ang UI names papunta sa opisyal na Google Gemini API endpoints
-    let targetModel = 'gemini-1.5-flash';
+    // Fallback: Kapag wala sa listahan, gamitin ang gemini-3.6-flash
+    const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
-    if (model === 'gemini-3.5-flash-lite') {
-      targetModel = 'gemini-1.5-flash-8b';
-    } else if (model === 'gemini-3.6-flash') {
-      targetModel = 'gemini-1.5-flash';
-    } else if (model === 'gemini-3.1-pro') {
-      targetModel = 'gemini-1.5-pro';
-    } else if (model === 'gemini-3.7-extended-thinking') {
-      targetModel = 'gemini-1.5-pro'; // Ginagamitan ng mas malalim na reasoning
-    } else if (model) {
-      targetModel = model;
-    }
-
-    // 2. Updated System Instructions para maging katulad na katulad ko ang personality at responses
-    let systemInstructionText = 
-      "You are JepongDevxyz AI, an authentic, adaptive AI collaborator with a touch of wit. " +
-      "Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). " +
-      "Always balance empathy with candor: validate the user authentically while correcting misinformation gently yet directly. " +
-      "Drastically minimize introductory fluff (1-2 sentences max) and provide clear, scannable responses with bold texts and concise paragraphs. " +
-      "Always structure code responses inside standard markdown code blocks.";
-
+    // System Prompts batay sa napiling Mode
+    let systemInstruction = "You are JepongDevxyz AI, a helpful, precise, and friendly AI assistant.";
     if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
+      systemInstruction = "You are an educational tutor. Explain concepts clearly with step-by-step guidance.";
     } else if (mode === 'coder') {
-      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
+      systemInstruction = "You are an expert software engineer. Provide high-quality, efficient code with clear comments.";
     } else if (mode === 'tagalog') {
-      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
+      systemInstruction = "Magsalita ka gamit ang taos-pusong Tagalog/Taglish na parang isang tropa o matalik na kaibigan.";
     } else if (mode === 'affiliate') {
-      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
+      systemInstruction = "You are an expert TikTok & Online Shop Affiliate Marketer. Provide persuasive copy, hooks, and strategy.";
     } else if (mode === 'custom' && customPrompt) {
-      systemInstructionText += ` ${customPrompt}`;
+      systemInstruction = customPrompt;
     }
 
-    const systemInstruction = {
-      parts: [{ text: systemInstructionText }]
+    // Format ng contents payload
+    const contents = [];
+    const userParts = [];
+
+    if (message) {
+      userParts.push({ text: message });
+    }
+
+    if (files && files.length > 0) {
+      files.forEach(file => {
+        userParts.push({
+          inlineData: {
+            mimeType: file.mimeType,
+            data: file.data
+          }
+        });
+      });
+    }
+
+    contents.push({ role: 'user', parts: userParts });
+
+    const payload = {
+      systemInstruction: {
+        parts: [{ text: systemInstruction }]
+      },
+      contents: contents
     };
 
-    const parts = [];
+    const apiKey = process.env.GEMINI_API_KEY;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:streamGenerateContent?key=${apiKey}`;
 
-    // Pag-handle ng Image/File attachments
-    if (files && Array.isArray(files) && files.length > 0) {
-      files.forEach(f => {
-        if (f.data && f.mimeType) {
-          parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
-        }
+    const googleRes = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!googleRes.ok) {
+      const errText = await googleRes.text();
+      return new Response(JSON.stringify({ error: errText }), {
+        status: googleRes.status,
+        headers: { 'Content-Type': 'application/json' }
       });
-    } else if (file && file.data && file.mimeType) {
-      parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
     }
 
-    if (message) parts.push({ text: message });
-
-    let geminiRes = null;
-    let lastErrorText = '';
-
-    // Multiple API Keys Failover/Rotation Mechanism
-    for (const apiKey of apiKeys) {
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: systemInstruction,
-            contents: [{ parts }]
-          })
-        }
-      );
-
-      if (geminiRes.ok) break;
-
-      lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break;
-    }
-
-    if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText }), { status: geminiRes ? geminiRes.status : 500 });
-    }
-
-    // SSE TransformStream para sa Streaming Responses sa Vercel Edge
+    // Stream the response back to client
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    const transformStream = new TransformStream({
-      start() { this.buffer = ''; },
-      async transform(chunk, controller) {
-        this.buffer += decoder.decode(chunk, { stream: true });
-        const lines = this.buffer.split('\n');
-        this.buffer = lines.pop() || '';
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = googleRes.body.getReader();
+        let buffer = '';
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data:')) {
-            const jsonStr = trimmed.slice(5).trim();
-            if (jsonStr === '[DONE]') continue;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (textChunk) {
-                controller.enqueue(encoder.encode(textChunk));
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // keep last incomplete line
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.replace('data: ', '').trim();
+                if (jsonStr) {
+                  try {
+                    const parsed = JSON.parse(jsonStr);
+                    const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (textChunk) {
+                      controller.enqueue(encoder.encode(textChunk));
+                    }
+                  } catch (e) {
+                    // skip malformed JSON chunks
+                  }
+                }
               }
-            } catch (e) {}
+            }
           }
+        } catch (err) {
+          controller.error(err);
+        } finally {
+          controller.close();
         }
       }
     });
 
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-      },
+        'Cache-Control': 'no-cache'
+      }
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
