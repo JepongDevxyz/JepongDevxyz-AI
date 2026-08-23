@@ -10,12 +10,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // Libre at walang API key na kailangan, instant image URL!
     const encodedPrompt = encodeURIComponent(prompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true`;
+    const generatedUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&nologo=true`;
 
-    // Siguraduhing laging valid JSON ang ibabalik
-    return res.status(200).json({ image: imageUrl });
+    // Ibalik pareho sa JSON response para madaling makuha ng frontend
+    return res.status(200).json({ 
+      image: generatedUrl,
+      imageUrl: generatedUrl,
+      url: generatedUrl,
+      data: [{ url: generatedUrl }]
+    });
 
   } catch (err) {
     return res.status(500).json({ error: err.message || 'Internal Server Error' });
