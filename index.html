@@ -33,7 +33,17 @@
             .app-container { max-width: 900px; height: 90vh; border: 1px solid var(--border-color); border-radius: 24px; }
         }
 
-        .header { padding: 10px 14px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; background: rgba(11, 15, 25, 0.8); }
+        .header { 
+            padding: 10px 14px; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            background: rgba(11, 15, 25, 0.95); 
+            backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 10;
+        }
         .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
         
         .brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; padding: 2px 0; }
@@ -102,7 +112,16 @@
         .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; }
         .delete-hist-btn:hover { color: #ef4444; }
 
-        .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; position: relative; }
+        .chat-box { 
+            flex: 1; 
+            padding: 16px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 14px; 
+            position: relative; 
+            z-index: 1;
+        }
         
         .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; margin: auto; width: 100%; }
         .welcome-lottie-top { width: 220px; height: 60px; margin-bottom: -10px; }
@@ -258,10 +277,6 @@
                     <div class="option-info"><span class="option-name">🛒 Mode: Affiliate Marketer</span></div>
                     <div class="radio-icon"></div>
                 </button>
-                <button class="option-item" onclick="selectMode('image_gen', '🎨 Mode: Imagen 3 (Google Engine)')">
-                    <div class="option-info"><span class="option-name">🎨 Mode: Imagen 3 (Google Engine)</span></div>
-                    <div class="radio-icon"></div>
-                </button>
                 <button class="option-item" onclick="selectMode('custom', '✏️ Mode: Custom Persona')">
                     <div class="option-info"><span class="option-name">✏️ Mode: Custom Persona</span></div>
                     <div class="radio-icon"></div>
@@ -348,8 +363,6 @@
         let currentSelectedMode = 'general';
         let isRecording = false;
         let recognition = null;
-
-        const micSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" ry="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -581,6 +594,10 @@
                     body: JSON.stringify({ message, files: tempFiles, model, mode, customPrompt })
                 });
 
+                if (!response.ok) {
+                    throw new Error('Server returned status ' + response.status);
+                }
+
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullResponse = '';
@@ -606,7 +623,30 @@
                 }
 
             } catch (err) {
-                botMsgElem.innerText = 'Connection Error.';
+                botMsgElem.innerHTML = `
+                    <div style="color: #fca5a5; margin-bottom: 8px;">⚠️ Connection Error or Timeout.</div>
+                    <button class="bot-action-btn" onclick="retryLastMessage()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 10px; border-radius: 6px;">
+                        🔄 Try Again
+                    </button>
+                `;
+                scrollToBottom();
+            }
+        }
+
+        function retryLastMessage() {
+            if (currentSessionId && chatSessions[currentSessionId]) {
+                const messages = chatSessions[currentSessionId].messages;
+                for (let i = messages.length - 1; i >= 0; i--) {
+                    if (messages[i].role === 'user') {
+                        const lastMsgText = messages[i].text;
+                        chatSessions[currentSessionId].messages.pop();
+                        const userInput = document.getElementById('userInput');
+                        userInput.value = lastMsgText;
+                        chatBox.removeChild(chatBox.lastChild);
+                        sendMessage();
+                        break;
+                    }
+                }
             }
         }
 
@@ -628,7 +668,7 @@
 
         function copyCode(id, btn) {
             navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => {
-                btn.innerText = '✅ Copied!';
+                btn.innerText = '✓ Copied!';
                 setTimeout(() => btn.innerText = '📋 Copy', 2000);
             });
         }
@@ -647,13 +687,22 @@
 
         function speakRawText(text) {
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text.replace(/[*_#`~]/g, ''));
+            const cleanText = text.replace(/[*_#`~]/g, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            
+            // Auto detect kung Tagalog ba o English ang text para sa tamang boses (tl-PH / en-US)
+            const tagalogWords = /\b(ang|mga|at|sa|na|ng|ay|ko|mo|niya|ito|yan|iyon|ka|ako|kami|tayo|sila|ba|rin|din|kung|para|kayo|po|opo)\b/i;
+            if (tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog') {
+                utterance.lang = 'tl-PH';
+            } else {
+                utterance.lang = 'en-US';
+            }
+
             utterance.rate = 1.0;
             window.speechSynthesis.speak(utterance);
         }
 
         function toggleSpeechRecognition() {
-            const micBtn = document.getElementById('micBtn');
             const userInput = document.getElementById('userInput');
             const waveContainer = document.getElementById('waveContainer');
 
@@ -670,7 +719,7 @@
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
-                recognition.lang = 'en-US';
+                recognition.lang = currentSelectedMode === 'tagalog' ? 'tl-PH' : 'en-US';
 
                 recognition.onstart = () => {
                     isRecording = true;
