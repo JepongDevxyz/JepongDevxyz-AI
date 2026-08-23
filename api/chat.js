@@ -2,22 +2,27 @@ export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(req, res) {
+export default async function handler(req) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 
   try {
-    const { message, file, files, model, mode, customPrompt } = req.body || {};
+    const { message, file, files, model, mode, customPrompt } = await req.json();
     
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return res.status(500).json({ error: 'No API keys configured.' });
+      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
-    // Listahan ng mga opisyal na model ID na tugma sa UI dropdown mo
     const VALID_MODELS = [
       'gemini-3.7-flash',
       'gemini-3.6-flash',
@@ -28,7 +33,6 @@ export default async function handler(req, res) {
 
     const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
-    // Set System Prompt base sa napiling Mode
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
     if (mode === 'school') {
@@ -84,44 +88,51 @@ export default async function handler(req, res) {
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return res.status(geminiRes ? geminiRes.status : 500).json({ error: lastErrorText });
+      return new Response(JSON.stringify({ error: lastErrorText }), { 
+        status: geminiRes ? geminiRes.status : 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-
-    const reader = geminiRes.body.getReader();
+    const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    let buffer = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    const transformStream = new TransformStream({
+      start() { this.buffer = ''; },
+      async transform(chunk, controller) {
+        this.buffer += decoder.decode(chunk, { stream: true });
+        const lines = this.buffer.split('\n');
+        this.buffer = lines.pop() || '';
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data:')) {
+            const jsonStr = trimmed.slice(5).trim();
+            if (jsonStr === '[DONE]') continue;
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('data:')) {
-          const jsonStr = trimmed.slice(5).trim();
-          if (jsonStr === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (textChunk) {
-              res.write(textChunk);
-            }
-          } catch (e) {}
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (textChunk) {
+                controller.enqueue(encoder.encode(textChunk));
+              }
+            } catch (e) {}
+          }
         }
       }
-    }
+    });
 
-    res.end();
+    return new Response(geminiRes.body.pipeThrough(transformStream), {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+      },
+    });
 
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 }
