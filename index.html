@@ -34,7 +34,8 @@
         .header { padding: 10px 14px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; background: rgba(11, 15, 25, 0.8); }
         .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
         
-        .brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; }
+        .brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; cursor: pointer; padding: 2px 6px; border-radius: 8px; transition: background 0.2s; }
+        .brand:hover { background: rgba(255, 255, 255, 0.05); }
         .brand-icon { width: 32px; height: 32px; background: var(--accent-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; flex-shrink: 0; }
         .brand-title { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px; }
 
@@ -60,6 +61,31 @@
         select { flex: 1; background: rgba(30, 41, 59, 0.8); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; min-width: 0; }
         
         .clear-btn { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.72rem; flex-shrink: 0; }
+
+        .sidebar-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 900; }
+        .sidebar { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #0f172a; border-right: 1px solid var(--border-color); z-index: 901; transition: left 0.3s ease; display: flex; flex-direction: column; padding: 16px; gap: 14px; }
+        .sidebar.open { left: 0; }
+        .sidebar-overlay.open { display: block; }
+        
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .sidebar-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+        .close-sidebar-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; }
+        
+        .new-chat-btn { background: var(--accent-gradient); color: #fff; border: none; padding: 10px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .search-chat-input { background: rgba(30, 41, 59, 0.8); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; width: 100%; }
+
+        .history-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-top: 6px; }
+        .chat-history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .history-item { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; gap: 6px; }
+        .history-item:hover { background: rgba(255, 255, 255, 0.08); }
+        .history-item.active { border-color: #6366f1; background: rgba(99, 102, 241, 0.15); }
+        .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        
+        .history-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+        .action-history-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; padding: 2px 4px; opacity: 0.6; }
+        .action-history-btn:hover { opacity: 1; color: var(--text-main); }
+        .action-history-btn.pinned { opacity: 1; color: #a855f7; }
+        .del-history-btn:hover { color: #ef4444 !important; }
 
         .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; position: relative; }
         .msg { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; word-break: break-word; }
@@ -91,8 +117,14 @@
         .code-actions button { background: rgba(255, 255, 255, 0.1); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; }
         .code-block-wrapper pre { margin: 0; padding: 12px; overflow-x: auto; font-size: 0.85rem; }
 
-        .input-container { padding: 12px 16px; border-top: 1px solid var(--border-color); background: rgba(11, 15, 25, 0.8); display: flex; flex-direction: column; }
+        .input-container { padding: 10px 16px 12px 16px; border-top: 1px solid var(--border-color); background: rgba(11, 15, 25, 0.8); display: flex; flex-direction: column; gap: 8px; }
         
+        /* File Preview Chip Styling */
+        .file-preview-chip { display: none; align-items: center; justify-content: space-between; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; color: #a5b4fc; }
+        .file-preview-info { display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .cancel-file-btn { background: none; border: none; color: #fca5a5; cursor: pointer; font-size: 0.9rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+        .cancel-file-btn:hover { background: rgba(239, 68, 68, 0.2); }
+
         .input-wrapper { display: flex; align-items: center; gap: 8px; background: rgba(30, 41, 59, 0.8); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 24px; width: 100%; }
         
         input[type="text"] { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 0.9rem; min-width: 0; padding: 4px 0; }
@@ -157,11 +189,31 @@
 <body>
 
     <div class="app-container">
+        <!-- Sidebar Navigation Drawer -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>💬 Chat History</h3>
+                <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
+            </div>
+
+            <button class="new-chat-btn" onclick="createNewChat()">
+                <span>➕</span> New Chat
+            </button>
+
+            <input type="text" class="search-chat-input" id="searchChatInput" placeholder="🔍 Search chat history..." oninput="filterChatHistory()">
+
+            <div class="history-title">Recent Chats</div>
+            <div class="chat-history-list" id="chatHistoryList">
+                <!-- Dynamic Chat Sessions -->
+            </div>
+        </div>
+
         <div class="header">
             <div class="header-top">
-                <div class="brand">
+                <div class="brand" onclick="toggleSidebar(true)" title="Open Menu & History">
                     <div class="brand-icon">✦</div>
-                    <div class="brand-title">JepongDevxyz AI</div>
+                    <div class="brand-title">JepongDevxyz AI ☰</div>
                 </div>
                 
                 <div class="header-tools-group">
@@ -175,7 +227,7 @@
                         <span id="pingText">Checking...</span>
                     </div>
 
-                    <button class="clear-btn" onclick="clearChat()">Clear</button>
+                    <button class="clear-btn" onclick="clearCurrentChat()">Clear</button>
                 </div>
             </div>
 
@@ -198,6 +250,15 @@
         </div>
 
         <div class="input-container">
+            <!-- File Preview Chip -->
+            <div class="file-preview-chip" id="filePreviewChip">
+                <div class="file-preview-info">
+                    <span>📎</span>
+                    <span id="fileNameDisplay">file.png</span>
+                </div>
+                <button class="cancel-file-btn" onclick="cancelAttachedFile()" title="Cancel File">✕</button>
+            </div>
+
             <div class="input-wrapper">
                 <input type="file" id="fileInput" hidden onchange="handleFileSelect(event)">
                 
@@ -225,6 +286,8 @@
     <script>
         let selectedFileData = null;
         let recognition = null;
+        let chatSessions = {};
+        let currentSessionId = null;
 
         function checkLivePing() {
             const pingText = document.getElementById('pingText');
@@ -325,28 +388,179 @@
             }
         }
 
-        function loadHistory() {
-            const saved = localStorage.getItem('jepong_chat_history');
-            if (saved) {
-                chatBox.innerHTML += saved;
-                document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (show) {
+                sidebar.classList.add('open');
+                overlay.classList.add('open');
+                renderChatHistoryList();
             } else {
-                chatBox.innerHTML += `<div class="msg bot">Hello! I am JepongDevxyz AI. How can I help you today?</div>`;
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
             }
+        }
+
+        function loadAllSessions() {
+            const stored = localStorage.getItem('jepong_chat_sessions');
+            if (stored) {
+                try { chatSessions = JSON.parse(stored); } catch (e) { chatSessions = {}; }
+            }
+            
+            const activeId = localStorage.getItem('jepong_active_session');
+            if (activeId && chatSessions[activeId]) {
+                currentSessionId = activeId;
+            } else {
+                createNewChat(false);
+            }
+            
+            loadCurrentSessionHtml();
+        }
+
+        function saveAllSessions() {
+            if (currentSessionId) {
+                const htmlContent = chatBox.innerHTML;
+                
+                let title = "New Conversation";
+                const firstUserMsg = chatBox.querySelector('.msg.user');
+                if (firstUserMsg) {
+                    title = firstUserMsg.innerText.trim().substring(0, 30);
+                }
+
+                chatSessions[currentSessionId] = {
+                    title: title,
+                    html: htmlContent,
+                    timestamp: chatSessions[currentSessionId]?.timestamp || Date.now(),
+                    pinned: chatSessions[currentSessionId]?.pinned || false
+                };
+            }
+
+            localStorage.setItem('jepong_chat_sessions', JSON.stringify(chatSessions));
+            if (currentSessionId) {
+                localStorage.setItem('jepong_active_session', currentSessionId);
+            }
+        }
+
+        function loadCurrentSessionHtml() {
+            if (currentSessionId && chatSessions[currentSessionId]) {
+                chatBox.innerHTML = chatSessions[currentSessionId].html;
+                if (!chatBox.querySelector('#scrollBtn')) {
+                    chatBox.appendChild(scrollBtn);
+                }
+            } else {
+                chatBox.innerHTML = `<div class="msg bot">Hello! I am JepongDevxyz AI. How can I help you today?</div>`;
+                chatBox.appendChild(scrollBtn);
+            }
+            document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
             scrollToBottom();
         }
 
-        function saveHistory() {
-            const scrollBtnBackup = document.getElementById('scrollBtn');
-            if (scrollBtnBackup) scrollBtnBackup.remove();
-            localStorage.setItem('jepong_chat_history', chatBox.innerHTML);
-            if (scrollBtnBackup) chatBox.appendChild(scrollBtnBackup);
+        function createNewChat(autoClose = true) {
+            saveAllSessions();
+            currentSessionId = 'session_' + Date.now();
+            chatSessions[currentSessionId] = {
+                title: 'New Conversation',
+                html: `<div class="msg bot">Hello! I am JepongDevxyz AI. How can I help you today?</div>`,
+                timestamp: Date.now(),
+                pinned: false
+            };
+            
+            loadCurrentSessionHtml();
+            saveAllSessions();
+            renderChatHistoryList();
+            
+            if (autoClose) toggleSidebar(false);
         }
 
-        function clearChat() {
-            if (confirm("Clear all chat history?")) {
-                localStorage.removeItem('jepong_chat_history');
-                location.reload();
+        function switchSession(id) {
+            saveAllSessions();
+            currentSessionId = id;
+            localStorage.setItem('jepong_active_session', currentSessionId);
+            loadCurrentSessionHtml();
+            renderChatHistoryList();
+            toggleSidebar(false);
+        }
+
+        function togglePinSession(id, event) {
+            event.stopPropagation();
+            if (chatSessions[id]) {
+                chatSessions[id].pinned = !chatSessions[id].pinned;
+                saveAllSessions();
+                renderChatHistoryList(document.getElementById('searchChatInput').value);
+            }
+        }
+
+        function deleteSession(id, event) {
+            event.stopPropagation();
+            if (confirm("Sigurado ka bang gusto mo burahin ang chat na ito?")) {
+                delete chatSessions[id];
+                if (currentSessionId === id) {
+                    const keys = Object.keys(chatSessions);
+                    if (keys.length > 0) {
+                        currentSessionId = keys[keys.length - 1];
+                    } else {
+                        createNewChat(false);
+                    }
+                }
+                saveAllSessions();
+                loadCurrentSessionHtml();
+                renderChatHistoryList();
+            }
+        }
+
+        function renderChatHistoryList(filterQuery = '') {
+            const listElem = document.getElementById('chatHistoryList');
+            listElem.innerHTML = '';
+
+            // Sort: Pinned first (descending timestamp), then unpinned (descending timestamp)
+            const sortedKeys = Object.keys(chatSessions).sort((a, b) => {
+                const chatA = chatSessions[a];
+                const chatB = chatSessions[b];
+                if (chatA.pinned && !chatB.pinned) return -1;
+                if (!chatA.pinned && chatB.pinned) return 1;
+                return chatB.timestamp - chatA.timestamp;
+            });
+
+            let count = 0;
+            sortedKeys.forEach(id => {
+                const session = chatSessions[id];
+                const title = session.title || 'Conversation';
+                const isPinned = session.pinned || false;
+
+                if (filterQuery && !title.toLowerCase().includes(filterQuery.toLowerCase())) {
+                    return;
+                }
+
+                count++;
+                const item = document.createElement('div');
+                item.className = `history-item ${id === currentSessionId ? 'active' : ''}`;
+                item.onclick = () => switchSession(id);
+
+                item.innerHTML = `
+                    <span class="history-item-text">${isPinned ? '📌 ' : '💬 '} ${escapeHTML(title)}</span>
+                    <div class="history-actions">
+                        <button class="action-history-btn ${isPinned ? 'pinned' : ''}" onclick="togglePinSession('${id}', event)" title="${isPinned ? 'Unpin' : 'Pin'}">📌</button>
+                        <button class="action-history-btn del-history-btn" onclick="deleteSession('${id}', event)" title="Delete">✕</button>
+                    </div>
+                `;
+                listElem.appendChild(item);
+            });
+
+            if (count === 0) {
+                listElem.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted); padding:8px;">No chats found.</div>`;
+            }
+        }
+
+        function filterChatHistory() {
+            const q = document.getElementById('searchChatInput').value;
+            renderChatHistoryList(q);
+        }
+
+        function clearCurrentChat() {
+            if (confirm("Clear current message view?")) {
+                chatBox.innerHTML = `<div class="msg bot">Hello! I am JepongDevxyz AI. How can I help you today?</div>`;
+                chatBox.appendChild(scrollBtn);
+                saveAllSessions();
             }
         }
 
@@ -455,8 +669,11 @@
 
             chatBox.innerHTML += `<div class="msg user">${escapeHTML(message)}</div>`;
             input.value = '';
+            
+            // Clear attached file state after sending
             const tempFile = selectedFileData;
-            selectedFileData = null;
+            cancelAttachedFile();
+            
             scrollToBottom();
 
             const botMsgElem = document.createElement('div');
@@ -492,7 +709,7 @@
                 }
 
                 document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
-                saveHistory();
+                saveAllSessions();
 
             } catch (err) {
                 botMsgElem.innerText = 'Connection Error.';
@@ -511,15 +728,24 @@
             const r = new FileReader();
             r.onload = (ex) => {
                 selectedFileData = { mimeType: file.type, data: ex.target.result.split(',')[1] };
-                alert(`File attached: ${file.name}`);
+                
+                // Show file preview chip
+                document.getElementById('fileNameDisplay').innerText = file.name;
+                document.getElementById('filePreviewChip').style.display = 'flex';
             };
             r.readAsDataURL(file);
+        }
+
+        function cancelAttachedFile() {
+            selectedFileData = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreviewChip').style.display = 'none';
         }
 
         function escapeHTML(s) { return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t])); }
         function escapeQuotes(s) { return s.replace(/[`"'\\]/g, ''); }
 
-        loadHistory();
+        loadAllSessions();
     </script>
 </body>
 </html>
