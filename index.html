@@ -748,21 +748,52 @@
 
         function retryLastMessage(btn) {
             btn.classList.add('spinning');
+            
             setTimeout(() => {
                 if (currentSessionId && chatSessions[currentSessionId]) {
                     const messages = chatSessions[currentSessionId].messages;
+                    
+                    let lastUserMsgIndex = -1;
                     for (let i = messages.length - 1; i >= 0; i--) {
                         if (messages[i].role === 'user') {
-                            const lastMsgText = messages[i].text;
-                            chatSessions[currentSessionId].messages.pop();
-                            document.getElementById('userInput').value = lastMsgText;
-                            chatBox.removeChild(chatBox.lastChild);
-                            sendMessage();
+                            lastUserMsgIndex = i;
                             break;
                         }
                     }
+
+                    if (lastUserMsgIndex !== -1) {
+                        const lastMsg = messages[lastUserMsgIndex];
+                        
+                        if (chatBox.lastChild) {
+                            chatBox.removeChild(chatBox.lastChild);
+                        }
+                        
+                        document.getElementById('userInput').value = lastMsg.text || '';
+                        
+                        selectedFilesData = [];
+                        if (lastMsg.files && lastMsg.files.length > 0) {
+                            lastMsg.files.forEach(f => {
+                                selectedFilesData.push({
+                                    name: f.name,
+                                    mimeType: f.mimeType,
+                                    data: f.fullData ? f.fullData.split(',')[1] : '',
+                                    fullData: f.fullData
+                                });
+                            });
+                            renderFilePreviews();
+                        }
+
+                        chatSessions[currentSessionId].messages.splice(lastUserMsgIndex);
+                        saveSessions();
+
+                        sendMessage();
+                    } else {
+                        btn.classList.remove('spinning');
+                    }
+                } else {
+                    btn.classList.remove('spinning');
                 }
-            }, 500); // Maikling delay para makita ang spinning animation bago mag-reload
+            }, 400);
         }
 
         function clearCurrentChat() {
