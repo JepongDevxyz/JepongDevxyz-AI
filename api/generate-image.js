@@ -1,67 +1,42 @@
-export default async function handler(req, res) {
-  // Siguraduhin na laging JSON ang ibabalik kahit may error
-  res.setHeader('Content-Type', 'application/json');
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method Not Allowed' });
-  }
-
+// Frontend Handler (e.g., inside your submit/click event listener)
+async function generateImage(promptText) {
   try {
-    const { prompt } = req.body || {};
-    
-    if (!prompt) {
-      return res.status(400).json({ success: false, error: 'Prompt is required' });
-    }
-
-    const API_KEY = process.env.GEMINI_API_KEY;
-
-    if (!API_KEY) {
-      return res.status(500).json({ success: false, error: 'Missing GEMINI_API_KEY in Environment Variables' });
-    }
-
-    // Google API Endpoint para sa Imagen
-    const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=${API_KEY}`;
-
-    const apiResponse = await fetch(googleUrl, {
+    const response = await fetch('/api/generate-image', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        prompt: prompt,
-        config: {
-          numberOfImages: 1,
-          outputMimeType: "image/jpeg",
-          aspectRatio: "1:1"
-        }
-      }),
+      body: JSON.stringify({ prompt: promptText }),
     });
 
-    const data = await apiResponse.json();
+    // 1. Kunin muna ang raw text mula sa response
+    const rawText = await response.text();
 
-    if (!apiResponse.ok) {
-      return res.status(apiResponse.status).json({
-        success: false,
-        error: data.error?.message || 'Google API Error'
-      });
+    // 2. Suriin kung blangko ang nakuha mula sa server
+    if (!rawText) {
+      throw new Error(`Server returned empty response (Status: ${response.status})`);
     }
 
-    const base64ImageBytes = data.generatedImages?.[0]?.image?.imageBytes;
-
-    if (!base64ImageBytes) {
-      return res.status(500).json({ success: false, error: 'No image data returned from Google API' });
+    // 3. I-parse ang text sa JSON nang may safe try-catch
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      throw new Error(`Server error (${response.status}): ${rawText.substring(0, 100)}`);
     }
 
-    return res.status(200).json({
-      success: true,
-      imageUrl: `data:image/jpeg;base64,${base64ImageBytes}`
-    });
+    // 4. Suriin ang API result status
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    }
 
-  } catch (err) {
-    // Sisiguraduhing makakatanggap pa rin ng valid JSON response ang Frontend sa anumang crash
-    return res.status(500).json({
-      success: false,
-      error: err.message || 'Internal Server Error'
-    });
+    // Tagumpay: gamitin ang imageUrl
+    console.log("Image URL:", data.imageUrl);
+    return data.imageUrl;
+
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    // Ipapakita na ngayon ang totoong dahilan sa UI imbes na 'Unexpected end of JSON input'
+    showErrorToUser(error.message); 
   }
 }
