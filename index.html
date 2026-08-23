@@ -471,7 +471,6 @@
                 scrollBtn.style.display = !isNearBottom ? 'block' : 'none';
             }
 
-            // Kung malayo sa ibaba, ibig sabihin nag-scroll pataas ang user para magbasa
             userScrolledUp = !isNearBottom;
         });
 
@@ -650,7 +649,7 @@
                 chatSessions[currentSessionId].title = message ? message.substring(0, 25) : 'File Attachment';
             }
 
-            userScrolledUp = false; // I-reset para sa bagong message
+            userScrolledUp = false;
             chatBox.innerHTML += `<div class="msg user">${escapeHTML(message)}</div>`;
             chatSessions[currentSessionId].messages.push({ role: 'user', text: message });
             saveSessions();
@@ -693,7 +692,6 @@
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
                         </div>`;
                     
-                    // Smart scroll call (hindi pipiliting ibaba kung nagba-browse sa itaas ang user)
                     scrollToBottom(false);
                 }
 
@@ -778,19 +776,43 @@
         }
 
         function speakRawText(text) {
+            if (!('speechSynthesis' in window)) {
+                alert('Text-to-speech is not supported in this browser.');
+                return;
+            }
+
             window.speechSynthesis.cancel();
             const cleanText = text.replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
             
+            const voices = window.speechSynthesis.getVoices();
             const tagalogWords = /\b(ang|mga|at|sa|na|ng|ay|ko|mo|niya|ito|yan|iyon|ka|ako|kami|tayo|sila|ba|rin|din|kung|para|kayo|po|opo)\b/i;
+            
+            let targetLang = 'en-US';
             if (tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog') {
-                utterance.lang = 'tl-PH';
-            } else {
-                utterance.lang = 'en-US';
+                targetLang = 'tl-PH';
             }
 
+            let selectedVoice = voices.find(v => v.lang === targetLang || v.lang.startsWith(targetLang.substring(0, 2)));
+            
+            if (!selectedVoice && targetLang === 'tl-PH') {
+                selectedVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+            }
+
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+            
+            utterance.lang = selectedVoice ? selectedVoice.lang : targetLang;
             utterance.rate = 1.0;
+            
             window.speechSynthesis.speak(utterance);
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
         }
 
         function toggleSpeechRecognition() {
