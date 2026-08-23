@@ -48,89 +48,38 @@
         .bar-1 { height: 25%; } .bar-2 { height: 50%; } .bar-3 { height: 75%; } .bar-4 { height: 100%; }
 
         .header-controls { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; align-items: center; }
-        select, .custom-prompt-input { flex: 1; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; min-width: 130px; }
-        .custom-prompt-input { display: none; width: 100%; margin-top: 4px; }
+        .custom-prompt-input { flex: 1; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; min-width: 100%; display: none; margin-top: 4px; }
         
-        .model-trigger-btn {
-            background: rgba(30, 41, 59, 0.5);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            min-width: 130px;
-        }
-        .model-trigger-btn::after { content: '▾'; font-size: 0.7rem; color: var(--text-muted); }
+        .header-btn { background: transparent; color: var(--text-main); border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.72rem; flex-shrink: 0; transition: background 0.2s; }
+        .header-btn:hover { background: rgba(255, 255, 255, 0.05); }
+        .clear-btn { color: #fca5a5; }
+        .clear-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
-        .header-btn { background: transparent; color: var(--text-main); border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.72rem; flex-shrink: 0; }
-        .clear-btn { background: transparent; color: #fca5a5; border: none; }
-
-        .model-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-        .model-modal-overlay.open { display: flex; }
+        /* Custom Floating Modal Dropdown para sa Mode at Model */
+        .selector-wrapper { position: relative; flex: 1; min-width: 130px; }
+        .dropdown-btn { width: 100%; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         
-        .model-modal-card {
-            background: #191c21;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            width: 100%;
-            max-width: 320px;
-            padding: 12px 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            animation: popupFade 0.2s ease-out;
-        }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 1000; }
+        .modal-overlay.open { display: flex; align-items: center; justify-content: center; }
+        
+        .floating-modal { background: #151d2d; border: 1px solid var(--border-color); border-radius: 20px; width: 90%; max-width: 340px; padding: 10px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: modalPop 0.2s ease-out; max-height: 85vh; overflow-y: auto; }
+        @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        @keyframes popupFade {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        .option-item { background: transparent; border: none; border-radius: 12px; padding: 10px 12px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); width: 100%; }
+        .option-item:hover { background: rgba(255, 255, 255, 0.05); }
+        .option-item.active { background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); }
+        
+        .option-info { display: flex; flex-direction: column; gap: 2px; }
+        .option-name { font-weight: 600; font-size: 0.88rem; }
+        .option-desc { font-size: 0.72rem; color: var(--text-muted); }
+        
+        /* Radio button style */
+        .radio-icon { width: 18px; height: 18px; border: 2px solid var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .option-item.active .radio-icon { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2); box-shadow: inset 0 0 0 3px #8b5cf6; }
+        
+        .divider { height: 1px; background: var(--border-color); margin: 6px 0; }
 
-        .model-option-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 14px;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .model-option-item:hover { background: rgba(255, 255, 255, 0.05); }
-
-        .model-option-check {
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-size: 0.95rem;
-            flex-shrink: 0;
-            visibility: hidden;
-        }
-        .model-option-item.selected .model-option-check { visibility: visible; }
-
-        .model-option-details { display: flex; flex-direction: column; gap: 2px; }
-        .model-option-title { font-size: 0.95rem; font-weight: 500; color: #ffffff; }
-        .model-option-desc { font-size: 0.75rem; color: #94a3b8; }
-        .model-divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin: 6px 12px; }
-
+        /* Sidebar Styling */
         .sidebar-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 900; }
         .sidebar { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #0f172a; border-right: 1px solid var(--border-color); z-index: 901; transition: left 0.3s ease; display: flex; flex-direction: column; padding: 16px; gap: 14px; }
         .sidebar.open { left: 0; }
@@ -149,42 +98,24 @@
         .search-chat-input { background: rgba(30, 41, 59, 0.5); border: none; color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; width: 100%; }
         .chat-history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         
-        .history-item { background: transparent; border: none; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+        .history-item { background: transparent; border: none; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 6px; transition: background 0.2s; color: var(--text-main); }
         .history-item:hover { background: rgba(255, 255, 255, 0.03); }
         .history-item.active { background: rgba(99, 102, 241, 0.15); }
-        .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
         .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; }
         .delete-hist-btn:hover { color: #ef4444; }
 
         .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; position: relative; }
         
-        .welcome-screen { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100%; 
-            text-align: center; 
-            margin: auto; 
-            width: 100%; 
-            padding: 20px 0;
-        }
-        .welcome-lottie-top { width: 180px; height: 60px; }
-        .welcome-title { 
-            font-size: 1.85rem; 
-            font-weight: 700; 
-            background: linear-gradient(90deg, #ffffff, #94a3b8); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            letter-spacing: -0.5px; 
-            margin: 8px 0; 
-            line-height: 1; 
-        }
-        .welcome-lottie-bottom { width: 220px; height: 120px; }
+        .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; margin: auto; width: 100%; }
+        .welcome-lottie-top { width: 220px; height: 60px; margin-bottom: -10px; }
+        .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; margin: 0; line-height: 1; }
+        .welcome-lottie-bottom { width: 100%; max-width: 260px; height: auto; aspect-ratio: 16 / 9; margin-top: -55px; }
 
         .msg { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; word-break: break-word; position: relative; }
         .user { align-self: flex-end; background: var(--user-msg); color: #fff; border-bottom-right-radius: 4px; }
         .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+        .bot img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border-color); }
 
         .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; text-decoration: none; }
@@ -195,6 +126,7 @@
         .code-actions button { background: rgba(255, 255, 255, 0.1); border: none; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
         pre { padding: 12px; overflow-x: auto; font-size: 0.85rem; }
 
+        /* Input Container Pill UI */
         .input-container { padding: 12px 16px 18px 16px; background: transparent; }
         .chat-input-pill {
             background: #1f222a;
@@ -208,30 +140,12 @@
         }
 
         .pill-plus-btn {
-            background: transparent;
-            border: none;
-            color: #e2e8f0;
-            font-size: 1.4rem;
-            font-weight: 300;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            flex-shrink: 0;
+            background: transparent; border: none; color: #e2e8f0; font-size: 1.4rem; font-weight: 300; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
         }
 
         .pill-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #ffffff !important;
-            font-size: 0.95rem;
-            caret-color: #3b82f6;
-            padding: 4px 6px;
-            min-width: 0;
+            flex: 1; background: transparent; border: none; color: #ffffff !important; font-size: 0.95rem; caret-color: #3b82f6; padding: 4px 6px; min-width: 0;
         }
         .pill-input::placeholder { color: #94a3b8; font-weight: 400; }
 
@@ -251,38 +165,14 @@
             50% { transform: scaleY(1.2); opacity: 1; background: #8b5cf6; }
         }
 
-        .pill-mic-btn {
-            background: transparent;
-            border: none;
-            color: #e2e8f0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .pill-action-btn {
-            background: #8b5cf6;
-            color: #ffffff;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-        }
+        .pill-mic-btn { background: transparent; border: none; color: #e2e8f0; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; transition: background 0.2s; }
+        .pill-mic-btn:hover { background: rgba(255,255,255,0.08); }
+        
+        .pill-action-btn { background: #8b5cf6; color: #ffffff; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.2s ease, background-color 0.2s ease; }
         .pill-action-btn:hover { background: #7c3aed; transform: scale(1.05); }
 
         .file-preview-row { display: none; gap: 8px; overflow-x: auto; padding: 4px 2px 10px 2px; }
-        .gemini-chip { position: relative; display: inline-flex; align-items: center; background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 4px 8px; height: 48px; }
+        .gemini-chip { position: relative; display: inline-flex; align-items: center; background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 4px 8px; height: 48px; color: var(--text-main); }
         .gemini-chip.img-chip { padding: 0; width: 52px; height: 52px; border-radius: 12px; overflow: hidden; }
         .gemini-chip img { width: 100%; height: 100%; object-fit: cover; }
         .chip-close-btn { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; background: rgba(0, 0, 0, 0.75); border: none; color: #ffffff; border-radius: 50%; font-size: 0.65rem; cursor: pointer; }
@@ -335,59 +225,92 @@
             </div>
 
             <div class="header-controls">
-                <select id="modeSelect" onchange="checkCustomMode()">
-                    <option value="general">🤖 Mode: General AI</option>
-                    <option value="school">🎓 Mode: School Purpose</option>
-                    <option value="coder">💻 Mode: Expert Coder</option>
-                    <option value="tagalog">🇵🇭 Mode: Pure Tagalog Friend</option>
-                    <option value="affiliate">🛒 Mode: Affiliate Marketer</option>
-                    <option value="custom">✏️ Mode: Custom Persona</option>
-                </select>
-                
-                <button class="model-trigger-btn" id="modelTriggerBtn" onclick="toggleModelModal(true)">
-                    <span id="selectedModelLabel">Gemini 3.6 Flash</span>
-                </button>
+                <!-- Mode Selector Floating Modal Wrapper -->
+                <div class="selector-wrapper">
+                    <button class="dropdown-btn" onclick="toggleModal('modeModalOverlay', true)">
+                        <span id="selectedModeText">🤖 Mode: General AI</span>
+                        <span>▼</span>
+                    </button>
+                </div>
 
+                <!-- Model Selector Floating Modal Wrapper -->
+                <div class="selector-wrapper">
+                    <button class="dropdown-btn" onclick="toggleModal('modelModalOverlay', true)">
+                        <span id="selectedModelText">Gemini 3.6 Flash</span>
+                        <span>▼</span>
+                    </button>
+                </div>
+                
                 <input type="text" id="customPromptInput" class="custom-prompt-input" placeholder="Type custom persona instructions here...">
             </div>
         </div>
 
-        <!-- Gemini Model Selection Modal (3.x Series) -->
-        <div class="model-modal-overlay" id="modelModalOverlay" onclick="toggleModelModal(false)">
-            <div class="model-modal-card" onclick="event.stopPropagation()">
-                <div class="model-option-item" id="opt-gemini-3.5-flash-lite" onclick="selectModel('gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite')">
-                    <div class="model-option-check" id="check-gemini-3.5-flash-lite">✓</div>
-                    <div class="model-option-details">
-                        <div class="model-option-title">Gemini 3.5 Flash-Lite</div>
-                        <div class="model-option-desc">Fastest answers</div>
-                    </div>
-                </div>
-                
-                <div class="model-option-item selected" id="opt-gemini-3.6-flash" onclick="selectModel('gemini-3.6-flash', 'Gemini 3.6 Flash')">
-                    <div class="model-option-check" id="check-gemini-3.6-flash">✓</div>
-                    <div class="model-option-details">
-                        <div class="model-option-title">Gemini 3.6 Flash</div>
-                        <div class="model-option-desc">All-around help</div>
-                    </div>
-                </div>
+        <!-- Mode Floating Modal Overlay -->
+        <div class="modal-overlay" id="modeModalOverlay" onclick="if(event.target === this) toggleModal('modeModalOverlay', false)">
+            <div class="floating-modal">
+                <button class="option-item active" onclick="selectMode('general', '🤖 Mode: General AI')">
+                    <div class="option-info"><span class="option-name">🤖 Mode: General AI</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('school', '🎓 Mode: School Purpose')">
+                    <div class="option-info"><span class="option-name">🎓 Mode: School Purpose</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('coder', '💻 Mode: Expert Coder')">
+                    <div class="option-info"><span class="option-name">💻 Mode: Expert Coder</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('tagalog', '🇵🇭 Mode: Pure Tagalog Friend')">
+                    <div class="option-info"><span class="option-name">🇵🇭 Mode: Pure Tagalog Friend</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('affiliate', '🛒 Mode: Affiliate Marketer')">
+                    <div class="option-info"><span class="option-name">🛒 Mode: Affiliate Marketer</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('image_gen', '🎨 Mode: Imagen 3 (Google Engine)')">
+                    <div class="option-info"><span class="option-name">🎨 Mode: Imagen 3 (Google Engine)</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('custom', '✏️ Mode: Custom Persona')">
+                    <div class="option-info"><span class="option-name">✏️ Mode: Custom Persona</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+            </div>
+        </div>
 
-                <div class="model-option-item" id="opt-gemini-3.1-pro" onclick="selectModel('gemini-3.1-pro', 'Gemini 3.1 Pro')">
-                    <div class="model-option-check" id="check-gemini-3.1-pro">✓</div>
-                    <div class="model-option-details">
-                        <div class="model-option-title">Gemini 3.1 Pro</div>
-                        <div class="model-option-desc">Advanced reasoning</div>
+        <!-- Model Floating Modal Overlay -->
+        <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
+            <div class="floating-modal">
+                <button class="option-item" onclick="selectModel('gemini-3.5-flash-lite', '3.5 Flash-Lite')">
+                    <div class="option-info">
+                        <div class="option-name">3.5 Flash-Lite</div>
+                        <div class="option-desc">Fastest answers</div>
                     </div>
-                </div>
-
-                <div class="model-divider"></div>
-
-                <div class="model-option-item" id="opt-gemini-3.7-extended-thinking" onclick="selectModel('gemini-3.7-extended-thinking', 'Extended thinking')">
-                    <div class="model-option-check" id="check-gemini-3.7-extended-thinking">✓</div>
-                    <div class="model-option-details">
-                        <div class="model-option-title">Extended thinking</div>
-                        <div class="model-option-desc">Complex problem solving</div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item active" onclick="selectModel('gemini-3.6-flash', 'Gemini 3.6 Flash')">
+                    <div class="option-info">
+                        <div class="option-name">Gemini 3.6 Flash</div>
+                        <div class="option-desc">All-around help</div>
                     </div>
-                </div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectModel('gemini-3.1-pro', '3.1 Pro')">
+                    <div class="option-info">
+                        <div class="option-name">3.1 Pro</div>
+                        <div class="option-desc">Advanced reasoning</div>
+                    </div>
+                    <div class="radio-icon"></div>
+                </button>
+                <div class="divider"></div>
+                <button class="option-item" onclick="selectModel('gemini-3.7-extended-thinking', 'Extended thinking')">
+                    <div class="option-info">
+                        <div class="option-name">Extended thinking</div>
+                        <div class="option-desc">Complex problem solving</div>
+                    </div>
+                    <div class="radio-icon"></div>
+                </button>
             </div>
         </div>
 
@@ -396,7 +319,7 @@
             <button id="scrollBtn" onclick="scrollToBottom()">↓</button>
         </div>
 
-        <!-- Input Container -->
+        <!-- Input Box -->
         <div class="input-container">
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
@@ -407,13 +330,7 @@
                 <input type="text" class="pill-input" id="userInput" placeholder="Ask Gemini..." onkeydown="if(event.key==='Enter') sendMessage()">
                 
                 <div class="wave-container" id="waveContainer">
-                    <div class="wave-bar"></div>
-                    <div class="wave-bar"></div>
-                    <div class="wave-bar"></div>
-                    <div class="wave-bar"></div>
-                    <div class="wave-bar"></div>
-                    <div class="wave-bar"></div>
-                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
                 </div>
 
                 <button class="pill-mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice input">
@@ -437,9 +354,10 @@
         let selectedFilesData = [];
         let chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
         let currentSessionId = null;
+        let currentSelectedModel = 'gemini-3.6-flash';
+        let currentSelectedMode = 'general';
         let isRecording = false;
         let recognition = null;
-        let selectedModelVal = 'gemini-3.6-flash';
 
         const micSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" ry="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
         const stopSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
@@ -463,23 +381,6 @@
 
         const chatBox = document.getElementById('chatBox');
 
-        function toggleModelModal(show) {
-            document.getElementById('modelModalOverlay').classList.toggle('open', show);
-        }
-
-        function selectModel(val, label) {
-            selectedModelVal = val;
-            document.getElementById('selectedModelLabel').innerText = label;
-            
-            document.querySelectorAll('.model-option-item').forEach(el => el.classList.remove('selected'));
-            
-            const targetOpt = document.getElementById('opt-' + val);
-            if (targetOpt) {
-                targetOpt.classList.add('selected');
-            }
-            toggleModelModal(false);
-        }
-
         function saveSessions() {
             localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
             renderSidebarHistory();
@@ -492,25 +393,50 @@
         chatBox.addEventListener('scroll', () => {
             const scrollBtn = document.getElementById('scrollBtn');
             if (scrollBtn) {
-                if (chatBox.scrollTop < chatBox.scrollHeight - chatBox.clientHeight - 100) {
-                    scrollBtn.style.display = 'block';
-                } else {
-                    scrollBtn.style.display = 'none';
-                }
+                scrollBtn.style.display = chatBox.scrollTop < chatBox.scrollHeight - chatBox.clientHeight - 100 ? 'block' : 'none';
             }
         });
 
-        function checkCustomMode() {
-            const mode = document.getElementById('modeSelect').value;
-            document.getElementById('customPromptInput').style.display = mode === 'custom' ? 'block' : 'none';
+        function toggleModal(modalId, show) {
+            document.getElementById(modalId).classList.toggle('open', show);
+        }
+
+        function selectMode(modeKey, modeDisplayName) {
+            currentSelectedMode = modeKey;
+            document.getElementById('selectedModeText').innerText = modeDisplayName;
+            
+            const modal = document.getElementById('modeModalOverlay');
+            modal.querySelectorAll('.option-item').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(modeKey)) {
+                    btn.classList.add('active');
+                }
+            });
+            toggleModal('modeModalOverlay', false);
+            
+            document.getElementById('customPromptInput').style.display = modeKey === 'custom' ? 'block' : 'none';
+        }
+
+        function selectModel(modelKey, modelDisplayName) {
+            currentSelectedModel = modelKey;
+            document.getElementById('selectedModelText').innerText = modelDisplayName;
+            
+            const modal = document.getElementById('modelModalOverlay');
+            modal.querySelectorAll('.option-item').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(modelKey)) {
+                    btn.classList.add('active');
+                }
+            });
+            toggleModal('modelModalOverlay', false);
         }
 
         function renderWelcomeScreen() {
             chatBox.innerHTML = `
                 <div class="welcome-screen">
-                    <lottie-player class="welcome-lottie-top" src="https://assets2.lottiefiles.com/packages/lf20_at4p6j7k.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                    <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
                     <div class="welcome-title">JepongDevxyz AI</div>
-                    <lottie-player class="welcome-lottie-bottom" src="https://assets9.lottiefiles.com/packages/lf20_myej3slc.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                    <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button id="scrollBtn" onclick="scrollToBottom()">↓</button>
             `;
@@ -629,8 +555,8 @@
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
-            const mode = document.getElementById('modeSelect').value;
-            const model = selectedModelVal;
+            const mode = currentSelectedMode;
+            const model = currentSelectedModel;
 
             if (!message && selectedFilesData.length === 0) return;
             if (!currentSessionId || !chatSessions[currentSessionId]) createNewChat();
@@ -651,6 +577,34 @@
             chatBox.appendChild(botMsgElem);
             scrollToBottom();
 
+            if (mode === 'image_gen') {
+                botMsgElem.innerText = '🎨 Generating image...';
+                try {
+                    const res = await fetch('/api/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: message, model: 'imagen-3.0-generate-002' })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        const imageMarkdown = `Here is your generated image:\n\n![Generated Image](${data.imageUrl})`;
+                        botMsgElem.innerHTML = `<div>${marked.parse(imageMarkdown)}</div>
+                            <div class="bot-actions">
+                                <a href="${data.imageUrl}" download="imagen.jpg" class="bot-action-btn">📥 Download</a>
+                            </div>`;
+                        chatSessions[currentSessionId].messages.push({ role: 'bot', text: imageMarkdown });
+                        saveSessions();
+                    } else {
+                        botMsgElem.innerText = '⚠️ Error generating image.';
+                    }
+                } catch (err) {
+                    botMsgElem.innerText = '⚠️ Connection Error.';
+                }
+                selectedFilesData = [];
+                renderFilePreviews();
+                return;
+            }
+
             const tempFiles = [...selectedFilesData];
             selectedFilesData = [];
             renderFilePreviews();
@@ -664,12 +618,6 @@
                     body: JSON.stringify({ message, files: tempFiles, model, mode, customPrompt })
                 });
 
-                if (!response.ok) {
-                    const errData = await response.json();
-                    botMsgElem.innerText = '⚠️ API Error: ' + (errData.error || 'Request Failed');
-                    return;
-                }
-
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullResponse = '';
@@ -677,7 +625,6 @@
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    
                     fullResponse += decoder.decode(value, { stream: true });
                     botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
                         <div class="bot-actions">
@@ -696,7 +643,7 @@
                 }
 
             } catch (err) {
-                botMsgElem.innerText = '⚠️ Connection Error.';
+                botMsgElem.innerText = 'Connection Error.';
             }
         }
 
@@ -724,14 +671,12 @@
         }
 
         function speakText(btn) {
-            const text = btn.closest('.msg').querySelector('div').innerText;
-            speakRawText(text);
+            speakRawText(btn.closest('.msg').querySelector('div').innerText);
         }
 
         function speakRawText(text) {
             window.speechSynthesis.cancel();
-            const cleanText = text.replace(/[*_#`~]/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanText);
+            const utterance = new SpeechSynthesisUtterance(text.replace(/[*_#`~]/g, ''));
             utterance.rate = 1.0;
             window.speechSynthesis.speak(utterance);
         }
@@ -768,8 +713,8 @@
                     stopRecordingUI();
                 };
 
-                recognition.onerror = () => { stopRecordingUI(); };
-                recognition.onend = () => { stopRecordingUI(); };
+                recognition.onerror = () => stopRecordingUI();
+                recognition.onend = () => stopRecordingUI();
 
                 recognition.start();
             }
@@ -784,18 +729,11 @@
 
         async function checkPing() {
             const pingText = document.getElementById('pingText');
-            const bars = [
-                document.getElementById('bar1'),
-                document.getElementById('bar2'),
-                document.getElementById('bar3'),
-                document.getElementById('bar4')
-            ];
-
+            const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
             const start = performance.now();
             try {
-                const res = await fetch('/api/ping', { method: 'GET', cache: 'no-store' });
-                const ping = Math.round(performance.now() - start);
-                pingText.innerText = ping + ' ms';
+                await fetch('/api/chat', { method: 'HEAD', cache: 'no-store' });
+                pingText.innerText = Math.round(performance.now() - start) + ' ms';
                 bars.forEach(bar => bar.style.backgroundColor = 'var(--sig-good)');
             } catch (e) {
                 pingText.innerText = 'Offline';
@@ -809,8 +747,7 @@
         function escapeHTML(s) { return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t])); }
 
         if (Object.keys(chatSessions).length > 0) {
-            const firstId = Object.keys(chatSessions)[Object.keys(chatSessions).length - 1];
-            loadChatSession(firstId);
+            loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
         } else {
             createNewChat();
         }
