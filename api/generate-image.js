@@ -7,6 +7,10 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
+    if (!apiKey) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Vercel Environment Variables' });
+    }
+
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
@@ -30,12 +34,14 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error?.message || 'Failed to fetch from Imagen API');
+      return res.status(response.status).json({ 
+        error: data.error?.message || 'Failed to fetch image from Google API' 
+      });
     }
 
     const base64Image = data.predictions?.[0]?.bytesBase64Encoded;
     if (!base64Image) {
-      return res.status(500).json({ error: 'No image data returned from API' });
+      return res.status(500).json({ error: 'Empty response received from Google Imagen API.' });
     }
 
     return res.status(200).json({ 
