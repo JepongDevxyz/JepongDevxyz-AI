@@ -341,7 +341,6 @@
                 
                 <button class="action-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">📎</button>
 
-                <!-- Updated Text Box Placeholder -->
                 <input type="text" id="userInput" placeholder="Ask JepongDevxyz AI" onkeydown="if(event.key==='Enter') sendMessage()">
                 
                 <button class="mic-btn" id="micBtn" onclick="toggleSpeech()" title="Voice Input">🎤</button>
@@ -584,6 +583,7 @@
             }
         }
 
+        /* Improved Full-Text Deep Search across both User & AI Messages */
         function renderChatHistoryList(filterQuery = '') {
             const listElem = document.getElementById('chatHistoryList');
             listElem.innerHTML = '';
@@ -597,13 +597,22 @@
             });
 
             let count = 0;
+            const queryLower = filterQuery.toLowerCase().trim();
+
             sortedKeys.forEach(id => {
                 const session = chatSessions[id];
                 const title = session.title || 'Conversation';
                 const isPinned = session.pinned || false;
 
-                if (filterQuery && !title.toLowerCase().includes(filterQuery.toLowerCase())) {
-                    return;
+                if (queryLower) {
+                    // Extract full text from session HTML for deep searching
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = session.html || '';
+                    const fullTextContent = (title + " " + tempDiv.innerText).toLowerCase();
+
+                    if (!fullTextContent.includes(queryLower)) {
+                        return;
+                    }
                 }
 
                 count++;
@@ -712,13 +721,11 @@
 
         function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
 
-        /* Auto-Detect Language (Tagalog vs English) Voice Output Fix */
         function speakText(text) {
             window.speechSynthesis.cancel();
             const cleanText = text.replace(/<[^>]*>?/gm, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
 
-            // Detection for Tagalog words
             const tagalogWords = ['ang', 'mga', 'ng', 'sa', 'na', 'para', 'ako', 'ikaw', 'kami', 'tayo', 'sila', 'ito', 'iyan', 'iyon', 'hindi', 'oo', 'dahil', 'kung', 'paano', 'salamat', 'maganda', 'bata'];
             const lower = cleanText.toLowerCase();
             const isTagalog = tagalogWords.some(word => new RegExp('\\b' + word + '\\b', 'i').test(lower));
