@@ -1,70 +1,57 @@
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(req) {
+// Example: api/generate-image.js (Vercel / Node.js Serverless Function)
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
 
+  const { prompt } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ success: false, error: 'Prompt is required' });
+  }
+
+  const API_KEY = process.env.GEMINI_API_KEY; // Siguraduhing naka-set ang iyong API key
+
+  // Endpoint para sa Imagen 4
+  const URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4:generateImages?key=${API_KEY}`;
+
   try {
-    const { prompt } = await req.json();
-
-    if (!prompt) {
-      return new Response(JSON.stringify({ error: 'Prompt is required.' }), { status: 400 });
-    }
-
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
-
-    if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { status: 500 });
-    }
-
-    let imagenRes = null;
-    let lastErrorText = '';
-
-    for (const apiKey of apiKeys) {
-      imagenRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            instances: [{ prompt: prompt }],
-            parameters: {
-              sampleCount: 1,
-              outputMimeType: 'image/jpeg',
-              aspectRatio: '1:1'
-            }
-          })
+    const response = await fetch(URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        config: {
+          numberOfImages: 1,
+          outputMimeType: "image/jpeg",
+          aspectRatio: "1:1",
+          personGeneration: "ALLOW_ADULT"
         }
-      );
+      }),
+    });
 
-      if (imagenRes.ok) break;
+    const data = await response.json();
 
-      lastErrorText = await imagenRes.text();
-      if (imagenRes.status !== 429) break;
+    if (!response.ok) {
+      // Magbabalik ng malinaw na error message mula sa Google API kapag may problema
+      const errorMsg = data.error?.message || JSON.stringify(data);
+      throw new Error(errorMsg);
     }
 
-    if (!imagenRes || !imagenRes.ok) {
-      return new Response(JSON.stringify({ success: false, error: lastErrorText }), { status: imagenRes ? imagenRes.status : 500 });
-    }
+    // Kukunin ang base64 image data mula sa response ng Imagen 4
+    const base64ImageBytes = data.generatedImages[0].image.imageBytes;
+    const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
 
-    const data = await imagenRes.json();
-    const base64Image = data.predictions?.[0]?.bytesBase64Encoded;
-
-    if (!base64Image) {
-      return new Response(JSON.stringify({ success: false, error: 'No image data returned.' }), { status: 500 });
-    }
-
-    const imageUrl = `data:image/jpeg;base64,${base64Image}`;
-
-    return new Response(JSON.stringify({ success: true, imageUrl }), {
-      headers: { 'Content-Type': 'application/json' }
+    return res.status(200).json({
+      success: true,
+      imageUrl: imageUrl
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500 });
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to generate image with Imagen 4'
+    });
   }
 }
