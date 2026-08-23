@@ -8,9 +8,8 @@ export default async function handler(req) {
   }
 
   try {
-    const { message, file, files, model } = await req.json();
+    const { message, file, files, model, mode, customPrompt } = await req.json();
     
-    // Babasahin ang mga keys na hiwalay ng comma (e.g., KEY1,KEY2,KEY3)
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
@@ -18,25 +17,36 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ error: 'No API keys configured.' }), { status: 500 });
     }
 
-    // Siguraduhing valid ang model name
     const targetModel = model || 'gemini-3.6-flash';
 
+    // Set System Prompt base sa napiling Mode
+    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
+
+    if (mode === 'school') {
+      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
+    } else if (mode === 'coder') {
+      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
+    } else if (mode === 'tagalog') {
+      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
+    } else if (mode === 'affiliate') {
+      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
+    } else if (mode === 'custom' && customPrompt) {
+      systemInstructionText += ` ${customPrompt}`;
+    }
+
     const systemInstruction = {
-      parts: [{ text: "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks." }]
+      parts: [{ text: systemInstructionText }]
     };
 
     const parts = [];
 
-    // Suporta para sa multiple files (mula sa bagong index.html)
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
         if (f.data && f.mimeType) {
           parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
         }
       });
-    } 
-    // Suporta para sa lumang single file format
-    else if (file && file.data && file.mimeType) {
+    } else if (file && file.data && file.mimeType) {
       parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
     }
 
@@ -45,7 +55,6 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
-    // Susubukan ang bawat API key kapag nag-429 (Quota Limit) error
     for (const apiKey of apiKeys) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
@@ -62,7 +71,7 @@ export default async function handler(req) {
       if (geminiRes.ok) break;
 
       lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break; // Kapag hindi quota error, huwag nang subukan ang susunod na key
+      if (geminiRes.status !== 429) break;
     }
 
     if (!geminiRes || !geminiRes.ok) {
