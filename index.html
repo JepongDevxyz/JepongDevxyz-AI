@@ -380,7 +380,7 @@
 
         <!-- Chat Area -->
         <div class="chat-box" id="chatBox">
-            <button id="scrollBtn" onclick="scrollToBottom()">↓</button>
+            <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
         </div>
 
         <!-- Input Box -->
@@ -433,6 +433,7 @@
         let currentSelectedMode = 'general';
         let isRecording = false;
         let recognition = null;
+        let userScrolledUp = false; // Smart scroll control flag
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -461,16 +462,24 @@
             renderSidebarHistory();
         }
 
-        function scrollToBottom() {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
+        // Smart scroll detection
         chatBox.addEventListener('scroll', () => {
             const scrollBtn = document.getElementById('scrollBtn');
+            const isNearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 100;
+            
             if (scrollBtn) {
-                scrollBtn.style.display = chatBox.scrollTop < chatBox.scrollHeight - chatBox.clientHeight - 100 ? 'block' : 'none';
+                scrollBtn.style.display = !isNearBottom ? 'block' : 'none';
             }
+
+            // Kung malayo sa ibaba, ibig sabihin nag-scroll pataas ang user para magbasa
+            userScrolledUp = !isNearBottom;
         });
+
+        function scrollToBottom(forced = false) {
+            if (forced || !userScrolledUp) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
 
         function toggleModal(modalId, show) {
             document.getElementById(modalId).classList.toggle('open', show);
@@ -512,8 +521,9 @@
                     <div class="welcome-title">JepongDevxyz AI</div>
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
-                <button id="scrollBtn" onclick="scrollToBottom()">↓</button>
+                <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
             `;
+            userScrolledUp = false;
         }
 
         function toggleSidebar(show) {
@@ -538,7 +548,7 @@
             if (session.messages.length === 0) {
                 renderWelcomeScreen();
             } else {
-                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom()">↓</button>';
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
                 session.messages.forEach(msg => {
                     if (msg.role === 'user') {
                         chatBox.innerHTML += `<div class="msg user">${escapeHTML(msg.text)}</div>`;
@@ -555,7 +565,7 @@
                 });
                 document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
             }
-            scrollToBottom();
+            scrollToBottom(true);
             toggleSidebar(false);
             renderSidebarHistory();
         }
@@ -636,10 +646,11 @@
             if (!currentSessionId || !chatSessions[currentSessionId]) createNewChat();
 
             if (chatSessions[currentSessionId].messages.length === 0) {
-                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom()">↓</button>';
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
                 chatSessions[currentSessionId].title = message ? message.substring(0, 25) : 'File Attachment';
             }
 
+            userScrolledUp = false; // I-reset para sa bagong message
             chatBox.innerHTML += `<div class="msg user">${escapeHTML(message)}</div>`;
             chatSessions[currentSessionId].messages.push({ role: 'user', text: message });
             saveSessions();
@@ -649,7 +660,7 @@
             botMsgElem.className = 'msg bot';
             botMsgElem.innerText = 'Thinking...';
             chatBox.appendChild(botMsgElem);
-            scrollToBottom();
+            scrollToBottom(true);
 
             const tempFiles = [...selectedFilesData];
             selectedFilesData = [];
@@ -681,7 +692,9 @@
                             <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
                         </div>`;
-                    scrollToBottom();
+                    
+                    // Smart scroll call (hindi pipiliting ibaba kung nagba-browse sa itaas ang user)
+                    scrollToBottom(false);
                 }
 
                 chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
@@ -699,7 +712,7 @@
                         🔄 Try Again
                     </button>
                 `;
-                scrollToBottom();
+                scrollToBottom(true);
             }
         }
 
@@ -747,7 +760,7 @@
 
         function copyCode(id, btn) {
             navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => {
-                btn.innerText = '✓ Copied!';
+                btn.innerText = '✅ Copied!';
                 setTimeout(() => btn.innerText = '📋 Copy', 2000);
             });
         }
