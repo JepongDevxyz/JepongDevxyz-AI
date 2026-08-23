@@ -19,7 +19,7 @@
             --text-muted: #94a3b8;
             --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             --user-msg: rgba(30, 41, 59, 0.9);
-            --bot-msg: rgba(30, 41, 59, 0.7);
+            --bot-msg: transparent; /* Ginawa nating flat/walang background para mukhang official clean text tulad ng akin */
             --sig-good: #10b981;
             --sig-bad: #ef4444;
         }
@@ -118,7 +118,7 @@
             overflow-y: auto; 
             display: flex; 
             flex-direction: column; 
-            gap: 14px; 
+            gap: 16px; 
             position: relative; 
             z-index: 1;
         }
@@ -128,20 +128,22 @@
         .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; margin: 0; line-height: 1; }
         .welcome-lottie-bottom { width: 100%; max-width: 260px; height: auto; aspect-ratio: 16 / 9; margin-top: -55px; }
 
-        .msg { max-width: 88%; font-size: 0.92rem; line-height: 1.5; word-break: break-word; position: relative; }
+        .msg { max-width: 100%; font-size: 0.92rem; line-height: 1.6; word-break: break-word; position: relative; }
         
-        /* User bubble kapag may kasamang text */
-        .msg.user.has-bubble { padding: 12px 16px; border-radius: 16px; background: var(--user-msg); border: 1px solid var(--border-color); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; }
-        
-        /* User wrapper kapag image/file lang (walang background container) */
+        /* User message styling: kung may text may bubble, kung file lang ay walang bubble */
+        .msg.user.has-bubble { padding: 12px 16px; border-radius: 16px; background: var(--user-msg); border: 1px solid var(--border-color); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; max-width: 88%; }
         .msg.user.no-bubble { align-self: flex-end; background: transparent; border: none; padding: 0; }
 
-        .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 16px; border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+        /* Bot message styling: Flat/Clean tulad ng assistant response (walang paligid na kahon) */
+        .msg.bot { align-self: flex-start; background: var(--bot-msg); border: none; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+        .msg.bot p { margin-bottom: 8px; }
+        .msg.bot ul, .msg.bot ol { padding-left: 20px; margin-bottom: 8px; }
+        .msg.bot li { margin-bottom: 6px; }
         
         .msg img { max-width: 100%; max-height: 250px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; cursor: pointer; transition: transform 0.2s; display: block; }
         .msg img:hover { transform: scale(1.02); opacity: 0.95; }
 
-        .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap; }
+        .bot-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; text-decoration: none; }
         .bot-action-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
 
@@ -209,9 +211,7 @@
             align-items: center;
             padding: 10px;
         }
-        .preview-modal-overlay.open {
-            display: flex;
-        }
+        .preview-modal-overlay.open { display: flex; }
         .preview-modal-content {
             background: #0f172a;
             border: 1px solid var(--border-color);
@@ -246,15 +246,8 @@
             cursor: pointer;
             font-size: 0.8rem;
         }
-        .preview-close-btn:hover {
-            background: rgba(239, 68, 68, 0.4);
-        }
-        .preview-iframe {
-            flex: 1;
-            width: 100%;
-            border: none;
-            background: #000;
-        }
+        .preview-close-btn:hover { background: rgba(239, 68, 68, 0.4); }
+        .preview-iframe { flex: 1; width: 100%; border: none; background: #000; }
 
         .image-lightbox-overlay {
             display: none;
@@ -267,16 +260,8 @@
             padding: 20px;
             backdrop-filter: blur(5px);
         }
-        .image-lightbox-overlay.open {
-            display: flex;
-        }
-        .image-lightbox-content {
-            max-width: 100%;
-            max-height: 90vh;
-            border-radius: 12px;
-            object-fit: contain;
-            border: 1px solid var(--border-color);
-        }
+        .image-lightbox-overlay.open { display: flex; }
+        .image-lightbox-content { max-width: 100%; max-height: 90vh; border-radius: 12px; object-fit: contain; border: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
@@ -286,7 +271,7 @@
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>💬 Chat History - JepongDevxyz AI</h2>
+                <h2>💬 Chat History</h2>
                 <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
             </div>
             <button class="new-chat-btn" onclick="createNewChat()"><span>➕</span> New Chat</button>
@@ -342,7 +327,7 @@
             </div>
         </div>
 
-        <!-- Mode Modal Overlay -->
+        <!-- Mode Modal -->
         <div class="modal-overlay" id="modeModalOverlay" onclick="if(event.target === this) toggleModal('modeModalOverlay', false)">
             <div class="floating-modal">
                 <button class="option-item active" onclick="selectMode('general', '🤖 Mode: General AI')">
@@ -372,36 +357,24 @@
             </div>
         </div>
 
-        <!-- Model Modal Overlay -->
+        <!-- Model Modal -->
         <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
             <div class="floating-modal">
                 <button class="option-item" onclick="selectModel('gemini-3.5-flash-lite', '3.5 Flash-Lite')">
-                    <div class="option-info">
-                        <div class="option-name">3.5 Flash-Lite</div>
-                        <div class="option-desc">Fastest answers</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">3.5 Flash-Lite</div><div class="option-desc">Fastest answers</div></div>
                     <div class="radio-icon"></div>
                 </button>
                 <button class="option-item active" onclick="selectModel('gemini-3.6-flash', 'Gemini 3.6 Flash')">
-                    <div class="option-info">
-                        <div class="option-name">Gemini 3.6 Flash</div>
-                        <div class="option-desc">All-around help</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">Gemini 3.6 Flash</div><div class="option-desc">All-around help</div></div>
                     <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectModel('gemini-3.1-pro', '3.1 Pro')">
-                    <div class="option-info">
-                        <div class="option-name">3.1 Pro</div>
-                        <div class="option-desc">Advanced reasoning</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">3.1 Pro</div><div class="option-desc">Advanced reasoning</div></div>
                     <div class="radio-icon"></div>
                 </button>
                 <div class="divider"></div>
                 <button class="option-item" onclick="selectModel('gemini-3.7-extended-thinking', 'Extended thinking')">
-                    <div class="option-info">
-                        <div class="option-name">Extended thinking</div>
-                        <div class="option-desc">Complex problem solving</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">Extended thinking</div><div class="option-desc">Complex problem solving</div></div>
                     <div class="radio-icon"></div>
                 </button>
             </div>
@@ -443,7 +416,7 @@
         </div>
     </div>
 
-    <!-- In-App Code Preview Modal -->
+    <!-- Modals -->
     <div class="preview-modal-overlay" id="codePreviewModal" onclick="if(event.target === this) closeCodePreview()">
         <div class="preview-modal-content">
             <div class="preview-modal-header">
@@ -454,7 +427,6 @@
         </div>
     </div>
 
-    <!-- Image Zoom Lightbox Modal -->
     <div class="image-lightbox-overlay" id="imageLightbox" onclick="closeLightbox()">
         <img class="image-lightbox-content" id="lightboxImg">
     </div>
@@ -477,7 +449,6 @@
 
         loadVoices();
         if ('speechSynthesis' in window) {
-            loadVoices();
             window.speechSynthesis.onvoiceschanged = loadVoices;
         }
 
@@ -511,11 +482,7 @@
         chatBox.addEventListener('scroll', () => {
             const scrollBtn = document.getElementById('scrollBtn');
             const isNearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 100;
-            
-            if (scrollBtn) {
-                scrollBtn.style.display = !isNearBottom ? 'block' : 'none';
-            }
-
+            if (scrollBtn) scrollBtn.style.display = !isNearBottom ? 'block' : 'none';
             userScrolledUp = !isNearBottom;
         });
 
@@ -532,13 +499,10 @@
         function selectMode(modeKey, modeDisplayName) {
             currentSelectedMode = modeKey;
             document.getElementById('selectedModeText').innerText = modeDisplayName;
-            
             const modal = document.getElementById('modeModalOverlay');
             modal.querySelectorAll('.option-item').forEach(btn => {
                 btn.classList.remove('active');
-                if(btn.getAttribute('onclick').includes(modeKey)) {
-                    btn.classList.add('active');
-                }
+                if(btn.getAttribute('onclick').includes(modeKey)) btn.classList.add('active');
             });
             toggleModal('modeModalOverlay', false);
             document.getElementById('customPromptInput').style.display = modeKey === 'custom' ? 'block' : 'none';
@@ -547,13 +511,10 @@
         function selectModel(modelKey, modelDisplayName) {
             currentSelectedModel = modelKey;
             document.getElementById('selectedModelText').innerText = modelDisplayName;
-            
             const modal = document.getElementById('modelModalOverlay');
             modal.querySelectorAll('.option-item').forEach(btn => {
                 btn.classList.remove('active');
-                if(btn.getAttribute('onclick').includes(modelKey)) {
-                    btn.classList.add('active');
-                }
+                if(btn.getAttribute('onclick').includes(modelKey)) btn.classList.add('active');
             });
             toggleModal('modelModalOverlay', false);
         }
@@ -605,11 +566,9 @@
                                 }
                             });
                         }
-                        
                         const hasText = msg.text && msg.text.trim().length > 0;
                         const bubbleClass = hasText ? 'msg user has-bubble' : 'msg user no-bubble';
                         const content = (hasText ? `<div>${escapeHTML(msg.text)}</div>` : '') + attHTML;
-                        
                         chatBox.innerHTML += `<div class="${bubbleClass}">${content}</div>`;
                     } else {
                         const botDiv = document.createElement('div');
@@ -662,7 +621,6 @@
         function handleFileSelect(e) {
             const files = e.target.files;
             if (!files || files.length === 0) return;
-
             Array.from(files).forEach(file => {
                 const r = new FileReader();
                 r.onload = (ex) => {
@@ -757,9 +715,7 @@
                     body: JSON.stringify({ message, files: tempFiles, model, mode, customPrompt })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Server returned status ' + response.status);
-                }
+                if (!response.ok) throw new Error('Server returned status ' + response.status);
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -778,7 +734,6 @@
                     botMsgElem.querySelectorAll('img').forEach(img => {
                         img.onclick = () => openLightbox(img.src);
                     });
-
                     scrollToBottom(false);
                 }
 
@@ -808,8 +763,7 @@
                     if (messages[i].role === 'user') {
                         const lastMsgText = messages[i].text;
                         chatSessions[currentSessionId].messages.pop();
-                        const userInput = document.getElementById('userInput');
-                        userInput.value = lastMsgText;
+                        document.getElementById('userInput').value = lastMsgText;
                         chatBox.removeChild(chatBox.lastChild);
                         sendMessage();
                         break;
@@ -830,7 +784,6 @@
             const codeText = document.getElementById(id).innerText;
             const modal = document.getElementById('codePreviewModal');
             const iframe = document.getElementById('previewIframe');
-            
             modal.classList.add('open');
             iframe.srcdoc = codeText;
         }
@@ -838,21 +791,18 @@
         function closeCodePreview() {
             const modal = document.getElementById('codePreviewModal');
             const iframe = document.getElementById('previewIframe');
-            
             modal.classList.remove('open');
             iframe.srcdoc = '';
         }
 
         function openLightbox(imgSrc) {
             const lightbox = document.getElementById('imageLightbox');
-            const lightboxImg = document.getElementById('lightboxImg');
-            lightboxImg.src = imgSrc;
+            document.getElementById('lightboxImg').src = imgSrc;
             lightbox.classList.add('open');
         }
 
         function closeLightbox() {
-            const lightbox = document.getElementById('imageLightbox');
-            lightbox.classList.remove('open');
+            document.getElementById('imageLightbox').classList.remove('open');
         }
 
         function copyCode(id, btn) {
@@ -876,23 +826,17 @@
 
         function speakRawText(text) {
             if (!('speechSynthesis' in window)) return;
-            
             window.speechSynthesis.cancel();
             systemVoices = window.speechSynthesis.getVoices();
-            
             if (systemVoices.length === 0) {
                 setTimeout(() => speakRawText(text), 150);
                 return;
             }
-
             const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
-
             const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano)\b/i;
             const isTagalog = tagalogWords.test(cleanText);
-
             let targetVoice = null;
-
             if (isTagalog) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
@@ -900,36 +844,30 @@
                     return lang === 'fil-ph' || lang === 'tl-ph' || name.includes('filipino') || name.includes('tagalog');
                 });
             }
-
             if (!targetVoice) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
                     return lang === 'en-us' || lang === 'en-gb' || lang.startsWith('en');
                 });
             }
-
             if (targetVoice) {
                 utterance.voice = targetVoice;
                 utterance.lang = targetVoice.lang;
             } else {
                 utterance.lang = isTagalog ? 'fil-PH' : 'en-US';
             }
-
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
-
             window.speechSynthesis.speak(utterance);
         }
 
         function toggleSpeechRecognition() {
             const userInput = document.getElementById('userInput');
             const waveContainer = document.getElementById('waveContainer');
-
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 alert('Speech recognition is not supported in this browser.');
                 return;
             }
-
             if (isRecording) {
                 if (recognition) recognition.stop();
                 stopRecordingUI();
@@ -939,21 +877,17 @@
                 recognition.continuous = false;
                 recognition.interimResults = false;
                 recognition.lang = 'fil-PH';
-
                 recognition.onstart = () => {
                     isRecording = true;
                     userInput.style.display = 'none';
                     waveContainer.classList.add('active');
                 };
-
                 recognition.onresult = (event) => {
                     userInput.value = event.results[0][0].transcript;
                     stopRecordingUI();
                 };
-
                 recognition.onerror = () => stopRecordingUI();
                 recognition.onend = () => stopRecordingUI();
-
                 recognition.start();
             }
         }
