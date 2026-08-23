@@ -13,15 +13,15 @@ export default async function handler(req) {
   try {
     const { message, files = [], model, mode, customPrompt } = await req.json();
 
-    // Valid 3.x series models
+    // Valid 3.x series models (kasama ang 3.7 Flash)
     const VALID_MODELS = [
+      'gemini-3.7-flash',
       'gemini-3.6-flash',
       'gemini-3.5-flash-lite',
       'gemini-3.1-pro',
       'gemini-3.7-extended-thinking'
     ];
 
-    // Fallback: Kapag wala sa listahan, gamitin ang gemini-3.6-flash
     const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
     // System Prompts batay sa napiling Mode
@@ -38,7 +38,7 @@ export default async function handler(req) {
       systemInstruction = customPrompt;
     }
 
-    // Format ng contents payload
+    // Contents payload construction
     const contents = [];
     const userParts = [];
 
@@ -59,8 +59,9 @@ export default async function handler(req) {
 
     contents.push({ role: 'user', parts: userParts });
 
+    // Tamang payload structure para sa Gemini API
     const payload = {
-      systemInstruction: {
+      system_instruction: {
         parts: [{ text: systemInstruction }]
       },
       contents: contents
@@ -83,7 +84,6 @@ export default async function handler(req) {
       });
     }
 
-    // Stream the response back to client
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
@@ -99,7 +99,7 @@ export default async function handler(req) {
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
-            buffer = lines.pop(); // keep last incomplete line
+            buffer = lines.pop();
 
             for (const line of lines) {
               if (line.startsWith('data: ')) {
