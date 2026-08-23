@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -7,25 +5,45 @@ export default async function handler(req, res) {
 
   try {
     const { prompt } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // Gumamit ng REST call/direct model instantiation batay sa SDK access
-    const model = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-002' });
-    
-    const result = await model.generateImages({
-      prompt: prompt,
-      numberOfImages: 1,
-      outputMimeType: 'image/jpeg',
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt: prompt }],
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: '1:1',
+            outputOptions: { mimeType: 'image/jpeg' }
+          }
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Failed to fetch from Imagen API');
+    }
+
+    const base64Image = data.predictions?.[0]?.bytesBase64Encoded;
+    if (!base64Image) {
+      return res.status(500).json({ error: 'No image data returned from API' });
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      imageUrl: `data:image/jpeg;base64,${base64Image}` 
     });
 
-    const imageUrl = `data:image/jpeg;base64,${result.response.images[0].base64}`;
-    return res.status(200).json({ success: true, imageUrl });
-
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error.message || 'Image generation failed' });
+    return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
 }
