@@ -13,16 +13,16 @@ export default async function handler(req) {
   try {
     const { message, files = [], model, mode, customPrompt } = await req.json();
 
-    // Mga totoong working models sa opisyal na Google Gemini API ngayon
+    // Mga opisyal at aktwal na model IDs sa Gemini API batay sa UI mo
     const VALID_MODELS = [
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro'
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-pro-preview',
+      'gemini-3.7-flash'
     ];
 
-    // Fallback sa gemini-2.5-flash kapag hindi tugma
-    const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-2.5-flash';
+    // Fallback sa gemini-3.6-flash kapag hindi tugma
+    const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
     // System Prompts batay sa napiling Mode
     let systemInstruction = "You are JepongDevxyz AI, a helpful, precise, and friendly AI assistant.";
@@ -99,7 +99,7 @@ export default async function handler(req) {
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
-            buffer = lines.pop(); // keep last incomplete line
+            buffer = lines.pop();
 
             for (const line of lines) {
               if (line.startsWith('data: ')) {
