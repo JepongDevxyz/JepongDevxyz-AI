@@ -83,7 +83,7 @@
         .sidebar.open { left: 0; }
         .sidebar-overlay.open { display: block; }
         
-        .sidebar-header { display: flex; justify-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .sidebar-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
         .close-sidebar-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; }
         
@@ -147,7 +147,7 @@
             background: transparent; 
             border: none; 
             color: #ffffff !important; 
-            font-size: 0.9rem; 
+            font-size: 0.88rem; 
             min-width: 0; 
             padding: 4px 0; 
             caret-color: #38bdf8; 
@@ -340,8 +340,9 @@
                 <input type="file" id="fileInput" hidden onchange="handleFileSelect(event)">
                 
                 <button class="action-icon-btn" onclick="document.getElementById('fileInput').click()" title="Attach File">📎</button>
-                
-                <input type="text" id="userInput" placeholder="Type a message or use mic..." onkeydown="if(event.key==='Enter') sendMessage()">
+
+                <!-- Updated Text Box Placeholder -->
+                <input type="text" id="userInput" placeholder="Ask JepongDevxyz AI" onkeydown="if(event.key==='Enter') sendMessage()">
                 
                 <button class="mic-btn" id="micBtn" onclick="toggleSpeech()" title="Voice Input">🎤</button>
 
@@ -396,7 +397,7 @@
             pingText.innerText = `${ping} ms`;
             pingText.style.color = 'var(--text-muted)';
 
-            if (ping <= 100) {
+            if (ping <= 60) {
                 setBarColor(bars, 4, 'var(--sig-good)');
             } else if (ping <= 120) {
                 setBarColor(bars, 3, '#f59e0b');
@@ -711,11 +712,34 @@
 
         function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
 
+        /* Auto-Detect Language (Tagalog vs English) Voice Output Fix */
         function speakText(text) {
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text.replace(/<[^>]*>?/gm, ''));
-            utterance.lang = 'tl-PH';
+            const cleanText = text.replace(/<[^>]*>?/gm, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+
+            // Detection for Tagalog words
+            const tagalogWords = ['ang', 'mga', 'ng', 'sa', 'na', 'para', 'ako', 'ikaw', 'kami', 'tayo', 'sila', 'ito', 'iyan', 'iyon', 'hindi', 'oo', 'dahil', 'kung', 'paano', 'salamat', 'maganda', 'bata'];
+            const lower = cleanText.toLowerCase();
+            const isTagalog = tagalogWords.some(word => new RegExp('\\b' + word + '\\b', 'i').test(lower));
+
+            const voices = window.speechSynthesis.getVoices();
+
+            if (isTagalog) {
+                utterance.lang = 'tl-PH';
+                const tlVoice = voices.find(v => v.lang.includes('tl') || v.lang.includes('fil'));
+                if (tlVoice) utterance.voice = tlVoice;
+            } else {
+                utterance.lang = 'en-US';
+                const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en'));
+                if (enVoice) utterance.voice = enVoice;
+            }
+
             window.speechSynthesis.speak(utterance);
+        }
+
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => {};
         }
 
         function toggleSpeech() {
@@ -735,7 +759,10 @@
 
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRec();
-            recognition.lang = 'tl-PH';
+            
+            const currentMode = document.getElementById('modeSelect').value;
+            recognition.lang = (currentMode === 'tagalog') ? 'tl-PH' : 'en-US';
+            
             recognition.continuous = false;
             recognition.interimResults = false;
 
@@ -819,7 +846,7 @@
 
         function copyCode(blockId, btn) {
             navigator.clipboard.writeText(document.getElementById(blockId).innerText);
-            btn.innerText = '✓ Copied!';
+            btn.innerText = '✅ Copied!';
             setTimeout(() => btn.innerText = '📋 Copy', 2000);
         }
 
