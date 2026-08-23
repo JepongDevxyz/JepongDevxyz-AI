@@ -133,9 +133,22 @@
         .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
         .bot img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border-color); }
 
-        .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap; }
-        .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; text-decoration: none; }
-        .bot-action-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .tts-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            align-self: flex-start;
+            font-weight: 500;
+            margin-top: 6px;
+        }
+        .tts-btn:hover { background: rgba(255, 255, 255, 0.2); }
 
         .code-block-wrapper { background: #131722; border: 1px solid var(--border-color); border-radius: 10px; margin: 8px 0; overflow: hidden; }
         .code-header { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 6px 12px; font-size: 0.75rem; color: var(--text-muted); }
@@ -190,7 +203,6 @@
 
         #scrollBtn { display: none; position: absolute; bottom: 85px; right: 20px; background: var(--accent-gradient); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 10; }
 
-        /* In-App Code Preview Modal */
         .preview-modal-overlay {
             display: none;
             position: fixed;
@@ -202,9 +214,7 @@
             align-items: center;
             padding: 10px;
         }
-        .preview-modal-overlay.open {
-            display: flex;
-        }
+        .preview-modal-overlay.open { display: flex; }
         .preview-modal-content {
             background: #0f172a;
             border: 1px solid var(--border-color);
@@ -217,7 +227,6 @@
             flex-direction: column;
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            animation: modalPop 0.2s ease-out;
         }
         .preview-modal-header {
             display: flex;
@@ -239,15 +248,7 @@
             cursor: pointer;
             font-size: 0.8rem;
         }
-        .preview-close-btn:hover {
-            background: rgba(239, 68, 68, 0.4);
-        }
-        .preview-iframe {
-            flex: 1;
-            width: 100%;
-            border: none;
-            background: #000;
-        }
+        .preview-iframe { flex: 1; width: 100%; border: none; background: #000; }
     </style>
 </head>
 <body>
@@ -313,7 +314,7 @@
             </div>
         </div>
 
-        <!-- Mode Modal Overlay -->
+        <!-- Mode Modal -->
         <div class="modal-overlay" id="modeModalOverlay" onclick="if(event.target === this) toggleModal('modeModalOverlay', false)">
             <div class="floating-modal">
                 <button class="option-item active" onclick="selectMode('general', '🤖 Mode: General AI')">
@@ -343,36 +344,24 @@
             </div>
         </div>
 
-        <!-- Model Modal Overlay -->
+        <!-- Model Modal -->
         <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
             <div class="floating-modal">
                 <button class="option-item" onclick="selectModel('gemini-3.5-flash-lite', '3.5 Flash-Lite')">
-                    <div class="option-info">
-                        <div class="option-name">3.5 Flash-Lite</div>
-                        <div class="option-desc">Fastest answers</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">3.5 Flash-Lite</div><div class="option-desc">Fastest answers</div></div>
                     <div class="radio-icon"></div>
                 </button>
                 <button class="option-item active" onclick="selectModel('gemini-3.6-flash', 'Gemini 3.6 Flash')">
-                    <div class="option-info">
-                        <div class="option-name">Gemini 3.6 Flash</div>
-                        <div class="option-desc">All-around help</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">Gemini 3.6 Flash</div><div class="option-desc">All-around help</div></div>
                     <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectModel('gemini-3.1-pro', '3.1 Pro')">
-                    <div class="option-info">
-                        <div class="option-name">3.1 Pro</div>
-                        <div class="option-desc">Advanced reasoning</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">3.1 Pro</div><div class="option-desc">Advanced reasoning</div></div>
                     <div class="radio-icon"></div>
                 </button>
                 <div class="divider"></div>
                 <button class="option-item" onclick="selectModel('gemini-3.7-extended-thinking', 'Extended thinking')">
-                    <div class="option-info">
-                        <div class="option-name">Extended thinking</div>
-                        <div class="option-desc">Complex problem solving</div>
-                    </div>
+                    <div class="option-info"><div class="option-name">Extended thinking</div><div class="option-desc">Complex problem solving</div></div>
                     <div class="radio-icon"></div>
                 </button>
             </div>
@@ -414,7 +403,7 @@
         </div>
     </div>
 
-    <!-- In-App Code Preview Modal -->
+    <!-- Code Preview Modal -->
     <div class="preview-modal-overlay" id="codePreviewModal" onclick="if(event.target === this) closeCodePreview()">
         <div class="preview-modal-content">
             <div class="preview-modal-header">
@@ -465,11 +454,7 @@
         chatBox.addEventListener('scroll', () => {
             const scrollBtn = document.getElementById('scrollBtn');
             const isNearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 100;
-            
-            if (scrollBtn) {
-                scrollBtn.style.display = !isNearBottom ? 'block' : 'none';
-            }
-
+            if (scrollBtn) scrollBtn.style.display = !isNearBottom ? 'block' : 'none';
             userScrolledUp = !isNearBottom;
         });
 
@@ -486,13 +471,10 @@
         function selectMode(modeKey, modeDisplayName) {
             currentSelectedMode = modeKey;
             document.getElementById('selectedModeText').innerText = modeDisplayName;
-            
             const modal = document.getElementById('modeModalOverlay');
             modal.querySelectorAll('.option-item').forEach(btn => {
                 btn.classList.remove('active');
-                if(btn.getAttribute('onclick').includes(modeKey)) {
-                    btn.classList.add('active');
-                }
+                if(btn.getAttribute('onclick').includes(modeKey)) btn.classList.add('active');
             });
             toggleModal('modeModalOverlay', false);
             document.getElementById('customPromptInput').style.display = modeKey === 'custom' ? 'block' : 'none';
@@ -501,13 +483,10 @@
         function selectModel(modelKey, modelDisplayName) {
             currentSelectedModel = modelKey;
             document.getElementById('selectedModelText').innerText = modelDisplayName;
-            
             const modal = document.getElementById('modelModalOverlay');
             modal.querySelectorAll('.option-item').forEach(btn => {
                 btn.classList.remove('active');
-                if(btn.getAttribute('onclick').includes(modelKey)) {
-                    btn.classList.add('active');
-                }
+                if(btn.getAttribute('onclick').includes(modelKey)) btn.classList.add('active');
             });
             toggleModal('modelModalOverlay', false);
         }
@@ -554,10 +533,7 @@
                         const botDiv = document.createElement('div');
                         botDiv.className = 'msg bot';
                         botDiv.innerHTML = `<div>${marked.parse(msg.text)}</div>
-                            <div class="bot-actions">
-                                <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
-                                <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
-                            </div>`;
+                            <button class="tts-btn" onclick="speakText(this)">🔊 Listen</button>`;
                         chatBox.appendChild(botDiv);
                     }
                 });
@@ -598,7 +574,6 @@
         function handleFileSelect(e) {
             const files = e.target.files;
             if (!files || files.length === 0) return;
-
             Array.from(files).forEach(file => {
                 const r = new FileReader();
                 r.onload = (ex) => {
@@ -673,9 +648,7 @@
                     body: JSON.stringify({ message, files: tempFiles, model, mode, customPrompt })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Server returned status ' + response.status);
-                }
+                if (!response.ok) throw new Error('Server status ' + response.status);
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -686,11 +659,7 @@
                     if (done) break;
                     fullResponse += decoder.decode(value, { stream: true });
                     botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
-                        <div class="bot-actions">
-                            <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
-                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
-                        </div>`;
-                    
+                        <button class="tts-btn" onclick="speakText(this)">🔊 Listen</button>`;
                     scrollToBottom(false);
                 }
 
@@ -703,30 +672,8 @@
                 }
 
             } catch (err) {
-                botMsgElem.innerHTML = `
-                    <div style="color: #fca5a5; margin-bottom: 8px;">⚠️ Connection Error or Timeout.</div>
-                    <button class="bot-action-btn" onclick="retryLastMessage()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 10px; border-radius: 6px;">
-                        🔄 Try Again
-                    </button>
-                `;
+                botMsgElem.innerHTML = `<div style="color: #fca5a5;">⚠️ Connection Error.</div>`;
                 scrollToBottom(true);
-            }
-        }
-
-        function retryLastMessage() {
-            if (currentSessionId && chatSessions[currentSessionId]) {
-                const messages = chatSessions[currentSessionId].messages;
-                for (let i = messages.length - 1; i >= 0; i--) {
-                    if (messages[i].role === 'user') {
-                        const lastMsgText = messages[i].text;
-                        chatSessions[currentSessionId].messages.pop();
-                        const userInput = document.getElementById('userInput');
-                        userInput.value = lastMsgText;
-                        chatBox.removeChild(chatBox.lastChild);
-                        sendMessage();
-                        break;
-                    }
-                }
             }
         }
 
@@ -742,7 +689,6 @@
             const codeText = document.getElementById(id).innerText;
             const modal = document.getElementById('codePreviewModal');
             const iframe = document.getElementById('previewIframe');
-            
             modal.classList.add('open');
             iframe.srcdoc = codeText;
         }
@@ -750,7 +696,6 @@
         function closeCodePreview() {
             const modal = document.getElementById('codePreviewModal');
             const iframe = document.getElementById('previewIframe');
-            
             modal.classList.remove('open');
             iframe.srcdoc = '';
         }
@@ -762,56 +707,39 @@
             });
         }
 
-        function copyText(btn) {
-            const text = btn.closest('.msg').querySelector('div').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                btn.innerText = '✅ Copied!';
-                setTimeout(() => btn.innerText = '📋 Copy', 2000);
-            });
-        }
-
         function speakText(btn) {
             speakRawText(btn.closest('.msg').querySelector('div').innerText);
         }
 
-        // Tumpak na Language Separation (Tagalog vs English) para sa boses
+        /* Working Tagalog and English Voice Logic mula sa lumang code */
         function speakRawText(text) {
-            if (!('speechSynthesis' in window)) {
-                alert('Text-to-speech is not supported in this browser.');
-                return;
-            }
-
+            if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
-            const cleanText = text.replace(/[*_#`~]/g, '');
+            
+            const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
-            
+
+            const tagalogWords = ['ang', 'mga', 'ng', 'sa', 'na', 'para', 'ako', 'ikaw', 'kami', 'tayo', 'sila', 'ito', 'iyan', 'iyon', 'hindi', 'oo', 'dahil', 'kung', 'paano', 'salamat', 'maganda', 'bata'];
+            const lower = cleanText.toLowerCase();
+            const isTagalog = tagalogWords.some(word => new RegExp('\\b' + word + '\\b', 'i').test(lower)) || currentSelectedMode === 'tagalog';
+
             const voices = window.speechSynthesis.getVoices();
-            const tagalogWords = /\b(ang|mga|at|sa|na|ng|ay|ko|mo|niya|ito|yan|iyon|ka|ako|kami|tayo|sila|ba|rin|din|kung|para|kayo|po|opo|paano|bakit|ano|sino|saan|meron|wala|ha)\b/i;
-            
-            let isTagalog = tagalogWords.test(cleanText) || currentSelectedMode === 'tagalog';
-            
-            let selectedVoice = null;
 
             if (isTagalog) {
                 utterance.lang = 'tl-PH';
-                selectedVoice = voices.find(v => v.lang.toLowerCase().includes('fil') || v.lang.toLowerCase().includes('tl'));
+                const tlVoice = voices.find(v => v.lang.toLowerCase().includes('tl') || v.lang.toLowerCase().includes('fil'));
+                if (tlVoice) utterance.voice = tlVoice;
             } else {
                 utterance.lang = 'en-US';
-                selectedVoice = voices.find(v => v.lang.startsWith('en'));
+                const enVoice = voices.find(v => v.lang.toLowerCase().includes('en'));
+                if (enVoice) utterance.voice = enVoice;
             }
 
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-
-            utterance.rate = 1.0;
             window.speechSynthesis.speak(utterance);
         }
 
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = () => {
-                window.speechSynthesis.getVoices();
-            };
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
         }
 
         function toggleSpeechRecognition() {
@@ -819,7 +747,7 @@
             const waveContainer = document.getElementById('waveContainer');
 
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('Speech recognition is not supported in this browser.');
+                alert('Speech recognition not supported.');
                 return;
             }
 
