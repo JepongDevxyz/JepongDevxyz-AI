@@ -256,7 +256,7 @@
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h3>💬 Chat History - Devxyz AI</h3>
+                <h2>💬 JepongDevxyz AI</h2>
                 <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
             </div>
             <button class="new-chat-btn" onclick="createNewChat()"><span>➕</span> New Chat</button>
@@ -354,7 +354,7 @@
                 </button>
                 <button class="option-item active" onclick="selectModel('gemini-3.6-flash', 'Gemini 3.6 Flash')">
                     <div class="option-info">
-                        <div class="option-name">3.6 Flash</div>
+                        <div class="option-name">Gemini 3.6 Flash</div>
                         <div class="option-desc">All-around help</div>
                     </div>
                     <div class="radio-icon"></div>
@@ -791,7 +791,6 @@
             window.speechSynthesis.cancel();
             systemVoices = window.speechSynthesis.getVoices();
             
-            // Kung sakaling kosong pa ang listahan dahil nagloload pa, maghintay ng konti
             if (systemVoices.length === 0) {
                 setTimeout(() => speakRawText(text), 150);
                 return;
@@ -800,38 +799,34 @@
             const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
 
-            // Comprehensive Tagalog detector para matiyak na ma-detect ang tagalog chat
-            const tagalogKeywords = /\b(ang|mga|at|sa|na|ay|ako|ka|mo|niya|ito|yan|iyon|ba|pa|talaga|kung|para|nang|mismo|kamusta|magandang|oo|hindi|wala|meron|sige|bakit|paano|gusto|pwede|naman|kasi|nga|pala|tulungan|ko|namin|natin|nyo|nila)\b/i;
-            const isTagalog = tagalogKeywords.test(cleanText) || currentSelectedMode === 'tagalog';
+            // Dynamic language & word detection (Tagalog vs English)
+            const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano)\b/i;
+            const isTagalog = tagalogWords.test(cleanText);
 
             let targetVoice = null;
 
             if (isTagalog) {
-                // Hanapin ang fil-PH, tl-PH, o boses na may pangalang Tagalog/Filipino
+                // Humanap muna ng Tagalog/Filipino voice
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
                     const name = (v.name || '').toLowerCase();
-                    return lang === 'fil-ph' || lang === 'tl-ph' || lang.startsWith('fil') || lang.startsWith('tl') || name.includes('tagalog') || name.includes('filipino');
+                    return lang === 'fil-ph' || lang === 'tl-ph' || name.includes('filipino') || name.includes('tagalog');
                 });
+            }
 
-                if (!targetVoice) {
-                    targetVoice = systemVoices.find(v => (v.lang || '').toLowerCase().includes('ph') || (v.lang || '').toLowerCase().includes('fil'));
-                }
-            } else {
+            // Kung English o walang nahanap na Tagalog voice, humanap ng English voice
+            if (!targetVoice) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
-                    return lang.startsWith('en') || lang.includes('us') || lang.includes('gb');
+                    return lang === 'en-us' || lang === 'en-gb' || lang.startsWith('en');
                 });
             }
 
             if (targetVoice) {
                 utterance.voice = targetVoice;
                 utterance.lang = targetVoice.lang;
-            } else if (isTagalog) {
-                // Piliting i-set sa fil-PH kung walang saktong voice profile na makuha sa device
-                utterance.lang = 'fil-PH';
             } else {
-                utterance.lang = 'en-US';
+                utterance.lang = isTagalog ? 'fil-PH' : 'en-US';
             }
 
             utterance.rate = 1.0;
@@ -857,7 +852,7 @@
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
-                recognition.lang = currentSelectedMode === 'tagalog' ? 'fil-PH' : 'en-US';
+                recognition.lang = 'fil-PH';
 
                 recognition.onstart = () => {
                     isRecording = true;
