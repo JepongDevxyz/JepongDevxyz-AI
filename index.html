@@ -256,7 +256,7 @@
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>💬 JepongDevxyz AI</h2>
+                <h2>💬 Chat History - JepongDevxyz AI</h2>
                 <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
             </div>
             <button class="new-chat-btn" onclick="createNewChat()"><span>➕</span> New Chat</button>
@@ -560,7 +560,18 @@
                 chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
                 session.messages.forEach(msg => {
                     if (msg.role === 'user') {
-                        chatBox.innerHTML += `<div class="msg user">${escapeHTML(msg.text)}</div>`;
+                        let attHTML = '';
+                        if (msg.files && msg.files.length > 0) {
+                            msg.files.forEach(file => {
+                                if (file.mimeType.startsWith('image/')) {
+                                    attHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block;"></div>`;
+                                } else {
+                                    attHTML += `<div style="margin-top: 6px; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">📄 ${escapeHTML(file.name)}</div>`;
+                                }
+                            });
+                        }
+                        const content = (msg.text ? `<div>${escapeHTML(msg.text)}</div>` : '') + attHTML;
+                        chatBox.innerHTML += `<div class="msg user">${content}</div>`;
                     } else {
                         const botDiv = document.createElement('div');
                         botDiv.className = 'msg bot';
@@ -654,26 +665,43 @@
             if (!message && selectedFilesData.length === 0) return;
             if (!currentSessionId || !chatSessions[currentSessionId]) createNewChat();
 
+            const tempFiles = [...selectedFilesData];
+
             if (chatSessions[currentSessionId].messages.length === 0) {
                 chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
-                chatSessions[currentSessionId].title = message ? message.substring(0, 25) : 'File Attachment';
+                chatSessions[currentSessionId].title = message ? message.substring(0, 25) : (tempFiles.length > 0 ? tempFiles[0].name : 'Attachment');
             }
 
             userScrolledUp = false;
-            chatBox.innerHTML += `<div class="msg user">${escapeHTML(message)}</div>`;
-            chatSessions[currentSessionId].messages.push({ role: 'user', text: message });
+
+            let attachmentsHTML = '';
+            tempFiles.forEach(file => {
+                if (file.mimeType.startsWith('image/')) {
+                    attachmentsHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block;"></div>`;
+                } else {
+                    attachmentsHTML += `<div style="margin-top: 6px; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">📄 ${escapeHTML(file.name)}</div>`;
+                }
+            });
+
+            const userBubbleContent = (message ? `<div>${escapeHTML(message)}</div>` : '') + attachmentsHTML;
+            chatBox.innerHTML += `<div class="msg user">${userBubbleContent}</div>`;
+            
+            chatSessions[currentSessionId].messages.push({ 
+                role: 'user', 
+                text: message, 
+                files: tempFiles.map(f => ({ name: f.name, mimeType: f.mimeType, fullData: f.fullData })) 
+            });
             saveSessions();
+
             input.value = '';
+            selectedFilesData = [];
+            renderFilePreviews();
 
             const botMsgElem = document.createElement('div');
             botMsgElem.className = 'msg bot';
             botMsgElem.innerText = 'Thinking...';
             chatBox.appendChild(botMsgElem);
             scrollToBottom(true);
-
-            const tempFiles = [...selectedFilesData];
-            selectedFilesData = [];
-            renderFilePreviews();
 
             const customPrompt = document.getElementById('customPromptInput').value;
 
@@ -799,14 +827,12 @@
             const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanText);
 
-            // Dynamic language & word detection (Tagalog vs English)
             const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano)\b/i;
             const isTagalog = tagalogWords.test(cleanText);
 
             let targetVoice = null;
 
             if (isTagalog) {
-                // Humanap muna ng Tagalog/Filipino voice
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
                     const name = (v.name || '').toLowerCase();
@@ -814,7 +840,6 @@
                 });
             }
 
-            // Kung English o walang nahanap na Tagalog voice, humanap ng English voice
             if (!targetVoice) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
