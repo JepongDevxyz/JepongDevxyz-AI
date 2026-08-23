@@ -18,7 +18,8 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            --user-msg: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            /* Pinalitan na natin ang user-msg para maging clean dark slate theme */
+            --user-msg: rgba(30, 41, 59, 0.9);
             --bot-msg: rgba(30, 41, 59, 0.7);
             --sig-good: #10b981;
             --sig-bad: #ef4444;
@@ -129,9 +130,12 @@
         .welcome-lottie-bottom { width: 100%; max-width: 260px; height: auto; aspect-ratio: 16 / 9; margin-top: -55px; }
 
         .msg { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; word-break: break-word; position: relative; }
-        .user { align-self: flex-end; background: var(--user-msg); color: #fff; border-bottom-right-radius: 4px; }
+        .user { align-self: flex-end; background: var(--user-msg); border: 1px solid var(--border-color); color: #fff; border-bottom-right-radius: 4px; }
         .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
-        .bot img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border-color); }
+        
+        /* Ginawa nating clickable/interactive ang mga larawan sa chat */
+        .msg img { max-width: 100%; max-height: 250px; border-radius: 12px; margin-top: 8px; border: 1px solid var(--border-color); object-fit: cover; cursor: pointer; transition: transform 0.2s; display: block; }
+        .msg img:hover { transform: scale(1.02); opacity: 0.95; }
 
         .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap; }
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; text-decoration: none; }
@@ -246,6 +250,29 @@
             width: 100%;
             border: none;
             background: #000;
+        }
+
+        /* Modal para sa pag-zoom ng image kapag pinindot */
+        .image-lightbox-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .image-lightbox-overlay.open {
+            display: flex;
+        }
+        .image-lightbox-content {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 12px;
+            object-fit: contain;
+            border: 1px solid var(--border-color);
         }
     </style>
 </head>
@@ -424,6 +451,11 @@
         </div>
     </div>
 
+    <!-- Image Zoom Lightbox Modal -->
+    <div class="image-lightbox-overlay" id="imageLightbox" onclick="closeLightbox()">
+        <img class="image-lightbox-content" id="lightboxImg">
+    </div>
+
     <script>
         let selectedFilesData = [];
         let chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
@@ -564,7 +596,7 @@
                         if (msg.files && msg.files.length > 0) {
                             msg.files.forEach(file => {
                                 if (file.mimeType.startsWith('image/')) {
-                                    attHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block;"></div>`;
+                                    attHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" onclick="openLightbox('${file.fullData}')" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block; cursor: pointer;"></div>`;
                                 } else {
                                     attHTML += `<div style="margin-top: 6px; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">📄 ${escapeHTML(file.name)}</div>`;
                                 }
@@ -582,6 +614,10 @@
                             </div>`;
                         chatBox.appendChild(botDiv);
                     }
+                });
+                // Gawing clickable ang mga images na na-render mula sa past messages
+                chatBox.querySelectorAll('.msg img').forEach(img => {
+                    img.onclick = () => openLightbox(img.src);
                 });
                 document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
             }
@@ -677,7 +713,7 @@
             let attachmentsHTML = '';
             tempFiles.forEach(file => {
                 if (file.mimeType.startsWith('image/')) {
-                    attachmentsHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block;"></div>`;
+                    attachmentsHTML += `<div style="margin-top: 6px;"><img src="${file.fullData}" onclick="openLightbox('${file.fullData}')" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); object-fit: cover; display: block; cursor: pointer;"></div>`;
                 } else {
                     attachmentsHTML += `<div style="margin-top: 6px; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">📄 ${escapeHTML(file.name)}</div>`;
                 }
@@ -730,6 +766,11 @@
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
                         </div>`;
                     
+                    // Gawing clickable ang anumang images na lumalabas sa stream/bot response
+                    botMsgElem.querySelectorAll('img').forEach(img => {
+                        img.onclick = () => openLightbox(img.src);
+                    });
+
                     scrollToBottom(false);
                 }
 
@@ -792,6 +833,18 @@
             
             modal.classList.remove('open');
             iframe.srcdoc = '';
+        }
+
+        function openLightbox(imgSrc) {
+            const lightbox = document.getElementById('imageLightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            lightboxImg.src = imgSrc;
+            lightbox.classList.add('open');
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('imageLightbox');
+            lightbox.classList.remove('open');
         }
 
         function copyCode(id, btn) {
