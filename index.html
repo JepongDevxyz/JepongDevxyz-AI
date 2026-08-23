@@ -1162,8 +1162,18 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ prompt: message })
                     });
-                    const data = await res.json();
-                    if (!data.success) throw new Error(data.error || 'Failed to generate image');
+                    
+                    const rawText = await res.text();
+                    let data;
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch (pErr) {
+                        throw new Error(`Server returned invalid JSON: ${rawText.substring(0, 80)}`);
+                    }
+
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to generate image');
+                    }
 
                     const imgHtml = `<div><img src="${data.imageUrl}" onclick="openLightbox('${data.imageUrl}')" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer;"></div>`;
                     botMsgElem.innerHTML = imgHtml + `
