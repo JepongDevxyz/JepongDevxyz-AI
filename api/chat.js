@@ -2,8 +2,6 @@ export const config = {
   runtime: 'edge',
 };
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
@@ -16,7 +14,7 @@ export default async function handler(req) {
     const { message, file, files, model, mode, customPrompt } = await req.json();
     
     const rawKeys = process.env.GEMINI_API_KEY || '';
-    let apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
       return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
@@ -25,17 +23,15 @@ export default async function handler(req) {
       });
     }
 
-    // Load balancing sa pamamagitan ng shuffling ng API keys
-    apiKeys = apiKeys.sort(() => Math.random() - 0.5);
-
     const VALID_MODELS = [
       'gemini-3.7-flash',
       'gemini-3.6-flash',
       'gemini-3.5-flash-lite',
-      'gemini-3.1-pro'
+      'gemini-3.1-pro',
+      'gemini-3.7-extended-thinking'
     ];
 
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.7-flash';
+    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
@@ -72,9 +68,7 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
-    for (let i = 0; i < apiKeys.length; i++) {
-      const apiKey = apiKeys[i];
-
+    for (const apiKey of apiKeys) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
         {
@@ -83,7 +77,6 @@ export default async function handler(req) {
           body: JSON.stringify({
             system_instruction: systemInstruction,
             contents: [{ parts }]
-            // Tinanggal ang tools: [{ googleSearch: {} }] para maiwasan ang 429 Search Limit Error
           })
         }
       );
@@ -91,12 +84,7 @@ export default async function handler(req) {
       if (geminiRes.ok) break;
 
       lastErrorText = await geminiRes.text();
-
-      if (geminiRes.status === 429) {
-        await delay(1500);
-      } else {
-        break;
-      }
+      if (geminiRes.status !== 429) break;
     }
 
     if (!geminiRes || !geminiRes.ok) {
