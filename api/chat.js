@@ -23,15 +23,16 @@ export default async function handler(req) {
       });
     }
 
+    // Tamang official model names sa Google Gemini API
     const VALID_MODELS = [
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-pro',
-      'gemini-3.7-extended-thinking'
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro'
     ];
 
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
+    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-2.5-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
@@ -88,7 +89,7 @@ export default async function handler(req) {
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText }), { 
+      return new Response(JSON.stringify({ error: lastErrorText || 'Failed to reach Gemini API' }), { 
         status: geminiRes ? geminiRes.status : 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
@@ -126,6 +127,7 @@ export default async function handler(req) {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
+        'X-Content-Type-Options': 'nosniff',
       },
     });
 
