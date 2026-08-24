@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const userPrompt = message || prompt || '';
     const rawMode = String(mode || '').toLowerCase();
 
-    // 1. CHECK API KEYS
+    // 1. CHECK API KEYS (Random key rotation)
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
@@ -43,23 +43,24 @@ export default async function handler(req, res) {
         return res.status(200).send(markdownImage);
 
       } catch (imgError) {
-        // Fallback sa Pollinations kapag may quota limit o error sa Imagen
+        // Fallback sa Pollinations kapag nag-error o na-quota sa Imagen
         const seed = Math.floor(Math.random() * 1000000);
         const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
         return res.status(200).send(`![${userPrompt}](${fallbackUrl})`);
       }
     }
 
-    // 3. CHAT TEXT MODE (Dynamic Model Mapping)
-    let targetModel = 'gemini-1.5-flash'; // Default model
-    
-    // Dynamic mapping batay sa napiling model sa UI
+    // 3. CHAT TEXT MODE (Dynamic Model Selection)
+    let targetModel = 'gemini-2.5-flash'; // Recommended default model para sa bilis at mura
+
     if (selectedModel) {
       const lowerModel = String(selectedModel).toLowerCase();
       if (lowerModel.includes('pro')) {
-        targetModel = 'gemini-1.5-pro';
+        targetModel = 'gemini-2.5-pro';
       } else if (lowerModel.includes('flash-lite')) {
-        targetModel = 'gemini-1.5-flash'; 
+        targetModel = 'gemini-2.5-flash-lite';
+      } else if (lowerModel.includes('flash')) {
+        targetModel = 'gemini-2.5-flash';
       }
     }
 
@@ -78,6 +79,7 @@ export default async function handler(req, res) {
       systemInstruction += " Act as a TikTok Affiliate Marketing Specialist.";
     }
 
+    // Generate response via Stream
     const responseStream = await ai.models.generateContentStream({
       model: targetModel,
       contents: userPrompt,
