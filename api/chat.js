@@ -1,46 +1,46 @@
-export default async function handler(req, res) {
+export const config = {
+  runtime: 'edge',
+};
+
+export default async function handler(req) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 
   try {
-    const { message, file, files, model, mode, customPrompt } = req.body || {};
+    const body = await req.json();
+    const { message, file, files, model, mode, customPrompt } = body;
     
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return res.status(500).json({ error: 'No API keys configured.' });
+      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
-    const VALID_MODELS = [
-      'gemini-1.5-flash',
-      'gemini-1.5-pro',
-      'gemini-2.0-flash'
-    ];
-
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-1.5-flash';
+    const targetModel = model || 'gemini-1.5-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
     if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
+      systemInstructionText += " Act as an academic assistant.";
     } else if (mode === 'coder') {
-      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
+      systemInstructionText += " Act as an expert software engineer.";
     } else if (mode === 'tagalog') {
-      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
+      systemInstructionText += " Speak strictly in natural Tagalog.";
     } else if (mode === 'affiliate') {
-      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
+      systemInstructionText += " Act as a top-tier digital affiliate marketing expert.";
     } else if (mode === 'custom' && customPrompt) {
       systemInstructionText += ` ${customPrompt}`;
     }
 
-    const systemInstruction = {
-      parts: [{ text: systemInstructionText }]
-    };
-
     const parts = [];
-
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
         if (f.data && f.mimeType) {
@@ -63,28 +63,36 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            system_instruction: systemInstruction,
+            system_instruction: { parts: [{ text: systemInstructionText }] },
             contents: [{ parts }]
           })
         }
       );
 
       if (geminiRes.ok) break;
-
       lastErrorText = await geminiRes.text();
       if (geminiRes.status !== 429) break;
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return res.status(geminiRes ? geminiRes.status : 500).json({ error: lastErrorText });
+      return new Response(JSON.stringify({ error: lastErrorText }), { 
+        status: geminiRes ? geminiRes.status : 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
     const data = await geminiRes.json();
     const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
 
-    return res.status(200).json({ reply: replyText });
+    return new Response(JSON.stringify({ reply: replyText }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
 
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 }
