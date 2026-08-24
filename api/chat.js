@@ -2,7 +2,7 @@ export const config = {
   runtime: 'edge',
 };
 
-// Helper function para sa delay kapag nag-hit ng Rate Limit (429)
+// Helper function para mag-delay kapag nag-hit ng Rate Limit (429)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default async function handler(req) {
@@ -16,7 +16,7 @@ export default async function handler(req) {
   try {
     const { message, file, files, model, mode, customPrompt } = await req.json();
     
-    // Kunin ang API keys at i-shuffle para hindi laging ang unang key ang maunang maubos
+    // Kunin ang API keys at i-shuffle para ma-distribute ang request load
     const rawKeys = process.env.GEMINI_API_KEY || '';
     let apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
@@ -27,19 +27,18 @@ export default async function handler(req) {
       });
     }
 
-    // I-randomize ang pagkakasunod-sunod ng API keys para sa load balancing
+    // Randomize order ng API keys
     apiKeys = apiKeys.sort(() => Math.random() - 0.5);
 
-    // I-map ang requested model sa opisyal na Google Gemini Model Identifiers
-    const MODEL_MAP = {
-      'gemini-3.7-flash': 'gemini-2.5-flash',
-      'gemini-3.6-flash': 'gemini-2.5-flash',
-      'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
-      'gemini-3.1-pro': 'gemini-2.5-pro',
-      'gemini-3.7-extended-thinking': 'gemini-2.5-pro'
-    };
+    const VALID_MODELS = [
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-pro',
+      'gemini-3.7-extended-thinking'
+    ];
 
-    const targetModel = MODEL_MAP[model] || 'gemini-2.5-flash';
+    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
@@ -97,11 +96,11 @@ export default async function handler(req) {
 
       lastErrorText = await geminiRes.text();
 
-      // Kapag 429 Error, maghintay muna ng 1.5 seconds bago lumipat sa susunod na API Key
+      // Kapag 429 Error, maghintay ng 1.5 seconds bago ilipat sa susunod na API key
       if (geminiRes.status === 429) {
         await delay(1500);
       } else {
-        break; // Kapag ibang uri ng error (tulad ng 400 Bad Request), itigil na ang loop
+        break; // Kapag ibang uri ng error (e.g. 400 Bad Request), wag nang mag-retry
       }
     }
 
