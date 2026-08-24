@@ -1,37 +1,25 @@
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(req) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
-      status: 405, 
-      headers: { 'Content-Type': 'application/json' } 
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { message, file, files, model, mode, customPrompt } = await req.json();
+    const { message, file, files, model, mode, customPrompt } = req.body || {};
     
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
+      return res.status(500).json({ error: 'No API keys configured.' });
     }
 
     const VALID_MODELS = [
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-pro',
-      'gemini-3.7-extended-thinking'
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash'
     ];
 
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
+    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-1.5-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
@@ -70,7 +58,7 @@ export default async function handler(req) {
 
     for (const apiKey of apiKeys) {
       geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -88,51 +76,15 @@ export default async function handler(req) {
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText }), { 
-        status: geminiRes ? geminiRes.status : 500, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
+      return res.status(geminiRes ? geminiRes.status : 500).json({ error: lastErrorText });
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+    const data = await geminiRes.json();
+    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
 
-    const transformStream = new TransformStream({
-      start() { this.buffer = ''; },
-      async transform(chunk, controller) {
-        this.buffer += decoder.decode(chunk, { stream: true });
-        const lines = this.buffer.split('\n');
-        this.buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data:')) {
-            const jsonStr = trimmed.slice(5).trim();
-            if (jsonStr === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (textChunk) {
-                controller.enqueue(encoder.encode(textChunk));
-              }
-            } catch (e) {}
-          }
-        }
-      }
-    });
-
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-      },
-    });
+    return res.status(200).json({ reply: replyText });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500, 
-      headers: { 'Content-Type': 'application/json' } 
-    });
+    return res.status(500).json({ error: error.message });
   }
 }
