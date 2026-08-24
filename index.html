@@ -321,7 +321,7 @@
             <input type="text" class="search-chat-input" id="searchChatInput" placeholder="🔍 Search chat..." oninput="filterChatHistory()">
             <div class="chat-history-list" id="chatHistoryList"></div>
 
-            <!-- Footer ng Sidebar -->
+            <!-- Footer ng Sidebar: Total Words Used sa unahan at Settings Icon button sa dulo/katabi -->
             <div id="sidebar-footer-settings" style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 11px; opacity: 0.8;">
               <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Words Used: <span id="word-count">0</span></span>
               <button onclick="openSettingsModal()" title="Settings" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -531,6 +531,7 @@
                 <button class="preview-close-btn" onclick="toggleCommandsModal(false)" style="cursor: pointer; background: none; border: none; color: #aaa; font-size: 1.1rem;">✕ Close</button>
             </div>
             <div class="commands-list" id="commandsListContainer" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Dynamic Content loaded via JS -->
             </div>
         </div>
     </div>
@@ -1049,98 +1050,6 @@
             `;
         }
 
-        // ==========================================
-        // UPDATED STREAMING FUNCTION
-        // ==========================================
-        async function handleStreamingChat(payload) {
-            const chatContainer = document.getElementById('chatBox');
-            
-            // 1. Gumawa ng temporary message element para sa AI Response
-            const aiMessageElement = document.createElement('div');
-            aiMessageElement.className = 'msg bot';
-            const contentContainer = document.createElement('div');
-            aiMessageElement.appendChild(contentContainer);
-            chatContainer.appendChild(aiMessageElement);
-
-            let fullText = '';
-
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                // 2. I-check kung nag-return ng Error Status ang Server
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Server error: ${response.status}`);
-                }
-
-                // 3. Basahin ang Body ReadableStream
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    // 4. I-convert ang binary chunk patungong string
-                    const chunkText = decoder.decode(value, { stream: true });
-                    fullText += chunkText;
-
-                    // 5. Render sa Markdown at i-display sa UI
-                    const parsedHtml = typeof marked.parse === 'function' 
-                        ? await marked.parse(fullText) 
-                        : marked(fullText);
-
-                    contentContainer.innerHTML = parsedHtml;
-
-                    // 6. Auto-scroll pababa habang nag-i-stream
-                    scrollToBottom(false);
-                }
-
-                // Bot Action Controls pagkatapos mag-stream
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'bot-actions';
-                if (isBibleMode) {
-                    actionsDiv.style.marginTop = '8px';
-                    actionsDiv.style.display = 'flex';
-                    actionsDiv.style.gap = '8px';
-                    actionsDiv.innerHTML = `<button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>`;
-                } else {
-                    actionsDiv.innerHTML = `
-                        <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
-                        <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
-                    `;
-                }
-                aiMessageElement.appendChild(actionsDiv);
-
-                // Highlight code blocks
-                aiMessageElement.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
-                aiMessageElement.querySelectorAll('img').forEach(img => {
-                    img.onclick = () => openLightbox(img.src);
-                });
-
-                return fullText;
-
-            } catch (error) {
-                console.error('Streaming Error:', error);
-                aiMessageElement.innerHTML = `
-                    <div class="minimal-error-card">
-                        <span class="minimal-error-text">⚠️ ${escapeHTML(error.message || 'Connection Error')}</span>
-                        <button class="minimal-retry-btn" onclick="retryLastMessage(this)" title="Try Again">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.63-5.19"/>
-                            </svg>
-                        </button>
-                    </div>
-                `;
-                scrollToBottom(true);
-                throw error;
-            }
-        }
-
         async function processBiblePrompt(userText) {
             if (!chatBox) return;
 
@@ -1157,25 +1066,52 @@
             bibleChatSessions[currentBibleSessionId].messages.push({ role: 'user', text: userText });
             saveBibleSessions();
 
+            const botMsgElem = document.createElement('div');
+            botMsgElem.className = 'msg bot';
+            botMsgElem.innerText = 'Naghahanap sa Banal na Kasulatan...';
+            chatBox.appendChild(botMsgElem);
+            scrollToBottom(true);
+
             const bibleSystemInstruction = "You are a warm, wise, and highly articulate Biblical Scholar and Master Storyteller. Your purpose is to explain Bible verses, tell vivid biblical stories, provide context, and offer prayers/reflections. ALWAYS detect the language of the user (Tagalog/Filipino or English) and reply FULLY in that language. Ensure your responses sound fluid and natural when read aloud via Text-to-Speech.";
 
             try {
-                const fullResponse = await handleStreamingChat({
-                    message: userText, 
-                    files: [], 
-                    model: currentSelectedModel || 'gemini-3.6-flash', 
-                    mode: 'custom', 
-                    customPrompt: bibleSystemInstruction 
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: userText, 
+                        files: [], 
+                        model: currentSelectedModel || 'gemini-3.6-flash', 
+                        mode: 'custom', 
+                        customPrompt: bibleSystemInstruction 
+                    })
                 });
 
-                if (fullResponse) {
-                    bibleChatSessions[currentBibleSessionId].messages.push({ role: 'bot', text: fullResponse });
-                    saveBibleSessions();
-                    updateWordCounter(userText + ' ' + fullResponse);
-                    speakRawText(fullResponse);
+                if (!response.ok) throw new Error('Failed to connect to AI');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    fullResponse += decoder.decode(value, { stream: true });
+                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
+                        <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                            <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>
+                        </div>`;
+                    scrollToBottom(false);
                 }
+
+                bibleChatSessions[currentBibleSessionId].messages.push({ role: 'bot', text: fullResponse });
+                saveBibleSessions();
+
+                updateWordCounter(userText + ' ' + fullResponse);
+                speakRawText(fullResponse);
+
             } catch (err) {
-                console.error(err);
+                botMsgElem.innerHTML = `<div class="minimal-error-card"><span class="minimal-error-text">⚠️ ${escapeHTML(err.message)}</span></div>`;
             }
         }
 
@@ -1288,16 +1224,16 @@
             selectedFilesData = [];
             renderFilePreviews();
 
+            const botMsgElem = document.createElement('div');
+            botMsgElem.className = 'msg bot';
+            botMsgElem.innerText = mode === 'imagen' ? 'Generating image with Imagen 4...' : 'Thinking...';
+            chatBox.appendChild(botMsgElem);
+            scrollToBottom(true);
+
             const customPrompt = document.getElementById('customPromptInput').value;
 
             try {
                 if (mode === 'imagen') {
-                    const botMsgElem = document.createElement('div');
-                    botMsgElem.className = 'msg bot';
-                    botMsgElem.innerText = 'Generating image with Imagen 4...';
-                    chatBox.appendChild(botMsgElem);
-                    scrollToBottom(true);
-
                     const res = await fetch('/api/generate-image', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1330,27 +1266,56 @@
                     return;
                 }
 
-                // Streaming via handleStreamingChat
-                const fullResponse = await handleStreamingChat({ 
-                    message, 
-                    files: tempFiles, 
-                    model, 
-                    mode, 
-                    customPrompt 
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, files: tempFiles, model, mode, customPrompt })
                 });
 
-                if (fullResponse) {
-                    chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
-                    saveSessions();
-                    updateWordCounter(message + ' ' + fullResponse);
+                if (!response.ok) throw new Error('Server returned status ' + response.status);
 
-                    if (document.getElementById('autoTTSToggle').checked) {
-                        speakRawText(fullResponse);
-                    }
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    fullResponse += decoder.decode(value, { stream: true });
+                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
+                        <div class="bot-actions">
+                            <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
+                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
+                        </div>`;
+                    
+                    botMsgElem.querySelectorAll('img').forEach(img => {
+                        img.onclick = () => openLightbox(img.src);
+                    });
+                    scrollToBottom(false);
+                }
+
+                chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
+                saveSessions();
+                document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+
+                updateWordCounter(message + ' ' + fullResponse);
+
+                if (document.getElementById('autoTTSToggle').checked) {
+                    speakRawText(fullResponse);
                 }
 
             } catch (err) {
-                console.error(err);
+                botMsgElem.innerHTML = `
+                    <div class="minimal-error-card">
+                        <span class="minimal-error-text">⚠️ ${escapeHTML(err.message || 'Connection Error')}</span>
+                        <button class="minimal-retry-btn" onclick="retryLastMessage(this)" title="Try Again">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.63-5.19"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                scrollToBottom(true);
             }
         }
 
