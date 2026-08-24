@@ -17,25 +17,37 @@ export default async function handler(req) {
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No GEMINI_API_KEY set in Vercel settings.' }), { 
+      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    const targetModel = model || 'gemini-2.5-flash';
+    // Official Gemini API Key Mapping (Safeguard para hindi mag-404 sa backend)
+    const MODEL_MAPPING = {
+      'gemini-3.7-flash': 'gemini-2.5-flash',
+      'gemini-3.6-flash': 'gemini-2.5-flash',
+      'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
+      'gemini-3.1-pro': 'gemini-1.5-pro',
+      'gemini-3.7-extended-thinking': 'gemini-2.5-flash'
+    };
 
-    // System Prompt setup
+    // Siguraduhing valid na API endpoint model name ang maipapadala sa Google
+    const targetModel = MODEL_MAPPING[model] || model || 'gemini-2.5-flash';
+
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
-    if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant.";
+    // High-Priority Custom Persona Check
+    if (mode === 'custom' && customPrompt && customPrompt.trim()) {
+      systemInstructionText = `You are JepongDevxyz AI. Strictly adopt and act according to this custom role/persona: "${customPrompt.trim()}". Always structure code responses inside standard markdown code blocks.`;
+    } else if (mode === 'school') {
+      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
     } else if (mode === 'coder') {
-      systemInstructionText += " Act as an expert software engineer.";
+      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
     } else if (mode === 'tagalog') {
-      systemInstructionText += " Speak strictly in natural Tagalog.";
-    } else if (mode === 'custom' && customPrompt) {
-      systemInstructionText += ` ${customPrompt}`;
+      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
+    } else if (mode === 'affiliate') {
+      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
     }
 
     const systemInstruction = {
@@ -44,7 +56,6 @@ export default async function handler(req) {
 
     const parts = [];
 
-    // Attachments
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
         if (f.data && f.mimeType) {
@@ -61,16 +72,17 @@ export default async function handler(req) {
     let lastErrorText = '';
 
     for (const apiKey of apiKeys) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`;
-
-      geminiRes = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: systemInstruction,
-          contents: [{ parts }]
-        })
-      });
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: systemInstruction,
+            contents: [{ parts }]
+          })
+        }
+      );
 
       if (geminiRes.ok) break;
 
@@ -79,20 +91,44 @@ export default async function handler(req) {
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ 
-        error: lastErrorText || 'Failed to communicate with Gemini API.' 
-      }), { 
+      return new Response(JSON.stringify({ error: lastErrorText || 'Failed to reach Gemini API' }), { 
         status: geminiRes ? geminiRes.status : 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    // Pass direct stream response to prevent Vercel 504 Timeout
-    return new Response(geminiRes.body, {
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const transformStream = new TransformStream({
+      start() { this.buffer = ''; },
+      async transform(chunk, controller) {
+        this.buffer += decoder.decode(chunk, { stream: true });
+        const lines = this.buffer.split('\n');
+        this.buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data:')) {
+            const jsonStr = trimmed.slice(5).trim();
+            if (jsonStr === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (textChunk) {
+                controller.enqueue(encoder.encode(textChunk));
+              }
+            } catch (e) {}
+          }
+        }
+      }
+    });
+
+    return new Response(geminiRes.body.pipeThrough(transformStream), {
       headers: {
-        'Content-Type': 'text/event-stream',
+        'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
       },
     });
 
