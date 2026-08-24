@@ -1,120 +1,138 @@
-import { GoogleGenAI } from '@google/genai';
-
 export const config = {
-  runtime: 'edge', // Mas mabilis na streaming support sa Vercel
+  runtime: 'edge',
 };
 
 export default async function handler(req) {
-  // 1. Method Validation
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405, 
+      headers: { 'Content-Type': 'application/json' } 
     });
   }
 
   try {
-    // 2. API Key Rotation (with trim fix)
-    const rawKeys = process.env.GEMINI_API_KEY;
-    if (!rawKeys) {
-      return new Response(JSON.stringify({ error: 'Missing GEMINI_API_KEY environment variable' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
+    const { message, file, files, model, mode, customPrompt } = await req.json();
+    
+    const rawKeys = process.env.GEMINI_API_KEY || '';
+    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+
+    if (apiKeys.length === 0) {
+      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    const apiKeys = rawKeys.split(',').map(key => key.trim()).filter(Boolean);
-    const selectedKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+    const VALID_MODELS = [
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-pro',
+      'gemini-3.7-extended-thinking'
+    ];
 
-    const ai = new GoogleGenAI({ apiKey: selectedKey });
-    const body = await req.json();
-    const { prompt, model: requestedModel, type, context } = body;
+    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
-    // 3. Image Generation Mode (with Fallback to Pollinations)
-    const isImageRequest = type === 'image' || (prompt && /generate image|draw|picture/i.test(prompt));
-    
-    if (isImageRequest) {
-      try {
-        const imageResponse = await ai.models.generateImages({
-          model: 'imagen-3.0-generate-002',
-          prompt: prompt,
-          config: {
-            numberOfImages: 1,
-            outputMimeType: 'image/jpeg',
-            aspectRatio: '1:1',
-          },
-        });
+    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
-        const base64ImageBytes = imageResponse.generatedImages[0].image.imageBytes;
-        const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
+    if (mode === 'school') {
+      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
+    } else if (mode === 'coder') {
+      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
+    } else if (mode === 'tagalog') {
+      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
+    } else if (mode === 'affiliate') {
+      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
+    } else if (mode === 'custom' && customPrompt) {
+      systemInstructionText += ` ${customPrompt}`;
+    }
 
-        return new Response(JSON.stringify({ url: imageUrl }), {
-          status: 200,
+    const systemInstruction = {
+      parts: [{ text: systemInstructionText }]
+    };
+
+    const parts = [];
+
+    if (files && Array.isArray(files) && files.length > 0) {
+      files.forEach(f => {
+        if (f.data && f.mimeType) {
+          parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
+        }
+      });
+    } else if (file && file.data && file.mimeType) {
+      parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
+    }
+
+    if (message) parts.push({ text: message });
+
+    let geminiRes = null;
+    let lastErrorText = '';
+
+    for (const apiKey of apiKeys) {
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-        });
-      } catch (imgError) {
-        // Fallback to Pollinations AI
-        const fallbackUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000)}&model=flux`;
-        return new Response(JSON.stringify({ url: fallbackUrl, fallback: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
+          body: JSON.stringify({
+            system_instruction: systemInstruction,
+            contents: [{ parts }]
+          })
+        }
+      );
+
+      if (geminiRes.ok) break;
+
+      lastErrorText = await geminiRes.text();
+      if (geminiRes.status !== 429) break;
     }
 
-    // 4. Model Selection Mapping Fix
-    let selectedModel = 'gemini-1.5-flash';
-    if (requestedModel?.includes('pro')) {
-      selectedModel = 'gemini-1.5-pro';
-    } else if (requestedModel?.includes('lite') || requestedModel?.includes('flash-lite')) {
-      selectedModel = 'gemini-1.5-flash'; // Fallback to standard fast model
+    if (!geminiRes || !geminiRes.ok) {
+      return new Response(JSON.stringify({ error: lastErrorText }), { 
+        status: geminiRes ? geminiRes.status : 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
-    // 5. System Persona Instructions
-    let systemInstruction = "You are JepongDevxyz AI, developed by Jay-Ar Lee Espiritu.";
-    if (context === 'school') {
-      systemInstruction += " Focus on educational, clear, and academic explanations.";
-    } else if (context === 'coding') {
-      systemInstruction += " Provide clean, optimized code snippets with minimal unnecessary talk.";
-    } else if (context === 'tiktok') {
-      systemInstruction += " Act as a TikTok affiliate marketing expert. Give practical growth strategies.";
-    } else {
-      systemInstruction += " Respond naturally in Tagalog/English mix, friendly and engaging.";
-    }
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
 
-    // 6. Content Streaming Response
-    const responseStream = await ai.models.generateContentStream({
-      model: selectedModel,
-      contents: prompt,
-      config: {
-        systemInstruction: systemInstruction,
-      },
-    });
+    const transformStream = new TransformStream({
+      start() { this.buffer = ''; },
+      async transform(chunk, controller) {
+        this.buffer += decoder.decode(chunk, { stream: true });
+        const lines = this.buffer.split('\n');
+        this.buffer = lines.pop() || '';
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        for await (const chunk of responseStream) {
-          if (chunk.text) {
-            controller.enqueue(encoder.encode(chunk.text));
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data:')) {
+            const jsonStr = trimmed.slice(5).trim();
+            if (jsonStr === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (textChunk) {
+                controller.enqueue(encoder.encode(textChunk));
+              }
+            } catch (e) {}
           }
         }
-        controller.close();
-      },
+      }
     });
 
-    return new Response(stream, {
+    return new Response(geminiRes.body.pipeThrough(transformStream), {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
-        'X-Content-Type-Options': 'nosniff',
       },
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500, 
+      headers: { 'Content-Type': 'application/json' } 
     });
   }
 }
