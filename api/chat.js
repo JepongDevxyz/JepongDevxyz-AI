@@ -2,7 +2,6 @@ export const config = {
   runtime: 'edge',
 };
 
-// Helper function para sa delay kapag nag-hit ng Rate Limit (429)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default async function handler(req) {
@@ -16,7 +15,6 @@ export default async function handler(req) {
   try {
     const { message, file, files, model, mode, customPrompt } = await req.json();
     
-    // Kunin ang API keys at i-shuffle para ma-distribute nang maayos ang traffic
     const rawKeys = process.env.GEMINI_API_KEY || '';
     let apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
@@ -27,10 +25,9 @@ export default async function handler(req) {
       });
     }
 
-    // Randomize order ng API keys para sa load balancing
+    // Load balancing sa pamamagitan ng shuffling ng API keys
     apiKeys = apiKeys.sort(() => Math.random() - 0.5);
 
-    // Listahan ng valid 3.x Gemini models
     const VALID_MODELS = [
       'gemini-3.7-flash',
       'gemini-3.6-flash',
@@ -38,7 +35,6 @@ export default async function handler(req) {
       'gemini-3.1-pro'
     ];
 
-    // Gagamitin ang gemini-3.7-flash bilang default fallback
     const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.7-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
@@ -76,7 +72,6 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
-    // Subukan ang bawat API key at maglagay ng delay kung mag-429 Rate Limit
     for (let i = 0; i < apiKeys.length; i++) {
       const apiKey = apiKeys[i];
 
@@ -87,8 +82,8 @@ export default async function handler(req) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             system_instruction: systemInstruction,
-            contents: [{ parts }],
-            tools: [{ googleSearch: {} }]
+            contents: [{ parts }]
+            // Tinanggal ang tools: [{ googleSearch: {} }] para maiwasan ang 429 Search Limit Error
           })
         }
       );
@@ -97,11 +92,10 @@ export default async function handler(req) {
 
       lastErrorText = await geminiRes.text();
 
-      // Kapag 429 Too Many Requests, mag-wait ng 1.5 seconds bago gumamit ng susunod na API key
       if (geminiRes.status === 429) {
         await delay(1500);
       } else {
-        break; // Kapag ibang error (tulad ng 400 Bad Request), huwag nang subukan sa ibang key
+        break;
       }
     }
 
