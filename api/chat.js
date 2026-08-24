@@ -15,27 +15,32 @@ export default async function handler(req) {
     const message = body.message || body.prompt || '';
     const { model, mode, customPrompt, file, files } = body;
 
-    // 1. HANDLER PARA SA IMAGE GENERATOR MODE
-    if (mode === 'image' || mode === 'imagen' || mode === 'Image Generator' || mode === '🎨 Image Generator') {
+    // 1. IMAGE GENERATOR MODE (Streamed Markdown Image Response)
+    const isImageMode = mode === 'image' || 
+                        mode === 'imagen' || 
+                        mode === 'Image Generator' || 
+                        mode === '🎨 Image Generator';
+
+    if (isImageMode) {
       if (!message.trim()) {
-        return new Response(JSON.stringify({ error: 'Prompt is required for image generation.' }), {
+        return new Response('Pakilagay ang prompt para sa lilikhaing larawan.', {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
       }
 
       const seed = Math.floor(Math.random() * 1000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(message)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+      
+      // Markdown formatted image na maiintindihan agad ng frontend chat UI
+      const markdownImageResponse = `Eto na ang iyong hiniling na larawan para sa "${message}":\n\n![${message}](${imageUrl})`;
 
-      return new Response(JSON.stringify({
-        success: true,
-        type: 'image',
-        imageUrl: imageUrl,
-        resultUrl: imageUrl,
-        text: `![Generated Image](${imageUrl})`
-      }), {
+      return new Response(markdownImageResponse, {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache',
+        },
       });
     }
 
@@ -50,7 +55,7 @@ export default async function handler(req) {
       });
     }
 
-    // 3. MAP UI DROPDOWN TO OFFICIAL LIVE GEMINI MODEL NAMES
+    // 3. MODEL MAPPING
     const MODEL_MAPPING = {
       '3.6 Flash': 'gemini-3.6-flash',
       '3.7 Flash': 'gemini-3.7-flash',
@@ -100,7 +105,7 @@ export default async function handler(req) {
 
     const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
 
-    // 6. CALL GOOGLE GEMINI API WITH AUTOMATIC FALLBACK ON 404
+    // 6. CALL GOOGLE GEMINI API WITH AUTOMATIC FALLBACK
     let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`,
       {
@@ -113,7 +118,6 @@ export default async function handler(req) {
       }
     );
 
-    // Kapag nag-404 sa partikular na model string, kusa itong lilipat sa gemini-2.5-flash
     if (geminiRes.status === 404) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
