@@ -11,43 +11,74 @@ export default async function handler(req) {
   }
 
   try {
-    const { message, file, files, model, mode, customPrompt } = await req.json();
-    
+    const { message, prompt, file, files, model, mode, customPrompt } = await req.json();
+    const userPrompt = message || prompt || '';
+
+    // ==========================================
+    // 1. IMAGE GENERATOR MODE (HANDLED DIRECTLY)
+    // ==========================================
+    if (mode === 'image' || mode === 'imagen' || mode === 'Image Generator') {
+      if (!userPrompt.trim()) {
+        return new Response(JSON.stringify({ error: 'Prompt is required for image generation.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const seed = Math.floor(Math.random() * 1000000);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+
+      // Return JSON directly so frontend doesn't throw "Unexpected end of JSON input"
+      return new Response(JSON.stringify({
+        success: true,
+        type: 'image',
+        imageUrl: imageUrl,
+        resultUrl: imageUrl,
+        text: `![Generated Image](${imageUrl})`
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // ==========================================
+    // 2. TEXT & CUSTOM PERSONA CHAT MODE
+    // ==========================================
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
+      return new Response(JSON.stringify({ error: 'No GEMINI_API_KEY configured in environment.' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    // Official Gemini API Key Mapping (Safeguard para hindi mag-404 sa backend)
+    // Model Safeguard: Converts Frontend Labels to Valid Official Gemini API Identifiers
     const MODEL_MAPPING = {
-      'gemini-3.7-flash': 'gemini-2.5-flash',
+      '3.5 Flash-Lite': 'gemini-2.5-flash-lite',
+      '3.6 Flash': 'gemini-2.5-flash',
+      '3.1 Pro': 'gemini-1.5-pro',
+      'Extended thinking': 'gemini-2.5-flash',
       'gemini-3.6-flash': 'gemini-2.5-flash',
       'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
-      'gemini-3.1-pro': 'gemini-1.5-pro',
-      'gemini-3.7-extended-thinking': 'gemini-2.5-flash'
+      'gemini-3.1-pro': 'gemini-1.5-pro'
     };
 
-    // Siguraduhing valid na API endpoint model name ang maipapadala sa Google
     const targetModel = MODEL_MAPPING[model] || model || 'gemini-2.5-flash';
 
+    // Base System Persona Logic
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
-    // High-Priority Custom Persona Check
-    if (mode === 'custom' && customPrompt && customPrompt.trim()) {
-      systemInstructionText = `You are JepongDevxyz AI. Strictly adopt and act according to this custom role/persona: "${customPrompt.trim()}". Always structure code responses inside standard markdown code blocks.`;
+    if (mode === 'custom' || mode === 'Custom Persona') {
+      const activeCustomPersona = customPrompt || userPrompt;
+      systemInstructionText = `You are JepongDevxyz AI. Strictly adopt and act according to this persona: "${activeCustomPersona}". Always structure code responses inside standard markdown code blocks.`;
     } else if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
+      systemInstructionText += " Act as an academic assistant for homework, essays, and study guides.";
     } else if (mode === 'coder') {
-      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
+      systemInstructionText += " Act as an expert software engineer and senior programmer.";
     } else if (mode === 'tagalog') {
-      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
-    } else if (mode === 'affiliate') {
-      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
+      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language.";
     }
 
     const systemInstruction = {
@@ -66,37 +97,32 @@ export default async function handler(req) {
       parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
     }
 
-    if (message) parts.push({ text: message });
+    if (userPrompt) parts.push({ text: userPrompt });
 
-    let geminiRes = null;
-    let lastErrorText = '';
+    // Pick random API key to distribute load
+    const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`;
 
-    for (const apiKey of apiKeys) {
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: systemInstruction,
-            contents: [{ parts }]
-          })
-        }
-      );
+    const geminiRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: systemInstruction,
+        contents: [{ parts }]
+      })
+    });
 
-      if (geminiRes.ok) break;
-
-      lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break;
-    }
-
-    if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText || 'Failed to reach Gemini API' }), { 
-        status: geminiRes ? geminiRes.status : 500, 
+    if (!geminiRes.ok) {
+      const errorText = await geminiRes.text();
+      return new Response(JSON.stringify({ 
+        error: `Gemini API Error (${geminiRes.status}): ${errorText}` 
+      }), { 
+        status: geminiRes.status, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
+    // TransformStream for SSE Streaming text output
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
