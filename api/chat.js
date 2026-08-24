@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-const VALID_MODELS = [
-  'gemini-3.7-flash',
-  'gemini-3.7-extended-thinking',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-3.1-pro'
-];
+// I-map ang frontend dropdown selections papunta sa opisyal na Google API model IDs
+const MODEL_MAPPING = {
+  'gemini-3.7-flash': 'gemini-1.5-flash',
+  'gemini-3.7-extended-thinking': 'gemini-1.5-pro',
+  'gemini-3.6-flash': 'gemini-1.5-flash',
+  'gemini-3.5-flash-lite': 'gemini-1.5-flash',
+  'gemini-3.1-pro': 'gemini-1.5-pro'
+};
 
 export async function POST(req) {
   try {
@@ -18,23 +19,20 @@ export async function POST(req) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'CONFIG_ERROR: Ang GEMINI_API_KEY ay wala sa environment variables.' },
+        { error: 'Missing GEMINI_API_KEY environment variable.' },
         { status: 500 }
       );
     }
 
-    // Model selection logic
-    let selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
-    if (model === 'gemini-3.7-extended-thinking') {
-      selectedModel = 'gemini-3.7-flash'; // I-fallback sa 3.7 flash kung gamit ang extended thinking flag
-    }
+    // 1. Model Mapping
+    const targetModel = MODEL_MAPPING[model] || 'gemini-1.5-flash';
 
-    // System Instructions
+    // 2. System Instructions base sa Mode
     let systemInstructionText = "You are a helpful, smart, and precise AI assistant.";
     if (mode === 'school') {
       systemInstructionText = "You are an expert tutor. Explain concepts clearly, step-by-step, and simply.";
     } else if (mode === 'coder') {
-      systemInstructionText = "You are a senior software developer. Write clean, optimized code.";
+      systemInstructionText = "You are a senior software developer. Write clean, optimized, production-ready code.";
     } else if (mode === 'tagalog') {
       systemInstructionText = "Sumagot ka sa Tagalog o Taglish sa natural, maayos, at madaling maunawaang paraan.";
     } else if (mode === 'affiliate') {
@@ -43,13 +41,12 @@ export async function POST(req) {
       systemInstructionText = customPrompt;
     }
 
-    // Structure Request Parts
+    // 3. i-Format ang Content Parts
     const userParts = [];
 
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach((file) => {
         if (file.mimeType && file.data) {
-          // Tanggalin ang base64 header prefix kung naisama mula sa frontend
           const cleanBase64 = file.data.includes(',') ? file.data.split(',')[1] : file.data;
           userParts.push({
             inline_data: {
@@ -65,19 +62,13 @@ export async function POST(req) {
       userParts.push({ text: message });
     }
 
-    if (userParts.length === 0) {
-      return NextResponse.json(
-        { error: 'BAD_REQUEST: Walang text message o file na naipasa sa request.' },
-        { status: 400 }
-      );
-    }
-
     const payload = {
       contents: [{ role: 'user', parts: userParts }],
       systemInstruction: { parts: [{ text: systemInstructionText }] }
     };
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    // 4. API Request sa Google Gemini Endpoint
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`;
 
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -87,16 +78,14 @@ export async function POST(req) {
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
-      console.error('Gemini API Error Detail:', errorText);
-      
-      // Ibalik ang eksaktong dahilan galing sa Google para makita sa app
+      console.error('Google API Error:', errorText);
       return NextResponse.json(
-        { error: `GEMINI_API_REJECTED (${geminiResponse.status}): ${errorText}` },
+        { error: `API Error (${geminiResponse.status}): ${errorText}` },
         { status: geminiResponse.status }
       );
     }
 
-    // SSE Stream Transformation
+    // 5. Safe SSE Stream Parser
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -124,7 +113,7 @@ export async function POST(req) {
                 }
               }
             } catch (e) {
-              // Ignore partial JSON parse errors safely
+              // I-skip lang ang mga partial/broken JSON chunks
             }
           }
         }
@@ -139,10 +128,10 @@ export async function POST(req) {
       }
     });
 
-  } catch (err) {
-    console.error('Unhandled Edge Error:', err);
+  } catch (error) {
+    console.error('Server Handler Error:', error);
     return NextResponse.json(
-      { error: `SERVER_EXCEPTIONAL_CRASH: ${err.message || 'Unknown Error'}` },
+      { error: error.message || 'Internal Server Error' },
       { status: 500 }
     );
   }
