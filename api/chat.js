@@ -1,140 +1,88 @@
-export const config = {
-  runtime: 'edge',
-};
+import { GoogleGenAI } from '@google/genai';
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    const body = await req.json();
-    const message = body.message || body.prompt || '';
-    const rawMode = String(body.mode || '').toLowerCase();
-    const rawModel = String(body.model || '').toLowerCase();
+    const { message, prompt, mode, customPrompt } = req.body;
+    const userPrompt = message || prompt || '';
+    const rawMode = String(mode || '').toLowerCase();
 
-    // 1. IMAGE GENERATOR MODE (Kahit anong variations ng word na image/imagen)
-    if (rawMode.includes('image') || rawMode.includes('imagen') || rawMode.includes('🎨')) {
-      if (!message.trim()) {
-        return new Response('Maglagay ng prompt para sa lilikhaing larawan.', { status: 400 });
-      }
-
-      const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(message)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
-      
-      return new Response(`![${message}](${imageUrl})`, {
-        status: 200,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-      });
-    }
-
-    // 2. CHECK API KEYS
+    // 1. CHECK API KEYS
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response('Walang GEMINI_API_KEY na nakaset.', { status: 500 });
+      return res.status(500).json({ error: 'Walang GEMINI_API_KEY na nakaset sa Vercel Environment Variables.' });
     }
 
-    const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+    const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+    const ai = new GoogleGenAI({ apiKey });
 
-    // 3. HARDCODED VALID GEMINI MODEL (Iwas 404 kahit ano pang ipasa ng dropdown)
-    // Ginagawang default ang gemini-1.5-flash dahil ito ang pinaka-stable sa v1beta
-    let targetModel = 'gemini-1.5-flash';
+    // 2. IMAGE GENERATOR MODE
+    if (rawMode.includes('image') || rawMode.includes('imagen') || rawMode.includes('🎨')) {
+      if (!userPrompt.trim()) {
+        return res.status(400).send('Maglagay ng prompt para sa lilikhaing larawan.');
+      }
 
-    if (rawModel.includes('pro')) {
-      targetModel = 'gemini-1.5-pro';
+      try {
+        const response = await ai.models.generateImages({
+          model: 'imagen-3.0-generate-002',
+          prompt: userPrompt,
+          config: {
+            numberOfImages: 1,
+            outputMimeType: 'image/jpeg',
+            aspectRatio: '1:1',
+          },
+        });
+
+        const base64Bytes = response.generatedImages[0].image.imageBytes;
+        const markdownImage = `![${userPrompt}](data:image/jpeg;base64,${base64Bytes})`;
+        return res.status(200).send(markdownImage);
+
+      } catch (imgError) {
+        // Fallback sa Pollinations kapag quota limit o error ang Imagen
+        const seed = Math.floor(Math.random() * 1000000);
+        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+        return res.status(200).send(`![${userPrompt}](${fallbackUrl})`);
+      }
     }
 
-    // 4. SYSTEM INSTRUCTIONS / PERSONA
-    let systemInstructionText = "You are JepongDevxyz AI developed by Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
+    // 3. CHAT TEXT MODE
+    let systemInstruction = "You are JepongDevxyz AI developed by Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
 
     if (rawMode.includes('custom')) {
-      systemInstructionText = `Act according to this persona: "${body.customPrompt || message}".`;
+      systemInstruction = `Act according to this persona: "${customPrompt || userPrompt}".`;
     } else if (rawMode.includes('school') || rawMode.includes('homework')) {
-      systemInstructionText += " Act as an academic assistant for homework.";
+      systemInstruction += " Act as an academic assistant for homework.";
     } else if (rawMode.includes('coder') || rawMode.includes('code')) {
-      systemInstructionText += " Act as an expert programmer.";
+      systemInstruction += " Act as an expert programmer.";
     } else if (rawMode.includes('tagalog')) {
-      systemInstructionText += " Speak strictly in Tagalog/Filipino.";
+      systemInstruction += " Speak strictly in Tagalog/Filipino.";
     }
 
-    // 5. PREPARE PAYLOAD
-    const parts = [];
-
-    if (body.files && Array.isArray(body.files)) {
-      body.files.forEach(f => {
-        if (f.data && f.mimeType) parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
-      });
-    } else if (body.file && body.file.data) {
-      parts.push({ inline_data: { mime_type: body.file.mimeType, data: body.file.data } });
-    }
-
-    if (message) parts.push({ text: message });
-
-    // 6. CALL API WITH FALLBACK
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`;
-
-    let geminiRes = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemInstructionText }] },
-        contents: [{ parts }]
-      })
-    });
-
-    if (!geminiRes.ok) {
-      // Kung mag-error pa rin ang model, gagamit ng absolute fallback
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts }] })
-        }
-      );
-    }
-
-    if (!geminiRes.ok) {
-      const errorText = await geminiRes.text();
-      return new Response(`API Error: ${errorText}`, { status: geminiRes.status });
-    }
-
-    // 7. STREAM TRANSFORM
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    const transformStream = new TransformStream({
-      start() { this.buffer = ''; },
-      async transform(chunk, controller) {
-        this.buffer += decoder.decode(chunk, { stream: true });
-        const lines = this.buffer.split('\n');
-        this.buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data:')) {
-            const jsonStr = trimmed.slice(5).trim();
-            if (jsonStr === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (textChunk) {
-                controller.enqueue(encoder.encode(textChunk));
-              }
-            } catch (e) {}
-          }
-        }
+    const responseStream = await ai.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      contents: userPrompt,
+      config: {
+        systemInstruction: systemInstruction,
       }
     });
 
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+
+    for await (const chunk of responseStream) {
+      if (chunk.text) {
+        res.write(chunk.text);
+      }
+    }
+
+    return res.end();
 
   } catch (error) {
-    return new Response(`Server Error: ${error.message}`, { status: 500 });
+    return res.status(500).send(`Server Error: ${error.message}`);
   }
 }
