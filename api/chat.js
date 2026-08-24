@@ -15,7 +15,16 @@ export default async function handler(req) {
     const message = body.message || body.prompt || '';
     const { model, mode, customPrompt, file, files } = body;
 
-    // 1. DIRECT HANDLER PARA SA IMAGEN / IMAGE GENERATOR
+    const rawKeys = process.env.GEMINI_API_KEY || '';
+    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+
+    if (apiKeys.length === 0) {
+      return new Response('Walang GEMINI_API_KEY na nakaset sa environment variables.', { status: 500 });
+    }
+
+    const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+
+    // 1. IMAGE GENERATOR MODE (IMAGEN 3)
     const isImageMode = mode === 'image' || 
                         mode === 'imagen' || 
                         mode === 'Image Generator' || 
@@ -26,37 +35,38 @@ export default async function handler(req) {
         return new Response('Maglagay ng prompt para sa lilikhaing larawan.', { status: 400 });
       }
 
-      const rawKeys = process.env.GEMINI_API_KEY || '';
-      const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
-
       let markdownImage = '';
 
-      if (apiKeys.length > 0) {
-        const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-
-        // Tawagin ang official Google Imagen API
+      try {
+        // Correct REST Endpoint Structure for Imagen 3
         const imgRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=${activeApiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              instances: [{ prompt: message }],
-              parameters: { sampleCount: 1, aspectRatio: "1:1", outputMimeType: "image/jpeg" }
+              prompt: message,
+              config: {
+                numberOfImages: 1,
+                aspectRatio: "1:1",
+                outputMimeType: "image/jpeg"
+              }
             })
           }
         );
 
         if (imgRes.ok) {
           const imgData = await imgRes.json();
-          const base64 = imgData.predictions?.[0]?.bytesBase64Encoded;
+          const base64 = imgData.generatedImages?.[0]?.image?.imageBytes;
           if (base64) {
             markdownImage = `![${message}](data:image/jpeg;base64,${base64})`;
           }
         }
+      } catch (err) {
+        console.error('Imagen API Error:', err);
       }
 
-      // Fallback sa Pollinations kapag may quota limit o error ang Google API key
+      // Fallback kung sakaling may API quota error/limit sa Google Imagen
       if (!markdownImage) {
         const seed = Math.floor(Math.random() * 1000000);
         const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(message)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
@@ -69,20 +79,12 @@ export default async function handler(req) {
       });
     }
 
-    // 2. CHECK API KEYS FOR CHAT
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
-
-    if (apiKeys.length === 0) {
-      return new Response('Walang GEMINI_API_KEY na nakaset.', { status: 500 });
-    }
-
-    // 3. CHAT MODEL MAPPING
+    // 2. CHAT MODELS MAPPING (Valid Google Gemini Models)
     const MODEL_MAPPING = {
       '3.6 Flash': 'gemini-2.5-flash',
       '3.7 Flash': 'gemini-2.5-flash',
       '3.5 Flash-Lite': 'gemini-2.5-flash-lite',
-      '3.1 Pro': 'gemini-1.5-pro',
+      '3.1 Pro': 'gemini-2.5-pro',
       'Extended thinking': 'gemini-2.5-flash',
       'gemini-3.6-flash': 'gemini-2.5-flash',
       'gemini-3.7-flash': 'gemini-2.5-flash',
@@ -92,7 +94,7 @@ export default async function handler(req) {
 
     const targetModel = MODEL_MAPPING[model] || 'gemini-2.5-flash';
 
-    // 4. PERSONA & SYSTEM INSTRUCTIONS
+    // 3. PERSONA LOGIC
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
 
     if (mode === 'custom' || mode === 'Custom Persona' || mode === '🎭 Custom Persona') {
@@ -110,6 +112,7 @@ export default async function handler(req) {
       parts: [{ text: systemInstructionText }]
     };
 
+    // 4. ATTACHMENTS HANDLING
     const parts = [];
 
     if (files && Array.isArray(files) && files.length > 0) {
@@ -124,9 +127,7 @@ export default async function handler(req) {
 
     if (message) parts.push({ text: message });
 
-    const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-
-    // 5. CALL GEMINI CHAT STREAM
+    // 5. CALL CHAT STREAM ENDPOINT
     let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`,
       {
@@ -139,6 +140,7 @@ export default async function handler(req) {
       }
     );
 
+    // Fallback kapag nag-404 ang napiling model
     if (geminiRes.status === 404) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
@@ -158,7 +160,7 @@ export default async function handler(req) {
       return new Response(errorText, { status: geminiRes.status });
     }
 
-    // 6. STREAM TRANSFORM
+    // 6. RESPONSE STREAMING
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
