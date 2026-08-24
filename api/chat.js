@@ -15,7 +15,7 @@ export default async function handler(req) {
     const userPrompt = message || prompt || '';
 
     // ==========================================
-    // 1. IMAGE GENERATOR MODE (HANDLED DIRECTLY)
+    // 1. IMAGE GENERATOR MODE
     // ==========================================
     if (mode === 'image' || mode === 'imagen' || mode === 'Image Generator') {
       if (!userPrompt.trim()) {
@@ -28,7 +28,6 @@ export default async function handler(req) {
       const seed = Math.floor(Math.random() * 1000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
 
-      // Return JSON directly so frontend doesn't throw "Unexpected end of JSON input"
       return new Response(JSON.stringify({
         success: true,
         type: 'image',
@@ -42,7 +41,7 @@ export default async function handler(req) {
     }
 
     // ==========================================
-    // 2. TEXT & CUSTOM PERSONA CHAT MODE
+    // 2. TEXT CHAT & CUSTOM PERSONA MODE
     // ==========================================
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
@@ -54,27 +53,30 @@ export default async function handler(req) {
       });
     }
 
-    // Model Safeguard: Converts Frontend Labels to Valid Official Gemini API Identifiers
+    // MAP LAHAT NG DROPDOWN OPTIONS SA OFFICIAL GOOGLE MODEL NAMES
     const MODEL_MAPPING = {
-      '3.5 Flash-Lite': 'gemini-2.5-flash-lite',
-      '3.6 Flash': 'gemini-2.5-flash',
+      '3.5 Flash-Lite': 'gemini-1.5-flash',
+      '3.6 Flash': 'gemini-1.5-flash',
       '3.1 Pro': 'gemini-1.5-pro',
-      'Extended thinking': 'gemini-2.5-flash',
-      'gemini-3.6-flash': 'gemini-2.5-flash',
-      'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
-      'gemini-3.1-pro': 'gemini-1.5-pro'
+      'Extended thinking': 'gemini-1.5-pro',
+      'gemini-3.7-flash': 'gemini-1.5-flash',
+      'gemini-3.6-flash': 'gemini-1.5-flash',
+      'gemini-3.5-flash-lite': 'gemini-1.5-flash',
+      'gemini-3.1-pro': 'gemini-1.5-pro',
+      'gemini-2.5-flash': 'gemini-1.5-flash',
+      'gemini-2.5-flash-lite': 'gemini-1.5-flash'
     };
 
-    const targetModel = MODEL_MAPPING[model] || model || 'gemini-2.5-flash';
+    const targetModel = MODEL_MAPPING[model] || 'gemini-1.5-flash';
 
-    // Base System Persona Logic
+    // System Persona Logic
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
     if (mode === 'custom' || mode === 'Custom Persona') {
       const activeCustomPersona = customPrompt || userPrompt;
       systemInstructionText = `You are JepongDevxyz AI. Strictly adopt and act according to this persona: "${activeCustomPersona}". Always structure code responses inside standard markdown code blocks.`;
     } else if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant for homework, essays, and study guides.";
+      systemInstructionText += " Act as an academic assistant for homework and study guides.";
     } else if (mode === 'coder') {
       systemInstructionText += " Act as an expert software engineer and senior programmer.";
     } else if (mode === 'tagalog') {
@@ -99,18 +101,35 @@ export default async function handler(req) {
 
     if (userPrompt) parts.push({ text: userPrompt });
 
-    // Pick random API key to distribute load
     const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`;
+    
+    // Official API v1beta Endpoint Call
+    let geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: systemInstruction,
+          contents: [{ parts }]
+        })
+      }
+    );
 
-    const geminiRes = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: systemInstruction,
-        contents: [{ parts }]
-      })
-    });
+    // Fallback: Kapag nag-404 pa rin ang napiling model, ire-redirect pabalik sa standard `gemini-1.5-flash`
+    if (geminiRes.status === 404) {
+      geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: systemInstruction,
+            contents: [{ parts }]
+          })
+        }
+      );
+    }
 
     if (!geminiRes.ok) {
       const errorText = await geminiRes.text();
@@ -122,7 +141,7 @@ export default async function handler(req) {
       });
     }
 
-    // TransformStream for SSE Streaming text output
+    // Stream Transform Pipeline
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
