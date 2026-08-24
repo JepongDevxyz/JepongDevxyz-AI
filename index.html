@@ -1,9 +1,67 @@
+<div id="usage-tracker" style="font-size: 11px; opacity: 0.6; text-align: right; padding: 4px 10px;">
+  Total Words Used: <span id="word-count">0</span>
+</div>
+
+<style>
+:root {
+  --bg-color: #0f172a;
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --accent-color: #6366f1;
+  --text-color: #f8fafc;
+}
+
+body.theme-neon {
+  --bg-color: #050505;
+  --card-bg: rgba(20, 20, 20, 0.8);
+  --accent-color: #00ffcc;
+  --text-color: #00ffcc;
+}
+
+body.theme-sunset {
+  --bg-color: #1a0b2e;
+  --card-bg: rgba(45, 15, 64, 0.7);
+  --accent-color: #ff5e62;
+  --text-color: #ffecd2;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background 0.3s ease;
+}
+</style>
+
+<script>
+function updateWordCounter(text) {
+  const currentCount = parseInt(localStorage.getItem('jepong_word_count') || '0');
+  const wordsInText = text.trim().split(/\s+/).length;
+  const newTotal = currentCount + wordsInText;
+  localStorage.setItem('jepong_word_count', newTotal);
+  document.getElementById('word-count').innerText = newTotal;
+}
+
+function setTheme(themeName) {
+  document.body.className = themeName;
+  localStorage.setItem('jepong_theme', themeName);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('jepong_theme') || '';
+  if (savedTheme) document.body.className = savedTheme;
+  const savedWordCount = localStorage.getItem('jepong_word_count') || '0';
+  const wordCountElem = document.getElementById('word-count');
+  if (wordCountElem) wordCountElem.innerText = savedWordCount;
+});
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
 <!-- Jay-Ar Lee Espiritu -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
     <title>JepongDevxyz AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
@@ -1027,6 +1085,7 @@
                 bibleChatSessions[currentBibleSessionId].messages.push({ role: 'bot', text: fullResponse });
                 saveBibleSessions();
 
+                updateWordCounter(userText + ' ' + fullResponse);
                 speakRawText(fullResponse);
 
             } catch (err) {
@@ -1184,6 +1243,7 @@
                     
                     chatSessions[currentSessionId].messages.push({ role: 'bot', text: `![Generated Image](${data.imageUrl})` });
                     saveSessions();
+                    updateWordCounter(message);
                     scrollToBottom(false);
                     return;
                 }
@@ -1219,6 +1279,8 @@
                 chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
                 saveSessions();
                 document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+
+                updateWordCounter(message + ' ' + fullResponse);
 
                 if (document.getElementById('autoTTSToggle').checked) {
                     speakRawText(fullResponse);
@@ -1318,7 +1380,8 @@
         }
 
         function closeLightbox() {
-            document.getElementById('imageLightbox').classList.remove('open');
+            const lightbox = document.getElementById('imageLightbox');
+            lightbox.classList.remove('open');
         }
 
         function copyCode(id, btn) {
