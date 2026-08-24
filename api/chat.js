@@ -1,36 +1,43 @@
 import { GoogleGenAI } from '@google/genai';
 
-export default async function handler(req, res) {
+export const config = {
+  runtime: 'edge', // Mas mabilis na streaming support sa Vercel
+};
+
+export default async function handler(req) {
+  // 1. Method Validation
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    const { message, prompt, mode, customPrompt, model: selectedModel } = req.body;
-    const userPrompt = message || prompt || '';
-    const rawMode = String(mode || '').toLowerCase();
-
-    // 1. CHECK API KEYS (Random key rotation)
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
-
-    if (apiKeys.length === 0) {
-      return res.status(500).json({ error: 'Walang GEMINI_API_KEY na nakaset sa Vercel Environment Variables.' });
+    // 2. API Key Rotation (with trim fix)
+    const rawKeys = process.env.GEMINI_API_KEY;
+    if (!rawKeys) {
+      return new Response(JSON.stringify({ error: 'Missing GEMINI_API_KEY environment variable' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-    const ai = new GoogleGenAI({ apiKey });
+    const apiKeys = rawKeys.split(',').map(key => key.trim()).filter(Boolean);
+    const selectedKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
 
-    // 2. IMAGE GENERATOR MODE
-    if (rawMode.includes('image') || rawMode.includes('imagen') || rawMode.includes('🎨')) {
-      if (!userPrompt.trim()) {
-        return res.status(400).send('Maglagay ng prompt para sa lilikhaing larawan.');
-      }
+    const ai = new GoogleGenAI({ apiKey: selectedKey });
+    const body = await req.json();
+    const { prompt, model: requestedModel, type, context } = body;
 
+    // 3. Image Generation Mode (with Fallback to Pollinations)
+    const isImageRequest = type === 'image' || (prompt && /generate image|draw|picture/i.test(prompt));
+    
+    if (isImageRequest) {
       try {
-        const response = await ai.models.generateImages({
+        const imageResponse = await ai.models.generateImages({
           model: 'imagen-3.0-generate-002',
-          prompt: userPrompt,
+          prompt: prompt,
           config: {
             numberOfImages: 1,
             outputMimeType: 'image/jpeg',
@@ -38,75 +45,76 @@ export default async function handler(req, res) {
           },
         });
 
-        const base64Bytes = response.generatedImages[0].image.imageBytes;
-        const markdownImage = `![${userPrompt}](data:image/jpeg;base64,${base64Bytes})`;
-        return res.status(200).send(markdownImage);
+        const base64ImageBytes = imageResponse.generatedImages[0].image.imageBytes;
+        const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
 
+        return new Response(JSON.stringify({ url: imageUrl }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       } catch (imgError) {
-        console.warn("Imagen generation failed, falling back to Pollinations:", imgError.message);
-        // Fallback to Pollinations upon error or quota limit
-        const seed = Math.floor(Math.random() * 1000000);
-        const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
-        return res.status(200).send(`![${userPrompt}](${fallbackUrl})`);
+        // Fallback to Pollinations AI
+        const fallbackUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000)}&model=flux`;
+        return new Response(JSON.stringify({ url: fallbackUrl, fallback: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
     }
 
-    // 3. CHAT TEXT MODE (Dynamic Model Selection)
-    // Updated default models to valid standard aliases
-    let targetModel = 'gemini-2.0-flash'; 
-
-    if (selectedModel) {
-      const lowerModel = String(selectedModel).toLowerCase();
-      if (lowerModel.includes('pro')) {
-        targetModel = 'gemini-1.5-pro';
-      } else if (lowerModel.includes('flash-lite')) {
-        targetModel = 'gemini-2.0-flash-lite';
-      } else if (lowerModel.includes('flash')) {
-        targetModel = 'gemini-2.0-flash';
-      }
+    // 4. Model Selection Mapping Fix
+    let selectedModel = 'gemini-1.5-flash';
+    if (requestedModel?.includes('pro')) {
+      selectedModel = 'gemini-1.5-pro';
+    } else if (requestedModel?.includes('lite') || requestedModel?.includes('flash-lite')) {
+      selectedModel = 'gemini-1.5-flash'; // Fallback to standard fast model
     }
 
-    // Dynamic Persona System Prompt
-    let systemInstruction = "You are JepongDevxyz AI developed by Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
-
-    if (rawMode.includes('custom')) {
-      systemInstruction = `Act according to this persona: "${customPrompt || userPrompt}".`;
-    } else if (rawMode.includes('school') || rawMode.includes('homework')) {
-      systemInstruction += " Act as an academic assistant for homework.";
-    } else if (rawMode.includes('coder') || rawMode.includes('code')) {
-      systemInstruction += " Act as an expert programmer.";
-    } else if (rawMode.includes('tagalog')) {
-      systemInstruction += " Speak strictly in Tagalog/Filipino.";
-    } else if (rawMode.includes('affiliate')) {
-      systemInstruction += " Act as a TikTok Affiliate Marketing Specialist.";
+    // 5. System Persona Instructions
+    let systemInstruction = "You are JepongDevxyz AI, developed by Jay-Ar Lee Espiritu.";
+    if (context === 'school') {
+      systemInstruction += " Focus on educational, clear, and academic explanations.";
+    } else if (context === 'coding') {
+      systemInstruction += " Provide clean, optimized code snippets with minimal unnecessary talk.";
+    } else if (context === 'tiktok') {
+      systemInstruction += " Act as a TikTok affiliate marketing expert. Give practical growth strategies.";
+    } else {
+      systemInstruction += " Respond naturally in Tagalog/English mix, friendly and engaging.";
     }
 
-    // Initialize Stream
+    // 6. Content Streaming Response
     const responseStream = await ai.models.generateContentStream({
-      model: targetModel,
-      contents: userPrompt,
+      model: selectedModel,
+      contents: prompt,
       config: {
         systemInstruction: systemInstruction,
-      }
+      },
     });
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        for await (const chunk of responseStream) {
+          if (chunk.text) {
+            controller.enqueue(encoder.encode(chunk.text));
+          }
+        }
+        controller.close();
+      },
+    });
 
-    for await (const chunk of responseStream) {
-      if (chunk.text) {
-        res.write(chunk.text);
-      }
-    }
-
-    return res.end();
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
 
   } catch (error) {
-    console.error("Chat Server Error:", error);
-    if (!res.headersSent) {
-      return res.status(500).send(`Server Error: ${error.message}`);
-    }
-    res.end();
+    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
