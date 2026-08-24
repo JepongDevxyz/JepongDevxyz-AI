@@ -4,136 +4,104 @@ export const config = {
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
-      status: 405, 
-      headers: { 'Content-Type': 'application/json' } 
-    });
+    return new Response('Method not allowed', { status: 405 });
   }
 
   try {
     const body = await req.json();
     const message = body.message || body.prompt || '';
-    const { model, mode, customPrompt, file, files } = body;
+    const rawMode = String(body.mode || '').toLowerCase();
+    const rawModel = String(body.model || '').toLowerCase();
 
-    // 1. CHECK API KEYS
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
-
-    if (apiKeys.length === 0) {
-      return new Response('Walang GEMINI_API_KEY na nakaset sa Vercel Environment Variables.', { status: 500 });
-    }
-
-    const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-
-    // 2. IMAGE GENERATOR MODE (Native Markdown Stream Bridge)
-    const isImageMode = mode === 'image' || 
-                        mode === 'imagen' || 
-                        mode === 'Image Generator' || 
-                        mode === '🎨 Image Generator';
-
-    if (isImageMode) {
+    // 1. IMAGE GENERATOR MODE (Kahit anong variations ng word na image/imagen)
+    if (rawMode.includes('image') || rawMode.includes('imagen') || rawMode.includes('🎨')) {
       if (!message.trim()) {
         return new Response('Maglagay ng prompt para sa lilikhaing larawan.', { status: 400 });
       }
 
-      // High-resolution native renderer URL
       const seed = Math.floor(Math.random() * 1000000);
-      const cleanPrompt = encodeURIComponent(message.trim());
-      const imageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(message)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
       
-      const markdownOutput = `Eto na ang iyong nilikhang larawan:\n\n![${message}](${imageUrl})`;
-
-      return new Response(markdownOutput, {
+      return new Response(`![${message}](${imageUrl})`, {
         status: 200,
-        headers: { 
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache'
-        }
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
     }
 
-    // 3. CHAT MODELS MAPPING (Standard Active Gemini Endpoints)
-    const MODEL_MAPPING = {
-      '3.6 Flash': 'gemini-2.5-flash',
-      '3.7 Flash': 'gemini-2.5-flash',
-      '3.5 Flash-Lite': 'gemini-2.5-flash-lite',
-      '3.1 Pro': 'gemini-2.5-pro',
-      'Extended thinking': 'gemini-2.5-flash',
-      'gemini-3.6-flash': 'gemini-2.5-flash',
-      'gemini-3.7-flash': 'gemini-2.5-flash',
-      'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
-      'gemini-2.5-flash': 'gemini-2.5-flash'
-    };
+    // 2. CHECK API KEYS
+    const rawKeys = process.env.GEMINI_API_KEY || '';
+    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
-    const targetModel = MODEL_MAPPING[model] || 'gemini-2.5-flash';
-
-    // 4. PERSONA LOGIC
-    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
-
-    if (mode === 'custom' || mode === 'Custom Persona' || mode === '🎭 Custom Persona') {
-      const activePersona = customPrompt && customPrompt.trim() !== '' ? customPrompt : message;
-      systemInstructionText = `You are JepongDevxyz AI. Strictly adopt and act according to this persona: "${activePersona}". Format code inside markdown code blocks.`;
-    } else if (mode === 'school' || mode === '🎓 Homework Helper') {
-      systemInstructionText += " Act as an academic assistant for homework and study guides.";
-    } else if (mode === 'coder' || mode === '💻 Code Assistant') {
-      systemInstructionText += " Act as an expert software engineer and senior programmer.";
-    } else if (mode === 'tagalog' || mode === '🇵🇭 Tagalog Companion') {
-      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language.";
+    if (apiKeys.length === 0) {
+      return new Response('Walang GEMINI_API_KEY na nakaset.', { status: 500 });
     }
 
-    const systemInstruction = {
-      parts: [{ text: systemInstructionText }]
-    };
+    const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
 
-    // 5. ATTACHMENTS & MESSAGES ASSEMBLY
+    // 3. HARDCODED VALID GEMINI MODEL (Iwas 404 kahit ano pang ipasa ng dropdown)
+    // Ginagawang default ang gemini-1.5-flash dahil ito ang pinaka-stable sa v1beta
+    let targetModel = 'gemini-1.5-flash';
+
+    if (rawModel.includes('pro')) {
+      targetModel = 'gemini-1.5-pro';
+    }
+
+    // 4. SYSTEM INSTRUCTIONS / PERSONA
+    let systemInstructionText = "You are JepongDevxyz AI developed by Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
+
+    if (rawMode.includes('custom')) {
+      systemInstructionText = `Act according to this persona: "${body.customPrompt || message}".`;
+    } else if (rawMode.includes('school') || rawMode.includes('homework')) {
+      systemInstructionText += " Act as an academic assistant for homework.";
+    } else if (rawMode.includes('coder') || rawMode.includes('code')) {
+      systemInstructionText += " Act as an expert programmer.";
+    } else if (rawMode.includes('tagalog')) {
+      systemInstructionText += " Speak strictly in Tagalog/Filipino.";
+    }
+
+    // 5. PREPARE PAYLOAD
     const parts = [];
 
-    if (files && Array.isArray(files) && files.length > 0) {
-      files.forEach(f => {
-        if (f.data && f.mimeType) {
-          parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
-        }
+    if (body.files && Array.isArray(body.files)) {
+      body.files.forEach(f => {
+        if (f.data && f.mimeType) parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
       });
-    } else if (file && file.data && file.mimeType) {
-      parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
+    } else if (body.file && body.file.data) {
+      parts.push({ inline_data: { mime_type: body.file.mimeType, data: body.file.data } });
     }
 
     if (message) parts.push({ text: message });
 
-    // 6. STREAM GENERATE CONTENT CALL
-    let geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: systemInstruction,
-          contents: [{ parts }]
-        })
-      }
-    );
+    // 6. CALL API WITH FALLBACK
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`;
 
-    // Fallback sa default flash model kapag nag-404 ang napiling model
-    if (geminiRes.status === 404) {
+    let geminiRes = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstructionText }] },
+        contents: [{ parts }]
+      })
+    });
+
+    if (!geminiRes.ok) {
+      // Kung mag-error pa rin ang model, gagamit ng absolute fallback
       geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: systemInstruction,
-            contents: [{ parts }]
-          })
+          body: JSON.stringify({ contents: [{ parts }] })
         }
       );
     }
 
     if (!geminiRes.ok) {
       const errorText = await geminiRes.text();
-      return new Response(errorText, { status: geminiRes.status });
+      return new Response(`API Error: ${errorText}`, { status: geminiRes.status });
     }
 
-    // 7. TRANSFORM STREAMING RESPONSE
+    // 7. STREAM TRANSFORM
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
@@ -163,13 +131,10 @@ export default async function handler(req) {
     });
 
     return new Response(geminiRes.body.pipeThrough(transformStream), {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-      },
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
 
   } catch (error) {
-    return new Response(error.message, { status: 500 });
+    return new Response(`Server Error: ${error.message}`, { status: 500 });
   }
 }
