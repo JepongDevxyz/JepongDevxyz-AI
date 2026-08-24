@@ -1,5 +1,8 @@
 {
   "name": "jepong-devxyz-ai",
   "version": "1.0.0",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^0.1.1"
+  }
 }
