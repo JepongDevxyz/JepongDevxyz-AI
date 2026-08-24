@@ -2,6 +2,9 @@ export const config = {
   runtime: 'edge',
 };
 
+// Helper function para sa delay kapag nag-hit ng Rate Limit (429)
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
@@ -13,8 +16,9 @@ export default async function handler(req) {
   try {
     const { message, file, files, model, mode, customPrompt } = await req.json();
     
+    // Kunin ang API keys at i-shuffle para hindi laging ang unang key ang maunang maubos
     const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+    let apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
       return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
@@ -23,15 +27,19 @@ export default async function handler(req) {
       });
     }
 
-    const VALID_MODELS = [
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-pro',
-      'gemini-3.7-extended-thinking'
-    ];
+    // I-randomize ang pagkakasunod-sunod ng API keys para sa load balancing
+    apiKeys = apiKeys.sort(() => Math.random() - 0.5);
 
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
+    // I-map ang requested model sa opisyal na Google Gemini Model Identifiers
+    const MODEL_MAP = {
+      'gemini-3.7-flash': 'gemini-2.5-flash',
+      'gemini-3.6-flash': 'gemini-2.5-flash',
+      'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
+      'gemini-3.1-pro': 'gemini-2.5-pro',
+      'gemini-3.7-extended-thinking': 'gemini-2.5-pro'
+    };
+
+    const targetModel = MODEL_MAP[model] || 'gemini-2.5-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
@@ -68,7 +76,10 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
-    for (const apiKey of apiKeys) {
+    // Subukan ang bawat API key gamit ang delay kapag nakatanggap ng Status 429
+    for (let i = 0; i < apiKeys.length; i++) {
+      const apiKey = apiKeys[i];
+
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
         {
@@ -77,7 +88,6 @@ export default async function handler(req) {
           body: JSON.stringify({
             system_instruction: systemInstruction,
             contents: [{ parts }],
-            // Idinagdag ang Google Search Grounding tool para sa real-time internet search
             tools: [{ googleSearch: {} }]
           })
         }
@@ -86,7 +96,13 @@ export default async function handler(req) {
       if (geminiRes.ok) break;
 
       lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break;
+
+      // Kapag 429 Error, maghintay muna ng 1.5 seconds bago lumipat sa susunod na API Key
+      if (geminiRes.status === 429) {
+        await delay(1500);
+      } else {
+        break; // Kapag ibang uri ng error (tulad ng 400 Bad Request), itigil na ang loop
+      }
     }
 
     if (!geminiRes || !geminiRes.ok) {
