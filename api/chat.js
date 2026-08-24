@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
+// Tugma sa mga pinagpipilian sa iyong Frontend Dropdown Menu
 const VALID_MODELS = [
   'gemini-3.7-flash',
-  'gemini-3.7-extended-thinking', // Naidagdag para sa frontend selection
+  'gemini-3.7-extended-thinking',
   'gemini-3.6-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-pro'
@@ -24,7 +25,7 @@ export async function POST(req) {
     }
 
     // 1. Model Validation with Fallback
-    let selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.7-flash';
+    const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
 
     // 2. System Instructions based on Mode
     let systemInstructionText = "You are a helpful, smart, and precise AI assistant.";
@@ -87,35 +88,56 @@ export async function POST(req) {
       const errorText = await geminiResponse.text();
       console.error('Gemini API Error:', errorText);
       return NextResponse.json(
-        { error: `Gemini API Error: ${geminiResponse.statusText}` },
+        { error: `Gemini API Error: ${geminiResponse.statusText}`, details: errorText },
         { status: geminiResponse.status }
       );
     }
 
-    // 5. Transform Stream Response for Frontend
+    // 5. Robust SSE Transform Stream Handler (Iwas-Crash sa Incomplete Chunks)
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
+    let buffer = '';
 
     const transformStream = new TransformStream({
       transform(chunk, controller) {
-        const text = decoder.decode(chunk, { stream: true });
-        const lines = text.split('\n');
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split('\n');
+
+        // Itatabi ang huling hindi pa kumpletong linya sa buffer
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const jsonStr = line.replace('data: ', '').trim();
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith('data: ')) {
+            const jsonStr = trimmedLine.replace('data: ', '').trim();
             if (!jsonStr) continue;
 
             try {
               const data = JSON.parse(jsonStr);
-              const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (content) {
-                controller.enqueue(encoder.encode(content));
+              const parts = data.candidates?.[0]?.content?.parts;
+              if (parts && Array.isArray(parts)) {
+                for (const part of parts) {
+                  if (part.text) {
+                    controller.enqueue(encoder.encode(part.text));
+                  }
+                }
               }
             } catch (err) {
-              // Ignore parse errors for incomplete JSON chunks
+              // Lalaktawan lamang ang invalid chunk nang hindi nagso-throw ng 500 server error
             }
           }
+        }
+      },
+      flush(controller) {
+        if (buffer.trim().startsWith('data: ')) {
+          try {
+            const jsonStr = buffer.trim().replace('data: ', '').trim();
+            const data = JSON.parse(jsonStr);
+            const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (content) {
+              controller.enqueue(encoder.encode(content));
+            }
+          } catch (err) {}
         }
       }
     });
@@ -133,7 +155,7 @@ export async function POST(req) {
   } catch (error) {
     console.error('Server Handler Error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: error.message || 'Internal Server Error' },
       { status: 500 }
     );
   }
