@@ -15,62 +15,33 @@ export default async function handler(req) {
     const message = body.message || body.prompt || '';
     const { model, mode, customPrompt, file, files } = body;
 
-    // 1. IMAGE GENERATOR MODE (Streamed Markdown Image Response)
-    const isImageMode = mode === 'image' || 
-                        mode === 'imagen' || 
-                        mode === 'Image Generator' || 
-                        mode === '🎨 Image Generator';
-
-    if (isImageMode) {
-      if (!message.trim()) {
-        return new Response('Pakilagay ang prompt para sa lilikhaing larawan.', {
-          status: 400,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        });
-      }
-
-      const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(message)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
-      
-      // Markdown formatted image na maiintindihan agad ng frontend chat UI
-      const markdownImageResponse = `Eto na ang iyong hiniling na larawan para sa "${message}":\n\n![${message}](${imageUrl})`;
-
-      return new Response(markdownImageResponse, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache',
-        },
-      });
-    }
-
-    // 2. CHECK API KEYS
+    // Check API Keys
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No GEMINI_API_KEY configured.' }), { 
+      return new Response(JSON.stringify({ error: 'No GEMINI_API_KEY configured in environment.' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    // 3. MODEL MAPPING
+    // Model Mapping para sa live Gemini models
     const MODEL_MAPPING = {
-      '3.6 Flash': 'gemini-3.6-flash',
-      '3.7 Flash': 'gemini-3.7-flash',
-      '3.5 Flash-Lite': 'gemini-3.5-flash-lite',
-      '3.1 Pro': 'gemini-3.1-pro-preview',
-      'Extended thinking': 'gemini-3.7-flash',
-      'gemini-3.6-flash': 'gemini-3.6-flash',
-      'gemini-3.7-flash': 'gemini-3.7-flash',
-      'gemini-3.5-flash-lite': 'gemini-3.5-flash-lite',
+      '3.6 Flash': 'gemini-2.5-flash',
+      '3.7 Flash': 'gemini-2.5-flash',
+      '3.5 Flash-Lite': 'gemini-2.5-flash-lite',
+      '3.1 Pro': 'gemini-1.5-pro',
+      'Extended thinking': 'gemini-2.5-flash',
+      'gemini-3.6-flash': 'gemini-2.5-flash',
+      'gemini-3.7-flash': 'gemini-2.5-flash',
+      'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
       'gemini-2.5-flash': 'gemini-2.5-flash'
     };
 
-    const targetModel = MODEL_MAPPING[model] || 'gemini-3.6-flash';
+    const targetModel = MODEL_MAPPING[model] || 'gemini-2.5-flash';
 
-    // 4. PERSONA & SYSTEM INSTRUCTION LOGIC
+    // Persona System Instruction Logic
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
 
     if (mode === 'custom' || mode === 'Custom Persona' || mode === '🎭 Custom Persona') {
@@ -88,7 +59,7 @@ export default async function handler(req) {
       parts: [{ text: systemInstructionText }]
     };
 
-    // 5. ATTACHMENTS & MESSAGES ASSEMBLY
+    // Attachments at User Message handling
     const parts = [];
 
     if (files && Array.isArray(files) && files.length > 0) {
@@ -105,7 +76,7 @@ export default async function handler(req) {
 
     const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
 
-    // 6. CALL GOOGLE GEMINI API WITH AUTOMATIC FALLBACK
+    // Google Gemini API Stream Fetch
     let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`,
       {
@@ -118,6 +89,7 @@ export default async function handler(req) {
       }
     );
 
+    // Fallback kapag nag-404
     if (geminiRes.status === 404) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
@@ -140,7 +112,7 @@ export default async function handler(req) {
       });
     }
 
-    // 7. STREAM RESPONSE VIA TRANSFORMSTREAM
+    // Stream Output Parsing via TransformStream
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
