@@ -17,22 +17,14 @@ export default async function handler(req) {
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
+      return new Response(JSON.stringify({ error: 'No API keys configured in environment variables.' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    // Tamang official model names sa Google Gemini API
-    const VALID_MODELS = [
-      'gemini-2.5-flash',
-      'gemini-2.5-pro',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro'
-    ];
-
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-2.5-flash';
+    // Default to gemini-2.5-flash if invalid or missing model
+    const targetModel = model || 'gemini-2.5-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
@@ -54,6 +46,7 @@ export default async function handler(req) {
 
     const parts = [];
 
+    // Process file attachments
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
         if (f.data && f.mimeType) {
@@ -69,32 +62,36 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
+    // Loop through API Keys (Failover Handling)
     for (const apiKey of apiKeys) {
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: systemInstruction,
-            contents: [{ parts }]
-          })
-        }
-      );
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`;
+
+      geminiRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: systemInstruction,
+          contents: [{ parts }]
+        })
+      });
 
       if (geminiRes.ok) break;
 
       lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break;
+      // If 404 happens (model not found), break loop immediately instead of wasting remaining API keys
+      if (geminiRes.status === 404 || geminiRes.status !== 429) break;
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText || 'Failed to reach Gemini API' }), { 
+      return new Response(JSON.stringify({ 
+        error: `Gemini API Error (${geminiRes ? geminiRes.status : 500}): ${lastErrorText || 'Failed to communicate with Google API.'}` 
+      }), { 
         status: geminiRes ? geminiRes.status : 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
+    // Stream Transform Pipeline
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
