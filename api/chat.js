@@ -43,7 +43,8 @@ export default async function handler(req, res) {
         return res.status(200).send(markdownImage);
 
       } catch (imgError) {
-        // Fallback sa Pollinations kapag nag-error o na-quota sa Imagen
+        console.warn("Imagen generation failed, falling back to Pollinations:", imgError.message);
+        // Fallback to Pollinations upon error or quota limit
         const seed = Math.floor(Math.random() * 1000000);
         const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
         return res.status(200).send(`![${userPrompt}](${fallbackUrl})`);
@@ -51,16 +52,17 @@ export default async function handler(req, res) {
     }
 
     // 3. CHAT TEXT MODE (Dynamic Model Selection)
-    let targetModel = 'gemini-2.5-flash'; // Recommended default model para sa bilis at mura
+    // Updated default models to valid standard aliases
+    let targetModel = 'gemini-2.0-flash'; 
 
     if (selectedModel) {
       const lowerModel = String(selectedModel).toLowerCase();
       if (lowerModel.includes('pro')) {
-        targetModel = 'gemini-2.5-pro';
+        targetModel = 'gemini-1.5-pro';
       } else if (lowerModel.includes('flash-lite')) {
-        targetModel = 'gemini-2.5-flash-lite';
+        targetModel = 'gemini-2.0-flash-lite';
       } else if (lowerModel.includes('flash')) {
-        targetModel = 'gemini-2.5-flash';
+        targetModel = 'gemini-2.0-flash';
       }
     }
 
@@ -79,7 +81,7 @@ export default async function handler(req, res) {
       systemInstruction += " Act as a TikTok Affiliate Marketing Specialist.";
     }
 
-    // Generate response via Stream
+    // Initialize Stream
     const responseStream = await ai.models.generateContentStream({
       model: targetModel,
       contents: userPrompt,
@@ -89,7 +91,8 @@ export default async function handler(req, res) {
     });
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
 
     for await (const chunk of responseStream) {
       if (chunk.text) {
@@ -101,6 +104,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error("Chat Server Error:", error);
-    return res.status(500).send(`Server Error: ${error.message}`);
+    if (!res.headersSent) {
+      return res.status(500).send(`Server Error: ${error.message}`);
+    }
+    res.end();
   }
 }
