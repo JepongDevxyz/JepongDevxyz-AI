@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, prompt, mode, customPrompt } = req.body;
+    const { message, prompt, mode, customPrompt, model: selectedModel } = req.body;
     const userPrompt = message || prompt || '';
     const rawMode = String(mode || '').toLowerCase();
 
@@ -43,14 +43,27 @@ export default async function handler(req, res) {
         return res.status(200).send(markdownImage);
 
       } catch (imgError) {
-        // Fallback sa Pollinations kapag quota limit o error ang Imagen
+        // Fallback sa Pollinations kapag may quota limit o error sa Imagen
         const seed = Math.floor(Math.random() * 1000000);
         const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
         return res.status(200).send(`![${userPrompt}](${fallbackUrl})`);
       }
     }
 
-    // 3. CHAT TEXT MODE
+    // 3. CHAT TEXT MODE (Dynamic Model Mapping)
+    let targetModel = 'gemini-1.5-flash'; // Default model
+    
+    // Dynamic mapping batay sa napiling model sa UI
+    if (selectedModel) {
+      const lowerModel = String(selectedModel).toLowerCase();
+      if (lowerModel.includes('pro')) {
+        targetModel = 'gemini-1.5-pro';
+      } else if (lowerModel.includes('flash-lite')) {
+        targetModel = 'gemini-1.5-flash'; 
+      }
+    }
+
+    // Dynamic Persona System Prompt
     let systemInstruction = "You are JepongDevxyz AI developed by Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
 
     if (rawMode.includes('custom')) {
@@ -61,10 +74,12 @@ export default async function handler(req, res) {
       systemInstruction += " Act as an expert programmer.";
     } else if (rawMode.includes('tagalog')) {
       systemInstruction += " Speak strictly in Tagalog/Filipino.";
+    } else if (rawMode.includes('affiliate')) {
+      systemInstruction += " Act as a TikTok Affiliate Marketing Specialist.";
     }
 
     const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: targetModel,
       contents: userPrompt,
       config: {
         systemInstruction: systemInstruction,
@@ -83,6 +98,7 @@ export default async function handler(req, res) {
     return res.end();
 
   } catch (error) {
+    console.error("Chat Server Error:", error);
     return res.status(500).send(`Server Error: ${error.message}`);
   }
 }
