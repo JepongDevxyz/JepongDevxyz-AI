@@ -76,7 +76,9 @@ export default async function handler(req) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             system_instruction: systemInstruction,
-            contents: [{ parts }]
+            contents: [{ parts }],
+            // Idinagdag ang Google Search Grounding tool para sa real-time internet search
+            tools: [{ googleSearch: {} }]
           })
         }
       );
