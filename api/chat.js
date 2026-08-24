@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-// Tugma sa mga pinagpipilian sa iyong Frontend Dropdown Menu
 const VALID_MODELS = [
   'gemini-3.7-flash',
   'gemini-3.7-extended-thinking',
@@ -13,44 +12,49 @@ const VALID_MODELS = [
 
 export async function POST(req) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { message, files, model, mode, customPrompt } = body;
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY is missing' },
+        { error: 'CONFIG_ERROR: Ang GEMINI_API_KEY ay wala sa environment variables.' },
         { status: 500 }
       );
     }
 
-    // 1. Model Validation with Fallback
-    const selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
+    // Model selection logic
+    let selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
+    if (model === 'gemini-3.7-extended-thinking') {
+      selectedModel = 'gemini-3.7-flash'; // I-fallback sa 3.7 flash kung gamit ang extended thinking flag
+    }
 
-    // 2. System Instructions based on Mode
+    // System Instructions
     let systemInstructionText = "You are a helpful, smart, and precise AI assistant.";
     if (mode === 'school') {
-      systemInstructionText = "You are an expert tutor. Explain concepts clearly, step-by-step, and simply. Help the student learn effectively.";
+      systemInstructionText = "You are an expert tutor. Explain concepts clearly, step-by-step, and simply.";
     } else if (mode === 'coder') {
-      systemInstructionText = "You are a senior software developer. Write clean, optimized, production-ready code. Provide concise explanations and best practices.";
+      systemInstructionText = "You are a senior software developer. Write clean, optimized code.";
     } else if (mode === 'tagalog') {
       systemInstructionText = "Sumagot ka sa Tagalog o Taglish sa natural, maayos, at madaling maunawaang paraan.";
     } else if (mode === 'affiliate') {
-      systemInstructionText = "You are a TikTok & E-commerce Affiliate Marketing Specialist. Give persuasive copy, strategy tips, viral hooks, and high-converting product descriptions.";
+      systemInstructionText = "You are a TikTok & E-commerce Affiliate Marketing Specialist.";
     } else if (mode === 'custom' && customPrompt) {
       systemInstructionText = customPrompt;
     }
 
-    // 3. Prepare Contents (Text + File Attachments)
+    // Structure Request Parts
     const userParts = [];
 
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach((file) => {
         if (file.mimeType && file.data) {
+          // Tanggalin ang base64 header prefix kung naisama mula sa frontend
+          const cleanBase64 = file.data.includes(',') ? file.data.split(',')[1] : file.data;
           userParts.push({
             inline_data: {
               mime_type: file.mimeType,
-              data: file.data
+              data: cleanBase64
             }
           });
         }
@@ -61,39 +65,38 @@ export async function POST(req) {
       userParts.push({ text: message });
     }
 
+    if (userParts.length === 0) {
+      return NextResponse.json(
+        { error: 'BAD_REQUEST: Walang text message o file na naipasa sa request.' },
+        { status: 400 }
+      );
+    }
+
     const payload = {
-      contents: [
-        {
-          role: 'user',
-          parts: userParts
-        }
-      ],
-      systemInstruction: {
-        parts: [{ text: systemInstructionText }]
-      }
+      contents: [{ role: 'user', parts: userParts }],
+      systemInstruction: { parts: [{ text: systemInstructionText }] }
     };
 
-    // 4. API Request to Gemini (SSE Streaming)
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:streamGenerateContent?alt=sse&key=${apiKey}`;
 
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
-      console.error('Gemini API Error:', errorText);
+      console.error('Gemini API Error Detail:', errorText);
+      
+      // Ibalik ang eksaktong dahilan galing sa Google para makita sa app
       return NextResponse.json(
-        { error: `Gemini API Error: ${geminiResponse.statusText}`, details: errorText },
+        { error: `GEMINI_API_REJECTED (${geminiResponse.status}): ${errorText}` },
         { status: geminiResponse.status }
       );
     }
 
-    // 5. Robust SSE Transform Stream Handler (Iwas-Crash sa Incomplete Chunks)
+    // SSE Stream Transformation
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -102,14 +105,12 @@ export async function POST(req) {
       transform(chunk, controller) {
         buffer += decoder.decode(chunk, { stream: true });
         const lines = buffer.split('\n');
-
-        // Itatabi ang huling hindi pa kumpletong linya sa buffer
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (trimmedLine.startsWith('data: ')) {
-            const jsonStr = trimmedLine.replace('data: ', '').trim();
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data: ')) {
+            const jsonStr = trimmed.replace('data: ', '').trim();
             if (!jsonStr) continue;
 
             try {
@@ -122,40 +123,26 @@ export async function POST(req) {
                   }
                 }
               }
-            } catch (err) {
-              // Lalaktawan lamang ang invalid chunk nang hindi nagso-throw ng 500 server error
+            } catch (e) {
+              // Ignore partial JSON parse errors safely
             }
           }
-        }
-      },
-      flush(controller) {
-        if (buffer.trim().startsWith('data: ')) {
-          try {
-            const jsonStr = buffer.trim().replace('data: ', '').trim();
-            const data = JSON.parse(jsonStr);
-            const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (content) {
-              controller.enqueue(encoder.encode(content));
-            }
-          } catch (err) {}
         }
       }
     });
 
-    const readableStream = geminiResponse.body.pipeThrough(transformStream);
-
-    return new Response(readableStream, {
+    return new Response(geminiResponse.body.pipeThrough(transformStream), {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
+        'Cache-Control': 'no-cache',
         'Connection': 'keep-alive'
       }
     });
 
-  } catch (error) {
-    console.error('Server Handler Error:', error);
+  } catch (err) {
+    console.error('Unhandled Edge Error:', err);
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
+      { error: `SERVER_EXCEPTIONAL_CRASH: ${err.message || 'Unknown Error'}` },
       { status: 500 }
     );
   }
