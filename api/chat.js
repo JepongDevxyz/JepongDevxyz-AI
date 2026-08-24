@@ -1,150 +1,140 @@
-export const config = {
-  runtime: 'edge',
-};
+import { NextResponse } from 'next/server';
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+export const runtime = 'edge';
 
-export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
-      status: 405, 
-      headers: { 'Content-Type': 'application/json' } 
-    });
-  }
+const VALID_MODELS = [
+  'gemini-3.7-flash',
+  'gemini-3.7-extended-thinking', // Naidagdag para sa frontend selection
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-pro'
+];
 
+export async function POST(req) {
   try {
-    const { message, file, files, model, mode, customPrompt } = await req.json();
-    
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    let apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+    const body = await req.json();
+    const { message, files, model, mode, customPrompt } = body;
 
-    if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'GEMINI_API_KEY is missing' },
+        { status: 500 }
+      );
     }
 
-    // Load balancing sa pamamagitan ng shuffling ng API keys
-    apiKeys = apiKeys.sort(() => Math.random() - 0.5);
+    // 1. Model Validation with Fallback
+    let selectedModel = VALID_MODELS.includes(model) ? model : 'gemini-3.7-flash';
 
-    const VALID_MODELS = [
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-pro'
-    ];
-
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.7-flash';
-
-    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
-
+    // 2. System Instructions based on Mode
+    let systemInstructionText = "You are a helpful, smart, and precise AI assistant.";
     if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
+      systemInstructionText = "You are an expert tutor. Explain concepts clearly, step-by-step, and simply. Help the student learn effectively.";
     } else if (mode === 'coder') {
-      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
+      systemInstructionText = "You are a senior software developer. Write clean, optimized, production-ready code. Provide concise explanations and best practices.";
     } else if (mode === 'tagalog') {
-      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
+      systemInstructionText = "Sumagot ka sa Tagalog o Taglish sa natural, maayos, at madaling maunawaang paraan.";
     } else if (mode === 'affiliate') {
-      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
+      systemInstructionText = "You are a TikTok & E-commerce Affiliate Marketing Specialist. Give persuasive copy, strategy tips, viral hooks, and high-converting product descriptions.";
     } else if (mode === 'custom' && customPrompt) {
-      systemInstructionText += ` ${customPrompt}`;
+      systemInstructionText = customPrompt;
     }
 
-    const systemInstruction = {
-      parts: [{ text: systemInstructionText }]
-    };
-
-    const parts = [];
+    // 3. Prepare Contents (Text + File Attachments)
+    const userParts = [];
 
     if (files && Array.isArray(files) && files.length > 0) {
-      files.forEach(f => {
-        if (f.data && f.mimeType) {
-          parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
+      files.forEach((file) => {
+        if (file.mimeType && file.data) {
+          userParts.push({
+            inline_data: {
+              mime_type: file.mimeType,
+              data: file.data
+            }
+          });
         }
       });
-    } else if (file && file.data && file.mimeType) {
-      parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
     }
 
-    if (message) parts.push({ text: message });
+    if (message) {
+      userParts.push({ text: message });
+    }
 
-    let geminiRes = null;
-    let lastErrorText = '';
-
-    for (let i = 0; i < apiKeys.length; i++) {
-      const apiKey = apiKeys[i];
-
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+    const payload = {
+      contents: [
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: systemInstruction,
-            contents: [{ parts }]
-            // Tinanggal ang tools: [{ googleSearch: {} }] para maiwasan ang 429 Search Limit Error
-          })
+          role: 'user',
+          parts: userParts
         }
-      );
-
-      if (geminiRes.ok) break;
-
-      lastErrorText = await geminiRes.text();
-
-      if (geminiRes.status === 429) {
-        await delay(1500);
-      } else {
-        break;
+      ],
+      systemInstruction: {
+        parts: [{ text: systemInstructionText }]
       }
+    };
+
+    // 4. API Request to Gemini (SSE Streaming)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:streamGenerateContent?alt=sse&key=${apiKey}`;
+
+    const geminiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      console.error('Gemini API Error:', errorText);
+      return NextResponse.json(
+        { error: `Gemini API Error: ${geminiResponse.statusText}` },
+        { status: geminiResponse.status }
+      );
     }
 
-    if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText }), { 
-        status: geminiRes ? geminiRes.status : 500, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
-    }
-
+    // 5. Transform Stream Response for Frontend
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
     const transformStream = new TransformStream({
-      start() { this.buffer = ''; },
-      async transform(chunk, controller) {
-        this.buffer += decoder.decode(chunk, { stream: true });
-        const lines = this.buffer.split('\n');
-        this.buffer = lines.pop() || '';
+      transform(chunk, controller) {
+        const text = decoder.decode(chunk, { stream: true });
+        const lines = text.split('\n');
 
         for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data:')) {
-            const jsonStr = trimmed.slice(5).trim();
-            if (jsonStr === '[DONE]') continue;
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.replace('data: ', '').trim();
+            if (!jsonStr) continue;
 
             try {
-              const parsed = JSON.parse(jsonStr);
-              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (textChunk) {
-                controller.enqueue(encoder.encode(textChunk));
+              const data = JSON.parse(jsonStr);
+              const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (content) {
+                controller.enqueue(encoder.encode(content));
               }
-            } catch (e) {}
+            } catch (err) {
+              // Ignore parse errors for incomplete JSON chunks
+            }
           }
         }
       }
     });
 
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
+    const readableStream = geminiResponse.body.pipeThrough(transformStream);
+
+    return new Response(readableStream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
-      },
+        'Connection': 'keep-alive'
+      }
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500, 
-      headers: { 'Content-Type': 'application/json' } 
-    });
+    console.error('Server Handler Error:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
