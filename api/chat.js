@@ -11,12 +11,13 @@ export default async function handler(req) {
   }
 
   try {
-    const { message, prompt, file, files, model, mode, customPrompt } = await req.json();
-    const userPrompt = message || prompt || '';
+    const body = await req.json();
+    const message = body.message || body.prompt || '';
+    const { model, mode, customPrompt, file, files } = body;
 
-    // 1. Image Generation Handler (Direct JSON Return)
-    if (mode === 'image' || mode === 'imagen' || mode === 'Image Generator') {
-      if (!userPrompt.trim()) {
+    // 1. HANDLER PARA SA IMAGE GENERATOR MODE
+    if (mode === 'image' || mode === 'imagen' || mode === 'Image Generator' || mode === '🎨 Image Generator') {
+      if (!message.trim()) {
         return new Response(JSON.stringify({ error: 'Prompt is required for image generation.' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
@@ -24,7 +25,7 @@ export default async function handler(req) {
       }
 
       const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(message)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
 
       return new Response(JSON.stringify({
         success: true,
@@ -38,42 +39,43 @@ export default async function handler(req) {
       });
     }
 
-    // 2. Text Chat & Custom Persona Handler
+    // 2. CHECK API KEYS
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No GEMINI_API_KEY configured in environment.' }), { 
+      return new Response(JSON.stringify({ error: 'No GEMINI_API_KEY configured.' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    // Model Safeguard Mapping to Official Gemini API Models
+    // 3. MAP UI DROPDOWN TO OFFICIAL LIVE GEMINI MODEL NAMES
     const MODEL_MAPPING = {
-      '3.5 Flash-Lite': 'gemini-2.5-flash-lite',
-      '3.6 Flash': 'gemini-2.5-flash',
-      '3.1 Pro': 'gemini-1.5-pro',
-      'Extended thinking': 'gemini-2.5-flash',
-      'gemini-3.7-flash': 'gemini-2.5-flash',
-      'gemini-3.6-flash': 'gemini-2.5-flash',
-      'gemini-3.5-flash-lite': 'gemini-2.5-flash-lite',
-      'gemini-3.1-pro': 'gemini-1.5-pro'
+      '3.6 Flash': 'gemini-3.6-flash',
+      '3.7 Flash': 'gemini-3.7-flash',
+      '3.5 Flash-Lite': 'gemini-3.5-flash-lite',
+      '3.1 Pro': 'gemini-3.1-pro-preview',
+      'Extended thinking': 'gemini-3.7-flash',
+      'gemini-3.6-flash': 'gemini-3.6-flash',
+      'gemini-3.7-flash': 'gemini-3.7-flash',
+      'gemini-3.5-flash-lite': 'gemini-3.5-flash-lite',
+      'gemini-2.5-flash': 'gemini-2.5-flash'
     };
 
-    const targetModel = MODEL_MAPPING[model] || model || 'gemini-2.5-flash';
+    const targetModel = MODEL_MAPPING[model] || 'gemini-3.6-flash';
 
-    // System Persona Setup
-    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
+    // 4. PERSONA & SYSTEM INSTRUCTION LOGIC
+    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always format code inside markdown code blocks.";
 
-    if (mode === 'custom' || mode === 'Custom Persona') {
-      const activeCustomPersona = customPrompt || userPrompt;
-      systemInstructionText = `You are JepongDevxyz AI. Strictly adopt and act according to this custom role/persona: "${activeCustomPersona}". Always structure code responses inside standard markdown code blocks.`;
-    } else if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant for homework, essays, and study guides.";
-    } else if (mode === 'coder') {
+    if (mode === 'custom' || mode === 'Custom Persona' || mode === '🎭 Custom Persona') {
+      const activePersona = customPrompt && customPrompt.trim() !== '' ? customPrompt : message;
+      systemInstructionText = `You are JepongDevxyz AI. Strictly adopt and act according to this persona: "${activePersona}". Format code inside markdown code blocks.`;
+    } else if (mode === 'school' || mode === '🎓 Homework Helper') {
+      systemInstructionText += " Act as an academic assistant for homework and study guides.";
+    } else if (mode === 'coder' || mode === '💻 Code Assistant') {
       systemInstructionText += " Act as an expert software engineer and senior programmer.";
-    } else if (mode === 'tagalog') {
+    } else if (mode === 'tagalog' || mode === '🇵🇭 Tagalog Companion') {
       systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language.";
     }
 
@@ -81,6 +83,7 @@ export default async function handler(req) {
       parts: [{ text: systemInstructionText }]
     };
 
+    // 5. ATTACHMENTS & MESSAGES ASSEMBLY
     const parts = [];
 
     if (files && Array.isArray(files) && files.length > 0) {
@@ -93,11 +96,11 @@ export default async function handler(req) {
       parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
     }
 
-    if (userPrompt) parts.push({ text: userPrompt });
+    if (message) parts.push({ text: message });
 
     const activeApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-    
-    // API Call with Auto-Fallback
+
+    // 6. CALL GOOGLE GEMINI API WITH AUTOMATIC FALLBACK ON 404
     let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${activeApiKey}`,
       {
@@ -110,7 +113,7 @@ export default async function handler(req) {
       }
     );
 
-    // Fallback logic kapag nag-404 pa rin sa partikular na model name
+    // Kapag nag-404 sa partikular na model string, kusa itong lilipat sa gemini-2.5-flash
     if (geminiRes.status === 404) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${activeApiKey}`,
@@ -127,15 +130,13 @@ export default async function handler(req) {
 
     if (!geminiRes.ok) {
       const errorText = await geminiRes.text();
-      return new Response(JSON.stringify({ 
-        error: `Gemini API Error (${geminiRes.status}): ${errorText}` 
-      }), { 
+      return new Response(JSON.stringify({ error: errorText }), { 
         status: geminiRes.status, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    // Stream Output Parsing
+    // 7. STREAM RESPONSE VIA TRANSFORMSTREAM
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
