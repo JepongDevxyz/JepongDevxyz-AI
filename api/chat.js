@@ -5,6 +5,11 @@ export const config = {
 };
 
 export default async function handler(req) {
+    // Payagan ang HEAD request para sa ping/network check ng dex.html
+    if (req.method === 'HEAD') {
+        return new Response(null, { status: 200 });
+    }
+
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method not allowed' }), {
             status: 405,
@@ -32,12 +37,20 @@ export default async function handler(req) {
         // 2. Shuffle / Randomize ang listahan para nahahati nang pantay ang load sa 6 na keys
         const shuffledKeys = [...apiKeys].sort(() => Math.random() - 0.5);
 
-        // 3. Map model name
+        // 3. Dynamic Model Mapping (Tumutugma na sa UI ng dex.html)
         let targetModel = 'gemini-2.5-flash';
-        if (model && model.includes('pro')) {
-            targetModel = 'gemini-2.5-pro';
-        } else if (model && model.includes('lite')) {
-            targetModel = 'gemini-2.5-flash-lite';
+        if (model) {
+            if (model.includes('3.1-pro') || model.includes('pro')) {
+                targetModel = 'gemini-2.5-pro';
+            } else if (model.includes('flash-lite') || model.includes('lite')) {
+                targetModel = 'gemini-2.5-flash-lite';
+            } else if (model.includes('3.6-flash') || model.includes('flash')) {
+                targetModel = 'gemini-2.5-flash';
+            } else if (model.includes('thinking')) {
+                targetModel = 'gemini-2.5-pro'; // Ginagamit ang Pro para sa deep reasoning
+            } else {
+                targetModel = model; // Fallback kung eksaktong model name ang ipinasa
+            }
         }
 
         // 4. Setup System Persona/Instruction
@@ -94,7 +107,7 @@ export default async function handler(req) {
             }
         }
 
-        // Kung sakaling mag-fail lahat ng 6 na keys
+        // Kung sakaling mag-fail lahat ng API keys
         if (!resultStream) {
             return new Response(JSON.stringify({ 
                 error: `Lahat ng ${shuffledKeys.length} API keys ay nag-error o na-reach ang rate limit. Error: ${lastError?.message}` 
