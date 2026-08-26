@@ -1,164 +1,137 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 export const config = {
-  runtime: 'edge',
+    runtime: 'edge', // Fast streaming sa Vercel Edge Runtime
 };
 
 export default async function handler(req) {
-  // CORS Headers para maiwasan ang cross-origin access issues
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-
-  // Handle OPTIONS preflight request
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
-
-  if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }), 
-      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-
-  try {
-    const { message, file, files, model, mode, customPrompt } = await req.json();
-    
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
-
-    if (apiKeys.length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'No API keys configured in environment variables.' }), 
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (req.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+            status: 405,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
-    // Mapping at Fallback para sa UI model names
-    const modelMapping = {
-      '3.7 Flash': 'gemini-2.0-flash',
-      '3.6 Flash': 'gemini-1.5-flash',
-      '3.5 Flash Lite': 'gemini-1.5-flash',
-      '3.1 Pro': 'gemini-1.5-pro',
-      'gemini-3.7-flash': 'gemini-2.0-flash',
-      'gemini-3.6-flash': 'gemini-1.5-flash',
-      'gemini-3.5-flash-lite': 'gemini-1.5-flash',
-      'gemini-3.1-pro': 'gemini-1.5-pro',
-      'gemini-1.5-flash': 'gemini-1.5-flash',
-      'gemini-1.5-pro': 'gemini-1.5-pro',
-      'gemini-2.0-flash': 'gemini-2.0-flash'
-    };
+    try {
+        const { message, files, model, mode, customPrompt } = await req.json();
 
-    const targetModel = modelMapping[model] || 'gemini-1.5-flash';
+        // 1. Kunan ang GEMINI_API_KEYS variable at i-split sa kuwit (,)
+        const rawKeys = process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '';
+        const apiKeys = rawKeys
+            .split(',')
+            .map(k => k.trim())
+            .filter(Boolean);
 
-    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
-
-    if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
-    } else if (mode === 'coder') {
-      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
-    } else if (mode === 'tagalog') {
-      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
-    } else if (mode === 'affiliate') {
-      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
-    } else if (mode === 'custom' && customPrompt) {
-      systemInstructionText += ` ${customPrompt}`;
-    }
-
-    const systemInstruction = {
-      parts: [{ text: systemInstructionText }]
-    };
-
-    const parts = [];
-
-    if (files && Array.isArray(files) && files.length > 0) {
-      files.forEach(f => {
-        if (f.data && f.mimeType) {
-          parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
+        if (apiKeys.length === 0) {
+            return new Response(JSON.stringify({ error: 'Walang nahanap na GEMINI_API_KEYS sa environment variables.' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
-      });
-    } else if (file && file.data && file.mimeType) {
-      parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
-    }
 
-    if (message) {
-      parts.push({ text: message });
-    }
+        // 2. Shuffle / Randomize ang listahan para nahahati nang pantay ang load sa 6 na keys
+        const shuffledKeys = [...apiKeys].sort(() => Math.random() - 0.5);
 
-    let geminiRes = null;
-    let lastErrorText = '';
-
-    for (const apiKey of apiKeys) {
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: systemInstruction,
-            contents: [{ parts }]
-          })
+        // 3. Map model name
+        let targetModel = 'gemini-2.5-flash';
+        if (model && model.includes('pro')) {
+            targetModel = 'gemini-2.5-pro';
+        } else if (model && model.includes('lite')) {
+            targetModel = 'gemini-2.5-flash-lite';
         }
-      );
 
-      if (geminiRes.ok) break;
+        // 4. Setup System Persona/Instruction
+        let systemInstruction = "You are a helpful and intelligent AI assistant.";
+        if (mode === 'school') {
+            systemInstruction = "You are an expert academic tutor. Explain concepts clearly with structured examples.";
+        } else if (mode === 'coder') {
+            systemInstruction = "You are a senior software developer. Provide clean, efficient code with explanations.";
+        } else if (mode === 'tagalog') {
+            systemInstruction = "Ikaw ay isang kaibigang Pilipino. Sumagot gamit ang natural at kaswal na Tagalog/Taglish.";
+        } else if (mode === 'affiliate') {
+            systemInstruction = "You are a persuasive affiliate marketing strategist and copywriter.";
+        } else if (mode === 'custom' && customPrompt) {
+            systemInstruction = customPrompt;
+        }
 
-      lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break;
-    }
+        // 5. Format prompt parts (text + attachments)
+        const promptParts = [];
+        if (files && files.length > 0) {
+            files.forEach(file => {
+                promptParts.push({
+                    inlineData: {
+                        mimeType: file.mimeType,
+                        data: file.data
+                    }
+                });
+            });
+        }
+        if (message) {
+            promptParts.push(message);
+        }
 
-    if (!geminiRes || !geminiRes.ok) {
-      return new Response(
-        JSON.stringify({ error: lastErrorText || 'Failed to generate response from Gemini API.' }), 
-        { status: geminiRes ? geminiRes.status : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+        let resultStream = null;
+        let lastError = null;
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    const transformStream = new TransformStream({
-      start() {
-        this.buffer = '';
-      },
-      async transform(chunk, controller) {
-        this.buffer += decoder.decode(chunk, { stream: true });
-        const lines = this.buffer.split('\n');
-        this.buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data:')) {
-            const jsonStr = trimmed.slice(5).trim();
-            if (jsonStr === '[DONE]') continue;
-
+        // 6. ROTATION LOGIC: Subukan ang bawat key sa listahan kapag nag-fail ang nauna
+        for (const apiKey of shuffledKeys) {
             try {
-              const parsed = JSON.parse(jsonStr);
-              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (textChunk) {
-                controller.enqueue(encoder.encode(textChunk));
-              }
-            } catch (e) {
-              // Ignore invalid JSON chunks
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const geminiModel = genAI.getGenerativeModel({
+                    model: targetModel,
+                    systemInstruction: systemInstruction,
+                });
+
+                const result = await geminiModel.generateContentStream({
+                    contents: [{ role: 'user', parts: promptParts }]
+                });
+
+                resultStream = result.stream;
+                break; // Kapag gumana nang maayos, lalabas na sa loop!
+            } catch (err) {
+                console.warn(`Key failed/rate-limited, rotating to next key... Error: ${err.message}`);
+                lastError = err;
             }
-          }
         }
-      }
-    });
 
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-      },
-    });
+        // Kung sakaling mag-fail lahat ng 6 na keys
+        if (!resultStream) {
+            return new Response(JSON.stringify({ 
+                error: `Lahat ng ${shuffledKeys.length} API keys ay nag-error o na-reach ang rate limit. Error: ${lastError?.message}` 
+            }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }), 
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
+        // 7. I-stream ang sagot pabalik sa UI
+        const stream = new ReadableStream({
+            async start(controller) {
+                const encoder = new TextEncoder();
+                try {
+                    for await (const chunk of resultStream) {
+                        const text = chunk.text();
+                        controller.enqueue(encoder.encode(text));
+                    }
+                } catch (e) {
+                    controller.error(e);
+                } finally {
+                    controller.close();
+                }
+            }
+        });
+
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'Cache-Control': 'no-cache'
+            }
+        });
+
+    } catch (error) {
+        return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
 }
