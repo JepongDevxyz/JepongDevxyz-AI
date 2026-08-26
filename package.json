@@ -1,6 +1,5 @@
 {
-  "name": "jepongdevxyz-ai",
+  "name": "jepong-devxyz-ai",
   "version": "1.0.0",
-  "type": "module",
-  "dependencies": { ... }
+  "type": "module"
 }
