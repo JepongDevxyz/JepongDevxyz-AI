@@ -86,6 +86,7 @@
 
         .selector-wrapper { position: relative; flex: 1; min-width: 140px; }
         .dropdown-btn { width: 100%; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 7px 10px; border-radius: 8px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dropdown-btn span:first-child { overflow: hidden; text-overflow: ellipsis; }
         
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; }
         .modal-overlay.open { display: flex; align-items: center; justify-content: center; }
@@ -101,19 +102,22 @@
             border-radius: 20px;
             width: 90%;
             max-width: 340px;
-            padding: 20px;
+            padding: 20px 20px 16px 20px;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
         }
 
         .alert-header { display: flex; align-items: center; gap: 10px; }
         .alert-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
-        .alert-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+        .alert-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.2px; }
         .alert-body { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; word-break: break-word; }
         .alert-footer { display: flex; justify-content: flex-end; margin-top: 4px; }
-        .alert-btn { background: var(--accent-gradient); color: #ffffff; border: none; padding: 8px 18px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+        .alert-btn { background: var(--accent-gradient); color: #ffffff; border: none; padding: 8px 18px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: transform 0.15s ease, opacity 0.15s ease; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25); }
+        .alert-btn:hover { opacity: 0.92; transform: translateY(-1px); }
 
         .option-item { background: transparent; border: none; border-radius: 12px; padding: 10px 12px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; color: var(--text-main); width: 100%; }
         .option-item:hover { background: rgba(255, 255, 255, 0.05); }
@@ -123,7 +127,7 @@
         .option-name { font-weight: 600; font-size: 0.88rem; }
         .option-desc { font-size: 0.72rem; color: var(--text-muted); }
         
-        .radio-icon { width: 18px; height: 18px; border: 2px solid var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .radio-icon { width: 18px; height: 18px; border: 2px solid var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
         .option-item.active .radio-icon { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2); box-shadow: inset 0 0 0 3px #8b5cf6; }
         
         .divider { height: 1px; background: var(--border-color); margin: 6px 0; }
@@ -134,7 +138,7 @@
         .sidebar-overlay.open { display: block; }
         
         .sidebar-header { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .sidebar-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+        .sidebar-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-main); text-align: center; }
         .close-sidebar-btn { position: absolute; right: 0; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; }
         
         .new-chat-btn { background: var(--accent-gradient); color: #fff; border: none; padding: 10px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -142,19 +146,31 @@
         .search-chat-input { background: rgba(30, 41, 59, 0.5); border: none; color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; width: 100%; }
         .chat-history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         
-        .history-item { background: transparent; border: none; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 6px; color: var(--text-main); }
+        .history-item { background: transparent; border: none; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 6px; transition: background 0.2s; color: var(--text-main); }
         .history-item:hover { background: rgba(255, 255, 255, 0.03); }
         .history-item.active { background: rgba(99, 102, 241, 0.15); }
         .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
         .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; }
         .delete-hist-btn:hover { color: #ef4444; }
 
-        .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; }
+        .chat-box { 
+            flex: 1; 
+            padding: 16px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 16px; 
+            position: relative; 
+            z-index: 1;
+        }
         
         .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; margin: auto; width: 100%; }
-        .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome-lottie-top { width: 220px; height: 60px; margin-bottom: -10px; }
+        .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; margin: 0; line-height: 1; }
+        .welcome-lottie-bottom { width: 100%; max-width: 260px; height: auto; aspect-ratio: 16 / 9; margin-top: -55px; }
 
         .msg { max-width: 100%; font-size: 0.92rem; line-height: 1.6; word-break: break-word; position: relative; }
+        
         .msg.user.has-bubble { padding: 12px 16px; border-radius: 16px; background: var(--user-msg); border: 1px solid var(--border-color); color: #fff; border-bottom-right-radius: 4px; align-self: flex-end; max-width: 88%; }
         .msg.user.no-bubble { align-self: flex-end; background: transparent; border: none; padding: 0; }
 
@@ -163,16 +179,56 @@
         .msg.bot ul, .msg.bot ol { padding-left: 20px; margin-bottom: 8px; }
         .msg.bot li { margin-bottom: 6px; }
         
-        .msg img { max-width: 100%; max-height: 300px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; cursor: pointer; }
+        .msg img { max-width: 100%; max-height: 250px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; cursor: pointer; transition: transform 0.2s; display: block; }
+        .msg img:hover { transform: scale(1.02); opacity: 0.95; }
 
         .bot-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; text-decoration: none; }
         .bot-action-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
 
+        .minimal-error-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            color: #fca5a5;
+            font-size: 0.85rem;
+            width: fit-content;
+            max-width: 100%;
+        }
+        .minimal-error-text { flex: 1; font-weight: 500; }
+        .minimal-retry-btn {
+            background: transparent;
+            border: none;
+            color: #fca5a5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background 0.2s, color 0.2s;
+        }
+        .minimal-retry-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ffffff;
+        }
+        .minimal-retry-btn.spinning svg {
+            animation: spinAnim 0.8s linear infinite;
+        }
+        @keyframes spinAnim {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .code-block-wrapper { background: #131722; border: 1px solid var(--border-color); border-radius: 10px; margin: 8px 0; overflow: hidden; }
         .code-header { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 6px 12px; font-size: 0.75rem; color: var(--text-muted); }
         .code-actions { display: flex; gap: 6px; }
         .code-actions button { background: rgba(255, 255, 255, 0.1); border: none; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+        .code-actions button:hover { background: rgba(255, 255, 255, 0.2); }
         pre { padding: 12px; overflow-x: auto; font-size: 0.85rem; }
 
         .input-container { padding: 12px 16px 18px 16px; background: transparent; }
@@ -187,17 +243,57 @@
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .pill-plus-btn { background: transparent; border: none; color: #e2e8f0; font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+        .pill-plus-btn { background: transparent; border: none; color: #e2e8f0; font-size: 1.4rem; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
         .pill-input { flex: 1; background: transparent; border: none; color: #ffffff !important; font-size: 0.95rem; caret-color: #3b82f6; padding: 4px 6px; min-width: 0; }
-        .pill-input::placeholder { color: #94a3b8; }
+        .pill-input::placeholder { color: #94a3b8; font-weight: 400; }
 
-        .pill-action-btn { background: #8b5cf6; color: #ffffff; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .wave-container { display: none; flex: 1; align-items: center; justify-content: center; gap: 4px; height: 32px; padding: 0 8px; }
+        .wave-container.active { display: flex; }
+        .wave-bar { width: 3px; background: #e2e8f0; border-radius: 2px; animation: waveAnim 1.2s infinite ease-in-out; }
+        .wave-bar:nth-child(1) { height: 10px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { height: 20px; animation-delay: 0.3s; }
+        .wave-bar:nth-child(3) { height: 28px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { height: 16px; animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { height: 24px; animation-delay: 0.15s; }
+        .wave-bar:nth-child(6) { height: 12px; animation-delay: 0.35s; }
+        .wave-bar:nth-child(7) { height: 22px; animation-delay: 0.25s; }
+
+        @keyframes waveAnim {
+            0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+            50% { transform: scaleY(1.2); opacity: 1; background: #8b5cf6; }
+        }
+
+        .pill-mic-btn { background: transparent; border: none; color: #e2e8f0; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; transition: background 0.2s; }
+        .pill-mic-btn:hover { background: rgba(255,255,255,0.08); }
+        
+        .pill-action-btn { background: #8b5cf6; color: #ffffff; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.2s ease, background-color 0.2s ease; }
+        .pill-action-btn:hover { background: #7c3aed; transform: scale(1.05); }
+
+        .file-preview-row { display: none; gap: 8px; overflow-x: auto; padding: 4px 2px 10px 2px; }
+        .gemini-chip { position: relative; display: inline-flex; align-items: center; background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 4px 8px; height: 48px; color: var(--text-main); }
+        .gemini-chip.img-chip { padding: 0; width: 52px; height: 52px; border-radius: 12px; overflow: hidden; }
+        .gemini-chip img { width: 100%; height: 100%; object-fit: cover; }
+        .chip-close-btn { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; background: rgba(0, 0, 0, 0.75); border: none; color: #ffffff; border-radius: 50%; font-size: 0.65rem; cursor: pointer; }
 
         #scrollBtn { display: none; position: absolute; bottom: 85px; right: 20px; background: var(--accent-gradient); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 10; }
 
-        .image-lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 3000; justify-content: center; align-items: center; padding: 20px; }
+        .preview-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; padding: 10px; }
+        .preview-modal-overlay.open { display: flex; }
+        .preview-modal-content { background: #0f172a; border: 1px solid var(--border-color); width: 100%; height: 100%; max-width: 1000px; max-height: 95vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: modalPop 0.2s ease-out; }
+        .preview-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(30, 41, 59, 0.7); border-bottom: 1px solid var(--border-color); font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+        .preview-close-btn { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .preview-close-btn:hover { background: rgba(239, 68, 68, 0.4); }
+        .preview-iframe { flex: 1; width: 100%; border: none; background: #000; }
+
+        .image-lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 3000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .image-lightbox-overlay.open { display: flex; }
-        .image-lightbox-content { max-width: 100%; max-height: 90vh; border-radius: 12px; object-fit: contain; }
+        .image-lightbox-content { max-width: 100%; max-height: 90vh; border-radius: 12px; object-fit: contain; border: 1px solid var(--border-color); }
+
+        .commands-modal-content { background: #151d2d; border: 1px solid var(--border-color); width: 90%; max-width: 420px; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: modalPop 0.2s ease-out; }
+        .commands-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; }
+        .command-row { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 10px 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
+        .command-name { font-weight: 600; font-size: 0.85rem; color: #a855f7; font-family: monospace; }
+        .command-desc { font-size: 0.78rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -211,8 +307,19 @@
                 <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
             </div>
             <button class="new-chat-btn" onclick="createNewChat()"><span>➕</span> New Chat</button>
+
             <input type="text" class="search-chat-input" id="searchChatInput" placeholder="🔍 Search chat..." oninput="filterChatHistory()">
             <div class="chat-history-list" id="chatHistoryList"></div>
+
+            <div id="sidebar-footer-settings" style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 11px; opacity: 0.8;">
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Words Used: <span id="word-count">0</span></span>
+              <button onclick="openSettingsModal()" title="Settings" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-main, #ccc);">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.72l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
         </div>
 
         <!-- Header -->
@@ -223,7 +330,13 @@
                     <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
                 </div>
                 <div class="header-tools-group">
-                    <div class="network-status">
+                    <div class="network-status" id="networkStatus">
+                        <div class="signal-bars">
+                            <div class="bar bar-1" id="bar1"></div>
+                            <div class="bar bar-2" id="bar2"></div>
+                            <div class="bar bar-3" id="bar3"></div>
+                            <div class="bar bar-4" id="bar4"></div>
+                        </div>
                         <span id="pingText">Checking...</span>
                     </div>
                     <button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
@@ -254,21 +367,31 @@
             <div class="floating-modal">
                 <button class="option-item active" onclick="selectMode('general', '🤖 General AI')">
                     <div class="option-info"><span class="option-name">🤖 General AI</span></div>
+                    <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectMode('school', '🎓 School Purpose')">
                     <div class="option-info"><span class="option-name">🎓 School Purpose</span></div>
+                    <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectMode('coder', '💻 Expert Coder')">
                     <div class="option-info"><span class="option-name">💻 Expert Coder</span></div>
+                    <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectMode('tagalog', '🇵🇭 Tagalog Friend')">
                     <div class="option-info"><span class="option-name">🇵🇭 Tagalog Friend</span></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <button class="option-item" onclick="selectMode('affiliate', '🛒 Affiliate Marketer')">
+                    <div class="option-info"><span class="option-name">🛒 Affiliate Marketer</span></div>
+                    <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectMode('imagen', '🎨 Image Generator')">
                     <div class="option-info"><span class="option-name">🎨 Image Generator</span></div>
+                    <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectMode('custom', '✏️ Custom Persona')">
                     <div class="option-info"><span class="option-name">✏️ Custom Persona</span></div>
+                    <div class="radio-icon"></div>
                 </button>
             </div>
         </div>
@@ -278,12 +401,20 @@
             <div class="floating-modal">
                 <button class="option-item" onclick="selectModel('gemini-2.5-flash-lite', '2.5 Flash-Lite')">
                     <div class="option-info"><div class="option-name">2.5 Flash-Lite</div><div class="option-desc">Fastest answers</div></div>
+                    <div class="radio-icon"></div>
                 </button>
                 <button class="option-item active" onclick="selectModel('gemini-2.5-flash', '2.5 Flash')">
                     <div class="option-info"><div class="option-name">2.5 Flash</div><div class="option-desc">All-around help</div></div>
+                    <div class="radio-icon"></div>
                 </button>
                 <button class="option-item" onclick="selectModel('gemini-2.5-pro', '2.5 Pro')">
                     <div class="option-info"><div class="option-name">2.5 Pro</div><div class="option-desc">Advanced reasoning</div></div>
+                    <div class="radio-icon"></div>
+                </button>
+                <div class="divider"></div>
+                <button class="option-item" onclick="selectModel('gemini-2.5-pro-thinking', 'Extended thinking')">
+                    <div class="option-info"><div class="option-name">Extended thinking</div><div class="option-desc">Complex problem solving</div></div>
+                    <div class="radio-icon"></div>
                 </button>
             </div>
         </div>
@@ -295,8 +426,25 @@
 
         <!-- Input Box -->
         <div class="input-container">
+            <div class="file-preview-row" id="filePreviewContainer"></div>
+
             <div class="chat-input-pill">
+                <input type="file" id="fileInput" hidden multiple onchange="handleFileSelect(event)">
+                <button class="pill-plus-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">+</button>
+                
                 <input type="text" class="pill-input" id="userInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter') sendMessage()">
+                
+                <div class="wave-container" id="waveContainer">
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                </div>
+
+                <button class="pill-mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice input">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="2" width="6" height="12" rx="3" ry="3"></rect>
+                        <path d="M5 10v2a7 7 0 0 0 14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                </button>
                 
                 <button class="pill-action-btn" onclick="sendMessage()" title="Send">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -307,16 +455,171 @@
         </div>
     </div>
 
-    <!-- Image Lightbox Modal -->
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay" onclick="if(event.target === this) closeSettingsModal()">
+      <div class="floating-modal" style="width: 90%; max-width: 400px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="margin: 0; font-size: 1rem;">Settings</h3>
+          <button onclick="closeSettingsModal()" style="background:none; border:none; color:inherit; font-size: 18px; cursor:pointer;">✕</button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">🔊 AI Speech</span>
+            <input type="checkbox" id="aiSpeechToggle" onchange="toggleAISpeech(this)" style="width: 18px; height: 18px; accent-color: #8b5cf6; cursor: pointer;">
+          </label>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="margin-top: 15px; margin-bottom: 10px;">
+          <h4 style="margin-bottom: 10px; font-size: 14px; opacity: 0.8;">Select Theme</h4>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button onclick="setTheme('')" class="theme-btn" style="flex:1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: #111; color: #fff; cursor:pointer;">Default</button>
+            <button onclick="setTheme('theme-neon')" class="theme-btn" style="flex:1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: #000; color: #00ffcc; cursor:pointer;">Neon</button>
+            <button onclick="setTheme('theme-sunset')" class="theme-btn" style="flex:1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: #2a1b3d; color: #ff7e5f; cursor:pointer;">Sunset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Custom Alert Popup -->
+    <div class="modal-overlay" id="customAlertOverlay" onclick="if(event.target === this) closeCustomAlert()">
+        <div class="custom-alert-card">
+            <div class="alert-header">
+                <div class="alert-icon" id="customAlertIcon">✨</div>
+                <div class="alert-title" id="customAlertTitle">Notice</div>
+            </div>
+            <div class="alert-body" id="customAlertMessage">
+                Notification message goes here.
+            </div>
+            <div class="alert-footer">
+                <button class="alert-btn" onclick="closeCustomAlert()">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Preview Modal -->
+    <div class="preview-modal-overlay" id="codePreviewModal" onclick="if(event.target === this) closeCodePreview()">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <span>Live Web Preview</span>
+                <button class="preview-close-btn" onclick="closeCodePreview()">✕ Close</button>
+            </div>
+            <iframe class="preview-iframe" id="previewIframe" title="Code Preview"></iframe>
+        </div>
+    </div>
+
+    <!-- DYNAMIC COMMANDS MODAL -->
+    <div class="modal-overlay" id="commandsModalOverlay" onclick="if(event.target === this) toggleCommandsModal(false)">
+        <div class="commands-modal-content">
+            <div class="preview-modal-header">
+                <span id="commandsModalTitle" style="font-weight: 600; color: #fff;">⚡ Available Commands</span>
+                <button class="preview-close-btn" onclick="toggleCommandsModal(false)" style="cursor: pointer; background: none; border: none; color: #aaa; font-size: 1.1rem;">✕ Close</button>
+            </div>
+            <div class="commands-list" id="commandsListContainer" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+            </div>
+        </div>
+    </div>
+
     <div class="image-lightbox-overlay" id="imageLightbox" onclick="closeLightbox()">
         <img class="image-lightbox-content" id="lightboxImg" alt="Enlarged view">
     </div>
 
     <script>
+        let selectedFilesData = [];
         let chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
         let currentSessionId = null;
         let currentSelectedModel = 'gemini-2.5-flash';
         let currentSelectedMode = 'general';
+        let isIncognito = false;
+        let inactivityTimer = null;
+        let isRecording = false;
+        let recognition = null;
+        let userScrolledUp = false;
+        let systemVoices = [];
+
+        let isBibleMode = false;
+        let bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
+        let currentBibleSessionId = null;
+
+        /* SWIPE GESTURE IMPLEMENTATION */
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        const appContainer = document.getElementById('appContainer');
+
+        appContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        appContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipeGesture();
+        }, { passive: true });
+
+        function handleSwipeGesture() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const minSwipeDistance = 50;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > minSwipeDistance) {
+                    toggleSidebar(true);
+                } else if (deltaX < -minSwipeDistance) {
+                    toggleSidebar(false);
+                }
+            }
+        }
+
+        function openSettingsModal() {
+          document.getElementById('settingsModal').classList.add('open');
+        }
+
+        function closeSettingsModal() {
+          document.getElementById('settingsModal').classList.remove('open');
+        }
+
+        function toggleAISpeech(checkbox) {
+        }
+
+        function showAlert(message, title = 'Notice', icon = '💡') {
+            document.getElementById('customAlertTitle').innerText = title;
+            document.getElementById('customAlertMessage').innerText = message;
+            document.getElementById('customAlertIcon').innerText = icon;
+            document.getElementById('customAlertOverlay').classList.add('open');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertOverlay').classList.remove('open');
+        }
+
+        function resetInactivityTimer() {
+            if (!isIncognito) return;
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                showAlert('Incognito session expired due to 30 minutes of inactivity.', 'Session Expired', '⏳');
+                setTimeout(() => window.location.reload(), 2000);
+            }, 30 * 60 * 1000);
+        }
+
+        window.addEventListener('mousemove', resetInactivityTimer);
+        window.addEventListener('keydown', resetInactivityTimer);
+        window.addEventListener('click', resetInactivityTimer);
+
+        function loadVoices() {
+            if (!('speechSynthesis' in window)) return;
+            systemVoices = window.speechSynthesis.getVoices();
+        }
+
+        loadVoices();
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
 
         const renderer = new marked.Renderer();
         renderer.code = function(code, language) {
@@ -328,6 +631,7 @@
                     <div class="code-header">
                         <span>${lang}</span>
                         <div class="code-actions">
+                            <button onclick="runCode('${blockId}')">▶ Run</button>
                             <button onclick="copyCode('${blockId}', this)">📋 Copy</button>
                         </div>
                     </div>
@@ -340,21 +644,73 @@
         const chatBox = document.getElementById('chatBox');
 
         function saveSessions() {
+            if (isIncognito) return;
             localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
             renderSidebarHistory();
         }
 
+        chatBox.addEventListener('scroll', () => {
+            const scrollBtn = document.getElementById('scrollBtn');
+            const isNearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 100;
+            if (scrollBtn) scrollBtn.style.display = !isNearBottom ? 'block' : 'none';
+            userScrolledUp = !isNearBottom;
+        });
+
         function scrollToBottom(forced = false) {
-            chatBox.scrollTop = chatBox.scrollHeight;
+            if (forced || !userScrolledUp) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
         }
 
         function toggleModal(modalId, show) {
             document.getElementById(modalId).classList.toggle('open', show);
         }
 
+        function toggleCommandsModal(show) {
+            const modal = document.getElementById('commandsModalOverlay');
+            const container = document.getElementById('commandsListContainer');
+            const title = document.getElementById('commandsModalTitle');
+
+            if (!modal || !container || !title) return;
+
+            if (show) {
+                if (isBibleMode) {
+                    title.innerText = '📖 Bible Mode Commands';
+                    container.innerHTML = `
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/story [topic/person]</span><span class="command-desc"> - Ikwento nang buo at lively ang kwento mula sa Biblia (auto Text-To-Speech).</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/verse [verse]</span><span class="command-desc"> - Kukuha ng salin (NIV/Tagalog) at magbibigay ng malalim na paliwanag.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/pray [topic]</span><span class="command-desc"> - Gagawan ka ng taos-pusong panalangin na may kaugnay na talata.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/bnew</span><span class="command-desc"> - Magbubukas ng bagong Bible conversation thread.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/bclear</span><span class="command-desc"> - Buburahin ang saved history sa Bible Mode lamang.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/commands</span><span class="command-desc"> - Ipapakita ang listahang ito ng Bible commands.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #f59e0b; font-weight: bold;">/exit</span><span class="command-desc"> - Lalabas sa Bible Mode at babalik sa Normal Mode (safe at naka-save ang Bible history).</span></div>
+                    `;
+                } else {
+                    title.innerText = '⚡ Normal Slash Commands';
+                    container.innerHTML = `
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/bible [topic]</span><span class="command-desc"> - Magbubukas ng Dedicated Bible Mode Tab (hiwalay ang storage at may auto Text-To-Speech).</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/newchat</span><span class="command-desc"> - Gumagawa ng bagong conversation tab.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/delete</span><span class="command-desc"> - Buburahin ang kasalukuyang active conversation.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/refresh</span><span class="command-desc"> - Irerefresh ang buong website.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/clearcache</span><span class="command-desc"> - Buburahin ang lahat ng saved chats sa localStorage.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/incognito</span><span class="command-desc"> - Magbubukas ng pribadong session (walang save).</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/exit</span><span class="command-desc"> - Lalabas sa incognito mode pabalik sa normal mode.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #3b82f6; font-weight: bold;">/commands</span><span class="command-desc"> - Ipapakita ang listahang ito ng Normal commands.</span></div>
+                    `;
+                }
+            }
+
+            modal.classList.toggle('open', show);
+        }
+
         function selectMode(modeKey, modeDisplayName) {
             currentSelectedMode = modeKey;
             document.getElementById('selectedModeText').innerText = modeDisplayName;
+            const modal = document.getElementById('modeModalOverlay');
+            modal.querySelectorAll('.option-item').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(modeKey)) btn.classList.add('active');
+            });
             toggleModal('modeModalOverlay', false);
             document.getElementById('customPromptInput').style.display = modeKey === 'custom' ? 'block' : 'none';
         }
@@ -362,25 +718,46 @@
         function selectModel(modelKey, modelDisplayName) {
             currentSelectedModel = modelKey;
             document.getElementById('selectedModelText').innerText = modelDisplayName;
+            const modal = document.getElementById('modelModalOverlay');
+            modal.querySelectorAll('.option-item').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(modelKey)) btn.classList.add('active');
+            });
             toggleModal('modelModalOverlay', false);
         }
 
         function renderWelcomeScreen() {
             chatBox.innerHTML = `
                 <div class="welcome-screen">
-                    <div class="welcome-title">JepongDevxyz AI</div>
+                    <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                    <div class="welcome-title">${isIncognito ? '🕵️‍♂️ Incognito Mode' : 'JepongDevxyz AI'}</div>
+                    <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
             `;
+            userScrolledUp = false;
         }
 
         function toggleSidebar(show) {
+            if (isIncognito) {
+                showAlert('Sidebar history is disabled in Incognito mode.', 'Incognito Mode', '🕵️‍♂️');
+                return;
+            }
             document.getElementById('sidebar').classList.toggle('open', show);
             document.getElementById('sidebarOverlay').classList.toggle('open', show);
             if (show) renderSidebarHistory();
         }
 
         function createNewChat() {
+            if (isBibleMode) {
+                createBibleChatSession();
+                return;
+            }
+            if (isIncognito) {
+                showAlert('You are currently in Incognito mode. Type /exit to return to normal mode.', 'Incognito Active', '🕵️‍♂️');
+                return;
+            }
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
             currentSessionId = 'session_' + Date.now();
             chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
             saveSessions();
@@ -388,7 +765,38 @@
             toggleSidebar(false);
         }
 
+        function startIncognitoChat() {
+            if (isIncognito) {
+                showAlert('You are already in Incognito mode.', 'Notice', '🕵️‍♂️');
+                return;
+            }
+            isIncognito = true;
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
+            currentSessionId = 'incognito_' + Date.now();
+            chatSessions = {};
+            renderWelcomeScreen();
+            toggleSidebar(false);
+            resetInactivityTimer();
+        }
+
+        function exitIncognitoChat() {
+            if (!isIncognito) {
+                showAlert('You are not in any mode.', 'Notice', 'ℹ️');
+                return;
+            }
+            isIncognito = false;
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
+            if (Object.keys(chatSessions).length > 0) {
+                loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
+            } else {
+                createNewChat();
+            }
+        }
+
         function loadChatSession(id) {
+            if (isIncognito) return;
             currentSessionId = id;
             const session = chatSessions[id];
             if (!session) return;
@@ -399,20 +807,54 @@
                 chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
                 session.messages.forEach(msg => {
                     if (msg.role === 'user') {
-                        chatBox.innerHTML += `<div class="msg user has-bubble"><div>${escapeHTML(msg.text)}</div></div>`;
+                        let attHTML = '';
+                        if (msg.files && msg.files.length > 0) {
+                            msg.files.forEach(file => {
+                                if (file.mimeType.startsWith('image/')) {
+                                    attHTML += `<div style="margin-top: 4px;"><img src="${file.fullData}" alt="Uploaded image" onclick="openLightbox('${file.fullData}')" style="max-width: 220px; max-height: 220px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; display: block; cursor: pointer;"></div>`;
+                                } else {
+                                    attHTML += `<div style="margin-top: 4px; font-size: 0.8rem; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color);">📄 ${escapeHTML(file.name)}</div>`;
+                                }
+                            });
+                        }
+                        const hasText = msg.text && msg.text.trim().length > 0;
+                        const bubbleClass = hasText ? 'msg user has-bubble' : 'msg user no-bubble';
+                        const content = (hasText ? `<div>${escapeHTML(msg.text)}</div>` : '') + attHTML;
+                        chatBox.innerHTML += `<div class="${bubbleClass}">${content}</div>`;
                     } else {
                         const botDiv = document.createElement('div');
                         botDiv.className = 'msg bot';
-                        botDiv.innerHTML = `<div>${marked.parse(msg.text)}</div>`;
+                        botDiv.innerHTML = `<div>${marked.parse(msg.text)}</div>
+                            <div class="bot-actions">
+                                <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
+                                <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
+                            </div>`;
                         chatBox.appendChild(botDiv);
                     }
                 });
+                chatBox.querySelectorAll('.msg img').forEach(img => {
+                    img.onclick = () => openLightbox(img.src);
+                });
+                document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
             }
             scrollToBottom(true);
             toggleSidebar(false);
+            renderSidebarHistory();
+        }
+
+        function deleteChatSession(id, e) {
+            if(e) e.stopPropagation();
+            if (isIncognito) {
+                showAlert('Command not available in Incognito mode.', 'Incognito Active', '🕵️‍♂️');
+                return;
+            }
+            delete chatSessions[id];
+            saveSessions();
+            if (currentSessionId === id) createNewChat();
         }
 
         function renderSidebarHistory(filter = '') {
+            if (isIncognito) return;
             const list = document.getElementById('chatHistoryList');
             list.innerHTML = '';
             Object.values(chatSessions).reverse().forEach(session => {
@@ -420,48 +862,419 @@
                 const item = document.createElement('div');
                 item.className = 'history-item' + (session.id === currentSessionId ? ' active' : '');
                 item.onclick = () => loadChatSession(session.id);
-                item.innerHTML = `<span class="history-item-text">${escapeHTML(session.title)}</span>`;
+                item.innerHTML = `
+                    <span class="history-item-text">${escapeHTML(session.title)}</span>
+                    <button class="delete-hist-btn" onclick="deleteChatSession('${session.id}', event)">🗑️</button>
+                `;
                 list.appendChild(item);
             });
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const message = input.value.trim();
-            if (!message) return;
+        function filterChatHistory() {
+            renderSidebarHistory(document.getElementById('searchChatInput').value);
+        }
 
-            if (!currentSessionId || !chatSessions[currentSessionId]) createNewChat();
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            Array.from(files).forEach(file => {
+                const r = new FileReader();
+                r.onload = (ex) => {
+                    selectedFilesData.push({
+                        name: file.name,
+                        mimeType: file.type,
+                        data: ex.target.result.split(',')[1],
+                        fullData: ex.target.result
+                    });
+                    renderFilePreviews();
+                };
+                r.readAsDataURL(file);
+            });
+        }
 
-            if (chatSessions[currentSessionId].messages.length === 0) {
-                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
-                chatSessions[currentSessionId].title = message.substring(0, 25);
+        function renderFilePreviews() {
+            const container = document.getElementById('filePreviewContainer');
+            container.innerHTML = '';
+            if (selectedFilesData.length === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'flex';
+            selectedFilesData.forEach((file, index) => {
+                const chip = document.createElement('div');
+                chip.className = file.mimeType.startsWith('image/') ? 'gemini-chip img-chip' : 'gemini-chip';
+                chip.innerHTML = file.mimeType.startsWith('image/') 
+                    ? `<img src="${file.fullData}" alt="Thumbnail"><button class="chip-close-btn" onclick="removeFile(${index})">✕</button>`
+                    : `<span>📄 ${escapeHTML(file.name)}</span><button class="chip-close-btn" onclick="removeFile(${index})">✕</button>`;
+                container.appendChild(chip);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFilesData.splice(index, 1);
+            renderFilePreviews();
+        }
+
+        function handleBibleCommands(message) {
+            const cmdLine = message.trim();
+            const parts = cmdLine.split(' ');
+            const mainCmd = parts[0].toLowerCase();
+            const args = parts.slice(1).join(' ');
+
+            if (mainCmd === '/exit') {
+                exitBibleMode();
+                return true;
             }
 
-            chatBox.innerHTML += `<div class="msg user has-bubble"><div>${escapeHTML(message)}</div></div>`;
-            chatSessions[currentSessionId].messages.push({ role: 'user', text: message });
-            saveSessions();
+            if (mainCmd === '/bnew') {
+                createBibleChatSession();
+                return true;
+            }
 
-            input.value = '';
+            if (mainCmd === '/bclear') {
+                localStorage.removeItem('jepong_bible_chats');
+                bibleChatSessions = {};
+                createBibleChatSession();
+                showAlert('Nabura na ang lahat ng history sa Bible Mode.', 'Bible Storage Cleared', '🧹');
+                return true;
+            }
+
+            if (mainCmd === '/commands' || mainCmd === '/bcommands') {
+                toggleCommandsModal(true);
+                return true;
+            }
+
+            if (mainCmd === '/verse') {
+                if (!args) {
+                    showAlert('Maglagay ng verse pagkatapos ng command.\nHalimbawa: /verse John 3:16', 'Bible Command', '📖');
+                    return true;
+                }
+                processBiblePrompt(`Magbigay ng malalim na paliwanag, eksaktong teksto (Tagalog/English), at life application para sa verse na ito: ${args}`);
+                return true;
+            }
+
+            if (mainCmd === '/story') {
+                if (!args) {
+                    showAlert('Maglagay ng pangalan ng tauhan o kwento.\nHalimbawa: /story Kwento ni David at Goliath', 'Bible Command', '📜');
+                    return true;
+                }
+                processBiblePrompt(`Ikwento mo nang buo, detalyado, at lively ang kwentong ito mula sa Biblia na parang isang master storyteller: ${args}`);
+                return true;
+            }
+
+            if (mainCmd === '/pray') {
+                const topic = args || 'pangkalahatang gabay at kapayapaan';
+                processBiblePrompt(`Gumawa ng isang taos-pusong panalangin (prayer) base sa paksang ito: ${topic}. Isama rin ang angkop na Bible verse.`);
+                return true;
+            }
+
+            return false;
+        }
+
+        function startBibleMode(initialTopic = '') {
+            isBibleMode = true;
+            const titleElem = document.getElementById('brandTitleText');
+            if (titleElem) titleElem.innerText = 'JepongDevxyz AI';
+            
+            bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
+            
+            if (Object.keys(bibleChatSessions).length > 0) {
+                currentBibleSessionId = Object.keys(bibleChatSessions)[Object.keys(bibleChatSessions).length - 1];
+                loadBibleSession(currentBibleSessionId);
+            } else {
+                createBibleChatSession();
+            }
+
+            if (initialTopic) {
+                processBiblePrompt(initialTopic);
+            } else {
+                showAlert('Nasa dedicated Bible Mode ka na!\nType /commands para sa mga commands.', '📖 Bible Mode', '🕊️');
+            }
+        }
+
+        function exitBibleMode() {
+            if (!isBibleMode) return;
+            isBibleMode = false;
+            const titleElem = document.getElementById('brandTitleText');
+            if (titleElem) titleElem.innerText = 'JepongDevxyz AI';
+            
+            chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
+            if (Object.keys(chatSessions).length > 0) {
+                loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
+            } else {
+                createNewChat();
+            }
+            showAlert('Nakalabas ka na sa Bible Mode. Safe at saved pa rin ang dati mong Bible topics pagbalik mo!', 'Normal Mode', '🔙');
+        }
+
+        function createBibleChatSession() {
+            currentBibleSessionId = 'bsession_' + Date.now();
+            bibleChatSessions[currentBibleSessionId] = { id: currentBibleSessionId, title: 'Bible Session', messages: [] };
+            saveBibleSessions();
+            renderBibleWelcomeScreen();
+        }
+
+        function saveBibleSessions() {
+            localStorage.setItem('jepong_bible_chats', JSON.stringify(bibleChatSessions));
+        }
+
+        function loadBibleSession(id) {
+            currentBibleSessionId = id;
+            const session = bibleChatSessions[id];
+            if (!session || !chatBox) return;
+
+            if (session.messages.length === 0) {
+                renderBibleWelcomeScreen();
+            } else {
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
+                session.messages.forEach(msg => {
+                    if (msg.role === 'user') {
+                        chatBox.innerHTML += `<div class="msg user has-bubble"><div>${escapeHTML(msg.text)}</div></div>`;
+                    } else {
+                        const botDiv = document.createElement('div');
+                        botDiv.className = 'msg bot';
+                        botDiv.innerHTML = `<div>${marked.parse(msg.text)}</div>
+                            <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                                <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>
+                            </div>`;
+                        chatBox.appendChild(botDiv);
+                    }
+                });
+            }
+            scrollToBottom(true);
+        }
+
+        function renderBibleWelcomeScreen() {
+            if (!chatBox) return;
+            chatBox.innerHTML = `
+                <div class="welcome-screen" style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 3.5rem; margin-bottom: 8px;">📖🕊️</div>
+                    <div class="welcome-title" style="font-size: 1.5rem; font-weight: bold; background: linear-gradient(90deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bible Scholar & Storyteller</div>
+                    <p style="color: #aaa; font-size: 0.85rem; margin-top: 8px; max-width: 320px; margin-left: auto; margin-right: auto;">
+                        I-type ang iyong paksa o gumamit ng commands tulad ng <b>/story</b>, <b>/verse</b>, o <b>/pray</b>. Naka-auto Text-to-Speech ang bawat sagot!
+                    </p>
+                </div>
+                <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
+            `;
+        }
+
+        async function processBiblePrompt(userText) {
+            if (!chatBox) return;
+
+            if (!currentBibleSessionId || !bibleChatSessions[currentBibleSessionId]) {
+                createBibleChatSession();
+            }
+
+            if (bibleChatSessions[currentBibleSessionId].messages.length === 0) {
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
+                bibleChatSessions[currentBibleSessionId].title = userText.substring(0, 25);
+            }
+
+            chatBox.innerHTML += `<div class="msg user has-bubble"><div>${escapeHTML(userText)}</div></div>`;
+            bibleChatSessions[currentBibleSessionId].messages.push({ role: 'user', text: userText });
+            saveBibleSessions();
 
             const botMsgElem = document.createElement('div');
             botMsgElem.className = 'msg bot';
-            botMsgElem.innerText = currentSelectedMode === 'imagen' ? 'Lilikha ng Larawan...' : 'Nag-iisip...';
+            botMsgElem.innerText = 'Naghahanap sa Banal na Kasulatan...';
+            chatBox.appendChild(botMsgElem);
+            scrollToBottom(true);
+
+            const bibleSystemInstruction = "You are a warm, wise, and highly articulate Biblical Scholar and Master Storyteller. Your purpose is to explain Bible verses, tell vivid biblical stories, provide context, and offer prayers/reflections. ALWAYS detect the language of the user (Tagalog/Filipino or English) and reply FULLY in that language. Ensure your responses sound fluid and natural when read aloud via Text-to-Speech.";
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: userText, 
+                        files: [], 
+                        model: currentSelectedModel || 'gemini-2.5-flash', 
+                        mode: 'custom', 
+                        customPrompt: bibleSystemInstruction 
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to connect to AI');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    fullResponse += decoder.decode(value, { stream: true });
+                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
+                        <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
+                            <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>
+                        </div>`;
+                    scrollToBottom(false);
+                }
+
+                bibleChatSessions[currentBibleSessionId].messages.push({ role: 'bot', text: fullResponse });
+                saveBibleSessions();
+
+                updateWordCounter(userText + ' ' + fullResponse);
+                speakRawText(fullResponse);
+
+            } catch (err) {
+                botMsgElem.innerHTML = `<div class="minimal-error-card"><span class="minimal-error-text">⚠️ ${escapeHTML(err.message)}</span></div>`;
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            if (!input) return;
+            const message = input.value.trim();
+            if (!message && selectedFilesData.length === 0) return;
+
+            if (message.toLowerCase() === '/commands') {
+                input.value = '';
+                toggleCommandsModal(true);
+                return;
+            }
+
+            if (!isBibleMode && message.toLowerCase().startsWith('/bible')) {
+                const topic = message.replace(/\/bible/i, '').trim();
+                input.value = '';
+                startBibleMode(topic);
+                return;
+            }
+
+            if (isBibleMode) {
+                input.value = '';
+                const isCmd = handleBibleCommands(message);
+                if (!isCmd) {
+                    processBiblePrompt(message);
+                }
+                return;
+            }
+
+            if (message.startsWith('/')) {
+                const cmd = message.toLowerCase();
+                input.value = '';
+                
+                if (cmd === '/newchat') {
+                    createNewChat();
+                    return;
+                } else if (cmd === '/delete') {
+                    if (isIncognito) {
+                        showAlert('You are in Incognito mode. Type /exit to leave.', 'Incognito Mode', '🕵️‍♂️');
+                    } else if (currentSessionId) {
+                        deleteChatSession(currentSessionId);
+                    }
+                    return;
+                } else if (cmd === '/refresh') {
+                    window.location.reload();
+                    return;
+                } else if (cmd === '/clearcache') {
+                    if (isIncognito) {
+                        showAlert('Cannot clear cache while in Incognito mode.', 'Incognito Mode', '🕵️‍♂️');
+                        return;
+                    }
+                    localStorage.removeItem('jepong_ai_chats');
+                    chatSessions = {};
+                    createNewChat();
+                    return;
+                } else if (cmd === '/incognito') {
+                    startIncognitoChat();
+                    return;
+                } else if (cmd === '/exit') {
+                    exitIncognitoChat();
+                    return;
+                } else {
+                    showAlert('Unknown command: ' + message + '\nType /commands to see available commands.', 'Command Error', '⚠️');
+                    return;
+                }
+            }
+
+            const mode = currentSelectedMode;
+            const model = currentSelectedModel;
+
+            if (!isIncognito && (!currentSessionId || !chatSessions[currentSessionId])) createNewChat();
+            if (isIncognito && !chatSessions[currentSessionId]) {
+                chatSessions[currentSessionId] = { id: currentSessionId, title: 'Incognito', messages: [] };
+            }
+
+            const tempFiles = [...selectedFilesData];
+
+            if (chatSessions[currentSessionId].messages.length === 0) {
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
+                chatSessions[currentSessionId].title = message ? message.substring(0, 25) : (tempFiles.length > 0 ? tempFiles[0].name : 'Attachment');
+            }
+
+            userScrolledUp = false;
+
+            let attachmentsHTML = '';
+            tempFiles.forEach(file => {
+                if (file.mimeType.startsWith('image/')) {
+                    attachmentsHTML += `<div style="margin-top: 4px;"><img src="${file.fullData}" alt="Uploaded file" onclick="openLightbox('${file.fullData}')" style="max-width: 220px; max-height: 220px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover; display: block; cursor: pointer;"></div>`;
+                } else {
+                    attachmentsHTML += `<div style="margin-top: 4px; font-size: 0.8rem; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color);">📄 ${escapeHTML(file.name)}</div>`;
+                }
+            });
+
+            const hasText = message.length > 0;
+            const bubbleClass = hasText ? 'msg user has-bubble' : 'msg user no-bubble';
+            const userBubbleContent = (hasText ? `<div>${escapeHTML(message)}</div>` : '') + attachmentsHTML;
+
+            chatBox.innerHTML += `<div class="${bubbleClass}">${userBubbleContent}</div>`;
+            
+            chatSessions[currentSessionId].messages.push({ 
+                role: 'user', 
+                text: message, 
+                files: tempFiles.map(f => ({ name: f.name, mimeType: f.mimeType, fullData: f.fullData })) 
+            });
+            saveSessions();
+
+            input.value = '';
+            selectedFilesData = [];
+            renderFilePreviews();
+
+            const botMsgElem = document.createElement('div');
+            botMsgElem.className = 'msg bot';
+            botMsgElem.innerText = mode === 'imagen' ? 'Generating image with Imagen 4...' : 'Thinking...';
             chatBox.appendChild(botMsgElem);
             scrollToBottom(true);
 
             const customPrompt = document.getElementById('customPromptInput').value;
 
             try {
-                // TAWAG SA /api/chat ENDPOINT (Streaming Text + Image Generation)
+                if (mode === 'imagen') {
+                    const res = await fetch('/api/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: message })
+                    });
+                    
+                    const rawText = await res.text();
+                    let data;
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch (pErr) {
+                        throw new Error(`Server returned invalid JSON: ${rawText.substring(0, 80)}`);
+                    }
+
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to generate image');
+                    }
+
+                    const imgHtml = `<div><img src="${data.imageUrl}" alt="Generated AI artwork" onclick="openLightbox('${data.imageUrl}')" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer;"></div>`;
+                    botMsgElem.innerHTML = imgHtml + `
+                        <div class="bot-actions">
+                            <a class="bot-action-btn" href="${data.imageUrl}" download="imagen4.jpg">📥 Download</a>
+                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy Prompt</button>
+                        </div>`;
+                    
+                    chatSessions[currentSessionId].messages.push({ role: 'bot', text: `![Generated Image](${data.imageUrl})` });
+                    saveSessions();
+                    updateWordCounter(message);
+                    scrollToBottom(false);
+                    return;
+                }
+
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        message: message, 
-                        model: currentSelectedModel, 
-                        mode: currentSelectedMode, 
-                        customPrompt: customPrompt 
-                    })
+                    body: JSON.stringify({ message, files: tempFiles, model, mode, customPrompt })
                 });
 
                 if (!response.ok) throw new Error('Server returned status ' + response.status);
@@ -474,7 +1287,11 @@
                     const { done, value } = await reader.read();
                     if (done) break;
                     fullResponse += decoder.decode(value, { stream: true });
-                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>`;
+                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
+                        <div class="bot-actions">
+                            <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
+                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
+                        </div>`;
                     
                     botMsgElem.querySelectorAll('img').forEach(img => {
                         img.onclick = () => openLightbox(img.src);
@@ -484,18 +1301,95 @@
 
                 chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
                 saveSessions();
+                document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+
+                updateWordCounter(message + ' ' + fullResponse);
 
             } catch (err) {
-                botMsgElem.innerHTML = `<div style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</div>`;
+                botMsgElem.innerHTML = `
+                    <div class="minimal-error-card">
+                        <span class="minimal-error-text">⚠️ ${escapeHTML(err.message || 'Connection Error')}</span>
+                        <button class="minimal-retry-btn" onclick="retryLastMessage(this)" title="Try Again">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.63-5.19"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                scrollToBottom(true);
             }
         }
 
+        function retryLastMessage(btn) {
+            btn.classList.add('spinning');
+            setTimeout(() => {
+                if (currentSessionId && chatSessions[currentSessionId]) {
+                    const messages = chatSessions[currentSessionId].messages;
+                    let lastUserMsgIndex = -1;
+                    for (let i = messages.length - 1; i >= 0; i--) {
+                        if (messages[i].role === 'user') {
+                            lastUserMsgIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (lastUserMsgIndex !== -1) {
+                        const lastMsg = messages[lastUserMsgIndex];
+                        if (chatBox.lastChild) chatBox.removeChild(chatBox.lastChild);
+                        document.getElementById('userInput').value = lastMsg.text || '';
+                        
+                        selectedFilesData = [];
+                        if (lastMsg.files && lastMsg.files.length > 0) {
+                            lastMsg.files.forEach(f => {
+                                selectedFilesData.push({
+                                    name: f.name,
+                                    mimeType: f.mimeType,
+                                    data: f.fullData ? f.fullData.split(',')[1] : '',
+                                    fullData: f.fullData
+                                });
+                            });
+                            renderFilePreviews();
+                        }
+
+                        chatSessions[currentSessionId].messages.splice(lastUserMsgIndex);
+                        saveSessions();
+                        sendMessage();
+                    } else {
+                        btn.classList.remove('spinning');
+                    }
+                } else {
+                    btn.classList.remove('spinning');
+                }
+            }, 400);
+        }
+
         function clearCurrentChat() {
+            if (isBibleMode && currentBibleSessionId && bibleChatSessions[currentBibleSessionId]) {
+                bibleChatSessions[currentBibleSessionId].messages = [];
+                saveBibleSessions();
+                renderBibleWelcomeScreen();
+                return;
+            }
             if (currentSessionId && chatSessions[currentSessionId]) {
                 chatSessions[currentSessionId].messages = [];
                 saveSessions();
                 renderWelcomeScreen();
             }
+        }
+
+        function runCode(id) {
+            const codeText = document.getElementById(id).innerText;
+            const modal = document.getElementById('codePreviewModal');
+            const iframe = document.getElementById('previewIframe');
+            modal.classList.add('open');
+            iframe.srcdoc = codeText;
+        }
+
+        function closeCodePreview() {
+            const modal = document.getElementById('codePreviewModal');
+            const iframe = document.getElementById('previewIframe');
+            modal.classList.remove('open');
+            iframe.srcdoc = '';
         }
 
         function openLightbox(imgSrc) {
@@ -505,7 +1399,8 @@
         }
 
         function closeLightbox() {
-            document.getElementById('imageLightbox').classList.remove('open');
+            const lightbox = document.getElementById('imageLightbox');
+            lightbox.classList.remove('open');
         }
 
         function copyCode(id, btn) {
@@ -514,6 +1409,148 @@
                 setTimeout(() => btn.innerText = '📋 Copy', 2000);
             });
         }
+
+        function copyText(btn) {
+            const text = btn.closest('.msg').querySelector('div').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.innerText = '✓ Copied!';
+                setTimeout(() => btn.innerText = '📋 Copy', 2000);
+            });
+        }
+
+        function speakText(btn) {
+            speakRawText(btn.closest('.msg').querySelector('div').innerText);
+        }
+
+        function speakRawText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            
+            const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~>\[\]\(\)]/g, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            
+            systemVoices = window.speechSynthesis.getVoices();
+            const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano|diyos|panginoon)\b/i;
+            const isTagalog = tagalogWords.test(cleanText);
+            
+            let targetVoice = null;
+            if (isTagalog && systemVoices.length > 0) {
+                targetVoice = systemVoices.find(v => {
+                    const lang = (v.lang || '').toLowerCase();
+                    const name = (v.name || '').toLowerCase();
+                    return lang === 'fil-ph' || lang === 'tl-ph' || name.includes('filipino') || name.includes('tagalog');
+                });
+            }
+            if (!targetVoice && systemVoices.length > 0) {
+                targetVoice = systemVoices.find(v => {
+                    const lang = (v.lang || '').toLowerCase();
+                    return lang === 'en-us' || lang === 'en-gb' || lang.startsWith('en');
+                });
+            }
+            
+            if (targetVoice) {
+                utterance.voice = targetVoice;
+                utterance.lang = targetVoice.lang;
+            } else {
+                utterance.lang = isTagalog ? 'tl-PH' : 'en-US';
+            }
+            
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleSpeechRecognition() {
+            const userInput = document.getElementById('userInput');
+            const waveContainer = document.getElementById('waveContainer');
+            
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showAlert('Speech recognition is not supported in this browser.', 'Browser Restriction', '⚠️');
+                return;
+            }
+            
+            if (isRecording) {
+                if (recognition) recognition.stop();
+                stopRecordingUI();
+            } else {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'fil-PH';
+                
+                recognition.onstart = () => {
+                    isRecording = true;
+                    userInput.style.display = 'none';
+                    waveContainer.classList.add('active');
+                };
+                recognition.onresult = (event) => {
+                    userInput.value = event.results[0][0].transcript;
+                    stopRecordingUI();
+                };
+                recognition.onerror = (event) => {
+                    stopRecordingUI();
+                    if (event.error === 'not-allowed') {
+                        showAlert('Microphone access blocked. Please allow permission in browser settings.', 'Microphone Blocked', '🎙️');
+                    } else if (event.error !== 'no-speech') {
+                        showAlert('Speech recognition error: ' + event.error, 'Speech Error', '⚠️');
+                    }
+                };
+                recognition.onend = () => stopRecordingUI();
+                
+                try {
+                    recognition.start();
+                } catch(e) {
+                    stopRecordingUI();
+                    showAlert('Unable to start speech recognition.', 'Error', '⚠️');
+                }
+            }
+        }
+
+        function stopRecordingUI() {
+            isRecording = false;
+            document.getElementById('userInput').style.display = 'block';
+            document.getElementById('waveContainer').classList.remove('active');
+        }
+
+        async function checkPing() {
+            const pingText = document.getElementById('pingText');
+            const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
+            const start = performance.now();
+            try {
+                await fetch('/api/chat', { method: 'HEAD', cache: 'no-store' });
+                pingText.innerText = Math.round(performance.now() - start) + ' ms';
+                bars.forEach(bar => bar.style.backgroundColor = 'var(--sig-good)');
+            } catch (e) {
+                pingText.innerText = 'Offline';
+                bars.forEach(bar => bar.style.backgroundColor = 'var(--sig-bad)');
+            }
+        }
+
+        setInterval(checkPing, 5000);
+        checkPing();
+
+        function updateWordCounter(text) {
+          const currentCount = parseInt(localStorage.getItem('jepong_word_count') || '0');
+          const wordsInText = text.trim().split(/\s+/).length;
+          const newTotal = currentCount + wordsInText;
+          localStorage.setItem('jepong_word_count', newTotal);
+          const wordCountElem = document.getElementById('word-count');
+          if (wordCountElem) wordCountElem.innerText = newTotal;
+        }
+
+        function setTheme(themeName) {
+          document.body.className = themeName;
+          localStorage.setItem('jepong_theme', themeName);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+          const savedTheme = localStorage.getItem('jepong_theme') || '';
+          if (savedTheme) document.body.className = savedTheme;
+          const savedWordCount = localStorage.getItem('jepong_word_count') || '0';
+          const wordCountElem = document.getElementById('word-count');
+          if (wordCountElem) wordCountElem.innerText = savedWordCount;
+        });
 
         function escapeHTML(s) { 
             return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t)); 
