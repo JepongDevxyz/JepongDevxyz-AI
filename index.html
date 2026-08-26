@@ -8,8 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    
-    <!-- Lottie Player Web Component Script -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 
     <style>
@@ -52,8 +50,10 @@
         .bar-1 { height: 25%; } .bar-2 { height: 50%; } .bar-3 { height: 75%; } .bar-4 { height: 100%; }
 
         .header-controls { display: flex; gap: 6px; width: 100%; }
-        select { flex: 1; background: rgba(30, 41, 59, 0.8); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; min-width: 0; }
-        .clear-btn { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.72rem; flex-shrink: 0; }
+        select, .custom-prompt-input { flex: 1; background: rgba(30, 41, 59, 0.8); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; min-width: 0; }
+        .custom-prompt-input { display: none; }
+        .header-btn { background: rgba(255, 255, 255, 0.08); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.72rem; flex-shrink: 0; }
+        .clear-btn { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
 
         .sidebar-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 900; }
         .sidebar { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #0f172a; border-right: 1px solid var(--border-color); z-index: 901; transition: left 0.3s ease; display: flex; flex-direction: column; padding: 16px; gap: 14px; }
@@ -79,49 +79,18 @@
 
         .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; position: relative; }
         
-        .welcome-screen { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100%; 
-            text-align: center; 
-            margin: auto; 
-            width: 100%;
-        }
-        
-        .welcome-lottie-top { 
-            width: 220px; 
-            height: 60px; 
-            margin-bottom: -10px; 
-        }
-        
-        .welcome-title {
-            font-size: 1.85rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, #ffffff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-            margin: 0;
-            line-height: 1;
-            position: relative;
-            z-index: 2;
-        }
+        .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; margin: auto; width: 100%; }
+        .welcome-lottie-top { width: 220px; height: 60px; margin-bottom: -10px; }
+        .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; margin: 0; line-height: 1; position: relative; z-index: 2; }
+        .welcome-lottie-bottom { width: 100%; max-width: 260px; height: auto; aspect-ratio: 16 / 9; margin-top: -55px; position: relative; z-index: 1; }
 
-        .welcome-lottie-bottom { 
-            width: 100%;
-            max-width: 260px;
-            height: auto;
-            aspect-ratio: 16 / 9;
-            margin-top: -55px; /* Inangat pa para sa exact placement */
-            position: relative;
-            z-index: 1;
-        }
-
-        .msg { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; word-break: break-word; }
+        .msg { max-width: 88%; padding: 12px 16px; border-radius: 16px; font-size: 0.92rem; line-height: 1.5; word-break: break-word; position: relative; }
         .user { align-self: flex-end; background: var(--user-msg); color: #fff; border-bottom-right-radius: 4px; }
         .bot { align-self: flex-start; background: var(--bot-msg); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+
+        .bot-actions { display: flex; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+        .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; }
+        .bot-action-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
 
         .code-block-wrapper { background: #131722; border: 1px solid var(--border-color); border-radius: 10px; margin: 8px 0; overflow: hidden; }
         .code-header { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 6px 12px; font-size: 0.75rem; color: var(--text-muted); }
@@ -197,18 +166,21 @@
                         </div>
                         <span id="pingText">Checking...</span>
                     </div>
-                    <button class="clear-btn" onclick="clearCurrentChat()">Clear</button>
+                    <button class="header-btn" onclick="exportChatHistory()" title="Export Chat">📥 Export</button>
+                    <button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
                 </div>
             </div>
 
             <div class="header-controls">
-                <select id="modeSelect">
+                <select id="modeSelect" onchange="checkCustomMode()">
                     <option value="general">🤖 Mode: General AI</option>
                     <option value="school">🎓 Mode: School Purpose</option>
                     <option value="coder">💻 Mode: Expert Coder</option>
                     <option value="tagalog">🇵🇭 Mode: Pure Tagalog Friend</option>
                     <option value="affiliate">🛒 Mode: Affiliate Marketer</option>
+                    <option value="custom">✏️ Mode: Custom Persona</option>
                 </select>
+                <input type="text" id="customPromptInput" class="custom-prompt-input" placeholder="Type custom instructions...">
                 <select id="modelSelect">
                     <option value="gemini-3.6-flash" selected>Gemini 3.6 Flash</option>
                     <option value="gemini-3.7-extended-thinking">Gemini 3.7 Thinking</option>
@@ -254,6 +226,7 @@
         let recognition = null;
         let chatSessions = {};
         let currentSessionId = null;
+        let activeUtterance = null;
 
         function checkLivePing() {
             const pingText = document.getElementById('pingText');
@@ -315,28 +288,18 @@
         function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
         function smartScrollToBottom() { if (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight <= 150) chatBox.scrollTop = chatBox.scrollHeight; }
 
+        function checkCustomMode() {
+            const mode = document.getElementById('modeSelect').value;
+            const customInput = document.getElementById('customPromptInput');
+            customInput.style.display = mode === 'custom' ? 'block' : 'none';
+        }
+
         function renderWelcomeScreen() {
             chatBox.innerHTML = `
                 <div class="welcome-screen">
-                    <lottie-player 
-                        class="welcome-lottie-top" 
-                        src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" 
-                        background="transparent" 
-                        speed="1" 
-                        loop 
-                        autoplay>
-                    </lottie-player>
-
+                    <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
                     <div class="welcome-title">JepongDevxyz AI</div>
-
-                    <lottie-player 
-                        class="welcome-lottie-bottom" 
-                        src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" 
-                        background="transparent" 
-                        speed="1" 
-                        loop 
-                        autoplay>
-                    </lottie-player>
+                    <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button id="scrollBtn" onclick="scrollToBottom()">↓</button>
             `;
@@ -390,7 +353,14 @@
                 s.messages.forEach(m => {
                     const elem = document.createElement('div');
                     elem.className = `msg ${m.role}`;
-                    elem.innerHTML = m.role === 'bot' ? `<div>${marked.parse(m.text)}</div>` : escapeHTML(m.text);
+                    if (m.role === 'bot') {
+                        elem.innerHTML = `<div>${marked.parse(m.text)}</div>
+                            <div class="bot-actions">
+                                <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
+                            </div>`;
+                    } else {
+                        elem.innerText = m.text;
+                    }
                     chatBox.appendChild(elem);
                 });
                 scrollToBottom();
@@ -422,9 +392,41 @@
             }
         }
 
-        function saveHistoryToStorage() {
-            localStorage.setItem('jepong_chat_history', JSON.stringify(chatSessions));
+        function exportChatHistory() {
+            if (!currentSessionId || !chatSessions[currentSessionId] || chatSessions[currentSessionId].messages.length === 0) {
+                return alert("No messages to export.");
+            }
+            const messages = chatSessions[currentSessionId].messages;
+            let textData = `JepongDevxyz AI Chat Export\nSession: ${chatSessions[currentSessionId].title}\n-----------------------------------\n\n`;
+            messages.forEach(m => {
+                textData += `[${m.role.toUpperCase()}]:\n${m.text}\n\n`;
+            });
+            
+            const blob = new Blob([textData], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `chat-export-${Date.now()}.txt`;
+            link.click();
         }
+
+        function speakText(btn) {
+            if ('speechSynthesis' in window) {
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    btn.innerText = '🔊 Listen';
+                    return;
+                }
+                const text = btn.parentElement.previousElementSibling.innerText;
+                activeUtterance = new SpeechSynthesisUtterance(text);
+                activeUtterance.onend = () => { btn.innerText = '🔊 Listen'; };
+                btn.innerText = '⏹️ Stop';
+                window.speechSynthesis.speak(activeUtterance);
+            } else {
+                alert("Text-to-Speech is not supported in this browser.");
+            }
+        }
+
+        function saveHistoryToStorage() { localStorage.setItem('jepong_chat_history', JSON.stringify(chatSessions)); }
 
         function loadHistoryFromStorage() {
             const saved = localStorage.getItem('jepong_chat_history');
@@ -475,17 +477,10 @@
 
                 if (isImage) {
                     chip.className = 'gemini-chip img-chip';
-                    chip.innerHTML = `
-                        <img src="${file.fullData}" alt="preview">
-                        <button class="chip-close-btn" onclick="removeFile(${index})">✕</button>
-                    `;
+                    chip.innerHTML = `<img src="${file.fullData}" alt="preview"><button class="chip-close-btn" onclick="removeFile(${index})">✕</button>`;
                 } else {
                     chip.className = 'gemini-chip';
-                    chip.innerHTML = `
-                        <div class="chip-icon">📄</div>
-                        <span class="chip-filename">${escapeHTML(file.name)}</span>
-                        <button class="chip-close-btn" onclick="removeFile(${index})">✕</button>
-                    `;
+                    chip.innerHTML = `<div class="chip-icon">📄</div><span class="chip-filename">${escapeHTML(file.name)}</span><button class="chip-close-btn" onclick="removeFile(${index})">✕</button>`;
                 }
                 container.appendChild(chip);
             });
@@ -523,7 +518,8 @@
                 coder: "You are an expert Senior Full-stack Developer.",
                 tagalog: "Magsalita sa natural na Tagalog.",
                 affiliate: "You are a TikTok Affiliate Marketing expert.",
-                general: "You are JepongDevxyz AI."
+                general: "You are JepongDevxyz AI.",
+                custom: document.getElementById('customPromptInput').value || "You are a helpful AI assistant."
             };
 
             const fullPrompt = `${systemPrompts[mode]}\n\nUser Question: ${message}`;
@@ -562,7 +558,10 @@
                     const { done, value } = await reader.read();
                     if (done) break;
                     fullResponse += decoder.decode(value, { stream: true });
-                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>`;
+                    botMsgElem.innerHTML = `<div>${marked.parse(fullResponse)}</div>
+                        <div class="bot-actions">
+                            <button class="bot-action-btn" onclick="speakText(this)">🔊 Listen</button>
+                        </div>`;
                     smartScrollToBottom();
                 }
 
@@ -596,7 +595,7 @@
         function copyCode(id, btn) {
             const code = document.getElementById(id).innerText;
             navigator.clipboard.writeText(code).then(() => {
-                btn.innerText = '✓ Copied!';
+                btn.innerText = '✅ Copied!';
                 setTimeout(() => btn.innerText = '📋 Copy', 2000);
             });
         }
