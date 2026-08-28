@@ -23,15 +23,23 @@ export default async function handler(req) {
       });
     }
 
+    // 1. Inayos ang mga valid models batay sa opisyal na API strings
     const VALID_MODELS = [
       'gemini-3.7-flash',
       'gemini-3.6-flash',
       'gemini-3.5-flash-lite',
-      'gemini-3.1-pro',
-      'gemini-3.7-extended-thinking'
+      'gemini-3.5-flash',
+      'gemini-3.1-pro-preview' // Ginawang preview dahil walang stable string na gemini-3.1-pro
     ];
 
-    const targetModel = VALID_MODELS.includes(model) ? model : 'gemini-3.6-flash';
+    // Intercept natin kung humihingi sila ng "extended-thinking" at ituro sa 3.7-flash
+    let selectedModel = model;
+    if (model === 'gemini-3.7-extended-thinking') {
+      selectedModel = 'gemini-3.7-flash';
+    }
+
+    // Default fallback kung wala sa listahan ang pinasa ng frontend
+    const targetModel = VALID_MODELS.includes(selectedModel) ? selectedModel : 'gemini-3.7-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
