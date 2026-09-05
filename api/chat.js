@@ -34,7 +34,7 @@ export default async function handler(req) {
 
     // Intercept natin kung humihingi sila ng "extended-thinking" at ituro sa 3.7-flash
     let selectedModel = model;
-    if (model === 'gemini-3.7-extended-thinking') {
+    if (model === 'gemini-flash-latest') {
       selectedModel = 'gemini-3.7-flash';
     }
 
