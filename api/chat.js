@@ -25,11 +25,11 @@ export default async function handler(req) {
 
     // 1. Inayos ang mga valid models batay sa opisyal na API strings
     const VALID_MODELS = [
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.5-flash',
-      'gemini-3.1-pro-preview' // Ginawang preview dahil walang stable string na gemini-3.1-pro
+      'gemini-flash-latest',    // Awtomatikong tuturo sa pinakabagong bersyon (3.8-flash)
+  'gemini-3.8-flash',       // Pinakabagong release ngayon (Setyembre 2026)
+  'gemini-3.7-flash',       // Maayos na fallback 1
+  'gemini-3.6-flash',       // Maayos na fallback 2
+  'gemini-3.5-flash-lite'
     ];
 
     // Intercept natin kung humihingi sila ng "extended-thinking" at ituro sa 3.7-flash
