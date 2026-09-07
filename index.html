@@ -158,7 +158,6 @@
         .option-item.active .radio-icon { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2); box-shadow: inset 0 0 0 3px #8b5cf6; }
         .divider { height: 1px; background: var(--border-color); margin: 6px 0; }
 
-        /* iOS Toggle Switch */
         .ios-switch-container { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
         .ios-switch { position: relative; display: inline-block; width: 46px; height: 26px; }
         .ios-switch input { opacity: 0; width: 0; height: 0; }
@@ -167,7 +166,6 @@
         input:checked + .ios-slider { background-color: #10b981; }
         input:checked + .ios-slider:before { transform: translateX(20px); }
 
-        /* Usage Metrics */
         .usage-section { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 4px; }
         .usage-title { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px; text-align: center; }
         .usage-metric-card { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
@@ -185,7 +183,6 @@
         .progress-fill { height: 100%; background: var(--bar-fill); border-radius: 6px; width: 0%; transition: width 0.4s ease; }
         .limit-card-footer { font-size: 0.72rem; color: var(--text-muted); }
 
-        /* Sidebar */
         .sidebar-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 900; }
         .sidebar { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #0f172a; border-right: 1px solid var(--border-color); z-index: 901; transition: left 0.3s ease; display: flex; flex-direction: column; padding: 16px; gap: 14px; }
         body.theme-light .sidebar { background: #ffffff; }
@@ -207,7 +204,6 @@
         .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
         .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; }
 
-        /* Chat Body */
         .chat-box { 
             flex: 1 1 auto; 
             min-height: 0;
@@ -237,7 +233,7 @@
         .msg.user.no-bubble { align-self: flex-end; background: transparent; border: none; padding: 0; }
         .msg.bot { align-self: flex-start; background: var(--bot-msg); border: none; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
-        /* AI Indicator Card (Walang ilaw na tumatagos) */
+        /* AI Indicator Card: Walang ilaw na lumalagpas sa border */
         .ai-indicator-card {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.16));
             border: 1px solid rgba(139, 92, 246, 0.45);
@@ -288,7 +284,6 @@
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; }
         .bot-action-btn.active-action { color: #8b5cf6; background: rgba(139, 92, 246, 0.15); }
 
-        /* Input Area */
         .input-container { 
             width: 100%;
             max-width: 100%;
@@ -873,47 +868,60 @@
             botMsgElem.className = 'msg bot';
             chatBox.appendChild(botMsgElem);
 
-            // Auto-detect image generation request
             const isImageCreationRequest = currentSelectedMode === 'imagen' || 
-                /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of)/i.test(promptText);
+                /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of|icon ng)/i.test(promptText);
 
             if (isImageCreationRequest) {
                 try {
-                    const cleanImagePrompt = promptText
+                    let finalImagePrompt = promptText
                         .replace(/\[Dola AI Vision\]:/gi, '')
-                        .replace(/(palitan mo yan ng|palitan ng|gawan mo ako ng|generate an image of|draw a|gumawa ka ng)/gi, '')
-                        .trim() || promptText;
+                        .replace(/(paki palitan naman ng|palitan mo yan ng|palitan ng|gawan mo ako ng|generate an image of|draw a|gumawa ka ng)/gi, '')
+                        .trim();
 
-                    let generatedImageUrl = '';
+                    if (currentFiles && currentFiles.length > 0) {
+                        try {
+                            const visionAnalyzeRes = await fetch('/api/chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    message: `Look at the attached image carefully. The user wants to transform or replace the subject of this image with: "${finalImagePrompt}". 
+Extract the visual style, colors, composition, and format of the image (e.g. circular vector logo, minimalist graphic icon, blue swirl lines, flat design, white background). 
+Write a single concise English image generation prompt (max 30 words) that re-creates the new subject while strictly keeping the EXACT same style, colors, and design layout as the attached image. Output ONLY the prompt text, nothing else.`,
+                                    history: [],
+                                    files: currentFiles,
+                                    model: 'gemini-flash-latest',
+                                    mode: 'general'
+                                })
+                            });
 
-                    try {
-                        const res = await fetch('/api/generate-image', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ prompt: cleanImagePrompt })
-                        });
-                        const data = await res.json();
-                        if (data.success && data.imageUrl) {
-                            generatedImageUrl = data.imageUrl;
+                            if (visionAnalyzeRes.ok) {
+                                const visionReader = visionAnalyzeRes.body.getReader();
+                                const visionDecoder = new TextDecoder();
+                                let visionPrompt = '';
+                                while (true) {
+                                    const { done, value } = await visionReader.read();
+                                    if (done) break;
+                                    visionPrompt += visionDecoder.decode(value, { stream: true });
+                                }
+                                if (visionPrompt.trim()) {
+                                    finalImagePrompt = visionPrompt.trim();
+                                }
+                            }
+                        } catch (vErr) {
+                            console.warn("Vision prompt enhancement fallback:", vErr);
                         }
-                    } catch (e) {
-                        // Fallback client-side direct Pollinations URL kung mag-offline ang server
-                        const enc = encodeURIComponent(cleanImagePrompt);
-                        const seed = Math.floor(Math.random() * 1000000);
-                        generatedImageUrl = `https://image.pollinations.ai/prompt/${enc}?seed=${seed}&width=1024&height=1024&nologo=true`;
                     }
 
-                    if (!generatedImageUrl) {
-                        const enc = encodeURIComponent(cleanImagePrompt);
-                        const seed = Math.floor(Math.random() * 1000000);
-                        generatedImageUrl = `https://image.pollinations.ai/prompt/${enc}?seed=${seed}&width=1024&height=1024&nologo=true`;
-                    }
+                    const encodedPrompt = encodeURIComponent(finalImagePrompt);
+                    const randomSeed = Math.floor(Math.random() * 1000000);
+                    const generatedImageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${randomSeed}&width=1024&height=1024&model=flux&nologo=true`;
 
+                    // Alisin agad ang indicator card kapag lumabas ang imahe
                     removeAIIndicator();
 
                     botMsgElem.innerHTML = `
                         <div>
-                            <p style="margin-bottom: 8px; font-size: 0.88rem; color: #a855f7;">✨ Eto ang nalikhang imahe batay sa iyong prompt:</p>
+                            <p style="margin-bottom: 8px; font-size: 0.88rem; color: #a855f7;">✨ Eto ang nalikhang imahe batay sa estilo ng iyong litrato:</p>
                             <img src="${generatedImageUrl}" alt="Generated artwork" loading="lazy" onclick="openLightbox('${generatedImageUrl}')" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                         </div>
                         <div class="bot-actions" style="margin-top: 10px; display: flex; gap: 8px;">
@@ -949,6 +957,7 @@
                     })
                 });
 
+                // Alisin agad ang indicator card bago mag-render ng streaming text
                 removeAIIndicator();
 
                 if (!response.ok) {
@@ -990,6 +999,7 @@
                 incrementCounters(promptText + ' ' + fullResponse);
 
             } catch (err) {
+                // Alisin din ang indicator card kapag nag-error upang hindi mag-iwan ng bakanteng box
                 removeAIIndicator();
                 botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</span>`;
                 scrollToBottom(true);
@@ -1038,6 +1048,8 @@
         }
 
         function createNewChat() {
+            // Siguraduhing tanggal ang anumang nakabitin na indicator paglipat ng bagong chat
+            removeAIIndicator();
             currentSessionId = 'session_' + Date.now();
             chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
             saveSessions();
@@ -1046,6 +1058,7 @@
         }
 
         function renderWelcomeScreen() {
+            removeAIIndicator();
             chatBox.innerHTML = `
                 <div class="welcome-screen">
                     <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
@@ -1057,6 +1070,7 @@
         }
 
         function loadChatSession(id) {
+            removeAIIndicator();
             currentSessionId = id;
             const session = chatSessions[id];
             if (!session || session.messages.length === 0) {
@@ -1132,6 +1146,7 @@
         }
 
         function clearCurrentChat() {
+            removeAIIndicator();
             if (currentSessionId && chatSessions[currentSessionId]) {
                 chatSessions[currentSessionId].messages = [];
                 saveSessions();
