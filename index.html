@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Jay-Ar Lee Espiritu & JepongDevxyz AI -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -58,6 +57,7 @@
             --text-muted: #d8b4fe;
         }
 
+        /* Tanggalin ang unwanted default scrollbars sa mobile */
         * { 
             box-sizing: border-box; 
             margin: 0; 
@@ -66,14 +66,22 @@
             outline: none; 
             -webkit-tap-highlight-color: transparent; 
         }
-        
+
+        *::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+
         html, body { 
-            width: 100%; 
+            width: 100vw; 
             max-width: 100vw;
             height: 100%; 
             height: 100dvh; 
-            overflow: hidden; 
+            overflow: hidden !important; 
             overflow-x: hidden !important;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
             touch-action: pan-y;
             background-color: var(--bg-color); 
             color: var(--text-main); 
@@ -92,7 +100,7 @@
             flex-direction: column; 
             background: var(--card-bg); 
             position: relative; 
-            overflow: hidden;
+            overflow: hidden !important;
             overflow-x: hidden !important;
         }
 
@@ -112,13 +120,15 @@
             z-index: 20;
             flex-shrink: 0;
             width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
         body.theme-light .header { background: rgba(255, 255, 255, 0.98); }
-        .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
         
-        .brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; }
+        .brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; overflow: hidden; }
         .brand-icon { width: 34px; height: 34px; background: var(--accent-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; flex-shrink: 0; cursor: pointer; border: none; }
-        .brand-title { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .brand-title { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
         .header-tools-group { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
         .network-status { display: flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.05); padding: 4px 8px; border-radius: 8px; font-size: 0.7rem; color: var(--text-muted); }
@@ -217,6 +227,8 @@
             position: relative; 
             z-index: 1; 
             -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; margin: auto; width: 100%; max-width: 100%; overflow: hidden; }
@@ -230,7 +242,7 @@
         .msg.user.no-bubble { align-self: flex-end; background: transparent; border: none; padding: 0; }
         .msg.bot { align-self: flex-start; background: var(--bot-msg); border: none; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
-        /* AI Indicator Card */
+        /* AI Indicator Card - FIXED OVERLAP & GLOW SPILL */
         .ai-indicator-card {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.16));
             border: 1px solid rgba(139, 92, 246, 0.45);
@@ -244,18 +256,22 @@
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
+            overflow: hidden !important; /* PINIPIGILAN ANG PAGLABAS NG ILAW SA CARD */
             animation: pulseGlow 2s infinite ease-in-out;
             flex-shrink: 0;
         }
         .ai-indicator-card::before {
             content: '';
             position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 2px;
+            top: 0; 
+            left: -100%;
+            width: 100%; 
+            height: 2px;
             background: linear-gradient(90deg, transparent, #a855f7, #6366f1, transparent);
-            animation: scanLine 1.5s infinite linear;
+            animation: scanLine 1.8s infinite linear;
+            pointer-events: none;
         }
-        @keyframes scanLine { 0% { left: -100%; } 100% { left: 100%; } }
+        @keyframes scanLine { 0% { transform: translateX(0); } 100% { transform: translateX(200%); } }
         @keyframes pulseGlow { 0%, 100% { border-color: rgba(139, 92, 246, 0.45); } 50% { border-color: rgba(139, 92, 246, 0.85); } }
         
         .indicator-header { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; color: #c084fc; }
@@ -277,7 +293,7 @@
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; }
         .bot-action-btn.active-action { color: #8b5cf6; background: rgba(139, 92, 246, 0.15); }
 
-        /* Normal Messenger-style Input Deck */
+        /* Messenger-style Input Deck */
         .input-container { 
             width: 100%;
             max-width: 100%;
@@ -288,6 +304,7 @@
             flex-shrink: 0;
             border-top: 1px solid var(--border-color);
             box-sizing: border-box;
+            overflow: hidden;
         }
         .chat-input-pill { 
             width: 100%;
@@ -304,7 +321,6 @@
         .pill-plus-btn, .pill-dola-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; }
         .pill-dola-btn { color: #a855f7; }
         
-        /* Auto-resizing Clean Textarea Without Keyboard Autofill Bars */
         .pill-input { 
             flex: 1; 
             background: transparent; 
@@ -319,7 +335,9 @@
             max-height: 100px;
             line-height: 1.4;
             overflow-y: auto;
+            scrollbar-width: none;
         }
+        .pill-input::-webkit-scrollbar { display: none; }
         .pill-input::placeholder { color: var(--text-muted); }
 
         .pill-mic-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
@@ -331,7 +349,8 @@
         .wave-bar:nth-child(1) { height: 10px; } .wave-bar:nth-child(2) { height: 20px; } .wave-bar:nth-child(3) { height: 28px; } .wave-bar:nth-child(4) { height: 16px; }
         @keyframes waveAnim { 0%, 100% { transform: scaleY(0.4); opacity: 0.6; } 50% { transform: scaleY(1.2); opacity: 1; background: #8b5cf6; } }
 
-        .file-preview-row { display: none; gap: 8px; overflow-x: auto; padding: 4px 2px 8px 2px; }
+        .file-preview-row { display: none; gap: 8px; overflow-x: auto; padding: 4px 2px 8px 2px; scrollbar-width: none; }
+        .file-preview-row::-webkit-scrollbar { display: none; }
         .gemini-chip { position: relative; display: inline-flex; align-items: center; background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 4px 8px; height: 48px; color: var(--text-main); }
         .gemini-chip.img-chip { padding: 0; width: 52px; height: 52px; border-radius: 12px; overflow: hidden; }
         .gemini-chip img { width: 100%; height: 100%; object-fit: cover; }
@@ -425,7 +444,6 @@
             <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
         </div>
 
-        <!-- PURE MESSENGER INPUT (NO FORM / NO KEYBOARD AUTOFILL POPUPS) -->
         <div class="input-container" id="inputContainer">
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
@@ -463,7 +481,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settingsModal" class="modal-overlay" onclick="if(event.target === this) closeSettingsModal()">
       <div class="floating-modal">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -550,7 +567,6 @@
       </div>
     </div>
 
-    <!-- Dola AI Prompt Modal -->
     <div class="modal-overlay" id="dolaModalOverlay" onclick="if(event.target === this) closeDolaModal()">
         <div class="floating-modal" style="max-width: 400px; padding: 18px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -582,7 +598,6 @@
         </div>
     </div>
 
-    <!-- Mode Modal -->
     <div class="modal-overlay" id="modeModalOverlay" onclick="if(event.target === this) toggleModal('modeModalOverlay', false)">
         <div class="floating-modal">
             <button class="option-item active" onclick="selectMode('general', 'General AI')">
@@ -612,7 +627,6 @@
         </div>
     </div>
 
-    <!-- Model Modal -->
     <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
         <div class="floating-modal">
             <button class="option-item" onclick="selectModel('gemini-3.5-flash-lite', '3.5 Flash-Lite')">
@@ -860,7 +874,6 @@
             botMsgElem.className = 'msg bot';
             chatBox.appendChild(botMsgElem);
 
-            // Auto-detect image generation request
             const isImageCreationRequest = currentSelectedMode === 'imagen' || 
                 /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of)/i.test(promptText);
 
@@ -906,7 +919,6 @@
                 }
             }
 
-            // Normal Vision / Chat Response Call
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
