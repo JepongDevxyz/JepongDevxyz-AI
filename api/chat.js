@@ -3,6 +3,11 @@ export const config = {
 };
 
 export default async function handler(req) {
+  // Support sa HEAD request para sa ping/network status checker ng frontend
+  if (req.method === 'HEAD') {
+    return new Response(null, { status: 200 });
+  }
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
       status: 405, 
@@ -11,35 +16,30 @@ export default async function handler(req) {
   }
 
   try {
-    const { message, file, files, model, mode, customPrompt } = await req.json();
+    const { message, history, files, model, mode, customPrompt } = await req.json();
     
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured.' }), { 
+      return new Response(JSON.stringify({ error: 'No API keys configured in environment variables.' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    // 1. Inayos ang mga valid models batay sa opisyal na API strings
     const VALID_MODELS = [
-      'gemini-flash-latest',    // Awtomatikong tuturo sa pinakabagong bersyon (3.8-flash)
-  'gemini-3.8-flash',       // Pinakabagong release ngayon (Setyembre 2026)
-  'gemini-3.7-flash',       // Maayos na fallback 1
-  'gemini-3.6-flash',       // Maayos na fallback 2
-  'gemini-3.5-flash-lite'
+      'gemini-flash-latest',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite'
     ];
 
-    // Intercept natin kung humihingi sila ng "extended-thinking" at ituro sa 3.7-flash
-    let selectedModel = model;
-    if (model === 'gemini-flash-latest') {
-      selectedModel = 'gemini-3.7-flash';
+    let targetModel = model || 'gemini-flash-latest';
+    if (!VALID_MODELS.includes(targetModel)) {
+      targetModel = 'gemini-flash-latest';
     }
-
-    // Default fallback kung wala sa listahan ang pinasa ng frontend
-    const targetModel = VALID_MODELS.includes(selectedModel) ? selectedModel : 'gemini-3.7-flash';
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
@@ -50,7 +50,7 @@ export default async function handler(req) {
     } else if (mode === 'tagalog') {
       systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
     } else if (mode === 'affiliate') {
-      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies for TikTok/Shopee/Lazada affiliate marketing.";
+      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies.";
     } else if (mode === 'custom' && customPrompt) {
       systemInstructionText += ` ${customPrompt}`;
     }
@@ -59,19 +59,37 @@ export default async function handler(req) {
       parts: [{ text: systemInstructionText }]
     };
 
-    const parts = [];
+    // Ihanda ang continuous multi-turn chat contents
+    let contents = [];
 
+    if (Array.isArray(history) && history.length > 0) {
+      contents = history.map(turn => ({
+        role: turn.role === 'model' || turn.role === 'bot' ? 'model' : 'user',
+        parts: Array.isArray(turn.parts) ? turn.parts : [{ text: turn.text || '' }]
+      }));
+    }
+
+    // Buuin ang current turn
+    const currentParts = [];
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
         if (f.data && f.mimeType) {
-          parts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
+          currentParts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
         }
       });
-    } else if (file && file.data && file.mimeType) {
-      parts.push({ inline_data: { mime_type: file.mimeType, data: file.data } });
     }
 
-    if (message) parts.push({ text: message });
+    if (message) {
+      currentParts.push({ text: message });
+    }
+
+    // Idagdag kung may laman ang latest prompt
+    if (currentParts.length > 0) {
+      contents.push({
+        role: 'user',
+        parts: currentParts
+      });
+    }
 
     let geminiRes = null;
     let lastErrorText = '';
@@ -84,7 +102,7 @@ export default async function handler(req) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             system_instruction: systemInstruction,
-            contents: [{ parts }]
+            contents: contents
           })
         }
       );
@@ -96,7 +114,7 @@ export default async function handler(req) {
     }
 
     if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText }), { 
+      return new Response(JSON.stringify({ error: lastErrorText || 'Failed to communicate with Gemini API' }), { 
         status: geminiRes ? geminiRes.status : 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
