@@ -388,7 +388,8 @@
               <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Words: <b id="word-count">0</b></span>
               <button onclick="openSettingsModal()" title="Settings" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-main);">
-                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.72l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle>
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.72l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </button>
             </div>
@@ -668,14 +669,10 @@
         let currentSelectedModel = 'gemini-flash-latest';
         let currentSelectedMode = 'general';
         let isIncognito = false;
-        let inactivityTimer = null;
         let userScrolledUp = false;
         let dolaPhotoData = null;
-        let isRecording = false;
-        let recognition = null;
-        let systemVoices = [];
 
-        /* BIBLE MODE VARIABLES */
+        /* BIBLE MODE & INCOGNITO VARIABLES */
         let isBibleMode = false;
         let bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
         let currentBibleSessionId = null;
@@ -807,8 +804,10 @@
         }
 
         function getContinuousHistory() {
-            if (!currentSessionId || !chatSessions[currentSessionId]) return [];
-            return chatSessions[currentSessionId].messages.map(m => {
+            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
+            const activeId = isBibleMode ? currentBibleSessionId : currentSessionId;
+            if (!activeId || !activeSessions[activeId]) return [];
+            return activeSessions[activeId].messages.map(m => {
                 const parts = [];
                 if (m.files && Array.isArray(m.files)) {
                     m.files.forEach(f => {
@@ -856,10 +855,7 @@
 
         function regenerateAnswer(btn) {
             const botMsg = btn.closest('.msg.bot');
-            const messages = (isBibleMode && bibleChatSessions[currentBibleSessionId])
-                ? bibleChatSessions[currentBibleSessionId].messages
-                : (chatSessions[currentSessionId] ? chatSessions[currentSessionId].messages : []);
-
+            const messages = isBibleMode ? bibleChatSessions[currentBibleSessionId].messages : (isIncognito ? chatSessions[currentSessionId].messages : chatSessions[currentSessionId].messages);
             if (messages.length === 0) return;
 
             if (messages[messages.length - 1].role === 'bot') {
@@ -904,6 +900,12 @@
                         <div class="command-row"><span class="command-name" style="color: #f59e0b;">/commands</span><span class="command-desc">Ipapakita ang listahang ito ng Bible commands.</span></div>
                         <div class="command-row"><span class="command-name" style="color: #f59e0b;">/exit</span><span class="command-desc">Lalabas sa Bible Mode at babalik sa Normal Mode.</span></div>
                     `;
+                } else if (isIncognito) {
+                    title.innerText = '🕵️‍♂️ Incognito Mode Commands';
+                    container.innerHTML = `
+                        <div class="command-row"><span class="command-name" style="color: #38bdf8;">/exit</span><span class="command-desc">Lalabas sa Incognito Mode pabalik sa Normal Mode.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #38bdf8;">/commands</span><span class="command-desc">Ipapakita ang listahang ito.</span></div>
+                    `;
                 } else {
                     title.innerText = '⚡ Normal Slash Commands';
                     container.innerHTML = `
@@ -925,6 +927,7 @@
         /* BIBLE MODE FUNCTIONS */
         function startBibleMode(initialTopic = '') {
             isBibleMode = true;
+            isIncognito = false;
             const titleElem = document.getElementById('brandTitleText');
             if (titleElem) titleElem.innerText = 'JepongDevxyz AI • Bible Mode';
             
@@ -939,7 +942,10 @@
 
             if (initialTopic) {
                 processBiblePrompt(initialTopic);
+            } else {
+                renderBibleWelcomeScreen();
             }
+            toggleSidebar(false);
         }
 
         function exitBibleMode() {
@@ -957,6 +963,7 @@
         }
 
         function createBibleChatSession() {
+            removeAIIndicator();
             currentBibleSessionId = 'bsession_' + Date.now();
             bibleChatSessions[currentBibleSessionId] = { id: currentBibleSessionId, title: 'Bible Session', messages: [] };
             saveBibleSessions();
@@ -968,6 +975,7 @@
         }
 
         function loadBibleSession(id) {
+            removeAIIndicator();
             currentBibleSessionId = id;
             const session = bibleChatSessions[id];
             if (!session || !chatBox) return;
@@ -1131,6 +1139,7 @@
         }
 
         /* TEXT TO SPEECH */
+        let systemVoices = [];
         function loadVoices() {
             if (!('speechSynthesis' in window)) return;
             systemVoices = window.speechSynthesis.getVoices();
@@ -1181,6 +1190,7 @@
         /* INCOGNITO MODE */
         function startIncognitoChat() {
             isIncognito = true;
+            isBibleMode = false;
             currentSessionId = 'incognito_' + Date.now();
             chatSessions = {};
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • Incognito';
@@ -1201,6 +1211,8 @@
         }
 
         /* SPEECH RECOGNITION */
+        let isRecording = false;
+        let recognition = null;
         function toggleSpeechRecognition() {
             const userInput = document.getElementById('userInput');
             const waveContainer = document.getElementById('waveContainer');
@@ -1249,12 +1261,17 @@
 
             const continuousChatHistory = getContinuousHistory();
 
-            chatSessions[currentSessionId].messages.push({ 
-                role: 'user', 
-                text: promptText, 
-                files: currentFiles 
-            });
-            saveSessions();
+            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
+            const activeId = isBibleMode ? currentBibleSessionId : currentSessionId;
+            
+            if (activeSessions[activeId]) {
+                activeSessions[activeId].messages.push({ 
+                    role: 'user', 
+                    text: promptText, 
+                    files: currentFiles 
+                });
+                if (!isIncognito && !isBibleMode) saveSessions();
+            }
 
             const botMsgElem = document.createElement('div');
             botMsgElem.className = 'msg bot';
@@ -1318,8 +1335,10 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy Prompt</button>
                         </div>
                     `;
-                    chatSessions[currentSessionId].messages.push({ role: 'bot', text: `![Generated Image](${generatedImageUrl})` });
-                    saveSessions();
+                    if (activeSessions[activeId]) {
+                        activeSessions[activeId].messages.push({ role: 'bot', text: `![Generated Image](${generatedImageUrl})` });
+                        if (!isIncognito && !isBibleMode) saveSessions();
+                    }
                     incrementCounters(promptText);
                     scrollToBottom(true);
                     return;
@@ -1381,8 +1400,10 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                     scrollToBottom();
                 }
 
-                chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
-                saveSessions();
+                if (activeSessions[activeId]) {
+                    activeSessions[activeId].messages.push({ role: 'bot', text: fullResponse });
+                    if (!isIncognito && !isBibleMode) saveSessions();
+                }
                 incrementCounters(promptText + ' ' + fullResponse);
 
             } catch (err) {
@@ -1423,41 +1444,58 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                 return;
             }
 
+            if (message.toLowerCase() === '/incognito') {
+                input.value = '';
+                autoResizeTextarea(input);
+                startIncognitoChat();
+                return;
+            }
+
+            if (message.toLowerCase() === '/exit') {
+                input.value = '';
+                autoResizeTextarea(input);
+                if (isIncognito) {
+                    exitIncognitoChat();
+                } else if (isBibleMode) {
+                    exitBibleMode();
+                }
+                return;
+            }
+
             if (message.startsWith('/')) {
                 const cmd = message.toLowerCase();
                 input.value = '';
                 autoResizeTextarea(input);
                 
                 if (cmd === '/newchat') {
-                    createNewChat();
+                    if (!isIncognito && !isBibleMode) createNewChat();
                     return;
                 } else if (cmd === '/delete') {
-                    if (currentSessionId) deleteChatSession(currentSessionId);
+                    if (!isIncognito && !isBibleMode && currentSessionId) deleteChatSession(currentSessionId);
                     return;
                 } else if (cmd === '/refresh') {
                     window.location.reload();
                     return;
                 } else if (cmd === '/clearcache') {
                     localStorage.removeItem('jepong_ai_chats');
+                    localStorage.removeItem('jepong_bible_chats');
                     chatSessions = {};
+                    bibleChatSessions = {};
                     createNewChat();
-                    return;
-                } else if (cmd === '/incognito') {
-                    startIncognitoChat();
-                    return;
-                } else if (cmd === '/exit') {
-                    exitIncognitoChat();
                     return;
                 }
             }
 
             /* 2. REGULAR SEND */
-            if (!currentSessionId || !chatSessions[currentSessionId]) createNewChat();
+            if (!isIncognito && !isBibleMode && (!currentSessionId || !chatSessions[currentSessionId])) createNewChat();
 
             const tempFiles = [...selectedFilesData];
-            if (chatSessions[currentSessionId].messages.length === 0) {
+            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
+            const activeId = isBibleMode ? currentBibleSessionId : currentSessionId;
+
+            if (activeSessions[activeId] && activeSessions[activeId].messages.length === 0) {
                 chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
-                chatSessions[currentSessionId].title = message ? message.substring(0, 24) : 'Attachment';
+                activeSessions[activeId].title = message ? message.substring(0, 24) : 'Attachment';
             }
 
             let fileHTML = '';
@@ -1491,6 +1529,10 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
         function createNewChat() {
             if (isBibleMode) {
                 createBibleChatSession();
+                return;
+            }
+            if (isIncognito) {
+                startIncognitoChat();
                 return;
             }
             removeAIIndicator();
@@ -1562,13 +1604,13 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
         }
 
         function saveSessions() {
-            if (isIncognito) return;
+            if (isIncognito || isBibleMode) return;
             localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
             renderSidebarHistory();
         }
 
         function renderSidebarHistory(filter = '') {
-            if (isIncognito) return;
+            if (isIncognito || isBibleMode) return;
             const list = document.getElementById('chatHistoryList');
             list.innerHTML = '';
             Object.values(chatSessions).reverse().forEach(session => {
@@ -1586,7 +1628,7 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
 
         function deleteChatSession(id, e) {
             if (e) e.stopPropagation();
-            if (isIncognito) return;
+            if (isIncognito || isBibleMode) return;
             delete chatSessions[id];
             saveSessions();
             if (currentSessionId === id) createNewChat();
@@ -1616,6 +1658,7 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
         }
 
         function toggleSidebar(show) {
+            if (isIncognito || isBibleMode) return;
             document.getElementById('sidebar').classList.toggle('open', show);
             document.getElementById('sidebarOverlay').classList.toggle('open', show);
             if (show) renderSidebarHistory();
