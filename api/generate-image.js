@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Vercel Environment Variables.' });
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Environment Variables.' });
     }
 
     if (!prompt || !prompt.trim()) {
@@ -18,7 +18,6 @@ export default async function handler(req, res) {
 
     const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
 
-    // Official Google Developer API Endpoint via :predict
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
       {
@@ -43,7 +42,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Extraction ng Base64 Image string mula sa standard REST response structure
     const base64Image = data.predictions?.[0]?.bytesBase64Encoded || data.generatedImages?.[0]?.image?.imageBytes;
 
     if (!base64Image) {
