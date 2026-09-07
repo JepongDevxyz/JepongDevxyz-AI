@@ -1,59 +1,23 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+// POST /api/generate-image
+app.post('/api/generate-image', async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        if (!prompt) {
+            return res.status(400).json({ success: false, error: 'Prompt is required' });
+        }
 
-  try {
-    const { prompt } = req.body;
-    const rawKeys = process.env.GEMINI_API_KEY || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+        // Libreng Image Generator na hindi nangangailangan ng paid Google billing
+        const cleanPrompt = encodeURIComponent(prompt.trim());
+        const seed = Math.floor(Math.random() * 1000000);
+        // Gumagamit ng high quality free model (Pollinations / Flux / Turbo)
+        const imageUrl = `https://image.pollinations.ai/prompt/${cleanPrompt}?seed=${seed}&width=1024&height=1024&nologo=true`;
 
-    if (apiKeys.length === 0) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Environment Variables.' });
+        return res.json({
+            success: true,
+            imageUrl: imageUrl
+        });
+    } catch (err) {
+        console.error('Image Generation Error:', err);
+        return res.status(500).json({ success: false, error: err.message });
     }
-
-    if (!prompt || !prompt.trim()) {
-      return res.status(400).json({ error: 'Prompt is required.' });
-    }
-
-    const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instances: [{ prompt: prompt }],
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: "1:1",
-            outputMimeType: "image/jpeg"
-          }
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ 
-        error: data.error?.message || 'Failed to fetch image from Google Imagen API.' 
-      });
-    }
-
-    const base64Image = data.predictions?.[0]?.bytesBase64Encoded || data.generatedImages?.[0]?.image?.imageBytes;
-
-    if (!base64Image) {
-      return res.status(500).json({ error: 'No image bytes returned from Google Imagen API.' });
-    }
-
-    return res.status(200).json({ 
-      success: true, 
-      imageUrl: `data:image/jpeg;base64,${base64Image}` 
-    });
-
-  } catch (error) {
-    return res.status(500).json({ error: error.message || 'Internal Server Error' });
-  }
-}
+});
