@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Jay-Ar Lee Espiritu & JepongDevxyz AI -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -57,7 +58,6 @@
             --text-muted: #d8b4fe;
         }
 
-        /* Tanggalin ang unwanted default scrollbars sa mobile */
         * { 
             box-sizing: border-box; 
             margin: 0; 
@@ -67,11 +67,7 @@
             -webkit-tap-highlight-color: transparent; 
         }
 
-        *::-webkit-scrollbar {
-            display: none;
-            width: 0;
-            height: 0;
-        }
+        *::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
         html, body { 
             width: 100vw; 
@@ -120,7 +116,6 @@
             z-index: 20;
             flex-shrink: 0;
             width: 100%;
-            max-width: 100%;
             overflow-x: hidden;
         }
         body.theme-light .header { background: rgba(255, 255, 255, 0.98); }
@@ -128,7 +123,7 @@
         
         .brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; overflow: hidden; }
         .brand-icon { width: 34px; height: 34px; background: var(--accent-gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; flex-shrink: 0; cursor: pointer; border: none; }
-        .brand-title { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        .brand-title { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .header-tools-group { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
         .network-status { display: flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.05); padding: 4px 8px; border-radius: 8px; font-size: 0.7rem; color: var(--text-muted); }
@@ -172,7 +167,7 @@
         input:checked + .ios-slider { background-color: #10b981; }
         input:checked + .ios-slider:before { transform: translateX(20px); }
 
-        /* Usage Section */
+        /* Usage Metrics */
         .usage-section { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 4px; }
         .usage-title { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px; text-align: center; }
         .usage-metric-card { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
@@ -212,7 +207,7 @@
         .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
         .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; }
 
-        /* Chat Box */
+        /* Chat Body */
         .chat-box { 
             flex: 1 1 auto; 
             min-height: 0;
@@ -242,7 +237,7 @@
         .msg.user.no-bubble { align-self: flex-end; background: transparent; border: none; padding: 0; }
         .msg.bot { align-self: flex-start; background: var(--bot-msg); border: none; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
-        /* AI Indicator Card - FIXED OVERLAP & GLOW SPILL */
+        /* AI Indicator Card (Walang ilaw na tumatagos) */
         .ai-indicator-card {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.16));
             border: 1px solid rgba(139, 92, 246, 0.45);
@@ -256,7 +251,7 @@
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
-            overflow: hidden !important; /* PINIPIGILAN ANG PAGLABAS NG ILAW SA CARD */
+            overflow: hidden !important;
             animation: pulseGlow 2s infinite ease-in-out;
             flex-shrink: 0;
         }
@@ -293,7 +288,7 @@
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; }
         .bot-action-btn.active-action { color: #8b5cf6; background: rgba(139, 92, 246, 0.15); }
 
-        /* Messenger-style Input Deck */
+        /* Input Area */
         .input-container { 
             width: 100%;
             max-width: 100%;
@@ -481,6 +476,7 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
     <div id="settingsModal" class="modal-overlay" onclick="if(event.target === this) closeSettingsModal()">
       <div class="floating-modal">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -567,6 +563,7 @@
       </div>
     </div>
 
+    <!-- Dola AI Prompt Modal -->
     <div class="modal-overlay" id="dolaModalOverlay" onclick="if(event.target === this) closeDolaModal()">
         <div class="floating-modal" style="max-width: 400px; padding: 18px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -598,6 +595,7 @@
         </div>
     </div>
 
+    <!-- Mode Modal -->
     <div class="modal-overlay" id="modeModalOverlay" onclick="if(event.target === this) toggleModal('modeModalOverlay', false)">
         <div class="floating-modal">
             <button class="option-item active" onclick="selectMode('general', 'General AI')">
@@ -627,6 +625,7 @@
         </div>
     </div>
 
+    <!-- Model Modal -->
     <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
         <div class="floating-modal">
             <button class="option-item" onclick="selectModel('gemini-3.5-flash-lite', '3.5 Flash-Lite')">
@@ -874,6 +873,7 @@
             botMsgElem.className = 'msg bot';
             chatBox.appendChild(botMsgElem);
 
+            // Auto-detect image generation request
             const isImageCreationRequest = currentSelectedMode === 'imagen' || 
                 /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of)/i.test(promptText);
 
@@ -881,32 +881,47 @@
                 try {
                     const cleanImagePrompt = promptText
                         .replace(/\[Dola AI Vision\]:/gi, '')
-                        .replace(/(palitan mo yan ng|palitan ng|gawan mo ako ng|generate an image of|draw a)/gi, '')
-                        .trim();
+                        .replace(/(palitan mo yan ng|palitan ng|gawan mo ako ng|generate an image of|draw a|gumawa ka ng)/gi, '')
+                        .trim() || promptText;
 
-                    const res = await fetch('/api/generate-image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: cleanImagePrompt || promptText })
-                    });
-                    const data = await res.json();
-                    removeAIIndicator();
+                    let generatedImageUrl = '';
 
-                    if (!res.ok || !data.success) {
-                        throw new Error(data.error || 'Failed to generate image');
+                    try {
+                        const res = await fetch('/api/generate-image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt: cleanImagePrompt })
+                        });
+                        const data = await res.json();
+                        if (data.success && data.imageUrl) {
+                            generatedImageUrl = data.imageUrl;
+                        }
+                    } catch (e) {
+                        // Fallback client-side direct Pollinations URL kung mag-offline ang server
+                        const enc = encodeURIComponent(cleanImagePrompt);
+                        const seed = Math.floor(Math.random() * 1000000);
+                        generatedImageUrl = `https://image.pollinations.ai/prompt/${enc}?seed=${seed}&width=1024&height=1024&nologo=true`;
                     }
+
+                    if (!generatedImageUrl) {
+                        const enc = encodeURIComponent(cleanImagePrompt);
+                        const seed = Math.floor(Math.random() * 1000000);
+                        generatedImageUrl = `https://image.pollinations.ai/prompt/${enc}?seed=${seed}&width=1024&height=1024&nologo=true`;
+                    }
+
+                    removeAIIndicator();
 
                     botMsgElem.innerHTML = `
                         <div>
-                            <p style="margin-bottom: 8px; font-size: 0.88rem; color: #a855f7;">✨ Eto ang bagong imahe batay sa iyong prompt:</p>
-                            <img src="${data.imageUrl}" alt="Generated artwork" onclick="openLightbox('${data.imageUrl}')" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer;">
+                            <p style="margin-bottom: 8px; font-size: 0.88rem; color: #a855f7;">✨ Eto ang nalikhang imahe batay sa iyong prompt:</p>
+                            <img src="${generatedImageUrl}" alt="Generated artwork" loading="lazy" onclick="openLightbox('${generatedImageUrl}')" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                         </div>
-                        <div class="bot-actions">
-                            <a class="bot-action-btn" href="${data.imageUrl}" download="generated-art.jpg">📥 Download</a>
+                        <div class="bot-actions" style="margin-top: 10px; display: flex; gap: 8px;">
+                            <a class="bot-action-btn" href="${generatedImageUrl}" target="_blank" download="generated-art.jpg">📥 Download</a>
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy Prompt</button>
                         </div>
                     `;
-                    chatSessions[currentSessionId].messages.push({ role: 'bot', text: `![Generated Image](${data.imageUrl})` });
+                    chatSessions[currentSessionId].messages.push({ role: 'bot', text: `![Generated Image](${generatedImageUrl})` });
                     saveSessions();
                     incrementCounters(promptText);
                     scrollToBottom(true);
@@ -919,6 +934,7 @@
                 }
             }
 
+            // Normal Vision / Chat Response Call
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
