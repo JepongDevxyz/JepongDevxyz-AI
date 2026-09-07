@@ -29,6 +29,7 @@
             --modal-bg: #151d2d;
             --bar-track: rgba(255, 255, 255, 0.08);
             --bar-fill: #e2e8f0;
+            --drawer-width: 300px;
         }
 
         body.theme-light {
@@ -183,15 +184,104 @@
         .progress-fill { height: 100%; background: var(--bar-fill); border-radius: 6px; width: 0%; transition: width 0.4s ease; }
         .limit-card-footer { font-size: 0.72rem; color: var(--text-muted); }
 
-        .sidebar-overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 900; }
-        .sidebar { position: absolute; top: 0; left: -280px; width: 280px; height: 100%; background: #0f172a; border-right: 1px solid var(--border-color); z-index: 901; transition: left 0.3s ease; display: flex; flex-direction: column; padding: 16px; gap: 14px; }
+        /* BI-DIRECTIONAL SIDE-BY-SIDE + BOTTOM MENU DRAWER */
+        .sidebar-overlay { 
+            display: block;
+            pointer-events: none;
+            opacity: 0;
+            position: absolute; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.65); 
+            backdrop-filter: blur(4px); 
+            z-index: 900; 
+            transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1);
+            will-change: opacity;
+        }
+        .sidebar-overlay.open { 
+            pointer-events: auto;
+            opacity: 1; 
+        }
+
+        .sidebar { 
+            position: absolute; 
+            width: var(--drawer-width); 
+            max-width: 85vw;
+            height: 100%; 
+            top: 0;
+            background: #0f172a; 
+            z-index: 901; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 18px 16px; 
+            gap: 14px; 
+            will-change: transform;
+            transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+            box-shadow: 0 0 35px rgba(0,0,0,0.6);
+        }
+
+        /* DEFAULT / LEFT POSITION */
+        .sidebar.drawer-left {
+            left: 0;
+            right: auto;
+            border-right: 1px solid var(--border-color);
+            border-top-right-radius: 28px;
+            border-bottom-right-radius: 28px;
+            transform: translateX(-100%);
+        }
+        .sidebar.drawer-left.open {
+            transform: translateX(0);
+        }
+
+        /* RIGHT POSITION */
+        .sidebar.drawer-right {
+            left: auto;
+            right: 0;
+            border-left: 1px solid var(--border-color);
+            border-top-left-radius: 28px;
+            border-bottom-left-radius: 28px;
+            transform: translateX(100%);
+        }
+        .sidebar.drawer-right.open {
+            transform: translateX(0);
+        }
+
+        /* BOTTOM DRAWER POSITION (KAPAG PININDOT ANG ICON) */
+        .sidebar.drawer-bottom {
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            max-width: 100vw;
+            height: 75vh;
+            border-top: 1px solid var(--border-color);
+            border-top-left-radius: 28px;
+            border-top-right-radius: 28px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            transform: translateY(100%);
+        }
+        .sidebar.drawer-bottom.open {
+            transform: translateY(0);
+        }
+
         body.theme-light .sidebar { background: #ffffff; }
-        .sidebar.open { left: 0; }
-        .sidebar-overlay.open { display: block; }
+
+        .bottom-sheet-drag-handle {
+            width: 44px;
+            height: 5px;
+            background: var(--text-muted);
+            opacity: 0.4;
+            border-radius: 10px;
+            margin: 0 auto 4px auto;
+            cursor: grab;
+            flex-shrink: 0;
+        }
+
         .sidebar-header { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .sidebar-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
         .close-sidebar-btn { position: absolute; right: 0; background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .new-chat-btn { background: var(--accent-gradient); color: #fff; border: none; padding: 10px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .new-chat-btn { background: var(--accent-gradient); color: #fff; border: none; padding: 10px; border-radius: 12px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
         
         .search-bar-wrap { position: relative; display: flex; align-items: center; width: 100%; }
         .search-bar-wrap svg { position: absolute; left: 10px; color: var(--text-muted); pointer-events: none; }
@@ -222,7 +312,18 @@
             -ms-overflow-style: none;
         }
 
-        .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; margin: auto; width: 100%; max-width: 100%; overflow: hidden; }
+        .welcome-screen { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100%; 
+            text-align: center; 
+            margin: auto; 
+            width: 100%; 
+            max-width: 100%; 
+            overflow: hidden; 
+        }
         .welcome-lottie-top { width: 220px; height: 60px; margin-bottom: -10px; }
         .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; margin: 0; line-height: 1; }
         body.theme-light .welcome-title { background: linear-gradient(90deg, #0f172a, #475569); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -361,25 +462,28 @@
 <body>
 
     <div class="app-container" id="appContainer">
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
-        <div class="sidebar" id="sidebar">
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeAllDrawers()"></div>
+        
+        <!-- BI-DIRECTIONAL SIDE & BOTTOM DRAWER -->
+        <div class="sidebar drawer-bottom" id="sidebar">
+            <div class="bottom-sheet-drag-handle" id="bottomSheetDragHandle"></div>
             <div class="sidebar-header">
                 <h3>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-                    Chat History
+                    Chat History & Navigation
                 </h3>
-                <button class="close-sidebar-btn" onclick="toggleSidebar(false)">
+                <button class="close-sidebar-btn" onclick="closeAllDrawers()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
             </div>
             <button class="new-chat-btn" onclick="createNewChat()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                New Chat
+                New Conversation
             </button>
             
             <div class="search-bar-wrap">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" class="search-chat-input" id="searchChatInput" placeholder="Search chat..." oninput="filterChatHistory()">
+                <input type="text" class="search-chat-input" id="searchChatInput" placeholder="Search saved conversations..." oninput="filterChatHistory()">
             </div>
             
             <div class="chat-history-list" id="chatHistoryList"></div>
@@ -398,7 +502,7 @@
         <div class="header">
             <div class="header-top">
                 <div class="brand">
-                    <button class="brand-icon" onclick="toggleSidebar(true)">✦</button>
+                    <button class="brand-icon" onclick="openMenuFromBrandIcon()">✦</button>
                     <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
                 </div>
                 <div class="header-tools-group">
@@ -672,12 +776,17 @@
         let userScrolledUp = false;
         let dolaPhotoData = null;
 
-        /* BIBLE MODE & INCOGNITO VARIABLES */
+        /* ISOLATED SESSIONS FOR INCOGNITO & BIBLE */
+        let incognitoChatSessions = {};
+        let currentIncognitoSessionId = null;
+
         let isBibleMode = false;
         let bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
         let currentBibleSessionId = null;
 
         const chatBox = document.getElementById('chatBox');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         function adjustViewport() {
             if (window.visualViewport) {
@@ -803,11 +912,20 @@
             sendMessage();
         }
 
+        function getActiveContext() {
+            if (isBibleMode) {
+                return { sessions: bibleChatSessions, id: currentBibleSessionId, type: 'bible' };
+            }
+            if (isIncognito) {
+                return { sessions: incognitoChatSessions, id: currentIncognitoSessionId, type: 'incognito' };
+            }
+            return { sessions: chatSessions, id: currentSessionId, type: 'normal' };
+        }
+
         function getContinuousHistory() {
-            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
-            const activeId = isBibleMode ? currentBibleSessionId : currentSessionId;
-            if (!activeId || !activeSessions[activeId]) return [];
-            return activeSessions[activeId].messages.map(m => {
+            const ctx = getActiveContext();
+            if (!ctx.id || !ctx.sessions[ctx.id]) return [];
+            return ctx.sessions[ctx.id].messages.map(m => {
                 const parts = [];
                 if (m.files && Array.isArray(m.files)) {
                     m.files.forEach(f => {
@@ -845,6 +963,13 @@
             if (el) el.remove();
         }
 
+        function clearWelcomeScreenIfPresent() {
+            const welcome = chatBox.querySelector('.welcome-screen');
+            if (welcome) {
+                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
+            }
+        }
+
         function voteMessage(btn, type) {
             const actions = btn.parentElement;
             actions.querySelectorAll('.bot-action-btn').forEach(b => {
@@ -855,18 +980,19 @@
 
         function regenerateAnswer(btn) {
             const botMsg = btn.closest('.msg.bot');
-            const messages = isBibleMode ? bibleChatSessions[currentBibleSessionId].messages : (isIncognito ? chatSessions[currentSessionId].messages : chatSessions[currentSessionId].messages);
-            if (messages.length === 0) return;
+            const ctx = getActiveContext();
+            if (!ctx.id || !ctx.sessions[ctx.id] || ctx.sessions[ctx.id].messages.length === 0) return;
 
-            if (messages[messages.length - 1].role === 'bot') {
-                messages.pop();
+            const msgs = ctx.sessions[ctx.id].messages;
+            if (msgs[msgs.length - 1].role === 'bot') {
+                msgs.pop();
             }
             if (botMsg) botMsg.remove();
 
             let lastUserMsg = null;
-            for (let i = messages.length - 1; i >= 0; i--) {
-                if (messages[i].role === 'user') {
-                    lastUserMsg = messages[i];
+            for (let i = msgs.length - 1; i >= 0; i--) {
+                if (msgs[i].role === 'user') {
+                    lastUserMsg = msgs[i];
                     break;
                 }
             }
@@ -910,12 +1036,11 @@
                     title.innerText = '⚡ Normal Slash Commands';
                     container.innerHTML = `
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/bible [topic]</span><span class="command-desc">Magbubukas ng Dedicated Bible Mode Tab (may hiwalay na storage at auto TTS).</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/incognito</span><span class="command-desc">Magbubukas ng pribadong session (walang history na ise-save).</span></div>
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/newchat</span><span class="command-desc">Gumagawa ng bagong conversation tab.</span></div>
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/delete</span><span class="command-desc">Buburahin ang kasalukuyang active conversation.</span></div>
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/refresh</span><span class="command-desc">Irerefresh ang buong app.</span></div>
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/clearcache</span><span class="command-desc">Buburahin ang lahat ng saved chats sa localStorage.</span></div>
-                        <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/incognito</span><span class="command-desc">Magbubukas ng pribadong session (walang history na ise-save).</span></div>
-                        <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/exit</span><span class="command-desc">Lalabas sa incognito mode pabalik sa normal mode.</span></div>
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/commands</span><span class="command-desc">Ipapakita ang listahang ito ng Normal commands.</span></div>
                     `;
                 }
@@ -924,15 +1049,13 @@
             modal.classList.toggle('open', show);
         }
 
-        /* BIBLE MODE FUNCTIONS */
+        /* 1. BIBLE MODE SYSTEM */
         function startBibleMode(initialTopic = '') {
             isBibleMode = true;
             isIncognito = false;
-            const titleElem = document.getElementById('brandTitleText');
-            if (titleElem) titleElem.innerText = 'JepongDevxyz AI • Bible Mode';
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • 📖 Bible';
             
             bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
-            
             if (Object.keys(bibleChatSessions).length > 0) {
                 currentBibleSessionId = Object.keys(bibleChatSessions)[Object.keys(bibleChatSessions).length - 1];
                 loadBibleSession(currentBibleSessionId);
@@ -945,15 +1068,13 @@
             } else {
                 renderBibleWelcomeScreen();
             }
-            toggleSidebar(false);
+            closeAllDrawers();
         }
 
         function exitBibleMode() {
             if (!isBibleMode) return;
             isBibleMode = false;
-            const titleElem = document.getElementById('brandTitleText');
-            if (titleElem) titleElem.innerText = 'JepongDevxyz AI';
-            
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
             chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
             if (Object.keys(chatSessions).length > 0) {
                 loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
@@ -1006,12 +1127,10 @@
             removeAIIndicator();
             if (!chatBox) return;
             chatBox.innerHTML = `
-                <div class="welcome-screen" style="text-align: center; padding: 40px 20px;">
-                    <div style="font-size: 3.2rem; margin-bottom: 8px;">📖🕊️</div>
-                    <div class="welcome-title" style="font-size: 1.45rem; font-weight: bold; background: linear-gradient(90deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bible Scholar & Storyteller</div>
-                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; max-width: 320px; line-height: 1.5;">
-                        Mag-type ng paksa o gumamit ng commands tulad ng <b>/story</b>, <b>/verse</b>, o <b>/pray</b>. Naka-auto Text-to-Speech ang bawat sagot!
-                    </p>
+                <div class="welcome-screen">
+                    <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                    <div class="welcome-title" style="background: linear-gradient(90deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bible Mode 📖🕊️</div>
+                    <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
             `;
@@ -1042,24 +1161,15 @@
                 return true;
             }
             if (mainCmd === '/verse') {
-                if (!args) {
-                    processBiblePrompt('Magbigay ng isang magandang Bible verse para sa araw na ito na may malalim na paliwanag at life application.');
-                } else {
-                    processBiblePrompt(`Magbigay ng malalim na paliwanag, eksaktong teksto (Tagalog at English), at practical life application para sa verse na ito: ${args}`);
-                }
+                processBiblePrompt(args ? `Magbigay ng malalim na paliwanag, eksaktong teksto (Tagalog at English), at practical life application para sa verse na ito: ${args}` : 'Magbigay ng isang magandang Bible verse para sa araw na ito na may malalim na paliwanag at life application.');
                 return true;
             }
             if (mainCmd === '/story') {
-                if (!args) {
-                    processBiblePrompt('Ikwento mo nang buo, detalyado, at lively ang kwento mula sa Biblia ng isang kilalang tauhan.');
-                } else {
-                    processBiblePrompt(`Ikwento mo nang buo, detalyado, at lively ang kwentong ito mula sa Biblia na parang isang master storyteller: ${args}`);
-                }
+                processBiblePrompt(args ? `Ikwento mo nang buo, detalyado, at lively ang kwentong ito mula sa Biblia na parang isang master storyteller: ${args}` : 'Ikwento mo nang buo, detalyado, at lively ang kwento mula sa Biblia ng isang kilalang tauhan.');
                 return true;
             }
             if (mainCmd === '/pray') {
-                const topic = args || 'pangkalahatang gabay, kapayapaan, at proteksyon';
-                processBiblePrompt(`Gumawa ng isang taos-pusong panalangin (prayer) base sa paksang ito: ${topic}. Isama rin ang angkop na Bible verse.`);
+                processBiblePrompt(`Gumawa ng isang taos-pusong panalangin (prayer) base sa paksang ito: ${args || 'pangkalahatang gabay, kapayapaan, at proteksyon'}. Isama rin ang angkop na Bible verse.`);
                 return true;
             }
 
@@ -1069,17 +1179,20 @@
         async function processBiblePrompt(userText) {
             if (!chatBox) return;
 
+            clearWelcomeScreenIfPresent();
+
             if (!currentBibleSessionId || !bibleChatSessions[currentBibleSessionId]) {
                 createBibleChatSession();
             }
 
-            if (bibleChatSessions[currentBibleSessionId].messages.length === 0) {
-                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
-                bibleChatSessions[currentBibleSessionId].title = userText.substring(0, 24);
+            const currentSession = bibleChatSessions[currentBibleSessionId];
+
+            if (currentSession.messages.length === 0) {
+                currentSession.title = userText.substring(0, 24);
             }
 
             chatBox.innerHTML += `<div class="msg user has-bubble"><div>${escapeHTML(userText)}</div></div>`;
-            bibleChatSessions[currentBibleSessionId].messages.push({ role: 'user', text: userText });
+            currentSession.messages.push({ role: 'user', text: userText });
             saveBibleSessions();
 
             showAIIndicator(userText);
@@ -1125,7 +1238,7 @@
                     scrollToBottom(false);
                 }
 
-                bibleChatSessions[currentBibleSessionId].messages.push({ role: 'bot', text: fullResponse });
+                currentSession.messages.push({ role: 'bot', text: fullResponse });
                 saveBibleSessions();
 
                 incrementCounters(userText + ' ' + fullResponse);
@@ -1138,69 +1251,27 @@
             }
         }
 
-        /* TEXT TO SPEECH */
-        let systemVoices = [];
-        function loadVoices() {
-            if (!('speechSynthesis' in window)) return;
-            systemVoices = window.speechSynthesis.getVoices();
-        }
-        loadVoices();
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-        }
-
-        function speakRawText(text) {
-            if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            
-            const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~>\[\]\(\)]/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            
-            systemVoices = window.speechSynthesis.getVoices();
-            const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano|diyos|panginoon)\b/i;
-            const isTagalog = tagalogWords.test(cleanText);
-            
-            let targetVoice = null;
-            if (isTagalog && systemVoices.length > 0) {
-                targetVoice = systemVoices.find(v => {
-                    const lang = (v.lang || '').toLowerCase();
-                    const name = (v.name || '').toLowerCase();
-                    return lang === 'fil-ph' || lang === 'tl-ph' || name.includes('filipino') || name.includes('tagalog');
-                });
-            }
-            if (!targetVoice && systemVoices.length > 0) {
-                targetVoice = systemVoices.find(v => {
-                    const lang = (v.lang || '').toLowerCase();
-                    return lang === 'en-us' || lang === 'en-gb' || lang.startsWith('en');
-                });
-            }
-            
-            if (targetVoice) {
-                utterance.voice = targetVoice;
-                utterance.lang = targetVoice.lang;
-            } else {
-                utterance.lang = isTagalog ? 'tl-PH' : 'en-US';
-            }
-            
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            window.speechSynthesis.speak(utterance);
-        }
-
-        /* INCOGNITO MODE */
+        /* 2. INCOGNITO MODE SYSTEM */
         function startIncognitoChat() {
             isIncognito = true;
             isBibleMode = false;
-            currentSessionId = 'incognito_' + Date.now();
-            chatSessions = {};
-            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • Incognito';
-            renderWelcomeScreen();
-            toggleSidebar(false);
+            currentIncognitoSessionId = 'incognito_' + Date.now();
+            incognitoChatSessions = {};
+            incognitoChatSessions[currentIncognitoSessionId] = { 
+                id: currentIncognitoSessionId, 
+                title: 'Incognito', 
+                messages: [] 
+            };
+            document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • 🕵️‍♂️ Incognito';
+            renderIncognitoWelcomeScreen();
+            closeAllDrawers();
         }
 
         function exitIncognitoChat() {
             if (!isIncognito) return;
             isIncognito = false;
+            incognitoChatSessions = {};
+            currentIncognitoSessionId = null;
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
             chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
             if (Object.keys(chatSessions).length > 0) {
@@ -1210,62 +1281,170 @@
             }
         }
 
-        /* SPEECH RECOGNITION */
-        let isRecording = false;
-        let recognition = null;
-        function toggleSpeechRecognition() {
-            const userInput = document.getElementById('userInput');
-            const waveContainer = document.getElementById('waveContainer');
-            
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
-            
-            if (isRecording) {
-                if (recognition) recognition.stop();
-                stopRecordingUI();
-            } else {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = 'fil-PH';
-                
-                recognition.onstart = () => {
-                    isRecording = true;
-                    userInput.style.display = 'none';
-                    waveContainer.classList.add('active');
-                };
-                recognition.onresult = (event) => {
-                    userInput.value = event.results[0][0].transcript;
-                    autoResizeTextarea(userInput);
-                    stopRecordingUI();
-                };
-                recognition.onerror = () => stopRecordingUI();
-                recognition.onend = () => stopRecordingUI();
-                
-                try {
-                    recognition.start();
-                } catch(e) {
-                    stopRecordingUI();
+        function renderIncognitoWelcomeScreen() {
+            removeAIIndicator();
+            if (!chatBox) return;
+            chatBox.innerHTML = `
+                <div class="welcome-screen">
+                    <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                    <div class="welcome-title" style="background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Incognito Mode 🕵️‍♂️</div>
+                    <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                </div>
+                <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
+            `;
+        }
+
+        /* 3. NORMAL MODE SYSTEM & CORE MESSAGING */
+        function createNewChat() {
+            if (isBibleMode) {
+                createBibleChatSession();
+                return;
+            }
+            if (isIncognito) {
+                startIncognitoChat();
+                return;
+            }
+            removeAIIndicator();
+            currentSessionId = 'session_' + Date.now();
+            chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
+            saveSessions();
+            renderWelcomeScreen();
+            closeAllDrawers();
+        }
+
+        function renderWelcomeScreen() {
+            removeAIIndicator();
+            chatBox.innerHTML = `
+                <div class="welcome-screen">
+                    <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                    <div class="welcome-title">JepongDevxyz AI</div>
+                    <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
+                </div>
+                <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
+            `;
+        }
+
+        function loadChatSession(id) {
+            removeAIIndicator();
+            currentSessionId = id;
+            const session = chatSessions[id];
+            if (!session || session.messages.length === 0) {
+                renderWelcomeScreen();
+                return;
+            }
+            chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
+            session.messages.forEach(m => {
+                if (m.role === 'user') {
+                    let fileHTML = '';
+                    if (m.files && Array.isArray(m.files)) {
+                        m.files.forEach(f => {
+                            if (f.mimeType && f.mimeType.startsWith('image/')) {
+                                fileHTML += `<div><img src="${f.fullData}" style="max-width:200px; border-radius:10px; margin-top:4px;"></div>`;
+                            }
+                        });
+                    }
+                    chatBox.innerHTML += `<div class="msg user has-bubble">${escapeHTML(m.text || '')}${fileHTML}</div>`;
+                } else {
+                    const botDiv = document.createElement('div');
+                    botDiv.className = 'msg bot';
+                    botDiv.innerHTML = `<div>${marked.parse(m.text || '')}</div>
+                        <div class="bot-actions">
+                            <button class="bot-action-btn" onclick="voteMessage(this, 'like')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                            </button>
+                            <button class="bot-action-btn" onclick="voteMessage(this, 'dislike')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>
+                            </button>
+                            <button class="bot-action-btn" onclick="regenerateAnswer(this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                                Regenerate
+                            </button>
+                            <button class="bot-action-btn" onclick="copyText(this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                Copy
+                            </button>
+                        </div>`;
+                    chatBox.appendChild(botDiv);
                 }
+            });
+            scrollToBottom(true);
+            closeAllDrawers();
+            renderSidebarHistory();
+        }
+
+        function saveSessions() {
+            if (isIncognito || isBibleMode) return;
+            localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
+            renderSidebarHistory();
+        }
+
+        function renderSidebarHistory(filter = '') {
+            if (isIncognito) return;
+            const list = document.getElementById('chatHistoryList');
+            list.innerHTML = '';
+            
+            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
+
+            Object.values(activeSessions).reverse().forEach(session => {
+                if (filter && !session.title.toLowerCase().includes(filter.toLowerCase())) return;
+                const activeCurrentId = isBibleMode ? currentBibleSessionId : currentSessionId;
+                const item = document.createElement('div');
+                item.className = 'history-item' + (session.id === activeCurrentId ? ' active' : '');
+                item.onclick = () => {
+                    if (isBibleMode) loadBibleSession(session.id);
+                    else loadChatSession(session.id);
+                };
+                item.innerHTML = `<span class="history-item-text">${escapeHTML(session.title)}</span>
+                    <button class="delete-hist-btn" onclick="deleteChatSession('${session.id}', event)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>`;
+                list.appendChild(item);
+            });
+        }
+
+        function deleteChatSession(id, e) {
+            if (e) e.stopPropagation();
+            if (isBibleMode) {
+                delete bibleChatSessions[id];
+                saveBibleSessions();
+                if (currentBibleSessionId === id) createBibleChatSession();
+                return;
+            }
+            if (isIncognito) return;
+            delete chatSessions[id];
+            saveSessions();
+            if (currentSessionId === id) createNewChat();
+        }
+
+        function clearCurrentChat() {
+            removeAIIndicator();
+            if (isBibleMode && currentBibleSessionId && bibleChatSessions[currentBibleSessionId]) {
+                bibleChatSessions[currentBibleSessionId].messages = [];
+                saveBibleSessions();
+                renderBibleWelcomeScreen();
+                return;
+            }
+            if (isIncognito && currentIncognitoSessionId && incognitoChatSessions[currentIncognitoSessionId]) {
+                incognitoChatSessions[currentIncognitoSessionId].messages = [];
+                renderIncognitoWelcomeScreen();
+                return;
+            }
+            if (currentSessionId && chatSessions[currentSessionId]) {
+                chatSessions[currentSessionId].messages = [];
+                saveSessions();
+                renderWelcomeScreen();
             }
         }
 
-        function stopRecordingUI() {
-            isRecording = false;
-            document.getElementById('userInput').style.display = 'block';
-            document.getElementById('waveContainer').classList.remove('active');
-        }
-
+        /* 4. EXECUTE AI CALL */
         async function executeAICall(promptText, currentFiles = []) {
             showAIIndicator(promptText);
 
             const continuousChatHistory = getContinuousHistory();
+            const ctx = getActiveContext();
 
-            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
-            const activeId = isBibleMode ? currentBibleSessionId : currentSessionId;
-            
-            if (activeSessions[activeId]) {
-                activeSessions[activeId].messages.push({ 
+            if (ctx.id && ctx.sessions[ctx.id]) {
+                ctx.sessions[ctx.id].messages.push({ 
                     role: 'user', 
                     text: promptText, 
                     files: currentFiles 
@@ -1277,8 +1456,9 @@
             botMsgElem.className = 'msg bot';
             chatBox.appendChild(botMsgElem);
 
-            const isImageCreationRequest = currentSelectedMode === 'imagen' || 
-                /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of|icon ng)/i.test(promptText);
+            const isDolaVisionPrompt = promptText.startsWith('[Dola AI Vision]:');
+            const isImageCreationRequest = (currentSelectedMode === 'imagen') || 
+                (isDolaVisionPrompt && /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of|icon ng)/i.test(promptText));
 
             if (isImageCreationRequest) {
                 try {
@@ -1335,8 +1515,8 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy Prompt</button>
                         </div>
                     `;
-                    if (activeSessions[activeId]) {
-                        activeSessions[activeId].messages.push({ role: 'bot', text: `![Generated Image](${generatedImageUrl})` });
+                    if (ctx.id && ctx.sessions[ctx.id]) {
+                        ctx.sessions[ctx.id].messages.push({ role: 'bot', text: `![Generated Image](${generatedImageUrl})` });
                         if (!isIncognito && !isBibleMode) saveSessions();
                     }
                     incrementCounters(promptText);
@@ -1400,8 +1580,8 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                     scrollToBottom();
                 }
 
-                if (activeSessions[activeId]) {
-                    activeSessions[activeId].messages.push({ role: 'bot', text: fullResponse });
+                if (ctx.id && ctx.sessions[ctx.id]) {
+                    ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse });
                     if (!isIncognito && !isBibleMode) saveSessions();
                 }
                 incrementCounters(promptText + ' ' + fullResponse);
@@ -1413,16 +1593,30 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             }
         }
 
+        /* 5. SEND MESSAGE */
         async function sendMessage() {
+            closeAllDrawers();
+
             const input = document.getElementById('userInput');
             const message = input.value.trim();
             if (!message && selectedFilesData.length === 0) return;
 
-            /* 1. SLASH COMMANDS CHECK */
+            /* SLASH COMMANDS */
             if (message.toLowerCase() === '/commands') {
                 input.value = '';
                 autoResizeTextarea(input);
                 toggleCommandsModal(true);
+                return;
+            }
+
+            if (message.toLowerCase() === '/exit') {
+                input.value = '';
+                autoResizeTextarea(input);
+                if (isIncognito) {
+                    exitIncognitoChat();
+                } else if (isBibleMode) {
+                    exitBibleMode();
+                }
                 return;
             }
 
@@ -1451,27 +1645,18 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                 return;
             }
 
-            if (message.toLowerCase() === '/exit') {
-                input.value = '';
-                autoResizeTextarea(input);
-                if (isIncognito) {
-                    exitIncognitoChat();
-                } else if (isBibleMode) {
-                    exitBibleMode();
-                }
-                return;
-            }
-
             if (message.startsWith('/')) {
                 const cmd = message.toLowerCase();
                 input.value = '';
                 autoResizeTextarea(input);
                 
                 if (cmd === '/newchat') {
-                    if (!isIncognito && !isBibleMode) createNewChat();
+                    if (isIncognito) startIncognitoChat();
+                    else createNewChat();
                     return;
                 } else if (cmd === '/delete') {
-                    if (!isIncognito && !isBibleMode && currentSessionId) deleteChatSession(currentSessionId);
+                    if (!isIncognito && currentSessionId) deleteChatSession(currentSessionId);
+                    else if (isIncognito) startIncognitoChat();
                     return;
                 } else if (cmd === '/refresh') {
                     window.location.reload();
@@ -1486,18 +1671,32 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                 }
             }
 
-            /* 2. REGULAR SEND */
-            if (!isIncognito && !isBibleMode && (!currentSessionId || !chatSessions[currentSessionId])) createNewChat();
-
-            const tempFiles = [...selectedFilesData];
-            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
-            const activeId = isBibleMode ? currentBibleSessionId : currentSessionId;
-
-            if (activeSessions[activeId] && activeSessions[activeId].messages.length === 0) {
-                chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
-                activeSessions[activeId].title = message ? message.substring(0, 24) : 'Attachment';
+            /* TIYAKIN NA LAGING MAY ACTIVE SESSION */
+            if (isIncognito) {
+                if (!currentIncognitoSessionId || !incognitoChatSessions[currentIncognitoSessionId]) {
+                    currentIncognitoSessionId = 'incognito_' + Date.now();
+                    incognitoChatSessions[currentIncognitoSessionId] = {
+                        id: currentIncognitoSessionId,
+                        title: 'Incognito',
+                        messages: []
+                    };
+                }
+            } else if (!isBibleMode) {
+                if (!currentSessionId || !chatSessions[currentSessionId]) {
+                    createNewChat();
+                }
             }
 
+            /* AGARANG ALISIN ANG WELCOME SCREEN SA FIRST CHAT */
+            clearWelcomeScreenIfPresent();
+
+            const ctx = getActiveContext();
+            const activeSession = ctx.sessions[ctx.id];
+            if (activeSession && activeSession.messages.length === 0) {
+                activeSession.title = message ? message.substring(0, 24) : 'Attachment';
+            }
+
+            const tempFiles = [...selectedFilesData];
             let fileHTML = '';
             tempFiles.forEach(f => {
                 if (f.mimeType.startsWith('image/')) {
@@ -1516,6 +1715,101 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             executeAICall(message, tempFiles);
         }
 
+        /* TEXT TO SPEECH */
+        let systemVoices = [];
+        function loadVoices() {
+            if (!('speechSynthesis' in window)) return;
+            systemVoices = window.speechSynthesis.getVoices();
+        }
+        loadVoices();
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function speakRawText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            
+            const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~>\[\]\(\)]/g, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            
+            systemVoices = window.speechSynthesis.getVoices();
+            const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano|diyos|panginoon)\b/i;
+            const isTagalog = tagalogWords.test(cleanText);
+            
+            let targetVoice = null;
+            if (isTagalog && systemVoices.length > 0) {
+                targetVoice = systemVoices.find(v => {
+                    const lang = (v.lang || '').toLowerCase();
+                    const name = (v.name || '').toLowerCase();
+                    return lang === 'fil-ph' || lang === 'tl-ph' || name.includes('filipino') || name.includes('tagalog');
+                });
+            }
+            if (!targetVoice && systemVoices.length > 0) {
+                targetVoice = systemVoices.find(v => {
+                    const lang = (v.lang || '').toLowerCase();
+                    return lang === 'en-us' || lang === 'en-gb' || lang.startsWith('en');
+                });
+            }
+            
+            if (targetVoice) {
+                utterance.voice = targetVoice;
+                utterance.lang = targetVoice.lang;
+            } else {
+                utterance.lang = isTagalog ? 'tl-PH' : 'en-US';
+            }
+            
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        /* SPEECH RECOGNITION */
+        let isRecording = false;
+        let recognition = null;
+        function toggleSpeechRecognition() {
+            const userInput = document.getElementById('userInput');
+            const waveContainer = document.getElementById('waveContainer');
+            
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+            
+            if (isRecording) {
+                if (recognition) recognition.stop();
+                stopRecordingUI();
+            } else {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'fil-PH';
+                
+                recognition.onstart = () => {
+                    isRecording = true;
+                    userInput.style.display = 'none';
+                    waveContainer.classList.add('active');
+                };
+                recognition.onresult = (event) => {
+                    userInput.value = event.results[0][0].transcript;
+                    autoResizeTextarea(userInput);
+                    stopRecordingUI();
+                };
+                recognition.onerror = () => stopRecordingUI();
+                recognition.onend = () => stopRecordingUI();
+                
+                try {
+                    recognition.start();
+                } catch(e) {
+                    stopRecordingUI();
+                }
+            }
+        }
+
+        function stopRecordingUI() {
+            isRecording = false;
+            document.getElementById('userInput').style.display = 'block';
+            document.getElementById('waveContainer').classList.remove('active');
+        }
+
         function incrementCounters(text) {
             const words = text.trim().split(/\s+/).length;
             const currentWords = parseInt(localStorage.getItem('jepong_word_count') || '0') + words;
@@ -1526,129 +1820,6 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             updateUsageUI();
         }
 
-        function createNewChat() {
-            if (isBibleMode) {
-                createBibleChatSession();
-                return;
-            }
-            if (isIncognito) {
-                startIncognitoChat();
-                return;
-            }
-            removeAIIndicator();
-            currentSessionId = 'session_' + Date.now();
-            chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
-            saveSessions();
-            renderWelcomeScreen();
-            toggleSidebar(false);
-        }
-
-        function renderWelcomeScreen() {
-            removeAIIndicator();
-            chatBox.innerHTML = `
-                <div class="welcome-screen">
-                    <lottie-player class="welcome-lottie-top" src="https://lottie.host/035962ae-ec85-4735-ac5b-3a3764108916/y2Kb1ZKXAi.json" background="transparent" speed="1" loop autoplay></lottie-player>
-                    <div class="welcome-title">${isIncognito ? 'Incognito Mode' : 'JepongDevxyz AI'}</div>
-                    <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
-                </div>
-                <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
-            `;
-        }
-
-        function loadChatSession(id) {
-            removeAIIndicator();
-            currentSessionId = id;
-            const session = chatSessions[id];
-            if (!session || session.messages.length === 0) {
-                renderWelcomeScreen();
-                return;
-            }
-            chatBox.innerHTML = '<button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>';
-            session.messages.forEach(m => {
-                if (m.role === 'user') {
-                    let fileHTML = '';
-                    if (m.files && Array.isArray(m.files)) {
-                        m.files.forEach(f => {
-                            if (f.mimeType && f.mimeType.startsWith('image/')) {
-                                fileHTML += `<div><img src="${f.fullData}" style="max-width:200px; border-radius:10px; margin-top:4px;"></div>`;
-                            }
-                        });
-                    }
-                    chatBox.innerHTML += `<div class="msg user has-bubble">${escapeHTML(m.text || '')}${fileHTML}</div>`;
-                } else {
-                    const botDiv = document.createElement('div');
-                    botDiv.className = 'msg bot';
-                    botDiv.innerHTML = `<div>${marked.parse(m.text || '')}</div>
-                        <div class="bot-actions">
-                            <button class="bot-action-btn" onclick="voteMessage(this, 'like')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
-                            </button>
-                            <button class="bot-action-btn" onclick="voteMessage(this, 'dislike')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>
-                            </button>
-                            <button class="bot-action-btn" onclick="regenerateAnswer(this)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                                Regenerate
-                            </button>
-                            <button class="bot-action-btn" onclick="copyText(this)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                                Copy
-                            </button>
-                        </div>`;
-                    chatBox.appendChild(botDiv);
-                }
-            });
-            scrollToBottom(true);
-            toggleSidebar(false);
-            renderSidebarHistory();
-        }
-
-        function saveSessions() {
-            if (isIncognito || isBibleMode) return;
-            localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
-            renderSidebarHistory();
-        }
-
-        function renderSidebarHistory(filter = '') {
-            if (isIncognito || isBibleMode) return;
-            const list = document.getElementById('chatHistoryList');
-            list.innerHTML = '';
-            Object.values(chatSessions).reverse().forEach(session => {
-                if (filter && !session.title.toLowerCase().includes(filter.toLowerCase())) return;
-                const item = document.createElement('div');
-                item.className = 'history-item' + (session.id === currentSessionId ? ' active' : '');
-                item.onclick = () => loadChatSession(session.id);
-                item.innerHTML = `<span class="history-item-text">${escapeHTML(session.title)}</span>
-                    <button class="delete-hist-btn" onclick="deleteChatSession('${session.id}', event)">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>`;
-                list.appendChild(item);
-            });
-        }
-
-        function deleteChatSession(id, e) {
-            if (e) e.stopPropagation();
-            if (isIncognito || isBibleMode) return;
-            delete chatSessions[id];
-            saveSessions();
-            if (currentSessionId === id) createNewChat();
-        }
-
-        function clearCurrentChat() {
-            removeAIIndicator();
-            if (isBibleMode && currentBibleSessionId && bibleChatSessions[currentBibleSessionId]) {
-                bibleChatSessions[currentBibleSessionId].messages = [];
-                saveBibleSessions();
-                renderBibleWelcomeScreen();
-                return;
-            }
-            if (currentSessionId && chatSessions[currentSessionId]) {
-                chatSessions[currentSessionId].messages = [];
-                saveSessions();
-                renderWelcomeScreen();
-            }
-        }
-
         function scrollToBottom(forced = false) {
             if (forced || !userScrolledUp) {
                 setTimeout(() => {
@@ -1657,12 +1828,146 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             }
         }
 
-        function toggleSidebar(show) {
-            if (isIncognito || isBibleMode) return;
-            document.getElementById('sidebar').classList.toggle('open', show);
-            document.getElementById('sidebarOverlay').classList.toggle('open', show);
-            if (show) renderSidebarHistory();
+        /* ========================================================
+           BI-DIRECTIONAL (LEFT & RIGHT) EDGE-SWIPE & CLICK DRAWER
+           ======================================================== */
+        let activeDrawerMode = 'bottom'; // 'left', 'right', 'bottom'
+        let isDrawerOpen = false;
+
+        function closeAllDrawers() {
+            isDrawerOpen = false;
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+            sidebar.style.transform = '';
+            sidebarOverlay.style.opacity = '';
         }
+
+        // Pindot sa ✦ icon: aangat bilang bottom menu sheet
+        function openMenuFromBrandIcon() {
+            activeDrawerMode = 'bottom';
+            sidebar.className = 'sidebar drawer-bottom open';
+            sidebarOverlay.classList.add('open');
+            isDrawerOpen = true;
+            renderSidebarHistory();
+        }
+
+        // Pindot sa close button sa loob
+        function toggleSidebar(show) {
+            if (show) openMenuFromBrandIcon();
+            else closeAllDrawers();
+        }
+
+        // BI-DIRECTIONAL EDGE SWIPE LISTENERS
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isEdgeSwipe = false;
+        let edgeDirection = null; // 'left' or 'right'
+
+        window.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            const screenWidth = window.innerWidth;
+
+            // HUWAG pansinin kung nasa loob ng input bar, send button o buttons
+            if (e.target.closest('#inputContainer') || e.target.closest('.header-controls') || e.target.closest('.header-tools-group')) {
+                isEdgeSwipe = false;
+                return;
+            }
+
+            // Swipe mula sa kaliwang edge (0 hanggang 45px)
+            if (!isDrawerOpen && touchStartX <= 45) {
+                isEdgeSwipe = true;
+                edgeDirection = 'left';
+            } 
+            // Swipe mula sa kanang edge (huling 45px)
+            else if (!isDrawerOpen && touchStartX >= screenWidth - 45) {
+                isEdgeSwipe = true;
+                edgeDirection = 'right';
+            } 
+            // Kung kasalukuyang nakabukas ang sidebar
+            else if (isDrawerOpen) {
+                isEdgeSwipe = true;
+                edgeDirection = activeDrawerMode;
+            } else {
+                isEdgeSwipe = false;
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isEdgeSwipe) return;
+            const touch = e.touches[0];
+            const diffX = touch.clientX - touchStartX;
+            const diffY = touch.clientY - touchStartY;
+
+            // Huwag mag-trigger kung vertical scroll
+            if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 20) {
+                return;
+            }
+
+            // Real-time tracking kung swipe mula sa Left Edge
+            if (edgeDirection === 'left') {
+                if (!isDrawerOpen && diffX > 0) {
+                    activeDrawerMode = 'left';
+                    sidebar.className = 'sidebar drawer-left';
+                    const maxW = Math.min(window.innerWidth * 0.85, 300);
+                    const translate = Math.min(0, -maxW + diffX);
+                    sidebar.style.transition = 'none';
+                    sidebar.style.transform = `translateX(${translate}px)`;
+                    sidebarOverlay.style.opacity = Math.max(0, Math.min(1, (translate + maxW) / maxW));
+                }
+            } 
+            // Real-time tracking kung swipe mula sa Right Edge
+            else if (edgeDirection === 'right') {
+                if (!isDrawerOpen && diffX < 0) {
+                    activeDrawerMode = 'right';
+                    sidebar.className = 'sidebar drawer-right';
+                    const maxW = Math.min(window.innerWidth * 0.85, 300);
+                    const translate = Math.max(0, maxW + diffX);
+                    sidebar.style.transition = 'none';
+                    sidebar.style.transform = `translateX(${translate}px)`;
+                    sidebarOverlay.style.opacity = Math.max(0, Math.min(1, 1 - (translate / maxW)));
+                }
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            if (!isEdgeSwipe) return;
+            isEdgeSwipe = false;
+            const touch = e.changedTouches[0];
+            const diffX = touch.clientX - touchStartX;
+
+            sidebar.style.transition = '';
+            sidebarOverlay.style.opacity = '';
+
+            if (isDrawerOpen) {
+                // Kung nakabukas at hinila pabalik sa edge
+                if (activeDrawerMode === 'left' && diffX < -60) {
+                    closeAllDrawers();
+                } else if (activeDrawerMode === 'right' && diffX > 60) {
+                    closeAllDrawers();
+                }
+            } else {
+                // Swipe Right mula sa kaliwang edge lampas 60px -> Buksan sa kaliwa
+                if (edgeDirection === 'left' && diffX > 60) {
+                    activeDrawerMode = 'left';
+                    sidebar.className = 'sidebar drawer-left open';
+                    sidebarOverlay.classList.add('open');
+                    isDrawerOpen = true;
+                    renderSidebarHistory();
+                } 
+                // Swipe Left mula sa kanang edge lampas 60px -> Buksan sa kanan
+                else if (edgeDirection === 'right' && diffX < -60) {
+                    activeDrawerMode = 'right';
+                    sidebar.className = 'sidebar drawer-right open';
+                    sidebarOverlay.classList.add('open');
+                    isDrawerOpen = true;
+                    renderSidebarHistory();
+                } else {
+                    closeAllDrawers();
+                }
+            }
+        }, { passive: true });
 
         function toggleModal(id, show) {
             document.getElementById(id).classList.toggle('open', show);
