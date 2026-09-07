@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6366f1">
     <title>JepongDevxyz AI</title>
@@ -15,7 +15,7 @@
     <style>
         :root {
             --bg-color: #0b0f19;
-            --card-bg: rgba(21, 29, 45, 0.85);
+            --card-bg: rgba(21, 29, 45, 0.95);
             --border-color: rgba(255, 255, 255, 0.08);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -32,7 +32,7 @@
 
         body.theme-light {
             --bg-color: #f1f5f9;
-            --card-bg: rgba(255, 255, 255, 0.92);
+            --card-bg: rgba(255, 255, 255, 0.96);
             --border-color: rgba(0, 0, 0, 0.08);
             --text-main: #0f172a;
             --text-muted: #64748b;
@@ -45,22 +45,41 @@
 
         body.theme-neon {
             --bg-color: #050505;
-            --card-bg: rgba(20, 20, 20, 0.8);
+            --card-bg: rgba(20, 20, 20, 0.9);
             --text-main: #00ffcc;
             --text-muted: #00b399;
         }
 
         body.theme-sunset {
             --bg-color: #1a0b2e;
-            --card-bg: rgba(45, 15, 64, 0.7);
+            --card-bg: rgba(45, 15, 64, 0.85);
             --text-main: #ffecd2;
             --text-muted: #d8b4fe;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; outline: none; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; background-color: var(--bg-color); color: var(--text-main); transition: background 0.3s ease, color 0.3s ease; }
+        
+        /* Mobile height fix: handles keyboard resize smoothly */
+        html, body { 
+            width: 100%; 
+            height: 100%; 
+            height: 100dvh; 
+            overflow: hidden; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            transition: background 0.3s ease, color 0.3s ease; 
+        }
 
-        .app-container { width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--card-bg); backdrop-filter: blur(20px); position: relative; }
+        .app-container { 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            background: var(--card-bg); 
+            position: relative; 
+            overflow: hidden;
+        }
+
         @media (min-width: 768px) {
             body { padding: 20px; display: flex; justify-content: center; align-items: center; }
             .app-container { max-width: 900px; height: 90vh; border: 1px solid var(--border-color); border-radius: 24px; }
@@ -72,12 +91,12 @@
             display: flex; 
             flex-direction: column; 
             gap: 8px; 
-            background: rgba(11, 15, 25, 0.95); 
-            backdrop-filter: blur(20px);
+            background: rgba(11, 15, 25, 0.98); 
             position: relative;
-            z-index: 10;
+            z-index: 20;
+            flex-shrink: 0;
         }
-        body.theme-light .header { background: rgba(255, 255, 255, 0.95); }
+        body.theme-light .header { background: rgba(255, 255, 255, 0.98); }
         .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
         
         .brand { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; padding: 2px 0; }
@@ -171,17 +190,20 @@
         .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .delete-hist-btn:hover { color: #ef4444; }
 
-        /* Chat Body & Full Height Spacing */
+        /* Chat Body & Fluid Viewport Handling */
         .chat-box { 
-            flex: 1; 
-            padding: 16px 16px 40px 16px; 
+            flex: 1 1 auto; 
+            min-height: 0;
+            padding: 16px 16px 20px 16px; 
             overflow-y: auto; 
             display: flex; 
             flex-direction: column; 
             gap: 16px; 
             position: relative; 
             z-index: 1; 
+            -webkit-overflow-scrolling: touch;
         }
+
         .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; margin: auto; width: 100%; }
         .welcome-lottie-top { width: 220px; height: 60px; margin-bottom: -10px; }
         .welcome-title { font-size: 1.85rem; font-weight: 700; background: linear-gradient(90deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; margin: 0; line-height: 1; }
@@ -193,21 +215,21 @@
         .msg.user.no-bubble { align-self: flex-end; background: transparent; border: none; padding: 0; }
         .msg.bot { align-self: flex-start; background: var(--bot-msg); border: none; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
-        /* PERMANENT FIX: AI Indicator Card Full Word-Wrap & No Text Truncation */
+        /* PERMANENT FIX: Full Word-Wrap & No Text Truncation */
         .ai-indicator-card {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.16));
             border: 1px solid rgba(139, 92, 246, 0.45);
             border-radius: 14px;
             padding: 12px 14px;
-            margin: 8px 0 16px 0;
+            margin: 4px 0 10px 0;
             display: flex;
             flex-direction: column;
             gap: 6px;
             position: relative;
             width: 100%;
-            max-width: 100%;
             box-sizing: border-box;
             animation: pulseGlow 2s infinite ease-in-out;
+            flex-shrink: 0;
         }
         .ai-indicator-card::before {
             content: '';
@@ -240,13 +262,20 @@
         .bot-action-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.08); }
         .bot-action-btn.active-action { color: #8b5cf6; background: rgba(139, 92, 246, 0.15); }
 
-        /* Input Deck */
-        .input-container { padding: 10px 16px 16px 16px; background: transparent; z-index: 5; }
+        /* Input Deck: Keeps solid pinned position at bottom */
+        .input-container { 
+            padding: 8px 14px 12px 14px; 
+            background: var(--card-bg); 
+            position: relative; 
+            z-index: 10; 
+            flex-shrink: 0;
+            border-top: 1px solid var(--border-color);
+        }
         .chat-input-pill { background: var(--input-bg); border-radius: 40px; padding: 6px 10px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1px solid var(--border-color); }
         .pill-plus-btn, .pill-dola-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; transition: all 0.2s; }
         .pill-dola-btn { color: #a855f7; }
         .pill-plus-btn:hover, .pill-dola-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-main); }
-        .pill-input { flex: 1; background: transparent; border: none; color: var(--text-main) !important; font-size: 0.95rem; caret-color: #3b82f6; padding: 4px 6px; min-width: 0; }
+        .pill-input { flex: 1; background: transparent; border: none; color: var(--text-main) !important; font-size: 0.95rem; caret-color: #3b82f6; padding: 6px 6px; min-width: 0; }
         .pill-mic-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; transition: color 0.2s; }
         .pill-mic-btn:hover { color: var(--text-main); }
         .pill-action-btn { background: #8b5cf6; color: #ffffff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -257,7 +286,7 @@
         .wave-bar:nth-child(1) { height: 10px; } .wave-bar:nth-child(2) { height: 20px; } .wave-bar:nth-child(3) { height: 28px; } .wave-bar:nth-child(4) { height: 16px; }
         @keyframes waveAnim { 0%, 100% { transform: scaleY(0.4); opacity: 0.6; } 50% { transform: scaleY(1.2); opacity: 1; background: #8b5cf6; } }
 
-        .file-preview-row { display: none; gap: 8px; overflow-x: auto; padding: 4px 2px 10px 2px; }
+        .file-preview-row { display: none; gap: 8px; overflow-x: auto; padding: 4px 2px 8px 2px; }
         .gemini-chip { position: relative; display: inline-flex; align-items: center; background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 4px 8px; height: 48px; color: var(--text-main); }
         .gemini-chip.img-chip { padding: 0; width: 52px; height: 52px; border-radius: 12px; overflow: hidden; }
         .gemini-chip img { width: 100%; height: 100%; object-fit: cover; }
@@ -356,7 +385,7 @@
             <button id="scrollBtn" onclick="scrollToBottom(true)">↓</button>
         </div>
 
-        <div class="input-container">
+        <div class="input-container" id="inputContainer">
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
             <div class="chat-input-pill">
@@ -604,6 +633,14 @@
 
         const chatBox = document.getElementById('chatBox');
 
+        // Handles mobile visual viewport changes (keyboard popups)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                document.body.style.height = `${window.visualViewport.height}px`;
+                scrollToBottom(true);
+            });
+        }
+
         const modeIconsMap = {
             'general': `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>`,
             'school': `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-.838L12.83 2.18a2 2 0 0 0-1.66 0L2.6 10.084a1 1 0 0 0 0 1.832l8.57 7.908a2 2 0 0 0 1.66 0l8.57-7.908a1 1 0 0 0 .02-.994Z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/></svg>`,
@@ -736,6 +773,7 @@
         }
 
         function showAIIndicator(promptText) {
+            removeAIIndicator();
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
             indicator.className = 'ai-indicator-card';
@@ -747,9 +785,7 @@
                 <div class="indicator-query">${escapeHTML(promptText)}</div>
             `;
             chatBox.appendChild(indicator);
-            setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 50);
+            scrollToBottom(true);
         }
 
         function removeAIIndicator() {
@@ -804,13 +840,12 @@
             botMsgElem.className = 'msg bot';
             chatBox.appendChild(botMsgElem);
 
-            // AUTO DETECTION: Kung ang prompt ay nag-uutos na lumikha, palitan o gumawa ng bagong larawan
+            // AUTO DETECTION para sa Image Generation (Imagen)
             const isImageCreationRequest = currentSelectedMode === 'imagen' || 
                 /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of)/i.test(promptText);
 
             if (isImageCreationRequest) {
                 try {
-                    // Linisin ang prompt para sa Imagen generator
                     const cleanImagePrompt = promptText
                         .replace(/\[Dola AI Vision\]:/gi, '')
                         .replace(/(palitan mo yan ng|palitan ng|gawan mo ako ng|generate an image of|draw a)/gi, '')
@@ -841,17 +876,17 @@
                     chatSessions[currentSessionId].messages.push({ role: 'bot', text: `![Generated Image](${data.imageUrl})` });
                     saveSessions();
                     incrementCounters(promptText);
-                    chatBox.scrollTop = chatBox.scrollHeight;
+                    scrollToBottom(true);
                     return;
                 } catch (err) {
                     removeAIIndicator();
                     botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Image Generation Error: ${escapeHTML(err.message)}</span>`;
-                    chatBox.scrollTop = chatBox.scrollHeight;
+                    scrollToBottom(true);
                     return;
                 }
             }
 
-            // Normal AI Text & Vision Analysis
+            // Normal Vision / Chat Response Call
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -899,7 +934,7 @@
                                 Copy
                             </button>
                         </div>`;
-                    chatBox.scrollTop = chatBox.scrollHeight;
+                    scrollToBottom();
                 }
 
                 chatSessions[currentSessionId].messages.push({ role: 'bot', text: fullResponse });
@@ -909,7 +944,7 @@
             } catch (err) {
                 removeAIIndicator();
                 botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</span>`;
-                chatBox.scrollTop = chatBox.scrollHeight;
+                scrollToBottom(true);
             }
         }
 
@@ -938,6 +973,7 @@
             input.value = '';
             selectedFilesData = [];
             renderFilePreviews();
+            scrollToBottom(true);
 
             executeAICall(message, tempFiles);
         }
@@ -1055,7 +1091,11 @@
         }
 
         function scrollToBottom(forced = false) {
-            if (forced || !userScrolledUp) chatBox.scrollTop = chatBox.scrollHeight;
+            if (forced || !userScrolledUp) {
+                setTimeout(() => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 40);
+            }
         }
 
         function toggleSidebar(show) {
