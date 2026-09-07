@@ -3,7 +3,6 @@ export const config = {
 };
 
 export default async function handler(req) {
-  // Support sa HEAD request para sa ping/network status checker ng frontend
   if (req.method === 'HEAD') {
     return new Response(null, { status: 200 });
   }
@@ -55,21 +54,7 @@ export default async function handler(req) {
       systemInstructionText += ` ${customPrompt}`;
     }
 
-    const systemInstruction = {
-      parts: [{ text: systemInstructionText }]
-    };
-
-    // Ihanda ang continuous multi-turn chat contents
-    let contents = [];
-
-    if (Array.isArray(history) && history.length > 0) {
-      contents = history.map(turn => ({
-        role: turn.role === 'model' || turn.role === 'bot' ? 'model' : 'user',
-        parts: Array.isArray(turn.parts) ? turn.parts : [{ text: turn.text || '' }]
-      }));
-    }
-
-    // Buuin ang current turn
+    // 1. I-format ang current turn parts
     const currentParts = [];
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
@@ -78,16 +63,58 @@ export default async function handler(req) {
         }
       });
     }
-
-    if (message) {
-      currentParts.push({ text: message });
+    if (message && message.trim()) {
+      currentParts.push({ text: message.trim() });
     }
 
-    // Idagdag kung may laman ang latest prompt
+    // 2. I-sanitize ang previous history para masigurong alternating: user -> model
+    let rawContents = [];
+    if (Array.isArray(history) && history.length > 0) {
+      history.forEach(turn => {
+        const role = turn.role === 'bot' || turn.role === 'model' ? 'model' : 'user';
+        let parts = [];
+        if (Array.isArray(turn.parts) && turn.parts.length > 0) {
+          parts = turn.parts;
+        } else if (turn.text && turn.text.trim()) {
+          parts = [{ text: turn.text.trim() }];
+        }
+
+        if (parts.length > 0) {
+          rawContents.push({ role, parts });
+        }
+      });
+    }
+
+    // Tanggalin ang trailing 'user' message sa history kung may kasunod pa tayong currentParts
+    if (currentParts.length > 0 && rawContents.length > 0 && rawContents[rawContents.length - 1].role === 'user') {
+      rawContents.pop();
+    }
+
+    // Siguraduhing walang magkatabing parehong role sa history
+    const sanitizedContents = [];
+    for (const item of rawContents) {
+      if (sanitizedContents.length === 0) {
+        if (item.role === 'user') sanitizedContents.push(item);
+      } else {
+        const lastRole = sanitizedContents[sanitizedContents.length - 1].role;
+        if (item.role !== lastRole) {
+          sanitizedContents.push(item);
+        }
+      }
+    }
+
+    // Idagdag ang kasalukuyang user message
     if (currentParts.length > 0) {
-      contents.push({
+      sanitizedContents.push({
         role: 'user',
         parts: currentParts
+      });
+    }
+
+    if (sanitizedContents.length === 0) {
+      return new Response(JSON.stringify({ error: 'No prompt or content provided.' }), { 
+        status: 400, 
+        headers: { 'Content-Type': 'application/json' } 
       });
     }
 
@@ -101,8 +128,8 @@ export default async function handler(req) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            system_instruction: systemInstruction,
-            contents: contents
+            system_instruction: { parts: [{ text: systemInstructionText }] },
+            contents: sanitizedContents
           })
         }
       );
