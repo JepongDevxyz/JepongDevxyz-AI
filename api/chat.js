@@ -17,7 +17,7 @@ export default async function handler(req) {
   try {
     const { message, history, files, model, mode, customPrompt, webSearch } = await req.json();
     
-    const rawKeys = process.env.GEMINI_API_KEY || '';
+    const rawKeys = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEYS || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
