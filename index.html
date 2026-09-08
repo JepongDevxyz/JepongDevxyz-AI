@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 
     <style>
         :root {
@@ -877,8 +878,8 @@
         .model-provider-tab { border: 1px solid var(--border-color); background: rgba(255,255,255,.04); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: .74rem; font-weight: 700; cursor: pointer; }
         .model-provider-tab.active { color: var(--text-main); border-color: rgba(139,92,246,.5); background: rgba(139,92,246,.14); }
         .model-pages-viewport { overflow: hidden; touch-action: pan-y; width: 100%; }
-        .model-pages-track { display: flex; width: 200%; transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
-        .model-provider-page { width: 50%; flex: 0 0 50%; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .model-pages-track { display: flex; width: 700%; transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
+        .model-provider-page { width: calc(100% / 7); flex: 0 0 calc(100% / 7); padding: 14px; display: flex; flex-direction: column; gap: 6px; }
         .provider-badge {
             display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
             padding: 5px 9px; border: 1px solid var(--border-color); border-radius: 999px;
@@ -894,6 +895,323 @@
         .model-page-dot.active { opacity: 1; background: #8b5cf6; box-shadow: 0 0 8px rgba(139,92,246,.55); }
         .model-selected-provider { font-size: .66rem; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
         .mode-label-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ===== JepongDevxyz AI vNext feature pack ===== */
+        .header-controls .provider-runtime-badge{display:none!important}
+        .provider-runtime-badge{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;color:var(--text-muted);padding:4px 8px;border:1px solid var(--border-color);border-radius:999px;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+        .provider-runtime-badge.ok{color:#10b981}.provider-runtime-badge.warn{color:#f59e0b}.provider-runtime-badge.bad{color:#ef4444}
+        .prompt-suggestions{display:flex;gap:7px;overflow-x:auto;padding:0 2px 8px;scrollbar-width:none}.prompt-suggestions::-webkit-scrollbar{display:none}
+        .prompt-chip{border:1px solid var(--border-color);background:rgba(255,255,255,.035);color:var(--text-muted);border-radius:999px;padding:7px 10px;font-size:.7rem;white-space:nowrap;cursor:pointer}.prompt-chip:hover{color:var(--text-main);border-color:rgba(139,92,246,.45)}
+        .provider-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%;margin-top:10px}.provider-status-card{border:1px solid var(--border-color);border-radius:11px;padding:9px;background:rgba(255,255,255,.025);min-width:0}.provider-status-name{font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.provider-status-state{font-size:.66rem;color:var(--text-muted);margin-top:3px}.provider-status-card.ready .provider-status-state{color:#10b981}.provider-status-card.limited .provider-status-state{color:#ef4444}.provider-status-card.busy .provider-status-state{color:#f59e0b}
+        .feature-toggle-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;font-size:.78rem}.mini-toggle{width:42px;height:24px;position:relative;display:inline-block;flex:0 0 auto}.mini-toggle input{display:none}.mini-toggle span{position:absolute;inset:0;border-radius:30px;background:#475569;cursor:pointer;transition:.2s}.mini-toggle span:after{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;border-radius:50%;background:white;transition:.2s}.mini-toggle input:checked+span{background:#8b5cf6}.mini-toggle input:checked+span:after{transform:translateX(18px)}
+        .study-panel{margin:12px auto;max-width:560px;border:1px solid rgba(139,92,246,.32);background:rgba(139,92,246,.08);border-radius:16px;padding:14px}.study-panel h3{font-size:.95rem;margin:0 0 5px}.study-panel p{font-size:.74rem;color:var(--text-muted);margin:0 0 10px}.study-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.study-tool-btn{border:1px solid var(--border-color);background:rgba(255,255,255,.04);color:var(--text-main);border-radius:11px;padding:10px;font-size:.75rem;cursor:pointer;text-align:left}
+        .branch-badge{display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:#a78bfa;margin-left:4px}
+        .code-container-wrap table,.msg table{width:100%;border-collapse:collapse;display:block;overflow-x:auto;margin:10px 0;font-size:.82rem}.msg th,.msg td{border:1px solid var(--border-color);padding:8px 10px;text-align:left;min-width:90px}.msg th{background:rgba(139,92,246,.09)}
+        .fullscreen-code-overlay{position:fixed;inset:0;z-index:5000;background:rgba(2,6,23,.97);display:none;flex-direction:column}.fullscreen-code-overlay.open{display:flex}.fullscreen-code-head{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.fullscreen-code-body{flex:1;overflow:auto;padding:18px}.fullscreen-code-body pre{margin:0;min-height:100%;white-space:pre;overflow:auto}.fullscreen-code-close{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:white;border-radius:9px;padding:7px 11px;cursor:pointer}
+        .usage-sync-note{font-size:.65rem;line-height:1.4;color:var(--text-muted);margin-top:8px;text-align:left;width:100%}.usage-sync-note strong{color:var(--text-main)}
+        .model-provider-tabs{overflow-x:auto;justify-content:flex-start;scrollbar-width:none}.model-provider-tabs::-webkit-scrollbar{display:none}.model-provider-tab{flex:0 0 auto;min-width:82px}
+        @media(max-width:520px){.provider-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.study-tools{grid-template-columns:1fr 1fr}.provider-runtime-badge{max-width:125px}}
+
+
+        /* ===== Mobile polish: no overlap + clean model navigation ===== */
+        .model-picker-modal{width:min(94vw,430px);max-height:min(86dvh,760px);display:flex;flex-direction:column}
+        .model-picker-header{flex:0 0 auto;padding:14px 12px 12px}
+        .model-pages-viewport{flex:1 1 auto;min-height:0;overflow:hidden}
+        .model-provider-page{box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:14px 16px 10px}
+        .model-provider-page .option-item{display:grid;grid-template-columns:minmax(0,1fr) 24px;align-items:center;gap:12px;width:100%;min-width:0;box-sizing:border-box}
+        .model-provider-page .option-info,.model-provider-page .option-info>div{min-width:0;width:100%;overflow:visible}
+        .model-provider-page .option-name,.model-provider-page .option-desc{white-space:normal;overflow-wrap:anywhere;word-break:normal;max-width:100%}
+        .model-provider-page .option-name{line-height:1.25}
+        .model-provider-page .radio-icon{justify-self:end;flex:0 0 auto}
+        .provider-badge{max-width:100%;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
+        .model-page-dots{flex:0 0 auto;padding-top:8px}
+
+        /* Usage cards: prevent title/value collisions on every provider */
+        .usage-section,.usage-limits-deck,.limit-card,.provider-status-grid{min-width:0}
+        .limit-card{overflow:hidden}
+        .limit-card-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(88px,auto);gap:10px;align-items:start;width:100%}
+        .limit-title-wrap{min-width:0;align-items:flex-start}
+        .limit-title-wrap>span:first-child{min-width:0;overflow-wrap:anywhere;line-height:1.25}
+        .info-circle{flex:0 0 14px;margin-top:2px}
+        .limit-percent{min-width:0;max-width:180px;text-align:right;white-space:normal;overflow-wrap:anywhere;line-height:1.22}
+        .limit-card-footer,.usage-sync-note{overflow-wrap:anywhere;word-break:normal}
+        .provider-status-card{overflow:hidden}
+        .provider-status-name,.provider-status-state{overflow-wrap:anywhere;white-space:normal}
+
+        /* Modern in-app alerts */
+        .app-alert-overlay{position:fixed;inset:0;z-index:7000;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(2,6,23,.68);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+        .app-alert-overlay.open{display:flex;animation:appAlertFade .18s ease-out}
+        .app-alert-card{width:min(92vw,390px);border:1px solid rgba(148,163,184,.18);border-radius:22px;background:color-mix(in srgb,var(--modal-bg) 94%,transparent);box-shadow:0 28px 80px rgba(0,0,0,.48);padding:18px;transform-origin:center;animation:appAlertPop .2s cubic-bezier(.2,.8,.2,1)}
+        .app-alert-icon{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:13px;background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.28);color:#a78bfa}
+        .app-alert-title{font-size:1rem;font-weight:750;color:var(--text-main);margin:0 0 7px}
+        .app-alert-message{font-size:.82rem;line-height:1.55;color:var(--text-muted);white-space:pre-wrap;overflow-wrap:anywhere}
+        .app-alert-actions{display:flex;justify-content:flex-end;margin-top:18px}
+        .app-alert-ok{border:0;border-radius:12px;padding:9px 18px;background:var(--accent-gradient);color:#fff;font-weight:700;font-size:.8rem;cursor:pointer;box-shadow:0 8px 22px rgba(139,92,246,.25)}
+        @keyframes appAlertFade{from{opacity:0}to{opacity:1}}
+        @keyframes appAlertPop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+
+        @media(max-width:420px){
+          .model-picker-modal{width:calc(100vw - 24px);max-height:84dvh}
+          .model-provider-page{padding:12px}
+          .model-provider-page .option-item{min-height:66px;padding:11px 12px;gap:10px}
+          .model-provider-page .option-name{font-size:.88rem}
+          .model-provider-page .option-desc{font-size:.7rem}
+          .limit-card{padding:12px}
+          .limit-card-header{grid-template-columns:1fr;gap:5px}
+          .limit-percent{max-width:none;text-align:left;font-size:.8rem}
+          .usage-metric-card{gap:4px;padding:10px 7px}
+          .metric-box h5{font-size:.58rem}
+          .metric-box p{font-size:.88rem}
+        }
+
+
+        /* ===== JepongDevxyz synced activity timeline ===== */
+        .ai-activity-card{width:min(100%,720px);margin:10px 0 12px;padding:0 2px;color:var(--text-main);animation:activityIn .2s ease-out}
+        .ai-activity-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;padding:0 2px}
+        .ai-activity-title{display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:700;color:var(--text-muted)}
+        .ai-activity-title-dot{width:8px;height:8px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 10px rgba(139,92,246,.7);animation:activityPulse 1.2s infinite}
+        .ai-activity-card.complete .ai-activity-title-dot{background:#10b981;box-shadow:0 0 10px rgba(16,185,129,.55);animation:none}
+        .ai-activity-card.error .ai-activity-title-dot{background:#ef4444;animation:none}
+        .ai-activity-toggle{border:0;background:transparent;color:var(--text-muted);font-size:.7rem;cursor:pointer;padding:5px 7px;border-radius:8px}.ai-activity-toggle:hover{background:rgba(255,255,255,.05);color:var(--text-main)}
+        .ai-activity-list{display:flex;flex-direction:column;gap:2px;overflow:hidden;transition:max-height .25s ease,opacity .2s ease;max-height:520px;opacity:1}
+        .ai-activity-card.collapsed .ai-activity-list{max-height:0;opacity:0}
+        .ai-activity-row{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:start;gap:7px;padding:7px 4px;border-radius:10px;transition:.18s}
+        .ai-activity-row.running{background:linear-gradient(90deg,rgba(139,92,246,.08),transparent)}
+        .ai-activity-icon{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);border:1px solid transparent;background:rgba(255,255,255,.025);font-size:.84rem}
+        .ai-activity-row.running .ai-activity-icon{color:#a78bfa;border-color:rgba(139,92,246,.18)}
+        .ai-activity-row.completed .ai-activity-icon{color:#10b981}
+        .ai-activity-row.warning .ai-activity-icon{color:#f59e0b}
+        .ai-activity-row.error .ai-activity-icon{color:#ef4444}
+        .ai-activity-copy{min-width:0;padding-top:3px}.ai-activity-label{font-size:.78rem;line-height:1.42;color:var(--text-muted);overflow-wrap:anywhere}.ai-activity-row.running .ai-activity-label{color:var(--text-main)}
+        .ai-activity-detail{font-size:.65rem;line-height:1.35;color:var(--text-muted);opacity:.8;margin-top:2px;overflow-wrap:anywhere}
+        .ai-activity-spinner{width:13px;height:13px;border-radius:50%;border:2px solid rgba(167,139,250,.25);border-top-color:#a78bfa;animation:activitySpin .75s linear infinite}
+        .ai-activity-check{font-size:.78rem;font-weight:900}.ai-activity-warning{font-size:.84rem}.ai-activity-error{font-size:.82rem}
+        .ai-activity-summary{display:none;margin:3px 4px 0;font-size:.69rem;color:var(--text-muted)}
+        .ai-activity-card.collapsed .ai-activity-summary{display:block}
+        @keyframes activitySpin{to{transform:rotate(360deg)}}
+        @keyframes activityPulse{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.14)}}
+        @keyframes activityIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+        @media(max-width:520px){.ai-activity-card{margin:8px 0 10px}.ai-activity-row{grid-template-columns:27px minmax(0,1fr);gap:6px;padding:6px 2px}.ai-activity-icon{width:26px;height:26px}.ai-activity-label{font-size:.75rem}.ai-activity-head{margin-bottom:5px}}
+
+
+        /* =========================================================
+           PERSONALIZATION SETTINGS
+        ========================================================= */
+        .personalization-modal {
+            width: min(94vw, 520px);
+            max-height: 88dvh;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .personalization-head {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:14px 16px;
+            background: color-mix(in srgb, var(--modal-bg) 94%, transparent);
+            backdrop-filter: blur(14px);
+            border-bottom:1px solid var(--border-color);
+        }
+        .personalization-head h3 { margin:0; font-size:1rem; flex:1; }
+        .personalization-back,.personalization-close {
+            width:34px;height:34px;border-radius:12px;border:1px solid var(--border-color);
+            background:rgba(255,255,255,.04);color:var(--text-main);cursor:pointer;
+            display:grid;place-items:center;
+        }
+        .personalization-body{padding:14px;display:flex;flex-direction:column;gap:14px;}
+        .ps-section{
+            border:1px solid var(--border-color);
+            background:rgba(255,255,255,.025);
+            border-radius:18px;
+            overflow:hidden;
+        }
+        body.theme-light .ps-section{background:rgba(15,23,42,.025)}
+        .ps-title{padding:13px 14px 8px;font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+        .ps-row{
+            min-height:54px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+            border-top:1px solid var(--border-color);
+        }
+        .ps-row:first-of-type{border-top:none}
+        .ps-copy{min-width:0;flex:1}
+        .ps-copy strong{display:block;font-size:.86rem;color:var(--text-main)}
+        .ps-copy small{display:block;color:var(--text-muted);font-size:.69rem;line-height:1.35;margin-top:2px}
+        .ps-select{
+            max-width:48%;border:0;background:transparent;color:#a78bfa;font-weight:700;font-size:.76rem;cursor:pointer;
+            text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }
+        .ps-input,.ps-textarea{
+            width:100%;box-sizing:border-box;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-main);
+            border-radius:12px;padding:10px 11px;font:inherit;font-size:.78rem;outline:none;
+        }
+        .ps-textarea{min-height:78px;resize:vertical;line-height:1.45}
+        .ps-field{padding:10px 14px;border-top:1px solid var(--border-color)}
+        .ps-field label{display:block;font-size:.7rem;font-weight:700;color:var(--text-muted);margin-bottom:6px}
+        .ps-note{padding:0 14px 12px;color:var(--text-muted);font-size:.68rem;line-height:1.45}
+        .ps-action{
+            border:1px solid var(--border-color);background:rgba(255,255,255,.035);color:var(--text-main);
+            border-radius:12px;padding:8px 10px;font-size:.75rem;font-weight:700;cursor:pointer;
+        }
+        .ps-action.danger{color:#f87171}
+        .ps-memory-card{margin:0 14px 12px;padding:11px;border-radius:13px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2)}
+        .ps-memory-card .summary{font-size:.73rem;line-height:1.45;color:var(--text-muted);white-space:pre-wrap}
+        .ps-chip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px 14px 14px}
+        .ps-chip{
+            min-height:48px;border-radius:13px;border:1px solid var(--border-color);background:rgba(255,255,255,.03);color:var(--text-main);
+            cursor:pointer;text-align:left;padding:9px 10px;
+        }
+        .ps-chip.active{border-color:#8b5cf6;background:rgba(139,92,246,.14)}
+        .ps-chip b{display:block;font-size:.78rem}
+        .ps-chip span{display:block;font-size:.65rem;color:var(--text-muted);margin-top:2px}
+        .personalization-entry{
+            width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+            border:1px solid rgba(139,92,246,.28);background:linear-gradient(135deg,rgba(99,102,241,.09),rgba(168,85,247,.08));
+            color:var(--text-main);border-radius:14px;padding:12px 13px;cursor:pointer;
+        }
+        .personalization-entry .left{display:flex;align-items:center;gap:10px;text-align:left}
+        .personalization-entry strong{font-size:.84rem;display:block}
+        .personalization-entry small{font-size:.66rem;color:var(--text-muted);display:block;margin-top:2px}
+        .ps-inline-actions{display:flex;gap:7px;flex-wrap:wrap}
+        .ps-badge{font-size:.64rem;padding:4px 7px;border-radius:999px;background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+        @media(max-width:420px){
+            .personalization-modal{width:calc(100% - 20px);max-height:90dvh}
+            .ps-row{align-items:flex-start}
+            .ps-select{max-width:44%}
+            .ps-chip-grid{grid-template-columns:1fr}
+        }
+
+
+
+        /* =========================================================
+           PERSONALIZATION — REFERENCE-VIDEO CARBON-STYLE UI
+           JepongDevxyz-branded. Functional browser-native voice preview.
+        ========================================================= */
+        #personalizationModalOverlay.open{align-items:center;justify-content:center;padding:10px;background:rgba(0,0,0,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+        .personalization-modal.ps-reference-ui{width:min(96vw,760px);max-width:760px;height:min(88dvh,760px);max-height:88dvh;padding:0;gap:0;overflow:hidden;border-radius:24px;background:#202020;border:1px solid rgba(255,255,255,.10);box-shadow:0 28px 80px rgba(0,0,0,.58)}
+        body.theme-light .personalization-modal.ps-reference-ui{background:#fff}
+        .ps-ref-head{display:flex;align-items:center;gap:12px;padding:18px 22px 16px;border-bottom:1px solid var(--border-color);flex-shrink:0}
+        .ps-ref-head h2{flex:1;margin:0;font-size:1.55rem;font-weight:500;letter-spacing:-.02em}
+        .ps-ref-close{border:0;background:transparent;color:var(--text-main);width:38px;height:38px;border-radius:50%;font-size:1.75rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+        .ps-ref-close:hover{background:rgba(255,255,255,.06)}
+        .ps-ref-search-wrap{padding:14px 22px 12px;flex-shrink:0}
+        .ps-ref-search{height:50px;border:1px solid rgba(148,163,184,.36);border-radius:26px;display:flex;align-items:center;gap:10px;padding:0 18px;background:transparent}
+        .ps-ref-search svg{color:var(--text-muted);flex-shrink:0}.ps-ref-search input{flex:1;border:0;background:transparent;color:var(--text-main);font-size:1rem;min-width:0}.ps-ref-search input::placeholder{color:var(--text-muted)}
+        .ps-ref-tabs{display:flex;gap:2px;overflow-x:auto;padding:4px 20px 0;border-bottom:1px solid var(--border-color);flex-shrink:0;scroll-snap-type:x proximity}
+        .ps-ref-tab{border:0;background:transparent;color:var(--text-main);padding:14px 14px 15px;border-radius:14px 14px 0 0;font-size:.96rem;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:8px;position:relative;scroll-snap-align:start;opacity:.92}
+        .ps-ref-tab.active{background:rgba(255,255,255,.055)}.ps-ref-tab.active::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:#8b5cf6}
+        .ps-ref-content{overflow-y:auto;flex:1;min-height:0;padding:0 22px 26px;scroll-behavior:smooth}.ps-ref-section{padding:26px 0 8px;border-bottom:1px solid var(--border-color)}.ps-ref-section:last-child{border-bottom:0}
+        .ps-ref-section h3{font-size:1.32rem;font-weight:500;margin:0 0 18px;display:flex;align-items:center;gap:8px}.ps-ref-section .section-help{color:var(--text-muted);font-size:.91rem;line-height:1.48;margin:-8px 0 16px}
+        .ps-ref-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:20px;padding:17px 0;min-width:0}.ps-ref-row+.ps-ref-row{border-top:1px solid rgba(148,163,184,.12)}
+        .ps-ref-copy{min-width:0}.ps-ref-copy strong{display:block;font-size:1rem;font-weight:500;color:var(--text-main)}.ps-ref-copy small{display:block;color:var(--text-muted);font-size:.88rem;line-height:1.46;margin-top:7px;max-width:560px}
+        .ps-ref-choice{border:0;background:transparent;color:var(--text-main);font-size:1rem;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 0 8px 12px;min-width:90px;justify-content:flex-end}.ps-ref-choice .chev{width:28px;height:28px;border-radius:50%;background:#4b4b4b;display:grid;place-items:center;font-size:.75rem;color:#ddd}body.theme-light .ps-ref-choice .chev{background:#e7e7e7;color:#555}
+        .ps-ref-field{padding:14px 0 18px}.ps-ref-field label{display:block;font-size:1rem;font-weight:500;margin-bottom:10px}.ps-ref-field input,.ps-ref-field textarea{width:100%;border:1px solid rgba(148,163,184,.3);background:rgba(255,255,255,.025);color:var(--text-main);border-radius:14px;padding:13px 14px;font-size:.95rem;resize:vertical}.ps-ref-field textarea{min-height:92px;line-height:1.45}
+        .ps-ref-manage{border:1px solid rgba(148,163,184,.34);background:transparent;color:var(--text-main);border-radius:24px;padding:10px 20px;font-size:.95rem;font-weight:600;cursor:pointer}.ps-ref-note{color:var(--text-muted);font-size:.86rem;line-height:1.5;padding:14px 0 4px}.ps-ref-danger{color:#f87171}.ps-ref-reset{border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.07);color:#fca5a5;border-radius:22px;padding:10px 18px;font-weight:600;cursor:pointer}
+
+        /* Drop-down/popover used by tone, voice model, intelligence and language */
+        .ps-choice-overlay{position:fixed;inset:0;z-index:1205;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.28);padding:18px}.ps-choice-overlay.open{display:flex}.ps-choice-card{width:min(92vw,420px);max-height:72dvh;overflow-y:auto;border-radius:28px;background:#3a3a3a;border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 70px rgba(0,0,0,.55);padding:10px 0}body.theme-light .ps-choice-card{background:#f3f3f3}.ps-choice-title{padding:14px 22px 8px;font-size:.86rem;color:var(--text-muted)}.ps-choice-item{width:100%;border:0;background:transparent;color:var(--text-main);padding:15px 22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;text-align:left;cursor:pointer}.ps-choice-item:hover{background:rgba(255,255,255,.05)}.ps-choice-item strong{display:block;font-size:1rem;font-weight:500}.ps-choice-item small{display:block;margin-top:5px;color:var(--text-muted);font-size:.82rem;line-height:1.35}.ps-choice-check{font-size:1.2rem;align-self:center}
+
+        /* Pet picker – full visual list like the reference flow */
+        .ps-pet-page,.ps-voice-page{display:none;height:100%;min-height:0;flex-direction:column;background:#202020}.ps-pet-page.open,.ps-voice-page.open{display:flex}body.theme-light .ps-pet-page,body.theme-light .ps-voice-page{background:#fff}
+        .ps-pet-toolbar,.ps-voice-toolbar{display:flex;align-items:center;gap:12px;padding:18px 22px 14px;border-bottom:1px solid var(--border-color);flex-shrink:0}.ps-pet-back,.ps-voice-back{border:0;background:transparent;color:var(--text-main);font-size:1.5rem;width:34px;height:34px;cursor:pointer}.ps-pet-toolbar h3,.ps-voice-toolbar h3{flex:1;margin:0;font-size:1.35rem;font-weight:500}.ps-upload-btn{border:1px solid rgba(148,163,184,.35);background:transparent;color:var(--text-main);border-radius:24px;padding:9px 15px;cursor:pointer;font-size:.9rem}
+        .ps-pet-list{overflow-y:auto;padding:10px 22px 28px;flex:1;min-height:0}.ps-pet-item{display:grid;grid-template-columns:58px minmax(0,1fr) 34px;align-items:center;gap:12px;padding:17px 0;border-bottom:1px solid rgba(148,163,184,.14);cursor:pointer}.ps-pet-avatar{width:50px;height:50px;border-radius:15px;background:rgba(139,92,246,.10);display:grid;place-items:center;overflow:hidden}.ps-pet-avatar img{width:100%;height:100%;object-fit:cover}.ps-pet-mascot{width:48px;height:48px;display:block}.ps-pet-copy strong{display:block;font-size:1.02rem;font-weight:600}.ps-pet-copy small{display:block;color:var(--text-muted);font-size:.86rem;line-height:1.42;margin-top:4px}.ps-pet-radio{width:24px;height:24px;border:2px solid #676767;border-radius:50%;display:grid;place-items:center}.ps-pet-item.selected .ps-pet-radio{border-color:#8b5cf6}.ps-pet-item.selected .ps-pet-radio::after{content:"";width:12px;height:12px;background:#8b5cf6;border-radius:50%}
+        .ps-custom-pet{margin:10px 0 4px;padding:0;border:0;background:transparent}.ps-create-pet-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 0 18px;border-bottom:1px solid rgba(148,163,184,.14);cursor:pointer}.ps-create-pet-icon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--text-main);font-size:1.25rem}.ps-create-pet-row strong{display:block;font-size:1rem}.ps-create-pet-row small{display:block;color:var(--text-muted);font-size:.85rem;line-height:1.4;margin-top:4px}.ps-create-pet-fields{display:none;padding:14px 0 18px;border-bottom:1px solid rgba(148,163,184,.14)}.ps-create-pet-fields.open{display:block}.ps-create-pet-fields input,.ps-create-pet-fields textarea{width:100%;border:1px solid rgba(148,163,184,.28);background:transparent;color:var(--text-main);border-radius:12px;padding:11px 12px;margin-top:8px}.ps-create-pet-fields textarea{min-height:72px;resize:vertical}.ps-create-pet-fields button{margin-top:10px;border:0;border-radius:20px;padding:9px 15px;background:#8b5cf6;color:white;font-weight:600;cursor:pointer}
+
+        /* Voice page – orb, carousel, dots, preview and dropdown rows */
+        .ps-voice-scroll{overflow-y:auto;min-height:0;flex:1;padding:22px 22px 28px}.ps-voice-stage{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 0 18px}.ps-voice-orb{width:150px;height:150px;border-radius:50%;position:relative;overflow:hidden;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95) 0 8%,rgba(202,217,255,.88) 21%,rgba(129,140,248,.9) 50%,rgba(85,76,255,.92) 78%,rgba(40,38,150,.95) 100%);box-shadow:inset 0 0 32px rgba(255,255,255,.45),0 18px 44px rgba(99,102,241,.20);transition:filter .2s,transform .2s}.ps-voice-orb::before{content:"";position:absolute;inset:-30%;background:linear-gradient(115deg,transparent 28%,rgba(255,255,255,.86) 44%,rgba(255,255,255,.22) 55%,transparent 68%);filter:blur(12px);transform:rotate(-8deg);animation:voiceCloud 7s ease-in-out infinite}.ps-voice-orb.speaking{animation:voicePulse .65s ease-in-out infinite alternate;filter:saturate(1.2) brightness(1.05)}
+        @keyframes voiceCloud{0%,100%{transform:translate(-18%,-6%) rotate(-8deg)}50%{transform:translate(22%,10%) rotate(8deg)}}@keyframes voicePulse{from{transform:scale(1)}to{transform:scale(1.045);box-shadow:inset 0 0 38px rgba(255,255,255,.5),0 20px 54px rgba(99,102,241,.32)}}
+        .ps-voice-name{font-size:1.25rem;font-weight:650;margin-top:18px}.ps-voice-desc{color:var(--text-muted);font-size:.92rem;margin-top:4px}.ps-voice-nav{width:100%;display:grid;grid-template-columns:42px minmax(0,1fr) 42px;align-items:center;margin-top:5px}.ps-voice-nav button{border:0;background:transparent;color:var(--text-muted);font-size:2rem;cursor:pointer;height:42px}.ps-voice-dots{display:flex;justify-content:center;align-items:center;gap:10px}.ps-voice-dot{width:8px;height:8px;border-radius:50%;background:#555}.ps-voice-dot.active{background:#f1f5f9}.ps-voice-preview{margin-top:15px;border:1px solid rgba(148,163,184,.34);background:transparent;color:var(--text-main);border-radius:22px;padding:9px 16px;font-size:.88rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px}.ps-voice-preview:disabled{opacity:.5;cursor:not-allowed}.ps-voice-sample-status{min-height:18px;color:var(--text-muted);font-size:.78rem;margin-top:8px}
+        .ps-voice-settings{border-top:1px solid rgba(148,163,184,.15);margin-top:4px}.ps-voice-setting-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 0;border-bottom:1px solid rgba(148,163,184,.12)}.ps-voice-setting-row strong{font-weight:500;font-size:1rem}.ps-voice-value{border:0;background:transparent;color:var(--text-main);font-size:1rem;display:flex;align-items:center;gap:8px;cursor:pointer}.ps-voice-value span:last-child{color:var(--text-muted);font-size:.8rem}
+        .ps-voice-help{font-size:.8rem;line-height:1.45;color:var(--text-muted);padding-top:14px}.ps-voice-browser-note{padding:12px 14px;border-radius:14px;background:rgba(99,102,241,.09);border:1px solid rgba(99,102,241,.18);color:var(--text-muted);font-size:.78rem;line-height:1.45;margin-top:14px}
+
+
+
+        @keyframes psSpin{to{transform:rotate(360deg)}}.spin{animation:psSpin .8s linear infinite}
+        .pet-header-companion{display:none;width:34px;height:34px;min-width:34px;border:1px solid rgba(139,92,246,.22);background:rgba(139,92,246,.08);border-radius:12px;place-items:center;font-size:22px;line-height:1;cursor:pointer;overflow:hidden;transition:.18s ease}.pet-header-companion:hover{transform:translateY(-1px);background:rgba(139,92,246,.14)}.pet-header-companion img{width:100%;height:100%;object-fit:cover}.pet-header-companion.visible{display:grid}
+
+        /* ===== PET + VOICE MODERN UI FIX ===== */
+        .ps-pet-toolbar,.ps-voice-toolbar{gap:10px;background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)}
+        .ps-pet-back,.ps-voice-back,.ps-icon-btn{display:grid;place-items:center;border:1px solid rgba(148,163,184,.18)!important;background:rgba(255,255,255,.035)!important;color:var(--text-main)!important;border-radius:14px!important;width:42px!important;height:42px!important;transition:.18s ease;cursor:pointer}
+        .ps-pet-back:hover,.ps-voice-back:hover,.ps-icon-btn:hover{background:rgba(139,92,246,.13)!important;border-color:rgba(139,92,246,.35)!important;transform:translateY(-1px)}
+        .ps-upload-btn{display:inline-flex;align-items:center;gap:7px;border-radius:14px;padding:10px 13px;background:rgba(255,255,255,.035);transition:.18s ease}
+        .ps-upload-btn:hover{border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.09)}
+        .ps-pet-hero{padding:18px 0 14px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+        .ps-pet-hero-copy{min-width:0}.ps-pet-hero-copy strong{display:block;font-size:1.08rem}.ps-pet-hero-copy small{display:block;color:var(--text-muted);font-size:.82rem;line-height:1.4;margin-top:4px}
+        .ps-pet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:4px 0 16px}
+        .ps-pet-card{position:relative;border:1px solid rgba(148,163,184,.16);background:rgba(255,255,255,.025);border-radius:18px;padding:13px 9px 11px;min-width:0;cursor:pointer;text-align:center;color:var(--text-main);transition:.18s ease;box-shadow:0 8px 24px rgba(0,0,0,.10)}
+        .ps-pet-card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.35);background:rgba(139,92,246,.055)}
+        .ps-pet-card.selected{border-color:#8b5cf6;background:linear-gradient(180deg,rgba(139,92,246,.16),rgba(99,102,241,.06));box-shadow:0 0 0 1px rgba(139,92,246,.35),0 10px 28px rgba(91,33,182,.18)}
+        .ps-pet-card-visual{width:76px;height:76px;margin:0 auto 9px;border-radius:22px;display:grid;place-items:center;font-size:47px;line-height:1;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.14),rgba(99,102,241,.08) 48%,rgba(15,23,42,.1));overflow:hidden}
+        .ps-pet-card-visual img{width:100%;height:100%;object-fit:cover}.ps-pet-card-name{font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps-pet-card-desc{font-size:.66rem;color:var(--text-muted);line-height:1.25;margin-top:3px;min-height:32px}
+        .ps-pet-check{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;display:none;place-items:center;background:#7c3aed;color:#fff;box-shadow:0 4px 12px rgba(124,58,237,.4)}.ps-pet-card.selected .ps-pet-check{display:grid}
+        .ps-pet-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:2px 0 16px}.ps-pet-action-card{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid rgba(148,163,184,.16);border-radius:16px;background:rgba(255,255,255,.025);cursor:pointer;color:var(--text-main);text-align:left}.ps-pet-action-card:hover{border-color:rgba(139,92,246,.35);background:rgba(139,92,246,.055)}.ps-pet-action-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:rgba(99,102,241,.12);color:#a78bfa;flex-shrink:0}.ps-pet-action-card strong{font-size:.88rem;display:block}.ps-pet-action-card small{font-size:.7rem;color:var(--text-muted);display:block;margin-top:2px}
+        .ps-pet-list{padding-top:0}.ps-pet-list #psPetOptions{display:block}
+        .ps-create-pet-row{border:1px solid rgba(148,163,184,.16);border-radius:16px;padding:14px;margin-bottom:12px}.ps-create-pet-icon{border:0;background:rgba(139,92,246,.12);color:#a78bfa}
+        .ps-voice-stage{padding-top:6px}.ps-voice-orb{width:160px;height:160px}.ps-voice-nav{grid-template-columns:48px minmax(0,1fr) 48px;margin-top:12px}.ps-voice-nav>.ps-voice-arrow{display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.025);border-radius:50%;color:var(--text-muted);cursor:pointer;transition:.18s ease}.ps-voice-nav>.ps-voice-arrow:hover{color:var(--text-main);border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.08)}
+        .ps-voice-dots{gap:8px}.ps-voice-dot{width:8px!important;height:8px!important;min-width:8px!important;min-height:8px!important;padding:0!important;border:0!important;border-radius:50%!important;background:#4b5563!important;display:block!important}.ps-voice-dot.active{background:#8b5cf6!important;box-shadow:0 0 0 4px rgba(139,92,246,.12)}
+        .ps-voice-preview{border-radius:14px;padding:10px 16px;background:rgba(255,255,255,.025)}.ps-voice-preview i,.ps-voice-preview svg{width:17px;height:17px}.ps-voice-setting-row{padding:16px 0}.ps-voice-setting-row .ps-voice-value{padding:8px 10px;border-radius:10px}.ps-voice-setting-row .ps-voice-value:hover{background:rgba(255,255,255,.04)}
+        .ps-voice-sliders{margin-top:14px;padding:16px;border:1px solid rgba(148,163,184,.15);border-radius:18px;background:rgba(255,255,255,.02)}.ps-slider-row{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;align-items:center;gap:12px;padding:9px 0}.ps-slider-row label{font-size:.82rem;font-weight:600}.ps-slider-row output{font-size:.75rem;color:var(--text-muted);text-align:right}.ps-slider-row input[type=range]{width:100%;accent-color:#8b5cf6}.ps-auto-preview-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:12px;margin-top:6px;border-top:1px solid rgba(148,163,184,.12)}.ps-auto-preview-row strong{font-size:.82rem}.ps-modern-status{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:.74rem;color:var(--text-muted)}
+        @media(max-width:620px){.ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ps-pet-card-visual{width:72px;height:72px}.ps-pet-action-grid{grid-template-columns:1fr}.ps-pet-toolbar h3,.ps-voice-toolbar h3{font-size:1.16rem}.ps-upload-btn{font-size:.78rem;padding:9px 10px}.ps-voice-orb{width:150px;height:150px}}
+        @media(max-width:620px){#personalizationModalOverlay.open{padding:0;align-items:flex-end}.personalization-modal.ps-reference-ui{width:100vw;max-width:none;height:92dvh;max-height:92dvh;border-radius:24px 24px 0 0}.ps-ref-head{padding:16px 18px 14px}.ps-ref-head h2{font-size:1.32rem}.ps-ref-search-wrap{padding:12px 18px 10px}.ps-ref-tabs{padding-left:10px;padding-right:10px}.ps-ref-tab{padding:13px 12px 14px;font-size:.92rem}.ps-ref-content{padding:0 18px 24px}.ps-ref-row{gap:12px;padding:16px 0}.ps-ref-copy strong{font-size:.98rem}.ps-ref-copy small{font-size:.85rem}.ps-ref-choice{font-size:.96rem;min-width:78px}.ps-choice-overlay{align-items:flex-end;padding:0;background:rgba(0,0,0,.46)}.ps-choice-card{width:100%;max-width:none;border-radius:28px 28px 0 0;max-height:66dvh;padding-bottom:max(12px,env(safe-area-inset-bottom))}.ps-pet-toolbar,.ps-voice-toolbar{padding:16px 18px 12px}.ps-pet-list,.ps-voice-scroll{padding-left:18px;padding-right:18px}.ps-voice-orb{width:142px;height:142px}}
+
+    
+        /* ===== JEPONGDEVXYZ LIVE PET COMPANION v2 ===== */
+        .ps-pet-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px 0 18px}
+        .ps-pet-hero-copy strong{display:block;font-size:1.05rem}.ps-pet-hero-copy small{display:block;color:var(--text-muted);font-size:.82rem;line-height:1.45;margin-top:5px}
+        .ps-pet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .ps-pet-card{position:relative;min-width:0;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.025);color:var(--text-main);border-radius:18px;padding:10px 7px 11px;cursor:pointer;text-align:center;transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;overflow:hidden}
+        .ps-pet-card:hover,.ps-pet-card:active{transform:translateY(-2px);background:rgba(139,92,246,.07)}
+        .ps-pet-card.selected{border-color:#7c5cff;background:linear-gradient(180deg,rgba(124,92,255,.17),rgba(124,92,255,.06));box-shadow:0 0 0 1px rgba(124,92,255,.25),0 10px 30px rgba(0,0,0,.18)}
+        .ps-pet-check{position:absolute;right:7px;top:7px;width:21px;height:21px;border-radius:50%;display:none;place-items:center;background:#7357ff;color:white;z-index:2}
+        .ps-pet-check svg{width:13px;height:13px}.ps-pet-card.selected .ps-pet-check{display:grid}
+        .ps-pet-card-visual{height:76px;display:grid;place-items:center;font-size:55px;line-height:1;filter:drop-shadow(0 8px 10px rgba(0,0,0,.28));transform-origin:50% 100%;transition:transform .2s}
+        .ps-pet-card:hover .ps-pet-card-visual{transform:scale(1.07) rotate(-2deg)}
+        .ps-pet-card-visual img{width:70px;height:70px;border-radius:18px;object-fit:cover}
+        .ps-pet-card-name{font-weight:700;font-size:.82rem;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .ps-pet-card-desc{font-size:.62rem;color:var(--text-muted);line-height:1.25;margin-top:2px;min-height:2.5em}
+        .ps-pet-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+        .ps-pet-action-card{min-width:0;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.025);color:var(--text-main);border-radius:16px;padding:13px;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer}
+        .ps-pet-action-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(124,92,255,.13);color:#9b87ff;flex:0 0 auto}
+        .ps-pet-action-card strong,.ps-pet-action-card small{display:block}.ps-pet-action-card strong{font-size:.78rem}.ps-pet-action-card small{font-size:.66rem;color:var(--text-muted);margin-top:3px}
+        @media(max-width:560px){.ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ps-pet-card-visual{height:88px;font-size:64px}.ps-pet-action-grid{grid-template-columns:1fr}.ps-upload-btn span{display:none}}
+
+        /* iOS-style pet toggle */
+        #psShowPetInChat + span{width:48px!important;height:28px!important;border-radius:999px!important;transition:.25s cubic-bezier(.2,.8,.2,1)!important}
+        #psShowPetInChat + span:before{width:22px!important;height:22px!important;left:3px!important;top:3px!important}
+        #psShowPetInChat:checked + span{background:#7357ff!important}
+        #psShowPetInChat:checked + span:before{transform:translateX(20px)!important}
+
+        /* Live pet on the chat screen */
+        .live-pet-layer{position:absolute;inset:0;pointer-events:none;z-index:18;overflow:hidden}
+        .live-pet{--pet-x:24px;position:absolute;left:var(--pet-x);bottom:94px;width:82px;height:96px;display:none;pointer-events:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer;filter:drop-shadow(0 10px 13px rgba(0,0,0,.35));transition:left 1.8s cubic-bezier(.22,.75,.25,1),bottom .35s ease,transform .25s ease,filter .25s ease}
+        .live-pet.visible{display:block;animation:petEnter .45s cubic-bezier(.2,.9,.25,1)}
+        .live-pet-visual{width:74px;height:74px;display:grid;place-items:center;font-size:61px;line-height:1;transform-origin:50% 100%;animation:petWalkBob .62s ease-in-out infinite alternate}
+        .live-pet-visual img{width:68px;height:68px;border-radius:20px;object-fit:cover}
+        .live-pet-name{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font-size:10px;font-weight:700;padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.78);border:1px solid rgba(255,255,255,.1);color:white;white-space:nowrap;backdrop-filter:blur(8px)}
+        .live-pet-bubble{position:absolute;left:50%;bottom:91px;transform:translateX(-50%) translateY(6px);max-width:150px;padding:7px 10px;border-radius:13px;background:rgba(15,23,42,.92);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:10px;line-height:1.25;text-align:center;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap}
+        .live-pet-bubble.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        .live-pet.sleeping .live-pet-visual{animation:petSleep 2.2s ease-in-out infinite;filter:saturate(.7)}
+        .live-pet.sleeping::after{content:"Z z";position:absolute;right:-3px;top:0;color:#a78bfa;font-weight:800;font-size:14px;animation:petZ 1.5s ease-in-out infinite}
+        .live-pet.working .live-pet-visual{animation:petWork .38s ease-in-out infinite alternate}
+        .live-pet.petting .live-pet-visual{animation:petHappy .45s ease-in-out 3}
+        .live-pet.eating .live-pet-visual{animation:petEat .28s ease-in-out 6}
+        .live-pet.eating::before{content:"🍪";position:absolute;left:3px;top:48px;font-size:25px;animation:petFood 1.7s ease forwards}
+        @keyframes petEnter{from{opacity:0;transform:translateY(25px) scale(.75)}to{opacity:1;transform:none}}
+        @keyframes petWalkBob{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-5px) rotate(2deg)}}
+        @keyframes petSleep{0%,100%{transform:translateY(5px) rotate(-5deg) scaleY(.92)}50%{transform:translateY(7px) rotate(-5deg) scaleY(.87)}}
+        @keyframes petZ{0%{opacity:0;transform:translate(0,8px) scale(.7)}70%{opacity:1}100%{opacity:0;transform:translate(12px,-18px) scale(1.15)}}
+        @keyframes petWork{from{transform:translateY(0) rotate(-5deg) scale(1)}to{transform:translateY(-7px) rotate(5deg) scale(1.04)}}
+        @keyframes petHappy{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-12px) scale(1.08) rotate(5deg)}}
+        @keyframes petEat{from{transform:rotate(-3deg) scale(1)}to{transform:rotate(3deg) scale(.96)}}
+        @keyframes petFood{0%{transform:translateX(-12px);opacity:1}75%{transform:translateX(30px) translateY(-5px) scale(.7);opacity:1}100%{transform:translateX(38px) translateY(-8px) scale(.25);opacity:0}}
+        @media(prefers-reduced-motion:reduce){.live-pet,.live-pet-visual{animation:none!important;transition:none!important}}
+
+    
+        .ps-pet-card-visual img{width:86px!important;height:86px!important;object-fit:contain!important;border-radius:0!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.32))}
+        .live-pet-visual img{width:82px!important;height:82px!important;object-fit:contain!important;border-radius:0!important;filter:drop-shadow(0 9px 11px rgba(0,0,0,.28))}
+        #petHeaderCompanion img{width:100%;height:100%;object-fit:contain!important;border-radius:0!important}
+
     </style>
 </head>
 <body>
@@ -936,11 +1254,19 @@
             </div>
         </div>
 
+        <div class="live-pet-layer" id="livePetLayer" aria-hidden="true">
+            <div class="live-pet" id="livePetCompanion" role="button" tabindex="0" aria-label="Pet companion">
+                <div class="live-pet-bubble" id="livePetBubble"></div>
+                <div class="live-pet-visual" id="livePetVisual"></div>
+                <div class="live-pet-name" id="livePetName"></div>
+            </div>
+        </div>
+
         <div class="header">
             <div class="header-top">
                 <div class="brand">
                     <button class="brand-icon" onclick="openMenuFromBrandIcon()">✦</button>
-                    <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
+                    <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div><button type="button" id="petHeaderCompanion" class="pet-header-companion" onclick="openPersonalizationSettings();setTimeout(openPetPicker,80)" title="Pet companion" aria-label="Pet companion"></button>
                 </div>
                 <div class="header-tools-group">
                     <div class="network-status" id="networkStatus" onclick="measureNetworkPing()" title="Click to refresh ping">
@@ -988,6 +1314,7 @@
                     <span>Web</span>
                 </button>
 
+
                 <input type="text" id="customPromptInput" class="custom-prompt-input" placeholder="Type custom persona instructions here...">
             </div>
         </div>
@@ -1009,6 +1336,7 @@
         </div>
 
         <div class="input-container" id="inputContainer">
+            <div class="prompt-suggestions" id="promptSuggestions"></div>
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
             <div class="chat-input-pill">
@@ -1137,6 +1465,19 @@
 
         <div class="divider"></div>
 
+
+        <button type="button" class="personalization-entry" onclick="openPersonalizationSettings()">
+            <span class="left">
+                <span style="width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(139,92,246,.16);color:#a78bfa;">✦</span>
+                <span>
+                    <strong>Personalization</strong>
+                    <small>Style, about you, memory, writing, advanced & voice behavior</small>
+                </span>
+            </span>
+            <span style="color:var(--text-muted);font-size:1rem;">›</span>
+        </button>
+
+        <div class="divider"></div>
         <button type="button" class="modern-select-btn" onclick="openPresetsModal()" style="margin-top: 2px;">
             <span style="display: flex; align-items: center; gap: 8px;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -1148,50 +1489,29 @@
         <div class="divider"></div>
 
         <div class="usage-section">
-          <h4 class="usage-title">Gemini Style Usage & Tokens</h4>
-          
+          <h4 class="usage-title">Live Provider Usage & Tokens</h4>
           <div class="usage-metric-card">
-            <div class="metric-box">
-                <h5>Words</h5>
-                <p id="geminiWordCount">0</p>
-            </div>
-            <div class="metric-box">
-                <h5>Est. Tokens</h5>
-                <p id="geminiTokenCount">0</p>
-            </div>
-            <div class="metric-box">
-                <h5>Queries</h5>
-                <p id="geminiQueryCount">0</p>
-            </div>
+            <div class="metric-box"><h5>Words</h5><p id="geminiWordCount">0</p></div>
+            <div class="metric-box"><h5>Est. Tokens</h5><p id="geminiTokenCount">0</p></div>
+            <div class="metric-box"><h5>Queries</h5><p id="geminiQueryCount">0</p></div>
           </div>
-
           <div class="usage-limits-deck">
             <div class="limit-card">
-              <div class="limit-card-header">
-                <div class="limit-title-wrap">
-                  <span>Current usage</span>
-                  <span class="info-circle" title="Your usage over a 5-hour window.">i</span>
-                </div>
-                <span class="limit-percent" id="currentUsagePercent">0% used</span>
-              </div>
-              <div class="progress-track">
-                <div class="progress-fill" id="currentUsageBar"></div>
-              </div>
-              <div class="limit-card-footer" id="currentUsageResetText">Resets soon</div>
+              <div class="limit-card-header"><div class="limit-title-wrap"><span id="currentUsageTitle">Selected provider quota</span><span class="info-circle" title="Synced from provider-reported limits when available. A real HTTP 429 marks the provider as reached/rate-limited.">i</span></div><span class="limit-percent" id="currentUsagePercent">Syncing…</span></div>
+              <div class="progress-track"><div class="progress-fill" id="currentUsageBar"></div></div>
+              <div class="limit-card-footer" id="currentUsageResetText">Waiting for provider data</div>
             </div>
-
             <div class="limit-card">
-              <div class="limit-card-header">
-                <div class="limit-title-wrap">
-                  <span>Weekly limit</span>
-                </div>
-                <span class="limit-percent" id="weeklyUsagePercent">0% used</span>
-              </div>
-              <div class="progress-track">
-                <div class="progress-fill" id="weeklyUsageBar"></div>
-              </div>
-              <div class="limit-card-footer" id="weeklyUsageResetText">Resets this week</div>
+              <div class="limit-card-header"><div class="limit-title-wrap"><span>Context usage</span></div><span class="limit-percent" id="weeklyUsagePercent">0% used</span></div>
+              <div class="progress-track"><div class="progress-fill" id="weeklyUsageBar"></div></div>
+              <div class="limit-card-footer" id="weeklyUsageResetText">Estimated from the active conversation context</div>
             </div>
+          </div>
+          <div class="usage-sync-note" id="usageSyncNote"><strong>Accurate limit detection:</strong> provider 429/rate-limit responses are marked immediately. Exact remaining quota is shown only when the provider exposes it.</div>
+          <div class="provider-status-grid" id="providerStatusGrid"></div>
+          <div style="width:100%;margin-top:8px">
+            <div class="feature-toggle-row"><span>Auto Provider Fallback</span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></div>
+            <div class="feature-toggle-row"><span>Smart Model Router</span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></div>
           </div>
         </div>
 
@@ -1204,6 +1524,186 @@
             <button onclick="setTheme('theme-neon')" class="option-item" style="flex:1; justify-content:center; border: 1px solid var(--border-color); font-size: 0.75rem;">Neon</button>
             <button onclick="setTheme('theme-sunset')" class="option-item" style="flex:1; justify-content:center; border: 1px solid var(--border-color); font-size: 0.75rem;">Sunset</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- PERSONALIZATION SETTINGS — reference-video style -->
+    <div class="modal-overlay" id="personalizationModalOverlay" onclick="if(event.target===this) closePersonalizationSettings()">
+      <div class="floating-modal personalization-modal ps-reference-ui">
+        <div id="personalizationMainPage" style="display:flex;flex-direction:column;height:100%;min-height:0;">
+          <div class="ps-ref-head">
+            <h2>Settings</h2>
+            <span class="ps-badge" id="psMemoryBadge" style="display:none">Local only</span>
+            <button class="ps-ref-close" onclick="closePersonalizationSettings()" aria-label="Close">×</button>
+          </div>
+
+          <div class="ps-ref-search-wrap">
+            <div class="ps-ref-search">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input id="personalizationSearchInput" type="search" placeholder="Search settings" oninput="filterPersonalizationSettings(this.value)">
+            </div>
+          </div>
+
+          <div class="ps-ref-tabs" id="personalizationTabs">
+            <button class="ps-ref-tab" onclick="openGeneralSettingsFromPersonalization()">⚙ General</button>
+            <button class="ps-ref-tab" onclick="showModernAlert('Notification preferences can be added here later.','Notifications')">♧ Notifications</button>
+            <button class="ps-ref-tab active" onclick="scrollPsSection('psStyleSection')">◉ Personalization</button>
+            <button class="ps-ref-tab" id="psVoiceTabBtn" onclick="openVoiceSettingsPage()">◉ Voice</button>
+            <button class="ps-ref-tab" onclick="scrollPsSection('psAdvancedSection')">◎ Plugins</button>
+          </div>
+
+          <div class="ps-ref-content" id="personalizationContent">
+            <section class="ps-ref-section" id="psStyleSection" data-ps-search="base style tone characteristics warm enthusiastic headers lists emoji fast answers suggested prompts custom instructions">
+              <h3>Base style and tone</h3>
+              <div class="ps-ref-row">
+                <div class="ps-ref-copy"><strong>Base style and tone</strong><small>Choose the overall personality JepongDevxyz AI should use in replies.</small></div>
+                <button class="ps-ref-choice" id="psBaseStyleBtn" onclick="openPersonalizationPicker('baseStyle','Base style and tone',[['Default','Balanced for everyday use'],['Professional','Polished and precise'],['Friendly','Warm and conversational'],['Candid','Direct and straightforward'],['Quirky','Playful and imaginative'],['Efficient','Concise and task-focused'],['Cynical','Dry and skeptical']])">Default <span class="chev">⌄</span></button>
+              </div>
+              <div class="section-help">Choose additional customizations on top of your base style and tone.</div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Warm</strong></div><button class="ps-ref-choice" id="psWarmBtn" onclick="openPersonalizationPicker('warm','Warm',[['More','Friendlier and more personable'],['Default','Balanced warmth'],['Less','More professional and factual']])">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enthusiastic</strong></div><button class="ps-ref-choice" id="psEnthusiasticBtn" onclick="openPersonalizationPicker('enthusiastic','Enthusiastic',[['More','More energetic and expressive'],['Default','Balanced energy'],['Less','Calmer and more restrained']])">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Headers & Lists</strong></div><button class="ps-ref-choice" id="psHeadersBtn" onclick="openPersonalizationPicker('headersLists','Headers & Lists',[['More','Use structured headings and lists more often'],['Default','Use structure when useful'],['Less','Prefer flowing paragraphs']])">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Emoji</strong></div><button class="ps-ref-choice" id="psEmojiBtn" onclick="openPersonalizationPicker('emoji','Emoji',[['More','Use emoji a little more often'],['Default','Use emoji when natural'],['Less','Prefer little or no emoji']])">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Fast answers</strong><small>Prefer concise answers first when the question does not need a long explanation.</small></div><label class="mini-toggle"><input id="psFastAnswers" type="checkbox" onchange="setPersonalizationToggle('fastAnswers',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Suggested prompts</strong><small>Show personalized prompt suggestions based on your current mode.</small></div><label class="mini-toggle"><input id="psSuggestedPrompts" type="checkbox" onchange="setPersonalizationToggle('suggestedPrompts',this.checked)"><span></span></label></div>
+              <div class="ps-ref-field"><label>Custom instructions</label><textarea id="psCustomInstructions" placeholder="Additional behavior, style, and tone preferences…" oninput="savePersonalizationField('customInstructions',this.value)"></textarea></div>
+            </section>
+
+            <section class="ps-ref-section" id="psPetSection" data-ps-search="pet companion choose pet upload custom create">
+              <h3>Pet companion</h3>
+              <div class="ps-ref-row" onclick="openPetPicker()" style="cursor:pointer">
+                <div class="ps-ref-copy"><strong>Pet</strong><small>Choose a companion persona that can subtly influence friendliness and style.</small></div>
+                <button class="ps-ref-choice" id="psPetBtn" type="button" onclick="event.stopPropagation();openPetPicker()">None <span class="chev">›</span></button>
+              </div>
+            </section>
+
+            <section class="ps-ref-section" id="psAboutSection" data-ps-search="about you nickname occupation more about you profile">
+              <h3>About you</h3>
+              <div class="ps-ref-field"><label>Nickname</label><input id="psNickname" placeholder="What should JepongDevxyz AI call you?" oninput="savePersonalizationField('nickname',this.value)"></div>
+              <div class="ps-ref-field"><label>Occupation</label><input id="psOccupation" placeholder="Example: Student, developer, creator…" oninput="savePersonalizationField('occupation',this.value)"></div>
+              <div class="ps-ref-field"><label>More about you</label><textarea id="psMoreAbout" placeholder="Interests, preferences, goals, or context you want the AI to keep in mind" oninput="savePersonalizationField('moreAbout',this.value)"></textarea></div>
+              <div class="ps-ref-note">Only save information you are comfortable keeping on this device.</div>
+            </section>
+
+            <section class="ps-ref-section" id="psMemorySection" data-ps-search="memory enable memory summary manage chat history saved memories">
+              <h3>Memory <span class="info-circle" title="Stored locally in this browser">?</span></h3>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enable memory</strong><small>Let JepongDevxyz AI personalize future chats using your saved local memory summary and personalization settings.</small></div><label class="mini-toggle"><input id="psMemoryEnabled" type="checkbox" onchange="setPersonalizationToggle('memoryEnabled',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Memory summary</strong><small id="psMemorySummaryPreview">View and edit an overview of information you want JepongDevxyz AI to keep in mind.</small></div><button class="ps-ref-manage" onclick="openMemorySummaryEditor()">Manage</button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference chat history</strong><small>Use the active conversation history as context for your next response.</small></div><label class="mini-toggle"><input id="psReferenceHistory" type="checkbox" onchange="setPersonalizationToggle('referenceChatHistory',this.checked)"><span></span></label></div>
+              <div class="ps-ref-note">Memory may also personalize web-search phrasing when live web context is enabled. Temporary/Incognito chats do not use this personalization payload.</div>
+            </section>
+
+            <section class="ps-ref-section" id="psWritingSection" data-ps-search="writing reference writing style record history">
+              <h3>Writing</h3>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference my writing style</strong><small>Use your writing tone and phrasing in the current conversation as a guide without copying long passages.</small></div><label class="mini-toggle"><input id="psWritingStyle" type="checkbox" onchange="setPersonalizationToggle('referenceWritingStyle',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference record history</strong><small>Keep voice/record interaction preferences consistent on this device.</small></div><label class="mini-toggle"><input id="psRecordHistory" type="checkbox" onchange="setPersonalizationToggle('referenceRecordHistory',this.checked)"><span></span></label></div>
+            </section>
+
+            <section class="ps-ref-section" id="psAdvancedSection" data-ps-search="advanced web search canvas preview voice library file search connectors plugins">
+              <h3>Advanced</h3>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Web search</strong><small>Allow live web context when the Web button is enabled.</small></div><label class="mini-toggle"><input id="psAdvancedWeb" type="checkbox" onchange="setPersonalizationToggle('advancedWebSearch',this.checked);syncPersonalizationFeatureToggles()"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Canvas / code preview</strong><small>Allow runnable previews and fullscreen code tools in supported responses.</small></div><label class="mini-toggle"><input id="psCanvas" type="checkbox" onchange="setPersonalizationToggle('canvasPreview',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Voice</strong><small>Allow response speech and voice controls.</small></div><label class="mini-toggle"><input id="psVoiceFeature" type="checkbox" onchange="setPersonalizationToggle('voiceEnabled',this.checked);syncPersonalizationFeatureToggles()"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Library / file search</strong><small>Allow attached files to be included in supported AI requests.</small></div><label class="mini-toggle"><input id="psLibrarySearch" type="checkbox" onchange="setPersonalizationToggle('librarySearch',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Connector search preference</strong><small>Saves your preference for future connected-service integrations. It does not connect an external account by itself.</small></div><label class="mini-toggle"><input id="psConnectorSearch" type="checkbox" onchange="setPersonalizationToggle('connectorSearch',this.checked)"><span></span></label></div>
+            </section>
+
+            <section class="ps-ref-section" id="psVoiceSection" data-ps-search="voice personality model intelligence language response speech">
+              <h3>Voice</h3>
+              <div class="ps-ref-row" onclick="openVoiceSettingsPage()" style="cursor:pointer"><div class="ps-ref-copy"><strong>Voice</strong><small>Choose a voice, hear a sample, and set voice model, intelligence, and language.</small></div><button class="ps-ref-choice" id="psVoicePersonaBtn" type="button" onclick="event.stopPropagation();openVoiceSettingsPage()">Breeze <span class="chev">›</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Model</strong><small>Voice-interaction preference only; your selected text provider/model remains unchanged.</small></div><button class="ps-ref-choice" id="psVoiceModelBtn" onclick="openPersonalizationPicker('voiceModel','Voice model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']])">Live <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Intelligence</strong><small>Choose the preferred balance of speed and depth for voice-style interactions.</small></div><button class="ps-ref-choice" id="psIntelligenceBtn" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']])">Instant <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Language</strong><small>Preferred language for voice and normal chats.</small></div><button class="ps-ref-choice" id="psLanguageBtn" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']))">Auto-detect <span class="chev">⌄</span></button></div>
+            </section>
+
+            <section class="ps-ref-section" id="psPrivacySection" data-ps-search="privacy storage reset personalization local browser">
+              <h3>Privacy & reset</h3>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Storage</strong><small>Personalization, custom pet settings, and memory summary are stored in this browser's LocalStorage.</small></div><span class="ps-badge">Local</span></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong class="ps-ref-danger">Reset personalization</strong><small>Restore defaults and clear your local memory summary and custom pet data.</small></div><button class="ps-ref-reset" onclick="resetPersonalization()">Reset</button></div>
+            </section>
+          </div>
+        </div>
+
+        <div class="ps-pet-page" id="personalizationPetPage">
+          <div class="ps-pet-toolbar">
+            <button class="ps-pet-back" onclick="closePetPicker()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+            <h3>Your pet</h3>
+            <label class="ps-upload-btn" for="psPetUploadInput"><i data-lucide="image-up"></i><span>Upload pet</span></label>
+            <input id="psPetUploadInput" type="file" accept="image/*" hidden onchange="handlePersonalizationPetUpload(event)">
+          </div>
+          <div class="ps-pet-list">
+            <div class="ps-pet-hero">
+              <div class="ps-pet-hero-copy"><strong>Choose your companion</strong><small>Pick a pet to personalize the app and subtly shape JepongDevxyz AI's friendly tone.</small></div>
+              <label class="mini-toggle" title="Show pet in chat"><input id="psShowPetInChat" type="checkbox" onchange="setPersonalizationToggle('showPetInChat',this.checked)"><span></span></label>
+            </div>
+            <div class="ps-pet-grid" id="psPetOptions"></div>
+            <div class="ps-pet-action-grid">
+              <label class="ps-pet-action-card" for="psPetUploadInput"><span class="ps-pet-action-icon"><i data-lucide="image-plus"></i></span><span><strong>Upload your pet</strong><small>Use your own image</small></span></label>
+              <button type="button" class="ps-pet-action-card" onclick="toggleCustomPetCreator()"><span class="ps-pet-action-icon"><i data-lucide="sparkles"></i></span><span><strong>Create a pet with AI</strong><small>Generate a unique companion profile</small></span></button>
+            </div>
+            <div class="ps-create-pet-fields" id="psCreatePetFields">
+              <input id="psCustomPetName" placeholder="Pet name">
+              <textarea id="psCustomPetDescription" placeholder="Describe the companion you want, e.g. a calm study buddy who cheers me on"></textarea>
+              <button id="psCreatePetAiBtn" onclick="generatePersonalizationPetWithAI()"><i data-lucide="sparkles"></i> Create with AI</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ps-voice-page" id="personalizationVoicePage">
+          <div class="ps-voice-toolbar">
+            <button class="ps-voice-back" onclick="closeVoiceSettingsPage()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+            <h3>Voice</h3>
+          </div>
+          <div class="ps-voice-scroll">
+            <div class="ps-voice-stage">
+              <div class="ps-voice-orb" id="psVoiceOrb" aria-hidden="true"></div>
+              <div class="ps-voice-name" id="psVoiceName">Breeze</div>
+              <div class="ps-voice-desc" id="psVoiceDescription">Animated and earnest</div>
+              <div class="ps-voice-nav">
+                <button class="ps-voice-arrow" type="button" onclick="movePersonalizationVoice(-1)" aria-label="Previous voice"><i data-lucide="chevron-left"></i></button>
+                <div class="ps-voice-dots" id="psVoiceDots"></div>
+                <button class="ps-voice-arrow" type="button" onclick="movePersonalizationVoice(1)" aria-label="Next voice"><i data-lucide="chevron-right"></i></button>
+              </div>
+              <button type="button" class="ps-voice-preview" id="psVoicePreviewBtn" onclick="playPersonalizationVoiceSample()"><i data-lucide="play"></i><span>Preview voice</span></button>
+              <div class="ps-voice-sample-status" id="psVoiceSampleStatus"></div>
+            </div>
+            <div class="ps-voice-settings">
+              <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']])"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
+              <div class="ps-voice-setting-row"><strong>Intelligence</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']])"><span id="psVoicePageIntelligence">Instant</span><i data-lucide="chevron-down"></i></button></div>
+              <div class="ps-voice-setting-row"><strong>Language</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']))"><span id="psVoicePageLanguage">Auto-detect</span><i data-lucide="chevron-down"></i></button></div>
+            </div>
+            <div class="ps-voice-sliders">
+              <div class="ps-slider-row"><label for="psVoiceSpeedRange">Speed</label><input id="psVoiceSpeedRange" type="range" min="0.7" max="1.3" step="0.05" oninput="setVoiceTuning('voiceSpeed',this.value)"><output id="psVoiceSpeedValue">1.0x</output></div>
+              <div class="ps-slider-row"><label for="psVoicePitchRange">Pitch</label><input id="psVoicePitchRange" type="range" min="0.7" max="1.3" step="0.05" oninput="setVoiceTuning('voicePitch',this.value)"><output id="psVoicePitchValue">1.0x</output></div>
+              <div class="ps-auto-preview-row"><strong>Auto-play preview when switching voices</strong><label class="mini-toggle"><input id="psVoiceAutoPreview" type="checkbox" onchange="setPersonalizationToggle('voiceAutoPreview',this.checked)"><span></span></label></div>
+            </div>
+            <div class="ps-voice-browser-note"><i data-lucide="info"></i> Voice previews use the speech engine available on your device/browser. If the current in-app preview browser does not expose speech synthesis, open the deployed site in Chrome or another browser with Web Speech support.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ps-choice-overlay" id="personalizationChoiceOverlay" onclick="if(event.target===this)closePersonalizationPicker()">
+      <div class="ps-choice-card">
+        <div class="ps-choice-title" id="personalizationChoiceTitle">Choose</div>
+        <div id="personalizationChoiceList"></div>
+      </div>
+    </div>
+
+    <!-- MEMORY SUMMARY EDITOR -->
+    <div class="modal-overlay" id="memorySummaryModalOverlay" onclick="if(event.target===this) closeMemorySummaryEditor()">
+      <div class="floating-modal" style="width:min(92vw,440px)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <h3 style="margin:0;font-size:.95rem">Memory summary</h3>
+          <button class="personalization-close" onclick="closeMemorySummaryEditor()">✕</button>
+        </div>
+        <p style="font-size:.72rem;color:var(--text-muted);line-height:1.45;margin:0 0 10px">Write only details you want JepongDevxyz AI to remember on this device. This is user-controlled memory, not hidden profiling.</p>
+        <textarea id="psMemorySummaryEditor" class="ps-textarea" style="min-height:170px" placeholder="Example: I prefer concise Tagalog explanations. I am learning JavaScript."></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+          <button class="ps-action" onclick="closeMemorySummaryEditor()">Cancel</button>
+          <button class="ps-action" style="background:var(--accent-gradient);color:#fff;border:0" onclick="saveMemorySummary()">Save memory</button>
         </div>
       </div>
     </div>
@@ -1306,66 +1806,93 @@
     <!-- Swipeable Multi-Provider Model Modal -->
     <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
         <div class="floating-modal model-picker-modal" id="modelPickerModal">
-            <div class="model-picker-header">
-                <button class="model-nav-btn" type="button" onclick="changeProviderPage(-1)" aria-label="Previous provider">←</button>
-                <div class="model-provider-title" id="modelProviderTitle">Gemini</div>
-                <button class="model-nav-btn" type="button" onclick="changeProviderPage(1)" aria-label="Next provider">→</button>
-            </div>
-            <div class="model-provider-tabs">
-                <button class="model-provider-tab active" type="button" onclick="setProviderPage(0)">Gemini</button>
-                <button class="model-provider-tab" type="button" onclick="setProviderPage(1)">Cloudflare</button>
-            </div>
-
-            <div class="model-pages-viewport" id="modelPagesViewport">
-                <div class="model-pages-track" id="modelPagesTrack">
-                    <section class="model-provider-page" data-provider="gemini">
-                        <div class="provider-badge"><span class="provider-badge-dot"></span> Google Gemini API</div>
-                        <button class="option-item" data-provider="gemini" data-model="gemini-3.5-flash-lite" onclick="selectProviderModel('gemini','gemini-3.5-flash-lite','3.5 Flash-Lite')">
-                            <div class="option-info"><div><div class="option-name">3.5 Flash-Lite</div><div class="option-desc">Fastest answers</div></div></div><div class="radio-icon"></div>
-                        </button>
-                        <button class="option-item" data-provider="gemini" data-model="gemini-flash-latest" onclick="selectProviderModel('gemini','gemini-flash-latest','Gemini Flash Latest')">
-                            <div class="option-info"><div><div class="option-name">Gemini Flash Latest</div><div class="option-desc">Default all-around Gemini model</div></div></div><div class="radio-icon"></div>
-                        </button>
-                        <button class="option-item" data-provider="gemini" data-model="gemini-3.7-flash" onclick="selectProviderModel('gemini','gemini-3.7-flash','3.7 Flash')">
-                            <div class="option-info"><div><div class="option-name">3.7 Flash</div><div class="option-desc">Advanced tasks and reasoning</div></div></div><div class="radio-icon"></div>
-                        </button>
-                        <button class="option-item" data-provider="gemini" data-model="gemini-3.6-flash" onclick="selectProviderModel('gemini','gemini-3.6-flash','3.6 Flash')">
-                            <div class="option-info"><div><div class="option-name">3.6 Flash</div><div class="option-desc">Balanced Gemini option</div></div></div><div class="radio-icon"></div>
-                        </button>
-                    </section>
-
-                    <section class="model-provider-page" data-provider="cloudflare">
-                        <div class="provider-badge"><span class="provider-badge-dot"></span> Cloudflare Workers AI · Free-plan compatible</div>
-                        <button class="option-item" data-provider="cloudflare" data-model="@cf/zai-org/glm-4.7-flash" onclick="selectProviderModel('cloudflare','@cf/zai-org/glm-4.7-flash','GLM 4.7 Flash')">
-                            <div class="option-info"><div><div class="option-name">GLM 4.7 Flash</div><div class="option-desc">Fast multilingual · reasoning · coding</div></div></div><div class="radio-icon"></div>
-                        </button>
-                        <button class="option-item" data-provider="cloudflare" data-model="@cf/google/gemma-4-26b-a4b-it" onclick="selectProviderModel('cloudflare','@cf/google/gemma-4-26b-a4b-it','Gemma 4 26B')">
-                            <div class="option-info"><div><div class="option-name">Gemma 4 26B</div><div class="option-desc">Reasoning + vision capable</div></div></div><div class="radio-icon"></div>
-                        </button>
-                        <button class="option-item" data-provider="cloudflare" data-model="@cf/nvidia/nemotron-3-120b-a12b" onclick="selectProviderModel('cloudflare','@cf/nvidia/nemotron-3-120b-a12b','Nemotron 3 120B')">
-                            <div class="option-info"><div><div class="option-name">Nemotron 3 120B</div><div class="option-desc">Advanced reasoning and agentic tasks</div></div></div><div class="radio-icon"></div>
-                        </button>
-                    </section>
-                </div>
-            </div>
-
-            <div class="model-page-dots">
-                <button class="model-page-dot active" type="button" onclick="setProviderPage(0)" aria-label="Gemini"></button>
-                <button class="model-page-dot" type="button" onclick="setProviderPage(1)" aria-label="Cloudflare"></button>
-            </div>
+            <div class="model-picker-header"><button class="model-nav-btn" type="button" onclick="changeProviderPage(-1)">←</button><div class="model-provider-title" id="modelProviderTitle">Gemini</div><button class="model-nav-btn" type="button" onclick="changeProviderPage(1)">→</button></div>
+            <div class="model-pages-viewport" id="modelPagesViewport"><div class="model-pages-track" id="modelPagesTrack"><section class="model-provider-page" data-provider="gemini"><div class="provider-badge"><span class="provider-badge-dot"></span> Google Gemini API</div><button class="option-item" data-provider="gemini" data-model="gemini-flash-latest" onclick="selectProviderModel('gemini','gemini-flash-latest','Gemini Flash Latest')"><div class="option-info"><div><div class="option-name">Gemini Flash Latest</div><div class="option-desc">Balanced all-around</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.8-flash" onclick="selectProviderModel('gemini','gemini-3.8-flash','Gemini 3.8 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.8 Flash</div><div class="option-desc">Advanced general tasks</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.7-flash" onclick="selectProviderModel('gemini','gemini-3.7-flash','Gemini 3.7 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.7 Flash</div><div class="option-desc">Reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.5-flash-lite" onclick="selectProviderModel('gemini','gemini-3.5-flash-lite','Gemini 3.5 Flash-Lite')"><div class="option-info"><div><div class="option-name">Gemini 3.5 Flash-Lite</div><div class="option-desc">Fast/light</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cloudflare"><div class="provider-badge"><span class="provider-badge-dot"></span> Workers AI</div><button class="option-item" data-provider="cloudflare" data-model="@cf/zai-org/glm-4.7-flash" onclick="selectProviderModel('cloudflare','@cf/zai-org/glm-4.7-flash','GLM 4.7 Flash')"><div class="option-info"><div><div class="option-name">GLM 4.7 Flash</div><div class="option-desc">Fast multilingual + coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/google/gemma-4-26b-a4b-it" onclick="selectProviderModel('cloudflare','@cf/google/gemma-4-26b-a4b-it','Gemma 4 26B')"><div class="option-info"><div><div class="option-name">Gemma 4 26B</div><div class="option-desc">Vision + general AI</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/nvidia/nemotron-3-120b-a12b" onclick="selectProviderModel('cloudflare','@cf/nvidia/nemotron-3-120b-a12b','Nemotron 3 120B')"><div class="option-info"><div><div class="option-name">Nemotron 3 120B</div><div class="option-desc">Advanced reasoning</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="groq"><div class="provider-badge"><span class="provider-badge-dot"></span> GroqCloud</div><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-120b" onclick="selectProviderModel('groq','openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Strong reasoning + coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-20b" onclick="selectProviderModel('groq','openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Very fast</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="llama-3.3-70b-versatile" onclick="selectProviderModel('groq','llama-3.3-70b-versatile','Llama 3.3 70B')"><div class="option-info"><div><div class="option-name">Llama 3.3 70B</div><div class="option-desc">Versatile</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound-mini" onclick="selectProviderModel('groq','groq/compound-mini','Compound Mini')"><div class="option-info"><div><div class="option-name">Compound Mini</div><div class="option-desc">Tools + speed</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="openrouter"><div class="provider-badge"><span class="provider-badge-dot"></span> 400+ model router</div><button class="option-item" data-provider="openrouter" data-model="openrouter/auto" onclick="selectProviderModel('openrouter','openrouter/auto','OpenRouter Auto')"><div class="option-info"><div><div class="option-name">OpenRouter Auto</div><div class="option-desc">Automatic best-model routing</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="openai/gpt-oss-120b" onclick="selectProviderModel('openrouter','openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">OpenRouter hosted</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="deepseek/deepseek-v3.2" onclick="selectProviderModel('openrouter','deepseek/deepseek-v3.2','DeepSeek V3.2')"><div class="option-info"><div><div class="option-name">DeepSeek V3.2</div><div class="option-desc">Reasoning/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="google/gemini-3.1-pro-preview" onclick="selectProviderModel('openrouter','google/gemini-3.1-pro-preview','Gemini 3.1 Pro')"><div class="option-info"><div><div class="option-name">Gemini 3.1 Pro</div><div class="option-desc">Advanced reasoning</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="mistral"><div class="provider-badge"><span class="provider-badge-dot"></span> La Plateforme</div><button class="option-item" data-provider="mistral" data-model="mistral-small-latest" onclick="selectProviderModel('mistral','mistral-small-latest','Mistral Small')"><div class="option-info"><div><div class="option-name">Mistral Small</div><div class="option-desc">Fast + balanced</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="mistral-large-latest" onclick="selectProviderModel('mistral','mistral-large-latest','Mistral Large')"><div class="option-info"><div><div class="option-name">Mistral Large</div><div class="option-desc">Complex tasks</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="codestral-latest" onclick="selectProviderModel('mistral','codestral-latest','Codestral')"><div class="option-info"><div><div class="option-name">Codestral</div><div class="option-desc">Coding specialist</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-8b-latest" onclick="selectProviderModel('mistral','ministral-8b-latest','Ministral 8B')"><div class="option-info"><div><div class="option-name">Ministral 8B</div><div class="option-desc">Lightweight</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cohere"><div class="provider-badge"><span class="provider-badge-dot"></span> Cohere Chat API</div><button class="option-item" data-provider="cohere" data-model="command-a-plus-05-2026" onclick="selectProviderModel('cohere','command-a-plus-05-2026','Command A+')"><div class="option-info"><div><div class="option-name">Command A+</div><div class="option-desc">Vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-03-2025" onclick="selectProviderModel('cohere','command-a-03-2025','Command A')"><div class="option-info"><div><div class="option-name">Command A</div><div class="option-desc">Multilingual + RAG</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-reasoning-08-2025" onclick="selectProviderModel('cohere','command-a-reasoning-08-2025','Command A Reasoning')"><div class="option-info"><div><div class="option-name">Command A Reasoning</div><div class="option-desc">Deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-r7b-12-2024" onclick="selectProviderModel('cohere','command-r7b-12-2024','Command R7B')"><div class="option-info"><div><div class="option-name">Command R7B</div><div class="option-desc">Fast/light</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="image"><div class="provider-badge"><span class="provider-badge-dot"></span> Image Generation</div><button class="option-item" data-provider="image" data-model="pollinations/flux" onclick="selectImageProviderModel('pollinations/flux','Flux Image')"><div class="option-info"><div><div class="option-name">Flux Image</div><div class="option-desc">Current free image generation route</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="image" data-model="smart-vision" onclick="selectImageProviderModel('smart-vision','Smart Vision Route')"><div class="option-info"><div><div class="option-name">Smart Vision Route</div><div class="option-desc">Automatically uses a vision model for image analysis</div></div></div><div class="radio-icon"></div></button></section></div></div>
+            <div class="model-page-dots"><button class="model-page-dot" type="button" onclick="setProviderPage(0)" aria-label="Gemini"></button><button class="model-page-dot" type="button" onclick="setProviderPage(1)" aria-label="Cloudflare"></button><button class="model-page-dot" type="button" onclick="setProviderPage(2)" aria-label="Groq"></button><button class="model-page-dot" type="button" onclick="setProviderPage(3)" aria-label="OpenRouter"></button><button class="model-page-dot" type="button" onclick="setProviderPage(4)" aria-label="Mistral"></button><button class="model-page-dot" type="button" onclick="setProviderPage(5)" aria-label="Cohere"></button><button class="model-page-dot" type="button" onclick="setProviderPage(6)" aria-label="Image"></button></div>
         </div>
+    </div>
+
+    <div class="fullscreen-code-overlay" id="fullscreenCodeOverlay">
+        <div class="fullscreen-code-head"><strong id="fullscreenCodeTitle">Code</strong><button class="fullscreen-code-close" onclick="closeCodeFullscreen()">Close</button></div>
+        <div class="fullscreen-code-body"><pre><code id="fullscreenCodeContent"></code></pre></div>
+    </div>
+
+    <div class="app-alert-overlay" id="appAlertOverlay" role="dialog" aria-modal="true" aria-labelledby="appAlertTitle" onclick="if(event.target===this) closeModernAlert()">
+      <div class="app-alert-card">
+        <div class="app-alert-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        </div>
+        <h3 class="app-alert-title" id="appAlertTitle">JepongDevxyz AI</h3>
+        <div class="app-alert-message" id="appAlertMessage"></div>
+        <div class="app-alert-actions"><button type="button" class="app-alert-ok" onclick="closeModernAlert()">OK</button></div>
+      </div>
+    </div>
+
+
+    <div class="app-alert-overlay" id="appConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle" onclick="if(event.target===this) closeModernConfirm(false)">
+      <div class="app-alert-card">
+        <div class="app-alert-icon" aria-hidden="true">?</div>
+        <h3 class="app-alert-title" id="appConfirmTitle">Confirm</h3>
+        <div class="app-alert-message" id="appConfirmMessage"></div>
+        <div class="app-alert-actions" style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="ps-action" onclick="closeModernConfirm(false)">Cancel</button>
+          <button type="button" class="app-alert-ok" onclick="closeModernConfirm(true)">Confirm</button>
+        </div>
+      </div>
     </div>
 
     <div class="image-lightbox-overlay" id="imageLightbox" onclick="closeLightbox()"><img class="image-lightbox-content" id="lightboxImg" alt="Enlarged view"></div>
 
     <script>
+        function showModernAlert(message, title = 'JepongDevxyz AI') {
+            const overlay = document.getElementById('appAlertOverlay');
+            const titleEl = document.getElementById('appAlertTitle');
+            const messageEl = document.getElementById('appAlertMessage');
+            if (!overlay || !titleEl || !messageEl) return;
+            titleEl.textContent = title;
+            messageEl.textContent = String(message ?? '');
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModernAlert() {
+            const overlay = document.getElementById('appAlertOverlay');
+            if (overlay) overlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        let modernConfirmCallback = null;
+        function showModernConfirm(message, title = 'Confirm', onConfirm = null) {
+            modernConfirmCallback = typeof onConfirm === 'function' ? onConfirm : null;
+            const overlay = document.getElementById('appConfirmOverlay');
+            const titleEl = document.getElementById('appConfirmTitle');
+            const messageEl = document.getElementById('appConfirmMessage');
+            if (!overlay || !titleEl || !messageEl) return;
+            titleEl.textContent = title;
+            messageEl.textContent = String(message ?? '');
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModernConfirm(confirmed) {
+            const overlay = document.getElementById('appConfirmOverlay');
+            if (overlay) overlay.classList.remove('open');
+            document.body.style.overflow = '';
+            const cb = modernConfirmCallback;
+            modernConfirmCallback = null;
+            if (confirmed && cb) cb();
+        }
+
         let selectedFilesData = [];
         let chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
         let currentSessionId = localStorage.getItem('jepong_last_session_id') || null;
         
         let currentSelectedProvider = localStorage.getItem('jepong_last_provider') || 'gemini';
         let currentSelectedModel = localStorage.getItem('jepong_last_model') || 'gemini-flash-latest';
-        let currentProviderPage = currentSelectedProvider === 'cloudflare' ? 1 : 0;
+        let currentProviderPage = Math.max(0, ['gemini','cloudflare','groq','openrouter','mistral','cohere','image'].indexOf(currentSelectedProvider));
+        let autoProviderFallback = JSON.parse(localStorage.getItem('jepong_auto_fallback') ?? 'true');
+        let smartModelRouter = JSON.parse(localStorage.getItem('jepong_smart_router') ?? 'true');
+        let pendingStudyTool = null;
+        let lastProviderMeta = JSON.parse(localStorage.getItem('jepong_provider_meta') || '{}');
         let currentSelectedMode = localStorage.getItem('jepong_last_mode') || 'general';
         let isWebSearchEnabled = JSON.parse(localStorage.getItem('jepong_last_websearch') || 'false');
         
@@ -1389,6 +1916,54 @@
         let bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
         let currentBibleSessionId = null;
 
+
+        const PERSONALIZATION_DEFAULTS = {
+            baseStyle: 'Default',
+            warm: 'Default',
+            enthusiastic: 'Default',
+            headersLists: 'Default',
+            emoji: 'Default',
+            fastAnswers: true,
+            suggestedPrompts: true,
+            customInstructions: '',
+            pet: 'None',
+            petDescription: '',
+            customPetImage: '',
+            showPetInChat: true,
+            petWalkEnabled: true,
+            petIdleSleep: true,
+            petWorkingMode: true,
+            petTapEnabled: true,
+            petDoubleTapFeed: true,
+            nickname: '',
+            occupation: '',
+            moreAbout: '',
+            memoryEnabled: false,
+            referenceChatHistory: true,
+            memorySummary: '',
+            referenceWritingStyle: false,
+            referenceRecordHistory: true,
+            advancedWebSearch: true,
+            canvasPreview: true,
+            voiceEnabled: true,
+            librarySearch: true,
+            connectorSearch: false,
+            voicePersona: 'Breeze',
+            voiceModel: 'Live',
+            intelligence: 'Instant',
+            language: 'Auto-detect',
+            voiceSpeed: 1.0,
+            voicePitch: 1.0,
+            voiceAutoPreview: true
+        };
+        let personalizationSettings = (() => {
+            try {
+                return { ...PERSONALIZATION_DEFAULTS, ...JSON.parse(localStorage.getItem('jepong_personalization') || '{}') };
+            } catch (_) {
+                return { ...PERSONALIZATION_DEFAULTS };
+            }
+        })();
+
         let isResponseSpeechEnabled = JSON.parse(localStorage.getItem('jepong_speech_enabled') || 'false');
         let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
         let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
@@ -1406,6 +1981,13 @@
             window.visualViewport.addEventListener('resize', adjustViewport);
             window.visualViewport.addEventListener('scroll', adjustViewport);
         }
+
+        ['pointerdown','keydown','touchstart'].forEach(evt=>{
+            document.addEventListener(evt, (e)=>{
+                if(e.target?.closest?.('#livePetCompanion')) return;
+                if(typeof wakeLivePet==='function') wakeLivePet();
+            }, {passive:true});
+        });
 
         const modeIconsMap = {
             'general': `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>`,
@@ -1452,6 +2034,13 @@
             isWebSearchEnabled = !isWebSearchEnabled;
             localStorage.setItem('jepong_last_websearch', JSON.stringify(isWebSearchEnabled));
             updateWebSearchUI();
+            renderPersonalizationSettings();
+            syncPersonalizationFeatureToggles();
+            document.getElementById('autoFallbackToggle').checked = autoProviderFallback;
+            document.getElementById('smartRouterToggle').checked = smartModelRouter;
+            renderPromptSuggestions();
+            renderProviderStatus();
+            syncProviderStatus();
         }
 
         function updateWebSearchUI() {
@@ -1485,8 +2074,651 @@
             }
         }
 
+
+        function persistPersonalization() {
+            localStorage.setItem('jepong_personalization', JSON.stringify(personalizationSettings));
+        }
+
+        function personalizationElementMap() {
+            return {
+                baseStyle: 'psBaseStyleBtn',
+                warm: 'psWarmBtn',
+                enthusiastic: 'psEnthusiasticBtn',
+                headersLists: 'psHeadersBtn',
+                emoji: 'psEmojiBtn',
+                pet: 'psPetBtn',
+                voicePersona: 'psVoicePersonaBtn',
+                voiceModel: 'psVoiceModelBtn',
+                intelligence: 'psIntelligenceBtn',
+                language: 'psLanguageBtn'
+            };
+        }
+
+        function refreshLucideIcons(root=document) {
+            try { if (window.lucide?.createIcons) window.lucide.createIcons({attrs:{'stroke-width':2}}); } catch (_) {}
+        }
+
+        function getSelectedPetVisual() {
+            const pet=PERSONALIZATION_PETS.find(x=>x.name===personalizationSettings.pet);
+            return pet?.emoji || (personalizationSettings.pet && personalizationSettings.pet!=='None' ? '🐾' : '');
+        }
+
+        function getSelectedPetImage() {
+            const pet=PERSONALIZATION_PETS.find(x=>x.name===personalizationSettings.pet);
+            return pet?.image || '';
+        }
+
+        let livePetIdleTimer = null;
+        let livePetWalkTimer = null;
+        let livePetBubbleTimer = null;
+        let livePetLastTap = 0;
+        let livePetWorking = false;
+
+        function getLivePetElements() {
+            return {
+                pet: document.getElementById('livePetCompanion'),
+                visual: document.getElementById('livePetVisual'),
+                name: document.getElementById('livePetName'),
+                bubble: document.getElementById('livePetBubble')
+            };
+        }
+
+        function livePetVisible() {
+            return personalizationSettings.showPetInChat !== false &&
+                personalizationSettings.pet && personalizationSettings.pet !== 'None';
+        }
+
+        function livePetSay(text, ms=1500) {
+            const {bubble}=getLivePetElements(); if(!bubble)return;
+            bubble.textContent=text; bubble.classList.add('show');
+            clearTimeout(livePetBubbleTimer);
+            livePetBubbleTimer=setTimeout(()=>bubble.classList.remove('show'),ms);
+        }
+
+        function wakeLivePet() {
+            const {pet}=getLivePetElements(); if(!pet)return;
+            pet.classList.remove('sleeping');
+            resetLivePetIdleTimer();
+        }
+
+        function resetLivePetIdleTimer() {
+            clearTimeout(livePetIdleTimer);
+            if(!livePetVisible() || personalizationSettings.petIdleSleep===false || livePetWorking)return;
+            livePetIdleTimer=setTimeout(()=>{
+                const {pet}=getLivePetElements();
+                if(pet && livePetVisible() && !livePetWorking){
+                    pet.classList.remove('petting','eating','working');
+                    pet.classList.add('sleeping');
+                    livePetSay('Zzz…',1200);
+                }
+            }, 30000);
+        }
+
+        function moveLivePet() {
+            const {pet}=getLivePetElements();
+            const layer=document.getElementById('livePetLayer');
+            if(!pet||!layer||!livePetVisible()||livePetWorking||pet.classList.contains('sleeping')||personalizationSettings.petWalkEnabled===false)return;
+            const max=Math.max(8,layer.clientWidth-pet.offsetWidth-8);
+            const x=Math.round(8+Math.random()*Math.max(0,max-8));
+            pet.style.left=x+'px';
+            pet.style.transform = x < (layer.clientWidth/2) ? 'scaleX(1)' : 'scaleX(-1)';
+            const visual=pet.querySelector('.live-pet-visual'), name=pet.querySelector('.live-pet-name'), bubble=pet.querySelector('.live-pet-bubble');
+            if(visual)visual.style.transform='scaleX(1)';
+            if(name)name.style.transform='translateX(-50%) '+(x >= layer.clientWidth/2?'scaleX(-1)':'');
+            if(bubble)bubble.style.transform='translateX(-50%) '+(x >= layer.clientWidth/2?'scaleX(-1)':'');
+        }
+
+        function startLivePetWalking() {
+            clearInterval(livePetWalkTimer);
+            if(!livePetVisible() || personalizationSettings.petWalkEnabled===false)return;
+            livePetWalkTimer=setInterval(moveLivePet,4200);
+            setTimeout(moveLivePet,500);
+        }
+
+        function setLivePetWorking(active) {
+            livePetWorking=!!active;
+            const {pet}=getLivePetElements(); if(!pet||!livePetVisible())return;
+            clearTimeout(livePetIdleTimer);
+            pet.classList.remove('sleeping','petting','eating');
+            pet.classList.toggle('working',livePetWorking && personalizationSettings.petWorkingMode!==false);
+            if(active) livePetSay('Working on it ✨',1300);
+            else { livePetSay('Done!',1000); resetLivePetIdleTimer(); }
+        }
+
+        function petLiveInteraction() {
+            const now=Date.now();
+            const doubleTap=now-livePetLastTap<330;
+            livePetLastTap=now;
+            const {pet}=getLivePetElements(); if(!pet)return;
+            wakeLivePet();
+            pet.classList.remove('petting','eating');
+            void pet.offsetWidth;
+            if(doubleTap && personalizationSettings.petDoubleTapFeed!==false){
+                pet.classList.add('eating'); livePetSay('Yum! 😋',1300);
+                setTimeout(()=>pet.classList.remove('eating'),1900);
+            } else if(personalizationSettings.petTapEnabled!==false){
+                pet.classList.add('petting'); livePetSay('💜',900);
+                setTimeout(()=>pet.classList.remove('petting'),1450);
+            }
+        }
+
+        function renderPetCompanionAcrossApp() {
+            const btn=document.getElementById('petHeaderCompanion');
+            const {pet,visual,name}=getLivePetElements();
+            const visible=livePetVisible();
+            if(btn){
+                btn.classList.toggle('visible',!!visible);
+                if(!visible)btn.innerHTML='';
+                else if(personalizationSettings.customPetImage)btn.innerHTML=`<img src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`;
+                else if(getSelectedPetImage())btn.innerHTML=`<img src="${escapeHTML(getSelectedPetImage())}" alt="${escapeHTML(personalizationSettings.pet)}">`;
+                else btn.textContent=getSelectedPetVisual();
+                btn.title=visible?`${personalizationSettings.pet} • Pet companion`:'Pet companion';
+            }
+            if(!pet||!visual||!name)return;
+            pet.classList.toggle('visible',!!visible);
+            if(!visible){clearTimeout(livePetIdleTimer);clearInterval(livePetWalkTimer);return;}
+            const builtInPetImage=getSelectedPetImage();
+            visual.innerHTML=personalizationSettings.customPetImage
+                ? `<img src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
+                : builtInPetImage
+                    ? `<img src="${escapeHTML(builtInPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
+                    : `<span aria-hidden="true">${getSelectedPetVisual()}</span>`;
+            name.textContent=personalizationSettings.pet;
+            pet.onclick=petLiveInteraction;
+            pet.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();petLiveInteraction();}};
+            startLivePetWalking();
+            resetLivePetIdleTimer();
+        }
+
+        function renderPersonalizationSettings() {
+            const map = personalizationElementMap();
+            Object.entries(map).forEach(([key,id]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const arrow = (key === 'pet' || key === 'voicePersona') ? '›' : '⌄';
+                el.innerHTML = `${escapeHTML(personalizationSettings[key] || '')} <span class="chev">${arrow}</span>`;
+            });
+
+            const values = {
+                psFastAnswers: personalizationSettings.fastAnswers,
+                psSuggestedPrompts: personalizationSettings.suggestedPrompts,
+                psMemoryEnabled: personalizationSettings.memoryEnabled,
+                psReferenceHistory: personalizationSettings.referenceChatHistory,
+                psWritingStyle: personalizationSettings.referenceWritingStyle,
+                psRecordHistory: personalizationSettings.referenceRecordHistory,
+                psAdvancedWeb: personalizationSettings.advancedWebSearch,
+                psCanvas: personalizationSettings.canvasPreview,
+                psVoiceFeature: personalizationSettings.voiceEnabled,
+                psLibrarySearch: personalizationSettings.librarySearch,
+                psConnectorSearch: personalizationSettings.connectorSearch,
+                psShowPetInChat: personalizationSettings.showPetInChat,
+                psVoiceAutoPreview: personalizationSettings.voiceAutoPreview
+            };
+            Object.entries(values).forEach(([id,val]) => {
+                const el = document.getElementById(id);
+                if (el) el.checked = !!val;
+            });
+
+            const fields = {
+                psCustomInstructions: 'customInstructions',
+                psNickname: 'nickname',
+                psOccupation: 'occupation',
+                psMoreAbout: 'moreAbout'
+            };
+            Object.entries(fields).forEach(([id,key]) => {
+                const el = document.getElementById(id);
+                if (el && document.activeElement !== el) el.value = personalizationSettings[key] || '';
+            });
+
+            const preview = document.getElementById('psMemorySummaryPreview');
+            if (preview) preview.textContent = personalizationSettings.memorySummary?.trim() || 'View and edit an overview of information you want JepongDevxyz AI to keep in mind.';
+            const badge = document.getElementById('psMemoryBadge');
+            if (badge) badge.textContent = personalizationSettings.memoryEnabled ? 'Memory on' : 'Local only';
+
+            const prompts = document.getElementById('promptSuggestions');
+            if (prompts) prompts.style.display = personalizationSettings.suggestedPrompts ? '' : 'none';
+            if (typeof renderVoiceSettingsPage === 'function') renderVoiceSettingsPage();
+            renderPetCompanionAcrossApp();
+            refreshLucideIcons();
+        }
+
+        const PERSONALIZATION_LANGUAGES = [
+            'Auto-detect','Filipino','English','Spanish','Japanese','Korean','Arabic','Bengali','Cebuano','Chinese','Danish','Dutch','Finnish','French','German','Greek','Gujarati','Hebrew','Hindi','Hungarian','Indonesian','Italian','Kannada','Kazakh','Korean','Latvian','Lithuanian','Macedonian','Malay','Malayalam','Mandarin Chinese','Marathi','Mongolian','Nepali','Norwegian','Norwegian Bokmål','Persian','Polish','Portuguese','Punjabi','Romanian','Russian','Serbian','Slovak','Slovenian','Swahili','Swedish','Tamil','Telugu','Thai','Turkish','Ukrainian','Urdu','Vietnamese'
+        ];
+        const PERSONALIZATION_PETS = [
+            {name:'None',visual:'none',emoji:'⊘',description:'No companion'},
+            {name:'Luna',visual:'cat',emoji:'🐱',image:'assets/pets/luna.png',description:'Curious & supportive'},
+            {name:'Kiro',visual:'dog',emoji:'🐶',image:'assets/pets/kiro.png',description:'Friendly & loyal'},
+            {name:'Mochi',visual:'rabbit',emoji:'🐰',image:'assets/pets/mochi.png',description:'Calm & gentle'},
+            {name:'Pixel',visual:'robot',emoji:'🤖',image:'assets/pets/pixel.png',description:'Smart & cheerful'},
+            {name:'Nova',visual:'blackcat',emoji:'🐈‍⬛',image:'assets/pets/nova.png',description:'Mysterious & cool'},
+            {name:'Sunny',visual:'chick',emoji:'🐥',image:'assets/pets/sunny.png',description:'Energetic & happy'},
+            {name:'Kumo',visual:'panda',emoji:'🐼',image:'assets/pets/kumo.png',description:'Chill & relaxed'},
+            {name:'Ace',visual:'fox',emoji:'🦊',image:'assets/pets/ace.png',description:'Brave & confident'}
+        ];
+        const PERSONALIZATION_VOICES = [
+            {name:'Breeze',description:'Animated and earnest',rate:1.04,pitch:1.08,keywords:['Google US English','Samantha','English United States']},
+            {name:'Cove',description:'Composed and direct',rate:.94,pitch:.96,keywords:['Daniel','Microsoft David','English United Kingdom']},
+            {name:'Ember',description:'Confident and optimistic',rate:1.0,pitch:1.0,keywords:['Google UK English Female','Microsoft Zira','Samantha']},
+            {name:'Juniper',description:'Open and upbeat',rate:1.03,pitch:1.04,keywords:['Google US English','Microsoft Aria','Karen']},
+            {name:'Maple',description:'Cheerful and candid',rate:.98,pitch:1.06,keywords:['Microsoft Jenny','Google UK English Female','Moira']},
+            {name:'Sol',description:'Savvy and relaxed',rate:.96,pitch:.98,keywords:['Microsoft Guy','Alex','Daniel']},
+            {name:'Spruce',description:'Calm and affirming',rate:.91,pitch:.95,keywords:['Google UK English Male','Daniel','Microsoft Ryan']},
+            {name:'Vale',description:'Bright and inquisitive',rate:1.06,pitch:1.1,keywords:['Microsoft Aria','Samantha','Google US English']},
+            {name:'Arbor',description:'Easygoing and versatile',rate:.97,pitch:1.02,keywords:['Alex','Karen','Google US English']}
+        ];
+
+        function petMascotSvg(type='none') {
+            const presets = {
+                none:['#3f3f46','#71717a','○'], bot:['#3158e8','#6ea8ff','▰'], drop:['#3aaef2','#91ddff','◆'], fire:['#ff6a22','#ffbe55','▲'], owl:['#dd681f','#ffad46','◉'], rock:['#758195','#a5b4c7','⬟'], seed:['#4caf68','#9ae6a8','♣']
+            };
+            const [a,b,glyph]=presets[type]||presets.none;
+            return `<svg class="ps-pet-mascot" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="g-${type}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${b}"/><stop offset="1" stop-color="${a}"/></linearGradient></defs><path d="M13 18c5-9 33-11 39 1 5 10 2 29-7 35-8 6-25 5-32-3C5 42 6 27 13 18Z" fill="url(#g-${type})"/><circle cx="24" cy="31" r="3.2" fill="#111827"/><circle cx="40" cy="31" r="3.2" fill="#111827"/><path d="M25 41c4 3 10 3 14 0" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><text x="32" y="19" text-anchor="middle" dominant-baseline="middle" font-size="13" fill="white" opacity=".92">${glyph}</text></svg>`;
+        }
+        let personalizationPickerKey = null;
+        let personalizationPickerChoices = [];
+
+        function openPersonalizationSettings() {
+            closeSettingsModal();
+            closeVoiceSettingsPage();
+            closePetPicker();
+            renderPersonalizationSettings();
+            const input = document.getElementById('personalizationSearchInput');
+            if (input) input.value = '';
+            filterPersonalizationSettings('');
+            document.getElementById('personalizationModalOverlay')?.classList.add('open');
+        }
+
+        function closePersonalizationSettings() {
+            closeVoiceSettingsPage();
+            closePersonalizationPicker();
+            document.getElementById('personalizationModalOverlay')?.classList.remove('open');
+        }
+
+        function openGeneralSettingsFromPersonalization() {
+            closePersonalizationSettings();
+            openSettingsModal();
+        }
+
+        function scrollPsSection(id) {
+            document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+
+        function filterPersonalizationSettings(query) {
+            const q = String(query || '').trim().toLowerCase();
+            document.querySelectorAll('#personalizationContent [data-ps-search]').forEach(section => {
+                const hay = (section.getAttribute('data-ps-search') + ' ' + section.innerText).toLowerCase();
+                section.style.display = !q || hay.includes(q) ? '' : 'none';
+            });
+        }
+
+        function openPersonalizationPicker(key, title, choices) {
+            personalizationPickerKey = key;
+            personalizationPickerChoices = Array.isArray(choices) ? choices : [];
+            const titleEl = document.getElementById('personalizationChoiceTitle');
+            const list = document.getElementById('personalizationChoiceList');
+            if (titleEl) titleEl.textContent = title || 'Choose';
+            if (list) {
+                list.innerHTML = personalizationPickerChoices.map((choice, index) => {
+                    const value = Array.isArray(choice) ? choice[0] : choice;
+                    const description = Array.isArray(choice) ? (choice[1] || '') : '';
+                    const selected = personalizationSettings[key] === value;
+                    return `<button class="ps-choice-item" onclick="selectPersonalizationChoice(${index})"><span><strong>${escapeHTML(value)}</strong>${description ? `<small>${escapeHTML(description)}</small>` : ''}</span><span class="ps-choice-check">${selected ? '✓' : ''}</span></button>`;
+                }).join('');
+            }
+            document.getElementById('personalizationChoiceOverlay')?.classList.add('open');
+        }
+
+        function selectPersonalizationChoice(index) {
+            const choice = personalizationPickerChoices[index];
+            if (!choice || !personalizationPickerKey) return;
+            personalizationSettings[personalizationPickerKey] = Array.isArray(choice) ? choice[0] : choice;
+            persistPersonalization();
+            renderPersonalizationSettings();
+            renderVoiceSettingsPage();
+            closePersonalizationPicker();
+            if (personalizationPickerKey === 'voicePersona') playPersonalizationVoiceSample();
+        }
+
+        function closePersonalizationPicker() {
+            document.getElementById('personalizationChoiceOverlay')?.classList.remove('open');
+        }
+
+        function cyclePersonalizationChoice(key, choices) {
+            openPersonalizationPicker(key, key, (choices || []).map(x => [x,'']));
+        }
+
+        function toggleCustomPetCreator(force) {
+            const fields = document.getElementById('psCreatePetFields');
+            if (!fields) return;
+            const next = typeof force === 'boolean' ? force : !fields.classList.contains('open');
+            fields.classList.toggle('open', next);
+            if (next) document.getElementById('psCustomPetName')?.focus();
+        }
+
+        function getVoiceProfile(name = personalizationSettings.voicePersona) {
+            return PERSONALIZATION_VOICES.find(v => v.name === name) || PERSONALIZATION_VOICES[0];
+        }
+
+        function getPersonalizationVoiceIndex() {
+            const i = PERSONALIZATION_VOICES.findIndex(v => v.name === personalizationSettings.voicePersona);
+            return i >= 0 ? i : 0;
+        }
+
+        function renderVoiceSettingsPage() {
+            const profile = getVoiceProfile();
+            const name = document.getElementById('psVoiceName');
+            const desc = document.getElementById('psVoiceDescription');
+            const dots = document.getElementById('psVoiceDots');
+            if (name) name.textContent = profile.name;
+            if (desc) desc.textContent = profile.description;
+            if (dots) dots.innerHTML = PERSONALIZATION_VOICES.map((v,i)=>`<button type="button" class="ps-voice-dot ${i===getPersonalizationVoiceIndex()?'active':''}" aria-label="${escapeHTML(v.name)}" onclick="choosePersonalizationVoice(${i},true)" style="border:0;padding:0;cursor:pointer"></button>`).join('');
+            const m=document.getElementById('psVoicePageModel'), intel=document.getElementById('psVoicePageIntelligence'), lang=document.getElementById('psVoicePageLanguage');
+            if(m)m.textContent=personalizationSettings.voiceModel||'Live';
+            if(intel)intel.textContent=personalizationSettings.intelligence||'Instant';
+            if(lang)lang.textContent=personalizationSettings.language||'Auto-detect';
+            const speed=document.getElementById('psVoiceSpeedRange');const pitch=document.getElementById('psVoicePitchRange');
+            const speedOut=document.getElementById('psVoiceSpeedValue');const pitchOut=document.getElementById('psVoicePitchValue');
+            const auto=document.getElementById('psVoiceAutoPreview');
+            if(speed)speed.value=Number(personalizationSettings.voiceSpeed||1);if(pitch)pitch.value=Number(personalizationSettings.voicePitch||1);
+            if(speedOut)speedOut.textContent=`${Number(personalizationSettings.voiceSpeed||1).toFixed(1)}x`;if(pitchOut)pitchOut.textContent=`${Number(personalizationSettings.voicePitch||1).toFixed(1)}x`;if(auto)auto.checked=personalizationSettings.voiceAutoPreview!==false;
+            refreshLucideIcons();
+        }
+
+        function openVoiceSettingsPage() {
+            closePetPicker();
+            const main=document.getElementById('personalizationMainPage');
+            const page=document.getElementById('personalizationVoicePage');
+            if(main)main.style.display='none';
+            page?.classList.add('open');
+            loadVoices();
+            renderVoiceSettingsPage();
+        }
+
+        function closeVoiceSettingsPage() {
+            if('speechSynthesis' in window) window.speechSynthesis.cancel();
+            document.getElementById('psVoiceOrb')?.classList.remove('speaking');
+            const status=document.getElementById('psVoiceSampleStatus');if(status)status.textContent='';
+            document.getElementById('personalizationVoicePage')?.classList.remove('open');
+            const main=document.getElementById('personalizationMainPage');if(main)main.style.display='flex';
+        }
+
+        function choosePersonalizationVoice(index, preview=true) {
+            const profile=PERSONALIZATION_VOICES[(index+PERSONALIZATION_VOICES.length)%PERSONALIZATION_VOICES.length];
+            personalizationSettings.voicePersona=profile.name;
+            persistPersonalization();
+            renderPersonalizationSettings();
+            renderVoiceSettingsPage();
+            if(preview && personalizationSettings.voiceAutoPreview!==false) playPersonalizationVoiceSample(profile.name);
+        }
+
+        function movePersonalizationVoice(direction) {
+            choosePersonalizationVoice(getPersonalizationVoiceIndex()+direction,true);
+        }
+
+        function setVoiceTuning(key, value) {
+            const n=Math.max(.7,Math.min(1.3,Number(value)||1));
+            personalizationSettings[key]=n;persistPersonalization();
+            const out=document.getElementById(key==='voiceSpeed'?'psVoiceSpeedValue':'psVoicePitchValue');if(out)out.textContent=`${n.toFixed(1)}x`;
+        }
+
+        function preferredLanguageCode() {
+            const lang=personalizationSettings.language||'Auto-detect';
+            const map={Filipino:'fil-PH',English:'en-US',Spanish:'es-ES',Japanese:'ja-JP',Korean:'ko-KR',Arabic:'ar-SA',French:'fr-FR',German:'de-DE',Italian:'it-IT',Portuguese:'pt-BR','Mandarin Chinese':'zh-CN',Chinese:'zh-CN'};
+            return map[lang] || '';
+        }
+
+        function resolvePersonalizationSystemVoice(profile=getVoiceProfile(), text='') {
+            if(!('speechSynthesis' in window)) return null;
+            systemVoices=window.speechSynthesis.getVoices();
+            if(!systemVoices.length) return null;
+            const prefLang=preferredLanguageCode().toLowerCase();
+            let pool=systemVoices;
+            if(prefLang) {
+                const exact=systemVoices.filter(v=>(v.lang||'').toLowerCase()===prefLang);
+                const base=systemVoices.filter(v=>(v.lang||'').toLowerCase().startsWith(prefLang.split('-')[0]));
+                if(exact.length) pool=exact; else if(base.length) pool=base;
+            } else if(/\b(ang|mga|ako|ikaw|salamat|kamusta|paano|gawin|natin)\b/i.test(text)) {
+                const fil=systemVoices.filter(v=>/^(fil|tl)(-|$)/i.test(v.lang||'') || /filipino|tagalog/i.test(v.name||''));
+                if(fil.length) pool=fil;
+            } else {
+                const en=systemVoices.filter(v=>(v.lang||'').toLowerCase().startsWith('en'));
+                if(en.length) pool=en;
+            }
+            for(const key of profile.keywords||[]) {
+                const found=pool.find(v=>(v.name||'').toLowerCase().includes(String(key).toLowerCase()));
+                if(found) return found;
+            }
+            const idx=getVoiceProfile(profile.name) ? PERSONALIZATION_VOICES.findIndex(v=>v.name===profile.name) : 0;
+            return pool[Math.abs(idx)%pool.length] || pool[0] || null;
+        }
+
+        function voiceSampleText() {
+            const lang=personalizationSettings.language;
+            if(lang==='Filipino') return 'Kumusta! Ako ang napili mong boses para sa JepongDevxyz AI. Handa akong tumulong sa iyo.';
+            if(lang==='Spanish') return 'Hola. Esta es una muestra de la voz que elegiste para JepongDevxyz AI.';
+            return `Hi! I'm ${personalizationSettings.voicePersona}. This is a preview of your selected JepongDevxyz AI voice.`;
+        }
+
+        function playPersonalizationVoiceSample(name=personalizationSettings.voicePersona) {
+            const status=document.getElementById('psVoiceSampleStatus');
+            const orb=document.getElementById('psVoiceOrb');
+            const btn=document.getElementById('psVoicePreviewBtn');
+            if(!('speechSynthesis' in window)) {
+                if(status)status.textContent='Voice preview is not supported by this browser.';
+                showModernAlert('Hindi supported ng browser na ito ang built-in speech synthesis.','Voice preview');
+                return;
+            }
+            const profile=getVoiceProfile(name);
+            personalizationSettings.voicePersona=profile.name;
+            persistPersonalization();renderPersonalizationSettings();renderVoiceSettingsPage();
+            window.speechSynthesis.cancel();
+            systemVoices=window.speechSynthesis.getVoices();
+            const utter=new SpeechSynthesisUtterance(voiceSampleText());
+            const voice=resolvePersonalizationSystemVoice(profile,utter.text);
+            if(voice){utter.voice=voice;utter.lang=voice.lang;} else utter.lang=preferredLanguageCode()||'en-US';
+            utter.rate=Math.max(.5,Math.min(2,profile.rate*Number(personalizationSettings.voiceSpeed||1)));utter.pitch=Math.max(.5,Math.min(2,profile.pitch*Number(personalizationSettings.voicePitch||1)));utter.volume=1;
+            utter.onstart=()=>{orb?.classList.add('speaking');if(status)status.textContent=`Playing ${profile.name} sample${voice?` • ${voice.name}`:''}`;if(btn)btn.innerHTML='<i data-lucide="square"></i><span>Stop preview</span>';refreshLucideIcons();};
+            utter.onend=()=>{orb?.classList.remove('speaking');if(status)status.textContent='';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();};
+            utter.onerror=()=>{orb?.classList.remove('speaking');if(status)status.textContent='Unable to play this local voice sample.';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();};
+            window.speechSynthesis.speak(utter);
+        }
+
+        function openPetPicker() {
+            closeVoiceSettingsPage();
+            const main = document.getElementById('personalizationMainPage');
+            const page = document.getElementById('personalizationPetPage');
+            if (main) main.style.display = 'none';
+            page?.classList.add('open');
+            renderPersonalizationPetOptions();
+        }
+
+        function closePetPicker() {
+            const main = document.getElementById('personalizationMainPage');
+            const page = document.getElementById('personalizationPetPage');
+            page?.classList.remove('open');
+            if (main) main.style.display = 'flex';
+        }
+
+        function renderPersonalizationPetOptions() {
+            const host=document.getElementById('psPetOptions');if(!host)return;
+            const choices=[...PERSONALIZATION_PETS];
+            if(personalizationSettings.pet&&!choices.some(x=>x.name===personalizationSettings.pet))choices.unshift({name:personalizationSettings.pet,emoji:'🐾',description:personalizationSettings.petDescription||'Your custom companion'});
+            host.innerHTML=choices.map((pet,index)=>{
+                const selected=personalizationSettings.pet===pet.name;
+                const img=selected&&personalizationSettings.customPetImage
+                    ? `<img src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(pet.name)}">`
+                    : pet.image
+                        ? `<img src="${escapeHTML(pet.image)}" alt="${escapeHTML(pet.name)}">`
+                        : `<span aria-hidden="true">${pet.emoji||'🐾'}</span>`;
+                return `<button type="button" class="ps-pet-card ${selected?'selected':''}" data-pet-index="${index}"><span class="ps-pet-check"><i data-lucide="check"></i></span><div class="ps-pet-card-visual">${img}</div><div class="ps-pet-card-name">${escapeHTML(pet.name)}</div><div class="ps-pet-card-desc">${escapeHTML(pet.description||'')}</div></button>`;
+            }).join('');
+            host.querySelectorAll('.ps-pet-card').forEach(btn=>btn.addEventListener('click',()=>{const pet=choices[Number(btn.dataset.petIndex)];if(pet)choosePersonalizationPet(pet.name,pet.description||'');}));
+            const t=document.getElementById('psShowPetInChat');if(t)t.checked=personalizationSettings.showPetInChat!==false;
+            refreshLucideIcons();
+        }
+
+        function choosePersonalizationPet(name, description='') {
+            personalizationSettings.pet = name;
+            personalizationSettings.petDescription = description || '';
+            if (PERSONALIZATION_PETS.some(x => x.name === name)) personalizationSettings.customPetImage = '';
+            persistPersonalization();
+            renderPersonalizationSettings();
+            renderPersonalizationPetOptions();
+            renderPetCompanionAcrossApp();
+            wakeLivePet();
+            if (typeof showModernToast === 'function') showModernToast(`${name} selected as your pet`);
+        }
+
+        async function generatePersonalizationPetWithAI() {
+            const nameEl=document.getElementById('psCustomPetName');
+            const descEl=document.getElementById('psCustomPetDescription');
+            const btn=document.getElementById('psCreatePetAiBtn');
+            const requestedName=(nameEl?.value||'').trim();
+            const idea=(descEl?.value||'').trim();
+            if(!requestedName && !idea){showModernAlert('Maglagay ng pet name o maikling description muna.','Create pet with AI');return;}
+            const old=btn?.innerHTML;if(btn){btn.disabled=true;btn.innerHTML='<i data-lucide="loader-circle"></i> Creating…';refreshLucideIcons();btn.querySelector('svg')?.classList.add('spin');}
+            try{
+                const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+                    message:`Create one friendly AI companion pet profile. Desired name: ${requestedName||'Choose a short original name'}. User idea: ${idea||'A friendly helpful companion'}. Return ONLY compact JSON with keys name and description. Description max 12 words.`,
+                    history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'custom',customPrompt:'You create concise, family-friendly companion pet profiles. Output JSON only.',webSearch:false,autoFallback:true,smartRouter:false,personalization:null
+                })});
+                if(!res.ok)throw new Error(`Server returned ${res.status}`);
+                const raw=await res.text();
+                const jsonText=(raw.match(/\{[\s\S]*\}/)||[])[0];
+                let data={};try{data=JSON.parse(jsonText||raw);}catch(_){data={name:requestedName||'My Pet',description:idea||'A friendly AI companion.'};}
+                personalizationSettings.pet=String(data.name||requestedName||'My Pet').trim().slice(0,60);
+                personalizationSettings.petDescription=String(data.description||idea||'A friendly AI companion.').trim().slice(0,180);
+                personalizationSettings.customPetImage='';
+                persistPersonalization();renderPersonalizationSettings();renderPersonalizationPetOptions();
+                if(nameEl)nameEl.value=personalizationSettings.pet;if(descEl)descEl.value=personalizationSettings.petDescription;
+                showModernAlert(`${personalizationSettings.pet} is ready as your companion.`,`Pet created`);
+            }catch(e){showModernAlert(`Hindi nagawa ng AI ang pet ngayon: ${e.message}`,'Create pet with AI');}
+            finally{if(btn){btn.disabled=false;btn.innerHTML=old||'<i data-lucide="sparkles"></i> Create with AI';refreshLucideIcons();}}
+        }
+
+        function saveCustomPersonalizationPet() {
+            const name = document.getElementById('psCustomPetName')?.value.trim();
+            const description = document.getElementById('psCustomPetDescription')?.value.trim();
+            if (!name) {
+                showModernAlert('Maglagay muna ng pangalan para sa custom pet.','Custom pet');
+                return;
+            }
+            personalizationSettings.pet = name.slice(0,60);
+            personalizationSettings.petDescription = (description || 'A custom companion chosen by the user.').slice(0,500);
+            persistPersonalization();
+            renderPersonalizationSettings();
+            renderPersonalizationPetOptions();
+            showModernAlert('Na-save ang custom pet companion.','Pet updated');
+        }
+
+        function handlePersonalizationPetUpload(event) {
+            const file = event?.target?.files?.[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showModernAlert('Image file lang ang puwedeng gawing pet picture.','Upload pet');
+                return;
+            }
+            if (file.size > 1.5 * 1024 * 1024) {
+                showModernAlert('Pumili ng image na mas maliit sa 1.5 MB para hindi mapuno ang browser storage.','Upload pet');
+                event.target.value='';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                personalizationSettings.customPetImage = String(reader.result || '');
+                if (!personalizationSettings.pet || personalizationSettings.pet === 'None') personalizationSettings.pet = 'My Pet';
+                if (!personalizationSettings.petDescription) personalizationSettings.petDescription = 'A custom companion uploaded by the user.';
+                persistPersonalization();
+                renderPersonalizationSettings();
+                renderPersonalizationPetOptions();
+            };
+            reader.readAsDataURL(file);
+            event.target.value='';
+        }
+
+        function setPersonalizationToggle(key, value) {
+            personalizationSettings[key] = !!value;
+            persistPersonalization();
+            renderPersonalizationSettings();
+            if (key === 'showPetInChat') {
+                if (value && personalizationSettings.pet && personalizationSettings.pet !== 'None') {
+                    livePetSay(`${personalizationSettings.pet} is here!`, 1200);
+                }
+            }
+        }
+
+        function savePersonalizationField(key, value) {
+            personalizationSettings[key] = value;
+            persistPersonalization();
+        }
+
+        function openMemorySummaryEditor() {
+            const el = document.getElementById('psMemorySummaryEditor');
+            if (el) el.value = personalizationSettings.memorySummary || '';
+            document.getElementById('memorySummaryModalOverlay')?.classList.add('open');
+        }
+
+        function closeMemorySummaryEditor() {
+            document.getElementById('memorySummaryModalOverlay')?.classList.remove('open');
+        }
+
+        function saveMemorySummary() {
+            const el = document.getElementById('psMemorySummaryEditor');
+            personalizationSettings.memorySummary = (el?.value || '').trim();
+            persistPersonalization();
+            renderPersonalizationSettings();
+            closeMemorySummaryEditor();
+            showModernAlert('Na-save ang memory summary sa browser na ito.', 'Memory updated');
+        }
+
+        function resetPersonalization() {
+            showModernConfirm(
+                'I-reset ang personalization settings at local memory summary?',
+                'Reset Personalization',
+                () => {
+                    personalizationSettings = { ...PERSONALIZATION_DEFAULTS };
+                    persistPersonalization();
+                    renderPersonalizationSettings();
+                    syncPersonalizationFeatureToggles();
+                    showModernAlert('Naibalik sa default ang personalization settings.', 'Reset complete');
+                }
+            );
+        }
+
+        function syncPersonalizationFeatureToggles() {
+            if (!personalizationSettings.voiceEnabled && isResponseSpeechEnabled) {
+                isResponseSpeechEnabled = false;
+                localStorage.setItem('jepong_speech_enabled', 'false');
+                const t = document.getElementById('responseSpeechToggle');
+                if (t) t.checked = false;
+                document.getElementById('speechSettingsGroup')?.classList.add('disabled');
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+            if (!personalizationSettings.advancedWebSearch && isWebSearchEnabled) {
+                isWebSearchEnabled = false;
+                localStorage.setItem('jepong_last_websearch', 'false');
+                if (typeof updateWebSearchUI === 'function') updateWebSearchUI();
+            }
+        }
+
+        function getPersonalizationPayload() {
+            if (isIncognito) return null;
+            return {
+                ...personalizationSettings,
+                memorySummary: personalizationSettings.memoryEnabled ? (personalizationSettings.memorySummary || '') : ''
+            };
+        }
+
+        function getHistoryForRequest(history) {
+            if (isIncognito) return history;
+            return personalizationSettings.referenceChatHistory ? history : [];
+        }
+
+
         function openSettingsModal() {
             updateUsageUI();
+            syncProviderStatus();
             
             const speechToggle = document.getElementById('responseSpeechToggle');
             const group = document.getElementById('speechSettingsGroup');
@@ -1498,6 +2730,8 @@
             if (speedSlider) speedSlider.value = speechRate;
             if (speedLabel) speedLabel.innerText = speechRate.toFixed(1) + 'x';
             updateVoiceLabelUI();
+            renderPersonalizationSettings();
+            syncPersonalizationFeatureToggles();
 
             document.getElementById('settingsModal').classList.add('open');
         }
@@ -1632,7 +2866,7 @@
             const prompt = promptInput.value.trim();
 
             if (!title || !prompt) {
-                alert('Paki-lagay ang Title at Prompt text.');
+                showModernAlert('Paki-lagay ang Title at Prompt text.', 'Kulang ang impormasyon');
                 return;
             }
 
@@ -1755,13 +2989,52 @@
         }
 
         function editUserMessage(btn) {
-            const userMsgElem = btn.closest('.msg.user').querySelector('.user-bubble-body');
-            if (!userMsgElem) return;
+            const msgNode = btn.closest('.msg.user');
+            const userMsgElem = msgNode?.querySelector('.user-bubble-body');
+            if (!msgNode || !userMsgElem) return;
+
             const text = userMsgElem.innerText;
+            const ctx = getActiveContext();
+            const session = ctx.id ? ctx.sessions[ctx.id] : null;
+
+            // True edit: rewind the conversation to this user turn, then place
+            // the original text back in the composer so the user can resend it.
+            if (session && Array.isArray(session.messages)) {
+                const renderedMessages = Array.from(chatBox.querySelectorAll('.msg'));
+                const index = renderedMessages.indexOf(msgNode);
+                if (index >= 0 && session.messages[index]?.role === 'user') {
+                    session.messages = session.messages.slice(0, index);
+                    if (isBibleMode) saveBibleSessions();
+                    else if (!isIncognito) saveSessions();
+                    loadChatSessionSafeAfterEdit(ctx, session);
+                }
+            }
+
             const input = document.getElementById('userInput');
             input.value = text;
             autoResizeTextarea(input);
             input.focus();
+        }
+
+        function loadChatSessionSafeAfterEdit(ctx, session) {
+            try {
+                if (ctx.type === 'normal' && ctx.id) loadChatSession(ctx.id);
+                else if (ctx.type === 'incognito') {
+                    renderIncognitoWelcomeScreen();
+                    // Re-render retained temporary messages without persisting them.
+                    (session.messages || []).forEach(m => {
+                        const div = document.createElement('div');
+                        div.className = `msg ${m.role === 'user' ? 'user' : 'bot'}`;
+                        if (m.role === 'user') div.innerHTML = `<div class="user-bubble-body">${escapeHTML(m.text || '')}</div>`;
+                        else div.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>`;
+                        chatBox.appendChild(div);
+                    });
+                    scrollToBottom(true);
+                } else if (ctx.type === 'bible' && ctx.id) {
+                    // Bible sessions already have their own persistence; refresh the visible session if available.
+                    if (typeof loadBibleSession === 'function') loadBibleSession(ctx.id);
+                }
+            } catch (_) {}
         }
 
         function renameChatSession(id, e) {
@@ -1779,33 +3052,12 @@
         }
 
         function updateUsageUI() {
-            const words = parseInt(localStorage.getItem('jepong_word_count') || '0');
-            const queries = parseInt(localStorage.getItem('jepong_query_count') || '0');
-            const estTokens = Math.round(words * 1.33);
-
-            document.getElementById('geminiWordCount').innerText = words.toLocaleString();
-            document.getElementById('geminiTokenCount').innerText = estTokens.toLocaleString();
-            document.getElementById('geminiQueryCount').innerText = queries.toLocaleString();
-            document.getElementById('word-count').innerText = words;
-
-            const currentPercent = Math.min(100, Math.round((queries % 50) / 50 * 100));
-            const weeklyPercent = Math.min(100, Math.round((queries % 300) / 300 * 100));
-
-            document.getElementById('currentUsagePercent').innerText = `${currentPercent}% used`;
-            document.getElementById('currentUsageBar').style.width = `${currentPercent}%`;
-
-            document.getElementById('weeklyUsagePercent').innerText = `${weeklyPercent}% used`;
-            document.getElementById('weeklyUsageBar').style.width = `${weeklyPercent}%`;
-
-            const now = new Date();
-            const fiveHoursLater = new Date(now.getTime() + 5 * 60 * 60 * 1000);
-            const resetCurrentStr = fiveHoursLater.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-            
-            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const resetWeeklyStr = nextWeek.toLocaleDateString([], { month: 'long', day: 'numeric' }) + ' at ' + nextWeek.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-
-            document.getElementById('currentUsageResetText').innerText = `Resets at ${resetCurrentStr}`;
-            document.getElementById('weeklyUsageResetText').innerText = `Resets ${resetWeeklyStr}`;
+            const words=parseInt(localStorage.getItem('jepong_word_count')||'0');
+            const queries=parseInt(localStorage.getItem('jepong_query_count')||'0');
+            const tokens=Math.ceil(words*1.35);
+            const w=document.getElementById('geminiWordCount'),t=document.getElementById('geminiTokenCount'),q=document.getElementById('geminiQueryCount');
+            if(w)w.textContent=words.toLocaleString(); if(t)t.textContent=tokens.toLocaleString(); if(q)q.textContent=queries.toLocaleString();
+            renderUsageSyncUI(); renderProviderStatus();
         }
 
         function openDolaModal() {
@@ -1881,25 +3133,129 @@
             });
         }
 
+        function activityIconMarkup(kind, state) {
+            if (state === 'running') return '<span class="ai-activity-spinner"></span>';
+            if (state === 'completed') return '<span class="ai-activity-check">✓</span>';
+            if (state === 'warning') return '<span class="ai-activity-warning">!</span>';
+            if (state === 'error') return '<span class="ai-activity-error">×</span>';
+            const icons = { web:'◎', file:'▧', route:'↗', fallback:'↻', provider:'◉', generate:'✦', process:'•', image:'◇' };
+            return icons[kind] || '•';
+        }
+
         function showAIIndicator(promptText) {
             removeAIIndicator();
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
-            indicator.className = 'ai-indicator-card';
+            indicator.className = 'ai-activity-card';
+            indicator.dataset.startedAt = String(Date.now());
             indicator.innerHTML = `
-                <div class="indicator-header">
-                    <span class="indicator-pulse-dot"></span>
-                    <span>AI Analyzer Engine • Analyzing Query</span>
+                <div class="ai-activity-head">
+                    <div class="ai-activity-title"><span class="ai-activity-title-dot"></span><span>JepongDevxyz activity</span></div>
+                    <button type="button" class="ai-activity-toggle" onclick="toggleActivityDetails(this)">Hide details</button>
                 </div>
-                <div class="indicator-query">${escapeHTML(promptText)}</div>
+                <div class="ai-activity-list" id="aiActivityList"></div>
+                <div class="ai-activity-summary" id="aiActivitySummary">Working on your request…</div>
             `;
             chatBox.appendChild(indicator);
+            appendActivityEvent({ id:'client-start', label:'Sending your request securely to JepongDevxyz AI', state:'completed', kind:'process' });
             scrollToBottom(true);
+        }
+
+        function toggleActivityDetails(btn) {
+            const card = btn.closest('.ai-activity-card');
+            if (!card) return;
+            card.classList.toggle('collapsed');
+            btn.textContent = card.classList.contains('collapsed') ? 'Show details' : 'Hide details';
+        }
+
+        function appendActivityEvent(evt = {}) {
+            const card = document.getElementById('activeAiIndicator');
+            const list = document.getElementById('aiActivityList');
+            if (!card || !list) return;
+            const id = String(evt.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
+            let row = list.querySelector(`[data-activity-id="${id}"]`);
+            if (!row) {
+                row = document.createElement('div');
+                row.dataset.activityId = id;
+                list.appendChild(row);
+            }
+            const state = evt.state || 'running';
+            const kind = evt.kind || 'process';
+            row.className = `ai-activity-row ${state}`;
+            row.innerHTML = `
+                <div class="ai-activity-icon">${activityIconMarkup(kind,state)}</div>
+                <div class="ai-activity-copy">
+                    <div class="ai-activity-label">${escapeHTML(evt.label || 'Working…')}</div>
+                    ${evt.detail ? `<div class="ai-activity-detail">${escapeHTML(evt.detail)}</div>` : ''}
+                </div>`;
+            const summary = document.getElementById('aiActivitySummary');
+            if (summary && evt.label) summary.textContent = evt.label;
+            if (!userIsScrollingUp) scrollToBottom(false);
+        }
+
+        function finishAIIndicator(success = true, elapsedMs = null) {
+            const card = document.getElementById('activeAiIndicator');
+            if (!card) return;
+            card.classList.toggle('complete', success);
+            card.classList.toggle('error', !success);
+            const summary = document.getElementById('aiActivitySummary');
+            const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
+            if (summary) summary.textContent = success ? `Completed in ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s` : 'Request stopped because of an error';
+            if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
         }
 
         function removeAIIndicator() {
             const el = document.getElementById('activeAiIndicator');
             if (el) el.remove();
+            if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
+        }
+
+        function captureProviderMetaEvent(meta = {}, startedAt = performance.now()) {
+            const used = meta.provider || currentSelectedProvider;
+            const model = meta.model || currentSelectedModel;
+            const elapsed = Math.max(1, Math.round(performance.now() - startedAt));
+            setProviderMeta(used, {
+                configured:true,
+                rateLimited:false,
+                busy:false,
+                lastModel:model,
+                lastMs:elapsed,
+                remainingRequests:Number.isFinite(Number(meta.remainingRequests)) ? Number(meta.remainingRequests) : null,
+                limitRequests:Number.isFinite(Number(meta.limitRequests)) ? Number(meta.limitRequests) : null,
+                keyIndex:meta.keyIndex || null,
+                keyCount:meta.keyCount || null
+            });
+            const badge=document.getElementById('providerRuntimeBadge');
+            if(badge){
+                badge.className='provider-runtime-badge ok';
+                badge.textContent=`${providerLabel(used)} · connected${meta.fallbackFrom?` · fallback from ${providerLabel(meta.fallbackFrom)}`:''}`;
+            }
+        }
+
+        async function readActivitySSE(response, handlers = {}) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream:true });
+                let boundary;
+                while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+                    const packet = buffer.slice(0, boundary);
+                    buffer = buffer.slice(boundary + 2);
+                    let eventName = 'message';
+                    const dataLines = [];
+                    for (const line of packet.split('\n')) {
+                        if (line.startsWith('event:')) eventName = line.slice(6).trim();
+                        else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+                    }
+                    if (!dataLines.length) continue;
+                    let payload;
+                    try { payload = JSON.parse(dataLines.join('\n')); } catch (_) { payload = { text:dataLines.join('\n') }; }
+                    if (handlers[eventName]) await handlers[eventName](payload);
+                }
+            }
         }
 
         function clearWelcomeScreenIfPresent() {
@@ -1985,6 +3341,8 @@
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/refresh</span><span class="command-desc">Irerefresh ang buong app.</span></div>
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/clearcache</span><span class="command-desc">Buburahin ang lahat ng saved chats sa localStorage.</span></div>
                         <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/commands</span><span class="command-desc">Ipapakita ang listahang ito ng Normal commands.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #8b5cf6;">/study</span><span class="command-desc">Buksan ang Study Mode: Quiz, Reviewer, Flashcards, at Explain Simply.</span></div>
+                        <div class="command-row"><span class="command-name" style="color: #38bdf8;">/temp</span><span class="command-desc">Magsimula ng temporary chat na hindi sine-save sa normal chat history.</span></div>
                     `;
                 }
             }
@@ -2189,7 +3547,8 @@
                         model: currentSelectedModel || 'gemini-flash-latest', 
                         mode: 'custom', 
                         customPrompt: bibleSystemInstruction,
-                        webSearch: isWebSearchEnabled
+                        webSearch: isWebSearchEnabled,
+                        personalization: getPersonalizationPayload()
                     })
                 });
 
@@ -2364,6 +3723,8 @@
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                                 Regenerate
                             </button>
+                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue generating">Continue</button>
+                            <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
                             <button class="bot-action-btn" onclick="copyText(this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                 Copy
@@ -2393,30 +3754,41 @@
             }
         }
 
-        function exportSpecificChat(id, e) {
+        function exportSpecificChat(id, e, format = 'txt') {
             if (e) e.stopPropagation();
             const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
             const session = activeSessions[id];
-            if (!session || !session.messages || session.messages.length === 0) {
-                alert('Walang mensahe na mai-export sa chat na ito.');
-                return;
+            if (!session || !session.messages || session.messages.length === 0) { showModernAlert('Walang mensahe na mai-export sa chat na ito.', 'Walang ma-export'); return; }
+            const safeTitle = (session.title || 'chat').replace(/[^a-zA-Z0-9_-]/g, '_');
+            let output = '';
+            if (format === 'md') {
+                output = `# ${session.title}
+
+*Exported from JepongDevxyz AI — ${new Date().toLocaleString()}*
+
+`;
+                session.messages.forEach(m => { output += `## ${m.role === 'user' ? 'You' : 'JepongDevxyz AI'}
+
+${m.text || ''}
+
+`; });
+            } else {
+                output = `=== JepongDevxyz AI Conversation ===
+Title: ${session.title}
+Date: ${new Date().toLocaleString()}
+
+`;
+                session.messages.forEach(m => { output += `[${m.role === 'user' ? 'USER' : 'AI'}]:
+${m.text || ''}
+
+-----------------------------
+
+`; });
             }
-
-            let textOutput = `=== JepongDevxyz AI Conversation ===\nTitle: ${session.title}\nDate: ${new Date().toLocaleString()}\n\n`;
-            session.messages.forEach(m => {
-                const sender = m.role === 'user' ? 'USER' : 'AI';
-                textOutput += `[${sender}]:\n${m.text || ''}\n\n-----------------------------\n\n`;
-            });
-
-            const blob = new Blob([textOutput], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${session.title.replace(/[^a-zA-Z0-9]/g, '_')}_chat.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const blob = new Blob([output], { type: format === 'md' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob), a = document.createElement('a');
+            a.href = url; a.download = `${safeTitle}_chat.${format === 'md' ? 'md' : 'txt'}`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
         function renderSidebarHistory(filter = '') {
@@ -2457,13 +3829,8 @@
                         <button class="hist-action-btn" onclick="renameChatSession('${session.id}', event)" title="Rename Tab">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                         </button>
-                        <button class="hist-action-btn" onclick="exportSpecificChat('${session.id}', event)" title="Export Conversation (TXT)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                        </button>
+                        <button class="hist-action-btn" onclick="exportSpecificChat('${session.id}', event, 'txt')" title="Export TXT">TXT</button>
+                        <button class="hist-action-btn" onclick="exportSpecificChat('${session.id}', event, 'md')" title="Export Markdown">MD</button>
                         <button class="hist-action-btn" onclick="deleteChatSession('${session.id}', event)" title="Delete Chat" style="color:#ef4444;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M3 6h18"></path>
@@ -2556,6 +3923,7 @@
                                     Run
                                 </button>
                             ` : ''}
+                            <button type="button" class="code-action-btn" onclick="openCodeFullscreen(${snippetIndex})" title="Fullscreen code">⛶ Full</button>
                             <button type="button" class="code-action-btn" onclick="copySnippetByIndex(this, ${snippetIndex})" title="Copy code">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
                                 <span>Copy</span>
@@ -2599,7 +3967,9 @@
                 if (/^(javascript|js)$/i.test(lang)) {
                     code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px;color:#333;}</style></head><body><h3>Console Output:</h3><div id="out"></div><script>const log=document.getElementById('out');console.log=(...a)=>{log.innerHTML+=a.join(' ')+'<br>'};try{${code}}catch(e){document.body.innerHTML+='<pre style="color:red">'+e+'</pre>'};<\/script></body></html>`;
                 } else {
-                    code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:16px;font-family:sans-serif;}</style></head><body>${code}</body></html>`;
+                    code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:16px;font-family:sans-serif;}
+
+</style></head><body>${code}</body></html>`;
                 }
             }
 
@@ -2623,10 +3993,57 @@
         }
 
         /* 5. EXECUTE AI CALL */
+        function toggleAutoFallback(v){ autoProviderFallback=!!v; localStorage.setItem('jepong_auto_fallback',JSON.stringify(autoProviderFallback)); }
+        function toggleSmartRouter(v){ smartModelRouter=!!v; localStorage.setItem('jepong_smart_router',JSON.stringify(smartModelRouter)); }
+        function openCodeFullscreen(index){ const item=window.executableSnippets[index]; if(!item)return; document.getElementById('fullscreenCodeTitle').textContent=(item.lang||'code').toUpperCase(); document.getElementById('fullscreenCodeContent').textContent=item.code; document.getElementById('fullscreenCodeOverlay').classList.add('open'); }
+        function closeCodeFullscreen(){ document.getElementById('fullscreenCodeOverlay')?.classList.remove('open'); }
+        function setProviderMeta(provider,patch){ lastProviderMeta[provider]={...(lastProviderMeta[provider]||{}),...patch,updatedAt:Date.now()}; localStorage.setItem('jepong_provider_meta',JSON.stringify(lastProviderMeta)); renderProviderStatus(); renderUsageSyncUI(); }
+        function renderProviderStatus(){ const grid=document.getElementById('providerStatusGrid'); if(!grid)return; grid.innerHTML=PROVIDER_ORDER.filter(p=>p!=='image').map(p=>{const m=lastProviderMeta[p]||{};let state=m.rateLimited?'limited':(m.busy?'busy':(m.configured===false?'not-configured':'ready'));let text=state==='limited'?'Rate limit reached':state==='busy'?'Busy / retrying':state==='not-configured'?'Key not configured':(m.remainingRequests!=null?`${m.remainingRequests} requests left`:'Ready');return `<div class="provider-status-card ${state}"><div class="provider-status-name">${providerLabel(p)}</div><div class="provider-status-state">${text}</div></div>`}).join(''); }
+        async function syncProviderStatus(){
+            try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'provider-status'})}); if(!r.ok)return; const d=await r.json(); Object.entries(d.providers||{}).forEach(([p,m])=>setProviderMeta(p,{configured:m.configured,openrouterUsage:m.usage||null,freeDailyNeurons:m.freeDailyNeurons||null})); }catch(_){ }
+            renderUsageSyncUI();
+        }
+        function renderUsageSyncUI(){
+            const p=currentSelectedProvider; const m=lastProviderMeta[p]||{}; const pctEl=document.getElementById('currentUsagePercent'),bar=document.getElementById('currentUsageBar'),reset=document.getElementById('currentUsageResetText'),title=document.getElementById('currentUsageTitle'); if(!pctEl||!bar)return;
+            if(title) title.textContent=`${providerLabel(p)} quota`;
+            let pct=null, txt='Synced · ready', foot='Exact remaining quota is shown only when this provider reports it.';
+            if(m.rateLimited){pct=100;txt='100% / reached';foot='Provider returned an actual rate-limit response. Auto fallback can switch providers.';}
+            else if(p==='openrouter'&&m.openrouterUsage&&m.openrouterUsage.limit!=null){const u=m.openrouterUsage;const used=Number(u.usage||0),lim=Number(u.limit||0);pct=lim>0?Math.min(100,Math.round(used/lim*100)):null;txt=pct==null?'Synced':`${pct}% used`;foot=`Remaining: ${u.limit_remaining ?? '—'} · reset: ${u.limit_reset || 'account policy'}`;}
+            else if(m.remainingRequests!=null&&m.limitRequests){pct=Math.max(0,Math.min(100,Math.round((1-m.remainingRequests/m.limitRequests)*100)));txt=`${pct}% used`;foot=`Provider reports ${m.remainingRequests}/${m.limitRequests} requests remaining.`;}
+            else if(p==='cloudflare'){txt=m.rateLimited?'100% / reached':'10,000 free neurons/day';foot='Cloudflare free allocation resets at 00:00 UTC. Exact consumed neurons are not exposed by this chat response, but 429/limit failures are detected exactly.';}
+            pctEl.textContent=txt;bar.style.width=`${pct==null?0:pct}%`;if(reset)reset.textContent=foot;
+            const ctx=getContinuousHistory(); const chars=ctx.reduce((n,x)=>n+(x.text?.length||0),0); const est=Math.ceil(chars/4); const contextPct=Math.min(100,Math.round(est/128000*100)); const w=document.getElementById('weeklyUsagePercent'),wb=document.getElementById('weeklyUsageBar'); if(w)w.textContent=`${contextPct}% used`;if(wb)wb.style.width=`${contextPct}%`;
+        }
+        function captureProviderHeaders(response,startedAt){
+            const used=response.headers.get('x-ai-provider')||currentSelectedProvider; const model=response.headers.get('x-ai-model')||currentSelectedModel; const fallback=response.headers.get('x-ai-fallback-from')||''; const elapsed=Math.max(1,Math.round(performance.now()-startedAt));
+            const rem=Number(response.headers.get('x-ratelimit-remaining-requests')); const lim=Number(response.headers.get('x-ratelimit-limit-requests'));
+            setProviderMeta(used,{configured:true,rateLimited:false,busy:false,lastModel:model,lastMs:elapsed,remainingRequests:Number.isFinite(rem)?rem:null,limitRequests:Number.isFinite(lim)?lim:null});
+            const badge=document.getElementById('providerRuntimeBadge');if(badge){badge.className='provider-runtime-badge ok';badge.textContent=`${providerLabel(used)} · ${elapsed} ms${fallback?` · fallback from ${providerLabel(fallback)}`:''}`;}
+            if(used!==currentSelectedProvider&&fallback){ /* keep user's selected provider but surface actual provider used */ }
+        }
+        function markProviderError(provider,status){ setProviderMeta(provider,{rateLimited:status===429,busy:[408,409,500,502,503,504].includes(status)}); const b=document.getElementById('providerRuntimeBadge');if(b){b.className=`provider-runtime-badge ${status===429?'bad':'warn'}`;b.textContent=status===429?`${providerLabel(provider)} limit reached`:`${providerLabel(provider)} error ${status}`;} }
+        const PROMPT_SUGGESTIONS={general:['Explain this simply','Compare two options','Help me brainstorm'],school:['Make a reviewer','Explain step-by-step','Quiz me on this'],coder:['Debug my code','Refactor this','Explain this error'],tagalog:['Ipaliwanag nang simple','Gawan ako ng halimbawa','I-summarize ito'],imagen:['Create a poster','Generate a logo idea','Make an illustration'],custom:['Use my custom persona']};
+        function renderPromptSuggestions(){const el=document.getElementById('promptSuggestions');if(!el)return;const items=PROMPT_SUGGESTIONS[currentSelectedMode]||PROMPT_SUGGESTIONS.general;el.innerHTML=items.map(x=>`<button class="prompt-chip" onclick="usePromptSuggestion(${JSON.stringify(x).replace(/"/g,'&quot;')})">${escapeHTML(x)}</button>`).join('');}
+        function usePromptSuggestion(text){const input=document.getElementById('userInput');input.value=text;autoResizeTextarea(input);input.focus();}
+        function showStudyPanel(){clearWelcomeScreenIfPresent();const d=document.createElement('div');d.className='study-panel';d.innerHTML=`<h3>📚 Study Mode</h3><p>Pili ng tool, tapos ilagay ang topic o lesson sa input.</p><div class="study-tools"><button class="study-tool-btn" onclick="activateStudyTool('quiz')">🧠 Quiz</button><button class="study-tool-btn" onclick="activateStudyTool('reviewer')">📝 Reviewer</button><button class="study-tool-btn" onclick="activateStudyTool('flashcards')">🗂️ Flashcards</button><button class="study-tool-btn" onclick="activateStudyTool('explain')">💡 Explain Simply</button></div>`;chatBox.appendChild(d);scrollToBottom(true);}
+        function activateStudyTool(tool){pendingStudyTool=tool;const input=document.getElementById('userInput');const names={quiz:'Quiz me about: ',reviewer:'Make a reviewer about: ',flashcards:'Make flashcards about: ',explain:'Explain simply: '};input.value=names[tool]||'';autoResizeTextarea(input);input.focus();}
+        function startTemporaryChat(){startIncognitoChat();document.getElementById('brandTitleText').innerText='JepongDevxyz AI • Temporary';}
+        function branchConversation(btn){const ctx=getActiveContext();if(isIncognito||isBibleMode||!ctx.id)return;const node=btn.closest('.msg');const nodes=[...chatBox.querySelectorAll('.msg')];const domIndex=nodes.indexOf(node);const source=ctx.sessions[ctx.id];if(!source)return;const id='chat_'+Date.now();const count=Math.min(source.messages.length,domIndex+1);chatSessions[id]={id,title:`Branch · ${source.title||'Chat'}`,messages:JSON.parse(JSON.stringify(source.messages.slice(0,count))),pinned:false};saveSessions();loadChatSession(id);}
+        function continueGenerating(btn){const input=document.getElementById('userInput');input.value='Continue from exactly where you stopped. Do not repeat what you already wrote.';sendMessage();}
+        async function prepareHistoryForRequest(history){
+            const chars=(history||[]).reduce((n,x)=>n+(x.text?.length||0),0); if(chars<30000||history.length<18)return history;
+            const older=history.slice(0,-10); const recent=history.slice(-10); const transcript=older.map(x=>`${x.role}: ${x.text}`).join('\n').slice(0,26000);
+            try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Summarize this conversation for context preservation. Keep facts, decisions, code requirements, and unresolved issues. Do not add new facts.\n\n${transcript}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:true,smartRouter:false})});if(r.ok){const t=await r.text();return [{role:'user',text:`[AUTO SUMMARY OF EARLIER CHAT]\n${t}`},...recent];}}catch(_){}
+            return history.slice(-14);
+        }
+        async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:true,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
+
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
             showAIIndicator(promptText);
+            setLivePetWorking(true);
 
-            const continuousChatHistory = getContinuousHistory();
+            const rawContinuousChatHistory = getContinuousHistory();
+            const continuousChatHistory = await prepareHistoryForRequest(rawContinuousChatHistory);
             const ctx = getActiveContext();
 
             if (!isRegenerate && ctx.id && ctx.sessions[ctx.id]) {
@@ -2647,6 +4064,7 @@
                 (isDolaVisionPrompt && /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of|icon ng)/i.test(promptText));
 
             if (isImageCreationRequest) {
+                appendActivityEvent({ id:'image-mode', label:'Image generation mode detected', state:'completed', kind:'image' });
                 try {
                     let finalImagePrompt = promptText
                         .replace(/\[Dola AI Vision\]:/gi, '')
@@ -2654,6 +4072,7 @@
                         .trim();
 
                     if (currentFiles && currentFiles.length > 0) {
+                        appendActivityEvent({ id:'image-vision', label:'Inspecting the attached image with Gemini Vision', state:'running', kind:'file' });
                         try {
                             const visionAnalyzeRes = await fetch('/api/chat', {
                                 method: 'POST',
@@ -2679,16 +4098,19 @@
                                 }
                                 if (visionPrompt.trim()) {
                                     finalImagePrompt = visionPrompt.trim();
+                                    appendActivityEvent({ id:'image-vision', label:'Image style analysis complete', state:'completed', kind:'file' });
                                 }
                             }
                         } catch (vErr) {}
                     }
 
+                    appendActivityEvent({ id:'image-create', label:'Creating your image', state:'running', kind:'image' });
                     const encodedPrompt = encodeURIComponent(finalImagePrompt);
                     const randomSeed = Math.floor(Math.random() * 1000000);
                     const generatedImageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${randomSeed}&width=1024&height=1024&model=flux&nologo=true`;
 
-                    removeAIIndicator();
+                    appendActivityEvent({ id:'image-create', label:'Image request prepared', state:'completed', kind:'image' });
+                    finishAIIndicator(true);
 
                     botMsgElem.innerHTML = `
                         <div>
@@ -2715,38 +4137,44 @@
                 }
             }
 
+            const aiRequestStartedAt = performance.now();
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         message: promptText, 
-                        history: continuousChatHistory,
-                        files: currentFiles, 
+                        history: getHistoryForRequest(continuousChatHistory),
+                        files: personalizationSettings.librarySearch ? currentFiles : [], 
                         provider: currentSelectedProvider,
                         model: currentSelectedModel, 
                         mode: currentSelectedMode, 
                         customPrompt: document.getElementById('customPromptInput').value,
-                        webSearch: isWebSearchEnabled
+                        webSearch: isWebSearchEnabled,
+                        autoFallback: autoProviderFallback,
+                        smartRouter: smartModelRouter,
+                        studyTool: pendingStudyTool,
+                        activityStream: true,
+                        personalization: getPersonalizationPayload()
                     })
                 });
 
-                removeAIIndicator();
+                pendingStudyTool = null;
 
                 if (!response.ok) {
+                    markProviderError(currentSelectedProvider, response.status);
                     const errData = await response.json().catch(() => ({}));
+                    appendActivityEvent({ id:'request-error', label:errData.error || `Server returned status ${response.status}`, state:'error', kind:'provider' });
+                    finishAIIndicator(false);
                     throw new Error(errData.error || `Server returned status ${response.status}`);
                 }
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
                 let fullResponse = '';
+                let actualProviderUsed = currentSelectedProvider;
+                let actualModelUsed = currentSelectedModel;
+                const contentType = response.headers.get('content-type') || '';
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    fullResponse += decoder.decode(value, { stream: true });
-                    
+                const renderLiveResponse = () => {
                     botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
                         <div class="bot-actions">
                             <button class="bot-action-btn" onclick="voteMessage(this, 'like')" title="Helpful">
@@ -2759,12 +4187,13 @@
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                                 Regenerate
                             </button>
+                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue generating">Continue</button>
+                            <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
                             <button class="bot-action-btn" onclick="copyText(this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                 Copy
                             </button>
                         </div>`;
-                    
                     if (userIsScrollingUp) {
                         unreadMessagesCount++;
                         const badge = document.getElementById('unreadBadge');
@@ -2773,11 +4202,43 @@
                     } else {
                         scrollToBottom(false);
                     }
+                };
+
+                if (contentType.includes('text/event-stream')) {
+                    await readActivitySSE(response, {
+                        activity: (evt) => appendActivityEvent(evt),
+                        meta: (meta) => { actualProviderUsed = meta.provider || actualProviderUsed; actualModelUsed = meta.model || actualModelUsed; captureProviderMetaEvent(meta, aiRequestStartedAt); },
+                        text: (payload) => {
+                            fullResponse += payload.text || '';
+                            renderLiveResponse();
+                        },
+                        done: (payload) => finishAIIndicator(true, payload.elapsedMs),
+                        error: (payload) => {
+                            appendActivityEvent({ id:'server-error', label:payload.message || 'AI provider unavailable', state:'error', kind:'provider' });
+                            finishAIIndicator(false);
+                            throw new Error(payload.message || 'AI provider unavailable');
+                        }
+                    });
+                } else {
+                    captureProviderHeaders(response, aiRequestStartedAt);
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        fullResponse += decoder.decode(value, { stream: true });
+                        renderLiveResponse();
+                    }
+                    finishAIIndicator(true);
                 }
+
+                const totalAiMs = Math.max(1, Math.round(performance.now() - aiRequestStartedAt));
+                const runtimeBadge = document.getElementById('providerRuntimeBadge');
+                if (runtimeBadge) { runtimeBadge.className = 'provider-runtime-badge ok'; runtimeBadge.textContent = `${providerLabel(actualProviderUsed)} · ${totalAiMs} ms total`; }
 
                 if (ctx.id && ctx.sessions[ctx.id]) {
                     ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse });
-                    if (!isIncognito && !isBibleMode) saveSessions();
+                    if (!isIncognito && !isBibleMode) { saveSessions(); maybeGenerateAITitle(ctx.sessions[ctx.id], promptText, fullResponse); }
                 }
                 incrementCounters(promptText + ' ' + fullResponse);
 
@@ -2786,7 +4247,8 @@
                 }
 
             } catch (err) {
-                removeAIIndicator();
+                appendActivityEvent({ id:'client-catch', label:err.message || 'Request failed', state:'error', kind:'provider' });
+                finishAIIndicator(false);
                 botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</span>`;
                 scrollToBottom(true);
             }
@@ -2834,6 +4296,14 @@
                     processBiblePrompt(message);
                 }
                 return;
+            }
+
+            if (message.toLowerCase() === '/study') {
+                input.value = ''; autoResizeTextarea(input); showStudyPanel(); return;
+            }
+
+            if (message.toLowerCase() === '/temp' || message.toLowerCase() === '/temporary') {
+                input.value = ''; autoResizeTextarea(input); startTemporaryChat(); return;
             }
 
             if (message.toLowerCase() === '/incognito') {
@@ -2991,6 +4461,8 @@
             if (!('speechSynthesis' in window)) return;
             systemVoices = window.speechSynthesis.getVoices();
             updateVoiceLabelUI();
+            if (typeof renderVoiceSettingsPage === 'function') renderVoiceSettingsPage();
+            refreshLucideIcons();
         }
         loadVoices();
         if ('speechSynthesis' in window) {
@@ -3016,6 +4488,10 @@
                 targetVoice = systemVoices.find(v => v.voiceURI === selectedVoiceURI);
             }
 
+            if (!targetVoice && personalizationSettings.voiceEnabled && systemVoices.length > 0) {
+                targetVoice = resolvePersonalizationSystemVoice(getVoiceProfile(), cleanText);
+            }
+
             if (!targetVoice && isTagalog && systemVoices.length > 0) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
@@ -3037,8 +4513,9 @@
                 utterance.lang = isTagalog ? 'tl-PH' : 'en-US';
             }
             
-            utterance.rate = speechRate || 1.0;
-            utterance.pitch = 1.0;
+            const personaProfile = getVoiceProfile();
+            utterance.rate = Math.max(.5,Math.min(2,(speechRate || 1.0) * (personaProfile.rate || 1) * Number(personalizationSettings.voiceSpeed || 1)));
+            utterance.pitch = Math.max(.5,Math.min(2,(personaProfile.pitch || 1.0) * Number(personalizationSettings.voicePitch || 1)));
             window.speechSynthesis.speak(utterance);
         }
 
@@ -3239,106 +4716,49 @@
             });
 
             document.getElementById('customPromptInput').style.display = key === 'custom' ? 'block' : 'none';
+            renderPromptSuggestions();
             toggleModal('modeModalOverlay', false);
         }
 
+        const PROVIDER_ORDER = ['gemini','cloudflare','groq','openrouter','mistral','cohere','image'];
+        const PROVIDER_LABELS = {gemini:'Gemini',cloudflare:'Cloudflare',groq:'Groq',openrouter:'OpenRouter',mistral:'Mistral',cohere:'Cohere',image:'Image'};
         const MODEL_DISPLAY_NAMES = {
-            'gemini-3.5-flash-lite': '3.5 Flash-Lite',
-            'gemini-flash-latest': 'Gemini Flash Latest',
-            'gemini-3.7-flash': '3.7 Flash',
-            'gemini-3.6-flash': '3.6 Flash',
-            '@cf/zai-org/glm-4.7-flash': 'GLM 4.7 Flash',
-            '@cf/google/gemma-4-26b-a4b-it': 'Gemma 4 26B',
-            '@cf/nvidia/nemotron-3-120b-a12b': 'Nemotron 3 120B'
+            'gemini-flash-latest':'Gemini Flash Latest','gemini-3.8-flash':'Gemini 3.8 Flash','gemini-3.7-flash':'Gemini 3.7 Flash','gemini-3.6-flash':'Gemini 3.6 Flash','gemini-3.5-flash-lite':'Gemini 3.5 Flash-Lite',
+            '@cf/zai-org/glm-4.7-flash':'GLM 4.7 Flash','@cf/google/gemma-4-26b-a4b-it':'Gemma 4 26B','@cf/nvidia/nemotron-3-120b-a12b':'Nemotron 3 120B',
+            'openai/gpt-oss-120b':'GPT-OSS 120B','openai/gpt-oss-20b':'GPT-OSS 20B','llama-3.3-70b-versatile':'Llama 3.3 70B','llama-3.1-8b-instant':'Llama 3.1 8B','groq/compound-mini':'Compound Mini',
+            'openrouter/auto':'OpenRouter Auto','deepseek/deepseek-v3.2':'DeepSeek V3.2','google/gemini-3.1-pro-preview':'Gemini 3.1 Pro',
+            'mistral-small-latest':'Mistral Small','mistral-large-latest':'Mistral Large','codestral-latest':'Codestral','ministral-8b-latest':'Ministral 8B',
+            'command-a-plus-05-2026':'Command A+','command-a-03-2025':'Command A','command-a-reasoning-08-2025':'Command A Reasoning','command-r7b-12-2024':'Command R7B'
         };
-
-        function providerLabel(provider) {
-            return provider === 'cloudflare' ? 'Cloudflare' : 'Gemini';
+        function providerLabel(p){ return PROVIDER_LABELS[p] || p || 'AI'; }
+        function updateSelectedModelUI(){
+            const label=MODEL_DISPLAY_NAMES[currentSelectedModel]||currentSelectedModel;
+            const el=document.getElementById('selectedModelText');
+            if(el) el.innerHTML=`<span class="model-selected-provider">${escapeHTML(providerLabel(currentSelectedProvider))}</span>${escapeHTML(label)}`;
+            document.querySelectorAll('#modelModalOverlay .option-item[data-model]').forEach(btn=>btn.classList.toggle('active',btn.dataset.provider===currentSelectedProvider&&btn.dataset.model===currentSelectedModel));
+            renderUsageSyncUI();
         }
-
-        function updateSelectedModelUI() {
-            const label = MODEL_DISPLAY_NAMES[currentSelectedModel] || currentSelectedModel;
-            const el = document.getElementById('selectedModelText');
-            if (el) el.innerHTML = `<span class="model-selected-provider">${providerLabel(currentSelectedProvider)}</span>${escapeHTML(label)}`;
-
-            const modal = document.getElementById('modelModalOverlay');
-            if (modal) {
-                modal.querySelectorAll('.option-item[data-model]').forEach(btn => {
-                    btn.classList.toggle('active',
-                        btn.dataset.provider === currentSelectedProvider &&
-                        btn.dataset.model === currentSelectedModel
-                    );
-                });
-            }
+        function selectProviderModel(provider,key,name){
+            currentSelectedProvider=provider; currentSelectedModel=key;
+            localStorage.setItem('jepong_last_provider',provider); localStorage.setItem('jepong_last_model',key);
+            if(name) MODEL_DISPLAY_NAMES[key]=name;
+            currentProviderPage=Math.max(0,PROVIDER_ORDER.indexOf(provider)); updateSelectedModelUI(); renderProviderPage(); toggleModal('modelModalOverlay',false);
         }
-
-        function selectProviderModel(provider, key, name) {
-            currentSelectedProvider = provider;
-            currentSelectedModel = key;
-            localStorage.setItem('jepong_last_provider', provider);
-            localStorage.setItem('jepong_last_model', key);
-            if (name) MODEL_DISPLAY_NAMES[key] = name;
-            currentProviderPage = provider === 'cloudflare' ? 1 : 0;
-            updateSelectedModelUI();
-            toggleModal('modelModalOverlay', false);
+        function selectImageProviderModel(key,name){ currentSelectedMode='imagen'; localStorage.setItem('jepong_last_mode','imagen'); localStorage.setItem('jepong_last_mode_name','Image Generator'); selectMode('imagen','Image Generator'); toggleModal('modelModalOverlay',false); }
+        function selectModel(key,name){ selectProviderModel(currentSelectedProvider||'gemini',key,name); }
+        function renderProviderPage(){
+            const track=document.getElementById('modelPagesTrack'); const title=document.getElementById('modelProviderTitle');
+            if(track) track.style.transform=`translateX(-${currentProviderPage*(100/7)}%)`;
+            if(title) title.textContent=providerLabel(PROVIDER_ORDER[currentProviderPage]);
+            document.querySelectorAll('.model-page-dot').forEach((dot,i)=>dot.classList.toggle('active',i===currentProviderPage));
+            document.querySelectorAll('.model-provider-tab').forEach((tab,i)=>tab.classList.toggle('active',i===currentProviderPage));
         }
-
-        // Backward-compatible helper used by older parts of this file.
-        function selectModel(key, name) {
-            selectProviderModel(currentSelectedProvider || 'gemini', key, name);
-        }
-
-        function renderProviderPage() {
-            const track = document.getElementById('modelPagesTrack');
-            const title = document.getElementById('modelProviderTitle');
-            if (track) track.style.transform = `translateX(-${currentProviderPage * 50}%)`;
-            if (title) title.textContent = currentProviderPage === 1 ? 'Cloudflare AI' : 'Gemini';
-            document.querySelectorAll('.model-page-dot').forEach((dot, i) => dot.classList.toggle('active', i === currentProviderPage));
-            document.querySelectorAll('.model-provider-tab').forEach((tab, i) => tab.classList.toggle('active', i === currentProviderPage));
-        }
-
-        function setProviderPage(index) {
-            currentProviderPage = Math.max(0, Math.min(1, index));
-            renderProviderPage();
-        }
-
-        function changeProviderPage(direction) {
-            setProviderPage((currentProviderPage + direction + 2) % 2);
-        }
-
-        function openModelPicker() {
-            currentProviderPage = currentSelectedProvider === 'cloudflare' ? 1 : 0;
-            updateSelectedModelUI();
-            renderProviderPage();
-            toggleModal('modelModalOverlay', true);
-        }
-
-        // Swipe only inside the model picker so it will not conflict with the app drawer swipe.
-        let modelSwipeStartX = 0;
-        let modelSwipeStartY = 0;
-        let modelSwipeActive = false;
-
-        document.addEventListener('touchstart', (e) => {
-            const viewport = e.target.closest && e.target.closest('#modelPagesViewport');
-            if (!viewport || !document.getElementById('modelModalOverlay')?.classList.contains('open')) return;
-            const t = e.touches[0];
-            modelSwipeStartX = t.clientX;
-            modelSwipeStartY = t.clientY;
-            modelSwipeActive = true;
-            e.stopPropagation();
-        }, { passive: true, capture: true });
-
-        document.addEventListener('touchend', (e) => {
-            if (!modelSwipeActive) return;
-            modelSwipeActive = false;
-            const t = e.changedTouches[0];
-            const dx = t.clientX - modelSwipeStartX;
-            const dy = t.clientY - modelSwipeStartY;
-            if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) {
-                changeProviderPage(dx < 0 ? 1 : -1);
-                e.stopPropagation();
-            }
-        }, { passive: true, capture: true });
+        function setProviderPage(index){ currentProviderPage=Math.max(0,Math.min(PROVIDER_ORDER.length-1,index)); renderProviderPage(); }
+        function changeProviderPage(direction){ setProviderPage((currentProviderPage+direction+PROVIDER_ORDER.length)%PROVIDER_ORDER.length); }
+        function openModelPicker(){ currentProviderPage=Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); toggleModal('modelModalOverlay',true); }
+        let modelSwipeStartX=0,modelSwipeStartY=0,modelSwipeActive=false;
+        document.addEventListener('touchstart',e=>{const viewport=e.target.closest&&e.target.closest('#modelPagesViewport');if(!viewport||!document.getElementById('modelModalOverlay')?.classList.contains('open'))return;const t=e.touches[0];modelSwipeStartX=t.clientX;modelSwipeStartY=t.clientY;modelSwipeActive=true;e.stopPropagation();},{passive:true,capture:true});
+        document.addEventListener('touchend',e=>{if(!modelSwipeActive)return;modelSwipeActive=false;const t=e.changedTouches[0],dx=t.clientX-modelSwipeStartX,dy=t.clientY-modelSwipeStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){changeProviderPage(dx<0?1:-1);e.stopPropagation();}},{passive:true,capture:true});
 
         function handleFileSelect(e) {
             Array.from(e.target.files).forEach(f => {
@@ -3393,6 +4813,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(()=>refreshLucideIcons(),0); // global icon refresh
             const savedTheme = localStorage.getItem('jepong_theme') || '';
             setTheme(savedTheme);
             updateUsageUI();
@@ -3403,6 +4824,8 @@
             updateSelectedModelUI();
             renderProviderPage();
             updateWebSearchUI();
+            renderPersonalizationSettings();
+            syncPersonalizationFeatureToggles();
 
             measureNetworkPing();
             setInterval(measureNetworkPing, 8000);
