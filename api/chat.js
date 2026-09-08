@@ -27,7 +27,7 @@ export default async function handler(req) {
       });
     }
 
-    // Shuffle keys (Fisher-Yates) para pantay ang ikot sa 8 accounts
+    // Shuffle keys (Fisher-Yates) para pantay ang paggamit sa 8 accounts
     for (let i = apiKeys.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [apiKeys[i], apiKeys[j]] = [apiKeys[j], apiKeys[i]];
@@ -47,6 +47,10 @@ export default async function handler(req) {
     }
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
+
+    if (webSearch) {
+      systemInstructionText += " You have access to Google Search. You MUST search the live web to answer queries regarding current events, real-time facts, local weather, live news, and current dates/times accurately.";
+    }
 
     if (mode === 'school') {
       systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
@@ -122,14 +126,15 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
-    // Function helper para sa API call
-    async function tryCallGemini(key, useSearch) {
+    async function sendRequestToGemini(key, includeSearch) {
       const payload = {
         system_instruction: { parts: [{ text: systemInstructionText }] },
         contents: sanitizedContents
       };
-      if (useSearch) {
-        payload.tools = [{ google_search: {} }];
+
+      if (includeSearch) {
+        // Tamang camelCase syntax para sa Google Search Grounding sa v1beta
+        payload.tools = [{ googleSearch: {} }];
       }
 
       return await fetch(
@@ -142,10 +147,10 @@ export default async function handler(req) {
       );
     }
 
-    // Step 1: Subukan ang bawat key (may Web Search kung naka-on)
+    // Unang pag-ikot: Gamit ang Search kapag naka-ON ang webSearch
     for (const apiKey of apiKeys) {
       try {
-        geminiRes = await tryCallGemini(apiKey, webSearch);
+        geminiRes = await sendRequestToGemini(apiKey, webSearch);
         if (geminiRes.ok) break;
 
         lastErrorText = await geminiRes.text();
@@ -155,12 +160,11 @@ export default async function handler(req) {
       }
     }
 
-    // Step 2: KUNG nag-fail sa 429 at naka-ON ang webSearch,
-    // malamang Search Tool Quota ang limit. Subukan ulit ang mga keys nang WALANG search tool para makasagot pa rin.
+    // Fallback: Kapag nag-fail sa search restriction o quota, subukan muli nang normal
     if ((!geminiRes || !geminiRes.ok) && webSearch) {
       for (const apiKey of apiKeys) {
         try {
-          geminiRes = await tryCallGemini(apiKey, false);
+          geminiRes = await sendRequestToGemini(apiKey, false);
           if (geminiRes.ok) break;
           lastErrorText = await geminiRes.text();
         } catch (err) {
