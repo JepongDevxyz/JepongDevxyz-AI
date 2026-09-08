@@ -2,255 +2,933 @@ export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(req) {
-  if (req.method === 'HEAD') {
-    return new Response(null, { status: 200 });
+const GEMINI_MODELS = [
+  'gemini-flash-latest',
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite'
+];
+
+const CLOUDFLARE_MODELS = [
+  '@cf/zai-org/glm-4.7-flash',
+  '@cf/google/gemma-4-26b-a4b-it',
+  '@cf/nvidia/nemotron-3-120b-a12b'
+];
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8'
+    },
+  });
+}
+
+function buildSystemInstruction(mode, customPrompt, liveWebContext) {
+  let text =
+    'You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.';
+
+  if (liveWebContext) {
+    text += liveWebContext;
   }
 
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
-      status: 405, 
-      headers: { 'Content-Type': 'application/json' } 
-    });
+  if (mode === 'school') {
+    text +=
+      ' Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.';
+  } else if (mode === 'coder') {
+    text +=
+      ' Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.';
+  } else if (mode === 'tagalog') {
+    text +=
+      ' Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.';
+  } else if (mode === 'affiliate') {
+    text +=
+      ' Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies.';
+  } else if (mode === 'custom' && customPrompt) {
+    text += ` ${customPrompt}`;
+  }
+
+  return text;
+}
+
+async function getLiveWebContext(message, webSearch) {
+  if (!webSearch || !message) {
+    return '';
   }
 
   try {
-    const { message, history, files, model, mode, customPrompt, webSearch } = await req.json();
-    
-    const rawKeys = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEYS || '';
-    let apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+    const isWeatherQuery =
+      /(weather|panahon|ulan|init|bagyo|temperatura|forecast)/i.test(message);
 
-    if (apiKeys.length === 0) {
-      return new Response(JSON.stringify({ error: 'No API keys configured in environment variables.' }), { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
-    }
+    if (isWeatherQuery) {
+      const locMatch = message.match(
+        /(?:sa|in|for|at)\s+([a-zA-Z\s,.-]+)/i
+      );
 
-    // Shuffle keys para pantay ang ikot sa accounts
-    for (let i = apiKeys.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [apiKeys[i], apiKeys[j]] = [apiKeys[j], apiKeys[i]];
-    }
+      const location = locMatch
+        ? locMatch[1].trim()
+        : 'Guimba';
 
-    const VALID_MODELS = [
-      'gemini-flash-latest',
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite'
-    ];
+      const weatherRes = await fetch(
+        `https://wttr.in/${encodeURIComponent(location)}?format=j1`,
+        {
+          headers: {
+            'User-Agent': 'curl/7.68.0'
+          },
+          signal: AbortSignal.timeout(3500),
+        }
+      );
 
-    let targetModel = model || 'gemini-flash-latest';
-    if (!VALID_MODELS.includes(targetModel)) {
-      targetModel = 'gemini-flash-latest';
-    }
+      if (weatherRes.ok) {
+        const wData = await weatherRes.json();
 
-    let liveWebContext = '';
+        const current =
+          wData.current_condition?.[0] || {};
 
-    // LIBRENG LIVE WEB & WEATHER FETCHER (HINDI NANGANGAILANGAN NG BAYAD NA GOOGLE GROUNDING)
-    if (webSearch && message) {
-      try {
-        const isWeatherQuery = /(weather|panahon|ulan|init|bagyo|temperatura|forecast)/i.test(message);
-        
-        if (isWeatherQuery) {
-          // Kunin ang lokasyon mula sa tanong (hal. Guimba)
-          const locMatch = message.match(/(sa|in|for|at)\s+([a-zA-Z\s]+)/i);
-          const location = locMatch ? locMatch[2].trim() : 'Guimba';
-          
-          const weatherRes = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`, {
-            headers: { 'User-Agent': 'curl/7.68.0' },
-            signal: AbortSignal.timeout(3500)
-          });
+        const nearest =
+          wData.nearest_area?.[0] || {};
 
-          if (weatherRes.ok) {
-            const wData = await weatherRes.json();
-            const current = wData.current_condition?.[0] || {};
-            const nearest = wData.nearest_area?.[0] || {};
-            liveWebContext = `\n\n[REAL-TIME LIVE WEATHER DATA as of today]:
+        return `
+
+[REAL-TIME LIVE WEATHER DATA]:
 Location: ${nearest.areaName?.[0]?.value || location}, ${nearest.region?.[0]?.value || ''}, Philippines
-Current Temperature: ${current.temp_C || '30'}°C (Feels like: ${current.FeelsLikeC || '34'}°C)
-Weather Condition: ${current.weatherDesc?.[0]?.value || 'Partly Cloudy'}
-Humidity: ${current.humidity || '70'}%
-Wind: ${current.windspeedKmph || '10'} km/h
-Precipitation / Rain: ${current.precipMM || '0.0'} mm.
-(Use this factual real-time data to answer the user accurately.)`;
-          }
-        } else {
-          // Para sa pangkalahatang tanong, kumuha ng instant facts via DuckDuckGo Instant Answers
-          const ddgRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(message)}&format=json&no_html=1&skip_disambig=1`, {
-            signal: AbortSignal.timeout(3000)
-          });
-          if (ddgRes.ok) {
-            const ddgData = await ddgRes.json();
-            if (ddgData.AbstractText) {
-              liveWebContext = `\n\n[LIVE WEB SEARCH RESULT]:\n${ddgData.AbstractText}\nSource: ${ddgData.AbstractURL || 'Internet'}`;
-            }
-          }
-        }
-      } catch (e) {
-        // Tuloy pa rin ang chat kung mag-timeout ang web fetcher
+Current Temperature: ${current.temp_C || 'N/A'}°C
+Feels like: ${current.FeelsLikeC || 'N/A'}°C
+Weather Condition: ${current.weatherDesc?.[0]?.value || 'Unknown'}
+Humidity: ${current.humidity || 'N/A'}%
+Wind: ${current.windspeedKmph || 'N/A'} km/h
+Precipitation / Rain: ${current.precipMM || 'N/A'} mm.
+
+Use this live data when answering the user.`;
       }
-    }
-
-    let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
-
-    if (liveWebContext) {
-      systemInstructionText += liveWebContext;
-    }
-
-    if (mode === 'school') {
-      systemInstructionText += " Act as an academic assistant. Help with homework, school projects, essays, research, and study guides with detailed, accurate, and educational explanations.";
-    } else if (mode === 'coder') {
-      systemInstructionText += " Act as an expert software engineer and senior programmer. Provide clean, well-commented code, debugging solutions, and system architectural designs.";
-    } else if (mode === 'tagalog') {
-      systemInstructionText += " Speak strictly in natural, pure Tagalog/Filipino language as a warm, friendly, and helpful companion. Avoid heavy English unless technical terms require it.";
-    } else if (mode === 'affiliate') {
-      systemInstructionText += " Act as a top-tier digital affiliate marketing expert and strategist. Help write compelling product scripts, promotional copy, sales hooks, call-to-actions, and social media engagement strategies.";
-    } else if (mode === 'custom' && customPrompt) {
-      systemInstructionText += ` ${customPrompt}`;
-    }
-
-    const currentParts = [];
-    if (files && Array.isArray(files) && files.length > 0) {
-      files.forEach(f => {
-        if (f.data && f.mimeType) {
-          currentParts.push({ inline_data: { mime_type: f.mimeType, data: f.data } });
+    } else {
+      const ddgRes = await fetch(
+        `https://api.duckduckgo.com/?q=${encodeURIComponent(
+          message
+        )}&format=json&no_html=1&skip_disambig=1`,
+        {
+          signal: AbortSignal.timeout(3000),
         }
-      });
-    }
-    if (message && message.trim()) {
-      currentParts.push({ text: message.trim() });
-    }
+      );
 
-    let rawContents = [];
-    if (Array.isArray(history) && history.length > 0) {
-      history.forEach(turn => {
-        const role = turn.role === 'bot' || turn.role === 'model' ? 'model' : 'user';
-        let parts = [];
-        if (Array.isArray(turn.parts) && turn.parts.length > 0) {
-          parts = turn.parts;
-        } else if (turn.text && turn.text.trim()) {
-          parts = [{ text: turn.text.trim() }];
-        }
+      if (ddgRes.ok) {
+        const ddgData = await ddgRes.json();
 
-        if (parts.length > 0) {
-          rawContents.push({ role, parts });
-        }
-      });
-    }
+        if (ddgData.AbstractText) {
+          return `
 
-    if (currentParts.length > 0 && rawContents.length > 0 && rawContents[rawContents.length - 1].role === 'user') {
-      rawContents.pop();
-    }
+[LIVE WEB SEARCH RESULT]:
+${ddgData.AbstractText}
 
-    const sanitizedContents = [];
-    for (const item of rawContents) {
-      if (sanitizedContents.length === 0) {
-        if (item.role === 'user') sanitizedContents.push(item);
-      } else {
-        const lastRole = sanitizedContents[sanitizedContents.length - 1].role;
-        if (item.role !== lastRole) {
-          sanitizedContents.push(item);
+Source:
+${ddgData.AbstractURL || 'Internet'}`;
         }
       }
     }
+  } catch (error) {
+    // Continue kahit hindi gumana ang web fetcher.
+  }
 
-    if (currentParts.length > 0) {
-      sanitizedContents.push({
-        role: 'user',
-        parts: currentParts
-      });
+  return '';
+}
+
+/* =========================================================
+   GEMINI MESSAGE BUILDER
+========================================================= */
+
+function buildGeminiContents(history, files, message) {
+  const currentParts = [];
+
+  if (Array.isArray(files)) {
+    for (const file of files) {
+      if (file?.data && file?.mimeType) {
+        currentParts.push({
+          inline_data: {
+            mime_type: file.mimeType,
+            data: file.data,
+          },
+        });
+      }
     }
+  }
 
-    if (sanitizedContents.length === 0) {
-      return new Response(JSON.stringify({ error: 'No prompt or content provided.' }), { 
-        status: 400, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
-    }
+  if (message?.trim()) {
+    currentParts.push({
+      text: message.trim(),
+    });
+  }
 
-    let geminiRes = null;
-    let lastErrorText = '';
+  const rawContents = [];
 
-    const payload = {
-      system_instruction: { parts: [{ text: systemInstructionText }] },
-      contents: sanitizedContents
-    };
+  if (Array.isArray(history)) {
+    for (const turn of history) {
+      const role =
+        turn.role === 'bot' ||
+        turn.role === 'model'
+          ? 'model'
+          : 'user';
 
-    // MABILIS NA LOOP NA MAY 6-SEGUNDONG TIMEOUT BAWAT SUSI PARA HINDI MAG-HANG
-    for (const apiKey of apiKeys) {
-      try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+      let parts = [];
+
+      if (
+        Array.isArray(turn.parts) &&
+        turn.parts.length
+      ) {
+        parts = turn.parts;
+      } else if (turn.text?.trim()) {
+        parts = [
           {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(6000)
-          }
-        );
+            text: turn.text.trim(),
+          },
+        ];
+      }
 
-        if (res.ok) {
-          geminiRes = res;
-          break;
-        }
-
-        lastErrorText = await res.text();
-        if (res.status !== 429 && res.status !== 403) break;
-      } catch (err) {
-        lastErrorText = err.message;
+      if (parts.length) {
+        rawContents.push({
+          role,
+          parts,
+        });
       }
     }
+  }
 
-    if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText || 'All configured API keys are currently busy or rate-limited.' }), { 
-        status: geminiRes ? geminiRes.status : 500, 
-        headers: { 'Content-Type': 'application/json' } 
+  /*
+   * Frontend history may already contain
+   * the current user message.
+   */
+  if (
+    currentParts.length &&
+    rawContents.length &&
+    rawContents.at(-1).role === 'user'
+  ) {
+    rawContents.pop();
+  }
+
+  const sanitized = [];
+
+  for (const item of rawContents) {
+    if (!sanitized.length) {
+      if (item.role === 'user') {
+        sanitized.push(item);
+      }
+
+      continue;
+    }
+
+    if (
+      sanitized.at(-1).role !== item.role
+    ) {
+      sanitized.push(item);
+    }
+  }
+
+  if (currentParts.length) {
+    sanitized.push({
+      role: 'user',
+      parts: currentParts,
+    });
+  }
+
+  return sanitized;
+}
+
+/* =========================================================
+   CLOUDFLARE MESSAGE BUILDER
+========================================================= */
+
+function buildCloudflareMessages(
+  history,
+  files,
+  message,
+  systemInstruction,
+  model
+) {
+  const messages = [
+    {
+      role: 'system',
+      content: systemInstruction,
+    },
+  ];
+
+  if (Array.isArray(history)) {
+    for (const turn of history) {
+      const content =
+        turn?.text?.trim();
+
+      if (!content) {
+        continue;
+      }
+
+      messages.push({
+        role:
+          turn.role === 'bot' ||
+          turn.role === 'model'
+            ? 'assistant'
+            : 'user',
+
+        content,
+      });
+    }
+  }
+
+  /*
+   * Remove duplicate current user
+   * message from history.
+   */
+  if (
+    messages.length > 1 &&
+    messages.at(-1).role === 'user'
+  ) {
+    messages.pop();
+  }
+
+  const hasFiles =
+    Array.isArray(files) &&
+    files.some(
+      file =>
+        file?.data &&
+        file?.mimeType
+    );
+
+  /*
+   * Image/file analysis is routed
+   * to Gemma in our Cloudflare setup.
+   */
+  if (
+    hasFiles &&
+    model !==
+      '@cf/google/gemma-4-26b-a4b-it'
+  ) {
+    throw new Error(
+      'For Cloudflare image/file analysis, select Gemma 4 26B. GLM and Nemotron are configured as text-only in this app.'
+    );
+  }
+
+  if (hasFiles) {
+    const content = [];
+
+    if (message?.trim()) {
+      content.push({
+        type: 'text',
+        text: message.trim(),
       });
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+    for (const file of files) {
+      if (
+        file?.data &&
+        file?.mimeType?.startsWith('image/')
+      ) {
+        content.push({
+          type: 'image_url',
 
-    const transformStream = new TransformStream({
-      start() { this.buffer = ''; },
-      async transform(chunk, controller) {
-        this.buffer += decoder.decode(chunk, { stream: true });
-        const lines = this.buffer.split('\n');
-        this.buffer = lines.pop() || '';
+          image_url: {
+            url:
+              `data:${file.mimeType};base64,${file.data}`,
+          },
+        });
+      }
+    }
+
+    if (content.length) {
+      messages.push({
+        role: 'user',
+        content,
+      });
+    }
+  } else if (message?.trim()) {
+    messages.push({
+      role: 'user',
+      content: message.trim(),
+    });
+  }
+
+  return messages;
+}
+
+/* =========================================================
+   GEMINI PROVIDER
+========================================================= */
+
+async function runGemini({
+  model,
+  history,
+  files,
+  message,
+  systemInstruction,
+}) {
+  const rawKeys =
+    process.env.GEMINI_API_KEY ||
+    process.env.GEMINI_API_KEYS ||
+    '';
+
+  const apiKeys = rawKeys
+    .split(',')
+    .map(key => key.trim())
+    .filter(Boolean);
+
+  if (!apiKeys.length) {
+    return json(
+      {
+        error:
+          'No Gemini API keys configured in environment variables.',
+      },
+      500
+    );
+  }
+
+  /*
+   * Shuffle Gemini keys.
+   */
+  for (
+    let i = apiKeys.length - 1;
+    i > 0;
+    i--
+  ) {
+    const j = Math.floor(
+      Math.random() * (i + 1)
+    );
+
+    [
+      apiKeys[i],
+      apiKeys[j],
+    ] = [
+      apiKeys[j],
+      apiKeys[i],
+    ];
+  }
+
+  const targetModel =
+    GEMINI_MODELS.includes(model)
+      ? model
+      : 'gemini-flash-latest';
+
+  const contents =
+    buildGeminiContents(
+      history,
+      files,
+      message
+    );
+
+  if (!contents.length) {
+    return json(
+      {
+        error:
+          'No prompt or content provided.',
+      },
+      400
+    );
+  }
+
+  const payload = {
+    system_instruction: {
+      parts: [
+        {
+          text: systemInstruction,
+        },
+      ],
+    },
+
+    contents,
+  };
+
+  let geminiRes = null;
+  let lastErrorText = '';
+
+  /*
+   * Try each configured Gemini key.
+   */
+  for (const apiKey of apiKeys) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body:
+            JSON.stringify(payload),
+
+          signal:
+            AbortSignal.timeout(6000),
+        }
+      );
+
+      if (res.ok) {
+        geminiRes = res;
+        break;
+      }
+
+      lastErrorText =
+        await res.text();
+
+      /*
+       * Try another API key only
+       * for quota/permission errors.
+       */
+      if (
+        res.status !== 429 &&
+        res.status !== 403
+      ) {
+        break;
+      }
+    } catch (error) {
+      lastErrorText =
+        error?.message ||
+        String(error);
+    }
+  }
+
+  if (!geminiRes?.ok) {
+    return json(
+      {
+        error:
+          lastErrorText ||
+          'All configured Gemini API keys are currently busy or rate-limited.',
+      },
+      geminiRes?.status || 500
+    );
+  }
+
+  const encoder =
+    new TextEncoder();
+
+  const decoder =
+    new TextDecoder();
+
+  const transformStream =
+    new TransformStream({
+      start() {
+        this.buffer = '';
+      },
+
+      transform(
+        chunk,
+        controller
+      ) {
+        this.buffer +=
+          decoder.decode(
+            chunk,
+            {
+              stream: true,
+            }
+          );
+
+        const lines =
+          this.buffer.split('\n');
+
+        this.buffer =
+          lines.pop() || '';
 
         for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith('data:')) {
-            const jsonStr = trimmed.slice(5).trim();
-            if (jsonStr === '[DONE]') continue;
+          const trimmed =
+            line.trim();
 
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const parts = parsed.candidates?.[0]?.content?.parts || [];
-              for (const part of parts) {
-                if (part.text) {
-                  controller.enqueue(encoder.encode(part.text));
-                }
+          if (
+            !trimmed.startsWith(
+              'data:'
+            )
+          ) {
+            continue;
+          }
+
+          const jsonStr =
+            trimmed
+              .slice(5)
+              .trim();
+
+          if (
+            !jsonStr ||
+            jsonStr === '[DONE]'
+          ) {
+            continue;
+          }
+
+          try {
+            const parsed =
+              JSON.parse(jsonStr);
+
+            const parts =
+              parsed
+                .candidates?.[0]
+                ?.content
+                ?.parts || [];
+
+            for (
+              const part of parts
+            ) {
+              if (part.text) {
+                controller.enqueue(
+                  encoder.encode(
+                    part.text
+                  )
+                );
               }
-            } catch (e) {}
+            }
+          } catch (error) {
+            // Ignore malformed SSE chunk.
           }
         }
-      }
-    });
-
-    return new Response(geminiRes.body.pipeThrough(transformStream), {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
       },
     });
 
+  return new Response(
+    geminiRes.body.pipeThrough(
+      transformStream
+    ),
+    {
+      headers: {
+        'Content-Type':
+          'text/plain; charset=utf-8',
+
+        'Cache-Control':
+          'no-cache, no-transform',
+      },
+    }
+  );
+}
+
+/* =========================================================
+   CLOUDFLARE WORKERS AI PROVIDER
+========================================================= */
+
+async function runCloudflare({
+  model,
+  history,
+  files,
+  message,
+  systemInstruction,
+}) {
+  const accountId =
+    process.env
+      .CLOUDFLARE_ACCOUNT_ID ||
+    '';
+
+  const apiToken =
+    process.env
+      .CLOUDFLARE_API_TOKEN ||
+    '';
+
+  if (
+    !accountId ||
+    !apiToken
+  ) {
+    return json(
+      {
+        error:
+          'Cloudflare is not configured. Add CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in Vercel Environment Variables.',
+      },
+      500
+    );
+  }
+
+  const targetModel =
+    CLOUDFLARE_MODELS.includes(
+      model
+    )
+      ? model
+      : '@cf/zai-org/glm-4.7-flash';
+
+  let messages;
+
+  try {
+    messages =
+      buildCloudflareMessages(
+        history,
+        files,
+        message,
+        systemInstruction,
+        targetModel
+      );
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500, 
-      headers: { 'Content-Type': 'application/json' } 
+    return json(
+      {
+        error: error.message,
+      },
+      400
+    );
+  }
+
+  if (
+    messages.length <= 1
+  ) {
+    return json(
+      {
+        error:
+          'No prompt or content provided.',
+      },
+      400
+    );
+  }
+
+  let cfRes;
+
+  try {
+    cfRes = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(
+        accountId
+      )}/ai/v1/chat/completions`,
+      {
+        method: 'POST',
+
+        headers: {
+          Authorization:
+            `Bearer ${apiToken}`,
+
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          model: targetModel,
+
+          messages,
+
+          stream: true,
+
+          max_completion_tokens:
+            2048,
+
+          temperature: 0.7,
+        }),
+
+        signal:
+          AbortSignal.timeout(
+            25000
+          ),
+      }
+    );
+  } catch (error) {
+    return json(
+      {
+        error:
+          `Cloudflare request failed: ${
+            error?.message ||
+            String(error)
+          }`,
+      },
+      502
+    );
+  }
+
+  if (!cfRes.ok) {
+    const errorText =
+      await cfRes
+        .text()
+        .catch(() => '');
+
+    return json(
+      {
+        error:
+          errorText ||
+          `Cloudflare returned status ${cfRes.status}`,
+      },
+      cfRes.status
+    );
+  }
+
+  const encoder =
+    new TextEncoder();
+
+  const decoder =
+    new TextDecoder();
+
+  /*
+   * Convert Cloudflare OpenAI-compatible
+   * SSE stream into the same plain-text
+   * stream expected by your frontend.
+   */
+  const transformStream =
+    new TransformStream({
+      start() {
+        this.buffer = '';
+      },
+
+      transform(
+        chunk,
+        controller
+      ) {
+        this.buffer +=
+          decoder.decode(
+            chunk,
+            {
+              stream: true,
+            }
+          );
+
+        const lines =
+          this.buffer.split('\n');
+
+        this.buffer =
+          lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed =
+            line.trim();
+
+          if (
+            !trimmed.startsWith(
+              'data:'
+            )
+          ) {
+            continue;
+          }
+
+          const payload =
+            trimmed
+              .slice(5)
+              .trim();
+
+          if (
+            !payload ||
+            payload === '[DONE]'
+          ) {
+            continue;
+          }
+
+          try {
+            const parsed =
+              JSON.parse(payload);
+
+            const text =
+              parsed
+                .choices?.[0]
+                ?.delta
+                ?.content;
+
+            if (
+              typeof text ===
+                'string' &&
+              text
+            ) {
+              controller.enqueue(
+                encoder.encode(text)
+              );
+            }
+          } catch (error) {
+            // Ignore malformed SSE chunk.
+          }
+        }
+      },
     });
+
+  return new Response(
+    cfRes.body.pipeThrough(
+      transformStream
+    ),
+    {
+      headers: {
+        'Content-Type':
+          'text/plain; charset=utf-8',
+
+        'Cache-Control':
+          'no-cache, no-transform',
+      },
+    }
+  );
+}
+
+/* =========================================================
+   MAIN API HANDLER
+========================================================= */
+
+export default async function handler(
+  req
+) {
+  /*
+   * Used by your ping/status checks.
+   */
+  if (req.method === 'HEAD') {
+    return new Response(
+      null,
+      {
+        status: 200,
+      }
+    );
+  }
+
+  if (
+    req.method !== 'POST'
+  ) {
+    return json(
+      {
+        error:
+          'Method not allowed',
+      },
+      405
+    );
+  }
+
+  try {
+    const {
+      message,
+      history,
+      files,
+
+      /*
+       * NEW:
+       * gemini | cloudflare
+       */
+      provider = 'gemini',
+
+      model,
+      mode,
+      customPrompt,
+      webSearch,
+    } = await req.json();
+
+    const liveWebContext =
+      await getLiveWebContext(
+        message,
+        webSearch
+      );
+
+    const systemInstruction =
+      buildSystemInstruction(
+        mode,
+        customPrompt,
+        liveWebContext
+      );
+
+    /*
+     * CLOUDFLARE
+     */
+    if (
+      provider ===
+      'cloudflare'
+    ) {
+      return await runCloudflare({
+        model,
+        history,
+        files,
+        message,
+        systemInstruction,
+      });
+    }
+
+    /*
+     * GEMINI DEFAULT
+     */
+    return await runGemini({
+      model,
+      history,
+      files,
+      message,
+      systemInstruction,
+    });
+  } catch (error) {
+    return json(
+      {
+        error:
+          error?.message ||
+          String(error),
+      },
+      500
+    );
   }
 }
