@@ -18,13 +18,19 @@ export default async function handler(req) {
     const { message, history, files, model, mode, customPrompt, webSearch } = await req.json();
     
     const rawKeys = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEYS || '';
-    const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+    let apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
 
     if (apiKeys.length === 0) {
       return new Response(JSON.stringify({ error: 'No API keys configured in environment variables.' }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
+    }
+
+    // Shuffle keys (Fisher-Yates) para pantay ang ikot sa 8 accounts
+    for (let i = apiKeys.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [apiKeys[i], apiKeys[j]] = [apiKeys[j], apiKeys[i]];
     }
 
     const VALID_MODELS = [
@@ -35,9 +41,9 @@ export default async function handler(req) {
       'gemini-3.5-flash-lite'
     ];
 
-    let targetModel = model || 'gemini-3.5-flash-lite';
+    let targetModel = model || 'gemini-flash-latest';
     if (!VALID_MODELS.includes(targetModel)) {
-      targetModel = 'gemini-3.5-flash-lite';
+      targetModel = 'gemini-flash-latest';
     }
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
@@ -116,29 +122,51 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
-    const payload = {
-      system_instruction: { parts: [{ text: systemInstructionText }] },
-      contents: sanitizedContents
-    };
+    // Function helper para sa API call
+    async function tryCallGemini(key, useSearch) {
+      const payload = {
+        system_instruction: { parts: [{ text: systemInstructionText }] },
+        contents: sanitizedContents
+      };
+      if (useSearch) {
+        payload.tools = [{ google_search: {} }];
+      }
 
-    if (webSearch) {
-      payload.tools = [{ google_search: {} }];
-    }
-
-    for (const apiKey of apiKeys) {
-      geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+      return await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${key}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }
       );
+    }
 
-      if (geminiRes.ok) break;
+    // Step 1: Subukan ang bawat key (may Web Search kung naka-on)
+    for (const apiKey of apiKeys) {
+      try {
+        geminiRes = await tryCallGemini(apiKey, webSearch);
+        if (geminiRes.ok) break;
 
-      lastErrorText = await geminiRes.text();
-      if (geminiRes.status !== 429) break;
+        lastErrorText = await geminiRes.text();
+        if (geminiRes.status !== 429 && geminiRes.status !== 403) break;
+      } catch (err) {
+        lastErrorText = err.message;
+      }
+    }
+
+    // Step 2: KUNG nag-fail sa 429 at naka-ON ang webSearch,
+    // malamang Search Tool Quota ang limit. Subukan ulit ang mga keys nang WALANG search tool para makasagot pa rin.
+    if ((!geminiRes || !geminiRes.ok) && webSearch) {
+      for (const apiKey of apiKeys) {
+        try {
+          geminiRes = await tryCallGemini(apiKey, false);
+          if (geminiRes.ok) break;
+          lastErrorText = await geminiRes.text();
+        } catch (err) {
+          lastErrorText = err.message;
+        }
+      }
     }
 
     if (!geminiRes || !geminiRes.ok) {
