@@ -144,7 +144,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
     if (p.emoji === 'More') text += ' Emoji may be used a little more often when appropriate.';
     else if (p.emoji === 'Less') text += ' Avoid emoji unless clearly useful.';
     if (p.fastAnswers) text += ' Prefer concise answers first; expand only when the task needs detail.';
-    if (p.referenceWritingStyle) text += ' Match the user's general writing tone and phrasing from the current conversation without copying long passages.';
+    if (p.referenceWritingStyle) text += " Match the user's general writing tone and phrasing from the current conversation without copying long passages.";
 
     const pet = safe(p.pet);
     const petDescription = safe(p.petDescription);
