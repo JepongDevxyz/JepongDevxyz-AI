@@ -27,7 +27,7 @@ export default async function handler(req) {
       });
     }
 
-    // Shuffle keys (Fisher-Yates) para pantay ang paggamit sa 8 accounts
+    // Shuffle keys para pantay ang ikot sa accounts
     for (let i = apiKeys.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [apiKeys[i], apiKeys[j]] = [apiKeys[j], apiKeys[i]];
@@ -46,10 +46,57 @@ export default async function handler(req) {
       targetModel = 'gemini-flash-latest';
     }
 
+    let liveWebContext = '';
+
+    // LIBRENG LIVE WEB & WEATHER FETCHER (HINDI NANGANGAILANGAN NG BAYAD NA GOOGLE GROUNDING)
+    if (webSearch && message) {
+      try {
+        const isWeatherQuery = /(weather|panahon|ulan|init|bagyo|temperatura|forecast)/i.test(message);
+        
+        if (isWeatherQuery) {
+          // Kunin ang lokasyon mula sa tanong (hal. Guimba)
+          const locMatch = message.match(/(sa|in|for|at)\s+([a-zA-Z\s]+)/i);
+          const location = locMatch ? locMatch[2].trim() : 'Guimba';
+          
+          const weatherRes = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`, {
+            headers: { 'User-Agent': 'curl/7.68.0' },
+            signal: AbortSignal.timeout(3500)
+          });
+
+          if (weatherRes.ok) {
+            const wData = await weatherRes.json();
+            const current = wData.current_condition?.[0] || {};
+            const nearest = wData.nearest_area?.[0] || {};
+            liveWebContext = `\n\n[REAL-TIME LIVE WEATHER DATA as of today]:
+Location: ${nearest.areaName?.[0]?.value || location}, ${nearest.region?.[0]?.value || ''}, Philippines
+Current Temperature: ${current.temp_C || '30'}°C (Feels like: ${current.FeelsLikeC || '34'}°C)
+Weather Condition: ${current.weatherDesc?.[0]?.value || 'Partly Cloudy'}
+Humidity: ${current.humidity || '70'}%
+Wind: ${current.windspeedKmph || '10'} km/h
+Precipitation / Rain: ${current.precipMM || '0.0'} mm.
+(Use this factual real-time data to answer the user accurately.)`;
+          }
+        } else {
+          // Para sa pangkalahatang tanong, kumuha ng instant facts via DuckDuckGo Instant Answers
+          const ddgRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(message)}&format=json&no_html=1&skip_disambig=1`, {
+            signal: AbortSignal.timeout(3000)
+          });
+          if (ddgRes.ok) {
+            const ddgData = await ddgRes.json();
+            if (ddgData.AbstractText) {
+              liveWebContext = `\n\n[LIVE WEB SEARCH RESULT]:\n${ddgData.AbstractText}\nSource: ${ddgData.AbstractURL || 'Internet'}`;
+            }
+          }
+        }
+      } catch (e) {
+        // Tuloy pa rin ang chat kung mag-timeout ang web fetcher
+      }
+    }
+
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
 
-    if (webSearch) {
-      systemInstructionText += " You have access to Google Search. You MUST search the live web to answer queries regarding current events, real-time facts, local weather, live news, and current dates/times accurately.";
+    if (liveWebContext) {
+      systemInstructionText += liveWebContext;
     }
 
     if (mode === 'school') {
@@ -126,55 +173,38 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
-    async function sendRequestToGemini(key, includeSearch) {
-      const payload = {
-        system_instruction: { parts: [{ text: systemInstructionText }] },
-        contents: sanitizedContents
-      };
+    const payload = {
+      system_instruction: { parts: [{ text: systemInstructionText }] },
+      contents: sanitizedContents
+    };
 
-      if (includeSearch) {
-        // Tamang camelCase syntax para sa Google Search Grounding sa v1beta
-        payload.tools = [{ googleSearch: {} }];
-      }
-
-      return await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }
-      );
-    }
-
-    // Unang pag-ikot: Gamit ang Search kapag naka-ON ang webSearch
+    // MABILIS NA LOOP NA MAY 6-SEGUNDONG TIMEOUT BAWAT SUSI PARA HINDI MAG-HANG
     for (const apiKey of apiKeys) {
       try {
-        geminiRes = await sendRequestToGemini(apiKey, webSearch);
-        if (geminiRes.ok) break;
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(6000)
+          }
+        );
 
-        lastErrorText = await geminiRes.text();
-        if (geminiRes.status !== 429 && geminiRes.status !== 403) break;
+        if (res.ok) {
+          geminiRes = res;
+          break;
+        }
+
+        lastErrorText = await res.text();
+        if (res.status !== 429 && res.status !== 403) break;
       } catch (err) {
         lastErrorText = err.message;
       }
     }
 
-    // Fallback: Kapag nag-fail sa search restriction o quota, subukan muli nang normal
-    if ((!geminiRes || !geminiRes.ok) && webSearch) {
-      for (const apiKey of apiKeys) {
-        try {
-          geminiRes = await sendRequestToGemini(apiKey, false);
-          if (geminiRes.ok) break;
-          lastErrorText = await geminiRes.text();
-        } catch (err) {
-          lastErrorText = err.message;
-        }
-      }
-    }
-
     if (!geminiRes || !geminiRes.ok) {
-      return new Response(JSON.stringify({ error: lastErrorText || 'Failed to communicate with Gemini API' }), { 
+      return new Response(JSON.stringify({ error: lastErrorText || 'All configured API keys are currently busy or rate-limited.' }), { 
         status: geminiRes ? geminiRes.status : 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
@@ -198,9 +228,11 @@ export default async function handler(req) {
 
             try {
               const parsed = JSON.parse(jsonStr);
-              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (textChunk) {
-                controller.enqueue(encoder.encode(textChunk));
+              const parts = parsed.candidates?.[0]?.content?.parts || [];
+              for (const part of parts) {
+                if (part.text) {
+                  controller.enqueue(encoder.encode(part.text));
+                }
               }
             } catch (e) {}
           }
