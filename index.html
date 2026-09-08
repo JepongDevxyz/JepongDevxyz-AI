@@ -162,12 +162,74 @@
         .divider { height: 1px; background: var(--border-color); margin: 6px 0; }
 
         .ios-switch-container { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
-        .ios-switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+        .ios-switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
         .ios-switch input { opacity: 0; width: 0; height: 0; }
         .ios-slider { position: absolute; cursor: pointer; inset: 0; background-color: #475569; transition: 0.3s; border-radius: 34px; }
         .ios-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         input:checked + .ios-slider { background-color: #10b981; }
         input:checked + .ios-slider:before { transform: translateX(20px); }
+
+        /* SPEECH SUB-SETTINGS & MODERN SELECTOR */
+        .speech-settings-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 4px 0;
+            transition: opacity 0.3s, filter 0.3s;
+        }
+        .speech-settings-group.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+            filter: grayscale(0.8);
+            user-select: none;
+        }
+        .modern-select-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .modern-select-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+        .speed-slider-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+        .modern-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            transition: background 0.2s;
+        }
+        .modern-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+            transition: transform 0.15s;
+        }
+        .modern-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
 
         .usage-section { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 4px; }
         .usage-title { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px; text-align: center; }
@@ -271,14 +333,61 @@
         
         .search-bar-wrap { position: relative; display: flex; align-items: center; width: 100%; }
         .search-bar-wrap svg { position: absolute; left: 10px; color: var(--text-muted); pointer-events: none; }
-        .search-chat-input { background: rgba(30, 41, 59, 0.5); border: none; color: var(--text-main); padding: 8px 12px 8px 32px; border-radius: 8px; font-size: 0.8rem; width: 100%; }
+        .search-chat-input { background: rgba(30, 41, 59, 0.5); border: none; color: var(--text-main); padding: 8px 12px 8px 32px; border-radius: 8px; font-size: 0.8rem; width: 100%; border: 1px solid var(--border-color); }
         body.theme-light .search-chat-input { background: #e2e8f0; }
         
         .chat-history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .history-item { background: transparent; border: none; border-radius: 8px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 6px; color: var(--text-main); }
+        .history-item { 
+            background: transparent; 
+            border: none; 
+            border-radius: 8px; 
+            padding: 8px 10px; 
+            font-size: 0.82rem; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 8px; 
+            color: var(--text-main); 
+            transition: background 0.2s;
+        }
         .history-item.active { background: rgba(99, 102, 241, 0.15); }
+        .history-item:hover { background: rgba(255, 255, 255, 0.05); }
         .history-item-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
-        .delete-hist-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; }
+        
+        /* ACTION ICONS DECK SA BAWAT CHAT */
+        .history-actions-deck {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .hist-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.2s, background 0.2s, transform 0.1s;
+        }
+        .hist-action-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.1);
+        }
+        .hist-action-btn.pin-btn.pinned {
+            color: #f59e0b;
+        }
+        .hist-action-btn.export-btn:hover {
+            color: #818cf8;
+        }
+        .hist-action-btn.delete-btn:hover {
+            color: #ef4444;
+        }
 
         .chat-box { 
             flex: 1 1 auto; 
@@ -769,6 +878,45 @@
           </label>
         </div>
 
+        <!-- RESPONSE SPEECH TOGGLE (IOS STYLE) -->
+        <div class="ios-switch-container">
+          <span style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            Response Speech
+          </span>
+          <label class="ios-switch">
+            <input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)">
+            <span class="ios-slider"></span>
+          </label>
+        </div>
+
+        <!-- SPEECH CONFIG GROUP (DYNAMICALLY ENABLED/DISABLED) -->
+        <div class="speech-settings-group disabled" id="speechSettingsGroup">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+              Text-to-Speech Voice
+            </label>
+            <button type="button" class="modern-select-btn" id="voiceSelectBtn" onclick="openVoiceModal()">
+              <span id="voiceSelectLabel" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Default Voice</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-2 10h9L7 22l2-10H0Z"/></svg>
+                Voice Speed
+              </label>
+              <span id="speedValueLabel" style="font-size: 0.8rem; font-weight: 700; color: #8b5cf6;">1.0x</span>
+            </div>
+            <div class="speed-slider-wrap">
+              <input type="range" class="modern-slider" id="speedSlider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="changeVoiceSpeed(this.value)">
+            </div>
+          </div>
+        </div>
+
         <div class="divider"></div>
 
         <div class="usage-section">
@@ -830,6 +978,22 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- MODERN VOICE SELECTION MODAL -->
+    <div class="modal-overlay" id="voiceModalOverlay" onclick="if(event.target === this) closeVoiceModal()">
+        <div class="floating-modal" style="max-height: 70vh;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+                <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                    Select Speech Voice
+                </span>
+                <button onclick="closeVoiceModal()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div id="voiceListContainer" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 50vh; padding-top: 6px;"></div>
+        </div>
     </div>
 
     <!-- Dola AI Prompt Modal -->
@@ -940,6 +1104,11 @@
         let bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
         let currentBibleSessionId = null;
 
+        /* SPEECH PREFERENCES STATE */
+        let isResponseSpeechEnabled = JSON.parse(localStorage.getItem('jepong_speech_enabled') || 'false');
+        let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
+        let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
+
         const chatBox = document.getElementById('chatBox');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -988,11 +1157,107 @@
 
         function openSettingsModal() {
             updateUsageUI();
+            
+            const speechToggle = document.getElementById('responseSpeechToggle');
+            const group = document.getElementById('speechSettingsGroup');
+            const speedSlider = document.getElementById('speedSlider');
+            const speedLabel = document.getElementById('speedValueLabel');
+
+            if (speechToggle) speechToggle.checked = isResponseSpeechEnabled;
+            if (group) group.classList.toggle('disabled', !isResponseSpeechEnabled);
+            if (speedSlider) speedSlider.value = speechRate;
+            if (speedLabel) speedLabel.innerText = speechRate.toFixed(1) + 'x';
+            updateVoiceLabelUI();
+
             document.getElementById('settingsModal').classList.add('open');
         }
 
         function closeSettingsModal() {
             document.getElementById('settingsModal').classList.remove('open');
+        }
+
+        /* RESPONSE SPEECH TOGGLE & HANDLERS */
+        function toggleResponseSpeech(enabled) {
+            isResponseSpeechEnabled = enabled;
+            localStorage.setItem('jepong_speech_enabled', JSON.stringify(enabled));
+            const group = document.getElementById('speechSettingsGroup');
+            if (group) {
+                group.classList.toggle('disabled', !enabled);
+            }
+            if (!enabled && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function changeVoiceSpeed(val) {
+            speechRate = parseFloat(val);
+            localStorage.setItem('jepong_speech_rate', speechRate);
+            const label = document.getElementById('speedValueLabel');
+            if (label) label.innerText = speechRate.toFixed(1) + 'x';
+        }
+
+        function openVoiceModal() {
+            if (!isResponseSpeechEnabled) return;
+            populateVoiceListModal();
+            document.getElementById('voiceModalOverlay').classList.add('open');
+        }
+
+        function closeVoiceModal() {
+            document.getElementById('voiceModalOverlay').classList.remove('open');
+        }
+
+        function populateVoiceListModal() {
+            const container = document.getElementById('voiceListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const defaultItem = document.createElement('button');
+            defaultItem.className = 'option-item' + (!selectedVoiceURI ? ' active' : '');
+            defaultItem.onclick = () => selectVoiceOption('');
+            defaultItem.innerHTML = `
+                <div class="option-info">
+                    <div>
+                        <div class="option-name">Default Voice</div>
+                        <div class="option-desc">Auto-detect Tagalog/English</div>
+                    </div>
+                </div>
+                <div class="radio-icon"></div>
+            `;
+            container.appendChild(defaultItem);
+
+            systemVoices.forEach(v => {
+                const item = document.createElement('button');
+                item.className = 'option-item' + (selectedVoiceURI === v.voiceURI ? ' active' : '');
+                item.onclick = () => selectVoiceOption(v.voiceURI);
+                item.innerHTML = `
+                    <div class="option-info">
+                        <div>
+                            <div class="option-name">${escapeHTML(v.name)}</div>
+                            <div class="option-desc">${escapeHTML(v.lang)}</div>
+                        </div>
+                    </div>
+                    <div class="radio-icon"></div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function selectVoiceOption(uri) {
+            selectedVoiceURI = uri;
+            localStorage.setItem('jepong_selected_voice', uri);
+            updateVoiceLabelUI();
+            closeVoiceModal();
+        }
+
+        function updateVoiceLabelUI() {
+            const label = document.getElementById('voiceSelectLabel');
+            if (!label) return;
+            if (!selectedVoiceURI) {
+                label.innerText = 'Default Voice (Auto)';
+                return;
+            }
+            const found = systemVoices.find(v => v.voiceURI === selectedVoiceURI);
+            label.innerText = found ? found.name : 'Default Voice';
         }
 
         function updateUsageUI() {
@@ -1134,7 +1399,7 @@
             btn.classList.add('active-action');
         }
 
-        /* REGENERATE ANSWER: HINDI NA UULITIN ANG USER MESSAGE */
+        /* REGENERATE ANSWER */
         function regenerateAnswer(btn) {
             const botMsg = btn.closest('.msg.bot');
             const ctx = getActiveContext();
@@ -1243,13 +1508,14 @@
         function createBibleChatSession() {
             removeAIIndicator();
             currentBibleSessionId = 'bsession_' + Date.now();
-            bibleChatSessions[currentBibleSessionId] = { id: currentBibleSessionId, title: 'Bible Session', messages: [] };
+            bibleChatSessions[currentBibleSessionId] = { id: currentBibleSessionId, title: 'Bible Session', messages: [], pinned: false };
             saveBibleSessions();
             renderBibleWelcomeScreen();
         }
 
         function saveBibleSessions() {
             localStorage.setItem('jepong_bible_chats', JSON.stringify(bibleChatSessions));
+            renderSidebarHistory();
         }
 
         function loadBibleSession(id) {
@@ -1270,7 +1536,7 @@
                         botDiv.className = 'msg bot';
                         botDiv.innerHTML = `<div>${renderCustomMarkdown(msg.text)}</div>
                             <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
-                                <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>
+                                <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)">🔊 Replay Audio</button>
                                 <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
                             </div>`;
                         chatBox.appendChild(botDiv);
@@ -1278,6 +1544,8 @@
                 });
             }
             scrollToBottom(true);
+            closeAllDrawers();
+            renderSidebarHistory();
         }
 
         function renderBibleWelcomeScreen() {
@@ -1390,7 +1658,7 @@
                     fullResponse += decoder.decode(value, { stream: true });
                     botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
                         <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
-                            <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText)">🔊 Replay Audio</button>
+                            <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)">🔊 Replay Audio</button>
                             <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
                         </div>`;
                     scrollToBottom(false);
@@ -1418,7 +1686,8 @@
             incognitoChatSessions[currentIncognitoSessionId] = { 
                 id: currentIncognitoSessionId, 
                 title: 'Incognito', 
-                messages: [] 
+                messages: [],
+                pinned: false
             };
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • 🕵️‍♂️ Incognito';
             renderIncognitoWelcomeScreen();
@@ -1464,7 +1733,7 @@
             }
             removeAIIndicator();
             currentSessionId = 'session_' + Date.now();
-            chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
+            chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [], pinned: false };
             saveSessions();
             renderWelcomeScreen();
             closeAllDrawers();
@@ -1536,14 +1805,61 @@
             renderSidebarHistory();
         }
 
+        /* PIN / STAR HANDLER */
+        function togglePinSession(id, e) {
+            if (e) e.stopPropagation();
+            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
+            if (activeSessions[id]) {
+                activeSessions[id].pinned = !activeSessions[id].pinned;
+                if (isBibleMode) saveBibleSessions();
+                else saveSessions();
+            }
+        }
+
+        /* EXPORT SPECIFIC CHAT AS TXT */
+        function exportSpecificChat(id, e) {
+            if (e) e.stopPropagation();
+            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
+            const session = activeSessions[id];
+            if (!session || !session.messages || session.messages.length === 0) {
+                alert('Walang mensahe na mai-export sa chat na ito.');
+                return;
+            }
+
+            let textOutput = `=== JepongDevxyz AI Conversation ===\nTitle: ${session.title}\nDate: ${new Date().toLocaleString()}\n\n`;
+            session.messages.forEach(m => {
+                const sender = m.role === 'user' ? 'USER' : 'AI';
+                textOutput += `[${sender}]:\n${m.text || ''}\n\n-----------------------------\n\n`;
+            });
+
+            const blob = new Blob([textOutput], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${session.title.replace(/[^a-zA-Z0-9]/g, '_')}_chat.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         function renderSidebarHistory(filter = '') {
             if (isIncognito) return;
             const list = document.getElementById('chatHistoryList');
+            if (!list) return;
             list.innerHTML = '';
             
             const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
 
-            Object.values(activeSessions).reverse().forEach(session => {
+            // I-sort ang pinned sa pinakatuktok bago ang iba
+            const sortedSessions = Object.values(activeSessions).sort((a, b) => {
+                const aPinned = !!a.pinned;
+                const bPinned = !!b.pinned;
+                if (aPinned === bPinned) return 0;
+                return aPinned ? -1 : 1;
+            });
+
+            sortedSessions.forEach(session => {
                 if (filter && !session.title.toLowerCase().includes(filter.toLowerCase())) return;
                 const activeCurrentId = isBibleMode ? currentBibleSessionId : currentSessionId;
                 const item = document.createElement('div');
@@ -1552,12 +1868,40 @@
                     if (isBibleMode) loadBibleSession(session.id);
                     else loadChatSession(session.id);
                 };
-                item.innerHTML = `<span class="history-item-text">${escapeHTML(session.title)}</span>
-                    <button class="delete-hist-btn" onclick="deleteChatSession('${session.id}', event)">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>`;
+
+                const isPinned = !!session.pinned;
+
+                item.innerHTML = `
+                    <span class="history-item-text">${escapeHTML(session.title)}</span>
+                    <div class="history-actions-deck">
+                        <button class="hist-action-btn pin-btn ${isPinned ? 'pinned' : ''}" onclick="togglePinSession('${session.id}', event)" title="${isPinned ? 'Unpin' : 'Pin'} Chat">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </button>
+                        <button class="hist-action-btn export-btn" onclick="exportSpecificChat('${session.id}', event)" title="Export Conversation (TXT)">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                        <button class="hist-action-btn delete-btn" onclick="deleteChatSession('${session.id}', event)" title="Delete Chat">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
                 list.appendChild(item);
             });
+        }
+
+        function filterChatHistory() {
+            const query = document.getElementById('searchChatInput').value;
+            renderSidebarHistory(query);
         }
 
         function deleteChatSession(id, e) {
@@ -1851,6 +2195,10 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                 }
                 incrementCounters(promptText + ' ' + fullResponse);
 
+                if (isResponseSpeechEnabled) {
+                    speakRawText(fullResponse);
+                }
+
             } catch (err) {
                 removeAIIndicator();
                 botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</span>`;
@@ -1943,7 +2291,8 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                     incognitoChatSessions[currentIncognitoSessionId] = {
                         id: currentIncognitoSessionId,
                         title: 'Incognito',
-                        messages: []
+                        messages: [],
+                        pinned: false
                     };
                 }
             } else if (!isBibleMode) {
@@ -2001,7 +2350,6 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
 
             const startTime = performance.now();
             try {
-                // Mabilisang HEAD request na may cache-busting
                 await fetch(`/?_ping=${Date.now()}`, { method: 'HEAD', cache: 'no-store' });
                 const latency = Math.round(performance.now() - startTime);
 
@@ -2034,7 +2382,6 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                     else b.classList.remove('active');
                 });
             } catch (err) {
-                // Fallback kung blocked ang cache test
                 const estLatency = Math.max(35, Math.round(performance.now() - startTime));
                 pingText.innerText = `${estLatency} ms`;
                 pingText.style.color = 'var(--text-main)';
@@ -2045,19 +2392,22 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             }
         }
 
-        /* TEXT TO SPEECH */
+        /* TEXT TO SPEECH ENGINE */
         let systemVoices = [];
         function loadVoices() {
             if (!('speechSynthesis' in window)) return;
             systemVoices = window.speechSynthesis.getVoices();
+            updateVoiceLabelUI();
         }
         loadVoices();
         if ('speechSynthesis' in window) {
             window.speechSynthesis.onvoiceschanged = loadVoices;
         }
 
-        function speakRawText(text) {
+        function speakRawText(text, bypassToggle = false) {
             if (!('speechSynthesis' in window)) return;
+            if (!isResponseSpeechEnabled && !bypassToggle) return;
+
             window.speechSynthesis.cancel();
             
             const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~>\[\]\(\)]/g, '');
@@ -2068,7 +2418,12 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             const isTagalog = tagalogWords.test(cleanText);
             
             let targetVoice = null;
-            if (isTagalog && systemVoices.length > 0) {
+
+            if (selectedVoiceURI && systemVoices.length > 0) {
+                targetVoice = systemVoices.find(v => v.voiceURI === selectedVoiceURI);
+            }
+
+            if (!targetVoice && isTagalog && systemVoices.length > 0) {
                 targetVoice = systemVoices.find(v => {
                     const lang = (v.lang || '').toLowerCase();
                     const name = (v.name || '').toLowerCase();
@@ -2089,7 +2444,7 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
                 utterance.lang = isTagalog ? 'tl-PH' : 'en-US';
             }
             
-            utterance.rate = 1.0;
+            utterance.rate = speechRate || 1.0;
             utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
         }
@@ -2194,7 +2549,7 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             touchStartY = touch.clientY;
             const screenWidth = window.innerWidth;
 
-            if (e.target.closest('#inputContainer') || e.target.closest('.header-controls') || e.target.closest('.header-tools-group') || e.target.closest('#codeRunnerModal')) {
+            if (e.target.closest('#inputContainer') || e.target.closest('.header-controls') || e.target.closest('.header-tools-group') || e.target.closest('#codeRunnerModal') || e.target.closest('.modal-overlay')) {
                 isEdgeSwipe = false;
                 return;
             }
@@ -2345,7 +2700,21 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
         }
 
         function escapeHTML(s) {
-            return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
+            return (s || '').replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
+        }
+
+        function openLightbox(src) {
+            const lb = document.getElementById('imageLightbox');
+            const img = document.getElementById('lightboxImg');
+            if (lb && img) {
+                img.src = src;
+                lb.classList.add('open');
+            }
+        }
+
+        function closeLightbox() {
+            const lb = document.getElementById('imageLightbox');
+            if (lb) lb.classList.remove('open');
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -2353,7 +2722,6 @@ Write a single concise English image generation prompt (max 30 words) that re-cr
             setTheme(savedTheme);
             updateUsageUI();
             
-            // Simulan agad ang ping measurement at patakbuhin kada 8 segundo
             measureNetworkPing();
             setInterval(measureNetworkPing, 8000);
             window.addEventListener('online', measureNetworkPing);
