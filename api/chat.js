@@ -15,7 +15,7 @@ export default async function handler(req) {
   }
 
   try {
-    const { message, history, files, model, mode, customPrompt } = await req.json();
+    const { message, history, files, model, mode, customPrompt, webSearch } = await req.json();
     
     const rawKeys = process.env.GEMINI_API_KEY || '';
     const apiKeys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
@@ -28,16 +28,14 @@ export default async function handler(req) {
     }
 
     const VALID_MODELS = [
-      'gemini-flash-latest',
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
+      'gemini-3.5-flash-lite',
       'gemini-3.6-flash',
-      'gemini-3.5-flash-lite'
+      'gemini-3.7-flash'
     ];
 
-    let targetModel = model || 'gemini-flash-latest';
+    let targetModel = model || 'gemini-3.5-flash-lite';
     if (!VALID_MODELS.includes(targetModel)) {
-      targetModel = 'gemini-flash-latest';
+      targetModel = 'gemini-3.5-flash-lite';
     }
 
     let systemInstructionText = "You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Always structure code responses inside standard markdown code blocks.";
@@ -54,7 +52,6 @@ export default async function handler(req) {
       systemInstructionText += ` ${customPrompt}`;
     }
 
-    // 1. I-format ang current turn parts
     const currentParts = [];
     if (files && Array.isArray(files) && files.length > 0) {
       files.forEach(f => {
@@ -67,7 +64,6 @@ export default async function handler(req) {
       currentParts.push({ text: message.trim() });
     }
 
-    // 2. I-sanitize ang previous history para masigurong alternating: user -> model
     let rawContents = [];
     if (Array.isArray(history) && history.length > 0) {
       history.forEach(turn => {
@@ -85,12 +81,10 @@ export default async function handler(req) {
       });
     }
 
-    // Tanggalin ang trailing 'user' message sa history kung may kasunod pa tayong currentParts
     if (currentParts.length > 0 && rawContents.length > 0 && rawContents[rawContents.length - 1].role === 'user') {
       rawContents.pop();
     }
 
-    // Siguraduhing walang magkatabing parehong role sa history
     const sanitizedContents = [];
     for (const item of rawContents) {
       if (sanitizedContents.length === 0) {
@@ -103,7 +97,6 @@ export default async function handler(req) {
       }
     }
 
-    // Idagdag ang kasalukuyang user message
     if (currentParts.length > 0) {
       sanitizedContents.push({
         role: 'user',
@@ -121,16 +114,22 @@ export default async function handler(req) {
     let geminiRes = null;
     let lastErrorText = '';
 
+    const payload = {
+      system_instruction: { parts: [{ text: systemInstructionText }] },
+      contents: sanitizedContents
+    };
+
+    if (webSearch) {
+      payload.tools = [{ google_search: {} }];
+    }
+
     for (const apiKey of apiKeys) {
       geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?alt=sse&key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemInstructionText }] },
-            contents: sanitizedContents
-          })
+          body: JSON.stringify(payload)
         }
       );
 
