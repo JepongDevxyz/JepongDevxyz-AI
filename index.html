@@ -1212,6 +1212,648 @@
         .live-pet-visual img{width:82px!important;height:82px!important;object-fit:contain!important;border-radius:0!important;filter:drop-shadow(0 9px 11px rgba(0,0,0,.28))}
         #petHeaderCompanion img{width:100%;height:100%;object-fit:contain!important;border-radius:0!important}
 
+    
+        /* ===== Unified Personalization tabs ===== */
+        .ps-ref-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px!important;padding:10px 14px 12px!important;border-bottom:1px solid var(--border-color);overflow:visible!important;background:color-mix(in srgb,var(--modal-bg) 96%,transparent)}
+        .ps-ref-tab{min-width:0!important;justify-content:center;gap:7px!important;padding:11px 10px!important;border:1px solid rgba(148,163,184,.18)!important;border-radius:14px!important;background:rgba(255,255,255,.025)!important;color:var(--text-muted)!important;font-size:.83rem!important;font-weight:650!important;opacity:1!important;transition:.16s ease!important}
+        .ps-ref-tab:hover,.ps-ref-tab:active{transform:translateY(-1px);color:var(--text-main)!important;border-color:rgba(139,92,246,.35)!important;background:rgba(139,92,246,.07)!important}
+        .ps-ref-tab.active{color:#fff!important;border-color:rgba(139,92,246,.65)!important;background:linear-gradient(135deg,rgba(99,102,241,.23),rgba(168,85,247,.18))!important;box-shadow:0 8px 24px rgba(99,102,241,.12),inset 0 0 0 1px rgba(255,255,255,.02)!important}
+        .ps-ref-tab.active::after{display:none!important}.ps-ref-tab svg{width:17px;height:17px;flex:0 0 auto}
+        @media(max-width:430px){.ps-ref-tabs{gap:6px!important;padding-left:10px!important;padding-right:10px!important}.ps-ref-tab{font-size:.76rem!important;padding:10px 7px!important}.ps-ref-tab svg{width:16px;height:16px}}
+        .ps-voice-stage{border:1px solid rgba(148,163,184,.15);border-radius:20px;background:linear-gradient(180deg,rgba(99,102,241,.055),rgba(255,255,255,.018));padding:18px 14px 20px!important;margin-bottom:12px}
+        .ps-voice-settings,.ps-voice-sliders{border:1px solid rgba(148,163,184,.15)!important;border-radius:18px!important;background:rgba(255,255,255,.02)!important;overflow:hidden}
+        .live-pet-visual{position:relative}
+        .live-pet.sleeping .live-pet-visual::before{content:"";position:absolute;z-index:5;width:12px;height:6px;left:20px;top:31px;border-bottom:3px solid rgba(25,25,35,.92);border-radius:0 0 14px 14px;transform:rotate(2deg);filter:drop-shadow(20px 0 0 rgba(25,25,35,.92));pointer-events:none}
+        .live-pet.sleeping .live-pet-visual img{filter:brightness(.93) saturate(.82)}
+        .live-pet.sleeping .live-pet-visual{animation:petSleep 2.3s ease-in-out infinite!important}
+
+    
+        /* ===== Personalization rows: clean reference-style layout ===== */
+        #psStyleSection .ps-ref-row{
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) auto!important;
+            align-items:center!important;
+            column-gap:20px!important;
+            row-gap:8px!important;
+            min-height:78px!important;
+            padding:18px 0!important;
+            overflow:visible!important;
+        }
+        #psStyleSection .ps-ref-row + .ps-ref-row{border-top:1px solid rgba(148,163,184,.12)!important}
+        #psStyleSection .ps-ref-copy{min-width:0!important;align-self:center!important}
+        #psStyleSection .ps-ref-copy strong{
+            display:block!important;
+            font-size:1rem!important;
+            line-height:1.3!important;
+            font-weight:500!important;
+            white-space:normal!important;
+            overflow-wrap:anywhere!important;
+        }
+        #psStyleSection .ps-ref-copy small{
+            display:block!important;
+            margin-top:7px!important;
+            font-size:.86rem!important;
+            line-height:1.45!important;
+            color:var(--text-muted)!important;
+            max-width:460px!important;
+        }
+        #psStyleSection .ps-ref-choice{
+            min-width:126px!important;
+            max-width:180px!important;
+            border:0!important;
+            background:transparent!important;
+            color:var(--text-main)!important;
+            padding:10px 2px 10px 12px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            justify-content:flex-end!important;
+            gap:12px!important;
+            font-size:1rem!important;
+            line-height:1.2!important;
+            white-space:nowrap!important;
+            overflow:visible!important;
+        }
+        #psStyleSection .ps-ref-choice .chev{
+            width:auto!important;
+            height:auto!important;
+            min-width:18px!important;
+            background:transparent!important;
+            border-radius:0!important;
+            color:var(--text-main)!important;
+            font-size:0!important;
+            display:grid!important;
+            place-items:center!important;
+            opacity:.95!important;
+        }
+        #psStyleSection .ps-ref-choice .chev::before{
+            content:'';
+            width:10px;
+            height:10px;
+            border-right:2px solid currentColor;
+            border-bottom:2px solid currentColor;
+            transform:rotate(45deg) translateY(-2px);
+            transform-origin:center;
+            display:block;
+        }
+        #psStyleSection .section-help{
+            position:relative!important;
+            display:block!important;
+            clear:both!important;
+            margin:0!important;
+            padding:0 0 18px!important;
+            font-size:.9rem!important;
+            line-height:1.5!important;
+            color:var(--text-muted)!important;
+            max-width:100%!important;
+        }
+        #psStyleSection > h3{margin-bottom:8px!important}
+        @media(max-width:520px){
+            #psStyleSection .ps-ref-row{
+                grid-template-columns:minmax(0,1fr) minmax(105px,auto)!important;
+                column-gap:12px!important;
+                min-height:76px!important;
+                padding:17px 0!important;
+            }
+            #psStyleSection .ps-ref-choice{
+                min-width:105px!important;
+                max-width:132px!important;
+                gap:10px!important;
+                padding-left:6px!important;
+                font-size:.98rem!important;
+            }
+            #psStyleSection .ps-ref-copy strong{font-size:.98rem!important}
+            #psStyleSection .ps-ref-copy small{font-size:.82rem!important;line-height:1.42!important}
+            #psStyleSection .section-help{font-size:.84rem!important;padding-bottom:14px!important}
+        }
+        @media(max-width:360px){
+            #psStyleSection .ps-ref-row{grid-template-columns:minmax(0,1fr) 96px!important}
+            #psStyleSection .ps-ref-choice{min-width:96px!important;max-width:96px!important;font-size:.9rem!important}
+        }
+
+    
+        /* ===== Mobile no-overlap fix: Personalization ===== */
+        .ps-ref-tabs{
+            grid-template-columns:minmax(0,1.35fr) minmax(0,.82fr) minmax(0,.72fr)!important;
+            gap:7px!important;
+            padding:10px 12px 12px!important;
+        }
+        .ps-ref-tab{
+            width:100%!important;
+            min-width:0!important;
+            overflow:hidden!important;
+            padding:11px 9px!important;
+            gap:6px!important;
+        }
+        .ps-ref-tab span{
+            min-width:0!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+            white-space:nowrap!important;
+            display:block!important;
+        }
+        .ps-ref-tab svg{
+            width:16px!important;
+            height:16px!important;
+            min-width:16px!important;
+            flex:0 0 16px!important;
+        }
+
+        .ps-ref-row{
+            grid-template-columns:minmax(0,1fr) minmax(104px,auto)!important;
+            column-gap:18px!important;
+            align-items:center!important;
+            width:100%!important;
+        }
+        .ps-ref-copy{min-width:0!important;max-width:100%!important;overflow:hidden!important;}
+        .ps-ref-copy strong,.ps-ref-copy small{max-width:100%!important;overflow-wrap:anywhere!important;word-break:normal!important;}
+        .ps-ref-choice{
+            min-width:104px!important;
+            max-width:142px!important;
+            width:auto!important;
+            justify-self:end!important;
+            justify-content:flex-end!important;
+            white-space:nowrap!important;
+            padding-left:8px!important;
+        }
+        .ps-ref-section .section-help{
+            clear:both!important;
+            width:100%!important;
+            max-width:100%!important;
+            padding-right:0!important;
+            overflow-wrap:anywhere!important;
+        }
+        #psStyleSection > .ps-ref-row:first-of-type{align-items:start!important;}
+        #psStyleSection > .ps-ref-row:first-of-type .ps-ref-choice{margin-top:2px!important;}
+
+        @media(max-width:430px){
+            .ps-ref-tabs{grid-template-columns:minmax(0,1.42fr) minmax(0,.78fr) minmax(0,.66fr)!important;gap:6px!important;padding-left:9px!important;padding-right:9px!important;}
+            .ps-ref-tab{font-size:.72rem!important;padding:10px 6px!important;gap:5px!important;}
+            .ps-ref-row{grid-template-columns:minmax(0,1fr) 96px!important;column-gap:12px!important;}
+            .ps-ref-choice{min-width:96px!important;max-width:110px!important;font-size:.9rem!important;}
+            .ps-ref-copy small{font-size:.82rem!important;line-height:1.42!important;}
+        }
+        @media(max-width:360px){
+            .ps-ref-tab{font-size:.68rem!important;}
+            .ps-ref-tab svg{width:14px!important;height:14px!important;min-width:14px!important;flex-basis:14px!important;}
+            .ps-ref-row{grid-template-columns:minmax(0,1fr) 88px!important;column-gap:10px!important;}
+            .ps-ref-choice{min-width:88px!important;max-width:96px!important;font-size:.85rem!important;}
+        }
+
+    
+        /* =========================================================
+           JEPONGDEVXYZ SETTINGS UI — FINAL NO-OVERLAP LAYOUT
+           Mobile-first spacing and alignment patch
+           ========================================================= */
+
+        #personalizationModalOverlay .personalization-modal.ps-reference-ui{
+            display:flex!important;
+            flex-direction:column!important;
+            min-height:0!important;
+            overflow:hidden!important;
+        }
+
+        #personalizationModalOverlay .ps-ref-head,
+        #personalizationModalOverlay .ps-ref-search-wrap,
+        #personalizationModalOverlay .ps-ref-tabs{
+            flex:0 0 auto!important;
+            position:relative!important;
+            z-index:3!important;
+        }
+
+        /* Tabs stay evenly distributed with no text/icon collisions */
+        #personalizationModalOverlay .ps-ref-tabs{
+            display:grid!important;
+            grid-template-columns:minmax(0,1.45fr) minmax(0,.82fr) minmax(0,.72fr)!important;
+            align-items:stretch!important;
+            gap:8px!important;
+            width:100%!important;
+            padding:10px 14px 12px!important;
+            overflow:hidden!important;
+        }
+        #personalizationModalOverlay .ps-ref-tab{
+            width:100%!important;
+            min-width:0!important;
+            height:48px!important;
+            padding:0 10px!important;
+            display:flex!important;
+            align-items:center!important;
+            justify-content:center!important;
+            gap:7px!important;
+            overflow:hidden!important;
+            line-height:1.1!important;
+        }
+        #personalizationModalOverlay .ps-ref-tab span{
+            min-width:0!important;
+            max-width:100%!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+            white-space:nowrap!important;
+        }
+        #personalizationModalOverlay .ps-ref-tab svg{
+            width:17px!important;
+            height:17px!important;
+            min-width:17px!important;
+            flex:0 0 17px!important;
+        }
+
+        /* Main personalization scroll area */
+        #personalizationModalOverlay .ps-ref-content{
+            flex:1 1 auto!important;
+            min-height:0!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            padding:14px 22px 30px!important;
+            scroll-padding-top:18px!important;
+            overscroll-behavior:contain!important;
+        }
+        #personalizationModalOverlay .ps-ref-section{
+            width:100%!important;
+            min-width:0!important;
+            padding:22px 0 18px!important;
+            margin:0!important;
+            scroll-margin-top:18px!important;
+            overflow:visible!important;
+        }
+        #personalizationModalOverlay .ps-ref-section > h3{
+            display:block!important;
+            width:100%!important;
+            margin:0 0 14px!important;
+            padding:0!important;
+            line-height:1.25!important;
+            min-height:0!important;
+            overflow:visible!important;
+        }
+        #personalizationModalOverlay .ps-ref-section .section-help{
+            display:block!important;
+            margin:0 0 10px!important;
+            padding:0 0 10px!important;
+            line-height:1.5!important;
+            min-height:0!important;
+        }
+
+        /* Every settings row gets its own clean lane */
+        #personalizationModalOverlay .ps-ref-row,
+        #personalizationModalOverlay #psStyleSection .ps-ref-row{
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) minmax(92px,auto)!important;
+            align-items:center!important;
+            column-gap:18px!important;
+            row-gap:8px!important;
+            width:100%!important;
+            min-width:0!important;
+            min-height:0!important;
+            padding:18px 0!important;
+            margin:0!important;
+            overflow:visible!important;
+        }
+        #personalizationModalOverlay .ps-ref-row + .ps-ref-row{
+            border-top:1px solid rgba(148,163,184,.12)!important;
+        }
+        #personalizationModalOverlay .ps-ref-copy{
+            min-width:0!important;
+            width:100%!important;
+            align-self:center!important;
+            overflow:visible!important;
+        }
+        #personalizationModalOverlay .ps-ref-copy strong{
+            display:block!important;
+            margin:0!important;
+            line-height:1.32!important;
+            overflow-wrap:anywhere!important;
+        }
+        #personalizationModalOverlay .ps-ref-copy small{
+            display:block!important;
+            width:100%!important;
+            max-width:100%!important;
+            margin:7px 0 0!important;
+            line-height:1.5!important;
+            overflow-wrap:anywhere!important;
+            word-break:normal!important;
+        }
+
+        /* Right-side controls always stay inside their own column */
+        #personalizationModalOverlay .ps-ref-choice,
+        #personalizationModalOverlay .ps-ref-manage,
+        #personalizationModalOverlay .ps-ref-reset,
+        #personalizationModalOverlay .ps-badge,
+        #personalizationModalOverlay .mini-toggle{
+            justify-self:end!important;
+            align-self:center!important;
+            position:relative!important;
+            z-index:2!important;
+            flex:0 0 auto!important;
+        }
+        #personalizationModalOverlay .ps-ref-choice{
+            min-width:92px!important;
+            max-width:132px!important;
+            width:auto!important;
+            padding:8px 0 8px 10px!important;
+            white-space:nowrap!important;
+        }
+        #personalizationModalOverlay .ps-ref-manage,
+        #personalizationModalOverlay .ps-ref-reset{
+            min-width:88px!important;
+            text-align:center!important;
+            white-space:nowrap!important;
+        }
+        #personalizationModalOverlay .mini-toggle{
+            width:46px!important;
+            min-width:46px!important;
+            height:26px!important;
+        }
+        #personalizationModalOverlay .mini-toggle span{
+            width:46px!important;
+            height:26px!important;
+        }
+
+        /* Voice page: every card/row gets equal spacing */
+        #personalizationModalOverlay .ps-voice-page{
+            min-height:0!important;
+            overflow:hidden!important;
+        }
+        #personalizationModalOverlay .ps-voice-toolbar{
+            flex:0 0 auto!important;
+            min-height:70px!important;
+            padding:14px 22px!important;
+            align-items:center!important;
+        }
+        #personalizationModalOverlay .ps-voice-scroll{
+            flex:1 1 auto!important;
+            min-height:0!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            padding:18px 22px 30px!important;
+            overscroll-behavior:contain!important;
+        }
+        #personalizationModalOverlay .ps-voice-stage{
+            width:100%!important;
+            margin:0 0 18px!important;
+            padding:18px 14px 20px!important;
+            overflow:visible!important;
+        }
+        #personalizationModalOverlay .ps-voice-settings{
+            width:100%!important;
+            margin:0!important;
+            padding:0 16px!important;
+            overflow:hidden!important;
+        }
+        #personalizationModalOverlay .ps-voice-setting-row{
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) minmax(110px,auto)!important;
+            align-items:center!important;
+            gap:14px!important;
+            min-height:72px!important;
+            padding:16px 0!important;
+            margin:0!important;
+        }
+        #personalizationModalOverlay .ps-voice-setting-row > strong{
+            min-width:0!important;
+            line-height:1.35!important;
+        }
+        #personalizationModalOverlay .ps-voice-value{
+            justify-self:end!important;
+            min-width:100px!important;
+            max-width:180px!important;
+            justify-content:flex-end!important;
+            text-align:right!important;
+            white-space:normal!important;
+            line-height:1.3!important;
+        }
+
+        #personalizationModalOverlay .ps-voice-sliders{
+            width:100%!important;
+            margin:16px 0 0!important;
+            padding:18px!important;
+            overflow:hidden!important;
+        }
+        #personalizationModalOverlay .ps-slider-row{
+            display:grid!important;
+            grid-template-columns:72px minmax(0,1fr) 52px!important;
+            align-items:center!important;
+            gap:12px!important;
+            min-height:54px!important;
+            padding:8px 0!important;
+        }
+        #personalizationModalOverlay .ps-slider-row input[type="range"]{
+            min-width:0!important;
+            width:100%!important;
+            margin:0!important;
+        }
+        #personalizationModalOverlay .ps-slider-row output{
+            min-width:48px!important;
+            white-space:nowrap!important;
+            text-align:right!important;
+        }
+        #personalizationModalOverlay .ps-auto-preview-row{
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) 46px!important;
+            align-items:center!important;
+            gap:16px!important;
+            min-height:72px!important;
+            padding:16px 0 2px!important;
+            margin:8px 0 0!important;
+        }
+        #personalizationModalOverlay .ps-auto-preview-row strong{
+            min-width:0!important;
+            line-height:1.35!important;
+            overflow-wrap:anywhere!important;
+        }
+        #personalizationModalOverlay .ps-voice-browser-note{
+            position:relative!important;
+            width:100%!important;
+            display:grid!important;
+            grid-template-columns:22px minmax(0,1fr)!important;
+            align-items:start!important;
+            gap:10px!important;
+            margin:16px 0 0!important;
+            padding:14px 16px!important;
+            line-height:1.55!important;
+            overflow:hidden!important;
+        }
+        #personalizationModalOverlay .ps-voice-browser-note svg{
+            width:20px!important;
+            height:20px!important;
+            margin-top:1px!important;
+            flex:0 0 auto!important;
+        }
+
+        /* Mobile tuning */
+        @media(max-width:620px){
+            #personalizationModalOverlay.open{
+                padding:0!important;
+                align-items:flex-end!important;
+            }
+            #personalizationModalOverlay .personalization-modal.ps-reference-ui{
+                width:100vw!important;
+                max-width:100vw!important;
+                height:94dvh!important;
+                max-height:94dvh!important;
+                border-radius:24px 24px 0 0!important;
+            }
+            #personalizationModalOverlay .ps-ref-head{
+                min-height:68px!important;
+                padding:14px 18px!important;
+            }
+            #personalizationModalOverlay .ps-ref-search-wrap{
+                padding:10px 18px 10px!important;
+            }
+            #personalizationModalOverlay .ps-ref-tabs{
+                padding:10px 12px 12px!important;
+                gap:7px!important;
+            }
+            #personalizationModalOverlay .ps-ref-content{
+                padding:12px 18px 28px!important;
+            }
+            #personalizationModalOverlay .ps-ref-section{
+                padding:20px 0 16px!important;
+            }
+            #personalizationModalOverlay .ps-ref-row,
+            #personalizationModalOverlay #psStyleSection .ps-ref-row{
+                grid-template-columns:minmax(0,1fr) minmax(90px,auto)!important;
+                column-gap:14px!important;
+                padding:17px 0!important;
+            }
+            #personalizationModalOverlay .ps-ref-choice{
+                min-width:90px!important;
+                max-width:118px!important;
+                font-size:.9rem!important;
+            }
+            #personalizationModalOverlay .ps-voice-toolbar{
+                min-height:68px!important;
+                padding:13px 18px!important;
+            }
+            #personalizationModalOverlay .ps-voice-scroll{
+                padding:18px 18px 28px!important;
+            }
+            #personalizationModalOverlay .ps-voice-settings{
+                padding:0 16px!important;
+            }
+            #personalizationModalOverlay .ps-voice-setting-row{
+                grid-template-columns:minmax(0,1fr) minmax(104px,auto)!important;
+                min-height:70px!important;
+            }
+        }
+
+        @media(max-width:430px){
+            #personalizationModalOverlay .ps-ref-tabs{
+                grid-template-columns:minmax(0,1.38fr) minmax(0,.78fr) minmax(0,.66fr)!important;
+                gap:6px!important;
+                padding-left:10px!important;
+                padding-right:10px!important;
+            }
+            #personalizationModalOverlay .ps-ref-tab{
+                height:46px!important;
+                padding:0 7px!important;
+                gap:5px!important;
+                font-size:.73rem!important;
+            }
+            #personalizationModalOverlay .ps-ref-tab svg{
+                width:15px!important;
+                height:15px!important;
+                min-width:15px!important;
+                flex-basis:15px!important;
+            }
+            #personalizationModalOverlay .ps-ref-row,
+            #personalizationModalOverlay #psStyleSection .ps-ref-row{
+                grid-template-columns:minmax(0,1fr) 92px!important;
+                column-gap:12px!important;
+            }
+            #personalizationModalOverlay .ps-ref-choice{
+                min-width:88px!important;
+                max-width:92px!important;
+                font-size:.86rem!important;
+            }
+            #personalizationModalOverlay .ps-ref-manage,
+            #personalizationModalOverlay .ps-ref-reset{
+                min-width:84px!important;
+                padding-left:13px!important;
+                padding-right:13px!important;
+            }
+            #personalizationModalOverlay .ps-ref-copy strong{
+                font-size:.98rem!important;
+            }
+            #personalizationModalOverlay .ps-ref-copy small{
+                font-size:.82rem!important;
+                line-height:1.46!important;
+            }
+            #personalizationModalOverlay .ps-voice-setting-row{
+                grid-template-columns:minmax(0,1fr) 102px!important;
+                gap:10px!important;
+            }
+            #personalizationModalOverlay .ps-voice-value{
+                min-width:96px!important;
+                max-width:102px!important;
+                font-size:.94rem!important;
+            }
+            #personalizationModalOverlay .ps-slider-row{
+                grid-template-columns:60px minmax(0,1fr) 46px!important;
+                gap:9px!important;
+            }
+            #personalizationModalOverlay .ps-slider-row label{
+                font-size:.8rem!important;
+            }
+            #personalizationModalOverlay .ps-auto-preview-row{
+                grid-template-columns:minmax(0,1fr) 46px!important;
+                gap:12px!important;
+            }
+        }
+
+        @media(max-width:360px){
+            #personalizationModalOverlay .ps-ref-tab{
+                font-size:.68rem!important;
+                padding:0 5px!important;
+            }
+            #personalizationModalOverlay .ps-ref-row,
+            #personalizationModalOverlay #psStyleSection .ps-ref-row{
+                grid-template-columns:minmax(0,1fr) 86px!important;
+                column-gap:10px!important;
+            }
+            #personalizationModalOverlay .ps-ref-choice{
+                min-width:84px!important;
+                max-width:86px!important;
+                font-size:.82rem!important;
+            }
+            #personalizationModalOverlay .ps-voice-setting-row{
+                grid-template-columns:minmax(0,1fr) 94px!important;
+            }
+            #personalizationModalOverlay .ps-voice-value{
+                min-width:90px!important;
+                max-width:94px!important;
+                font-size:.9rem!important;
+            }
+        }
+
+    
+        /* ===== Context-aware activity timeline: mobile-safe ===== */
+        .ai-activity-card{max-width:100%!important;overflow:hidden!important}
+        .ai-activity-list{min-width:0!important}
+        .ai-activity-row{
+            display:grid!important;
+            grid-template-columns:28px minmax(0,1fr)!important;
+            align-items:start!important;
+            column-gap:10px!important;
+            width:100%!important;
+            min-width:0!important;
+        }
+        .ai-activity-icon{width:28px!important;min-width:28px!important;padding-top:1px!important}
+        .ai-activity-copy{min-width:0!important;width:100%!important}
+        .ai-activity-label,.ai-activity-detail{
+            white-space:normal!important;
+            overflow:visible!important;
+            text-overflow:clip!important;
+            overflow-wrap:anywhere!important;
+            word-break:normal!important;
+        }
+        .ai-activity-label{line-height:1.42!important}
+        .ai-activity-detail{line-height:1.4!important;margin-top:3px!important}
+        @media(max-width:430px){
+            .ai-activity-card{padding:12px!important}
+            .ai-activity-row{grid-template-columns:26px minmax(0,1fr)!important;column-gap:9px!important}
+            .ai-activity-icon{width:26px!important;min-width:26px!important}
+            .ai-activity-label{font-size:.8rem!important}
+            .ai-activity-detail{font-size:.69rem!important}
+        }
+
     </style>
 </head>
 <body>
@@ -1266,7 +1908,7 @@
             <div class="header-top">
                 <div class="brand">
                     <button class="brand-icon" onclick="openMenuFromBrandIcon()">✦</button>
-                    <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div><button type="button" id="petHeaderCompanion" class="pet-header-companion" onclick="openPersonalizationSettings();setTimeout(openPetPicker,80)" title="Pet companion" aria-label="Pet companion"></button>
+                    <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
                 </div>
                 <div class="header-tools-group">
                     <div class="network-status" id="networkStatus" onclick="measureNetworkPing()" title="Click to refresh ping">
@@ -1547,11 +2189,9 @@
           </div>
 
           <div class="ps-ref-tabs" id="personalizationTabs">
-            <button class="ps-ref-tab" onclick="openGeneralSettingsFromPersonalization()">⚙ General</button>
-            <button class="ps-ref-tab" onclick="showModernAlert('Notification preferences can be added here later.','Notifications')">♧ Notifications</button>
-            <button class="ps-ref-tab active" onclick="scrollPsSection('psStyleSection')">◉ Personalization</button>
-            <button class="ps-ref-tab" id="psVoiceTabBtn" onclick="openVoiceSettingsPage()">◉ Voice</button>
-            <button class="ps-ref-tab" onclick="scrollPsSection('psAdvancedSection')">◎ Plugins</button>
+            <button class="ps-ref-tab active" id="psPersonalizationTabBtn" onclick="openPersonalizationHomeTab()"><i data-lucide="sliders-horizontal"></i><span>Personalization</span></button>
+            <button class="ps-ref-tab" id="psVoiceTabBtn" onclick="openVoiceSettingsPage()"><i data-lucide="audio-lines"></i><span>Voice</span></button>
+            <button class="ps-ref-tab" id="psPetTabBtn" onclick="openPetPicker()"><i data-lucide="paw-print"></i><span>Pet</span></button>
           </div>
 
           <div class="ps-ref-content" id="personalizationContent">
@@ -1668,6 +2308,7 @@
               </div>
               <button type="button" class="ps-voice-preview" id="psVoicePreviewBtn" onclick="playPersonalizationVoiceSample()"><i data-lucide="play"></i><span>Preview voice</span></button>
               <div class="ps-voice-sample-status" id="psVoiceSampleStatus"></div>
+              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.45;margin-top:6px;text-align:center">Neural voice uses Cloudflare when supported. Filipino and unsupported languages automatically use the best device voice available.</div>
             </div>
             <div class="ps-voice-settings">
               <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']])"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
@@ -2138,6 +2779,7 @@
         function wakeLivePet() {
             const {pet}=getLivePetElements(); if(!pet)return;
             pet.classList.remove('sleeping');
+            pet.setAttribute('aria-label', `${personalizationSettings.pet || 'Pet'} companion`);
             resetLivePetIdleTimer();
         }
 
@@ -2149,6 +2791,7 @@
                 if(pet && livePetVisible() && !livePetWorking){
                     pet.classList.remove('petting','eating','working');
                     pet.classList.add('sleeping');
+                    pet.setAttribute('aria-label', `${personalizationSettings.pet} sleeping`);
                     livePetSay('Zzz…',1200);
                 }
             }, 30000);
@@ -2235,8 +2878,8 @@
             Object.entries(map).forEach(([key,id]) => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                const arrow = (key === 'pet' || key === 'voicePersona') ? '›' : '⌄';
-                el.innerHTML = `${escapeHTML(personalizationSettings[key] || '')} <span class="chev">${arrow}</span>`;
+                const arrow = (key === 'pet' || key === 'voicePersona') ? '›' : '';
+                el.innerHTML = `${escapeHTML(personalizationSettings[key] || '')} <span class="chev" aria-hidden="true">${arrow}</span>`;
             });
 
             const values = {
@@ -2323,6 +2966,7 @@
             closeVoiceSettingsPage();
             closePetPicker();
             renderPersonalizationSettings();
+            setPersonalizationActiveTab('personalization');
             const input = document.getElementById('personalizationSearchInput');
             if (input) input.value = '';
             filterPersonalizationSettings('');
@@ -2340,7 +2984,24 @@
             openSettingsModal();
         }
 
+        function setPersonalizationActiveTab(tab) {
+            const map={personalization:'psPersonalizationTabBtn',voice:'psVoiceTabBtn',pet:'psPetTabBtn'};
+            Object.entries(map).forEach(([key,id])=>document.getElementById(id)?.classList.toggle('active',key===tab));
+            refreshLucideIcons();
+        }
+
+        function openPersonalizationHomeTab() {
+            closeVoiceSettingsPage();
+            closePetPicker();
+            const main=document.getElementById('personalizationMainPage');
+            if(main)main.style.display='flex';
+            setPersonalizationActiveTab('personalization');
+            const content=document.getElementById('personalizationContent');
+            if(content)content.scrollTo({top:0,behavior:'smooth'});
+        }
+
         function scrollPsSection(id) {
+            setPersonalizationActiveTab('personalization');
             document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});
         }
 
@@ -2427,6 +3088,7 @@
 
         function openVoiceSettingsPage() {
             closePetPicker();
+            setPersonalizationActiveTab('voice');
             const main=document.getElementById('personalizationMainPage');
             const page=document.getElementById('personalizationVoicePage');
             if(main)main.style.display='none';
@@ -2436,7 +3098,7 @@
         }
 
         function closeVoiceSettingsPage() {
-            if('speechSynthesis' in window) window.speechSynthesis.cancel();
+            stopAllSpeech();
             document.getElementById('psVoiceOrb')?.classList.remove('speaking');
             const status=document.getElementById('psVoiceSampleStatus');if(status)status.textContent='';
             document.getElementById('personalizationVoicePage')?.classList.remove('open');
@@ -2462,70 +3124,477 @@
             const out=document.getElementById(key==='voiceSpeed'?'psVoiceSpeedValue':'psVoicePitchValue');if(out)out.textContent=`${n.toFixed(1)}x`;
         }
 
+        /* ===== LANGUAGE-AWARE VOICE / PRONUNCIATION ENGINE ===== */
+        const VOICE_LANGUAGE_MAP = {
+            'Filipino':'fil-PH','English':'en-US','Spanish':'es-ES','Japanese':'ja-JP',
+            'Korean':'ko-KR','Arabic':'ar-SA','Bengali':'bn-BD','Cebuano':'ceb-PH',
+            'Chinese':'zh-CN','Mandarin Chinese':'zh-CN','Danish':'da-DK','Dutch':'nl-NL',
+            'Finnish':'fi-FI','French':'fr-FR','German':'de-DE','Greek':'el-GR',
+            'Gujarati':'gu-IN','Hebrew':'he-IL','Hindi':'hi-IN','Hungarian':'hu-HU',
+            'Indonesian':'id-ID','Italian':'it-IT','Kannada':'kn-IN','Kazakh':'kk-KZ',
+            'Latvian':'lv-LV','Lithuanian':'lt-LT','Macedonian':'mk-MK','Malay':'ms-MY',
+            'Malayalam':'ml-IN','Marathi':'mr-IN','Mongolian':'mn-MN','Nepali':'ne-NP',
+            'Norwegian':'nb-NO','Norwegian Bokmål':'nb-NO','Persian':'fa-IR','Polish':'pl-PL',
+            'Portuguese':'pt-BR','Punjabi':'pa-IN','Romanian':'ro-RO','Russian':'ru-RU',
+            'Serbian':'sr-RS','Slovak':'sk-SK','Slovenian':'sl-SI','Swahili':'sw-KE',
+            'Swedish':'sv-SE','Tamil':'ta-IN','Telugu':'te-IN','Thai':'th-TH',
+            'Turkish':'tr-TR','Ukrainian':'uk-UA','Urdu':'ur-PK','Vietnamese':'vi-VN'
+        };
+
         function preferredLanguageCode() {
-            const lang=personalizationSettings.language||'Auto-detect';
-            const map={Filipino:'fil-PH',English:'en-US',Spanish:'es-ES',Japanese:'ja-JP',Korean:'ko-KR',Arabic:'ar-SA',French:'fr-FR',German:'de-DE',Italian:'it-IT',Portuguese:'pt-BR','Mandarin Chinese':'zh-CN',Chinese:'zh-CN'};
-            return map[lang] || '';
+            const lang = personalizationSettings.language || 'Auto-detect';
+            return VOICE_LANGUAGE_MAP[lang] || '';
+        }
+
+        function detectSpeechLanguage(text='') {
+            const forced = preferredLanguageCode();
+            if (forced) return forced;
+
+            const t = String(text);
+            if (/[\u3040-\u30ff]/.test(t)) return 'ja-JP';
+            if (/[\uac00-\ud7af]/.test(t)) return 'ko-KR';
+            if (/[\u4e00-\u9fff]/.test(t)) return 'zh-CN';
+            if (/[\u0600-\u06ff]/.test(t)) return 'ar-SA';
+            if (/[\u0400-\u04ff]/.test(t)) return 'ru-RU';
+            if (/[\u0900-\u097f]/.test(t)) return 'hi-IN';
+            if (/[\u0e00-\u0e7f]/.test(t)) return 'th-TH';
+
+            const filipinoWords = /\b(ang|mga|ako|ikaw|siya|kami|tayo|sila|ito|iyan|iyon|salamat|kumusta|kamusta|paano|bakit|saan|kailan|gawin|natin|naman|lang|po|opo|hindi|oo|para|dahil|pero|kung|kapag|pwede|maaari|sagot|tanong|tulong)\b/i;
+            if (filipinoWords.test(t)) return 'fil-PH';
+
+            const spanishWords = /\b(hola|gracias|por favor|cómo|qué|para|porque|puedo|ayuda)\b/i;
+            if (spanishWords.test(t)) return 'es-ES';
+
+            return 'en-US';
+        }
+
+        function voiceLanguageScore(voice, targetLang) {
+            const vl = String(voice?.lang || '').toLowerCase();
+            const target = String(targetLang || '').toLowerCase();
+            if (!vl || !target) return 0;
+            if (vl === target) return 100;
+            const vb = vl.split('-')[0], tb = target.split('-')[0];
+            if (vb === tb) return 80;
+            if (tb === 'fil' && (vb === 'fil' || vb === 'tl')) return 90;
+            return 0;
         }
 
         function resolvePersonalizationSystemVoice(profile=getVoiceProfile(), text='') {
-            if(!('speechSynthesis' in window)) return null;
-            systemVoices=window.speechSynthesis.getVoices();
-            if(!systemVoices.length) return null;
-            const prefLang=preferredLanguageCode().toLowerCase();
-            let pool=systemVoices;
-            if(prefLang) {
-                const exact=systemVoices.filter(v=>(v.lang||'').toLowerCase()===prefLang);
-                const base=systemVoices.filter(v=>(v.lang||'').toLowerCase().startsWith(prefLang.split('-')[0]));
-                if(exact.length) pool=exact; else if(base.length) pool=base;
-            } else if(/\b(ang|mga|ako|ikaw|salamat|kamusta|paano|gawin|natin)\b/i.test(text)) {
-                const fil=systemVoices.filter(v=>/^(fil|tl)(-|$)/i.test(v.lang||'') || /filipino|tagalog/i.test(v.name||''));
-                if(fil.length) pool=fil;
-            } else {
-                const en=systemVoices.filter(v=>(v.lang||'').toLowerCase().startsWith('en'));
-                if(en.length) pool=en;
+            if (!('speechSynthesis' in window)) return null;
+            systemVoices = window.speechSynthesis.getVoices();
+            if (!systemVoices.length) return null;
+
+            const targetLang = detectSpeechLanguage(text);
+            const ranked = systemVoices
+                .map(v => ({voice:v, score:voiceLanguageScore(v,targetLang)}))
+                .filter(x => x.score > 0)
+                .sort((a,b) => b.score-a.score);
+
+            let pool = ranked.length ? ranked.map(x=>x.voice) : systemVoices;
+
+            // Prefer higher-quality local/Google/Microsoft/Samsung voices inside the CORRECT language.
+            const qualityPatterns = [
+                /google/i,/microsoft/i,/samsung/i,/natural/i,/neural/i,/enhanced/i,/premium/i
+            ];
+            const quality = pool.filter(v => qualityPatterns.some(rx => rx.test(v.name||'')));
+            if (quality.length) pool = quality;
+
+            // Persona keywords are only used after language matching, so an English persona
+            // will never override a Filipino/Japanese/etc. voice selection.
+            for (const key of profile.keywords || []) {
+                const found = pool.find(v => (v.name||'').toLowerCase().includes(String(key).toLowerCase()));
+                if (found) return found;
             }
-            for(const key of profile.keywords||[]) {
-                const found=pool.find(v=>(v.name||'').toLowerCase().includes(String(key).toLowerCase()));
-                if(found) return found;
+
+            // Prefer local service to reduce stutter/latency on mobile.
+            const local = pool.find(v => v.localService);
+            return local || pool[0] || null;
+        }
+
+        function normalizeBrandForSpeech(text, langCode='en-US') {
+            let t = String(text || '');
+            const base = String(langCode || '').toLowerCase().split('-')[0];
+
+            // Keep the visible brand unchanged; only the hidden TTS string gets a pronunciation hint.
+            let spokenBrand = 'Jepong Dev X Y Z';
+            if (base === 'fil' || base === 'tl') spokenBrand = 'Jepong Dev eks way zi';
+            else if (base === 'en') spokenBrand = 'Jepong Dev ex why zee';
+
+            t = t
+                .replace(/\bJepongDevxyz\b/gi, spokenBrand)
+                .replace(/\bJepong\s*Devxyz\b/gi, spokenBrand)
+                .replace(/\bJepong\s*Dev\s*xyz\b/gi, spokenBrand);
+
+            return t;
+        }
+
+        function cleanSpeechText(text='') {
+            const detectedLang = detectSpeechLanguage(text);
+            return normalizeBrandForSpeech(
+                String(text)
+                    .replace(/```[\s\S]*?```/g,' code block omitted ')
+                    .replace(/`([^`]+)`/g,'$1')
+                    .replace(/https?:\/\/\S+/gi,' link ')
+                    .replace(/<[^>]*>/g,' ')
+                    .replace(/[*_#~>\[\]{}]/g,' ')
+                    .replace(/&nbsp;/gi,' ')
+                    .replace(/&amp;/gi,' and ')
+                    .replace(/\s+/g,' ')
+                    .replace(/\s*([,.;:!?])\s*/g,'$1 ')
+                    .trim(),
+                detectedLang
+            );
+        }
+
+        function speechChunks(text,maxLen=150){
+            const clean=cleanSpeechText(text);
+            if(!clean)return[];
+            const sentences=clean.match(/[^.!?。！？]+[.!?。！？]?/g)||[clean];
+            const out=[];
+            let buf='';
+            for(const sentence of sentences){
+                const part=sentence.trim();
+                if(!part)continue;
+                if((buf+' '+part).trim().length<=maxLen){
+                    buf=(buf+' '+part).trim();
+                }else{
+                    if(buf)out.push(buf);
+                    if(part.length<=maxLen){
+                        buf=part;
+                    }else{
+                        const words=part.split(/\s+/);
+                        let small='';
+                        for(const word of words){
+                            if((small+' '+word).trim().length>maxLen){
+                                if(small)out.push(small);
+                                small=word;
+                            }else{
+                                small=(small+' '+word).trim();
+                            }
+                        }
+                        buf=small;
+                    }
+                }
             }
-            const idx=getVoiceProfile(profile.name) ? PERSONALIZATION_VOICES.findIndex(v=>v.name===profile.name) : 0;
-            return pool[Math.abs(idx)%pool.length] || pool[0] || null;
+            if(buf)out.push(buf);
+            return out;
+        }
+
+        function clearerSpeechRate(profileRate=1, langCode='') {
+            const userRate=Number(personalizationSettings.voiceSpeed||1);
+            const base=String(langCode||'').toLowerCase().split('-')[0];
+
+            // Slightly slower defaults for languages that become unclear at high WebSpeech rates.
+            const langFactor = {
+                fil:.88, tl:.88, ja:.90, ko:.90, zh:.90, ar:.88, hi:.90,
+                th:.90, vi:.90, es:.94, fr:.94, de:.94, it:.94, pt:.94
+            }[base] || .96;
+
+            return Math.max(.68,Math.min(1.08,profileRate*userRate*langFactor));
+        }
+
+        function clearerSpeechPitch(profilePitch=1) {
+            const userPitch=Number(personalizationSettings.voicePitch||1);
+            return Math.max(.88,Math.min(1.12,profilePitch*userPitch));
+        }
+
+        function speakChunksSequentially(chunks,options={}){
+            if(!('speechSynthesis' in window)||!chunks.length)return;
+            window.speechSynthesis.cancel();
+            let index=0;
+
+            const next=()=>{
+                if(index>=chunks.length){
+                    options.onend?.();
+                    return;
+                }
+
+                const rawText=chunks[index++];
+                const langCode=detectSpeechLanguage(rawText);
+                const text=normalizeBrandForSpeech(rawText,langCode);
+                const utter=new SpeechSynthesisUtterance(text);
+                const profile=options.profile||getVoiceProfile();
+                const voice=resolvePersonalizationSystemVoice(profile,text);
+
+                if(voice){
+                    utter.voice=voice;
+                    utter.lang=voice.lang || langCode;
+                }else{
+                    utter.lang=langCode;
+                }
+
+                utter.rate=clearerSpeechRate(profile.rate||1,utter.lang);
+                utter.pitch=clearerSpeechPitch(profile.pitch||1);
+                utter.volume=1;
+
+                utter.onstart=()=>options.onstart?.(utter,voice,index);
+                utter.onend=()=>{
+                    // Tiny pause between chunks prevents words from running together on Android.
+                    setTimeout(next,70);
+                };
+                utter.onerror=e=>options.onerror?.(e);
+                window.speechSynthesis.speak(utter);
+            };
+            next();
+        }
+
+
+        /* ===== SMART VOICE ENGINE: CLOUDFLARE NEURAL + DEVICE FALLBACK ===== */
+        let activeNeuralAudio = null;
+        let activeNeuralAudioUrl = '';
+        let activeNeuralAbort = null;
+        let smartSpeechRunId = 0;
+
+        function neuralTTSBaseLanguage(text='') {
+            return String(detectSpeechLanguage(text)||'en-US').toLowerCase().split('-')[0];
+        }
+
+        function neuralTTSIsSupported(text='') {
+            return ['en','es','fr','zh','ja','ko'].includes(neuralTTSBaseLanguage(text));
+        }
+
+        function stopAllSpeech() {
+            smartSpeechRunId++;
+            if(activeNeuralAbort){
+                try{activeNeuralAbort.abort();}catch(_){}
+                activeNeuralAbort=null;
+            }
+            if(activeNeuralAudio){
+                try{
+                    activeNeuralAudio.pause();
+                    activeNeuralAudio.currentTime=0;
+                }catch(_){}
+                activeNeuralAudio=null;
+            }
+            if(activeNeuralAudioUrl){
+                try{URL.revokeObjectURL(activeNeuralAudioUrl);}catch(_){}
+                activeNeuralAudioUrl='';
+            }
+            if('speechSynthesis' in window) window.speechSynthesis.cancel();
+        }
+
+        async function fetchNeuralTTSBlob(text, language, signal) {
+            const res = await fetch('/api/chat',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    action:'tts',
+                    text,
+                    language
+                }),
+                signal
+            });
+
+            if(!res.ok){
+                let detail={};
+                try{detail=await res.json();}catch(_){}
+                const err=new Error(detail?.error||`TTS HTTP ${res.status}`);
+                err.status=res.status;
+                err.code=detail?.code||'tts_failed';
+                throw err;
+            }
+
+            const type=(res.headers.get('content-type')||'').toLowerCase();
+            if(!type.includes('audio/') && !type.includes('application/octet-stream')){
+                throw new Error('TTS server returned a non-audio response.');
+            }
+            return await res.blob();
+        }
+
+        function playAudioBlob(blob, runId, options={}, engineLabel='Cloudflare Neural') {
+            return new Promise((resolve,reject)=>{
+                if(runId!==smartSpeechRunId) return resolve(false);
+
+                if(activeNeuralAudioUrl){
+                    try{URL.revokeObjectURL(activeNeuralAudioUrl);}catch(_){}
+                }
+                activeNeuralAudioUrl=URL.createObjectURL(blob);
+                const audio=new Audio(activeNeuralAudioUrl);
+                activeNeuralAudio=audio;
+                audio.preload='auto';
+                audio.volume=1;
+
+                audio.onplay=()=>options.onstart?.(null,null,0,engineLabel);
+                audio.onended=()=>{
+                    if(activeNeuralAudio===audio) activeNeuralAudio=null;
+                    if(activeNeuralAudioUrl){
+                        try{URL.revokeObjectURL(activeNeuralAudioUrl);}catch(_){}
+                        activeNeuralAudioUrl='';
+                    }
+                    resolve(true);
+                };
+                audio.onerror=()=>{
+                    if(activeNeuralAudio===audio) activeNeuralAudio=null;
+                    reject(new Error('Unable to play neural voice audio.'));
+                };
+                audio.play().catch(reject);
+            });
+        }
+
+        async function speakSmartVoice(text, options={}) {
+            const clean=cleanSpeechText(text);
+            if(!clean) return;
+
+            stopAllSpeech();
+            const runId=smartSpeechRunId;
+            const profile=options.profile||getVoiceProfile();
+
+            // MeloTTS currently covers EN/ES/FR/ZH/JA/KO.
+            // Filipino and every unsupported language intentionally use the
+            // phone/browser's native local voice so speech still works reliably.
+            if(!neuralTTSIsSupported(clean)){
+                const chunks=speechChunks(clean,150);
+                speakChunksSequentially(chunks,{
+                    ...options,
+                    profile,
+                    onstart:(utter,voice,index)=>{
+                        options.onstart?.(utter,voice,index,'Device voice');
+                    }
+                });
+                return;
+            }
+
+            const chunks=speechChunks(clean,420);
+            if(!chunks.length) return;
+
+            let fallbackFrom=0;
+
+            try{
+                for(let i=0;i<chunks.length;i++){
+                    if(runId!==smartSpeechRunId) return;
+
+                    const controller=new AbortController();
+                    activeNeuralAbort=controller;
+                    const lang=detectSpeechLanguage(chunks[i]);
+                    const blob=await fetchNeuralTTSBlob(chunks[i],lang,controller.signal);
+                    if(runId!==smartSpeechRunId) return;
+
+                    let prefetched=null;
+                    if(i+1<chunks.length){
+                        const nextController=new AbortController();
+                        const nextLang=detectSpeechLanguage(chunks[i+1]);
+                        prefetched=fetchNeuralTTSBlob(chunks[i+1],nextLang,nextController.signal)
+                            .then(b=>({blob:b,controller:nextController}))
+                            .catch(()=>null);
+                    }
+
+                    await playAudioBlob(blob,runId,{
+                        ...options,
+                        onstart:(utter,voice,index,engine)=>{
+                            options.onstart?.(utter,voice,i+1,engine);
+                        }
+                    },'Cloudflare Neural • MeloTTS');
+
+                    if(runId!==smartSpeechRunId) return;
+                    fallbackFrom=i+1;
+
+                    if(prefetched && i+1<chunks.length){
+                        const ready=await prefetched;
+                        if(ready?.blob && runId===smartSpeechRunId){
+                            i++;
+                            await playAudioBlob(ready.blob,runId,{
+                                ...options,
+                                onstart:(utter,voice,index,engine)=>{
+                                    options.onstart?.(utter,voice,i+1,engine);
+                                }
+                            },'Cloudflare Neural • MeloTTS');
+                            fallbackFrom=i+1;
+                        }
+                    }
+                }
+                if(runId===smartSpeechRunId) options.onend?.();
+            }catch(err){
+                if(err?.name==='AbortError' || runId!==smartSpeechRunId) return;
+
+                const remaining=chunks.slice(Math.max(0,fallbackFrom));
+                if(!remaining.length){
+                    options.onend?.();
+                    return;
+                }
+                speakChunksSequentially(remaining,{
+                    ...options,
+                    profile,
+                    onstart:(utter,voice,index)=>{
+                        options.onstart?.(utter,voice,index,'Device fallback');
+                    }
+                });
+            }finally{
+                activeNeuralAbort=null;
+            }
         }
 
         function voiceSampleText() {
-            const lang=personalizationSettings.language;
-            if(lang==='Filipino') return 'Kumusta! Ako ang napili mong boses para sa JepongDevxyz AI. Handa akong tumulong sa iyo.';
-            if(lang==='Spanish') return 'Hola. Esta es una muestra de la voz que elegiste para JepongDevxyz AI.';
-            return `Hi! I'm ${personalizationSettings.voicePersona}. This is a preview of your selected JepongDevxyz AI voice.`;
+            const lang = personalizationSettings.language || 'Auto-detect';
+            const samples = {
+                Filipino:'Kumusta! Ako ang napili mong boses para sa Jepong Devxyz AI. Malinaw, natural, at handa akong tumulong sa iyo.',
+                English:'Hello! This is the selected voice for Jepong Devxyz AI. I am ready to help you.',
+                Spanish:'Hola. Esta es la voz seleccionada para Jepong Devxyz AI. Estoy listo para ayudarte.',
+                Japanese:'こんにちは。これは Jepong Devxyz AI の選択された音声です。よろしくお願いします。',
+                Korean:'안녕하세요. Jepong Devxyz AI에서 선택한 음성입니다. 도와드릴게요.',
+                French:'Bonjour. Voici la voix sélectionnée pour Jepong Devxyz AI. Je suis prêt à vous aider.',
+                German:'Hallo. Dies ist die ausgewählte Stimme für Jepong Devxyz AI. Ich helfe dir gerne.',
+                Italian:'Ciao. Questa è la voce selezionata per Jepong Devxyz AI. Sono pronto ad aiutarti.',
+                Portuguese:'Olá. Esta é a voz selecionada para Jepong Devxyz AI. Estou pronto para ajudar.',
+                'Mandarin Chinese':'你好。这是 Jepong Devxyz AI 选择的语音。我很乐意帮助你。',
+                Chinese:'你好。这是 Jepong Devxyz AI 选择的语音。我很乐意帮助你。'
+            };
+            return samples[lang] || `Hello! This is the selected voice for Jepong Devxyz AI. I am ready to help you.`;
+        }
+
+        function currentVoiceQualityLabel(text='') {
+            if(!('speechSynthesis' in window)) return 'Speech synthesis unavailable';
+            const lang=detectSpeechLanguage(text || voiceSampleText());
+            const voice=resolvePersonalizationSystemVoice(getVoiceProfile(),text || voiceSampleText());
+            if(!voice) return `Using browser fallback • ${lang}`;
+            return `${voice.name} • ${voice.lang || lang}`;
         }
 
         function playPersonalizationVoiceSample(name=personalizationSettings.voicePersona) {
             const status=document.getElementById('psVoiceSampleStatus');
             const orb=document.getElementById('psVoiceOrb');
             const btn=document.getElementById('psVoicePreviewBtn');
-            if(!('speechSynthesis' in window)) {
-                if(status)status.textContent='Voice preview is not supported by this browser.';
-                showModernAlert('Hindi supported ng browser na ito ang built-in speech synthesis.','Voice preview');
+            const profile=getVoiceProfile(name);
+
+            if(activeNeuralAudio || ('speechSynthesis' in window && window.speechSynthesis.speaking)){
+                stopAllSpeech();
+                orb?.classList.remove('speaking');
+                if(status)status.textContent='';
+                if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
+                refreshLucideIcons();
                 return;
             }
-            const profile=getVoiceProfile(name);
+
             personalizationSettings.voicePersona=profile.name;
-            persistPersonalization();renderPersonalizationSettings();renderVoiceSettingsPage();
-            window.speechSynthesis.cancel();
-            systemVoices=window.speechSynthesis.getVoices();
-            const utter=new SpeechSynthesisUtterance(voiceSampleText());
-            const voice=resolvePersonalizationSystemVoice(profile,utter.text);
-            if(voice){utter.voice=voice;utter.lang=voice.lang;} else utter.lang=preferredLanguageCode()||'en-US';
-            utter.rate=Math.max(.5,Math.min(2,profile.rate*Number(personalizationSettings.voiceSpeed||1)));utter.pitch=Math.max(.5,Math.min(2,profile.pitch*Number(personalizationSettings.voicePitch||1)));utter.volume=1;
-            utter.onstart=()=>{orb?.classList.add('speaking');if(status)status.textContent=`Playing ${profile.name} sample${voice?` • ${voice.name}`:''}`;if(btn)btn.innerHTML='<i data-lucide="square"></i><span>Stop preview</span>';refreshLucideIcons();};
-            utter.onend=()=>{orb?.classList.remove('speaking');if(status)status.textContent='';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();};
-            utter.onerror=()=>{orb?.classList.remove('speaking');if(status)status.textContent='Unable to play this local voice sample.';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();};
-            window.speechSynthesis.speak(utter);
+            persistPersonalization();
+            renderPersonalizationSettings();
+            renderVoiceSettingsPage();
+
+            speakSmartVoice(voiceSampleText(),{
+                profile,
+                onstart:(utter,voice,index,engine)=>{
+                    orb?.classList.add('speaking');
+                    if(status)status.textContent=`Playing ${profile.name} • ${engine||'Voice'}${voice?` • ${voice.name}`:''}`;
+                    if(btn)btn.innerHTML='<i data-lucide="square"></i><span>Stop preview</span>';
+                    refreshLucideIcons();
+                },
+                onend:()=>{
+                    orb?.classList.remove('speaking');
+                    if(status)status.textContent='';
+                    if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
+                    refreshLucideIcons();
+                },
+                onerror:()=>{
+                    orb?.classList.remove('speaking');
+                    if(status)status.textContent='Voice playback failed.';
+                    if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
+                    refreshLucideIcons();
+                }
+            });
         }
 
         function openPetPicker() {
             closeVoiceSettingsPage();
+            setPersonalizationActiveTab('pet');
             const main = document.getElementById('personalizationMainPage');
             const page = document.getElementById('personalizationPetPage');
             if (main) main.style.display = 'none';
@@ -2693,7 +3762,7 @@
                 const t = document.getElementById('responseSpeechToggle');
                 if (t) t.checked = false;
                 document.getElementById('speechSettingsGroup')?.classList.add('disabled');
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                stopAllSpeech();
             }
             if (!personalizationSettings.advancedWebSearch && isWebSearchEnabled) {
                 isWebSearchEnabled = false;
@@ -2745,7 +3814,7 @@
             localStorage.setItem('jepong_speech_enabled', JSON.stringify(enabled));
             const group = document.getElementById('speechSettingsGroup');
             if (group) group.classList.toggle('disabled', !enabled);
-            if (!enabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+            if (!enabled) stopAllSpeech();
         }
 
         function changeVoiceSpeed(val) {
@@ -3138,12 +4207,24 @@
             if (state === 'completed') return '<span class="ai-activity-check">✓</span>';
             if (state === 'warning') return '<span class="ai-activity-warning">!</span>';
             if (state === 'error') return '<span class="ai-activity-error">×</span>';
-            const icons = { web:'◎', file:'▧', route:'↗', fallback:'↻', provider:'◉', generate:'✦', process:'•', image:'◇' };
+            const icons = { web:'◎', research:'⌕', test:'✓', file:'▧', route:'↗', fallback:'↻', provider:'◉', generate:'✦', process:'•', image:'◇', build:'⌘', deploy:'↥', api:'⇄' };
             return icons[kind] || '•';
         }
 
-        function showAIIndicator(promptText) {
+        function shouldShowAIActivity(promptText, files = []) {
+            const text = String(promptText || '').trim();
+            const lower = text.toLowerCase();
+            if (Array.isArray(files) && files.length > 0) return true;
+            if (isWebSearchEnabled) return true;
+            if (['coder','school','imagen'].includes(currentSelectedMode)) return true;
+            if (text.length >= 180 || text.split(/\s+/).filter(Boolean).length >= 28) return true;
+            const heavyPattern = /(code|coding|debug|error|fix|ayusin|gawan|gumawa|create|build|compile|implement|research|test|verify|validate|inspect|subukan|suriin|real[- ]?time|analy[sz]e|analysis|compare|explain.*detail|step[- ]?by[- ]?step|solve|solution|equation|essay|report|project|summari[sz]e|review|document|file|image|larawan|website|url|html|css|javascript|api|endpoint|backend|frontend|database|deploy|vercel|cloudflare|groq|gemini|openrouter|web search|hanapin|maghanap|latest|current|today|weather|panahon|news|update|status|availability)/i;
+            return heavyPattern.test(lower);
+        }
+
+        function showAIIndicator(promptText, files = []) {
             removeAIIndicator();
+            if (!shouldShowAIActivity(promptText, files)) return;
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
             indicator.className = 'ai-activity-card';
@@ -3157,7 +4238,14 @@
                 <div class="ai-activity-summary" id="aiActivitySummary">Working on your request…</div>
             `;
             chatBox.appendChild(indicator);
-            appendActivityEvent({ id:'client-start', label:'Sending your request securely to JepongDevxyz AI', state:'completed', kind:'process' });
+            const shortPrompt = String(promptText||'').replace(/https?:\/\/\S+/g,'').replace(/\s+/g,' ').trim();
+            const taskPreview = shortPrompt.length > 72 ? shortPrompt.slice(0,69).replace(/\s+\S*$/,'') + '…' : shortPrompt;
+            appendActivityEvent({
+                id:'client-start',
+                label: taskPreview ? `Received task: ${taskPreview}` : 'Received your request',
+                state:'completed',
+                kind:'process'
+            });
             scrollToBottom(true);
         }
 
@@ -3229,6 +4317,47 @@
             if(badge){
                 badge.className='provider-runtime-badge ok';
                 badge.textContent=`${providerLabel(used)} · connected${meta.fallbackFrom?` · fallback from ${providerLabel(meta.fallbackFrom)}`:''}`;
+            }
+        }
+
+
+        function artifactBase64ToBlob(base64, mimeType='application/octet-stream') {
+            const binary=atob(base64||'');
+            const bytes=new Uint8Array(binary.length);
+            for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+            return new Blob([bytes],{type:mimeType});
+        }
+
+        function formatArtifactSize(bytes=0) {
+            const n=Number(bytes)||0;
+            if(n<1024)return `${n} B`;
+            if(n<1024*1024)return `${(n/1024).toFixed(n<10240?1:0)} KB`;
+            return `${(n/1024/1024).toFixed(1)} MB`;
+        }
+
+        function attachGeneratedArtifact(botMsgElem, artifact) {
+            if(!botMsgElem || !artifact?.base64 || !artifact?.filename)return;
+            try{
+                const blob=artifactBase64ToBlob(artifact.base64,artifact.mimeType);
+                const url=URL.createObjectURL(blob);
+                const card=document.createElement('div');
+                card.className='generated-artifact-card';
+                card.style.cssText='margin:12px 0 4px;padding:12px;border:1px solid var(--border-color,#343434);border-radius:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--sidebar-bg,rgba(127,127,127,.06));';
+                const safeName=escapeHTML(artifact.filename);
+                const safeLabel=escapeHTML(artifact.label||'Generated file');
+                card.innerHTML=`
+                    <div style="min-width:0;flex:1 1 180px">
+                        <div style="font-weight:700;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeName}</div>
+                        <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${safeLabel} • ${formatArtifactSize(artifact.size)}</div>
+                    </div>
+                    <a class="bot-action-btn generated-download-btn" href="${url}" download="${safeName}" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 12px">
+                        <i data-lucide="download"></i>
+                        Download
+                    </a>`;
+                botMsgElem.appendChild(card);
+                refreshLucideIcons();
+            }catch(err){
+                appendActivityEvent({id:'artifact-client-error',label:'Could not prepare the generated download file.',state:'error',kind:'file'});
             }
         }
 
@@ -4039,7 +5168,7 @@ ${m.text || ''}
         async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:true,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
 
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
-            showAIIndicator(promptText);
+            showAIIndicator(promptText, currentFiles);
             setLivePetWorking(true);
 
             const rawContinuousChatHistory = getContinuousHistory();
@@ -4155,6 +5284,7 @@ ${m.text || ''}
                         smartRouter: smartModelRouter,
                         studyTool: pendingStudyTool,
                         activityStream: true,
+                        autoTools: true,
                         personalization: getPersonalizationPayload()
                     })
                 });
@@ -4211,6 +5341,9 @@ ${m.text || ''}
                         text: (payload) => {
                             fullResponse += payload.text || '';
                             renderLiveResponse();
+                        },
+                        artifact: (payload) => {
+                            attachGeneratedArtifact(botMsgElem, payload);
                         },
                         done: (payload) => finishAIIndicator(true, payload.elapsedMs),
                         error: (payload) => {
@@ -4470,58 +5603,20 @@ ${m.text || ''}
         }
 
         function speakRawText(text, bypassToggle = false) {
-            if (!('speechSynthesis' in window)) return;
-            if (!isResponseSpeechEnabled && !bypassToggle) return;
-
-            window.speechSynthesis.cancel();
-            
-            const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*_#`~>\[\]\(\)]/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            
-            systemVoices = window.speechSynthesis.getVoices();
-            const tagalogWords = /\b(ang|mga|na|ay|at|sa|ko|mo|niya|kami|tayo|sila|ito|iyan|iyon|ba|ka|din|rin|nang|para|kay|kung|pero|syempre|gawin|ano|sino|saan|paano|diyos|panginoon)\b/i;
-            const isTagalog = tagalogWords.test(cleanText);
-            
-            let targetVoice = null;
-
-            if (selectedVoiceURI && systemVoices.length > 0) {
-                targetVoice = systemVoices.find(v => v.voiceURI === selectedVoiceURI);
-            }
-
-            if (!targetVoice && personalizationSettings.voiceEnabled && systemVoices.length > 0) {
-                targetVoice = resolvePersonalizationSystemVoice(getVoiceProfile(), cleanText);
-            }
-
-            if (!targetVoice && isTagalog && systemVoices.length > 0) {
-                targetVoice = systemVoices.find(v => {
-                    const lang = (v.lang || '').toLowerCase();
-                    const name = (v.name || '').toLowerCase();
-                    return lang === 'fil-ph' || lang === 'tl-ph' || name.includes('filipino') || name.includes('tagalog');
-                });
-            }
-            if (!targetVoice && systemVoices.length > 0) {
-                targetVoice = systemVoices.find(v => {
-                    const lang = (v.lang || '').toLowerCase();
-                    return lang === 'en-us' || lang === 'en-gb' || lang.startsWith('en');
-                });
-            }
-            
-            if (targetVoice) {
-                utterance.voice = targetVoice;
-                utterance.lang = targetVoice.lang;
-            } else {
-                utterance.lang = isTagalog ? 'tl-PH' : 'en-US';
-            }
-            
-            const personaProfile = getVoiceProfile();
-            utterance.rate = Math.max(.5,Math.min(2,(speechRate || 1.0) * (personaProfile.rate || 1) * Number(personalizationSettings.voiceSpeed || 1)));
-            utterance.pitch = Math.max(.5,Math.min(2,(personaProfile.pitch || 1.0) * Number(personalizationSettings.voicePitch || 1)));
-            window.speechSynthesis.speak(utterance);
+            if(!isResponseSpeechEnabled&&!bypassToggle)return;
+            speakSmartVoice(text,{
+                profile:getVoiceProfile(),
+                onstart:()=>{
+                    if(typeof updateSpeakingUI==='function')updateSpeakingUI(true);
+                },
+                onend:()=>{
+                    if(typeof updateSpeakingUI==='function')updateSpeakingUI(false);
+                },
+                onerror:()=>{
+                    if(typeof updateSpeakingUI==='function')updateSpeakingUI(false);
+                }
+            });
         }
-
-        /* SPEECH RECOGNITION */
-        let isRecording = false;
-        let recognition = null;
         function toggleSpeechRecognition() {
             const userInput = document.getElementById('userInput');
             const waveContainer = document.getElementById('waveContainer');
@@ -4536,7 +5631,7 @@ ${m.text || ''}
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
-                recognition.lang = 'fil-PH';
+                recognition.lang = preferredLanguageCode() || 'fil-PH';
                 
                 recognition.onstart = () => {
                     isRecording = true;
