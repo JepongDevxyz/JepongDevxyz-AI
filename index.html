@@ -1854,6 +1854,25 @@
             .ai-activity-detail{font-size:.69rem!important}
         }
 
+    
+        /* ===== PET FOOD + PER-PET SOUND FIX ===== */
+        .live-pet.eating::before{content:none!important;display:none!important}
+        .live-pet-visual{position:relative!important;z-index:5!important}
+        .live-pet-food{
+            position:absolute;z-index:30!important;left:50px;top:43px;
+            width:34px;height:34px;display:grid;place-items:center;
+            font-size:27px;line-height:1;opacity:0;pointer-events:none;
+            filter:drop-shadow(0 4px 5px rgba(0,0,0,.28));
+        }
+        .live-pet-food.show{animation:petFoodFront 1.45s cubic-bezier(.22,.7,.25,1) forwards!important}
+        @keyframes petFoodFront{
+            0%{opacity:0;transform:translate(30px,8px) scale(.72) rotate(8deg)}
+            18%{opacity:1;transform:translate(18px,1px) scale(1.08) rotate(-5deg)}
+            72%{opacity:1;transform:translate(2px,-3px) scale(.88) rotate(2deg)}
+            100%{opacity:0;transform:translate(-8px,-6px) scale(.28) rotate(-8deg)}
+        }
+        .live-pet-bubble,.live-pet-name{z-index:35!important}
+
     </style>
 </head>
 <body>
@@ -1900,6 +1919,7 @@
             <div class="live-pet" id="livePetCompanion" role="button" tabindex="0" aria-label="Pet companion">
                 <div class="live-pet-bubble" id="livePetBubble"></div>
                 <div class="live-pet-visual" id="livePetVisual"></div>
+                <div class="live-pet-food" id="livePetFood" aria-hidden="true"></div>
                 <div class="live-pet-name" id="livePetName"></div>
             </div>
         </div>
@@ -2152,8 +2172,8 @@
           <div class="usage-sync-note" id="usageSyncNote"><strong>Accurate limit detection:</strong> provider 429/rate-limit responses are marked immediately. Exact remaining quota is shown only when the provider exposes it.</div>
           <div class="provider-status-grid" id="providerStatusGrid"></div>
           <div style="width:100%;margin-top:8px">
-            <div class="feature-toggle-row"><span>Auto Provider Fallback</span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></div>
-            <div class="feature-toggle-row"><span>Smart Model Router</span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></div>
+            <div class="feature-toggle-row"><span><strong style="display:block;font-weight:600">Auto Provider Fallback</strong><small style="display:block;color:var(--text-muted);margin-top:3px">OFF = test only the selected model. ON = allow model/provider fallback.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></div>
+            <div class="feature-toggle-row"><span><strong style="display:block;font-weight:600">Smart Model Router</strong><small style="display:block;color:var(--text-muted);margin-top:3px">OFF = keep your selected model. ON = router may choose another model.</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></div>
           </div>
         </div>
 
@@ -2448,7 +2468,7 @@
     <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
         <div class="floating-modal model-picker-modal" id="modelPickerModal">
             <div class="model-picker-header"><button class="model-nav-btn" type="button" onclick="changeProviderPage(-1)">←</button><div class="model-provider-title" id="modelProviderTitle">Gemini</div><button class="model-nav-btn" type="button" onclick="changeProviderPage(1)">→</button></div>
-            <div class="model-pages-viewport" id="modelPagesViewport"><div class="model-pages-track" id="modelPagesTrack"><section class="model-provider-page" data-provider="gemini"><div class="provider-badge"><span class="provider-badge-dot"></span> Google Gemini API</div><button class="option-item" data-provider="gemini" data-model="gemini-flash-latest" onclick="selectProviderModel('gemini','gemini-flash-latest','Gemini Flash Latest')"><div class="option-info"><div><div class="option-name">Gemini Flash Latest</div><div class="option-desc">Balanced all-around</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.8-flash" onclick="selectProviderModel('gemini','gemini-3.8-flash','Gemini 3.8 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.8 Flash</div><div class="option-desc">Advanced general tasks</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.7-flash" onclick="selectProviderModel('gemini','gemini-3.7-flash','Gemini 3.7 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.7 Flash</div><div class="option-desc">Reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.5-flash-lite" onclick="selectProviderModel('gemini','gemini-3.5-flash-lite','Gemini 3.5 Flash-Lite')"><div class="option-info"><div><div class="option-name">Gemini 3.5 Flash-Lite</div><div class="option-desc">Fast/light</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cloudflare"><div class="provider-badge"><span class="provider-badge-dot"></span> Workers AI</div><button class="option-item" data-provider="cloudflare" data-model="@cf/zai-org/glm-4.7-flash" onclick="selectProviderModel('cloudflare','@cf/zai-org/glm-4.7-flash','GLM 4.7 Flash')"><div class="option-info"><div><div class="option-name">GLM 4.7 Flash</div><div class="option-desc">Fast multilingual + coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/google/gemma-4-26b-a4b-it" onclick="selectProviderModel('cloudflare','@cf/google/gemma-4-26b-a4b-it','Gemma 4 26B')"><div class="option-info"><div><div class="option-name">Gemma 4 26B</div><div class="option-desc">Vision + general AI</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/nvidia/nemotron-3-120b-a12b" onclick="selectProviderModel('cloudflare','@cf/nvidia/nemotron-3-120b-a12b','Nemotron 3 120B')"><div class="option-info"><div><div class="option-name">Nemotron 3 120B</div><div class="option-desc">Advanced reasoning</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="groq"><div class="provider-badge"><span class="provider-badge-dot"></span> GroqCloud</div><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-120b" onclick="selectProviderModel('groq','openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Strong reasoning + coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-20b" onclick="selectProviderModel('groq','openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Very fast</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="llama-3.3-70b-versatile" onclick="selectProviderModel('groq','llama-3.3-70b-versatile','Llama 3.3 70B')"><div class="option-info"><div><div class="option-name">Llama 3.3 70B</div><div class="option-desc">Versatile</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound-mini" onclick="selectProviderModel('groq','groq/compound-mini','Compound Mini')"><div class="option-info"><div><div class="option-name">Compound Mini</div><div class="option-desc">Tools + speed</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="openrouter"><div class="provider-badge"><span class="provider-badge-dot"></span> 400+ model router</div><button class="option-item" data-provider="openrouter" data-model="openrouter/auto" onclick="selectProviderModel('openrouter','openrouter/auto','OpenRouter Auto')"><div class="option-info"><div><div class="option-name">OpenRouter Auto</div><div class="option-desc">Automatic best-model routing</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="openai/gpt-oss-120b" onclick="selectProviderModel('openrouter','openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">OpenRouter hosted</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="deepseek/deepseek-v3.2" onclick="selectProviderModel('openrouter','deepseek/deepseek-v3.2','DeepSeek V3.2')"><div class="option-info"><div><div class="option-name">DeepSeek V3.2</div><div class="option-desc">Reasoning/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="google/gemini-3.1-pro-preview" onclick="selectProviderModel('openrouter','google/gemini-3.1-pro-preview','Gemini 3.1 Pro')"><div class="option-info"><div><div class="option-name">Gemini 3.1 Pro</div><div class="option-desc">Advanced reasoning</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="mistral"><div class="provider-badge"><span class="provider-badge-dot"></span> La Plateforme</div><button class="option-item" data-provider="mistral" data-model="mistral-small-latest" onclick="selectProviderModel('mistral','mistral-small-latest','Mistral Small')"><div class="option-info"><div><div class="option-name">Mistral Small</div><div class="option-desc">Fast + balanced</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="mistral-large-latest" onclick="selectProviderModel('mistral','mistral-large-latest','Mistral Large')"><div class="option-info"><div><div class="option-name">Mistral Large</div><div class="option-desc">Complex tasks</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="codestral-latest" onclick="selectProviderModel('mistral','codestral-latest','Codestral')"><div class="option-info"><div><div class="option-name">Codestral</div><div class="option-desc">Coding specialist</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-8b-latest" onclick="selectProviderModel('mistral','ministral-8b-latest','Ministral 8B')"><div class="option-info"><div><div class="option-name">Ministral 8B</div><div class="option-desc">Lightweight</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cohere"><div class="provider-badge"><span class="provider-badge-dot"></span> Cohere Chat API</div><button class="option-item" data-provider="cohere" data-model="command-a-plus-05-2026" onclick="selectProviderModel('cohere','command-a-plus-05-2026','Command A+')"><div class="option-info"><div><div class="option-name">Command A+</div><div class="option-desc">Vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-03-2025" onclick="selectProviderModel('cohere','command-a-03-2025','Command A')"><div class="option-info"><div><div class="option-name">Command A</div><div class="option-desc">Multilingual + RAG</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-reasoning-08-2025" onclick="selectProviderModel('cohere','command-a-reasoning-08-2025','Command A Reasoning')"><div class="option-info"><div><div class="option-name">Command A Reasoning</div><div class="option-desc">Deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-r7b-12-2024" onclick="selectProviderModel('cohere','command-r7b-12-2024','Command R7B')"><div class="option-info"><div><div class="option-name">Command R7B</div><div class="option-desc">Fast/light</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="image"><div class="provider-badge"><span class="provider-badge-dot"></span> Image Generation</div><button class="option-item" data-provider="image" data-model="pollinations/flux" onclick="selectImageProviderModel('pollinations/flux','Flux Image')"><div class="option-info"><div><div class="option-name">Flux Image</div><div class="option-desc">Current free image generation route</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="image" data-model="smart-vision" onclick="selectImageProviderModel('smart-vision','Smart Vision Route')"><div class="option-info"><div><div class="option-name">Smart Vision Route</div><div class="option-desc">Automatically uses a vision model for image analysis</div></div></div><div class="radio-icon"></div></button></section></div></div>
+            <div class="model-pages-viewport" id="modelPagesViewport"><div class="model-pages-track" id="modelPagesTrack"><section class="model-provider-page" data-provider="gemini"><div class="provider-badge"><span class="provider-badge-dot"></span> Google Gemini API</div><button class="option-item" data-provider="gemini" data-model="gemini-flash-latest" onclick="selectProviderModel('gemini','gemini-flash-latest','Gemini Flash Latest')"><div class="option-info"><div><div class="option-name">Gemini Flash Latest</div><div class="option-desc">Balanced all-around</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.8-flash" onclick="selectProviderModel('gemini','gemini-3.8-flash','Gemini 3.8 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.8 Flash</div><div class="option-desc">Advanced general tasks</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.7-flash" onclick="selectProviderModel('gemini','gemini-3.7-flash','Gemini 3.7 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.7 Flash</div><div class="option-desc">Reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.5-flash-lite" onclick="selectProviderModel('gemini','gemini-3.5-flash-lite','Gemini 3.5 Flash-Lite')"><div class="option-info"><div><div class="option-name">Gemini 3.5 Flash-Lite</div><div class="option-desc">Fast/light</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cloudflare"><div class="provider-badge"><span class="provider-badge-dot"></span> Workers AI · current practical models</div><button class="option-item" data-provider="cloudflare" data-model="@cf/zai-org/glm-4.7-flash" onclick="selectProviderModel('cloudflare','@cf/zai-org/glm-4.7-flash','GLM 4.7 Flash')"><div class="option-info"><div><div class="option-name">GLM 4.7 Flash</div><div class="option-desc">Free-plan friendly · fast multilingual/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/google/gemma-4-26b-a4b-it" onclick="selectProviderModel('cloudflare','@cf/google/gemma-4-26b-a4b-it','Gemma 4 26B')"><div class="option-info"><div><div class="option-name">Gemma 4 26B</div><div class="option-desc">Free-plan friendly · vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/nvidia/nemotron-3-120b-a12b" onclick="selectProviderModel('cloudflare','@cf/nvidia/nemotron-3-120b-a12b','Nemotron 3 Super')"><div class="option-info"><div><div class="option-name">Nemotron 3 Super</div><div class="option-desc">Free-plan friendly · agentic reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/openai/gpt-oss-120b" onclick="selectProviderModel('cloudflare','@cf/openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Strong reasoning + coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/openai/gpt-oss-20b" onclick="selectProviderModel('cloudflare','@cf/openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Fast general model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/qwen/qwen3.8-27b" onclick="selectProviderModel('cloudflare','@cf/qwen/qwen3.8-27b','Qwen 3.8 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.8 27B</div><div class="option-desc">Vision + reasoning + tools</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="groq"><div class="provider-badge"><span class="provider-badge-dot"></span> GroqCloud · current chat models</div><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-120b" onclick="selectProviderModel('groq','openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Production · strong reasoning/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-20b" onclick="selectProviderModel('groq','openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Production · very fast</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="qwen/qwen3.6-27b" onclick="selectProviderModel('groq','qwen/qwen3.6-27b','Qwen 3.6 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.6 27B</div><div class="option-desc">Preview · vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="qwen/qwen3.8-27b" onclick="selectProviderModel('groq','qwen/qwen3.8-27b','Qwen 3.8 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.8 27B</div><div class="option-desc">Preview · newer Qwen</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound" onclick="selectProviderModel('groq','groq/compound','Compound')"><div class="option-info"><div><div class="option-name">Compound</div><div class="option-desc">Multi-tool web + code system</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound-mini" onclick="selectProviderModel('groq','groq/compound-mini','Compound Mini')"><div class="option-info"><div><div class="option-name">Compound Mini</div><div class="option-desc">Lower-latency tool system</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="openrouter"><div class="provider-badge"><span class="provider-badge-dot"></span> OpenRouter · current free models</div><button class="option-item" data-provider="openrouter" data-model="openrouter/free" onclick="selectProviderModel('openrouter','openrouter/free','OpenRouter Free')"><div class="option-info"><div><div class="option-name">OpenRouter Free</div><div class="option-desc">Recommended · auto-selects an available free model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-ultra-550b-a55b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-ultra-550b-a55b:free','Nemotron 3 Ultra Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Ultra Free</div><div class="option-desc">1M context · deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="poolside/laguna-s-2.1:free" onclick="selectProviderModel('openrouter','poolside/laguna-s-2.1:free','Laguna S 2.1 Free')"><div class="option-info"><div><div class="option-name">Laguna S 2.1 Free</div><div class="option-desc">Strong coding agent</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-super-120b-a12b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-super-120b-a12b:free','Nemotron 3 Super Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Super Free</div><div class="option-desc">Agentic reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="cohere/north-mini-code:free" onclick="selectProviderModel('openrouter','cohere/north-mini-code:free','North Mini Code Free')"><div class="option-info"><div><div class="option-name">North Mini Code Free</div><div class="option-desc">Fast agentic coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="poolside/laguna-xs-2.1:free" onclick="selectProviderModel('openrouter','poolside/laguna-xs-2.1:free','Laguna XS 2.1 Free')"><div class="option-info"><div><div class="option-name">Laguna XS 2.1 Free</div><div class="option-desc">Compact coding + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="inclusionai/ling-3.0-tiny:free" onclick="selectProviderModel('openrouter','inclusionai/ling-3.0-tiny:free','Ling 3.0 Tiny Free')"><div class="option-info"><div><div class="option-name">Ling 3.0 Tiny Free</div><div class="option-desc">Fast chat + instructions</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-nano-30b-a3b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-nano-30b-a3b:free','Nemotron 3 Nano Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Nano Free</div><div class="option-desc">Efficient reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="google/gemma-4-26b-a4b-it:free" onclick="selectProviderModel('openrouter','google/gemma-4-26b-a4b-it:free','Gemma 4 26B Free')"><div class="option-info"><div><div class="option-name">Gemma 4 26B Free</div><div class="option-desc">Google open multimodal model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="openai/gpt-oss-20b:free" onclick="selectProviderModel('openrouter','openai/gpt-oss-20b:free','GPT-OSS 20B Free')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B Free</div><div class="option-desc">Fast OpenAI open-weight model</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="mistral"><div class="provider-badge"><span class="provider-badge-dot"></span> Mistral · practical current choices</div><button class="option-item" data-provider="mistral" data-model="mistral-small-latest" onclick="selectProviderModel('mistral','mistral-small-latest','Mistral Small Latest')"><div class="option-info"><div><div class="option-name">Mistral Small Latest</div><div class="option-desc">Fast general-purpose model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-14b-latest" onclick="selectProviderModel('mistral','ministral-14b-latest','Ministral 14B Latest')"><div class="option-info"><div><div class="option-name">Ministral 14B Latest</div><div class="option-desc">Balanced compact model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-8b-latest" onclick="selectProviderModel('mistral','ministral-8b-latest','Ministral 8B Latest')"><div class="option-info"><div><div class="option-name">Ministral 8B Latest</div><div class="option-desc">Lighter / faster</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-3b-latest" onclick="selectProviderModel('mistral','ministral-3b-latest','Ministral 3B Latest')"><div class="option-info"><div><div class="option-name">Ministral 3B Latest</div><div class="option-desc">Smallest lightweight option</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="codestral-latest" onclick="selectProviderModel('mistral','codestral-latest','Codestral')"><div class="option-info"><div><div class="option-name">Codestral</div><div class="option-desc">Coding specialist</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cohere"><div class="provider-badge"><span class="provider-badge-dot"></span> Cohere · live Chat models</div><button class="option-item" data-provider="cohere" data-model="command-a-plus-05-2026" onclick="selectProviderModel('cohere','command-a-plus-05-2026','Command A+')"><div class="option-info"><div><div class="option-name">Command A+</div><div class="option-desc">Vision + reasoning + agents</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-03-2025" onclick="selectProviderModel('cohere','command-a-03-2025','Command A')"><div class="option-info"><div><div class="option-name">Command A</div><div class="option-desc">Multilingual + RAG + tools</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-reasoning-08-2025" onclick="selectProviderModel('cohere','command-a-reasoning-08-2025','Command A Reasoning')"><div class="option-info"><div><div class="option-name">Command A Reasoning</div><div class="option-desc">Deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-r7b-12-2024" onclick="selectProviderModel('cohere','command-r7b-12-2024','Command R7B')"><div class="option-info"><div><div class="option-name">Command R7B</div><div class="option-desc">Fast/light Command</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="tiny-aya-global" onclick="selectProviderModel('cohere','tiny-aya-global','Tiny Aya Global')"><div class="option-info"><div><div class="option-name">Tiny Aya Global</div><div class="option-desc">70-language lightweight chat</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="tiny-aya-water" onclick="selectProviderModel('cohere','tiny-aya-water','Tiny Aya Water')"><div class="option-info"><div><div class="option-name">Tiny Aya Water</div><div class="option-desc">Europe + Asia-Pacific language focus</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="c4ai-aya-expanse-32b" onclick="selectProviderModel('cohere','c4ai-aya-expanse-32b','Aya Expanse 32B')"><div class="option-info"><div><div class="option-name">Aya Expanse 32B</div><div class="option-desc">Strong multilingual generation</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="image"><div class="provider-badge"><span class="provider-badge-dot"></span> Image Generation</div><button class="option-item" data-provider="image" data-model="pollinations/flux" onclick="selectImageProviderModel('pollinations/flux','Flux Image')"><div class="option-info"><div><div class="option-name">Flux Image</div><div class="option-desc">Current free image generation route</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="image" data-model="smart-vision" onclick="selectImageProviderModel('smart-vision','Smart Vision Route')"><div class="option-info"><div><div class="option-name">Smart Vision Route</div><div class="option-desc">Automatically uses a vision model for image analysis</div></div></div><div class="radio-icon"></div></button></section></div></div>
             <div class="model-page-dots"><button class="model-page-dot" type="button" onclick="setProviderPage(0)" aria-label="Gemini"></button><button class="model-page-dot" type="button" onclick="setProviderPage(1)" aria-label="Cloudflare"></button><button class="model-page-dot" type="button" onclick="setProviderPage(2)" aria-label="Groq"></button><button class="model-page-dot" type="button" onclick="setProviderPage(3)" aria-label="OpenRouter"></button><button class="model-page-dot" type="button" onclick="setProviderPage(4)" aria-label="Mistral"></button><button class="model-page-dot" type="button" onclick="setProviderPage(5)" aria-label="Cohere"></button><button class="model-page-dot" type="button" onclick="setProviderPage(6)" aria-label="Image"></button></div>
         </div>
     </div>
@@ -2529,9 +2549,48 @@
         
         let currentSelectedProvider = localStorage.getItem('jepong_last_provider') || 'gemini';
         let currentSelectedModel = localStorage.getItem('jepong_last_model') || 'gemini-flash-latest';
+
+        // Migrate model IDs that were retired or replaced.
+        if(currentSelectedProvider==='groq' && ['llama-3.3-70b-versatile','llama-3.1-8b-instant'].includes(currentSelectedModel)){
+            currentSelectedModel='qwen/qwen3.6-27b';
+            localStorage.setItem('jepong_last_model',currentSelectedModel);
+        }
+        if(currentSelectedProvider==='mistral' && currentSelectedModel==='mistral-small-latest'){
+            currentSelectedModel='mistral-small-2603';
+            localStorage.setItem('jepong_last_model',currentSelectedModel);
+        }
+        if(currentSelectedProvider==='mistral' && currentSelectedModel==='mistral-large-latest'){
+            currentSelectedModel='mistral-large-2512';
+            localStorage.setItem('jepong_last_model',currentSelectedModel);
+        }
+        if(currentSelectedProvider==='openrouter' && currentSelectedModel==='google/gemini-3.1-pro-preview'){
+            currentSelectedModel='openrouter/free';
+            localStorage.setItem('jepong_last_model',currentSelectedModel);
+        }
+        if(currentSelectedProvider==='mistral' && ['mistral-small-2603','mistral-small-latest'].includes(currentSelectedModel)){
+            currentSelectedModel='mistral-small-latest';
+            localStorage.setItem('jepong_last_model',currentSelectedModel);
+        }
+        if(currentSelectedProvider==='mistral' && ['mistral-large-2512','mistral-large-latest'].includes(currentSelectedModel)){
+            currentSelectedModel='ministral-14b-latest';
+            localStorage.setItem('jepong_last_model',currentSelectedModel);
+        }
+
+        if(currentSelectedProvider==='openrouter' && ['openrouter/auto','openai/gpt-oss-120b','deepseek/deepseek-v3.2','google/gemini-3.1-pro-preview'].includes(currentSelectedModel)){
+            currentSelectedModel='openrouter/free';
+            localStorage.setItem('jepong_last_model',currentSelectedModel);
+        }
         let currentProviderPage = Math.max(0, ['gemini','cloudflare','groq','openrouter','mistral','cohere','image'].indexOf(currentSelectedProvider));
-        let autoProviderFallback = JSON.parse(localStorage.getItem('jepong_auto_fallback') ?? 'true');
-        let smartModelRouter = JSON.parse(localStorage.getItem('jepong_smart_router') ?? 'true');
+
+        // One-time routing reset for trustworthy per-model testing.
+        const ROUTING_DEFAULT_VERSION='direct-model-test-v2';
+        if(localStorage.getItem('jepong_routing_default_version')!==ROUTING_DEFAULT_VERSION){
+            localStorage.setItem('jepong_auto_fallback','false');
+            localStorage.setItem('jepong_smart_router','false');
+            localStorage.setItem('jepong_routing_default_version',ROUTING_DEFAULT_VERSION);
+        }
+        let autoProviderFallback = JSON.parse(localStorage.getItem('jepong_auto_fallback') ?? 'false');
+        let smartModelRouter = JSON.parse(localStorage.getItem('jepong_smart_router') ?? 'false');
         let pendingStudyTool = null;
         let lastProviderMeta = JSON.parse(localStorage.getItem('jepong_provider_meta') || '{}');
         let currentSelectedMode = localStorage.getItem('jepong_last_mode') || 'general';
@@ -2760,7 +2819,8 @@
                 pet: document.getElementById('livePetCompanion'),
                 visual: document.getElementById('livePetVisual'),
                 name: document.getElementById('livePetName'),
-                bubble: document.getElementById('livePetBubble')
+                bubble: document.getElementById('livePetBubble'),
+                food: document.getElementById('livePetFood')
             };
         }
 
@@ -2828,21 +2888,114 @@
             else { livePetSay('Done!',1000); resetLivePetIdleTimer(); }
         }
 
+
+        const PET_FOOD_CHOICES = {
+            Luna:['🐟','🍗','🥩'], Kiro:['🦴','🍖','🥩'], Mochi:['🥕','🥬','🍎'],
+            Pixel:['🔋','⚡','💾'], Nova:['🐟','🥩','🍗'], Sunny:['🌽','🌾','🍓'],
+            Kumo:['🎋','🥬','🍎'], Ace:['🍗','🥚','🍎','🥩'],
+            default:['🍪','🍎','🥕','🥪']
+        };
+        let petAudioContext=null;
+        let livePetTapTimer=null;
+
+        function selectedPetProfile(){
+            return PERSONALIZATION_PETS.find(x=>x.name===personalizationSettings.pet) ||
+                {name:personalizationSettings.pet||'Pet',visual:'custom'};
+        }
+        function randomPetFood(){
+            const list=PET_FOOD_CHOICES[personalizationSettings.pet]||PET_FOOD_CHOICES.default;
+            return list[Math.floor(Math.random()*list.length)];
+        }
+        function showPetFood(){
+            const {food}=getLivePetElements();if(!food)return;
+            food.textContent=randomPetFood();
+            food.classList.remove('show');void food.offsetWidth;food.classList.add('show');
+            setTimeout(()=>food.classList.remove('show'),1550);
+        }
+        function getPetAudioContext(){
+            try{
+                if(!petAudioContext)petAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+                if(petAudioContext.state==='suspended')petAudioContext.resume();
+                return petAudioContext;
+            }catch(_){return null;}
+        }
+        function petTone(ctx,start,duration,f0,f1,type='sine',gain=.04){
+            const o=ctx.createOscillator(),g=ctx.createGain();
+            o.type=type;o.frequency.setValueAtTime(f0,start);
+            o.frequency.exponentialRampToValueAtTime(Math.max(40,f1),start+duration);
+            g.gain.setValueAtTime(.0001,start);g.gain.exponentialRampToValueAtTime(gain,start+.015);
+            g.gain.exponentialRampToValueAtTime(.0001,start+duration);
+            o.connect(g);g.connect(ctx.destination);o.start(start);o.stop(start+duration+.02);
+        }
+        function playPetSound(action='tap'){
+            const ctx=getPetAudioContext();if(!ctx)return;
+            const species=String(selectedPetProfile().visual||'custom').toLowerCase();
+            const t=ctx.currentTime+.01;
+            if(species==='cat'||species==='blackcat'){
+                petTone(ctx,t,.18,420,690,'triangle',.04);
+                petTone(ctx,t+.16,.16,690,390,'triangle',.035);
+                if(action==='feed')petTone(ctx,t+.33,.10,520,760,'sine',.025);
+            }else if(species==='dog'){
+                petTone(ctx,t,.09,180,115,'sawtooth',.05);
+                petTone(ctx,t+.13,.075,210,130,'square',.04);
+                if(action==='feed')petTone(ctx,t+.23,.07,190,125,'square',.03);
+            }else if(species==='rabbit'){
+                petTone(ctx,t,.10,620,820,'sine',.03);
+                petTone(ctx,t+.12,.10,760,980,'sine',.024);
+            }else if(species==='robot'){
+                petTone(ctx,t,.075,720,720,'square',.025);
+                petTone(ctx,t+.09,.075,980,980,'square',.022);
+                if(action==='feed')petTone(ctx,t+.18,.11,520,1040,'sine',.025);
+            }else if(species==='chick'){
+                petTone(ctx,t,.065,1050,1350,'sine',.028);
+                petTone(ctx,t+.085,.065,980,1260,'sine',.025);
+            }else if(species==='panda'){
+                petTone(ctx,t,.16,250,180,'sine',.035);
+                if(action==='feed')petTone(ctx,t+.13,.12,330,230,'sine',.03);
+            }else if(species==='fox'){
+                petTone(ctx,t,.08,620,980,'triangle',.035);
+                petTone(ctx,t+.10,.10,900,540,'triangle',.03);
+            }else{
+                petTone(ctx,t,.10,520,700,'sine',.03);
+                if(action==='feed')petTone(ctx,t+.12,.10,700,880,'sine',.025);
+            }
+        }
+        function performPetTap(){
+            const {pet}=getLivePetElements();if(!pet)return;
+            wakeLivePet();pet.classList.remove('petting','eating');void pet.offsetWidth;
+            if(personalizationSettings.petTapEnabled!==false){
+                pet.classList.add('petting');playPetSound('tap');livePetSay('💜',900);
+                setTimeout(()=>pet.classList.remove('petting'),1450);
+            }
+        }
+        function performPetFeed(){
+            const {pet,food}=getLivePetElements();if(!pet)return;
+            wakeLivePet();pet.classList.remove('petting','eating');void pet.offsetWidth;
+            if(personalizationSettings.petDoubleTapFeed!==false){
+                pet.classList.add('eating');showPetFood();playPetSound('feed');
+                setTimeout(()=>livePetSay(`Yum! ${food?.textContent||'😋'}`,1250),40);
+                setTimeout(()=>pet.classList.remove('eating'),1750);
+            }
+        }
+
         function petLiveInteraction() {
             const now=Date.now();
             const doubleTap=now-livePetLastTap<330;
             livePetLastTap=now;
-            const {pet}=getLivePetElements(); if(!pet)return;
-            wakeLivePet();
-            pet.classList.remove('petting','eating');
-            void pet.offsetWidth;
-            if(doubleTap && personalizationSettings.petDoubleTapFeed!==false){
-                pet.classList.add('eating'); livePetSay('Yum! 😋',1300);
-                setTimeout(()=>pet.classList.remove('eating'),1900);
-            } else if(personalizationSettings.petTapEnabled!==false){
-                pet.classList.add('petting'); livePetSay('💜',900);
-                setTimeout(()=>pet.classList.remove('petting'),1450);
+
+            if(doubleTap){
+                clearTimeout(livePetTapTimer);
+                livePetTapTimer=null;
+                performPetFeed();
+                livePetLastTap=0;
+                return;
             }
+
+            clearTimeout(livePetTapTimer);
+            livePetTapTimer=setTimeout(()=>{
+                performPetTap();
+                livePetTapTimer=null;
+            },250);
         }
 
         function renderPetCompanionAcrossApp() {
@@ -3650,7 +3803,7 @@
             try{
                 const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
                     message:`Create one friendly AI companion pet profile. Desired name: ${requestedName||'Choose a short original name'}. User idea: ${idea||'A friendly helpful companion'}. Return ONLY compact JSON with keys name and description. Description max 12 words.`,
-                    history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'custom',customPrompt:'You create concise, family-friendly companion pet profiles. Output JSON only.',webSearch:false,autoFallback:true,smartRouter:false,personalization:null
+                    history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'custom',customPrompt:'You create concise, family-friendly companion pet profiles. Output JSON only.',webSearch:false,autoFallback:autoProviderFallback,smartRouter:false,personalization:null
                 })});
                 if(!res.ok)throw new Error(`Server returned ${res.status}`);
                 const raw=await res.text();
@@ -5162,10 +5315,10 @@ ${m.text || ''}
         async function prepareHistoryForRequest(history){
             const chars=(history||[]).reduce((n,x)=>n+(x.text?.length||0),0); if(chars<30000||history.length<18)return history;
             const older=history.slice(0,-10); const recent=history.slice(-10); const transcript=older.map(x=>`${x.role}: ${x.text}`).join('\n').slice(0,26000);
-            try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Summarize this conversation for context preservation. Keep facts, decisions, code requirements, and unresolved issues. Do not add new facts.\n\n${transcript}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:true,smartRouter:false})});if(r.ok){const t=await r.text();return [{role:'user',text:`[AUTO SUMMARY OF EARLIER CHAT]\n${t}`},...recent];}}catch(_){}
+            try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Summarize this conversation for context preservation. Keep facts, decisions, code requirements, and unresolved issues. Do not add new facts.\n\n${transcript}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:autoProviderFallback,smartRouter:false})});if(r.ok){const t=await r.text();return [{role:'user',text:`[AUTO SUMMARY OF EARLIER CHAT]\n${t}`},...recent];}}catch(_){}
             return history.slice(-14);
         }
-        async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:true,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
+        async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:autoProviderFallback,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
 
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
             showAIIndicator(promptText, currentFiles);
@@ -5820,10 +5973,27 @@ ${m.text || ''}
         const MODEL_DISPLAY_NAMES = {
             'gemini-flash-latest':'Gemini Flash Latest','gemini-3.8-flash':'Gemini 3.8 Flash','gemini-3.7-flash':'Gemini 3.7 Flash','gemini-3.6-flash':'Gemini 3.6 Flash','gemini-3.5-flash-lite':'Gemini 3.5 Flash-Lite',
             '@cf/zai-org/glm-4.7-flash':'GLM 4.7 Flash','@cf/google/gemma-4-26b-a4b-it':'Gemma 4 26B','@cf/nvidia/nemotron-3-120b-a12b':'Nemotron 3 120B',
-            'openai/gpt-oss-120b':'GPT-OSS 120B','openai/gpt-oss-20b':'GPT-OSS 20B','llama-3.3-70b-versatile':'Llama 3.3 70B','llama-3.1-8b-instant':'Llama 3.1 8B','groq/compound-mini':'Compound Mini',
-            'openrouter/auto':'OpenRouter Auto','deepseek/deepseek-v3.2':'DeepSeek V3.2','google/gemini-3.1-pro-preview':'Gemini 3.1 Pro',
-            'mistral-small-latest':'Mistral Small','mistral-large-latest':'Mistral Large','codestral-latest':'Codestral','ministral-8b-latest':'Ministral 8B',
-            'command-a-plus-05-2026':'Command A+','command-a-03-2025':'Command A','command-a-reasoning-08-2025':'Command A Reasoning','command-r7b-12-2024':'Command R7B'
+            'openai/gpt-oss-120b':'GPT-OSS 120B','openai/gpt-oss-20b':'GPT-OSS 20B','qwen/qwen3.6-27b':'Qwen 3.6 27B','groq/compound-mini':'Compound Mini',
+            'openrouter/auto':'OpenRouter Auto','openrouter/free':'OpenRouter Free','deepseek/deepseek-v3.2':'DeepSeek V3.2',
+            'mistral-small-latest':'Mistral Small Latest','ministral-14b-latest':'Ministral 14B Latest','codestral-latest':'Codestral','ministral-8b-latest':'Ministral 8B',
+            'command-a-plus-05-2026':'Command A+','command-a-03-2025':'Command A','command-a-reasoning-08-2025':'Command A Reasoning','command-r7b-12-2024':'Command R7B',
+            '@cf/openai/gpt-oss-120b':'GPT-OSS 120B',
+            '@cf/openai/gpt-oss-20b':'GPT-OSS 20B',
+            '@cf/qwen/qwen3.8-27b':'Qwen 3.8 27B',
+            'qwen/qwen3.8-27b':'Qwen 3.8 27B',
+            'nvidia/nemotron-3-ultra-550b-a55b:free':'Nemotron 3 Ultra Free',
+            'poolside/laguna-s-2.1:free':'Laguna S 2.1 Free',
+            'nvidia/nemotron-3-super-120b-a12b:free':'Nemotron 3 Super Free',
+            'cohere/north-mini-code:free':'North Mini Code Free',
+            'poolside/laguna-xs-2.1:free':'Laguna XS 2.1 Free',
+            'inclusionai/ling-3.0-tiny:free':'Ling 3.0 Tiny Free',
+            'nvidia/nemotron-3-nano-30b-a3b:free':'Nemotron 3 Nano Free',
+            'google/gemma-4-26b-a4b-it:free':'Gemma 4 26B Free',
+            'openai/gpt-oss-20b:free':'GPT-OSS 20B Free',
+            'ministral-3b-latest':'Ministral 3B Latest',
+            'tiny-aya-global':'Tiny Aya Global',
+            'tiny-aya-water':'Tiny Aya Water',
+            'c4ai-aya-expanse-32b':'Aya Expanse 32B'
         };
         function providerLabel(p){ return PROVIDER_LABELS[p] || p || 'AI'; }
         function updateSelectedModelUI(){
