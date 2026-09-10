@@ -13,27 +13,27 @@ const PROVIDERS = {
   },
   cloudflare: {
     label: 'Cloudflare',
-    models: ['@cf/zai-org/glm-4.7-flash','@cf/google/gemma-4-26b-a4b-it','@cf/nvidia/nemotron-3-120b-a12b'],
+    models: ['@cf/zai-org/glm-4.7-flash','@cf/google/gemma-4-26b-a4b-it','@cf/nvidia/nemotron-3-120b-a12b','@cf/openai/gpt-oss-120b','@cf/openai/gpt-oss-20b','@cf/qwen/qwen3.8-27b'],
     defaultModel: '@cf/zai-org/glm-4.7-flash'
   },
   groq: {
     label: 'Groq',
-    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','llama-3.3-70b-versatile','llama-3.1-8b-instant','qwen/qwen3.6-27b','groq/compound-mini'],
+    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.6-27b','qwen/qwen3.8-27b','groq/compound','groq/compound-mini'],
     defaultModel: 'openai/gpt-oss-20b'
   },
   openrouter: {
     label: 'OpenRouter',
-    models: ['openrouter/auto','openrouter/free','openai/gpt-oss-120b','deepseek/deepseek-v3.2','google/gemini-3.1-pro-preview'],
-    defaultModel: 'openrouter/auto'
+    models: ['openrouter/free','nvidia/nemotron-3-ultra-550b-a55b:free','poolside/laguna-s-2.1:free','nvidia/nemotron-3-super-120b-a12b:free','cohere/north-mini-code:free','poolside/laguna-xs-2.1:free','inclusionai/ling-3.0-tiny:free','nvidia/nemotron-3-nano-30b-a3b:free','google/gemma-4-26b-a4b-it:free','openai/gpt-oss-20b:free'],
+    defaultModel: 'openrouter/free'
   },
   mistral: {
     label: 'Mistral',
-    models: ['mistral-small-latest','mistral-small-2603','mistral-large-latest','mistral-large-2512','codestral-latest','ministral-8b-latest'],
+    models: ['mistral-small-latest','ministral-14b-latest','ministral-8b-latest','ministral-3b-latest','codestral-latest'],
     defaultModel: 'mistral-small-latest'
   },
   cohere: {
     label: 'Cohere',
-    models: ['command-a-plus-05-2026','command-a-03-2025','command-a-reasoning-08-2025','command-r7b-12-2024'],
+    models: ['command-a-plus-05-2026','command-a-03-2025','command-a-reasoning-08-2025','command-r7b-12-2024','tiny-aya-global','tiny-aya-water','c4ai-aya-expanse-32b'],
     defaultModel: 'command-a-03-2025'
   }
 };
@@ -543,6 +543,47 @@ function buildGeneratedArtifact(message='',responseText=''){
   };
 }
 
+
+function languageQualityInstruction(userMessage='', personalization=null) {
+  const msg=String(userMessage||'').trim();
+  const preferred=String(personalization?.language||'Auto-detect').trim();
+
+  let text =
+    ' Match the primary language of the user’s latest message unless the user explicitly requests another language. ' +
+    'Before sending the final response, silently proofread spelling, grammar, punctuation, agreement, word choice, and sentence clarity. ' +
+    'Avoid broken mixed-language phrases, awkward literal translations, unexplained fragments, and unnatural wording. ' +
+    'Do not expose provider/internal safety labels, hidden reasoning metadata, or internal classification text unless the user explicitly asks about it. ' +
+    'Technical terms may remain in standard English when that is clearer. ';
+
+  if(/[\u3040-\u30ff]/.test(msg)) text += 'Use natural, grammatically correct Japanese.';
+  else if(/[\uac00-\ud7af]/.test(msg)) text += 'Use natural, grammatically correct Korean.';
+  else if(/[\u0600-\u06ff]/.test(msg)) text += 'Use clear, grammatically correct Arabic.';
+  else if(/[\u4e00-\u9fff]/.test(msg)) text += 'Use natural Chinese wording and punctuation.';
+  else if(/[ñáéíóúü¿¡]/i.test(msg) || /\b(hola|gracias|por favor|cómo|quiero|puedes)\b/i.test(msg)) text += 'Use natural, grammatically correct Spanish.';
+  else if(/\b(ako|ikaw|ka|ko|mo|ang|mga|ito|iyan|yun|ano|bakit|paano|pwede|puwede|gusto|sana|naman|nga|salamat|kumusta|kamusta|paki|bigay|gawin|ayusin|lang|rin|din|po|opo|sakin|sa akin)\b/i.test(msg)) {
+    text += ' The latest message is Filipino/Tagalog. Reply in natural Filipino/Tagalog with correct grammar and spelling. Use natural Taglish only when technical English terms make the explanation clearer. Avoid stiff or machine-translated Filipino.';
+  } else if(/[A-Za-z]/.test(msg)) text += ' Use natural, grammatically correct English.';
+
+  if(preferred && preferred!=='Auto-detect') {
+    text += ` The saved language preference is ${preferred}, but the language of the latest user message takes priority unless the user explicitly asks otherwise.`;
+  }
+  return text;
+}
+
+function cleanUpstreamError(raw='', status=500, provider='', model='') {
+  let text=String(raw||'').trim();
+  try{
+    const parsed=JSON.parse(text);
+    text=parsed?.error?.message || parsed?.message || parsed?.detail || text;
+  }catch(_){}
+  if(Number(status)===402 && provider==='mistral'){
+    return `${modelLabel(model)} could not be used because this Mistral account currently has no usable quota/access for the request (HTTP 402). Auto Provider Fallback is OFF, so no other model was used.`;
+  }
+  if(Number(status)===429) return `${providerLabel(provider)} rate limit reached for ${modelLabel(model)} (HTTP 429). ${text.slice(0,260)}`;
+  if(Number(status)===404 || Number(status)===400) return `${providerLabel(provider)} could not use ${modelLabel(model)} (HTTP ${status}). ${text.slice(0,320)}`;
+  return text.slice(0,700) || `${providerLabel(provider)} request failed with HTTP ${status}.`;
+}
+
 function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='') {
   let text = 'You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Be accurate, helpful, and concise when possible. Put programming code inside fenced Markdown code blocks.';
 
@@ -601,6 +642,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   else if (studyTool === 'flashcards') text += ' STUDY TOOL: Produce concise flashcards in Q: / A: format, one card per pair.';
   else if (studyTool === 'explain') text += ' STUDY TOOL: Explain the topic simply using short steps, analogies, and one concrete example.';
   text += responseQualityInstruction(userMessage);
+  text += languageQualityInstruction(userMessage, personalization);
   text += artifactInstruction(userMessage);
   text += ' When tool results are supplied in bracketed LIVE/VERIFICATION/PROVIDED LINK sections, use them only when relevant to the user request and distinguish actual fetched/tested results from inference. Never say you searched, tested, ran, compiled, inspected an environment, or opened a website unless the supplied tool context confirms that action. For code, report static verification as static verification—not successful execution. Keep the final answer tightly aligned to the user\'s actual task, attached files, provided URLs, and requested output.';
   return text;
@@ -1434,7 +1476,7 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
   return {ok:false,status,error:last||'Cloudflare unavailable'};
 }
 
-async function runOpenAICompatible(provider,{model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit}) {
+async function runOpenAICompatible(provider,{model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
@@ -1447,43 +1489,48 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
 
   const requested=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
   const messages=buildOpenAIMessages(history,message,systemInstruction);
-
   let modelCandidates=[requested];
 
-  if(provider==='groq'){
-    if(requested==='llama-3.3-70b-versatile'){
+  // Compatible model substitution is allowed only when the user enabled fallback.
+  if(autoFallback){
+    if(provider==='groq' && requested==='qwen/qwen3.8-27b'){
+      modelCandidates=['qwen/qwen3.8-27b','qwen/qwen3.6-27b','openai/gpt-oss-120b'];
+    } else if(provider==='groq' && requested==='qwen/qwen3.6-27b'){
+      modelCandidates=['qwen/qwen3.6-27b','openai/gpt-oss-120b'];
+    } else if(provider==='groq' && requested==='openai/gpt-oss-120b'){
       modelCandidates=['openai/gpt-oss-120b','qwen/qwen3.6-27b'];
-    } else if(requested==='llama-3.1-8b-instant'){
-      modelCandidates=['openai/gpt-oss-20b'];
+    } else if(provider==='groq' && requested==='groq/compound-mini'){
+      modelCandidates=['groq/compound-mini','groq/compound'];
     }
-  }
 
-  if(provider==='mistral'){
-    if(requested==='mistral-small-latest'){
-      modelCandidates=['mistral-small-latest','mistral-small-2603'];
-    } else if(requested==='mistral-large-latest'){
-      modelCandidates=['mistral-large-latest','mistral-large-2512'];
+    if(provider==='mistral' && requested==='mistral-small-latest'){
+      modelCandidates=['mistral-small-latest','ministral-14b-latest','ministral-8b-latest'];
+    } else if(provider==='mistral' && requested==='ministral-14b-latest'){
+      modelCandidates=['ministral-14b-latest','mistral-small-latest'];
+    } else if(provider==='mistral' && requested==='codestral-latest'){
+      modelCandidates=['codestral-latest','mistral-small-latest'];
     }
-  }
 
-  if(provider==='openrouter' && requested==='google/gemini-3.1-pro-preview'){
-    modelCandidates=['google/gemini-3.1-pro-preview','openrouter/free'];
+    if(provider==='openrouter' && requested!=='openrouter/free'){
+      modelCandidates=[requested,'openrouter/free'];
+    }
   }
 
   let last='';
   let status=500;
+  let lastTarget=requested;
 
   for(let mi=0; mi<modelCandidates.length; mi++){
     const target=modelCandidates[mi];
+    lastTarget=target;
 
-    for(let i=0;i<keys.length;i++) {
-      const repaired = target!==requested;
+    for(let i=0;i<keys.length;i++){
+      const substituted=target!==requested;
       activity(
         emit,
         `${provider}-model-${mi}-key-${i}`,
-        `Connecting to ${providerLabel(provider)} • ${modelLabel(requested)}${repaired?` • using ${modelLabel(target)}`:''}${keys.length>1?` • credential ${i+1}/${keys.length}`:''}`,
-        'running',
-        'provider'
+        `Connecting to ${providerLabel(provider)} • ${modelLabel(requested)}${substituted?` • fallback model ${modelLabel(target)}`:''}${keys.length>1?` • credential ${i+1}/${keys.length}`:''}`,
+        'running','provider'
       );
 
       const headers={
@@ -1491,23 +1538,24 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
         'Content-Type':'application/json',
         'Accept':'text/event-stream'
       };
-
       if(provider==='openrouter'){
         headers['HTTP-Referer']=process.env.SITE_URL || 'https://jepongdevxyz.ai';
         headers['X-Title']='JepongDevxyz AI';
       }
 
       try{
+        const payload={
+          model:target,
+          messages,
+          stream:true,
+          max_tokens:outputBudgetFor(message),
+          temperature:.55
+        };
+
         const res=await fetch(cfg.url,{
           method:'POST',
           headers,
-          body:JSON.stringify({
-            model:target,
-            messages,
-            stream:true,
-            max_tokens:outputBudgetFor(message),
-            temperature:.7
-          }),
+          body:JSON.stringify(payload),
           signal:AbortSignal.timeout(120000)
         });
 
@@ -1515,61 +1563,57 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
           activity(
             emit,
             `${provider}-model-${mi}-key-${i}`,
-            `${providerLabel(provider)} connected • ${modelLabel(target)}${repaired?' • compatible replacement':''}`,
-            'completed',
-            'provider'
+            `${providerLabel(provider)} connected • ${modelLabel(target)}${substituted?' • fallback active':''}`,
+            'completed','provider'
           );
-
           return {
             ok:true,
             response:new Response(
               openAIStreamToText(res.body),
-              {
-                headers:passthroughHeaders(
-                  res,
-                  provider,
-                  target,
-                  fallbackFrom || (repaired ? requested : ''),
-                  routedReason || (repaired ? 'model-repair' : ''),
-                  i,
-                  keys.length
-                )
-              }
+              {headers:passthroughHeaders(
+                res,provider,target,
+                fallbackFrom || (substituted?requested:''),
+                routedReason || (substituted?'model-fallback':''),
+                i,keys.length
+              )}
             )
           };
         }
 
         status=res.status;
-        last=await res.text().catch(()=>`${provider} ${status}`);
+        const raw=await res.text().catch(()=>`${provider} ${status}`);
+        last=cleanUpstreamError(raw,status,provider,target);
 
         const hasAnotherKey=i<keys.length-1;
-        const hasAnotherModel=mi<modelCandidates.length-1;
-
+        const hasAnotherModel=autoFallback && mi<modelCandidates.length-1;
         activity(
           emit,
           `${provider}-model-${mi}-key-${i}`,
-          retryLabel(provider,status,hasAnotherKey || hasAnotherModel),
-          (hasAnotherKey || hasAnotherModel)?'warning':'error',
-          'provider'
+          retryLabel(provider,status,hasAnotherKey||hasAnotherModel),
+          (hasAnotherKey||hasAnotherModel)?'warning':'error',
+          'provider',
+          last.slice(0,180)
         );
 
-        const modelFallbackStatuses=[400,402,404,410,422,429,500,502,503,504];
-        if(!hasAnotherKey && !modelFallbackStatuses.includes(Number(status))) break;
+        if(!hasAnotherKey && !hasAnotherModel) break;
       }catch(e){
         status=502;
         last=e?.message||String(e);
+        const hasAnotherKey=i<keys.length-1;
+        const hasAnotherModel=autoFallback && mi<modelCandidates.length-1;
         activity(
           emit,
           `${provider}-model-${mi}-key-${i}`,
-          `${providerLabel(provider)} connection timed out${i<keys.length-1?' — rotating credential':mi<modelCandidates.length-1?' — trying compatible model':''}`,
-          (i<keys.length-1 || mi<modelCandidates.length-1)?'warning':'error',
-          'provider'
+          `${providerLabel(provider)} connection timed out${hasAnotherKey?' — rotating credential':hasAnotherModel?' — trying fallback model':''}`,
+          (hasAnotherKey||hasAnotherModel)?'warning':'error','provider'
         );
       }
     }
+
+    if(!autoFallback) break;
   }
 
-  return {ok:false,status,error:last||`${providerLabel(provider)} unavailable`};
+  return {ok:false,status,error:last||`${providerLabel(provider)} unavailable for ${modelLabel(lastTarget)}`};
 }
 
 async function runCohere({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit}) {
@@ -1626,7 +1670,7 @@ function responseMeta(response) {
 }
 
 async function processChat(body, emit) {
-  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=true,smartRouter=false,studyTool,personalization} = body;
+  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization} = body;
   const startedAt=Date.now();
   const contextPlan=emitContextActivityStart(message,files,emit);
 
@@ -1657,7 +1701,7 @@ async function processChat(body, emit) {
   completeContextPlan(contextPlan,emit);
   activity(emit,'prepare',`Request context ready for: ${contextPlan.profile.subject}`,'completed','process');
 
-  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit});
+  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation',`${usedProvider} is creating the response for: ${contextPlan.profile.subject}`,'running','generate');
@@ -1673,7 +1717,7 @@ async function processChat(body, emit) {
       if(hasImage&&!['gemini','cloudflare'].includes(p))continue;
       const fallbackModel=PROVIDERS[p].defaultModel;
       activity(emit,'fallback',`Switching to ${providerLabel(p)} • ${modelLabel(fallbackModel)}`,'running','fallback');
-      const r=await runProvider(p,{model:fallbackModel,history,files,message,systemInstruction,fallbackFrom:provider,routedReason:routedReason||'fallback',emit});
+      const r=await runProvider(p,{model:fallbackModel,history,files,message,systemInstruction,fallbackFrom:provider,routedReason:routedReason||'fallback',emit,autoFallback});
       if(r.ok){
         activity(emit,'fallback',`Fallback connected to ${providerLabel(p)}`,'completed','fallback');
         activity(emit,'generation',`${providerLabel(p)} is creating the response for: ${contextPlan.profile.subject}`,'running','generate');
