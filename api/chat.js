@@ -139,10 +139,12 @@ function wantsCompleteCode(message='') {
 }
 
 function outputBudgetFor(message='') {
-  // Larger budget only when the user explicitly requests the complete code.
-  // Providers may enforce a smaller hard limit; streaming still prevents us
-  // from buffering the whole answer before sending it to the browser.
-  return wantsCompleteCode(message) ? 16384 : 4096;
+  // Dynamic response budget: short requests stay efficient, while complex
+  // coding/research/troubleshooting tasks have more room to finish properly.
+  if(wantsCompleteCode(message)) return 16384;
+  const t=normalizeIntentText(message);
+  const complex=/\b(code|coding|debug|error|build|architecture|full|complete|detailed|breakdown|analyze|analysis|research|compare|review|verify|step by step|troubleshoot|production|website|app|api)\b/i.test(t);
+  return complex ? 8192 : 4096;
 }
 
 function responseQualityInstruction(message='') {
@@ -544,6 +546,268 @@ function buildGeneratedArtifact(message='',responseText=''){
 }
 
 
+
+/* =========================================================
+   JEPONGDEVXYZ HELPFULNESS CORE
+   Improves intent understanding, typo tolerance, context use,
+   ambiguity handling, answer quality, and task-aware behavior.
+   This does not change the underlying provider model itself.
+   ========================================================= */
+
+function normalizeIntentText(input=''){
+  return String(input||'')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[“”]/g,'"')
+    .replace(/[‘’]/g,"'")
+    .replace(/\s+/g,' ')
+    .replace(/\bpano\b/g,'paano')
+    .replace(/\bbat\b/g,'bakit')
+    .replace(/\bbkt\b/g,'bakit')
+    .replace(/\bpwedi\b/g,'pwede')
+    .replace(/\bpede\b/g,'pwede')
+    .replace(/\bpuedi\b/g,'pwede')
+    .replace(/\bayosin\b/g,'ayusin')
+    .replace(/\bgawn\b/g,'gawin')
+    .replace(/\bgawinm\b/g,'gawin')
+    .replace(/\bgumana\b/g,'gumagana')
+    .replace(/\bdiko\b/g,'di ko')
+    .replace(/\bdi\s+ko\b/g,'hindi ko')
+    .replace(/\bsya\b/g,'siya')
+    .replace(/\bganon\b/g,'ganoon')
+    .replace(/\bganto\b/g,'ganito')
+    .replace(/\beto\b/g,'ito')
+    .replace(/\byan\b/g,'iyan')
+    .replace(/\byung\b/g,'iyong')
+    .replace(/\bpls\b/g,'please')
+    .replace(/\bplz\b/g,'please')
+    .replace(/\bthx\b/g,'thanks')
+    .trim();
+}
+
+function classifyUserTask(message='', files=[]){
+  const raw=String(message||'');
+  const t=normalizeIntentText(raw);
+  const hasFiles=Array.isArray(files)&&files.length>0;
+  const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/'));
+  const hasVideo=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('video/')||f?.mediaRole==='video-frame');
+  const hasDocument=Array.isArray(files)&&files.some(f=>/\b(pdf|docx|pptx|spreadsheet|epub|zip|rtf|text)\b/i.test(String(f?.kind||'')));
+  const hasCodeFile=Array.isArray(files)&&files.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+
+  if(hasVideo || /\b(video|clip|recording)\b/i.test(t)) return 'video';
+  if(hasImage || /\b(image|photo|picture|larawan|screenshot|logo|design)\b/i.test(t)) return 'image';
+  if(hasDocument && /\b(summarize|summary|review|read|extract|document|file|pdf|docx|pptx|spreadsheet)\b/i.test(t)) return 'file';
+  if(hasCodeFile || /\b(code|coding|debug|bug|error|javascript|typescript|html|css|python|node|api|backend|frontend|react|php|java|sql|github|vercel|deploy|build|compile)\b/i.test(t)) return 'coding';
+  if(/\b(latest|current|today|now|news|research|search|verify online|check online|price|weather|status|available|release|version)\b/i.test(t)) return 'research';
+  if(/\b(homework|school|study|lesson|explain|solve|equation|quiz|reviewer|flashcard|assignment)\b/i.test(t)) return 'study';
+  if(/\b(write|rewrite|grammar|caption|script|email|message|essay|summarize|summary|translate|translation)\b/i.test(t)) return 'writing';
+  if(/\b(fix|ayusin|problem|issue|not working|hindi gumagana|gumagana ba|troubleshoot|bakit)\b/i.test(t)) return 'troubleshooting';
+  if(/\b(compare|choose|recommend|best|alin|which|budget|plan|planning)\b/i.test(t)) return 'decision';
+  if(/^(hi|hello|hey|kumusta|kamusta|sino ka|who are you|thanks|thank you|salamat)[!?.\s]*$/i.test(t)) return 'casual';
+  if(hasFiles) return 'file';
+  return 'general';
+}
+
+function looksReferential(message=''){
+  const t=normalizeIntentText(message);
+  return /\b(ito|iyan|iyon|ganito|ganyan|same|same as before|ulit|again|yung nauna|iyong nauna|doon|diyan|dito|this|that|these|those|above|previous|earlier)\b/i.test(t);
+}
+
+function looksAmbiguousButLowRisk(message=''){
+  const t=normalizeIntentText(message);
+  if(!t) return false;
+  const words=t.split(/\s+/).filter(Boolean);
+  return words.length<=5 && !/[?]/.test(message) && !/\b(delete|send|buy|pay|password|account|medical|legal|financial)\b/i.test(t);
+}
+
+function helpfulnessCoreInstruction(userMessage='', history=[], files=[]){
+  const task=classifyUserTask(userMessage,files);
+  const referential=looksReferential(userMessage);
+  const typoish=/\b(pano|bat|bkt|pwedi|pede|puedi|ayosin|gawn|diko|sya|ganon|ganto|eto|yan|pls|plz)\b/i.test(String(userMessage||''));
+  const historyCount=Array.isArray(history)?history.length:0;
+  const fileCount=userAttachmentCount(files);
+
+  let text =
+    ' CORE RESPONSE BEHAVIOR: Be highly helpful, practical, context-aware, and easy to talk to. ' +
+    'Infer the user’s intended meaning from ordinary typos, misspellings, shorthand, missing punctuation, phonetic spelling, Taglish, and casual chat style. ' +
+    'Do not get stuck analyzing a typo or slang term when the intended request is reasonably clear. Answer the intended request directly. ' +
+    'Do not scold the user for grammar or spelling. Only mention a correction when the correction itself is useful to the task. ' +
+    'Use the latest user message as the primary instruction, while using prior conversation context to resolve references and preserve ongoing decisions. ' +
+    'If the user says “ito”, “iyan”, “ganito”, “same”, “ulit”, “this”, “that”, or similar references, connect them to the most recent relevant message, file, code, link, setting, or result when the context makes that clear. ' +
+    'Do not ask the user to repeat information that is already present in the conversation or attached files. ' +
+    'When a request has one obvious likely interpretation, proceed with that interpretation. If an assumption materially affects the answer, state it briefly. ' +
+    'Ask a clarifying question only when genuinely necessary because two or more plausible interpretations would lead to meaningfully different answers, or required information is missing. ' +
+    'For low-risk everyday ambiguity, make a reasonable assumption and help immediately instead of blocking on clarification. ' +
+    'Never invent facts, test results, file contents, web searches, or actions. Distinguish verified information from inference. ' +
+    'Think through complex tasks internally, but give the user only the useful answer, explanation, result, or high-level progress—not hidden chain-of-thought. ' +
+    'Prefer concrete next steps, exact fixes, examples, and actionable details over generic filler. ' +
+    'Avoid repetitive disclaimers, unnecessary preambles, and restating the entire question. ' +
+    'Keep simple questions simple; give fuller detail only when the task benefits from it. ';
+
+  if(typoish){
+    text += ' The latest message contains likely shorthand or typos. Interpret them by context and respond to the intended meaning without making the typo itself the topic.';
+  }
+
+  if(referential && historyCount){
+    text += ' The latest message is referential. Resolve its pronouns/deictic words against the recent conversation before deciding that context is missing.';
+  }
+
+  if(fileCount){
+    text += ` The user supplied ${fileCount} file${fileCount===1?'':'s'}. When the request concerns those files, ground the answer in their actual content and do not substitute unrelated general knowledge for unseen file details.`;
+  }
+
+  if(task==='casual'){
+    text += ' This is casual conversation. Reply naturally and briefly; do not over-explain ordinary greetings or slang.';
+  } else if(task==='coding'){
+    text +=
+      ' For coding work: act like a careful senior engineer. Identify the actual failure mode, preserve working code, make the smallest correct fix when possible, and explain only the important tradeoffs. ' +
+      'When code or logs are supplied, inspect those exact details before giving a generic solution. If complete code is requested, provide complete runnable code without placeholder omissions.';
+  } else if(task==='troubleshooting'){
+    text +=
+      ' For troubleshooting: prioritize the most likely cause, give checks in a sensible order, separate confirmed symptoms from guesses, and avoid sending the user through unnecessary steps.';
+  } else if(task==='research'){
+    text +=
+      ' For research/current-information tasks: rely on supplied live-source/tool context when available, prefer recent authoritative evidence, and do not present stale model knowledge as current fact.';
+  } else if(task==='study'){
+    text +=
+      ' For learning tasks: explain at the user’s level, build intuition before jargon, show a worked example when useful, and help the user learn rather than merely dumping an answer.';
+  } else if(task==='writing'){
+    text +=
+      ' For writing tasks: preserve the user’s intended meaning and voice, improve clarity and grammar naturally, and return polished copy rather than discussing every edit unless asked.';
+  } else if(task==='decision'){
+    text +=
+      ' For decisions/comparisons: identify the user’s real constraint, compare the factors that matter, and give a clear recommendation with the main reason and tradeoff.';
+  } else if(task==='image'){
+    text +=
+      ' For image/screenshot tasks: focus on visible evidence and the user’s requested change or question. Do not invent details that are not visible.';
+  } else if(task==='video'){
+    text +=
+      ' For video tasks: use native video analysis when supplied; otherwise use sampled frames and metadata. Do not invent unsampled events or audio/transcript details. Follow the user’s requested transformation, review, or question as closely as the available media evidence permits.';
+  }
+
+  if(looksAmbiguousButLowRisk(userMessage)){
+    text += ' The request is short and low-risk; infer the most natural meaning from context and answer rather than forcing a clarification.';
+  }
+
+  return text;
+}
+
+function responseDepthInstruction(message='', files=[]){
+  const t=normalizeIntentText(message);
+  const task=classifyUserTask(message,files);
+  const complex =
+    task==='coding' || task==='research' || task==='troubleshooting' ||
+    /\b(full|complete|buong|step by step|detailed|breakdown|compare|analyze|review|verify|architecture|production)\b/i.test(t);
+
+  if(complex){
+    return ' RESPONSE DEPTH: Give enough detail to solve the task completely. Organize the answer clearly, but do not pad it with generic background the user did not need.';
+  }
+  return ' RESPONSE DEPTH: Be concise and conversational. Answer the question first, then add only the most useful supporting detail.';
+}
+
+function taskSpecificAccuracyInstruction(message='', files=[]){
+  const task=classifyUserTask(message,files);
+  let text=' ACCURACY DISCIPLINE: If you are uncertain, do not fabricate. State the uncertainty briefly and give the best supported answer or next check.';
+  if(task==='coding'){
+    text += ' Never claim code was executed, compiled, deployed, or tested unless tool context explicitly confirms that action.';
+  }
+  if(task==='research'){
+    text += ' Never claim information is current merely because it sounds plausible; current claims should come from live tool/source context when available.';
+  }
+  return text;
+}
+
+
+
+/* =========================================================
+   QUALITY ORCHESTRATOR
+   Complex requests get a compact same-model preflight brief
+   before the final answer. No silent provider/model switching.
+   ========================================================= */
+
+function reasoningComplexityScore(message='', files=[], mode=''){
+  const t=normalizeIntentText(message);
+  let score=0;
+  if(Array.isArray(files) && files.length) score+=2;
+  if(mode==='coder' || mode==='school') score+=1;
+  if(/\b(debug|bug|error|fix|ayusin|troubleshoot|architecture|production|deploy|build|compile|api|backend|frontend)\b/i.test(t)) score+=3;
+  if(/\b(research|verify|compare|analyze|analysis|review|current|latest|real time|web|source)\b/i.test(t)) score+=3;
+  if(/\b(full|complete|buong|step by step|detailed|breakdown|plan|strategy|multiple|several)\b/i.test(t)) score+=2;
+  if(t.length>500) score+=2;
+  else if(t.length>220) score+=1;
+  return score;
+}
+
+function shouldUseQualityOrchestrator(message='', files=[], mode=''){
+  const task=classifyUserTask(message,files);
+  if(task==='casual') return false;
+  if(/^(hi|hello|hey|kumusta|kamusta|thanks|thank you|salamat)[!?.\s]*$/i.test(String(message||'').trim())) return false;
+  return reasoningComplexityScore(message,files,mode)>=3;
+}
+
+function temperatureFor(message='', files=[]){
+  const task=classifyUserTask(message,files);
+  if(task==='coding' || task==='troubleshooting' || task==='research') return 0.35;
+  if(task==='study' || task==='decision') return 0.45;
+  if(task==='writing') return 0.65;
+  if(task==='casual') return 0.7;
+  return 0.5;
+}
+
+function buildInternalTaskBriefPrompt(message='', files=[]){
+  const task=classifyUserTask(message,files);
+  return [
+    'Create a compact INTERNAL TASK BRIEF for another assistant pass.',
+    'Do not write the final answer to the user.',
+    'Do not provide hidden chain-of-thought or private step-by-step reasoning.',
+    'Return concise structured notes with:',
+    '1) Intended user goal, interpreting ordinary typos/shorthand by context.',
+    '2) Relevant constraints from the latest request and conversation.',
+    '3) Facts/evidence actually available; mark uncertain items as uncertain.',
+    '4) Best response approach and important checks the final answer must satisfy.',
+    '5) Any genuinely necessary clarification; otherwise write "No clarification needed".',
+    `Task category: ${task}.`,
+    `Latest user request: ${String(message||'').slice(0,12000)}`
+  ].join('\n');
+}
+
+async function readInternalProviderText(response, maxChars=9000){
+  if(!response?.body) return '';
+  try{
+    const reader=response.body.getReader();
+    const decoder=new TextDecoder();
+    let text='';
+    while(true){
+      const {done,value}=await reader.read();
+      if(done) break;
+      text+=decoder.decode(value,{stream:true});
+      if(text.length>=maxChars){
+        text=text.slice(0,maxChars);
+        try{await reader.cancel();}catch(_){}
+        break;
+      }
+    }
+    text+=decoder.decode();
+    return text.trim();
+  }catch(_){
+    return '';
+  }
+}
+
+function finalAnswerAuditInstruction(){
+  return (
+    ' FINAL ANSWER AUDIT: Before sending, silently check that the response ' +
+    '(1) answers the latest request, ' +
+    '(2) uses relevant conversation/file/tool context correctly, ' +
+    '(3) interprets obvious typos and shorthand without derailing, ' +
+    '(4) does not invent facts, actions, tests, searches, or results, ' +
+    '(5) gives concrete useful help, ' +
+    '(6) uses natural grammar in the user’s language, and ' +
+    '(7) for code, preserves syntax and requested functionality. ' +
+    'Output only the polished final answer.'
+  );
+}
+
 function languageQualityInstruction(userMessage='', personalization=null) {
   const msg=String(userMessage||'').trim();
   const preferred=String(personalization?.language||'Auto-detect').trim();
@@ -560,7 +824,7 @@ function languageQualityInstruction(userMessage='', personalization=null) {
   else if(/[\u0600-\u06ff]/.test(msg)) text += 'Use clear, grammatically correct Arabic.';
   else if(/[\u4e00-\u9fff]/.test(msg)) text += 'Use natural Chinese wording and punctuation.';
   else if(/[ñáéíóúü¿¡]/i.test(msg) || /\b(hola|gracias|por favor|cómo|quiero|puedes)\b/i.test(msg)) text += 'Use natural, grammatically correct Spanish.';
-  else if(/\b(ako|ikaw|ka|ko|mo|ang|mga|ito|iyan|yun|ano|bakit|paano|pwede|puwede|gusto|sana|naman|nga|salamat|kumusta|kamusta|paki|bigay|gawin|ayusin|lang|rin|din|po|opo|sakin|sa akin)\b/i.test(msg)) {
+  else if(/\b(ako|ikaw|ka|ko|mo|ang|mga|ito|iyan|yun|yan|eto|ano|bakit|bat|bkt|paano|pano|pwede|puwede|pwedi|pede|gusto|sana|naman|nga|salamat|kumusta|kamusta|paki|bigay|gawin|gawn|ayusin|ayosin|lang|rin|din|po|opo|sakin|sa akin|diko|di ko|ganon|ganto|ganito|ganyan)\b/i.test(msg)) {
     text += ' The latest message is Filipino/Tagalog. Reply in natural Filipino/Tagalog with correct grammar and spelling. Use natural Taglish only when technical English terms make the explanation clearer. Avoid stiff or machine-translated Filipino.';
   } else if(/[A-Za-z]/.test(msg)) text += ' Use natural, grammatically correct English.';
 
@@ -584,8 +848,11 @@ function cleanUpstreamError(raw='', status=500, provider='', model='') {
   return text.slice(0,700) || `${providerLabel(provider)} request failed with HTTP ${status}.`;
 }
 
-function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='') {
-  let text = 'You are JepongDevxyz AI. Your creator and developer is Jepong Devxyz (Jay-Ar Lee Espiritu). Be accurate, helpful, and concise when possible. Put programming code inside fenced Markdown code blocks.';
+function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='', history=[], files=[]) {
+  let text =
+    'You are JepongDevxyz AI, a capable general-purpose assistant created by Jepong Devxyz (Jay-Ar Lee Espiritu). ' +
+    'Your job is to understand what the user is actually trying to accomplish and help them reach that goal efficiently. ' +
+    'Be accurate, useful, natural, and honest about uncertainty. Put programming code inside fenced Markdown code blocks.';
 
   if (personalization && typeof personalization === 'object') {
     const p = personalization;
@@ -641,6 +908,10 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   else if (studyTool === 'reviewer') text += ' STUDY TOOL: Produce a structured reviewer with headings, key ideas, definitions, examples, and a quick recap.';
   else if (studyTool === 'flashcards') text += ' STUDY TOOL: Produce concise flashcards in Q: / A: format, one card per pair.';
   else if (studyTool === 'explain') text += ' STUDY TOOL: Explain the topic simply using short steps, analogies, and one concrete example.';
+  text += helpfulnessCoreInstruction(userMessage, history, files);
+  text += responseDepthInstruction(userMessage, files);
+  text += taskSpecificAccuracyInstruction(userMessage, files);
+  text += finalAnswerAuditInstruction();
   text += responseQualityInstruction(userMessage);
   text += languageQualityInstruction(userMessage, personalization);
   text += artifactInstruction(userMessage);
@@ -655,12 +926,12 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
    ========================================================= */
 
 function shouldAutoResearch(message=''){
-  const t=String(message||'').toLowerCase();
-  return /\b(latest|current|currently|today|tonight|this week|this month|now|real[- ]?time|news|update|updated|price|presyo|weather|panahon|forecast|status|outage|release|released|version|available|availability|schedule|result|score|standing|search|research|verify online|check online|hanapin|maghanap|tingnan online|web)\b/i.test(t);
+  const t=normalizeIntentText(message);
+  return /\b(latest|current|currently|today|tonight|this week|this month|now|real[- ]?time|news|update|updated|price|presyo|weather|panahon|forecast|status|outage|release|released|version|available|availability|schedule|result|score|standing|search|research|verify online|check online|hanapin|maghanap|tingnan online|web|online|kasalukuyan|ngayon)\b/i.test(t);
 }
 
 function shouldVerifyTask(message='', files=[]){
-  const t=String(message||'').toLowerCase();
+  const t=normalizeIntentText(message);
   if(Array.isArray(files) && files.length && /\b(test|verify|check|inspect|validate|debug|run|working|gumagana|subukan|i-test|itest|suriin|ayusin|error|bug|build|compile|deploy)\b/i.test(t)) return true;
   return /\b(test|verify|check|inspect|validate|debug|run|working|gumagana|subukan|i-test|itest|suriin|build|compile|deploy|endpoint|website|url|api)\b/i.test(t);
 }
@@ -817,18 +1088,221 @@ function buildLiveSourceContext(results=[]){
 
 function textFromAttachment(file){
   try{
+    if(typeof file?.extractedText==='string' && file.extractedText.trim()){
+      return file.extractedText.slice(0,180000);
+    }
     if(!file?.data)return '';
     const mime=String(file.mimeType||'').toLowerCase();
     const name=String(file.name||file.filename||'');
     const textual=/^(text\/|application\/(json|javascript|xml|x-yaml|yaml))/i.test(mime) ||
-      /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|md|txt|csv|xml|svg|py|php|java|c|cpp|cs|sql|yaml|yml|sh)$/i.test(name);
+      /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|md|txt|csv|xml|svg|py|php|java|c|cpp|h|hpp|cs|sql|yaml|yml|sh|log)$/i.test(name);
     if(!textual)return '';
     const bin=atob(String(file.data));
     const bytes=new Uint8Array(bin.length);
     for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-    return new TextDecoder('utf-8',{fatal:false}).decode(bytes).slice(0,120000);
+    return new TextDecoder('utf-8',{fatal:false}).decode(bytes).slice(0,180000);
   }catch(_){return '';}
 }
+
+
+function sanitizeIncomingAttachments(files=[]){
+  const input=Array.isArray(files)?files.slice(0,40):[];
+  let totalBase64=0;
+  let totalText=0;
+  const out=[];
+
+  for(const raw of input){
+    if(!raw||typeof raw!=='object')continue;
+    const f={
+      name:String(raw.name||raw.filename||'Attachment').slice(0,220),
+      parentName:String(raw.parentName||'').slice(0,220),
+      mimeType:String(raw.mimeType||'application/octet-stream').slice(0,120),
+      originalMimeType:String(raw.originalMimeType||raw.mimeType||'application/octet-stream').slice(0,120),
+      kind:String(raw.kind||'file').slice(0,40),
+      mediaRole:String(raw.mediaRole||'').slice(0,40),
+      size:Math.max(0,Number(raw.size)||0),
+      frameTimeSeconds:Number.isFinite(Number(raw.frameTimeSeconds))?Number(raw.frameTimeSeconds):null,
+      pageNumber:Number.isFinite(Number(raw.pageNumber))?Number(raw.pageNumber):null,
+      extractionError:String(raw.extractionError||'').slice(0,500),
+      extractionWarning:String(raw.extractionWarning||'').slice(0,500)
+    };
+
+    if(typeof raw.extractedText==='string' && totalText<720000){
+      const remain=720000-totalText;
+      f.extractedText=raw.extractedText.slice(0,Math.min(180000,remain));
+      totalText+=f.extractedText.length;
+    }else f.extractedText='';
+
+    if(typeof raw.data==='string' && totalBase64<2500000){
+      const remain=2500000-totalBase64;
+      if(raw.data.length<=remain && raw.data.length<=1500000){
+        f.data=raw.data;
+        totalBase64+=raw.data.length;
+      }
+    }
+
+    out.push(f);
+  }
+  return out;
+}
+
+function attachmentRootName(file={}){
+  return String(file.parentName||file.name||file.filename||'Attachment');
+}
+
+function userAttachmentCount(files=[]){
+  const names=new Set();
+  for(const f of Array.isArray(files)?files:[]){
+    const root=attachmentRootName(f);
+    if(root)names.add(root);
+  }
+  return names.size;
+}
+
+function buildAttachmentSourceContext(files=[], userMessage=''){
+  if(!Array.isArray(files)||!files.length)return '';
+  const grouped=new Map();
+
+  for(const f of files){
+    const root=attachmentRootName(f);
+    if(!grouped.has(root))grouped.set(root,{root,items:[],texts:[],errors:[],warnings:[]});
+    const g=grouped.get(root);
+    g.items.push(f);
+
+    const text=textFromAttachment(f);
+    if(text && !f.mediaRole)g.texts.push(text);
+    if(f.extractionError)g.errors.push(f.extractionError);
+    if(f.extractionWarning)g.warnings.push(f.extractionWarning);
+  }
+
+  const roots=[...grouped.entries()];
+  const t=normalizeIntentText(userMessage);
+  const codeEditIntent=/\b(fix|ayusin|edit|modify|update|add|lagyan|implement|paganahin|make it work|working|gumagana|refactor|rewrite)\b/i.test(t);
+  const singleCodeFile=roots.length===1 && /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(roots[0]?.[0]||'');
+  const sourceBudget=(codeEditIntent&&singleCodeFile)?650000:320000;
+
+  let out='\n\n[ATTACHED SOURCE CONTENT]\n';
+  let used=0;
+  for(const [name,g] of roots.slice(0,12)){
+    if(used>=sourceBudget)break;
+    const first=g.items[0]||{};
+    const mediaItems=g.items.filter(x=>x?.data && /^(image|video)\//i.test(String(x.mimeType||''))).length;
+    out+=`\n--- Attachment: ${name} ---\n`;
+    out+=`Type: ${first.originalMimeType||first.mimeType||'unknown'}\n`;
+    if(first.size)out+=`Size: ${first.size} bytes\n`;
+    if(first.duration)out+=`Duration: ${first.duration}\n`;
+    if(mediaItems)out+=`Prepared visual/media parts: ${mediaItems}\n`;
+
+    const text=g.texts.join('\n\n');
+    if(text){
+      const remain=sourceBudget-used;
+      const part=text.slice(0,remain);
+      out+=`Extracted content:\n${part}\n`;
+      used+=part.length;
+    }else if(!mediaItems){
+      out+='No readable text content was extracted from this attachment.\n';
+    }
+
+    if(g.warnings.length)out+=`Extraction note: ${[...new Set(g.warnings)].join(' | ').slice(0,700)}\n`;
+    if(g.errors.length)out+=`Extraction error: ${[...new Set(g.errors)].join(' | ').slice(0,700)}\n`;
+  }
+
+  out+=
+    '\nATTACHMENT GROUNDING RULES: When the user asks to summarize, extract, answer questions, review, edit, transform, or draft from these attachments, treat the attachment content as the requested source. Preserve its terminology and distinctions. Do not silently replace missing information with outside knowledge. If a requested fact is not supported by the attachment, say so. When multiple files are present, distinguish them by filename. If outside research is also requested, clearly separate attachment-derived information from outside information.' +
+    '\nSOURCE EDITING RULES: If the user attaches a source file such as index.html, JavaScript, CSS, JSON, Python, or a project archive and asks you to make it work, fix it, or add features, inspect the supplied source first and implement the request against that exact source. Preserve working behavior unless the requested change requires otherwise. Do not answer with generic sample code when the user clearly wants their uploaded file modified. If the supplied source is truncated, unreadable, or incomplete, say exactly what could not be inspected instead of pretending the whole file was reviewed.';
+  return out;
+}
+
+function mediaAttachments(files=[]){
+  return (Array.isArray(files)?files:[]).filter(f=>{
+    if(!f?.data)return false;
+    const mime=String(f.mimeType||'').toLowerCase();
+    return mime.startsWith('image/') || mime.startsWith('video/');
+  }).slice(0,14);
+}
+
+function mediaGroundingPrompt(message='', files=[]){
+  const media=mediaAttachments(files);
+  const manifest=media.map((f,i)=>{
+    let detail=`${i+1}. ${f.name}`;
+    if(f.mediaRole==='video-frame' && f.frameTimeSeconds!=null)detail+=` at ${f.frameTimeSeconds}s`;
+    if(f.mediaRole==='pdf-page' && f.pageNumber!=null)detail+=` (PDF page ${f.pageNumber})`;
+    if(f.parentName)detail+=` from ${f.parentName}`;
+    return detail;
+  }).join('\n');
+
+  return (
+    'Analyze the attached media strictly for the user’s latest request. ' +
+    'Describe only evidence that is actually visible/audible in the supplied media. ' +
+    'For screenshots or documents, read visible text carefully. ' +
+    'For sampled video frames, do not claim events between frames unless clearly inferable; do not invent audio. ' +
+    'Group findings by source filename when there are multiple attachments. ' +
+    'Return a concise factual media-analysis note for another assistant pass, not a conversational final answer.\n\n' +
+    `User request: ${String(message||'').slice(0,8000)}\n\nMedia manifest:\n${manifest}`
+  );
+}
+
+async function analyzeMediaForNonVisionProvider(files=[], message='', selectedProvider='', emit){
+  const media=mediaAttachments(files);
+  if(!media.length)return '';
+
+  // Gemini and Cloudflare already receive the prepared images/media directly.
+  if(['gemini','cloudflare'].includes(selectedProvider)){
+    activity(emit,'attachment-media',`Prepared ${media.length} visual/media part${media.length===1?'':'s'} for ${providerLabel(selectedProvider)}`,'completed','file');
+    return '';
+  }
+
+  activity(emit,'attachment-media',`Analyzing ${media.length} visual/media part${media.length===1?'':'s'} for the selected text model`,'running','file');
+
+  const system =
+    'You are an attachment analysis tool. Be literal and evidence-grounded. ' +
+    'Do not invent text, people, events, audio, or details that are not present. ' +
+    'Your output will be given to another model as source context.';
+
+  try{
+    if(configured('gemini')){
+      const r=await runGemini({
+        model:'gemini-flash-latest',
+        history:[],
+        files:media,
+        message:mediaGroundingPrompt(message,media),
+        systemInstruction:system,
+        emit:null
+      });
+      if(r.ok){
+        const text=await readInternalProviderText(r.response,14000);
+        if(text){
+          activity(emit,'attachment-media','Media analysis completed with Gemini','completed','file');
+          return `\n\n[MEDIA ATTACHMENT ANALYSIS — Gemini]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
+        }
+      }
+    }
+
+    // Cloudflare can fall back for image/frame analysis (not native video files).
+    const imageOnly=media.filter(f=>String(f.mimeType||'').startsWith('image/'));
+    if(imageOnly.length && configured('cloudflare')){
+      const r=await runCloudflare({
+        model:'@cf/google/gemma-4-26b-a4b-it',
+        history:[],
+        files:imageOnly,
+        message:mediaGroundingPrompt(message,imageOnly),
+        systemInstruction:system,
+        emit:null
+      });
+      if(r.ok){
+        const text=await readInternalProviderText(r.response,14000);
+        if(text){
+          activity(emit,'attachment-media','Media analysis completed with Cloudflare vision','completed','file');
+          return `\n\n[MEDIA ATTACHMENT ANALYSIS — Cloudflare]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
+        }
+      }
+    }
+  }catch(_){}
+
+  activity(emit,'attachment-media','Media analyzer unavailable — using extracted text/metadata only','warning','file');
+  return '\n\n[MEDIA ATTACHMENT NOTE]\nSome attached media could not be visually analyzed by an available multimodal provider. Do not invent its contents; use only extracted text/metadata that is present.';
+}
+
 
 function extractCodeBlocks(text=''){
   const out=[];
@@ -957,6 +1431,7 @@ function taskProfile(message='', files=[]){
   const fileNames=(Array.isArray(files)?files:[]).map(f=>String(f?.name||f?.filename||'')).filter(Boolean);
   const hasCodeFiles=fileNames.some(n=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|cs|sql|yaml|yml|sh)$/i.test(n));
   const hasImages=(Array.isArray(files)?files:[]).some(f=>String(f?.mimeType||'').startsWith('image/'));
+  const hasVideos=(Array.isArray(files)?files:[]).some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
 
   let kind='general';
   if(/\b(apk|android|web\s*to\s*apk|webview|gradle|manifest)\b/i.test(t))kind='android';
@@ -964,7 +1439,8 @@ function taskProfile(message='', files=[]){
   else if(/\b(github|repository|repo|pull request|workflow|actions)\b/i.test(t))kind='github';
   else if(/\b(api|endpoint|backend|webhook|server|database)\b/i.test(t))kind='backend';
   else if(/\b(html|css|javascript|typescript|frontend|website|web app|ui|responsive)\b/i.test(t)||hasCodeFiles)kind='web';
-  else if(/\b(pdf|document|report|reviewer|essay|worksheet|notes)\b/i.test(t))kind='document';
+  else if(/\b(pdf|document|report|reviewer|essay|worksheet|notes|docx|pptx|spreadsheet)\b/i.test(t))kind='document';
+  else if(/\b(video|clip|recording)\b/i.test(t)||hasVideos)kind='video';
   else if(/\b(image|photo|picture|logo|design|larawan)\b/i.test(t)||hasImages)kind='image';
   else if(/\b(research|latest|current|today|news|compare|comparison|hanapin|maghanap)\b/i.test(t))kind='research';
   else if(/\b(math|equation|solve|school|study|lesson|explain|homework)\b/i.test(t))kind='study';
@@ -1027,6 +1503,10 @@ function contextActivityPlan(message='', files=[]){
     image:[
       ['task-domain','Reviewing visual requirements and supplied image context','image'],
       ['task-structure','Preparing the requested visual changes','image']
+    ],
+    video:[
+      ['task-domain','Reviewing video requirements and available visual/audio evidence','file'],
+      ['task-structure','Preparing a response grounded in the supplied video evidence','file']
     ],
     research:[
       ['task-domain','Identifying facts that need current sources','research'],
@@ -1288,10 +1768,16 @@ async function getLiveWebContext(message, webSearch, emit) {
 }
 
 function normalizeHistory(history = []) {
-  return history.filter(x => x && (x.text || x.parts)).map(x => ({
-    role: x.role === 'bot' || x.role === 'model' ? 'assistant' : 'user',
-    content: x.text || (Array.isArray(x.parts) ? x.parts.map(p => p.text || '').join('\n') : '')
-  })).filter(x => x.content);
+  return (Array.isArray(history)?history:[])
+    .filter(x => x && (x.text || x.parts))
+    .map(x => {
+      const role=x.role === 'bot' || x.role === 'model' || x.role === 'assistant' ? 'assistant' : 'user';
+      let content=x.text || (Array.isArray(x.parts) ? x.parts.map(p => p?.text || '').join('\n') : '');
+      content=String(content||'').trim();
+      return {role,content};
+    })
+    .filter(x => x.content)
+    .slice(-40);
 }
 
 function buildOpenAIMessages(history, message, systemInstruction) {
@@ -1302,12 +1788,13 @@ function buildOpenAIMessages(history, message, systemInstruction) {
 }
 
 function smartRoute(mode, files, message) {
+  const intentText=normalizeIntentText(message);
   const hasImage = Array.isArray(files) && files.some(f => f?.mimeType?.startsWith('image/') && f?.data);
   if (hasImage) {
     if (configured('cloudflare')) return {provider:'cloudflare',model:'@cf/google/gemma-4-26b-a4b-it',reason:'vision'};
     if (configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'vision'};
   }
-  const coding = mode === 'coder' || /\b(code|coding|debug|javascript|html|css|python|node|api|bug|error|typescript|php|java|react|sql)\b/i.test(message || '');
+  const coding = mode === 'coder' || /\b(code|coding|debug|javascript|javscript|html|hmtl|css|python|pyton|node|api|bug|error|typescript|php|java|react|sql|github|vercel|deploy|backend|frontend)\b/i.test(intentText);
   if (coding) {
     if (configured('groq')) return {provider:'groq',model:'openai/gpt-oss-120b',reason:'coding'};
     if (configured('mistral')) return {provider:'mistral',model:'codestral-latest',reason:'coding'};
@@ -1316,6 +1803,19 @@ function smartRoute(mode, files, message) {
     if (configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'school'};
     if (configured('cohere')) return {provider:'cohere',model:'command-a-03-2025',reason:'school'};
   }
+
+  const research=/\b(research|latest|current|news|verify|compare|analyze|analysis|source|web|real time)\b/i.test(intentText);
+  if(research){
+    if(configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'research synthesis'};
+    if(configured('groq')) return {provider:'groq',model:'openai/gpt-oss-120b',reason:'research synthesis'};
+  }
+
+  const reasoning=/\b(reason|reasoning|logic|strategy|plan|complex|architecture|decision|tradeoff)\b/i.test(intentText);
+  if(reasoning){
+    if(configured('groq')) return {provider:'groq',model:'openai/gpt-oss-120b',reason:'complex reasoning'};
+    if(configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'complex reasoning'};
+  }
+
   return null;
 }
 
@@ -1340,7 +1840,7 @@ function passthroughHeaders(upstream, provider, model, fallbackFrom = '', routed
   return h;
 }
 
-function openAIStreamToText(body) {
+function openAIStreamToText(body, finishState={reason:''}) {
   const decoder = new TextDecoder(); const encoder = new TextEncoder();
   return body.pipeThrough(new TransformStream({
     start(){ this.buffer=''; },
@@ -1349,18 +1849,29 @@ function openAIStreamToText(body) {
       const lines = this.buffer.split('\n'); this.buffer = lines.pop() || '';
       for (const line of lines) {
         const t=line.trim(); if (!t.startsWith('data:')) continue;
-        const s=t.slice(5).trim(); if (!s || s==='[DONE]') continue;
+        const s=t.slice(5).trim();
+        if (!s) continue;
+        if (s==='[DONE]') {
+          if(!finishState.reason) finishState.reason='stop';
+          continue;
+        }
         try {
           const p=JSON.parse(s);
-          const text=p.choices?.[0]?.delta?.content ?? p.choices?.[0]?.message?.content;
+          const choice=p.choices?.[0];
+          const text=choice?.delta?.content ?? choice?.message?.content;
+          const reason=choice?.finish_reason ?? choice?.finishReason ?? p?.finish_reason;
+          if(reason) finishState.reason=String(reason).toLowerCase();
           if (typeof text==='string' && text) controller.enqueue(encoder.encode(text));
         } catch(_){}
       }
+    },
+    flush(){
+      if(!finishState.reason) finishState.reason='unknown';
     }
   }));
 }
 
-function cohereStreamToText(body) {
+function cohereStreamToText(body, finishState={reason:''}) {
   const decoder=new TextDecoder(); const encoder=new TextEncoder();
   return body.pipeThrough(new TransformStream({
     start(){this.buffer='';},
@@ -1372,9 +1883,15 @@ function cohereStreamToText(body) {
         try{
           const p=JSON.parse(t.slice(5).trim());
           const text=p?.delta?.message?.content?.text;
+          const reason=p?.delta?.finish_reason ?? p?.finish_reason ?? p?.finishReason;
+          if(reason) finishState.reason=String(reason).toLowerCase();
+          if(p?.type==='message-end' && !finishState.reason) finishState.reason='stop';
           if(p?.type==='content-delta' && text) controller.enqueue(encoder.encode(text));
         }catch(_){}
       }
+    },
+    flush(){
+      if(!finishState.reason) finishState.reason='unknown';
     }
   }));
 }
@@ -1393,7 +1910,15 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
   const target = PROVIDERS.gemini.models.includes(model) ? model : PROVIDERS.gemini.defaultModel;
 
   const currentParts=[];
-  if(Array.isArray(files)) for(const f of files) if(f?.data&&f?.mimeType) currentParts.push({inline_data:{mime_type:f.mimeType,data:f.data}});
+  if(Array.isArray(files)){
+    for(const f of files){
+      if(!f?.data||!f?.mimeType)continue;
+      const mime=String(f.mimeType).toLowerCase();
+      if(mime.startsWith('image/')||mime.startsWith('video/')){
+        currentParts.push({inline_data:{mime_type:f.mimeType,data:f.data}});
+      }
+    }
+  }
   if(message?.trim()) currentParts.push({text:message.trim()});
   const contents=[];
   for(const h of history||[]) {
@@ -1410,11 +1935,12 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
     activity(emit,`gemini-key-${i}`,`Connecting to Gemini • ${modelLabel(target)}${keys.length>1?` • credential ${i+1}/${keys.length}`:''}`,'running','provider');
     try {
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig:{maxOutputTokens:outputBudgetFor(message)}}),signal:AbortSignal.timeout(90000)
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig:{maxOutputTokens:outputBudgetFor(message),temperature:temperatureFor(message,files)}}),signal:AbortSignal.timeout(90000)
       });
       if(res.ok) {
         activity(emit,`gemini-key-${i}`,`Gemini connected • ${modelLabel(target)}`,'completed','provider');
         const decoder=new TextDecoder(), encoder=new TextEncoder();
+        const finishState={reason:''};
         const stream=res.body.pipeThrough(new TransformStream({
           start(){this.buffer='';},
           transform(chunk,controller){
@@ -1422,11 +1948,17 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
             const lines=this.buffer.split('\n');this.buffer=lines.pop()||'';
             for(const line of lines){
               const t=line.trim();if(!t.startsWith('data:'))continue;
-              try{const p=JSON.parse(t.slice(5).trim());for(const part of p.candidates?.[0]?.content?.parts||[])if(part.text)controller.enqueue(encoder.encode(part.text));}catch(_){}
+              try{
+                const p=JSON.parse(t.slice(5).trim());
+                const candidate=p.candidates?.[0];
+                if(candidate?.finishReason) finishState.reason=String(candidate.finishReason).toLowerCase();
+                for(const part of candidate?.content?.parts||[]) if(part.text) controller.enqueue(encoder.encode(part.text));
+              }catch(_){}
             }
-          }
+          },
+          flush(){if(!finishState.reason)finishState.reason='unknown';}
         }));
-        return {ok:true,response:new Response(stream,{headers:passthroughHeaders(res,'gemini',target,fallbackFrom,routedReason,i,keys.length)})};
+        return {ok:true,response:new Response(stream,{headers:passthroughHeaders(res,'gemini',target,fallbackFrom,routedReason,i,keys.length)}),finishState};
       }
       status=res.status; last=await res.text().catch(()=>`Gemini ${status}`);
       activity(emit,`gemini-key-${i}`,retryLabel('gemini',status,i<keys.length-1),i<keys.length-1?'warning':'error','provider');
@@ -1459,11 +1991,12 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
     try {
       const a=accounts[i];
       const res=await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(a.accountId)}/ai/v1/chat/completions`,{
-        method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:outputBudgetFor(message),temperature:.7}),signal:AbortSignal.timeout(120000)
+        method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:outputBudgetFor(message),temperature:temperatureFor(message,files)}),signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
         activity(emit,`cloudflare-key-${i}`,`Cloudflare connected • ${modelLabel(target)}`,'completed','provider');
-        return {ok:true,response:new Response(openAIStreamToText(res.body),{headers:passthroughHeaders(res,'cloudflare',target,fallbackFrom,routedReason,i,accounts.length)})};
+        const finishState={reason:''};
+        return {ok:true,response:new Response(openAIStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'cloudflare',target,fallbackFrom,routedReason,i,accounts.length)}),finishState};
       }
       status=res.status; last=await res.text().catch(()=>`Cloudflare ${status}`);
       activity(emit,`cloudflare-key-${i}`,retryLabel('cloudflare',status,i<accounts.length-1),i<accounts.length-1?'warning':'error','provider');
@@ -1549,7 +2082,7 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
           messages,
           stream:true,
           max_tokens:outputBudgetFor(message),
-          temperature:.55
+          temperature:temperatureFor(message,[])
         };
 
         const res=await fetch(cfg.url,{
@@ -1566,17 +2099,19 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
             `${providerLabel(provider)} connected • ${modelLabel(target)}${substituted?' • fallback active':''}`,
             'completed','provider'
           );
+          const finishState={reason:''};
           return {
             ok:true,
             response:new Response(
-              openAIStreamToText(res.body),
+              openAIStreamToText(res.body,finishState),
               {headers:passthroughHeaders(
                 res,provider,target,
                 fallbackFrom || (substituted?requested:''),
                 routedReason || (substituted?'model-fallback':''),
                 i,keys.length
               )}
-            )
+            ),
+            finishState
           };
         }
 
@@ -1625,10 +2160,11 @@ async function runCohere({model,history,message,systemInstruction,fallbackFrom='
   for(let i=0;i<keys.length;i++) {
     activity(emit,`cohere-key-${i}`,`Connecting to Cohere • ${modelLabel(target)}${keys.length>1?` • credential ${i+1}/${keys.length}`:''}`,'running','provider');
     try{
-      const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:.7}),signal:AbortSignal.timeout(120000)});
+      const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:temperatureFor(message,[])}),signal:AbortSignal.timeout(120000)});
       if(res.ok){
         activity(emit,`cohere-key-${i}`,`Cohere connected • ${modelLabel(target)}`,'completed','provider');
-        return {ok:true,response:new Response(cohereStreamToText(res.body),{headers:passthroughHeaders(res,'cohere',target,fallbackFrom,routedReason,i,keys.length)})};
+        const finishState={reason:''};
+        return {ok:true,response:new Response(cohereStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'cohere',target,fallbackFrom,routedReason,i,keys.length)}),finishState};
       }
       status=res.status;last=await res.text().catch(()=>`Cohere ${status}`);
       activity(emit,`cohere-key-${i}`,retryLabel('cohere',status,i<keys.length-1),i<keys.length-1?'warning':'error','provider');
@@ -1671,12 +2207,20 @@ function responseMeta(response) {
 
 async function processChat(body, emit) {
   let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization} = body;
+  files=sanitizeIncomingAttachments(files);
   const startedAt=Date.now();
   const contextPlan=emitContextActivityStart(message,files,emit);
 
   if(Array.isArray(files)&&files.length){
-    const images=files.filter(f=>f?.mimeType?.startsWith('image/')).length;
-    activity(emit,'attachments',images?`Reviewing ${images} attached image${images>1?'s':''}`:`Reviewing ${files.length} attached file${files.length>1?'s':''}`,'completed','file');
+    const roots=userAttachmentCount(files);
+    const images=files.filter(f=>f?.mediaRole==='image'||(f?.mimeType?.startsWith('image/')&&!f?.parentName)).length;
+    const videos=new Set(files.filter(f=>f?.kind==='video'||f?.mediaRole==='video-native'||f?.mediaRole==='video-frame').map(f=>attachmentRootName(f))).size;
+    const labelParts=[];
+    if(images)labelParts.push(`${images} image${images===1?'':'s'}`);
+    if(videos)labelParts.push(`${videos} video${videos===1?'':'s'}`);
+    const other=Math.max(0,roots-images-videos);
+    if(other)labelParts.push(`${other} file${other===1?'':'s'}`);
+    activity(emit,'attachments',`Preparing ${labelParts.join(', ')||`${roots} attachment${roots===1?'':'s'}`}`,'completed','file');
   }
 
   let routedReason='';
@@ -1693,11 +2237,49 @@ async function processChat(body, emit) {
 
   if(!PROVIDERS[provider])provider='gemini';
   model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
+  const attachmentSourceContext=buildAttachmentSourceContext(files,message);
+  const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,message,provider,emit);
   const providedLinkContext=await inspectProvidedLinks(message,emit);
   const verificationContext=await performVerification(message,files,emit);
   const liveWebContext=await getEnhancedLiveWebContext(message,webSearch,emit);
-  const combinedToolContext=`${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
-  const systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message);
+  const combinedToolContext=`${attachmentSourceContext||''}${mediaAnalysisContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
+  let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
+
+  if(shouldUseQualityOrchestrator(message,files,mode)){
+    activity(emit,'quality-orchestrator',`Preparing a deeper response for: ${contextPlan.profile.subject}`,'running','process');
+    try{
+      const briefPrompt=buildInternalTaskBriefPrompt(message,files);
+      const briefSystem=systemInstruction +
+        ' INTERNAL PREFLIGHT MODE: Produce only the compact task brief requested by the user message. Do not produce the final user-facing response.';
+
+      const preflight=await runProvider(provider,{
+        model,
+        history,
+        files,
+        message:briefPrompt,
+        systemInstruction:briefSystem,
+        routedReason:routedReason||'quality-preflight',
+        emit:null,
+        autoFallback:false
+      });
+
+      if(preflight.ok){
+        const brief=await readInternalProviderText(preflight.response,9000);
+        if(brief){
+          systemInstruction += `\n\n[INTERNAL QUALITY BRIEF — not user-visible]\n${brief}\n[/INTERNAL QUALITY BRIEF]` +
+            '\nUse this brief as a quality checklist, but independently verify it against the actual user request and tool context. If the brief conflicts with the user, the user request wins.';
+          activity(emit,'quality-orchestrator','Intent, constraints, and answer requirements checked','completed','process');
+        }else{
+          activity(emit,'quality-orchestrator','Deeper preflight returned no usable brief — continuing normally','warning','process');
+        }
+      }else{
+        activity(emit,'quality-orchestrator','Deeper preflight unavailable — continuing normally','warning','process');
+      }
+    }catch(_){
+      activity(emit,'quality-orchestrator','Deeper preflight unavailable — continuing normally','warning','process');
+    }
+  }
+
   completeContextPlan(contextPlan,emit);
   activity(emit,'prepare',`Request context ready for: ${contextPlan.profile.subject}`,'completed','process');
 
@@ -1705,7 +2287,15 @@ async function processChat(body, emit) {
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation',`${usedProvider} is creating the response for: ${contextPlan.profile.subject}`,'running','generate');
-    return {ok:true,response:first.response,startedAt};
+    return {
+      ok:true,
+      response:first.response,
+      finishState:first.finishState||{reason:'unknown'},
+      startedAt,
+      resolvedProvider:first.response.headers.get('x-ai-provider')||provider,
+      resolvedModel:first.response.headers.get('x-ai-model')||model,
+      systemInstruction
+    };
   }
 
   const fallbackable=isRetryableStatus(first.status);
@@ -1721,7 +2311,15 @@ async function processChat(body, emit) {
       if(r.ok){
         activity(emit,'fallback',`Fallback connected to ${providerLabel(p)}`,'completed','fallback');
         activity(emit,'generation',`${providerLabel(p)} is creating the response for: ${contextPlan.profile.subject}`,'running','generate');
-        return {ok:true,response:r.response,startedAt};
+        return {
+          ok:true,
+          response:r.response,
+          finishState:r.finishState||{reason:'unknown'},
+          startedAt,
+          resolvedProvider:r.response.headers.get('x-ai-provider')||p,
+          resolvedModel:r.response.headers.get('x-ai-model')||fallbackModel,
+          systemInstruction
+        };
       }
     }
     activity(emit,'fallback','No fallback provider was available','error','fallback');
@@ -1748,15 +2346,80 @@ async function providerUsageSnapshot(){
   return providers;
 }
 
+
+const MAX_AUTO_CONTINUATIONS = 5;
+
+function finishReasonNeedsContinuation(reason=''){
+  const r=String(reason||'').toLowerCase();
+  return [
+    'length','max_tokens','max_output_tokens','max_tokens_reached',
+    'max_token','token_limit','max_completion_tokens'
+  ].includes(r);
+}
+
+function hasUnclosedFence(text=''){
+  const count=(String(text||'').match(/```/g)||[]).length;
+  return count%2===1;
+}
+
+function looksObviouslyTruncated(text=''){
+  const t=String(text||'').trim();
+  if(!t) return false;
+  if(hasUnclosedFence(t)) return true;
+
+  const tail=t.slice(-220);
+  // Conservative heuristic: only continue when the ending strongly looks cut off.
+  if(/[,:;([{<]$/.test(tail)) return true;
+  if(/\b(function|const|let|var|return|if|else|for|while|class|interface|type|import|export)\s*$/i.test(tail)) return true;
+  if(/["'`]$/.test(tail) && /[=([{,:]\s*["'`][^"'`]*["'`]?$/.test(tail)) return true;
+  return false;
+}
+
+function continuationNeeded(finishState, generatedText=''){
+  if(finishReasonNeedsContinuation(finishState?.reason)) return true;
+  if(String(finishState?.reason||'').toLowerCase()==='unknown' && looksObviouslyTruncated(generatedText)) return true;
+  return false;
+}
+
+function buildContinuationHistory(body, generatedText=''){
+  const base=Array.isArray(body.history)?body.history.slice(-36):[];
+  const out=[...base];
+  if(String(body.message||'').trim()) out.push({role:'user',text:String(body.message).trim()});
+  if(String(generatedText||'').trim()) out.push({role:'model',text:String(generatedText)});
+  return out;
+}
+
+function continuationPrompt(partNumber=1){
+  return (
+    `Continue the same answer from exactly where it stopped. This is automatic continuation ${partNumber}. ` +
+    'Do not restart, repeat, summarize, apologize, add a new introduction, or mention that this is another part. ' +
+    'Continue seamlessly from the previous final character. If the answer is already complete, output nothing.'
+  );
+}
+
+
 function sseEvent(event, data) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-function activityStreamResponse(body) {
+function activityStreamResponse(body, requestSignal=null) {
   const encoder=new TextEncoder();
-  return new Response(new ReadableStream({
+  let cancelled=false;
+  let activeReader=null;
+  const source={
     start(controller){
-      const send=(event,data)=>controller.enqueue(encoder.encode(sseEvent(event,data)));
+      const abortNow=()=>{
+        cancelled=true;
+        try{activeReader?.cancel('client_aborted');}catch(_){}
+      };
+      if(requestSignal){
+        if(requestSignal.aborted)abortNow();
+        else requestSignal.addEventListener('abort',abortNow,{once:true});
+      }
+      const send=(event,data)=>{
+        if(cancelled)return;
+        try{controller.enqueue(encoder.encode(sseEvent(event,data)));}catch(_){cancelled=true;}
+      };
       const emit=data=>send('activity',data);
       // Flush immediately so Vercel/browser sees an active streaming response.
       send('activity',{type:'activity',id:'stream-open',label:'Response stream opened',state:'completed',kind:'process',at:Date.now()});
@@ -1775,16 +2438,116 @@ function activityStreamResponse(body) {
 
           const meta=responseMeta(result.response);
           send('meta',meta);
-          const reader=result.response.body.getReader();
-          const decoder=new TextDecoder();
+
           let generatedText='';
-          while(true){
-            const {done,value}=await reader.read();
-            if(done)break;
-            const text=decoder.decode(value,{stream:true});
-            if(text){ generatedText+=text; send('text',{text}); }
+          let activeResponse=result.response;
+          let activeFinishState=result.finishState||{reason:'unknown'};
+          let continuationCount=0;
+          let resolvedProvider=result.resolvedProvider||meta.provider||body.provider||'gemini';
+          let resolvedModel=result.resolvedModel||meta.model||body.model||PROVIDERS[resolvedProvider]?.defaultModel;
+          const continuationSystemInstruction=(result.systemInstruction||'') +
+            ' AUTOMATIC CONTINUATION MODE: When continuing a previous answer, continue seamlessly without repeating earlier text. Do not add "Part 2", "Continuation", or a new introduction.';
+
+          while(activeResponse){
+            const reader=activeResponse.body.getReader();
+            activeReader=reader;
+            const decoder=new TextDecoder();
+
+            while(!cancelled){
+              const {done,value}=await reader.read();
+              if(done)break;
+              const text=decoder.decode(value,{stream:true});
+              if(text){
+                generatedText+=text;
+                send('text',{text});
+              }
+            }
+            const tail=decoder.decode();
+            if(tail){
+              generatedText+=tail;
+              send('text',{text:tail});
+            }
+
+            if(cancelled) break;
+            if(!continuationNeeded(activeFinishState,generatedText)) break;
+            if(continuationCount>=MAX_AUTO_CONTINUATIONS){
+              send('activity',{
+                type:'activity',
+                id:'auto-continue-limit',
+                label:`Automatic continuation reached the safety cap (${MAX_AUTO_CONTINUATIONS})`,
+                state:'warning',
+                kind:'generate',
+                detail:'The manual Continue button remains available.',
+                at:Date.now()
+              });
+              break;
+            }
+
+            continuationCount++;
+            send('activity',{
+              type:'activity',
+              id:`auto-continue-${continuationCount}`,
+              label:`Output limit reached — continuing automatically (${continuationCount}/${MAX_AUTO_CONTINUATIONS})`,
+              state:'running',
+              kind:'generate',
+              at:Date.now()
+            });
+
+            const continuation=await runProvider(resolvedProvider,{
+              model:resolvedModel,
+              history:buildContinuationHistory(body,generatedText),
+              files:sanitizeIncomingAttachments(body.files||[]).map(f=>({...f,data:''})),
+              message:continuationPrompt(continuationCount),
+              systemInstruction:continuationSystemInstruction,
+              routedReason:'automatic-continuation',
+              emit:null,
+              autoFallback:false
+            });
+
+            if(!continuation.ok){
+              send('activity',{
+                type:'activity',
+                id:`auto-continue-${continuationCount}`,
+                label:'Automatic continuation could not start — keeping the response generated so far',
+                state:'warning',
+                kind:'generate',
+                detail:String(continuation.error||'Provider unavailable').slice(0,180),
+                at:Date.now()
+              });
+              break;
+            }
+
+            activeResponse=continuation.response;
+            activeFinishState=continuation.finishState||{reason:'unknown'};
+            resolvedProvider=activeResponse.headers.get('x-ai-provider')||resolvedProvider;
+            resolvedModel=activeResponse.headers.get('x-ai-model')||resolvedModel;
+
+            send('activity',{
+              type:'activity',
+              id:`auto-continue-${continuationCount}`,
+              label:`Continuing with ${providerLabel(resolvedProvider)} • ${modelLabel(resolvedModel)}`,
+              state:'completed',
+              kind:'generate',
+              at:Date.now()
+            });
           }
-          const tail=decoder.decode(); if(tail){ generatedText+=tail; send('text',{text:tail}); }
+
+          if(cancelled){
+            clearInterval(keepAlive);
+            try{controller.close();}catch(_){}
+            return;
+          }
+
+          if(continuationCount>0){
+            send('activity',{
+              type:'activity',
+              id:'auto-continue-complete',
+              label:`Automatic continuation finished${continuationCount>1?` after ${continuationCount} continuations`:''}`,
+              state:'completed',
+              kind:'generate',
+              at:Date.now()
+            });
+          }
 
           if(shouldVerifyTask(body.message||'',body.files||[])){
             const generatedBlocks=extractCodeBlocks(generatedText);
@@ -1820,7 +2583,7 @@ function activityStreamResponse(body) {
 
           const elapsedMs=Math.max(1,Date.now()-result.startedAt);
           send('activity',{type:'activity',id:'generation',label:`Response complete in ${(elapsedMs/1000).toFixed(elapsedMs>=1000?1:2)}s`,state:'completed',kind:'generate',at:Date.now()});
-          send('done',{elapsedMs,...meta});
+          send('done',{elapsedMs,autoContinuations:continuationCount,...meta});
           clearInterval(keepAlive);
           controller.close();
         }catch(e){
@@ -1829,8 +2592,13 @@ function activityStreamResponse(body) {
           controller.close();
         }
       })();
+    },
+    cancel(reason){
+      cancelled=true;
+      try{activeReader?.cancel(reason||'client_cancelled');}catch(_){}
     }
-  }),{
+  };
+  return new Response(new ReadableStream(source),{
     headers:{
       'Content-Type':'text/event-stream; charset=utf-8',
       'Cache-Control':'no-cache, no-transform',
@@ -1994,7 +2762,7 @@ export default async function handler(req){
     const body=await req.json();
     if(body.action==='tts') return cloudflareTTS(body);
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
-    if(body.activityStream===true) return activityStreamResponse(body);
+    if(body.activityStream===true) return activityStreamResponse(body,req.signal);
 
     const result=await processChat(body,null);
     if(result.ok)return result.response;
