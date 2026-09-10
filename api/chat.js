@@ -2886,15 +2886,6 @@ function buildPetImagePrompt(options={}){
   return parts.join(' ').slice(0,2600);
 }
 
-function bytesToBase64(bytes){
-  let binary='';
-  const chunk=0x8000;
-  for(let i=0;i<bytes.length;i+=chunk){
-    binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
-  }
-  return btoa(binary);
-}
-
 function extractCloudflareImageBase64(payload){
   if(!payload)return '';
   const candidates=[
