@@ -176,20 +176,20 @@
             color: #fff;
         }
 
-        .header-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) auto; gap: 8px; width: 100%; align-items: center; }
+        .header-controls { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.35fr); gap: 8px; width: 100%; align-items: center; }
         .header-controls .selector-wrapper { min-width: 0; width: 100%; }
         .header-controls .dropdown-btn { min-width: 0; overflow: hidden; }
         .header-controls .dropdown-btn > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #selectedModelText { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
         #selectedModeText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         @media (max-width: 430px) {
-            .header-controls { grid-template-columns: minmax(0, .95fr) minmax(0, 1.2fr) auto; gap: 6px; }
+            .header-controls { grid-template-columns: minmax(0, .92fr) minmax(0, 1.35fr); gap: 6px; }
             .dropdown-btn { padding: 7px 8px; }
             .web-search-toggle-btn { padding: 7px 9px; }
             .model-selected-provider { display: none; }
         }
         @media (max-width: 360px) {
-            .header-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 42px; }
+            .header-controls { grid-template-columns: minmax(0, .9fr) minmax(0, 1.3fr); }
             .web-search-toggle-btn span { display: none; }
             .web-search-toggle-btn { justify-content: center; }
         }
@@ -1873,6 +1873,543 @@
         }
         .live-pet-bubble,.live-pet-name{z-index:35!important}
 
+    
+        /* ===== MODEL PICKER MOBILE SCROLL FIX ===== */
+        #modelPickerModal{
+            overflow:hidden!important;
+            max-height:min(88dvh,780px)!important;
+        }
+        #modelPagesViewport{
+            flex:1 1 auto!important;
+            min-height:0!important;
+            overflow:hidden!important;
+            touch-action:pan-y!important;
+        }
+        #modelPagesTrack{
+            height:100%!important;
+            min-height:0!important;
+            align-items:stretch!important;
+        }
+        #modelPagesTrack .model-provider-page{
+            height:100%!important;
+            min-height:0!important;
+            max-height:100%!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            -webkit-overflow-scrolling:touch!important;
+            overscroll-behavior-y:contain!important;
+            touch-action:pan-y!important;
+            padding-bottom:84px!important;
+            scrollbar-width:none!important;
+        }
+        #modelPagesTrack .model-provider-page::-webkit-scrollbar{display:none!important}
+        #modelPagesTrack .model-provider-page .option-item{flex:0 0 auto!important}
+        @media(max-width:520px){
+            #modelPickerModal{
+                height:min(86dvh,720px)!important;
+                max-height:min(86dvh,720px)!important;
+            }
+            #modelPagesTrack .model-provider-page{
+                padding-bottom:96px!important;
+            }
+        }
+
+    
+        /* ===== PET SLEEPING EYES v2 =====
+           Dedicated closed-eye overlay placed over each built-in pet image.
+           The old generic ::before eye line is disabled below. */
+        .live-pet.sleeping .live-pet-visual::before{
+            content:none!important;
+            display:none!important;
+        }
+        .live-pet-sleep-eyes{
+            position:absolute;
+            z-index:40;
+            left:21px;
+            top:31px;
+            width:40px;
+            height:13px;
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            pointer-events:none;
+            opacity:0;
+            transform:translateY(-1px);
+            transition:opacity .16s ease;
+        }
+        .live-pet-sleep-eyes i{
+            display:block;
+            width:11px;
+            height:7px;
+            border-bottom:3px solid rgba(24,24,34,.96);
+            border-radius:0 0 12px 12px;
+            transform:rotate(2deg);
+            filter:drop-shadow(0 1px 0 rgba(255,255,255,.12));
+        }
+        .live-pet-sleep-eyes i:last-child{transform:rotate(-2deg)}
+        .live-pet.sleeping .live-pet-sleep-eyes{
+            opacity:1;
+            animation:petClosedEyeBreath 2.3s ease-in-out infinite;
+        }
+
+        /* Fine-tuned face positions for the built-in companions. */
+        .live-pet[data-pet-visual="cat"] .live-pet-sleep-eyes{left:21px;top:31px;width:40px}
+        .live-pet[data-pet-visual="dog"] .live-pet-sleep-eyes{left:20px;top:32px;width:42px}
+        .live-pet[data-pet-visual="rabbit"] .live-pet-sleep-eyes{left:21px;top:32px;width:41px}
+        .live-pet[data-pet-visual="robot"] .live-pet-sleep-eyes{left:20px;top:31px;width:43px}
+        .live-pet[data-pet-visual="blackcat"] .live-pet-sleep-eyes{left:21px;top:31px;width:40px}
+        .live-pet[data-pet-visual="chick"] .live-pet-sleep-eyes{left:22px;top:31px;width:38px}
+        .live-pet[data-pet-visual="panda"] .live-pet-sleep-eyes{left:20px;top:31px;width:42px}
+        .live-pet[data-pet-visual="fox"] .live-pet-sleep-eyes{left:21px;top:32px;width:40px}
+
+        /* Dark pets need a brighter sleepy-eye stroke to remain visible. */
+        .live-pet[data-pet-visual="blackcat"] .live-pet-sleep-eyes i{
+            border-bottom-color:rgba(221,214,254,.96);
+            filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));
+        }
+        .live-pet[data-pet-visual="robot"] .live-pet-sleep-eyes i{
+            border-bottom-color:rgba(15,23,42,.96);
+            border-radius:0;
+            height:5px;
+        }
+
+        @keyframes petClosedEyeBreath{
+            0%,100%{transform:translateY(0) scaleX(1)}
+            50%{transform:translateY(1px) scaleX(.96)}
+        }
+
+    
+        /* ===== ACTIVITY TIMELINE VISIBILITY / MOBILE POSITION FIX ===== */
+        .ai-activity-card{
+            position:relative!important;
+            width:min(100%,720px)!important;
+            margin:12px 0 18px!important;
+            padding:14px 14px 12px!important;
+            border:1px solid rgba(148,163,184,.20)!important;
+            border-radius:18px!important;
+            background:linear-gradient(180deg,rgba(30,41,59,.92),rgba(15,23,42,.88))!important;
+            box-shadow:0 12px 34px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.03)!important;
+            color:var(--text-main)!important;
+            overflow:hidden!important;
+            scroll-margin-block:22px!important;
+        }
+        [data-theme="light"] .ai-activity-card{
+            background:linear-gradient(180deg,rgba(255,255,255,.99),rgba(248,250,252,.97))!important;
+            border-color:rgba(100,116,139,.22)!important;
+            box-shadow:0 10px 28px rgba(15,23,42,.10)!important;
+        }
+        .ai-activity-head{
+            position:sticky!important;
+            top:0!important;
+            z-index:3!important;
+            margin:0 0 8px!important;
+            padding:1px 1px 8px!important;
+            background:linear-gradient(180deg,rgba(26,36,56,.98) 72%,rgba(26,36,56,0))!important;
+        }
+        [data-theme="light"] .ai-activity-head{
+            background:linear-gradient(180deg,rgba(255,255,255,.98) 72%,rgba(255,255,255,0))!important;
+        }
+        .ai-activity-title{
+            color:var(--text-main)!important;
+            font-size:.80rem!important;
+            font-weight:800!important;
+            letter-spacing:.01em!important;
+        }
+        .ai-activity-toggle{
+            color:color-mix(in srgb,var(--text-main) 76%,transparent)!important;
+            font-size:.72rem!important;
+        }
+        .ai-activity-list{
+            display:flex!important;
+            flex-direction:column!important;
+            gap:4px!important;
+            max-height:min(46dvh,380px)!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            overscroll-behavior:contain!important;
+            -webkit-overflow-scrolling:touch!important;
+            scrollbar-width:thin!important;
+            padding:0 2px 7px 0!important;
+        }
+        .ai-activity-card.collapsed .ai-activity-list{
+            max-height:0!important;
+            overflow:hidden!important;
+            padding:0!important;
+        }
+        .ai-activity-row{
+            grid-template-columns:32px minmax(0,1fr)!important;
+            gap:9px!important;
+            padding:9px 8px!important;
+            border-radius:12px!important;
+            min-width:0!important;
+        }
+        .ai-activity-row.completed{background:rgba(255,255,255,.022)!important}
+        .ai-activity-row.running{
+            background:linear-gradient(90deg,rgba(139,92,246,.16),rgba(139,92,246,.04))!important;
+            border:1px solid rgba(139,92,246,.14)!important;
+        }
+        .ai-activity-row.warning{background:rgba(245,158,11,.08)!important}
+        .ai-activity-row.error{background:rgba(239,68,68,.08)!important}
+        .ai-activity-icon{
+            width:30px!important;
+            height:30px!important;
+            background:rgba(255,255,255,.045)!important;
+            border-color:rgba(148,163,184,.11)!important;
+        }
+        .ai-activity-copy{min-width:0!important;padding-top:2px!important}
+        .ai-activity-label{
+            color:color-mix(in srgb,var(--text-main) 88%,transparent)!important;
+            font-size:.82rem!important;
+            line-height:1.46!important;
+            font-weight:520!important;
+            overflow-wrap:anywhere!important;
+        }
+        .ai-activity-row.running .ai-activity-label{
+            color:var(--text-main)!important;
+            font-weight:680!important;
+        }
+        .ai-activity-row.warning .ai-activity-label{color:#fbbf24!important}
+        .ai-activity-row.error .ai-activity-label{color:#fca5a5!important}
+        .ai-activity-detail{
+            color:color-mix(in srgb,var(--text-main) 66%,transparent)!important;
+            opacity:1!important;
+            font-size:.70rem!important;
+            line-height:1.4!important;
+        }
+        .ai-activity-summary{
+            color:color-mix(in srgb,var(--text-main) 80%,transparent)!important;
+            font-size:.72rem!important;
+            line-height:1.4!important;
+            padding:2px 2px 1px!important;
+        }
+        @media(max-width:520px){
+            .ai-activity-card{
+                margin:10px 0 20px!important;
+                padding:12px 11px 11px!important;
+                border-radius:16px!important;
+            }
+            .ai-activity-list{max-height:min(39dvh,330px)!important}
+            .ai-activity-row{
+                grid-template-columns:29px minmax(0,1fr)!important;
+                gap:8px!important;
+                padding:8px 5px!important;
+            }
+            .ai-activity-icon{width:28px!important;height:28px!important}
+            .ai-activity-label{font-size:.79rem!important;line-height:1.45!important}
+            .ai-activity-title{font-size:.78rem!important}
+        }
+        @media(max-height:700px){
+            .ai-activity-list{max-height:32dvh!important}
+        }
+
+    
+        /* ===== USAGE PANEL TEMPORARILY REMOVED ===== */
+        .routing-settings-section{
+            width:100%;
+            margin-top:2px;
+            padding:12px 14px 6px;
+            border:1px solid var(--border-color);
+            border-radius:14px;
+            background:rgba(255,255,255,.025);
+        }
+        .routing-settings-title{
+            margin:0 0 4px;
+            font-size:.78rem;
+            color:var(--text-muted);
+            text-transform:uppercase;
+            letter-spacing:.45px;
+        }
+        .routing-settings-section .feature-toggle-row{
+            padding:12px 0!important;
+        }
+        .routing-settings-section .feature-toggle-row + .feature-toggle-row{
+            border-top:1px solid rgba(148,163,184,.12);
+        }
+
+    
+        /* ===== MULTI ATTACHMENT UI ===== */
+        .file-preview-row{
+            width:100%;
+            display:none;
+            gap:8px;
+            overflow-x:auto;
+            overflow-y:hidden;
+            padding:4px 2px 8px;
+            scrollbar-width:thin;
+            -webkit-overflow-scrolling:touch;
+            overscroll-behavior-x:contain;
+        }
+        .attachment-chip{
+            position:relative;
+            flex:0 0 auto;
+            width:176px;
+            min-height:58px;
+            border:1px solid rgba(148,163,184,.18);
+            border-radius:14px;
+            background:color-mix(in srgb,var(--modal-bg) 88%,transparent);
+            display:grid;
+            grid-template-columns:46px minmax(0,1fr);
+            align-items:center;
+            gap:9px;
+            padding:6px 28px 6px 6px;
+            overflow:hidden;
+        }
+        .attachment-thumb{
+            width:46px;height:46px;border-radius:10px;overflow:hidden;
+            display:grid;place-items:center;
+            background:rgba(99,102,241,.10);
+            color:#a78bfa;font-size:20px;
+            border:1px solid rgba(148,163,184,.10);
+        }
+        .attachment-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+        .attachment-info{min-width:0}
+        .attachment-name{
+            display:block;color:var(--text-main);font-size:.70rem;font-weight:650;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }
+        .attachment-meta{
+            display:block;color:var(--text-muted);font-size:.59rem;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;
+        }
+        .attachment-status{
+            display:inline-flex;align-items:center;gap:4px;margin-top:4px;
+            font-size:.56rem;color:#34d399;
+        }
+        .attachment-status.processing{color:#a78bfa}
+        .attachment-status.warning{color:#fbbf24}
+        .attachment-status.error{color:#f87171}
+        .attachment-spinner{
+            width:9px;height:9px;border:1.5px solid currentColor;border-right-color:transparent;
+            border-radius:50%;animation:attachmentSpin .7s linear infinite;
+        }
+        @keyframes attachmentSpin{to{transform:rotate(360deg)}}
+        .attachment-remove{
+            position:absolute;right:5px;top:5px;width:20px;height:20px;
+            border:0;border-radius:50%;display:grid;place-items:center;
+            background:rgba(15,23,42,.82);color:#fff;cursor:pointer;font-size:.68rem;
+        }
+        .user-attachment-list{
+            display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;
+        }
+        .user-attachment-pill{
+            display:inline-flex;align-items:center;gap:6px;max-width:240px;
+            border:1px solid rgba(148,163,184,.16);border-radius:10px;
+            padding:6px 8px;background:rgba(255,255,255,.035);
+            font-size:.66rem;color:var(--text-muted);
+        }
+        .user-attachment-pill span:last-child{
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }
+        .user-attachment-image{
+            max-width:210px;max-height:210px;object-fit:cover;border-radius:10px;
+            border:1px solid rgba(148,163,184,.14);
+        }
+        .attachment-drop-active .chat-input-pill{
+            outline:2px dashed rgba(139,92,246,.72)!important;
+            outline-offset:3px;
+            background:rgba(139,92,246,.075)!important;
+        }
+        @media(max-width:520px){
+            .attachment-chip{width:154px;grid-template-columns:42px minmax(0,1fr)}
+            .attachment-thumb{width:42px;height:42px}
+        }
+
+    
+        /* ===== CHATGPT-LIKE SEND / CANCEL BUTTON ===== */
+        .pill-action-btn{
+            position:relative;
+            transition:transform .16s ease,background .16s ease,box-shadow .16s ease!important;
+        }
+        .pill-action-btn.generating{
+            background:#3b82f6!important;
+            box-shadow:0 0 0 4px rgba(59,130,246,.12)!important;
+        }
+        .pill-action-btn.generating:hover{transform:scale(1.03)}
+        .pill-action-btn .stop-square{
+            width:12px;height:12px;border-radius:2.5px;background:#fff;display:block;
+            box-shadow:0 0 0 1px rgba(255,255,255,.15);
+        }
+        .pill-action-btn.stopping{
+            opacity:.72;
+            pointer-events:none;
+        }
+
+    
+        /* ===== HEADER SELECTOR BALANCE FIX ===== */
+        .header-controls{
+            grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr)!important;
+            gap:8px!important;
+        }
+        .header-controls .dropdown-btn{
+            min-width:0!important;
+            width:100%!important;
+            display:flex!important;
+            align-items:center!important;
+            gap:8px!important;
+            overflow:hidden!important;
+        }
+        .header-controls .dropdown-btn > span:first-child,
+        #selectedModeText,
+        #selectedModelText{
+            flex:1 1 auto!important;
+            min-width:0!important;
+            max-width:100%!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+            white-space:nowrap!important;
+            text-align:left!important;
+        }
+        #selectedModeText{
+            display:flex!important;
+            align-items:center!important;
+            gap:7px!important;
+        }
+        #selectedModeText > svg{
+            flex:0 0 16px!important;
+            width:16px!important;
+            height:16px!important;
+        }
+        .mode-label-text{
+            flex:1 1 auto!important;
+            min-width:0!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+            white-space:nowrap!important;
+        }
+        .header-controls .dropdown-btn > span:last-child{
+            flex:0 0 auto!important;
+            width:16px!important;
+            min-width:16px!important;
+            text-align:center!important;
+            margin-left:auto!important;
+            position:relative!important;
+            z-index:2!important;
+        }
+        @media(max-width:430px){
+            .header-controls{
+                grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr)!important;
+                gap:7px!important;
+            }
+            .header-controls .dropdown-btn{padding:8px 9px!important}
+        }
+        @media(max-width:360px){
+            .header-controls{
+                grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr)!important;
+                gap:6px!important;
+            }
+            .header-controls .dropdown-btn{font-size:.70rem!important;padding:7px 8px!important}
+        }
+
+
+        /* ===== FLOATING PERSONALIZATION PICKER ===== */
+        .ps-choice-overlay{
+            position:fixed!important;
+            inset:0!important;
+            display:none!important;
+            padding:0!important;
+            align-items:initial!important;
+            justify-content:initial!important;
+            background:transparent!important;
+            backdrop-filter:none!important;
+            -webkit-backdrop-filter:none!important;
+            z-index:1405!important;
+        }
+        .ps-choice-overlay.open{display:block!important}
+
+        .ps-choice-card{
+            position:fixed!important;
+            left:12px;
+            top:120px;
+            width:min(350px,calc(100vw - 24px))!important;
+            max-width:calc(100vw - 24px)!important;
+            max-height:min(68dvh,590px)!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            border-radius:20px!important;
+            padding:8px 0!important;
+            background:rgba(58,58,58,.985)!important;
+            border:1px solid rgba(255,255,255,.10)!important;
+            box-shadow:0 22px 60px rgba(0,0,0,.58),0 2px 10px rgba(0,0,0,.30)!important;
+            pointer-events:auto!important;
+            overscroll-behavior:contain!important;
+            -webkit-overflow-scrolling:touch!important;
+            transform-origin:top right!important;
+            animation:psFloatingPopoverIn .16s cubic-bezier(.2,.75,.3,1)!important;
+        }
+        body.theme-light .ps-choice-card{
+            background:rgba(250,250,250,.99)!important;
+            border-color:rgba(15,23,42,.12)!important;
+            box-shadow:0 20px 55px rgba(15,23,42,.18),0 2px 10px rgba(15,23,42,.08)!important;
+        }
+        .ps-choice-card.popover-above{transform-origin:bottom right!important}
+        .ps-choice-title{display:none!important}
+
+        .ps-choice-item{
+            min-height:66px!important;
+            padding:11px 18px!important;
+            grid-template-columns:minmax(0,1fr) 28px!important;
+            align-items:center!important;
+            column-gap:12px!important;
+            border-radius:0!important;
+            transition:background .13s ease!important;
+        }
+        .ps-choice-item:hover,
+        .ps-choice-item:active{background:rgba(255,255,255,.065)!important}
+        body.theme-light .ps-choice-item:hover,
+        body.theme-light .ps-choice-item:active{background:rgba(15,23,42,.055)!important}
+        .ps-choice-item strong{
+            font-size:1rem!important;
+            line-height:1.25!important;
+            font-weight:520!important;
+        }
+        .ps-choice-item small{
+            margin-top:4px!important;
+            font-size:.79rem!important;
+            line-height:1.32!important;
+        }
+        .ps-choice-check{
+            justify-self:center!important;
+            width:26px!important;
+            min-width:26px!important;
+            font-size:1.25rem!important;
+            color:var(--text-main)!important;
+            text-align:center!important;
+        }
+        @keyframes psFloatingPopoverIn{
+            from{opacity:0;transform:translateY(-5px) scale(.975)}
+            to{opacity:1;transform:translateY(0) scale(1)}
+        }
+        @media(max-width:620px){
+            .ps-choice-overlay{
+                align-items:initial!important;
+                justify-content:initial!important;
+                padding:0!important;
+                background:transparent!important;
+            }
+            .ps-choice-card{
+                position:fixed!important;
+                width:min(338px,calc(100vw - 20px))!important;
+                max-width:calc(100vw - 20px)!important;
+                max-height:min(66dvh,560px)!important;
+                border-radius:19px!important;
+                padding-bottom:8px!important;
+            }
+        }
+        @media(max-width:430px){
+            .ps-choice-card{
+                width:min(320px,calc(100vw - 20px))!important;
+                max-width:calc(100vw - 20px)!important;
+                max-height:min(64dvh,540px)!important;
+                border-radius:18px!important;
+            }
+            .ps-choice-item{
+                min-height:62px!important;
+                padding:10px 16px!important;
+            }
+            .ps-choice-item strong{font-size:.96rem!important}
+            .ps-choice-item small{font-size:.76rem!important}
+        }
+
     </style>
 </head>
 <body>
@@ -1970,13 +2507,6 @@
                         <span>▼</span>
                     </button>
                 </div>
-
-                <button type="button" class="web-search-toggle-btn" id="webSearchToggleBtn" onclick="toggleWebSearch()" title="Toggle Web Live Search">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                    <span>Web</span>
-                </button>
-
-
                 <input type="text" id="customPromptInput" class="custom-prompt-input" placeholder="Type custom persona instructions here...">
             </div>
         </div>
@@ -2002,9 +2532,9 @@
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
             <div class="chat-input-pill">
-                <input type="file" id="fileInput" hidden multiple onchange="handleFileSelect(event)">
+                <input type="file" id="fileInput" hidden multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xlsx,.xls,.ods,.csv,.txt,.md,.rtf,.json,.xml,.yaml,.yml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.php,.java,.c,.cpp,.h,.hpp,.cs,.sql,.sh,.log,.zip,.epub" onchange="handleFileSelect(event)">
                 
-                <button type="button" class="pill-plus-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">
+                <button type="button" class="pill-plus-btn" onclick="document.getElementById('fileInput').click()" title="Attach files, photos or videos">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 </button>
                 
@@ -2028,8 +2558,8 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
                 </button>
                 
-                <button type="button" class="pill-action-btn" onclick="sendMessage()" title="Send">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <button type="button" class="pill-action-btn" id="mainActionBtn" onclick="handleMainAction()" title="Send">
+                    <svg class="send-state-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
         </div>
@@ -2084,6 +2614,20 @@
           </span>
           <label class="ios-switch">
             <input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)">
+            <span class="ios-slider"></span>
+          </label>
+        </div>
+
+        <div class="ios-switch-container">
+          <span style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px; min-width:0;">
+            <i data-lucide="globe-2" style="width:18px;height:18px;flex:0 0 auto;"></i>
+            <span style="min-width:0;">
+              <strong style="display:block;font-size:.85rem;font-weight:600;">Live Web Search</strong>
+              <small style="display:block;color:var(--text-muted);font-size:.68rem;line-height:1.35;margin-top:2px;">Use current web results when a request needs live information.</small>
+            </span>
+          </span>
+          <label class="ios-switch">
+            <input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)">
             <span class="ios-slider"></span>
           </label>
         </div>
@@ -2150,32 +2694,30 @@
 
         <div class="divider"></div>
 
-        <div class="usage-section">
-          <h4 class="usage-title">Live Provider Usage & Tokens</h4>
-          <div class="usage-metric-card">
-            <div class="metric-box"><h5>Words</h5><p id="geminiWordCount">0</p></div>
-            <div class="metric-box"><h5>Est. Tokens</h5><p id="geminiTokenCount">0</p></div>
-            <div class="metric-box"><h5>Queries</h5><p id="geminiQueryCount">0</p></div>
+        <div class="routing-settings-section">
+          <h4 class="routing-settings-title">Model Routing</h4>
+          <div class="feature-toggle-row">
+            <span>
+              <strong style="display:block;font-weight:600">Auto Provider Fallback</strong>
+              <small style="display:block;color:var(--text-muted);margin-top:3px">OFF = test only the selected model. ON = allow model/provider fallback.</small>
+            </span>
+            <label class="mini-toggle">
+              <input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)">
+              <span></span>
+            </label>
           </div>
-          <div class="usage-limits-deck">
-            <div class="limit-card">
-              <div class="limit-card-header"><div class="limit-title-wrap"><span id="currentUsageTitle">Selected provider quota</span><span class="info-circle" title="Synced from provider-reported limits when available. A real HTTP 429 marks the provider as reached/rate-limited.">i</span></div><span class="limit-percent" id="currentUsagePercent">Syncing…</span></div>
-              <div class="progress-track"><div class="progress-fill" id="currentUsageBar"></div></div>
-              <div class="limit-card-footer" id="currentUsageResetText">Waiting for provider data</div>
-            </div>
-            <div class="limit-card">
-              <div class="limit-card-header"><div class="limit-title-wrap"><span>Context usage</span></div><span class="limit-percent" id="weeklyUsagePercent">0% used</span></div>
-              <div class="progress-track"><div class="progress-fill" id="weeklyUsageBar"></div></div>
-              <div class="limit-card-footer" id="weeklyUsageResetText">Estimated from the active conversation context</div>
-            </div>
-          </div>
-          <div class="usage-sync-note" id="usageSyncNote"><strong>Accurate limit detection:</strong> provider 429/rate-limit responses are marked immediately. Exact remaining quota is shown only when the provider exposes it.</div>
-          <div class="provider-status-grid" id="providerStatusGrid"></div>
-          <div style="width:100%;margin-top:8px">
-            <div class="feature-toggle-row"><span><strong style="display:block;font-weight:600">Auto Provider Fallback</strong><small style="display:block;color:var(--text-muted);margin-top:3px">OFF = test only the selected model. ON = allow model/provider fallback.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></div>
-            <div class="feature-toggle-row"><span><strong style="display:block;font-weight:600">Smart Model Router</strong><small style="display:block;color:var(--text-muted);margin-top:3px">OFF = keep your selected model. ON = router may choose another model.</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></div>
+          <div class="feature-toggle-row">
+            <span>
+              <strong style="display:block;font-weight:600">Smart Model Router</strong>
+              <small style="display:block;color:var(--text-muted);margin-top:3px">OFF = keep your selected model. ON = router may choose another model.</small>
+            </span>
+            <label class="mini-toggle">
+              <input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)">
+              <span></span>
+            </label>
           </div>
         </div>
+
 
         <div class="divider"></div>
 
@@ -2219,13 +2761,13 @@
               <h3>Base style and tone</h3>
               <div class="ps-ref-row">
                 <div class="ps-ref-copy"><strong>Base style and tone</strong><small>Choose the overall personality JepongDevxyz AI should use in replies.</small></div>
-                <button class="ps-ref-choice" id="psBaseStyleBtn" onclick="openPersonalizationPicker('baseStyle','Base style and tone',[['Default','Balanced for everyday use'],['Professional','Polished and precise'],['Friendly','Warm and conversational'],['Candid','Direct and straightforward'],['Quirky','Playful and imaginative'],['Efficient','Concise and task-focused'],['Cynical','Dry and skeptical']])">Default <span class="chev">⌄</span></button>
+                <button class="ps-ref-choice" id="psBaseStyleBtn" onclick="openPersonalizationPicker('baseStyle','Base style and tone',[['Default','Balanced for everyday use'],['Professional','Polished and precise'],['Friendly','Warm and conversational'],['Candid','Direct and straightforward'],['Quirky','Playful and imaginative'],['Efficient','Concise and task-focused'],['Cynical','Dry and skeptical']],this)">Default <span class="chev">⌄</span></button>
               </div>
               <div class="section-help">Choose additional customizations on top of your base style and tone.</div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Warm</strong></div><button class="ps-ref-choice" id="psWarmBtn" onclick="openPersonalizationPicker('warm','Warm',[['More','Friendlier and more personable'],['Default','Balanced warmth'],['Less','More professional and factual']])">Default <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enthusiastic</strong></div><button class="ps-ref-choice" id="psEnthusiasticBtn" onclick="openPersonalizationPicker('enthusiastic','Enthusiastic',[['More','More energetic and expressive'],['Default','Balanced energy'],['Less','Calmer and more restrained']])">Default <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Headers & Lists</strong></div><button class="ps-ref-choice" id="psHeadersBtn" onclick="openPersonalizationPicker('headersLists','Headers & Lists',[['More','Use structured headings and lists more often'],['Default','Use structure when useful'],['Less','Prefer flowing paragraphs']])">Default <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Emoji</strong></div><button class="ps-ref-choice" id="psEmojiBtn" onclick="openPersonalizationPicker('emoji','Emoji',[['More','Use emoji a little more often'],['Default','Use emoji when natural'],['Less','Prefer little or no emoji']])">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Warm</strong></div><button class="ps-ref-choice" id="psWarmBtn" onclick="openPersonalizationPicker('warm','Warm',[['More','Friendlier and more personable'],['Default','Balanced warmth'],['Less','More professional and factual']],this)">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enthusiastic</strong></div><button class="ps-ref-choice" id="psEnthusiasticBtn" onclick="openPersonalizationPicker('enthusiastic','Enthusiastic',[['More','More energetic and expressive'],['Default','Balanced energy'],['Less','Calmer and more restrained']],this)">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Headers & Lists</strong></div><button class="ps-ref-choice" id="psHeadersBtn" onclick="openPersonalizationPicker('headersLists','Headers & Lists',[['More','Use structured headings and lists more often'],['Default','Use structure when useful'],['Less','Prefer flowing paragraphs']],this)">Default <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Emoji</strong></div><button class="ps-ref-choice" id="psEmojiBtn" onclick="openPersonalizationPicker('emoji','Emoji',[['More','Use emoji a little more often'],['Default','Use emoji when natural'],['Less','Prefer little or no emoji']],this)">Default <span class="chev">⌄</span></button></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Fast answers</strong><small>Prefer concise answers first when the question does not need a long explanation.</small></div><label class="mini-toggle"><input id="psFastAnswers" type="checkbox" onchange="setPersonalizationToggle('fastAnswers',this.checked)"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Suggested prompts</strong><small>Show personalized prompt suggestions based on your current mode.</small></div><label class="mini-toggle"><input id="psSuggestedPrompts" type="checkbox" onchange="setPersonalizationToggle('suggestedPrompts',this.checked)"><span></span></label></div>
               <div class="ps-ref-field"><label>Custom instructions</label><textarea id="psCustomInstructions" placeholder="Additional behavior, style, and tone preferences…" oninput="savePersonalizationField('customInstructions',this.value)"></textarea></div>
@@ -2263,8 +2805,7 @@
 
             <section class="ps-ref-section" id="psAdvancedSection" data-ps-search="advanced web search canvas preview voice library file search connectors plugins">
               <h3>Advanced</h3>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Web search</strong><small>Allow live web context when the Web button is enabled.</small></div><label class="mini-toggle"><input id="psAdvancedWeb" type="checkbox" onchange="setPersonalizationToggle('advancedWebSearch',this.checked);syncPersonalizationFeatureToggles()"><span></span></label></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Canvas / code preview</strong><small>Allow runnable previews and fullscreen code tools in supported responses.</small></div><label class="mini-toggle"><input id="psCanvas" type="checkbox" onchange="setPersonalizationToggle('canvasPreview',this.checked)"><span></span></label></div>
+<div class="ps-ref-row"><div class="ps-ref-copy"><strong>Canvas / code preview</strong><small>Allow runnable previews and fullscreen code tools in supported responses.</small></div><label class="mini-toggle"><input id="psCanvas" type="checkbox" onchange="setPersonalizationToggle('canvasPreview',this.checked)"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Voice</strong><small>Allow response speech and voice controls.</small></div><label class="mini-toggle"><input id="psVoiceFeature" type="checkbox" onchange="setPersonalizationToggle('voiceEnabled',this.checked);syncPersonalizationFeatureToggles()"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Library / file search</strong><small>Allow attached files to be included in supported AI requests.</small></div><label class="mini-toggle"><input id="psLibrarySearch" type="checkbox" onchange="setPersonalizationToggle('librarySearch',this.checked)"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Connector search preference</strong><small>Saves your preference for future connected-service integrations. It does not connect an external account by itself.</small></div><label class="mini-toggle"><input id="psConnectorSearch" type="checkbox" onchange="setPersonalizationToggle('connectorSearch',this.checked)"><span></span></label></div>
@@ -2273,9 +2814,9 @@
             <section class="ps-ref-section" id="psVoiceSection" data-ps-search="voice personality model intelligence language response speech">
               <h3>Voice</h3>
               <div class="ps-ref-row" onclick="openVoiceSettingsPage()" style="cursor:pointer"><div class="ps-ref-copy"><strong>Voice</strong><small>Choose a voice, hear a sample, and set voice model, intelligence, and language.</small></div><button class="ps-ref-choice" id="psVoicePersonaBtn" type="button" onclick="event.stopPropagation();openVoiceSettingsPage()">Breeze <span class="chev">›</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Model</strong><small>Voice-interaction preference only; your selected text provider/model remains unchanged.</small></div><button class="ps-ref-choice" id="psVoiceModelBtn" onclick="openPersonalizationPicker('voiceModel','Voice model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']])">Live <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Intelligence</strong><small>Choose the preferred balance of speed and depth for voice-style interactions.</small></div><button class="ps-ref-choice" id="psIntelligenceBtn" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']])">Instant <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Language</strong><small>Preferred language for voice and normal chats.</small></div><button class="ps-ref-choice" id="psLanguageBtn" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']))">Auto-detect <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Model</strong><small>Voice-interaction preference only; your selected text provider/model remains unchanged.</small></div><button class="ps-ref-choice" id="psVoiceModelBtn" onclick="openPersonalizationPicker('voiceModel','Voice model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)">Live <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Intelligence</strong><small>Choose the preferred balance of speed and depth for voice-style interactions.</small></div><button class="ps-ref-choice" id="psIntelligenceBtn" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']],this)">Instant <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Language</strong><small>Preferred language for voice and normal chats.</small></div><button class="ps-ref-choice" id="psLanguageBtn" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']),this)">Auto-detect <span class="chev">⌄</span></button></div>
             </section>
 
             <section class="ps-ref-section" id="psPrivacySection" data-ps-search="privacy storage reset personalization local browser">
@@ -2328,12 +2869,12 @@
               </div>
               <button type="button" class="ps-voice-preview" id="psVoicePreviewBtn" onclick="playPersonalizationVoiceSample()"><i data-lucide="play"></i><span>Preview voice</span></button>
               <div class="ps-voice-sample-status" id="psVoiceSampleStatus"></div>
-              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.45;margin-top:6px;text-align:center">Neural voice uses Cloudflare when supported. Filipino and unsupported languages automatically use the best device voice available.</div>
+              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.45;margin-top:6px;text-align:center">Neural voice uses Cloudflare for supported languages. Other languages use an installed device voice; if that language voice is missing, the preview falls back to an audible device voice instead of staying silent.</div>
             </div>
             <div class="ps-voice-settings">
-              <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']])"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
-              <div class="ps-voice-setting-row"><strong>Intelligence</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']])"><span id="psVoicePageIntelligence">Instant</span><i data-lucide="chevron-down"></i></button></div>
-              <div class="ps-voice-setting-row"><strong>Language</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']))"><span id="psVoicePageLanguage">Auto-detect</span><i data-lucide="chevron-down"></i></button></div>
+              <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
+              <div class="ps-voice-setting-row"><strong>Intelligence</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']],this)"><span id="psVoicePageIntelligence">Instant</span><i data-lucide="chevron-down"></i></button></div>
+              <div class="ps-voice-setting-row"><strong>Language</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']),this)"><span id="psVoicePageLanguage">Auto-detect</span><i data-lucide="chevron-down"></i></button></div>
             </div>
             <div class="ps-voice-sliders">
               <div class="ps-slider-row"><label for="psVoiceSpeedRange">Speed</label><input id="psVoiceSpeedRange" type="range" min="0.7" max="1.3" step="0.05" oninput="setVoiceTuning('voiceSpeed',this.value)"><output id="psVoiceSpeedValue">1.0x</output></div>
@@ -2544,6 +3085,48 @@
         }
 
         let selectedFilesData = [];
+        let activeAIAbortController = null;
+        let isAIGenerating = false;
+        let activePartialResponse = '';
+        let activeBotMessageElement = null;
+
+        function updateGenerationActionButton(active, stopping=false){
+            isAIGenerating=!!active;
+            const btn=document.getElementById('mainActionBtn');
+            if(!btn)return;
+            btn.classList.toggle('generating',!!active);
+            btn.classList.toggle('stopping',!!stopping);
+            if(active){
+                btn.title=stopping?'Stopping…':'Stop generating';
+                btn.setAttribute('aria-label',btn.title);
+                btn.innerHTML='<span class="stop-square" aria-hidden="true"></span>';
+            }else{
+                btn.title='Send';
+                btn.setAttribute('aria-label','Send');
+                btn.innerHTML='<svg class="send-state-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+            }
+        }
+
+        function cancelAIResponse(){
+            if(!isAIGenerating)return;
+            updateGenerationActionButton(true,true);
+            try{activeAIAbortController?.abort('user_cancelled');}catch(_){}
+            try{stopAllSpeech();}catch(_){}
+            appendActivityEvent({
+                id:'user-cancel',
+                label:'Generation stopped by user',
+                state:'warning',
+                kind:'generate'
+            });
+        }
+
+        function handleMainAction(){
+            if(isAIGenerating){
+                cancelAIResponse();
+                return;
+            }
+            sendMessage();
+        }
         let chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
         let currentSessionId = localStorage.getItem('jepong_last_session_id') || null;
         
@@ -2730,22 +3313,23 @@
             if (toggle) toggle.checked = themeName === 'theme-light';
         }
 
-        function toggleWebSearch() {
-            isWebSearchEnabled = !isWebSearchEnabled;
+        function setLiveWebSearchEnabled(enabled) {
+            isWebSearchEnabled = !!enabled;
+            personalizationSettings.advancedWebSearch = isWebSearchEnabled;
             localStorage.setItem('jepong_last_websearch', JSON.stringify(isWebSearchEnabled));
+            persistPersonalization();
             updateWebSearchUI();
             renderPersonalizationSettings();
-            syncPersonalizationFeatureToggles();
-            document.getElementById('autoFallbackToggle').checked = autoProviderFallback;
-            document.getElementById('smartRouterToggle').checked = smartModelRouter;
             renderPromptSuggestions();
-            renderProviderStatus();
-            syncProviderStatus();
+        }
+
+        function toggleWebSearch() {
+            setLiveWebSearchEnabled(!isWebSearchEnabled);
         }
 
         function updateWebSearchUI() {
-            const btn = document.getElementById('webSearchToggleBtn');
-            if (btn) btn.classList.toggle('active', isWebSearchEnabled);
+            const settingsToggle = document.getElementById('settingsWebSearchToggle');
+            if (settingsToggle) settingsToggle.checked = !!isWebSearchEnabled;
         }
 
         chatBox.addEventListener('scroll', () => {
@@ -2927,39 +3511,138 @@
             g.gain.exponentialRampToValueAtTime(.0001,start+duration);
             o.connect(g);g.connect(ctx.destination);o.start(start);o.stop(start+duration+.02);
         }
+        const PET_SOUND_PATTERNS = {
+            Luna:{
+                tap:[
+                    [0,.11,510,760,'triangle',.040],
+                    [.11,.13,760,560,'sine',.030]
+                ],
+                feed:[
+                    [0,.08,600,820,'sine',.035],
+                    [.09,.08,720,940,'sine',.030],
+                    [.19,.10,520,700,'triangle',.025]
+                ]
+            },
+            Kiro:{
+                tap:[
+                    [0,.075,190,120,'square',.047],
+                    [.105,.07,225,145,'square',.038]
+                ],
+                feed:[
+                    [0,.065,175,115,'sawtooth',.044],
+                    [.08,.065,210,130,'square',.038],
+                    [.19,.075,240,155,'square',.032]
+                ]
+            },
+            Mochi:{
+                tap:[
+                    [0,.09,650,890,'sine',.030],
+                    [.105,.09,790,1050,'sine',.023]
+                ],
+                feed:[
+                    [0,.07,720,920,'sine',.026],
+                    [.08,.07,880,1120,'sine',.023],
+                    [.17,.10,620,840,'triangle',.022]
+                ]
+            },
+            Pixel:{
+                tap:[
+                    [0,.055,700,700,'square',.024],
+                    [.07,.055,980,980,'square',.022],
+                    [.14,.07,820,620,'square',.019]
+                ],
+                feed:[
+                    [0,.05,520,520,'square',.023],
+                    [.06,.05,760,760,'square',.023],
+                    [.12,.05,1040,1040,'square',.021],
+                    [.19,.10,520,1100,'sine',.024]
+                ]
+            },
+            Nova:{
+                tap:[
+                    [0,.12,390,620,'triangle',.035],
+                    [.12,.15,620,350,'triangle',.030]
+                ],
+                feed:[
+                    [0,.08,470,690,'sine',.032],
+                    [.09,.10,640,840,'triangle',.026],
+                    [.20,.12,560,420,'sine',.025]
+                ]
+            },
+            Sunny:{
+                tap:[
+                    [0,.052,1120,1450,'sine',.027],
+                    [.072,.052,1040,1320,'sine',.024]
+                ],
+                feed:[
+                    [0,.045,980,1250,'sine',.026],
+                    [.06,.045,1180,1510,'sine',.025],
+                    [.12,.055,1080,1370,'sine',.023]
+                ]
+            },
+            Kumo:{
+                tap:[
+                    [0,.13,270,205,'sine',.033],
+                    [.15,.11,315,235,'sine',.027]
+                ],
+                feed:[
+                    [0,.10,260,190,'sine',.032],
+                    [.12,.10,330,245,'sine',.027],
+                    [.24,.11,285,215,'triangle',.022]
+                ]
+            },
+            Ace:{
+                tap:[
+                    [0,.07,650,1010,'triangle',.033],
+                    [.085,.09,920,590,'triangle',.027]
+                ],
+                feed:[
+                    [0,.06,720,1040,'triangle',.031],
+                    [.075,.07,950,700,'triangle',.027],
+                    [.17,.09,780,1160,'sine',.023]
+                ]
+            },
+            default:{
+                tap:[[0,.09,520,720,'sine',.028]],
+                feed:[[0,.08,620,820,'sine',.028],[.10,.09,760,980,'sine',.023]]
+            }
+        };
+
+        function unlockPetAudio(){
+            const ctx=getPetAudioContext();
+            if(!ctx)return null;
+            try{
+                if(ctx.state==='suspended'){
+                    const p=ctx.resume();
+                    if(p?.catch)p.catch(()=>{});
+                }
+                // Near-silent pulse keeps Android/Chrome's user-gesture audio session unlocked.
+                const o=ctx.createOscillator();
+                const g=ctx.createGain();
+                g.gain.setValueAtTime(.00001,ctx.currentTime);
+                o.connect(g);g.connect(ctx.destination);
+                o.start(ctx.currentTime);
+                o.stop(ctx.currentTime+.012);
+            }catch(_){}
+            return ctx;
+        }
+
         function playPetSound(action='tap'){
-            const ctx=getPetAudioContext();if(!ctx)return;
-            const species=String(selectedPetProfile().visual||'custom').toLowerCase();
-            const t=ctx.currentTime+.01;
-            if(species==='cat'||species==='blackcat'){
-                petTone(ctx,t,.18,420,690,'triangle',.04);
-                petTone(ctx,t+.16,.16,690,390,'triangle',.035);
-                if(action==='feed')petTone(ctx,t+.33,.10,520,760,'sine',.025);
-            }else if(species==='dog'){
-                petTone(ctx,t,.09,180,115,'sawtooth',.05);
-                petTone(ctx,t+.13,.075,210,130,'square',.04);
-                if(action==='feed')petTone(ctx,t+.23,.07,190,125,'square',.03);
-            }else if(species==='rabbit'){
-                petTone(ctx,t,.10,620,820,'sine',.03);
-                petTone(ctx,t+.12,.10,760,980,'sine',.024);
-            }else if(species==='robot'){
-                petTone(ctx,t,.075,720,720,'square',.025);
-                petTone(ctx,t+.09,.075,980,980,'square',.022);
-                if(action==='feed')petTone(ctx,t+.18,.11,520,1040,'sine',.025);
-            }else if(species==='chick'){
-                petTone(ctx,t,.065,1050,1350,'sine',.028);
-                petTone(ctx,t+.085,.065,980,1260,'sine',.025);
-            }else if(species==='panda'){
-                petTone(ctx,t,.16,250,180,'sine',.035);
-                if(action==='feed')petTone(ctx,t+.13,.12,330,230,'sine',.03);
-            }else if(species==='fox'){
-                petTone(ctx,t,.08,620,980,'triangle',.035);
-                petTone(ctx,t+.10,.10,900,540,'triangle',.03);
-            }else{
-                petTone(ctx,t,.10,520,700,'sine',.03);
-                if(action==='feed')petTone(ctx,t+.12,.10,700,880,'sine',.025);
+            const ctx=getPetAudioContext();
+            if(!ctx)return;
+            try{if(ctx.state==='suspended')ctx.resume();}catch(_){}
+
+            const petName=String(personalizationSettings.pet||'default');
+            const pattern=PET_SOUND_PATTERNS[petName]||PET_SOUND_PATTERNS.default;
+            const notes=pattern[action]||pattern.tap||[];
+            const t=ctx.currentTime+.008;
+
+            for(const note of notes){
+                const [delay,duration,f0,f1,type,gain]=note;
+                petTone(ctx,t+delay,duration,f0,f1,type,gain);
             }
         }
+
         function performPetTap(){
             const {pet}=getLivePetElements();if(!pet)return;
             wakeLivePet();pet.classList.remove('petting','eating');void pet.offsetWidth;
@@ -2979,6 +3662,7 @@
         }
 
         function petLiveInteraction() {
+            unlockPetAudio();
             const now=Date.now();
             const doubleTap=now-livePetLastTap<330;
             livePetLastTap=now;
@@ -3014,11 +3698,15 @@
             pet.classList.toggle('visible',!!visible);
             if(!visible){clearTimeout(livePetIdleTimer);clearInterval(livePetWalkTimer);return;}
             const builtInPetImage=getSelectedPetImage();
-            visual.innerHTML=personalizationSettings.customPetImage
+            const petProfile=selectedPetProfile();
+            pet.dataset.petVisual=String(petProfile?.visual||'custom').toLowerCase();
+            pet.dataset.petName=String(personalizationSettings.pet||'Pet').toLowerCase();
+            const visualContent=personalizationSettings.customPetImage
                 ? `<img src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
                 : builtInPetImage
                     ? `<img src="${escapeHTML(builtInPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
                     : `<span aria-hidden="true">${getSelectedPetVisual()}</span>`;
+            visual.innerHTML=visualContent + `<span class="live-pet-sleep-eyes" aria-hidden="true"><i></i><i></i></span>`;
             name.textContent=personalizationSettings.pet;
             pet.onclick=petLiveInteraction;
             pet.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();petLiveInteraction();}};
@@ -3042,7 +3730,6 @@
                 psReferenceHistory: personalizationSettings.referenceChatHistory,
                 psWritingStyle: personalizationSettings.referenceWritingStyle,
                 psRecordHistory: personalizationSettings.referenceRecordHistory,
-                psAdvancedWeb: personalizationSettings.advancedWebSearch,
                 psCanvas: personalizationSettings.canvasPreview,
                 psVoiceFeature: personalizationSettings.voiceEnabled,
                 psLibrarySearch: personalizationSettings.librarySearch,
@@ -3166,9 +3853,86 @@
             });
         }
 
-        function openPersonalizationPicker(key, title, choices) {
+        let personalizationPickerAnchor = null;
+
+        function personalizationAnchorForKey(key) {
+            const map = {
+                baseStyle:'psBaseStyleBtn',
+                warm:'psWarmBtn',
+                enthusiastic:'psEnthusiasticBtn',
+                headersLists:'psHeadersBtn',
+                emoji:'psEmojiBtn',
+                voiceModel:'psVoiceModelBtn',
+                intelligence:'psIntelligenceBtn',
+                language:'psLanguageBtn'
+            };
+            return map[key] ? document.getElementById(map[key]) : null;
+        }
+
+        function positionPersonalizationPicker(anchorEl=null) {
+            const overlay=document.getElementById('personalizationChoiceOverlay');
+            const card=overlay?.querySelector('.ps-choice-card');
+            if(!overlay?.classList.contains('open') || !card)return;
+
+            const active=document.activeElement;
+            const activeIsChoice=active?.matches?.('.ps-ref-choice,.ps-voice-value');
+            const anchor=anchorEl || personalizationPickerAnchor || (activeIsChoice?active:null) || personalizationAnchorForKey(personalizationPickerKey);
+            personalizationPickerAnchor=anchor||null;
+
+            const vv=window.visualViewport;
+            const vw=vv?.width || window.innerWidth;
+            const vh=vv?.height || window.innerHeight;
+            const offsetLeft=vv?.offsetLeft || 0;
+            const offsetTop=vv?.offsetTop || 0;
+            const margin=10;
+            const gap=8;
+
+            card.style.left=`${offsetLeft+margin}px`;
+            card.style.top=`${offsetTop+Math.max(72,margin)}px`;
+            card.classList.remove('popover-above');
+
+            requestAnimationFrame(()=>{
+                const cr=card.getBoundingClientRect();
+                const ar=anchor?.getBoundingClientRect?.();
+
+                let left=offsetLeft+vw-cr.width-margin;
+                let top=offsetTop+Math.max(82,(vh-cr.height)/2);
+
+                if(ar){
+                    left=Math.min(
+                        offsetLeft+vw-cr.width-margin,
+                        Math.max(offsetLeft+margin, ar.right-cr.width)
+                    );
+
+                    const below=(offsetTop+vh-margin)-(ar.bottom+gap);
+                    const above=(ar.top-gap)-(offsetTop+margin);
+
+                    if(below>=Math.min(cr.height,280) || below>=above){
+                        top=ar.bottom+gap;
+                    }else{
+                        top=ar.top-cr.height-gap;
+                        card.classList.add('popover-above');
+                    }
+                }
+
+                left=Math.max(offsetLeft+margin,Math.min(left,offsetLeft+vw-cr.width-margin));
+                top=Math.max(offsetTop+margin,Math.min(top,offsetTop+vh-cr.height-margin));
+
+                card.style.left=`${Math.round(left)}px`;
+                card.style.top=`${Math.round(top)}px`;
+            });
+        }
+
+        function openPersonalizationPicker(key, title, choices, anchorEl=null) {
             personalizationPickerKey = key;
             personalizationPickerChoices = Array.isArray(choices) ? choices : [];
+
+            const active=document.activeElement;
+            personalizationPickerAnchor =
+                anchorEl ||
+                (active?.matches?.('.ps-ref-choice,.ps-voice-value') ? active : null) ||
+                personalizationAnchorForKey(key);
+
             const titleEl = document.getElementById('personalizationChoiceTitle');
             const list = document.getElementById('personalizationChoiceList');
             if (titleEl) titleEl.textContent = title || 'Choose';
@@ -3180,7 +3944,10 @@
                     return `<button class="ps-choice-item" onclick="selectPersonalizationChoice(${index})"><span><strong>${escapeHTML(value)}</strong>${description ? `<small>${escapeHTML(description)}</small>` : ''}</span><span class="ps-choice-check">${selected ? '✓' : ''}</span></button>`;
                 }).join('');
             }
-            document.getElementById('personalizationChoiceOverlay')?.classList.add('open');
+
+            const overlay=document.getElementById('personalizationChoiceOverlay');
+            overlay?.classList.add('open');
+            positionPersonalizationPicker(personalizationPickerAnchor);
         }
 
         function selectPersonalizationChoice(index) {
@@ -3190,13 +3957,29 @@
             persistPersonalization();
             renderPersonalizationSettings();
             renderVoiceSettingsPage();
+            const changedKey = personalizationPickerKey;
             closePersonalizationPicker();
-            if (personalizationPickerKey === 'voicePersona') playPersonalizationVoiceSample();
+            if ((changedKey === 'voicePersona' || changedKey === 'language') && personalizationSettings.voiceAutoPreview !== false) {
+                setTimeout(()=>playPersonalizationVoiceSample(),80);
+            }
         }
 
         function closePersonalizationPicker() {
             document.getElementById('personalizationChoiceOverlay')?.classList.remove('open');
+            personalizationPickerAnchor=null;
         }
+
+        window.addEventListener('resize',()=>{
+            if(document.getElementById('personalizationChoiceOverlay')?.classList.contains('open')){
+                positionPersonalizationPicker(personalizationPickerAnchor);
+            }
+        },{passive:true});
+
+        window.visualViewport?.addEventListener('resize',()=>{
+            if(document.getElementById('personalizationChoiceOverlay')?.classList.contains('open')){
+                positionPersonalizationPicker(personalizationPickerAnchor);
+            }
+        },{passive:true});
 
         function cyclePersonalizationChoice(key, choices) {
             openPersonalizationPicker(key, key, (choices || []).map(x => [x,'']));
@@ -3247,6 +4030,10 @@
             if(main)main.style.display='none';
             page?.classList.add('open');
             loadVoices();
+            ensureSpeechVoicesReady(1200).then(()=>{
+                loadVoices();
+                renderVoiceSettingsPage();
+            });
             renderVoiceSettingsPage();
         }
 
@@ -3332,12 +4119,12 @@
             return 0;
         }
 
-        function resolvePersonalizationSystemVoice(profile=getVoiceProfile(), text='') {
+        function resolvePersonalizationSystemVoice(profile=getVoiceProfile(), text='', languageOverride='') {
             if (!('speechSynthesis' in window)) return null;
             systemVoices = window.speechSynthesis.getVoices();
             if (!systemVoices.length) return null;
 
-            const targetLang = detectSpeechLanguage(text);
+            const targetLang = languageOverride || detectSpeechLanguage(text);
             const ranked = systemVoices
                 .map(v => ({voice:v, score:voiceLanguageScore(v,targetLang)}))
                 .filter(x => x.score > 0)
@@ -3451,10 +4238,50 @@
             return Math.max(.88,Math.min(1.12,profilePitch*userPitch));
         }
 
-        function speakChunksSequentially(chunks,options={}){
-            if(!('speechSynthesis' in window)||!chunks.length)return;
+        function ensureSpeechVoicesReady(timeoutMs=1400){
+            return new Promise(resolve=>{
+                if(!('speechSynthesis' in window)) return resolve([]);
+                let voices=window.speechSynthesis.getVoices();
+                if(voices.length){
+                    systemVoices=voices;
+                    return resolve(voices);
+                }
+                let done=false;
+                const finish=()=>{
+                    if(done)return;
+                    done=true;
+                    try{window.speechSynthesis.removeEventListener?.('voiceschanged',onVoices);}catch(_){}
+                    voices=window.speechSynthesis.getVoices();
+                    systemVoices=voices;
+                    resolve(voices);
+                };
+                const onVoices=()=>finish();
+                try{window.speechSynthesis.addEventListener?.('voiceschanged',onVoices,{once:true});}catch(_){}
+                setTimeout(finish,timeoutMs);
+            });
+        }
+
+        function hasDeviceVoiceForLanguage(langCode=''){
+            const voices=('speechSynthesis' in window)?window.speechSynthesis.getVoices():[];
+            return voices.some(v=>voiceLanguageScore(v,langCode)>0);
+        }
+
+        async function speakChunksSequentially(chunks,options={}){
+            if(!chunks.length){
+                options.onend?.();
+                return;
+            }
+            if(!('speechSynthesis' in window)){
+                options.onerror?.(new Error('Speech synthesis is unavailable in this browser.'));
+                return;
+            }
+
+            await ensureSpeechVoicesReady();
             window.speechSynthesis.cancel();
+            try{window.speechSynthesis.resume();}catch(_){}
+
             let index=0;
+            let startedAny=false;
 
             const next=()=>{
                 if(index>=chunks.length){
@@ -3463,31 +4290,60 @@
                 }
 
                 const rawText=chunks[index++];
-                const langCode=detectSpeechLanguage(rawText);
+                const langCode=options.languageOverride || detectSpeechLanguage(rawText);
                 const text=normalizeBrandForSpeech(rawText,langCode);
                 const utter=new SpeechSynthesisUtterance(text);
                 const profile=options.profile||getVoiceProfile();
-                const voice=resolvePersonalizationSystemVoice(profile,text);
+                const voice=resolvePersonalizationSystemVoice(profile,text,langCode);
 
                 if(voice){
                     utter.voice=voice;
                     utter.lang=voice.lang || langCode;
                 }else{
-                    utter.lang=langCode;
+                    utter.lang=langCode || 'en-US';
                 }
 
                 utter.rate=clearerSpeechRate(profile.rate||1,utter.lang);
                 utter.pitch=clearerSpeechPitch(profile.pitch||1);
                 utter.volume=1;
 
-                utter.onstart=()=>options.onstart?.(utter,voice,index);
-                utter.onend=()=>{
-                    // Tiny pause between chunks prevents words from running together on Android.
-                    setTimeout(next,70);
+                let watchdog=null;
+                utter.onstart=()=>{
+                    startedAny=true;
+                    if(watchdog)clearTimeout(watchdog);
+                    options.onstart?.(utter,voice,index);
                 };
-                utter.onerror=e=>options.onerror?.(e);
+                utter.onend=()=>{
+                    if(watchdog)clearTimeout(watchdog);
+                    setTimeout(next,90);
+                };
+                utter.onerror=e=>{
+                    if(watchdog)clearTimeout(watchdog);
+                    options.onerror?.(e);
+                };
+
                 window.speechSynthesis.speak(utter);
+
+                // Android/Chrome sometimes stays paused after cancel() or after the page regains focus.
+                setTimeout(()=>{
+                    try{
+                        if(window.speechSynthesis.paused) window.speechSynthesis.resume();
+                    }catch(_){}
+                },80);
+
+                watchdog=setTimeout(()=>{
+                    if(!startedAny && !window.speechSynthesis.speaking){
+                        try{
+                            window.speechSynthesis.cancel();
+                            window.speechSynthesis.speak(utter);
+                            window.speechSynthesis.resume();
+                        }catch(err){
+                            options.onerror?.(err);
+                        }
+                    }
+                },650);
             };
+
             next();
         }
 
@@ -3679,19 +4535,31 @@
         function voiceSampleText() {
             const lang = personalizationSettings.language || 'Auto-detect';
             const samples = {
-                Filipino:'Kumusta! Ako ang napili mong boses para sa Jepong Devxyz AI. Malinaw, natural, at handa akong tumulong sa iyo.',
+                Filipino:'Kumusta! Ito ang napili mong boses para sa Jepong Devxyz AI. Handa akong tumulong sa iyo.',
                 English:'Hello! This is the selected voice for Jepong Devxyz AI. I am ready to help you.',
                 Spanish:'Hola. Esta es la voz seleccionada para Jepong Devxyz AI. Estoy listo para ayudarte.',
-                Japanese:'こんにちは。これは Jepong Devxyz AI の選択された音声です。よろしくお願いします。',
-                Korean:'안녕하세요. Jepong Devxyz AI에서 선택한 음성입니다. 도와드릴게요.',
-                French:'Bonjour. Voici la voix sélectionnée pour Jepong Devxyz AI. Je suis prêt à vous aider.',
-                German:'Hallo. Dies ist die ausgewählte Stimme für Jepong Devxyz AI. Ich helfe dir gerne.',
-                Italian:'Ciao. Questa è la voce selezionata per Jepong Devxyz AI. Sono pronto ad aiutarti.',
-                Portuguese:'Olá. Esta é a voz selecionada para Jepong Devxyz AI. Estou pronto para ajudar.',
-                'Mandarin Chinese':'你好。这是 Jepong Devxyz AI 选择的语音。我很乐意帮助你。',
-                Chinese:'你好。这是 Jepong Devxyz AI 选择的语音。我很乐意帮助你。'
+                Japanese:'こんにちは。これは Jepong Devxyz AI の音声プレビューです。よろしくお願いします。',
+                Korean:'안녕하세요. Jepong Devxyz AI 음성 미리듣기입니다. 도와드릴게요.',
+                French:'Bonjour. Ceci est un aperçu de la voix de Jepong Devxyz AI. Je suis prêt à vous aider.',
+                German:'Hallo. Dies ist eine Sprachvorschau von Jepong Devxyz AI. Ich helfe dir gerne.',
+                Italian:'Ciao. Questa è un’anteprima della voce di Jepong Devxyz AI. Sono pronto ad aiutarti.',
+                Portuguese:'Olá. Esta é uma prévia da voz do Jepong Devxyz AI. Estou pronto para ajudar.',
+                Arabic:'مرحبًا. هذه معاينة لصوت Jepong Devxyz AI. أنا جاهز للمساعدة.',
+                Bengali:'হ্যালো। এটি Jepong Devxyz AI-এর ভয়েস প্রিভিউ। আমি সাহায্য করতে প্রস্তুত।',
+                Chinese:'你好。这是 Jepong Devxyz AI 的语音预览。我很乐意帮助你。',
+                'Mandarin Chinese':'你好。这是 Jepong Devxyz AI 的语音预览。我很乐意帮助你。',
+                Dutch:'Hallo. Dit is een stemvoorbeeld van Jepong Devxyz AI. Ik help je graag.',
+                Hindi:'नमस्ते। यह Jepong Devxyz AI की आवाज़ का पूर्वावलोकन है। मैं आपकी मदद के लिए तैयार हूँ।',
+                Indonesian:'Halo. Ini adalah pratinjau suara Jepong Devxyz AI. Saya siap membantu.',
+                Malay:'Helo. Ini ialah pratonton suara Jepong Devxyz AI. Saya sedia membantu.',
+                Polish:'Cześć. To jest podgląd głosu Jepong Devxyz AI. Jestem gotowy pomóc.',
+                Russian:'Здравствуйте. Это предварительный просмотр голоса Jepong Devxyz AI. Я готов помочь.',
+                Thai:'สวัสดี นี่คือตัวอย่างเสียงของ Jepong Devxyz AI ฉันพร้อมช่วยคุณ',
+                Turkish:'Merhaba. Bu, Jepong Devxyz AI için bir ses önizlemesidir. Yardım etmeye hazırım.',
+                Ukrainian:'Вітаю. Це попередній перегляд голосу Jepong Devxyz AI. Я готовий допомогти.',
+                Vietnamese:'Xin chào. Đây là bản xem trước giọng nói của Jepong Devxyz AI. Tôi sẵn sàng giúp bạn.'
             };
-            return samples[lang] || `Hello! This is the selected voice for Jepong Devxyz AI. I am ready to help you.`;
+            return samples[lang] || 'Hello! This is a voice preview for Jepong Devxyz AI. I am ready to help you.';
         }
 
         function currentVoiceQualityLabel(text='') {
@@ -3702,7 +4570,7 @@
             return `${voice.name} • ${voice.lang || lang}`;
         }
 
-        function playPersonalizationVoiceSample(name=personalizationSettings.voicePersona) {
+        async function playPersonalizationVoiceSample(name=personalizationSettings.voicePersona) {
             const status=document.getElementById('psVoiceSampleStatus');
             const orb=document.getElementById('psVoiceOrb');
             const btn=document.getElementById('psVoicePreviewBtn');
@@ -3718,11 +4586,23 @@
             }
 
             personalizationSettings.voicePersona=profile.name;
+            personalizationSettings.voiceEnabled=true;
             persistPersonalization();
             renderPersonalizationSettings();
             renderVoiceSettingsPage();
 
-            speakSmartVoice(voiceSampleText(),{
+            if(status)status.textContent='Preparing voice preview…';
+            if(btn)btn.innerHTML='<i data-lucide="loader-circle"></i><span>Preparing…</span>';
+            refreshLucideIcons();
+
+            await ensureSpeechVoicesReady(1200);
+
+            const sample=voiceSampleText();
+            const requestedLang=preferredLanguageCode() || detectSpeechLanguage(sample);
+            const neuralSupported=neuralTTSIsSupported(sample);
+            const hasLocalTarget=hasDeviceVoiceForLanguage(requestedLang);
+
+            const handlers={
                 profile,
                 onstart:(utter,voice,index,engine)=>{
                     orb?.classList.add('speaking');
@@ -3736,12 +4616,38 @@
                     if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
                     refreshLucideIcons();
                 },
-                onerror:()=>{
+                onerror:(err)=>{
                     orb?.classList.remove('speaking');
-                    if(status)status.textContent='Voice playback failed.';
+                    if(status)status.textContent='Voice preview could not play in this browser.';
                     if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
                     refreshLucideIcons();
                 }
+            };
+
+            // Neural languages use Cloudflare first; failure automatically drops to device TTS.
+            if(neuralSupported){
+                speakSmartVoice(sample,handlers);
+                return;
+            }
+
+            // For languages not covered by neural TTS, use an installed device voice.
+            if(hasLocalTarget){
+                speakChunksSequentially(speechChunks(sample,150),{
+                    ...handlers,
+                    languageOverride:requestedLang,
+                    onstart:(utter,voice,index)=>handlers.onstart(utter,voice,index,'Device voice')
+                });
+                return;
+            }
+
+            // If the device has no voice package for the chosen language, still give the user
+            // an audible preview instead of silently failing.
+            const englishFallback='Hello! This is a voice preview for Jepong Devxyz AI.';
+            if(status)status.textContent=`No ${personalizationSettings.language||'selected'} device voice is installed • using audible fallback`;
+            speakChunksSequentially([englishFallback],{
+                ...handlers,
+                languageOverride:'en-US',
+                onstart:(utter,voice,index)=>handlers.onstart(utter,voice,index,'Device fallback')
             });
         }
 
@@ -3939,8 +4845,6 @@
 
 
         function openSettingsModal() {
-            updateUsageUI();
-            syncProviderStatus();
             
             const speechToggle = document.getElementById('responseSpeechToggle');
             const group = document.getElementById('speechSettingsGroup');
@@ -3948,6 +4852,8 @@
             const speedLabel = document.getElementById('speedValueLabel');
 
             if (speechToggle) speechToggle.checked = isResponseSpeechEnabled;
+            const webToggle = document.getElementById('settingsWebSearchToggle');
+            if (webToggle) webToggle.checked = !!isWebSearchEnabled;
             if (group) group.classList.toggle('disabled', !isResponseSpeechEnabled);
             if (speedSlider) speedSlider.value = speechRate;
             if (speedLabel) speedLabel.innerText = speechRate.toFixed(1) + 'x';
@@ -3963,11 +4869,16 @@
         }
 
         function toggleResponseSpeech(enabled) {
-            isResponseSpeechEnabled = enabled;
-            localStorage.setItem('jepong_speech_enabled', JSON.stringify(enabled));
+            isResponseSpeechEnabled = !!enabled;
+            if (isResponseSpeechEnabled) {
+                personalizationSettings.voiceEnabled = true;
+                persistPersonalization();
+            }
+            localStorage.setItem('jepong_speech_enabled', JSON.stringify(isResponseSpeechEnabled));
             const group = document.getElementById('speechSettingsGroup');
-            if (group) group.classList.toggle('disabled', !enabled);
-            if (!enabled) stopAllSpeech();
+            if (group) group.classList.toggle('disabled', !isResponseSpeechEnabled);
+            if (!isResponseSpeechEnabled) stopAllSpeech();
+            renderPersonalizationSettings();
         }
 
         function changeVoiceSpeed(val) {
@@ -4274,12 +5185,7 @@
         }
 
         function updateUsageUI() {
-            const words=parseInt(localStorage.getItem('jepong_word_count')||'0');
-            const queries=parseInt(localStorage.getItem('jepong_query_count')||'0');
-            const tokens=Math.ceil(words*1.35);
-            const w=document.getElementById('geminiWordCount'),t=document.getElementById('geminiTokenCount'),q=document.getElementById('geminiQueryCount');
-            if(w)w.textContent=words.toLocaleString(); if(t)t.textContent=tokens.toLocaleString(); if(q)q.textContent=queries.toLocaleString();
-            renderUsageSyncUI(); renderProviderStatus();
+            // Usage/quota UI is temporarily disabled.
         }
 
         function openDolaModal() {
@@ -4399,7 +5305,13 @@
                 state:'completed',
                 kind:'process'
             });
-            scrollToBottom(true);
+            requestAnimationFrame(()=>{
+                try{
+                    indicator.scrollIntoView({behavior:'smooth',block:'center'});
+                }catch(_){
+                    scrollToBottom(true);
+                }
+            });
         }
 
         function toggleActivityDetails(btn) {
@@ -4431,7 +5343,24 @@
                 </div>`;
             const summary = document.getElementById('aiActivitySummary');
             if (summary && evt.label) summary.textContent = evt.label;
-            if (!userIsScrollingUp) scrollToBottom(false);
+
+            requestAnimationFrame(()=>{
+                try{
+                    list.scrollTo({top:list.scrollHeight,behavior:'smooth'});
+                }catch(_){
+                    list.scrollTop=list.scrollHeight;
+                }
+            });
+
+            if (!userIsScrollingUp) {
+                const rect=card.getBoundingClientRect();
+                const viewportH=window.visualViewport?.height || window.innerHeight;
+                const safeTop=80;
+                const safeBottom=viewportH-120;
+                if(rect.top>safeBottom || rect.bottom<safeTop){
+                    try{card.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){}
+                }
+            }
         }
 
         function finishAIIndicator(success = true, elapsedMs = null) {
@@ -4813,6 +5742,7 @@
             const botMsgElem = document.createElement('div');
             botMsgElem.className = 'msg bot';
             chatBox.appendChild(botMsgElem);
+            activeBotMessageElement=botMsgElem;
             scrollToBottom(true);
 
             const bibleSystemInstruction = "You are a warm, wise, and highly articulate Biblical Scholar and Master Storyteller. Your purpose is to explain Bible verses, tell vivid biblical stories, provide context, and offer prayers/reflections. ALWAYS detect the language of the user (Tagalog/Filipino or English) and reply FULLY in that language. Ensure your responses sound fluid and natural when read aloud via Text-to-Speech.";
@@ -5005,7 +5935,7 @@
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                                 Regenerate
                             </button>
-                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue generating">Continue</button>
+                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Manual Continue — usually only needed if automatic continuation reaches its cap">Continue</button>
                             <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
                             <button class="bot-action-btn" onclick="copyText(this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
@@ -5282,8 +6212,8 @@ ${m.text || ''}
         function setProviderMeta(provider,patch){ lastProviderMeta[provider]={...(lastProviderMeta[provider]||{}),...patch,updatedAt:Date.now()}; localStorage.setItem('jepong_provider_meta',JSON.stringify(lastProviderMeta)); renderProviderStatus(); renderUsageSyncUI(); }
         function renderProviderStatus(){ const grid=document.getElementById('providerStatusGrid'); if(!grid)return; grid.innerHTML=PROVIDER_ORDER.filter(p=>p!=='image').map(p=>{const m=lastProviderMeta[p]||{};let state=m.rateLimited?'limited':(m.busy?'busy':(m.configured===false?'not-configured':'ready'));let text=state==='limited'?'Rate limit reached':state==='busy'?'Busy / retrying':state==='not-configured'?'Key not configured':(m.remainingRequests!=null?`${m.remainingRequests} requests left`:'Ready');return `<div class="provider-status-card ${state}"><div class="provider-status-name">${providerLabel(p)}</div><div class="provider-status-state">${text}</div></div>`}).join(''); }
         async function syncProviderStatus(){
-            try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'provider-status'})}); if(!r.ok)return; const d=await r.json(); Object.entries(d.providers||{}).forEach(([p,m])=>setProviderMeta(p,{configured:m.configured,openrouterUsage:m.usage||null,freeDailyNeurons:m.freeDailyNeurons||null})); }catch(_){ }
-            renderUsageSyncUI();
+            // Provider usage/quota polling is temporarily disabled.
+            return;
         }
         function renderUsageSyncUI(){
             const p=currentSelectedProvider; const m=lastProviderMeta[p]||{}; const pctEl=document.getElementById('currentUsagePercent'),bar=document.getElementById('currentUsageBar'),reset=document.getElementById('currentUsageResetText'),title=document.getElementById('currentUsageTitle'); if(!pctEl||!bar)return;
@@ -5321,6 +6251,12 @@ ${m.text || ''}
         async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:autoProviderFallback,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
 
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
+            const requestController=new AbortController();
+            activeAIAbortController=requestController;
+            activePartialResponse='';
+            activeBotMessageElement=null;
+            updateGenerationActionButton(true,false);
+
             showAIIndicator(promptText, currentFiles);
             setLivePetWorking(true);
 
@@ -5332,7 +6268,7 @@ ${m.text || ''}
                 ctx.sessions[ctx.id].messages.push({ 
                     role: 'user', 
                     text: promptText, 
-                    files: currentFiles 
+                    files: historySafeAttachments(currentFiles)
                 });
                 if (!isIncognito && !isBibleMode) saveSessions();
             }
@@ -5359,6 +6295,7 @@ ${m.text || ''}
                             const visionAnalyzeRes = await fetch('/api/chat', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
+                                signal: requestController.signal,
                                 body: JSON.stringify({
                                     message: `Look at the attached image carefully. The user wants to transform or replace the subject of this image with: "${finalImagePrompt}". Extract the visual style, colors, composition, and format of the image. Write a single concise English image generation prompt (max 30 words) that re-creates the new subject while strictly keeping the EXACT same style, colors, and design layout as the attached image. Output ONLY the prompt text, nothing else.`,
                                     history: [],
@@ -5410,11 +6347,17 @@ ${m.text || ''}
                     }
                     incrementCounters(promptText);
                     scrollToBottom(true);
+                    if(activeAIAbortController===requestController)activeAIAbortController=null;
+                    updateGenerationActionButton(false,false);
+                    setLivePetWorking(false);
                     return;
                 } catch (err) {
                     removeAIIndicator();
                     botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Image Generation Error: ${escapeHTML(err.message)}</span>`;
                     scrollToBottom(true);
+                    if(activeAIAbortController===requestController)activeAIAbortController=null;
+                    updateGenerationActionButton(false,false);
+                    setLivePetWorking(false);
                     return;
                 }
             }
@@ -5424,6 +6367,7 @@ ${m.text || ''}
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    signal: requestController.signal,
                     body: JSON.stringify({ 
                         message: promptText, 
                         history: getHistoryForRequest(continuousChatHistory),
@@ -5470,7 +6414,7 @@ ${m.text || ''}
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                                 Regenerate
                             </button>
-                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue generating">Continue</button>
+                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Manual Continue — usually only needed if automatic continuation reaches its cap">Continue</button>
                             <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
                             <button class="bot-action-btn" onclick="copyText(this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
@@ -5493,6 +6437,7 @@ ${m.text || ''}
                         meta: (meta) => { actualProviderUsed = meta.provider || actualProviderUsed; actualModelUsed = meta.model || actualModelUsed; captureProviderMetaEvent(meta, aiRequestStartedAt); },
                         text: (payload) => {
                             fullResponse += payload.text || '';
+                            activePartialResponse=fullResponse;
                             renderLiveResponse();
                         },
                         artifact: (payload) => {
@@ -5513,6 +6458,7 @@ ${m.text || ''}
                         const { done, value } = await reader.read();
                         if (done) break;
                         fullResponse += decoder.decode(value, { stream: true });
+                        activePartialResponse=fullResponse;
                         renderLiveResponse();
                     }
                     finishAIIndicator(true);
@@ -5532,21 +6478,53 @@ ${m.text || ''}
                     speakRawText(fullResponse);
                 }
 
+                activePartialResponse='';
+                activeBotMessageElement=null;
+                if(activeAIAbortController===requestController)activeAIAbortController=null;
+                updateGenerationActionButton(false,false);
+
             } catch (err) {
-                appendActivityEvent({ id:'client-catch', label:err.message || 'Request failed', state:'error', kind:'provider' });
-                finishAIIndicator(false);
-                botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</span>`;
+                const wasCancelled = requestController.signal.aborted || err?.name==='AbortError';
+                if(wasCancelled){
+                    finishAIIndicator(true);
+                    if(activePartialResponse){
+                        botMsgElem.innerHTML=`<div>${renderCustomMarkdown(activePartialResponse)}</div>
+                            <div class="bot-actions">
+                                <button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue from the stopped response">Continue</button>
+                                <button class="bot-action-btn" onclick="copyText(this)">Copy</button>
+                            </div>`;
+                        if(ctx.id && ctx.sessions[ctx.id]){
+                            ctx.sessions[ctx.id].messages.push({role:'bot',text:activePartialResponse,stopped:true});
+                            if(!isIncognito && !isBibleMode)saveSessions();
+                        }
+                    }else{
+                        botMsgElem.innerHTML='<span style="color:var(--text-muted)">Generation stopped.</span>';
+                    }
+                }else{
+                    appendActivityEvent({ id:'client-catch', label:err.message || 'Request failed', state:'error', kind:'provider' });
+                    finishAIIndicator(false);
+                    botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</span>`;
+                }
                 scrollToBottom(true);
+            } finally {
+                if(activeAIAbortController===requestController)activeAIAbortController=null;
+                activePartialResponse='';
+                activeBotMessageElement=null;
+                updateGenerationActionButton(false,false);
+                setLivePetWorking(false);
             }
         }
 
         /* 6. SEND MESSAGE (SECURED DOM APPENDING) */
         async function sendMessage() {
+            if(isAIGenerating)return;
             closeAllDrawers();
 
             const input = document.getElementById('userInput');
             const message = input.value.trim();
             if (!message && selectedFilesData.length === 0) return;
+
+            await waitForAttachmentJobs();
 
             if (message.toLowerCase() === '/commands') {
                 input.value = '';
@@ -5648,13 +6626,9 @@ ${m.text || ''}
                 activeSession.title = message ? message.substring(0, 24) : 'Attachment';
             }
 
-            const tempFiles = [...selectedFilesData];
-            let fileHTML = '';
-            tempFiles.forEach(f => {
-                if (f.mimeType.startsWith('image/')) {
-                    fileHTML += `<div><img src="${f.fullData}" style="max-width:200px; border-radius:10px; margin-top:4px;"></div>`;
-                }
-            });
+            const selectedAttachmentSnapshot = [...selectedFilesData];
+            const tempFiles = prepareAttachmentsForRequest(selectedAttachmentSnapshot);
+            const fileHTML = userAttachmentHTML(selectedAttachmentSnapshot);
 
             // GUMAMIT NG APPENDCHILD SA HALIP NA INNERHTML += PARA HINDI MASIRA ANG BOT NODES
             const userMsgDiv = document.createElement('div');
@@ -5820,7 +6794,6 @@ ${m.text || ''}
 
             localStorage.setItem('jepong_word_count', currentWords);
             localStorage.setItem('jepong_query_count', currentQueries);
-            updateUsageUI();
         }
 
         /* BI-DIRECTIONAL EDGE-SWIPE & CLICK DRAWER */
@@ -6001,7 +6974,6 @@ ${m.text || ''}
             const el=document.getElementById('selectedModelText');
             if(el) el.innerHTML=`<span class="model-selected-provider">${escapeHTML(providerLabel(currentSelectedProvider))}</span>${escapeHTML(label)}`;
             document.querySelectorAll('#modelModalOverlay .option-item[data-model]').forEach(btn=>btn.classList.toggle('active',btn.dataset.provider===currentSelectedProvider&&btn.dataset.model===currentSelectedModel));
-            renderUsageSyncUI();
         }
         function selectProviderModel(provider,key,name){
             currentSelectedProvider=provider; currentSelectedModel=key;
@@ -6017,6 +6989,10 @@ ${m.text || ''}
             if(title) title.textContent=providerLabel(PROVIDER_ORDER[currentProviderPage]);
             document.querySelectorAll('.model-page-dot').forEach((dot,i)=>dot.classList.toggle('active',i===currentProviderPage));
             document.querySelectorAll('.model-provider-tab').forEach((tab,i)=>tab.classList.toggle('active',i===currentProviderPage));
+            requestAnimationFrame(()=>{
+                const active=document.querySelector(`#modelPagesTrack .model-provider-page[data-provider="${PROVIDER_ORDER[currentProviderPage]}"]`);
+                if(active && !active.matches(':active')) active.scrollTop=0;
+            });
         }
         function setProviderPage(index){ currentProviderPage=Math.max(0,Math.min(PROVIDER_ORDER.length-1,index)); renderProviderPage(); }
         function changeProviderPage(direction){ setProviderPage((currentProviderPage+direction+PROVIDER_ORDER.length)%PROVIDER_ORDER.length); }
@@ -6025,29 +7001,646 @@ ${m.text || ''}
         document.addEventListener('touchstart',e=>{const viewport=e.target.closest&&e.target.closest('#modelPagesViewport');if(!viewport||!document.getElementById('modelModalOverlay')?.classList.contains('open'))return;const t=e.touches[0];modelSwipeStartX=t.clientX;modelSwipeStartY=t.clientY;modelSwipeActive=true;e.stopPropagation();},{passive:true,capture:true});
         document.addEventListener('touchend',e=>{if(!modelSwipeActive)return;modelSwipeActive=false;const t=e.changedTouches[0],dx=t.clientX-modelSwipeStartX,dy=t.clientY-modelSwipeStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){changeProviderPage(dx<0?1:-1);e.stopPropagation();}},{passive:true,capture:true});
 
-        function handleFileSelect(e) {
-            Array.from(e.target.files).forEach(f => {
-                const r = new FileReader();
-                r.onload = ex => {
-                    selectedFilesData.push({ name: f.name, mimeType: f.type, data: ex.target.result.split(',')[1], fullData: ex.target.result });
-                    renderFilePreviews();
+        const MAX_SELECTED_ATTACHMENTS = 10;
+        const MAX_DOCUMENT_CHARS = 320000;
+        const MAX_CODE_CHARS = 620000;
+        const MAX_REQUEST_BASE64_CHARS = 2350000;
+        const MAX_VIDEO_NATIVE_BYTES = 1050000;
+        const MAX_VIDEO_FRAMES = 4;
+        const MAX_PDF_VISUAL_PAGES = 4;
+        const attachmentJobs = new Map();
+        const attachmentLibPromises = {};
+
+        function attachmentId(){
+            return 'att_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+        }
+
+        function humanFileSize(bytes=0){
+            const n=Number(bytes)||0;
+            if(n<1024)return `${n} B`;
+            if(n<1024*1024)return `${(n/1024).toFixed(1)} KB`;
+            return `${(n/(1024*1024)).toFixed(n<10*1024*1024?1:0)} MB`;
+        }
+
+        function extensionOf(name=''){
+            const m=String(name).toLowerCase().match(/\.([a-z0-9]+)$/);
+            return m?m[1]:'';
+        }
+
+        function attachmentKind(file){
+            const mime=String(file?.type||file?.mimeType||'').toLowerCase();
+            const ext=extensionOf(file?.name||'');
+            if(mime.startsWith('image/'))return 'image';
+            if(mime.startsWith('video/'))return 'video';
+            if(ext==='pdf'||mime==='application/pdf')return 'pdf';
+            if(ext==='docx'||/wordprocessingml/.test(mime))return 'docx';
+            if(ext==='pptx'||/presentationml/.test(mime))return 'pptx';
+            if(['xlsx','xls','ods'].includes(ext)||/spreadsheet|excel|sheet/.test(mime))return 'spreadsheet';
+            if(ext==='zip')return 'zip';
+            if(ext==='epub')return 'epub';
+            if(ext==='rtf'||mime==='application/rtf')return 'rtf';
+            if(/^(text\/|application\/(json|javascript|xml|x-yaml|yaml))/i.test(mime) ||
+               /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|md|txt|csv|xml|svg|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh|log)$/i.test(file?.name||'')) return 'text';
+            return 'file';
+        }
+
+        function attachmentIcon(kind){
+            return {
+                image:'🖼️',video:'🎬',pdf:'📕',docx:'📘',pptx:'📊',
+                spreadsheet:'📗',zip:'🗜️',epub:'📚',rtf:'📄',text:'📄',file:'📎'
+            }[kind]||'📎';
+        }
+
+        function loadExternalScript(key, urls){
+            if(attachmentLibPromises[key])return attachmentLibPromises[key];
+            attachmentLibPromises[key]=new Promise(async(resolve,reject)=>{
+                let lastErr=null;
+                for(const src of urls){
+                    try{
+                        await new Promise((ok,fail)=>{
+                            const existing=[...document.scripts].find(s=>s.src===src);
+                            if(existing){
+                                if(existing.dataset.loaded==='1')return ok();
+                                existing.addEventListener('load',ok,{once:true});
+                                existing.addEventListener('error',fail,{once:true});
+                                return;
+                            }
+                            const script=document.createElement('script');
+                            script.src=src;script.async=true;script.crossOrigin='anonymous';
+                            script.onload=()=>{script.dataset.loaded='1';ok();};
+                            script.onerror=()=>fail(new Error(`Could not load ${src}`));
+                            document.head.appendChild(script);
+                        });
+                        return resolve(true);
+                    }catch(err){lastErr=err;}
+                }
+                reject(lastErr||new Error(`Could not load ${key}`));
+            });
+            return attachmentLibPromises[key];
+        }
+
+        async function getPdfJs(){
+            if(attachmentLibPromises.pdfjs)return attachmentLibPromises.pdfjs;
+            attachmentLibPromises.pdfjs=(async()=>{
+                const urls=[
+                    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs',
+                    'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs'
+                ];
+                let last=null;
+                for(const url of urls){
+                    try{
+                        const mod=await import(url);
+                        mod.GlobalWorkerOptions.workerSrc=url.replace('pdf.min.mjs','pdf.worker.min.mjs');
+                        return mod;
+                    }catch(e){last=e;}
+                }
+                throw last||new Error('PDF reader could not load.');
+            })();
+            return attachmentLibPromises.pdfjs;
+        }
+
+        async function getMammoth(){
+            await loadExternalScript('mammoth',[
+                'https://cdn.jsdelivr.net/npm/mammoth@1.9.1/mammoth.browser.min.js',
+                'https://unpkg.com/mammoth@1.9.1/mammoth.browser.min.js'
+            ]);
+            if(!window.mammoth)throw new Error('DOCX reader unavailable.');
+            return window.mammoth;
+        }
+
+        async function getXLSX(){
+            await loadExternalScript('xlsx',[
+                'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+                'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+            ]);
+            if(!window.XLSX)throw new Error('Spreadsheet reader unavailable.');
+            return window.XLSX;
+        }
+
+        async function getJSZip(){
+            await loadExternalScript('jszip',[
+                'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+                'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
+            ]);
+            if(!window.JSZip)throw new Error('ZIP reader unavailable.');
+            return window.JSZip;
+        }
+
+        function dataUrlBase64(dataUrl=''){
+            return String(dataUrl).split(',')[1]||'';
+        }
+
+        async function imageFromFile(file){
+            if('createImageBitmap' in window){
+                try{return await createImageBitmap(file);}catch(_){}
+            }
+            const url=URL.createObjectURL(file);
+            try{
+                const img=new Image();
+                await new Promise((resolve,reject)=>{
+                    img.onload=resolve;img.onerror=reject;img.src=url;
+                });
+                return img;
+            }finally{
+                // Keep URL until image decode completes; it is safe to revoke here.
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function canvasDataUrlWithin(canvas, targetChars=240000, startQuality=.80){
+            let q=startQuality;
+            let url=canvas.toDataURL('image/jpeg',q);
+            while(url.length>targetChars && q>.42){
+                q-=.08;
+                url=canvas.toDataURL('image/jpeg',q);
+            }
+            return url;
+        }
+
+        async function compressImageAttachment(file){
+            const bitmap=await imageFromFile(file);
+            const width=bitmap.width||bitmap.naturalWidth||1;
+            const height=bitmap.height||bitmap.naturalHeight||1;
+            const maxDim=1280;
+            const scale=Math.min(1,maxDim/Math.max(width,height));
+            const w=Math.max(1,Math.round(width*scale));
+            const h=Math.max(1,Math.round(height*scale));
+            const canvas=document.createElement('canvas');
+            canvas.width=w;canvas.height=h;
+            const ctx=canvas.getContext('2d',{alpha:false});
+            ctx.drawImage(bitmap,0,0,w,h);
+            if(bitmap.close)try{bitmap.close();}catch(_){}
+            const fullData=canvasDataUrlWithin(canvas,245000,.80);
+            return {
+                data:dataUrlBase64(fullData),
+                fullData,
+                processedMimeType:'image/jpeg',
+                extractedText:`Image: ${file.name}\nOriginal dimensions: ${width}×${height}\nPrepared dimensions: ${w}×${h}.`
+            };
+        }
+
+        function decodeXmlText(s=''){
+            const ta=document.createElement('textarea');
+            ta.innerHTML=String(s);
+            return ta.value;
+        }
+
+        function stripRtf(text=''){
+            return String(text)
+                .replace(/\\par[d]?/g,'\n')
+                .replace(/\\'[0-9a-fA-F]{2}/g,' ')
+                .replace(/\\[a-zA-Z]+-?\d*\s?/g,'')
+                .replace(/[{}]/g,'')
+                .replace(/\n{3,}/g,'\n\n')
+                .trim();
+        }
+
+        async function extractPdfAttachment(file){
+            const pdfjs=await getPdfJs();
+            const buf=await file.arrayBuffer();
+            const pdf=await pdfjs.getDocument({data:new Uint8Array(buf)}).promise;
+            const pages=[];
+            let text='';
+            for(let p=1;p<=pdf.numPages && text.length<MAX_DOCUMENT_CHARS;p++){
+                const page=await pdf.getPage(p);
+                const tc=await page.getTextContent();
+                const pageText=tc.items.map(x=>x.str||'').join(' ').replace(/\s+/g,' ').trim();
+                pages.push(pageText);
+                text+=`\n\n--- Page ${p} ---\n${pageText}`;
+            }
+
+            const visualPages=[];
+            const pageNumbers=[1,2,Math.ceil(pdf.numPages/2),pdf.numPages]
+                .filter((n,i,a)=>n>=1&&n<=pdf.numPages&&a.indexOf(n)===i)
+                .slice(0,MAX_PDF_VISUAL_PAGES);
+
+            for(const p of pageNumbers){
+                try{
+                    const page=await pdf.getPage(p);
+                    const viewport=page.getViewport({scale:1.15});
+                    const scale=Math.min(1,1000/Math.max(viewport.width,viewport.height));
+                    const v=page.getViewport({scale:1.15*scale});
+                    const canvas=document.createElement('canvas');
+                    canvas.width=Math.max(1,Math.round(v.width));
+                    canvas.height=Math.max(1,Math.round(v.height));
+                    const ctx=canvas.getContext('2d',{alpha:false});
+                    await page.render({canvasContext:ctx,viewport:v}).promise;
+                    const fullData=canvasDataUrlWithin(canvas,165000,.67);
+                    visualPages.push({
+                        name:`${file.name} — page ${p}`,
+                        mimeType:'image/jpeg',
+                        data:dataUrlBase64(fullData),
+                        fullData,
+                        mediaRole:'pdf-page',
+                        pageNumber:p
+                    });
+                }catch(_){}
+            }
+
+            return {
+                extractedText:`PDF: ${file.name}\nPages: ${pdf.numPages}\n${text.slice(0,MAX_DOCUMENT_CHARS)}`,
+                frames:visualPages,
+                pageCount:pdf.numPages,
+                fullData:visualPages[0]?.fullData||''
+            };
+        }
+
+        async function extractDocxAttachment(file){
+            const mammoth=await getMammoth();
+            const result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
+            return {extractedText:`DOCX: ${file.name}\n${String(result.value||'').slice(0,MAX_DOCUMENT_CHARS)}`};
+        }
+
+        async function extractSpreadsheetAttachment(file){
+            const XLSX=await getXLSX();
+            const workbook=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});
+            let text=`Spreadsheet: ${file.name}\nSheets: ${workbook.SheetNames.join(', ')}\n`;
+            for(const name of workbook.SheetNames.slice(0,16)){
+                if(text.length>=MAX_DOCUMENT_CHARS)break;
+                const sheet=workbook.Sheets[name];
+                const csv=XLSX.utils.sheet_to_csv(sheet,{blankrows:false});
+                text+=`\n--- Sheet: ${name} ---\n${csv}`;
+            }
+            return {extractedText:text.slice(0,MAX_DOCUMENT_CHARS)};
+        }
+
+        async function extractPptxAttachment(file){
+            const JSZip=await getJSZip();
+            const zip=await JSZip.loadAsync(await file.arrayBuffer());
+            const slideNames=Object.keys(zip.files)
+                .filter(n=>/^ppt\/slides\/slide\d+\.xml$/i.test(n))
+                .sort((a,b)=>(Number(a.match(/slide(\d+)/i)?.[1])||0)-(Number(b.match(/slide(\d+)/i)?.[1])||0));
+            let text=`PowerPoint: ${file.name}\nSlides: ${slideNames.length}\n`;
+            for(let i=0;i<slideNames.length && text.length<MAX_DOCUMENT_CHARS;i++){
+                const xml=await zip.file(slideNames[i]).async('text');
+                const parts=[...xml.matchAll(/<a:t[^>]*>([\s\S]*?)<\/a:t>/gi)].map(m=>decodeXmlText(m[1]));
+                text+=`\n--- Slide ${i+1} ---\n${parts.join(' ').replace(/\s+/g,' ').trim()}`;
+            }
+            return {extractedText:text.slice(0,MAX_DOCUMENT_CHARS)};
+        }
+
+        async function extractArchiveAttachment(file, kind='zip'){
+            const JSZip=await getJSZip();
+            const zip=await JSZip.loadAsync(await file.arrayBuffer());
+            const names=Object.keys(zip.files).filter(n=>!zip.files[n].dir);
+            const textNames=names.filter(n=>/\.(txt|md|csv|json|xml|html?|css|js|mjs|cjs|ts|tsx|jsx|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh|log)$/i.test(n));
+            let text=`${kind.toUpperCase()} archive: ${file.name}\nFiles: ${names.length}\nFile list:\n${names.slice(0,80).join('\n')}\n`;
+            for(const name of textNames.slice(0,30)){
+                if(text.length>=MAX_DOCUMENT_CHARS)break;
+                try{
+                    const value=await zip.file(name).async('text');
+                    text+=`\n\n--- ${name} ---\n${value}`;
+                }catch(_){}
+            }
+            return {extractedText:text.slice(0,MAX_DOCUMENT_CHARS)};
+        }
+
+        async function seekVideo(video,time){
+            return new Promise((resolve,reject)=>{
+                const done=()=>{cleanup();resolve();};
+                const fail=()=>{cleanup();reject(new Error('Video seek failed'));};
+                const cleanup=()=>{
+                    video.removeEventListener('seeked',done);
+                    video.removeEventListener('error',fail);
+                    clearTimeout(timer);
                 };
-                r.readAsDataURL(f);
+                const timer=setTimeout(fail,5000);
+                video.addEventListener('seeked',done,{once:true});
+                video.addEventListener('error',fail,{once:true});
+                try{video.currentTime=Math.max(0,Math.min(time,Math.max(0,(video.duration||0)-.05)));}catch(e){fail();}
             });
         }
 
-        function renderFilePreviews() {
-            const c = document.getElementById('filePreviewContainer');
-            c.innerHTML = '';
-            if (!selectedFilesData.length) { c.style.display = 'none'; return; }
-            c.style.display = 'flex';
-            selectedFilesData.forEach((f, i) => {
-                const el = document.createElement('div');
-                el.className = 'gemini-chip img-chip';
-                el.innerHTML = `<img src="${f.fullData}"><button class="chip-close-btn" onclick="selectedFilesData.splice(${i},1);renderFilePreviews();">✕</button>`;
+        async function extractVideoAttachment(file){
+            const url=URL.createObjectURL(file);
+            const video=document.createElement('video');
+            video.preload='metadata';video.muted=true;video.playsInline=true;
+            try{
+                video.src=url;
+                await new Promise((resolve,reject)=>{
+                    const timer=setTimeout(()=>reject(new Error('Video metadata timed out')),7000);
+                    video.onloadedmetadata=()=>{clearTimeout(timer);resolve();};
+                    video.onerror=()=>{clearTimeout(timer);reject(new Error('Video could not be read'));};
+                });
+
+                const duration=Number.isFinite(video.duration)?video.duration:0;
+                const vw=video.videoWidth||0,vh=video.videoHeight||0;
+                const ratios=duration<=2?[.5]:duration<=8?[.15,.5,.85]:[.10,.36,.64,.90];
+                const frames=[];
+
+                for(let i=0;i<Math.min(MAX_VIDEO_FRAMES,ratios.length);i++){
+                    const time=Math.max(0,duration*ratios[i]);
+                    try{
+                        await seekVideo(video,time);
+                        const maxDim=960;
+                        const scale=Math.min(1,maxDim/Math.max(vw||1,vh||1));
+                        const canvas=document.createElement('canvas');
+                        canvas.width=Math.max(1,Math.round((vw||640)*scale));
+                        canvas.height=Math.max(1,Math.round((vh||360)*scale));
+                        const ctx=canvas.getContext('2d',{alpha:false});
+                        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                        const fullData=canvasDataUrlWithin(canvas,150000,.64);
+                        frames.push({
+                            name:`${file.name} — frame ${i+1}`,
+                            mimeType:'image/jpeg',
+                            data:dataUrlBase64(fullData),
+                            fullData,
+                            mediaRole:'video-frame',
+                            frameTimeSeconds:Number(time.toFixed(2))
+                        });
+                    }catch(_){}
+                }
+
+                let nativeData='';
+                if(file.size<=MAX_VIDEO_NATIVE_BYTES){
+                    try{
+                        const full=await new Promise((resolve,reject)=>{
+                            const r=new FileReader();
+                            r.onload=()=>resolve(String(r.result||''));r.onerror=reject;r.readAsDataURL(file);
+                        });
+                        nativeData=dataUrlBase64(full);
+                    }catch(_){}
+                }
+
+                return {
+                    extractedText:
+                        `Video: ${file.name}\nDuration: ${duration.toFixed(2)} seconds\nResolution: ${vw}×${vh}\n` +
+                        `Visual sampling: ${frames.length} frame(s).` +
+                        (nativeData?'\nThe original small video is also attached for native multimodal analysis when the provider supports it.':'\nLarge video: visual frames are supplied; audio is not transcribed in this browser build.'),
+                    frames,
+                    nativeData,
+                    fullData:frames[0]?.fullData||'',
+                    duration,
+                    dimensions:`${vw}×${vh}`
+                };
+            }finally{
+                try{video.pause();}catch(_){}
+                video.removeAttribute('src');
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        async function processAttachmentFile(file, placeholder){
+            const kind=attachmentKind(file);
+            placeholder.kind=kind;
+            placeholder.status='processing';
+            placeholder.statusText='Reading…';
+            renderFilePreviews();
+
+            try{
+                let result={};
+                if(kind==='image') result=await compressImageAttachment(file);
+                else if(kind==='video') result=await extractVideoAttachment(file);
+                else if(kind==='pdf') result=await extractPdfAttachment(file);
+                else if(kind==='docx') result=await extractDocxAttachment(file);
+                else if(kind==='spreadsheet') result=await extractSpreadsheetAttachment(file);
+                else if(kind==='pptx') result=await extractPptxAttachment(file);
+                else if(kind==='zip'||kind==='epub') result=await extractArchiveAttachment(file,kind);
+                else if(kind==='rtf') result={extractedText:`RTF: ${file.name}\n${stripRtf(await file.text()).slice(0,MAX_DOCUMENT_CHARS)}`};
+                else if(kind==='text'){
+                    const rawText=await file.text();
+                    const isSource=/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(file.name||'');
+                    const limit=isSource?MAX_CODE_CHARS:MAX_DOCUMENT_CHARS;
+                    result={
+                        extractedText:rawText.slice(0,limit),
+                        extractionWarning:rawText.length>limit
+                            ? `File is larger than the current ${limit.toLocaleString()} character source-reading budget; later content was not included.`
+                            : ''
+                    };
+                }
+                else result={
+                    extractedText:`File: ${file.name}\nType: ${file.type||'unknown'}\nSize: ${humanFileSize(file.size)}\nThis binary file type does not have a text extractor in the browser build.`,
+                    extractionWarning:'No content extractor for this binary format.'
+                };
+
+                Object.assign(placeholder,result);
+                placeholder.mimeType=result.processedMimeType||file.type||'application/octet-stream';
+                placeholder.status=result.extractionWarning?'warning':'ready';
+                placeholder.statusText=result.extractionWarning?'Metadata only':'Ready';
+            }catch(err){
+                placeholder.status='error';
+                placeholder.statusText='Could not fully read';
+                placeholder.extractionError=String(err?.message||err).slice(0,220);
+                placeholder.extractedText=
+                    `File: ${file.name}\nType: ${file.type||'unknown'}\nSize: ${humanFileSize(file.size)}\nExtraction error: ${placeholder.extractionError}`;
+            }
+            renderFilePreviews();
+            return placeholder;
+        }
+
+        async function addSelectedFiles(fileList){
+            const incoming=Array.from(fileList||[]);
+            if(!incoming.length)return;
+
+            const remaining=Math.max(0,MAX_SELECTED_ATTACHMENTS-selectedFilesData.length);
+            const accepted=incoming.slice(0,remaining);
+            if(incoming.length>remaining){
+                showModernAlert(`Hanggang ${MAX_SELECTED_ATTACHMENTS} attachments muna bawat message.`, 'Attachments');
+            }
+
+            for(const file of accepted){
+                const duplicate=selectedFilesData.some(x=>x.name===file.name&&x.size===file.size&&x.lastModified===file.lastModified);
+                if(duplicate)continue;
+
+                const placeholder={
+                    id:attachmentId(),
+                    name:file.name,
+                    originalMimeType:file.type||'application/octet-stream',
+                    mimeType:file.type||'application/octet-stream',
+                    size:file.size,
+                    lastModified:file.lastModified,
+                    kind:attachmentKind(file),
+                    status:'processing',
+                    statusText:'Reading…',
+                    extractedText:'',
+                    frames:[],
+                    data:'',
+                    fullData:''
+                };
+                selectedFilesData.push(placeholder);
+                const job=processAttachmentFile(file,placeholder)
+                    .finally(()=>attachmentJobs.delete(placeholder.id));
+                attachmentJobs.set(placeholder.id,job);
+            }
+            renderFilePreviews();
+        }
+
+        async function handleFileSelect(e){
+            const files=e?.target?.files||[];
+            await addSelectedFiles(files);
+            if(e?.target)e.target.value='';
+        }
+
+        async function waitForAttachmentJobs(){
+            const jobs=[...attachmentJobs.values()];
+            if(jobs.length)await Promise.allSettled(jobs);
+        }
+
+        function removeAttachment(id){
+            const idx=selectedFilesData.findIndex(x=>x.id===id);
+            if(idx>=0)selectedFilesData.splice(idx,1);
+            renderFilePreviews();
+        }
+
+        function renderFilePreviews(){
+            const c=document.getElementById('filePreviewContainer');
+            if(!c)return;
+            c.innerHTML='';
+            if(!selectedFilesData.length){c.style.display='none';return;}
+            c.style.display='flex';
+
+            selectedFilesData.forEach(f=>{
+                const el=document.createElement('div');
+                el.className='attachment-chip';
+
+                const thumb=f.fullData
+                    ? `<img src="${escapeHTML(f.fullData)}" alt="">`
+                    : `<span aria-hidden="true">${attachmentIcon(f.kind)}</span>`;
+
+                const statusClass=f.status==='processing'?'processing':f.status==='warning'?'warning':f.status==='error'?'error':'';
+                const statusIcon=f.status==='processing'?'<span class="attachment-spinner"></span>':f.status==='error'?'!':f.status==='warning'?'!':'✓';
+
+                el.innerHTML=`
+                    <div class="attachment-thumb">${thumb}</div>
+                    <div class="attachment-info">
+                        <span class="attachment-name" title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</span>
+                        <span class="attachment-meta">${escapeHTML(String(f.kind||'file').toUpperCase())} • ${humanFileSize(f.size)}</span>
+                        <span class="attachment-status ${statusClass}">${statusIcon} ${escapeHTML(f.statusText||'Ready')}</span>
+                    </div>
+                    <button class="attachment-remove" type="button" aria-label="Remove ${escapeHTML(f.name)}" onclick="removeAttachment('${f.id}')">×</button>`;
                 c.appendChild(el);
             });
         }
+
+        function requestSafeAttachmentSummary(f){
+            return {
+                name:f.name,
+                mimeType:f.mimeType||f.originalMimeType||'application/octet-stream',
+                originalMimeType:f.originalMimeType||f.mimeType||'application/octet-stream',
+                size:f.size||0,
+                kind:f.kind||'file',
+                extractedText:String(f.extractedText||'').slice(
+                    0,
+                    /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(f.name||'')
+                        ? MAX_CODE_CHARS
+                        : MAX_DOCUMENT_CHARS
+                ),
+                extractionError:f.extractionError||'',
+                extractionWarning:f.extractionWarning||'',
+                pageCount:f.pageCount||null,
+                duration:f.duration||null,
+                dimensions:f.dimensions||''
+            };
+        }
+
+        function prepareAttachmentsForRequest(files=[]){
+            const requestFiles=[];
+            let base64Chars=0;
+
+            for(const f of files){
+                const base=requestSafeAttachmentSummary(f);
+
+                // Send compressed image binary when possible.
+                if(f.kind==='image' && f.data && base64Chars+f.data.length<=MAX_REQUEST_BASE64_CHARS){
+                    requestFiles.push({...base,data:f.data,mimeType:f.mimeType||'image/jpeg',mediaRole:'image'});
+                    base64Chars+=f.data.length;
+                }else{
+                    requestFiles.push(base);
+                }
+
+                // Tiny videos can be understood natively by Gemini when available.
+                if(f.kind==='video' && f.nativeData && base64Chars+f.nativeData.length<=MAX_REQUEST_BASE64_CHARS){
+                    requestFiles.push({
+                        name:f.name,
+                        parentName:f.name,
+                        mimeType:f.originalMimeType||'video/mp4',
+                        originalMimeType:f.originalMimeType||'video/mp4',
+                        size:f.size||0,
+                        kind:'video-native',
+                        mediaRole:'video-native',
+                        data:f.nativeData
+                    });
+                    base64Chars+=f.nativeData.length;
+                }
+
+                // Video frames and visual PDF pages.
+                for(const frame of (f.frames||[])){
+                    if(!frame?.data)continue;
+                    if(base64Chars+frame.data.length>MAX_REQUEST_BASE64_CHARS){
+                        base.extractedText += '\nSome visual samples were omitted to keep the request within the server upload limit.';
+                        break;
+                    }
+                    requestFiles.push({
+                        name:frame.name,
+                        parentName:f.name,
+                        mimeType:frame.mimeType||'image/jpeg',
+                        originalMimeType:f.originalMimeType||f.mimeType,
+                        size:0,
+                        kind:frame.mediaRole||'media-frame',
+                        mediaRole:frame.mediaRole||'media-frame',
+                        frameTimeSeconds:frame.frameTimeSeconds??null,
+                        pageNumber:frame.pageNumber??null,
+                        data:frame.data
+                    });
+                    base64Chars+=frame.data.length;
+                }
+            }
+
+            return requestFiles.slice(0,36);
+        }
+
+        function historySafeAttachments(files=[]){
+            return files
+                .filter(f=>!f.mediaRole || ['image','video-native'].includes(f.mediaRole))
+                .slice(0,MAX_SELECTED_ATTACHMENTS)
+                .map(f=>({
+                    name:f.name,
+                    mimeType:f.originalMimeType||f.mimeType,
+                    kind:f.kind,
+                    size:f.size||0,
+                    extractedText:String(f.extractedText||'').slice(0,24000)
+                }));
+        }
+
+        function userAttachmentHTML(files=[]){
+            let html='';
+            const pills=[];
+            for(const f of files){
+                if(f.kind==='image' && f.fullData){
+                    html+=`<div style="margin-top:7px"><img class="user-attachment-image" src="${escapeHTML(f.fullData)}" alt="${escapeHTML(f.name)}"></div>`;
+                }else if((f.kind==='video'||f.kind==='pdf') && f.fullData){
+                    html+=`<div style="margin-top:7px"><img class="user-attachment-image" src="${escapeHTML(f.fullData)}" alt="${escapeHTML(f.name)} preview"></div>`;
+                }
+                pills.push(`<span class="user-attachment-pill"><span>${attachmentIcon(f.kind)}</span><span title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</span></span>`);
+            }
+            if(pills.length)html+=`<div class="user-attachment-list">${pills.join('')}</div>`;
+            return html;
+        }
+
+        // Drag/drop support on the composer.
+        document.addEventListener('dragover',e=>{
+            if(!e.dataTransfer?.types?.includes('Files'))return;
+            e.preventDefault();
+            document.getElementById('inputContainer')?.classList.add('attachment-drop-active');
+        });
+        document.addEventListener('dragleave',e=>{
+            if(e.relatedTarget)return;
+            document.getElementById('inputContainer')?.classList.remove('attachment-drop-active');
+        });
+        document.addEventListener('drop',e=>{
+            if(!e.dataTransfer?.files?.length)return;
+            e.preventDefault();
+            document.getElementById('inputContainer')?.classList.remove('attachment-drop-active');
+            addSelectedFiles(e.dataTransfer.files);
+        });
+
+        // Pasted screenshots/images also become attachments.
+        document.addEventListener('paste',e=>{
+            const target=e.target;
+            if(!target || target.id!=='userInput')return;
+            const files=[...(e.clipboardData?.files||[])];
+            if(files.length)addSelectedFiles(files);
+        });
 
         function copyText(btn) {
             const text = btn.closest('.msg').querySelector('div').innerText;
@@ -6081,8 +7674,6 @@ ${m.text || ''}
             setTimeout(()=>refreshLucideIcons(),0); // global icon refresh
             const savedTheme = localStorage.getItem('jepong_theme') || '';
             setTheme(savedTheme);
-            updateUsageUI();
-            
             const savedModeName = localStorage.getItem('jepong_last_mode_name');
             const modeName = savedModeName || MODE_DISPLAY_NAMES[currentSelectedMode] || 'General AI';
             selectMode(currentSelectedMode, modeName);
@@ -6091,6 +7682,8 @@ ${m.text || ''}
             updateWebSearchUI();
             renderPersonalizationSettings();
             syncPersonalizationFeatureToggles();
+            setTimeout(()=>loadVoices(),250);
+            setTimeout(()=>loadVoices(),1200);
 
             measureNetworkPing();
             setInterval(measureNetworkPing, 8000);
