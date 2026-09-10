@@ -848,6 +848,42 @@ function cleanUpstreamError(raw='', status=500, provider='', model='') {
   return text.slice(0,700) || `${providerLabel(provider)} request failed with HTTP ${status}.`;
 }
 
+
+function safeClientTimeZone(value='') {
+  const candidate=String(value||'').trim().slice(0,100);
+  if(!candidate)return 'UTC';
+  try{
+    new Intl.DateTimeFormat('en-US',{timeZone:candidate}).format(new Date());
+    return candidate;
+  }catch(_){return 'UTC';}
+}
+
+function buildCurrentDateContext({clientTimeZone=''}={}) {
+  const now=new Date();
+  const timeZone=safeClientTimeZone(clientTimeZone);
+  let localText='';
+  let currentYear=now.getUTCFullYear();
+  try{
+    localText=new Intl.DateTimeFormat('en-US',{
+      timeZone,
+      weekday:'long',year:'numeric',month:'long',day:'numeric',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,
+      timeZoneName:'short'
+    }).format(now);
+    currentYear=Number(new Intl.DateTimeFormat('en-US',{timeZone,year:'numeric'}).format(now))||currentYear;
+  }catch(_){
+    localText=now.toISOString();
+  }
+  return `
+
+[CURRENT DATE/TIME CONTEXT]
+Server UTC: ${now.toISOString()}
+User time zone: ${timeZone}
+User-local date/time: ${localText}
+Current year: ${currentYear}
+Treat this server instant as authoritative for words such as today, now, current, this week, this month, and this year. If the user explicitly names a different year, answer for that requested year instead of silently substituting ${currentYear}. For claims that can change over time (news, prices, current office-holders, releases, availability, schedules, scores, outages, or service status), use live research context when available and do not present stale model knowledge as current fact.`;
+}
+
 function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='', history=[], files=[]) {
   let text =
     'You are JepongDevxyz AI, a capable general-purpose assistant created by Jepong Devxyz (Jay-Ar Lee Espiritu). ' +
@@ -927,7 +963,20 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
 
 function shouldAutoResearch(message=''){
   const t=normalizeIntentText(message);
-  return /\b(latest|current|currently|today|tonight|this week|this month|now|real[- ]?time|news|update|updated|price|presyo|weather|panahon|forecast|status|outage|release|released|version|available|availability|schedule|result|score|standing|search|research|verify online|check online|hanapin|maghanap|tingnan online|web|online|kasalukuyan|ngayon)\b/i.test(t);
+  const currentYear=new Date().getUTCFullYear();
+  const years=[...t.matchAll(/\b((?:19|20)\d{2})\b/g)].map(m=>Number(m[1]));
+  if(years.some(year=>year>=currentYear-1)) return true;
+  return /\b(latest|current|currently|today|tonight|this week|this month|this year|what year|anong taon|what date|anong petsa|now|real[- ]?time|news|update|updated|price|presyo|weather|panahon|forecast|status|outage|release|released|version|available|availability|schedule|result|score|standing|search|research|verify online|check online|hanapin|maghanap|tingnan online|web|online|kasalukuyan|ngayon)\b/i.test(t);
+}
+
+function buildLiveSearchQuery(message=''){
+  const raw=String(message||'').trim();
+  const t=normalizeIntentText(raw);
+  const currentYear=new Date().getUTCFullYear();
+  const hasExplicitYear=/\b(?:19|20)\d{2}\b/.test(t);
+  const needsFreshness=/\b(latest|current|currently|today|tonight|this week|this month|this year|now|news|update|updated|price|presyo|status|outage|release|released|available|availability|schedule|result|score|standing|kasalukuyan|ngayon)\b/i.test(t);
+  if(needsFreshness&&!hasExplicitYear) return `${raw} ${currentYear}`.trim();
+  return raw;
 }
 
 function shouldVerifyTask(message='', files=[]){
@@ -1046,9 +1095,42 @@ async function duckDuckGoHtmlSearch(query, emit){
   }
 }
 
-async function enrichSearchResults(results=[], emit){
+
+async function duckDuckGoInstantSearch(query='', emit){
+  activity(emit,'web-search-alt','Checking alternate live search source','running','web');
+  try{
+    const res=await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`,{
+      headers:{'Accept':'application/json','User-Agent':'JepongDevxyzAI/1.0'},
+      signal:AbortSignal.timeout(5500)
+    });
+    if(!res.ok)throw new Error(`Search HTTP ${res.status}`);
+    const d=await res.json();
+    const results=[];
+    const push=(title,url,snippet='')=>{
+      if(results.length>=5||!title||!isSafePublicUrl(url))return;
+      if(results.some(x=>x.url===url))return;
+      results.push({title:String(title).slice(0,180),url:String(url),snippet:String(snippet||'').slice(0,500)});
+    };
+    push(d.Heading||d.AbstractText,d.AbstractURL,d.AbstractText);
+    const walk=items=>{
+      for(const item of Array.isArray(items)?items:[]){
+        if(results.length>=5)break;
+        if(Array.isArray(item?.Topics)) walk(item.Topics);
+        else if(item?.FirstURL) push(item.Text||item.Result||'DuckDuckGo result',item.FirstURL,item.Text||'');
+      }
+    };
+    walk(d.RelatedTopics);
+    activity(emit,'web-search-alt',results.length?`Alternate search found ${results.length} result${results.length===1?'':'s'}`:'Alternate live search returned no usable results',results.length?'completed':'warning','web');
+    return results;
+  }catch(e){
+    activity(emit,'web-search-alt','Alternate live search was unavailable','warning','web',String(e?.message||e).slice(0,120));
+    return [];
+  }
+}
+
+async function enrichSearchResults(results=[], emit, maxSources=3){
   const enriched=[];
-  for(let i=0;i<Math.min(results.length,3);i++){
+  for(let i=0;i<Math.min(results.length,Math.max(0,maxSources));i++){
     const r=results[i];
     activity(emit,`web-source-${i}`,`Reading source ${i+1}: ${r.title.slice(0,62)}`,'running','web');
     try{
@@ -1680,11 +1762,19 @@ async function performVerification(message='', files=[], emit){
   return context;
 }
 
-async function getEnhancedLiveWebContext(message, webSearch, emit){
+async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   if(!message)return '';
 
   const wantsLive=Boolean(webSearch)||shouldAutoResearch(message);
   if(!wantsLive)return '';
+  const fast=Boolean(options.fast);
+  const searchQuery=buildLiveSearchQuery(message);
+
+  // Current date/year questions are answered from the authoritative server clock
+  // injected into the system context; no network round trip is needed.
+  if(/^(?:what(?:'s| is)? (?:the )?(?:date|year)|anong (?:petsa|taon)|ano ang (?:petsa|taon))(?:\s+ngayon|\s+today)?[?.!\s]*$/i.test(normalizeIntentText(message))){
+    return '';
+  }
 
   const isWeather=/(weather|panahon|ulan|init|bagyo|temperatura|forecast)/i.test(message);
   if(isWeather){
@@ -1693,7 +1783,7 @@ async function getEnhancedLiveWebContext(message, webSearch, emit){
       const match=message.match(/(?:sa|in|for|at)\s+([a-zA-Z\s,.-]+)/i);
       const location=(match?match[1].trim():'Guimba').slice(0,100);
       const res=await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`,{
-        headers:{'User-Agent':'JepongDevxyz-AI/1.0'},signal:AbortSignal.timeout(7000)
+        headers:{'User-Agent':'JepongDevxyz-AI/1.0'},signal:AbortSignal.timeout(fast?4500:7000)
       });
       if(res.ok){
         const d=await res.json();
@@ -1705,30 +1795,32 @@ async function getEnhancedLiveWebContext(message, webSearch, emit){
     }catch(_){}
   }
 
+  const sourcePages=fast?1:3;
   // Optional Brave Search API, if the owner configures it later.
   const braveKey=(process.env.BRAVE_SEARCH_API_KEY||'').trim();
   if(braveKey){
     activity(emit,'web-search','Searching live web with Brave Search','running','web');
     try{
-      const res=await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(message)}&count=5`,{
+      const res=await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQuery)}&count=${fast?3:5}`,{
         headers:{'Accept':'application/json','X-Subscription-Token':braveKey},
-        signal:AbortSignal.timeout(8000)
+        signal:AbortSignal.timeout(fast?5000:8000)
       });
       if(res.ok){
         const d=await res.json();
-        const basic=(d?.web?.results||[]).slice(0,5).map(x=>({
+        const basic=(d?.web?.results||[]).slice(0,fast?3:5).map(x=>({
           title:String(x.title||'').slice(0,180),
           url:String(x.url||''),
           snippet:stripHtml(String(x.description||'')).slice(0,500)
         })).filter(x=>x.title&&isSafePublicUrl(x.url));
         activity(emit,'web-search',`Searched ${basic.length} live web results`,'completed','web');
-        return buildLiveSourceContext(await enrichSearchResults(basic,emit));
+        if(basic.length) return buildLiveSourceContext(await enrichSearchResults(basic,emit,sourcePages));
       }
     }catch(_){}
   }
 
-  const results=await duckDuckGoHtmlSearch(message,emit);
-  return buildLiveSourceContext(await enrichSearchResults(results,emit));
+  let results=await duckDuckGoHtmlSearch(searchQuery,emit);
+  if(!results.length) results=await duckDuckGoInstantSearch(searchQuery,emit);
+  return buildLiveSourceContext(await enrichSearchResults(results,emit,sourcePages));
 }
 
 
@@ -2206,8 +2298,9 @@ function responseMeta(response) {
 }
 
 async function processChat(body, emit) {
-  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization} = body;
+  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone} = body;
   files=sanitizeIncomingAttachments(files);
+  const fastAnswers=Boolean(personalization?.fastAnswers);
   const startedAt=Date.now();
   const contextPlan=emitContextActivityStart(message,files,emit);
 
@@ -2241,11 +2334,12 @@ async function processChat(body, emit) {
   const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,message,provider,emit);
   const providedLinkContext=await inspectProvidedLinks(message,emit);
   const verificationContext=await performVerification(message,files,emit);
-  const liveWebContext=await getEnhancedLiveWebContext(message,webSearch,emit);
-  const combinedToolContext=`${attachmentSourceContext||''}${mediaAnalysisContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
+  const liveWebContext=await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
+  const currentDateContext=buildCurrentDateContext({clientTimeZone});
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
-  if(shouldUseQualityOrchestrator(message,files,mode)){
+  if(!fastAnswers && shouldUseQualityOrchestrator(message,files,mode)){
     activity(emit,'quality-orchestrator',`Preparing a deeper response for: ${contextPlan.profile.subject}`,'running','process');
     try{
       const briefPrompt=buildInternalTaskBriefPrompt(message,files);
@@ -2755,11 +2849,166 @@ async function cloudflareTTS(body={}){
 }
 
 
+
+const PET_IMAGE_MODEL='@cf/black-forest-labs/flux-1-schnell';
+const WEBSITE_PET_STYLE_GUIDE = 'Use the same overall mascot design language as the website pets like Luna and Mochi: a cute polished companion character, rounded silhouette, large expressive eyes, soft 3D/cartoon rendering, clean edges, appealing studio lighting, friendly face, and a charming app-mascot presentation.';
+const WEBSITE_PET_REFERENCE_GUIDES = {
+  Luna:'Cat-inspired mascot with a gentle, curious, supportive vibe and soft plush-like proportions.',
+  Kiro:'Dog-inspired mascot with a loyal, upbeat, playful vibe and friendly rounded proportions.',
+  Mochi:'Rabbit-inspired mascot with a calm, gentle, cozy vibe and soft rounded ears and plush proportions.',
+  Pixel:'Robot-inspired mascot with a cheerful smart vibe, cute tech details, and rounded futuristic shapes.',
+  Nova:'Black cat-inspired mascot with a cool mysterious vibe and elegant rounded proportions.',
+  Sunny:'Chick-inspired mascot with bright happy energy and a cute compact silhouette.',
+  Kumo:'Panda-inspired mascot with a chill relaxed vibe and cozy rounded proportions.',
+  Ace:'Fox-inspired mascot with a brave confident vibe and cute alert features.'
+};
+
+function buildPetImagePrompt(options={}){
+  const petName=String(options.name||'My Pet').trim().slice(0,60) || 'My Pet';
+  const userIdea=String(options.description||'a cute friendly companion pet').trim().slice(0,1000) || 'a cute friendly companion pet';
+  const matchSiteStyle = options.matchSiteStyle !== false;
+  const referencePet = String(options.referencePet||'').trim();
+  const parts = [
+    `Create one polished companion pet mascot. The pet name is ${petName}, but DO NOT render the name or any text in the image.`,
+    `USER VISUAL REQUEST — follow this as the source of truth: "${userIdea}".`,
+    'Match the requested species/creature, body colors, markings, eyes, horns, wings, ears, tail, clothing, accessories, mood, and other visible traits as closely as possible.',
+    'Interpret an obvious minor spelling typo naturally when context is clear, but do not replace requested visual traits with unrelated ones.'
+  ];
+  if(matchSiteStyle){
+    parts.push(WEBSITE_PET_STYLE_GUIDE);
+    if(referencePet && WEBSITE_PET_REFERENCE_GUIDES[referencePet]){
+      parts.push(`STYLE REFERENCE ONLY — use ${referencePet} only as a style anchor: ${WEBSITE_PET_REFERENCE_GUIDES[referencePet]} This influences rendering language and mascot proportions only. It must NOT override the species, colors, or visible traits requested by the user unless the user explicitly asks for them.`);
+    }
+  } else {
+    parts.push('If the user explicitly requests an art style, that style wins. Otherwise use a cute high-quality 3D animated app-mascot style that fits a friendly AI companion.');
+  }
+  parts.push('Single full-body pet, centered, clearly visible, square composition, clean simple background, soft studio lighting, no extra characters, no UI, no letters, no logo, no watermark.');
+  return parts.join(' ').slice(0,2600);
+}
+
+function bytesToBase64(bytes){
+  let binary='';
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk){
+    binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+  }
+  return btoa(binary);
+}
+
+function extractCloudflareImageBase64(payload){
+  if(!payload)return '';
+  const candidates=[
+    payload?.result?.image,
+    payload?.image,
+    payload?.result?.data?.[0]?.b64_json,
+    payload?.data?.[0]?.b64_json
+  ];
+  for(const value of candidates){
+    if(typeof value==='string'&&value.length>100)return value.replace(/^data:image\/[^;]+;base64,/i,'');
+  }
+  return '';
+}
+
+async function generatePetImage(body={},requestSignal=null){
+  const name=String(body.name||'').trim().slice(0,60) || 'My Pet';
+  const description=String(body.description||'').trim().slice(0,900) || 'a cute friendly companion pet';
+  const matchSiteStyle = body.matchSiteStyle !== false;
+  const referencePet = String(body.referencePet||'').trim();
+  const prompt=buildPetImagePrompt({name,description,matchSiteStyle,referencePet});
+  const seed=Math.floor(Math.random()*2147483000)+1;
+  const errors=[];
+
+  const accounts=shuffle(getCloudflareAccounts());
+  for(const account of accounts){
+    try{
+      const url=`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account.accountId)}/ai/run/${PET_IMAGE_MODEL}`;
+      const signal=requestSignal || AbortSignal.timeout(65000);
+      const res=await fetch(url,{
+        method:'POST',
+        headers:{
+          'Authorization':`Bearer ${account.apiToken}`,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({prompt,seed,steps:8}),
+        signal
+      });
+      if(res.ok){
+        const payload=await res.json().catch(()=>null);
+        const image=extractCloudflareImageBase64(payload);
+        if(image){
+          return json({
+            ok:true,
+            name,
+            description,
+            imageDataUrl:`data:image/jpeg;base64,${image}`,
+            provider:'Cloudflare Workers AI',
+            model:PET_IMAGE_MODEL,
+            referencePet,
+            matchSiteStyle
+          });
+        }
+        errors.push('Cloudflare returned no image data.');
+      }else{
+        errors.push(`Cloudflare HTTP ${res.status}: ${(await res.text().catch(()=>'' )).slice(0,220)}`);
+      }
+    }catch(e){
+      if(requestSignal?.aborted)return json({error:'Pet generation cancelled.',code:'cancelled'},499);
+      errors.push(`Cloudflare: ${String(e?.message||e).slice(0,220)}`);
+    }
+  }
+
+  const pollinationsKey=String(process.env.POLLINATIONS_API_KEY||'').trim();
+  if(pollinationsKey){
+    try{
+      const url=`https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&seed=${seed}`;
+      const res=await fetch(url,{
+        headers:{'Authorization':`Bearer ${pollinationsKey}`,'Accept':'image/*'},
+        signal:requestSignal || AbortSignal.timeout(65000)
+      });
+      if(res.ok){
+        const contentType=(res.headers.get('content-type')||'image/jpeg').split(';')[0];
+        const bytes=new Uint8Array(await res.arrayBuffer());
+        if(bytes.length){
+          return json({
+            ok:true,
+            name,
+            description,
+            imageDataUrl:`data:${contentType};base64,${bytesToBase64(bytes)}`,
+            provider:'Pollinations',
+            model:'flux',
+            referencePet,
+            matchSiteStyle
+          });
+        }
+      }else{
+        errors.push(`Pollinations HTTP ${res.status}: ${(await res.text().catch(()=>'' )).slice(0,220)}`);
+      }
+    }catch(e){
+      if(requestSignal?.aborted)return json({error:'Pet generation cancelled.',code:'cancelled'},499);
+      errors.push(`Pollinations: ${String(e?.message||e).slice(0,220)}`);
+    }
+  }
+
+  if(!accounts.length&&!pollinationsKey){
+    return json({
+      error:'No pet image generator is configured.',
+      detail:'Configure Cloudflare Workers AI credentials (CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN) or optional POLLINATIONS_API_KEY.'
+    },503);
+  }
+
+  return json({
+    error:'Pet image generation is temporarily unavailable.',
+    detail:errors.slice(0,3).join(' | ').slice(0,700)
+  },502);
+}
+
+
 export default async function handler(req){
   if(req.method==='HEAD')return new Response(null,{status:200});
   if(req.method!=='POST')return json({error:'Method not allowed'},405);
   try{
     const body=await req.json();
+    if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return cloudflareTTS(body);
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
     if(body.activityStream===true) return activityStreamResponse(body,req.signal);
