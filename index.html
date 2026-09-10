@@ -2410,6 +2410,975 @@
             .ps-choice-item small{font-size:.76rem!important}
         }
 
+    
+        /* ===== PET UI V3 — AUTHORITATIVE ===== */
+        #personalizationPetPage{
+            min-height:0!important;
+            overflow:hidden!important;
+            background:var(--modal-bg,#202020)!important;
+        }
+        #personalizationPetPage .ps-pet-toolbar{
+            position:sticky!important;
+            top:0!important;
+            z-index:20!important;
+            min-height:70px!important;
+            padding:14px 18px!important;
+            display:grid!important;
+            grid-template-columns:46px minmax(0,1fr) auto!important;
+            align-items:center!important;
+            gap:12px!important;
+            background:color-mix(in srgb,var(--modal-bg,#202020) 96%,transparent)!important;
+            border-bottom:1px solid rgba(148,163,184,.14)!important;
+            backdrop-filter:blur(18px)!important;
+            -webkit-backdrop-filter:blur(18px)!important;
+        }
+        #personalizationPetPage .ps-pet-toolbar h3{
+            margin:0!important;
+            min-width:0!important;
+            font-size:1.24rem!important;
+            line-height:1.15!important;
+            font-weight:700!important;
+            white-space:nowrap!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+        }
+        #personalizationPetPage .ps-pet-back,
+        #personalizationPetPage .ps-upload-btn{
+            align-self:center!important;
+        }
+        #personalizationPetPage .ps-pet-list{
+            min-height:0!important;
+            flex:1 1 auto!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            overscroll-behavior:contain!important;
+            -webkit-overflow-scrolling:touch!important;
+            scrollbar-gutter:stable!important;
+            padding:0 18px max(34px,env(safe-area-inset-bottom))!important;
+        }
+        #personalizationPetPage .ps-pet-list > *{
+            width:min(100%,780px)!important;
+            margin-left:auto!important;
+            margin-right:auto!important;
+            box-sizing:border-box!important;
+        }
+        #personalizationPetPage .ps-pet-hero{
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) auto!important;
+            gap:16px!important;
+            align-items:center!important;
+            padding:22px 0 18px!important;
+        }
+        #personalizationPetPage .ps-pet-hero-copy strong{
+            font-size:1.08rem!important;
+            line-height:1.28!important;
+            font-weight:750!important;
+        }
+        #personalizationPetPage .ps-pet-hero-copy small{
+            margin-top:6px!important;
+            font-size:.80rem!important;
+            line-height:1.45!important;
+            max-width:570px!important;
+        }
+        #personalizationPetPage .ps-pet-grid{
+            display:grid!important;
+            grid-template-columns:repeat(3,minmax(0,1fr))!important;
+            grid-auto-rows:1fr!important;
+            gap:12px!important;
+            padding:0!important;
+            align-items:stretch!important;
+        }
+        #personalizationPetPage .ps-pet-card{
+            position:relative!important;
+            width:100%!important;
+            min-width:0!important;
+            min-height:168px!important;
+            height:100%!important;
+            padding:13px 10px 12px!important;
+            display:grid!important;
+            grid-template-rows:92px auto minmax(36px,auto)!important;
+            align-content:start!important;
+            align-items:start!important;
+            justify-items:center!important;
+            gap:4px!important;
+            border:1px solid rgba(148,163,184,.18)!important;
+            border-radius:18px!important;
+            background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.018))!important;
+            color:var(--text-main)!important;
+            text-align:center!important;
+            overflow:hidden!important;
+            box-shadow:none!important;
+            transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease!important;
+        }
+        #personalizationPetPage .ps-pet-card:hover,
+        #personalizationPetPage .ps-pet-card:active{
+            transform:translateY(-2px)!important;
+            border-color:rgba(139,92,246,.42)!important;
+            background:linear-gradient(180deg,rgba(139,92,246,.10),rgba(139,92,246,.035))!important;
+        }
+        #personalizationPetPage .ps-pet-card.selected{
+            border-color:#8b5cf6!important;
+            background:linear-gradient(180deg,rgba(139,92,246,.18),rgba(99,102,241,.055))!important;
+            box-shadow:0 0 0 1px rgba(139,92,246,.30),0 12px 28px rgba(76,29,149,.16)!important;
+        }
+        #personalizationPetPage .ps-pet-card-visual{
+            width:92px!important;
+            height:92px!important;
+            margin:0!important;
+            display:grid!important;
+            place-items:center!important;
+            align-self:center!important;
+            border-radius:22px!important;
+            background:radial-gradient(circle at 38% 20%,rgba(255,255,255,.10),rgba(99,102,241,.055) 52%,transparent 75%)!important;
+            font-size:62px!important;
+            line-height:1!important;
+            filter:none!important;
+            transform:none!important;
+            overflow:hidden!important;
+        }
+        #personalizationPetPage .ps-pet-card:hover .ps-pet-card-visual{transform:scale(1.035)!important}
+        #personalizationPetPage .ps-pet-card-visual img{
+            width:88px!important;
+            height:88px!important;
+            max-width:100%!important;
+            max-height:100%!important;
+            object-fit:contain!important;
+            border-radius:0!important;
+            filter:drop-shadow(0 7px 10px rgba(0,0,0,.28))!important;
+        }
+        #personalizationPetPage .ps-pet-card-name{
+            width:100%!important;
+            margin:4px 0 0!important;
+            font-size:.86rem!important;
+            line-height:1.25!important;
+            font-weight:760!important;
+            white-space:nowrap!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+        }
+        #personalizationPetPage .ps-pet-card-desc{
+            width:100%!important;
+            min-height:36px!important;
+            margin:1px 0 0!important;
+            display:-webkit-box!important;
+            -webkit-line-clamp:2!important;
+            -webkit-box-orient:vertical!important;
+            overflow:hidden!important;
+            font-size:.65rem!important;
+            line-height:1.36!important;
+            color:var(--text-muted)!important;
+        }
+        #personalizationPetPage .ps-pet-check{
+            top:9px!important;
+            right:9px!important;
+            width:24px!important;
+            height:24px!important;
+            z-index:4!important;
+        }
+        #personalizationPetPage .ps-pet-action-grid{
+            display:grid!important;
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+            gap:12px!important;
+            margin:16px auto 0!important;
+            padding:0!important;
+        }
+        #personalizationPetPage .ps-pet-action-card{
+            min-width:0!important;
+            min-height:78px!important;
+            padding:13px 14px!important;
+            display:grid!important;
+            grid-template-columns:44px minmax(0,1fr)!important;
+            align-items:center!important;
+            gap:12px!important;
+            border:1px solid rgba(148,163,184,.18)!important;
+            border-radius:17px!important;
+            background:rgba(255,255,255,.025)!important;
+            color:var(--text-main)!important;
+            text-align:left!important;
+            overflow:hidden!important;
+        }
+        #personalizationPetPage .ps-pet-action-card > span:last-child{min-width:0!important}
+        #personalizationPetPage .ps-pet-action-card strong{
+            display:block!important;
+            font-size:.82rem!important;
+            line-height:1.3!important;
+            white-space:normal!important;
+        }
+        #personalizationPetPage .ps-pet-action-card small{
+            display:block!important;
+            margin-top:3px!important;
+            font-size:.67rem!important;
+            line-height:1.35!important;
+            white-space:normal!important;
+        }
+        #personalizationPetPage .ps-pet-action-icon{
+            width:44px!important;
+            height:44px!important;
+            flex:0 0 44px!important;
+            border-radius:13px!important;
+        }
+
+        /* AI creator is an inline, non-overlapping panel. */
+        #personalizationPetPage [hidden]{display:none!important}
+        #personalizationPetPage .ps-ai-pet-creator{
+            display:none!important;
+            margin:14px auto 0!important;
+            padding:0!important;
+            border:1px solid rgba(139,92,246,.30)!important;
+            border-radius:20px!important;
+            background:linear-gradient(180deg,rgba(139,92,246,.085),rgba(255,255,255,.018))!important;
+            box-shadow:0 14px 34px rgba(0,0,0,.14)!important;
+            overflow:hidden!important;
+        }
+        #personalizationPetPage .ps-ai-pet-creator.open{
+            display:block!important;
+            animation:psAiPetOpen .18s cubic-bezier(.2,.78,.25,1)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-head{
+            min-width:0!important;
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) 36px!important;
+            align-items:start!important;
+            gap:12px!important;
+            padding:16px 16px 14px!important;
+            border-bottom:1px solid rgba(148,163,184,.12)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-head-copy{min-width:0!important}
+        #personalizationPetPage .ps-ai-pet-kicker{
+            display:block!important;
+            margin-bottom:6px!important;
+            color:#a78bfa!important;
+            font-size:.61rem!important;
+            line-height:1!important;
+            font-weight:850!important;
+            letter-spacing:.10em!important;
+        }
+        #personalizationPetPage .ps-ai-pet-head strong{
+            display:block!important;
+            font-size:.94rem!important;
+            line-height:1.32!important;
+        }
+        #personalizationPetPage .ps-ai-pet-head small{
+            display:block!important;
+            margin-top:5px!important;
+            color:var(--text-muted)!important;
+            font-size:.69rem!important;
+            line-height:1.45!important;
+        }
+        #personalizationPetPage .ps-ai-pet-close{
+            width:36px!important;
+            height:36px!important;
+            display:grid!important;
+            place-items:center!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:11px!important;
+            background:rgba(255,255,255,.035)!important;
+            color:var(--text-muted)!important;
+            cursor:pointer!important;
+        }
+        #personalizationPetPage .ps-ai-pet-body{
+            display:grid!important;
+            grid-template-columns:220px minmax(0,1fr)!important;
+            gap:16px!important;
+            padding:16px!important;
+            min-width:0!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview{
+            min-width:0!important;
+            align-self:start!important;
+            padding:12px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:16px!important;
+            background:rgba(15,23,42,.16)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-visual{
+            position:relative!important;
+            width:100%!important;
+            aspect-ratio:1/1!important;
+            display:grid!important;
+            place-items:center!important;
+            overflow:hidden!important;
+            border-radius:15px!important;
+            background:radial-gradient(circle at 35% 25%,rgba(167,139,250,.20),rgba(30,41,59,.24) 58%,rgba(15,23,42,.36))!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-placeholder{
+            width:58px!important;
+            height:58px!important;
+            display:grid!important;
+            place-items:center!important;
+            border-radius:18px!important;
+            background:rgba(139,92,246,.13)!important;
+            color:#a78bfa!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-placeholder.generating{
+            animation:psAiPetPulse 1.1s ease-in-out infinite!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-visual img{
+            width:100%!important;
+            height:100%!important;
+            display:block!important;
+            object-fit:cover!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-copy{padding:11px 3px 1px!important}
+        #personalizationPetPage .ps-ai-pet-preview-copy strong{
+            display:block!important;
+            font-size:.84rem!important;
+            line-height:1.3!important;
+            white-space:nowrap!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-copy small{
+            display:-webkit-box!important;
+            -webkit-line-clamp:3!important;
+            -webkit-box-orient:vertical!important;
+            overflow:hidden!important;
+            min-height:2.8em!important;
+            margin-top:4px!important;
+            color:var(--text-muted)!important;
+            font-size:.65rem!important;
+            line-height:1.4!important;
+        }
+        #personalizationPetPage .ps-ai-pet-status{
+            display:inline-flex!important;
+            align-items:center!important;
+            gap:6px!important;
+            max-width:100%!important;
+            margin-top:9px!important;
+            color:var(--text-muted)!important;
+            font-size:.61rem!important;
+            line-height:1.3!important;
+        }
+        #personalizationPetPage .ps-ai-pet-status-dot{
+            width:7px!important;
+            height:7px!important;
+            flex:0 0 7px!important;
+            border-radius:50%!important;
+            background:#64748b!important;
+        }
+        #personalizationPetPage .ps-ai-pet-status[data-state="working"] .ps-ai-pet-status-dot{background:#a78bfa!important;box-shadow:0 0 0 4px rgba(167,139,250,.10)!important}
+        #personalizationPetPage .ps-ai-pet-status[data-state="ready"] .ps-ai-pet-status-dot{background:#34d399!important}
+        #personalizationPetPage .ps-ai-pet-status[data-state="error"] .ps-ai-pet-status-dot{background:#f87171!important}
+        #personalizationPetPage .ps-ai-pet-form{min-width:0!important}
+        #personalizationPetPage .ps-ai-pet-field{
+            display:block!important;
+            min-width:0!important;
+            margin:0 0 12px!important;
+        }
+        #personalizationPetPage .ps-ai-pet-field > span{
+            display:flex!important;
+            align-items:center!important;
+            gap:6px!important;
+            margin-bottom:6px!important;
+            font-size:.70rem!important;
+            font-weight:720!important;
+        }
+        #personalizationPetPage .ps-ai-pet-field > span small{
+            color:var(--text-muted)!important;
+            font-size:.59rem!important;
+            font-weight:500!important;
+        }
+        #personalizationPetPage .ps-ai-pet-field input,
+        #personalizationPetPage .ps-ai-pet-field textarea{
+            width:100%!important;
+            min-width:0!important;
+            box-sizing:border-box!important;
+            margin:0!important;
+            border:1px solid rgba(148,163,184,.22)!important;
+            border-radius:13px!important;
+            outline:0!important;
+            background:rgba(15,23,42,.16)!important;
+            color:var(--text-main)!important;
+            font:inherit!important;
+            font-size:.76rem!important;
+            line-height:1.45!important;
+            transition:border-color .15s ease,box-shadow .15s ease,background .15s ease!important;
+        }
+        #personalizationPetPage .ps-ai-pet-field input{height:44px!important;padding:0 12px!important}
+        #personalizationPetPage .ps-ai-pet-field textarea{min-height:116px!important;max-height:220px!important;padding:11px 12px!important;resize:vertical!important}
+        #personalizationPetPage .ps-ai-pet-field input:focus,
+        #personalizationPetPage .ps-ai-pet-field textarea:focus{
+            border-color:rgba(139,92,246,.62)!important;
+            box-shadow:0 0 0 3px rgba(139,92,246,.11)!important;
+            background:rgba(139,92,246,.035)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-hint{
+            display:grid!important;
+            grid-template-columns:16px minmax(0,1fr)!important;
+            gap:7px!important;
+            align-items:start!important;
+            margin-top:2px!important;
+            color:var(--text-muted)!important;
+            font-size:.62rem!important;
+            line-height:1.4!important;
+        }
+        #personalizationPetPage .ps-ai-pet-hint svg{width:15px!important;height:15px!important;margin-top:1px!important}
+        #personalizationPetPage .ps-ai-pet-actions{
+            display:flex!important;
+            flex-wrap:wrap!important;
+            align-items:center!important;
+            gap:9px!important;
+            margin-top:14px!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate,
+        #personalizationPetPage .ps-ai-pet-cancel{
+            min-height:42px!important;
+            margin:0!important;
+            padding:0 15px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            justify-content:center!important;
+            gap:8px!important;
+            border-radius:13px!important;
+            font-size:.72rem!important;
+            font-weight:760!important;
+            cursor:pointer!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate{
+            border:0!important;
+            background:linear-gradient(135deg,#7c3aed,#8b5cf6)!important;
+            color:#fff!important;
+            box-shadow:0 8px 18px rgba(124,58,237,.22)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-cancel{
+            border:1px solid rgba(148,163,184,.20)!important;
+            background:rgba(255,255,255,.035)!important;
+            color:var(--text-main)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate:disabled{opacity:.64!important;cursor:wait!important}
+        @keyframes psAiPetOpen{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+        @keyframes psAiPetPulse{0%,100%{transform:scale(.96);opacity:.62}50%{transform:scale(1.04);opacity:1}}
+
+        body.theme-light #personalizationPetPage .ps-pet-card,
+        body.theme-light #personalizationPetPage .ps-pet-action-card,
+        body.theme-light #personalizationPetPage .ps-ai-pet-creator,
+        body.theme-light #personalizationPetPage .ps-ai-pet-preview,
+        body.theme-light #personalizationPetPage .ps-ai-pet-field input,
+        body.theme-light #personalizationPetPage .ps-ai-pet-field textarea{
+            background:rgba(15,23,42,.018)!important;
+        }
+
+        @media(max-width:679px){
+            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+            #personalizationPetPage .ps-pet-card{min-height:164px!important;padding-left:8px!important;padding-right:8px!important}
+            #personalizationPetPage .ps-pet-action-grid{grid-template-columns:1fr!important;gap:10px!important}
+            #personalizationPetPage .ps-ai-pet-body{grid-template-columns:1fr!important;gap:13px!important}
+            #personalizationPetPage .ps-ai-pet-preview{display:grid!important;grid-template-columns:108px minmax(0,1fr)!important;gap:12px!important;align-items:center!important}
+            #personalizationPetPage .ps-ai-pet-preview-visual{width:108px!important;height:108px!important;aspect-ratio:auto!important}
+            #personalizationPetPage .ps-ai-pet-preview-copy{padding:0!important;min-width:0!important}
+        }
+        @media(max-width:430px){
+            #personalizationPetPage .ps-pet-toolbar{grid-template-columns:42px minmax(0,1fr) 42px!important;padding:12px 14px!important}
+            #personalizationPetPage .ps-upload-btn{width:42px!important;height:42px!important;padding:0!important;display:grid!important;place-items:center!important}
+            #personalizationPetPage .ps-upload-btn span{display:none!important}
+            #personalizationPetPage .ps-pet-list{padding-left:14px!important;padding-right:14px!important}
+            #personalizationPetPage .ps-pet-hero{padding-top:18px!important;gap:10px!important}
+            #personalizationPetPage .ps-pet-card-visual{width:82px!important;height:82px!important;font-size:56px!important}
+            #personalizationPetPage .ps-pet-card-visual img{width:80px!important;height:80px!important}
+            #personalizationPetPage .ps-pet-card{grid-template-rows:84px auto minmax(36px,auto)!important;min-height:158px!important}
+            #personalizationPetPage .ps-ai-pet-head{padding:14px!important}
+            #personalizationPetPage .ps-ai-pet-body{padding:14px!important}
+            #personalizationPetPage .ps-ai-pet-preview{grid-template-columns:94px minmax(0,1fr)!important;padding:10px!important}
+            #personalizationPetPage .ps-ai-pet-preview-visual{width:94px!important;height:94px!important}
+        }
+
+    
+        /* ==== Pet creator + pet grid cleanup ==== */
+        #personalizationPetPage .ps-pet-grid{
+            display:grid!important;
+            grid-template-columns:repeat(4,minmax(0,1fr))!important;
+            gap:14px!important;
+            align-items:stretch!important;
+            padding:6px 0 18px!important;
+        }
+        #personalizationPetPage .ps-pet-card{
+            min-height:174px!important;
+            height:100%!important;
+            display:flex!important;
+            flex-direction:column!important;
+            align-items:center!important;
+            justify-content:flex-start!important;
+            gap:0!important;
+            padding:14px 10px 12px!important;
+            border-radius:20px!important;
+            overflow:hidden!important;
+        }
+        #personalizationPetPage .ps-pet-card-visual{
+            width:84px!important;
+            height:84px!important;
+            flex:0 0 84px!important;
+            margin:0 auto 10px!important;
+            border-radius:24px!important;
+            box-shadow:0 10px 30px rgba(15,23,42,.18)!important;
+            background:radial-gradient(circle at 35% 20%, rgba(255,255,255,.22), rgba(129,140,248,.14) 46%, rgba(15,23,42,.18))!important;
+        }
+        #personalizationPetPage .ps-pet-card-name{
+            width:100%!important;
+            margin-top:2px!important;
+            text-align:center!important;
+            font-size:.9rem!important;
+            line-height:1.25!important;
+        }
+        #personalizationPetPage .ps-pet-card-desc{
+            width:100%!important;
+            text-align:center!important;
+            margin-top:6px!important;
+            min-height:2.8em!important;
+            display:-webkit-box!important;
+            -webkit-line-clamp:2!important;
+            -webkit-box-orient:vertical!important;
+            overflow:hidden!important;
+            font-size:.68rem!important;
+            line-height:1.38!important;
+        }
+        #personalizationPetPage .ps-pet-action-grid{
+            display:grid!important;
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+            gap:12px!important;
+            margin:2px 0 16px!important;
+        }
+        #personalizationPetPage .ps-pet-action-card{
+            min-height:84px!important;
+            display:flex!important;
+            align-items:center!important;
+            gap:12px!important;
+            padding:14px!important;
+            border-radius:18px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025))!important;
+            box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
+            text-align:left!important;
+        }
+        #personalizationPetPage .ps-pet-action-card strong,
+        #personalizationPetPage .ps-pet-action-card small{
+            display:block!important;
+        }
+        #personalizationPetPage .ps-pet-action-card small{
+            margin-top:4px!important;
+            line-height:1.4!important;
+        }
+        #personalizationPetPage .ps-ai-pet-creator{
+            border-radius:22px!important;
+            overflow:hidden!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:linear-gradient(180deg, rgba(15,23,42,.48), rgba(2,6,23,.36))!important;
+            box-shadow:0 16px 40px rgba(2,6,23,.22)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-body{
+            grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important;
+            gap:18px!important;
+            align-items:start!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview{
+            position:sticky!important;
+            top:0!important;
+            min-height:320px!important;
+            display:flex!important;
+            flex-direction:column!important;
+            justify-content:flex-start!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-copy{padding:12px 2px 2px!important}
+        #personalizationPetPage .ps-ai-pet-meta-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-top:8px!important}
+        #personalizationPetPage .ps-ai-pet-style-pill{
+            display:inline-flex!important;
+            align-items:center!important;
+            gap:7px!important;
+            max-width:100%!important;
+            padding:7px 10px!important;
+            border-radius:999px!important;
+            background:rgba(99,102,241,.14)!important;
+            border:1px solid rgba(129,140,248,.24)!important;
+            color:#dbe4ff!important;
+            font-size:.64rem!important;
+            line-height:1.25!important;
+        }
+        #personalizationPetPage .ps-ai-pet-style-pill i{width:14px!important;height:14px!important;flex:0 0 14px!important}
+        #personalizationPetPage .ps-ai-pet-setting-row{
+            display:flex!important;
+            align-items:center!important;
+            justify-content:space-between!important;
+            gap:12px!important;
+            padding:12px 14px!important;
+            margin:2px 0 12px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:16px!important;
+            background:rgba(255,255,255,.03)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-setting-copy{min-width:0!important}
+        #personalizationPetPage .ps-ai-pet-setting-copy strong{display:block!important;font-size:.79rem!important;line-height:1.25!important}
+        #personalizationPetPage .ps-ai-pet-setting-copy small{display:block!important;margin-top:4px!important;color:var(--text-muted)!important;font-size:.64rem!important;line-height:1.38!important}
+        #personalizationPetPage .ps-ai-pet-reference-wrap{
+            display:block!important;
+            min-width:0!important;
+            margin:0 0 12px!important;
+            padding:12px 14px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:16px!important;
+            background:rgba(255,255,255,.03)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-reference-wrap[hidden]{display:none!important}
+        #personalizationPetPage .ps-ai-pet-option-label{display:block!important;font-size:.7rem!important;font-weight:800!important;letter-spacing:.04em!important;margin-bottom:9px!important;color:#cbd5e1!important}
+        #personalizationPetPage .ps-ai-pet-reference-chips{
+            display:flex!important;
+            flex-wrap:wrap!important;
+            gap:8px!important;
+            min-width:0!important;
+        }
+        #personalizationPetPage .ps-ai-pet-ref-chip{
+            appearance:none!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:rgba(15,23,42,.22)!important;
+            color:var(--text-main)!important;
+            border-radius:999px!important;
+            padding:8px 11px!important;
+            min-height:36px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            gap:7px!important;
+            cursor:pointer!important;
+            font-size:.69rem!important;
+            font-weight:700!important;
+            line-height:1!important;
+            transition:.16s ease!important;
+        }
+        #personalizationPetPage .ps-ai-pet-ref-chip:hover{transform:translateY(-1px)!important;border-color:rgba(129,140,248,.34)!important;background:rgba(99,102,241,.08)!important}
+        #personalizationPetPage .ps-ai-pet-ref-chip.active{border-color:#8b5cf6!important;background:rgba(139,92,246,.18)!important;box-shadow:0 0 0 1px rgba(139,92,246,.28)!important;color:#f4f0ff!important}
+        #personalizationPetPage .ps-ai-pet-ref-chip span.emoji{font-size:.92rem!important;line-height:1!important}
+        #personalizationPetPage .ps-ai-pet-reference-help{display:block!important;margin-top:10px!important;color:var(--text-muted)!important;font-size:.63rem!important;line-height:1.42!important}
+        #personalizationPetPage .ps-ai-pet-actions{
+            display:flex!important;
+            flex-wrap:wrap!important;
+            gap:10px!important;
+            align-items:center!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate,
+        #personalizationPetPage .ps-ai-pet-secondary,
+        #personalizationPetPage .ps-ai-pet-cancel{
+            min-width:0!important;
+            min-height:44px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            justify-content:center!important;
+            gap:8px!important;
+            padding:0 14px!important;
+            border-radius:14px!important;
+            border:1px solid rgba(148,163,184,.18)!important;
+            font-size:.75rem!important;
+            font-weight:800!important;
+            cursor:pointer!important;
+            transition:.16s ease!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate{background:linear-gradient(135deg,#8b5cf6,#6366f1)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 12px 24px rgba(99,102,241,.24)!important}
+        #personalizationPetPage .ps-ai-pet-secondary{background:rgba(255,255,255,.045)!important;color:var(--text-main)!important}
+        #personalizationPetPage .ps-ai-pet-secondary:disabled{opacity:.52!important;cursor:not-allowed!important}
+        #personalizationPetPage .ps-ai-pet-cancel{background:rgba(239,68,68,.11)!important;color:#fecaca!important;border-color:rgba(248,113,113,.18)!important}
+        #personalizationPetPage .ps-ai-pet-generate:hover,
+        #personalizationPetPage .ps-ai-pet-secondary:hover,
+        #personalizationPetPage .ps-ai-pet-cancel:hover{transform:translateY(-1px)!important}
+        @media (max-width: 980px){
+            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+            #personalizationPetPage .ps-ai-pet-body{grid-template-columns:1fr!important}
+            #personalizationPetPage .ps-ai-pet-preview{position:relative!important;top:auto!important;min-height:unset!important}
+        }
+        @media (max-width: 720px){
+            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+            #personalizationPetPage .ps-pet-action-grid{grid-template-columns:1fr!important}
+            #personalizationPetPage .ps-ai-pet-setting-row{align-items:flex-start!important}
+            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 calc(50% - 5px)!important}
+        }
+        @media (max-width: 540px){
+            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 100%!important}
+            #personalizationPetPage .ps-pet-card{min-height:164px!important}
+            #personalizationPetPage .ps-pet-card-visual{width:78px!important;height:78px!important}
+        }
+
+    
+
+        /* ===== PET SETTINGS REFERENCE UI v2 ===== */
+        #personalizationPetPage{
+            background:
+                radial-gradient(circle at 12% 0%,rgba(99,102,241,.10),transparent 31%),
+                linear-gradient(180deg,#0d1424 0%,#111a2d 100%)!important;
+        }
+        body.theme-light #personalizationPetPage{
+            background:linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%)!important;
+        }
+
+        /* Large, balanced header like the approved visual reference. */
+        #personalizationPetPage .ps-pet-toolbar{
+            min-height:92px!important;
+            display:grid!important;
+            grid-template-columns:58px minmax(0,1fr) 58px!important;
+            align-items:center!important;
+            gap:16px!important;
+            padding:16px 20px!important;
+            background:rgba(17,26,45,.94)!important;
+            border-bottom:1px solid rgba(148,163,184,.16)!important;
+            backdrop-filter:blur(18px)!important;
+            -webkit-backdrop-filter:blur(18px)!important;
+        }
+        body.theme-light #personalizationPetPage .ps-pet-toolbar{background:rgba(248,250,252,.95)!important}
+        #personalizationPetPage .ps-pet-toolbar h3{
+            margin:0!important;
+            min-width:0!important;
+            color:var(--text-main)!important;
+            font-size:1.62rem!important;
+            line-height:1.1!important;
+            font-weight:780!important;
+            letter-spacing:-.035em!important;
+            white-space:nowrap!important;
+            overflow:hidden!important;
+            text-overflow:ellipsis!important;
+        }
+        #personalizationPetPage .ps-pet-back,
+        #personalizationPetPage .ps-upload-btn{
+            width:58px!important;
+            height:58px!important;
+            min-width:58px!important;
+            padding:0!important;
+            display:grid!important;
+            place-items:center!important;
+            border:1px solid rgba(148,163,184,.24)!important;
+            border-radius:19px!important;
+            background:rgba(255,255,255,.035)!important;
+            color:var(--text-main)!important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+        }
+        #personalizationPetPage .ps-pet-back svg,
+        #personalizationPetPage .ps-upload-btn svg{width:27px!important;height:27px!important;stroke-width:2.1!important}
+        #personalizationPetPage .ps-upload-btn span{display:none!important}
+
+        #personalizationPetPage .ps-pet-list{
+            display:flex!important;
+            flex-direction:column!important;
+            gap:16px!important;
+            padding:20px 18px max(34px,env(safe-area-inset-bottom))!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+        }
+        #personalizationPetPage .ps-pet-list > *{
+            width:min(100%,780px)!important;
+            margin-left:auto!important;
+            margin-right:auto!important;
+            box-sizing:border-box!important;
+        }
+
+        /* Top "Choose your companion" card. */
+        #personalizationPetPage .ps-pet-hero{
+            min-height:158px!important;
+            margin:0!important;
+            padding:26px 24px!important;
+            display:grid!important;
+            grid-template-columns:minmax(0,1fr) auto!important;
+            align-items:center!important;
+            gap:20px!important;
+            border:1px solid rgba(148,163,184,.18)!important;
+            border-radius:26px!important;
+            background:linear-gradient(145deg,rgba(30,41,65,.78),rgba(17,26,45,.72))!important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 14px 36px rgba(2,6,23,.14)!important;
+        }
+        body.theme-light #personalizationPetPage .ps-pet-hero,
+        body.theme-light #personalizationPetPage .ps-pet-behavior-row{
+            background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,250,252,.96))!important;
+            box-shadow:0 10px 28px rgba(15,23,42,.06)!important;
+        }
+        #personalizationPetPage .ps-pet-hero-copy{min-width:0!important}
+        #personalizationPetPage .ps-pet-hero-copy strong{
+            display:block!important;
+            margin:0!important;
+            color:var(--text-main)!important;
+            font-size:1.42rem!important;
+            line-height:1.22!important;
+            font-weight:790!important;
+            letter-spacing:-.028em!important;
+        }
+        #personalizationPetPage .ps-pet-hero-copy small{
+            display:block!important;
+            max-width:560px!important;
+            margin-top:10px!important;
+            color:#9aaacf!important;
+            font-size:.94rem!important;
+            line-height:1.55!important;
+            overflow-wrap:anywhere!important;
+        }
+        body.theme-light #personalizationPetPage .ps-pet-hero-copy small,
+        body.theme-light #personalizationPetPage .ps-pet-behavior-copy small{color:var(--text-muted)!important}
+
+        /* Drag/Falling cards: icon | copy | toggle, never overlapping. */
+        #personalizationPetPage .ps-pet-behavior-grid{
+            width:100%!important;
+            display:grid!important;
+            grid-template-columns:1fr!important;
+            gap:16px!important;
+            margin:0!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-row{
+            min-height:158px!important;
+            width:100%!important;
+            min-width:0!important;
+            display:grid!important;
+            grid-template-columns:56px minmax(0,1fr) auto!important;
+            align-items:center!important;
+            gap:20px!important;
+            padding:24px!important;
+            border:1px solid rgba(148,163,184,.18)!important;
+            border-radius:26px!important;
+            background:linear-gradient(145deg,rgba(30,41,65,.78),rgba(17,26,45,.72))!important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 14px 36px rgba(2,6,23,.14)!important;
+            overflow:hidden!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-icon{
+            width:56px!important;
+            height:56px!important;
+            display:grid!important;
+            place-items:center!important;
+            align-self:center!important;
+            border:1px solid rgba(129,140,248,.25)!important;
+            border-radius:18px!important;
+            background:linear-gradient(145deg,rgba(129,140,248,.18),rgba(99,102,241,.08))!important;
+            color:#a9a3ff!important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-icon svg{
+            width:29px!important;
+            height:29px!important;
+            stroke-width:2!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-copy{
+            min-width:0!important;
+            width:100%!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-copy strong{
+            display:block!important;
+            margin:0!important;
+            color:var(--text-main)!important;
+            font-size:1.16rem!important;
+            line-height:1.25!important;
+            font-weight:780!important;
+            letter-spacing:-.02em!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-copy small{
+            display:block!important;
+            margin-top:9px!important;
+            max-width:520px!important;
+            color:#9aaacf!important;
+            font-size:.90rem!important;
+            line-height:1.55!important;
+            white-space:normal!important;
+            overflow-wrap:anywhere!important;
+            word-break:normal!important;
+        }
+
+        /* Larger purple iOS switches used only by the three pet settings. */
+        #personalizationPetPage .ps-pet-hero > .mini-toggle,
+        #personalizationPetPage .ps-pet-behavior-toggle{
+            position:relative!important;
+            width:58px!important;
+            height:34px!important;
+            min-width:58px!important;
+            flex:0 0 58px!important;
+            justify-self:end!important;
+            align-self:center!important;
+            margin:0!important;
+        }
+        #personalizationPetPage .ps-pet-hero > .mini-toggle span,
+        #personalizationPetPage .ps-pet-behavior-toggle span{
+            position:absolute!important;
+            inset:0!important;
+            width:58px!important;
+            height:34px!important;
+            border-radius:999px!important;
+            background:#475569!important;
+            box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)!important;
+            transition:.22s cubic-bezier(.2,.8,.2,1)!important;
+        }
+        #personalizationPetPage .ps-pet-hero > .mini-toggle span:after,
+        #personalizationPetPage .ps-pet-behavior-toggle span:after{
+            content:""!important;
+            position:absolute!important;
+            width:28px!important;
+            height:28px!important;
+            left:3px!important;
+            top:3px!important;
+            border-radius:50%!important;
+            background:#fff!important;
+            box-shadow:0 2px 8px rgba(0,0,0,.28)!important;
+            transform:none!important;
+            transition:.22s cubic-bezier(.2,.8,.2,1)!important;
+        }
+        #personalizationPetPage .ps-pet-hero > .mini-toggle input:checked + span,
+        #personalizationPetPage .ps-pet-behavior-toggle input:checked + span{
+            background:linear-gradient(135deg,#7c3aed,#6d4cff)!important;
+        }
+        #personalizationPetPage .ps-pet-hero > .mini-toggle input:checked + span:after,
+        #personalizationPetPage .ps-pet-behavior-toggle input:checked + span:after{
+            transform:translateX(24px)!important;
+        }
+
+        #personalizationPetPage .ps-pet-hero:hover,
+        #personalizationPetPage .ps-pet-behavior-row:hover{
+            border-color:rgba(129,140,248,.30)!important;
+        }
+
+        @media(max-width:620px){
+            #personalizationPetPage .ps-pet-toolbar{
+                min-height:82px!important;
+                grid-template-columns:52px minmax(0,1fr) 52px!important;
+                gap:14px!important;
+                padding:14px 16px!important;
+            }
+            #personalizationPetPage .ps-pet-toolbar h3{font-size:1.42rem!important}
+            #personalizationPetPage .ps-pet-back,
+            #personalizationPetPage .ps-upload-btn{
+                width:52px!important;height:52px!important;min-width:52px!important;border-radius:17px!important;
+            }
+            #personalizationPetPage .ps-pet-back svg,
+            #personalizationPetPage .ps-upload-btn svg{width:25px!important;height:25px!important}
+            #personalizationPetPage .ps-pet-list{gap:14px!important;padding:16px 14px max(28px,env(safe-area-inset-bottom))!important}
+            #personalizationPetPage .ps-pet-hero{
+                min-height:142px!important;
+                padding:22px 18px!important;
+                gap:14px!important;
+                border-radius:23px!important;
+            }
+            #personalizationPetPage .ps-pet-hero-copy strong{font-size:1.20rem!important}
+            #personalizationPetPage .ps-pet-hero-copy small{font-size:.82rem!important;line-height:1.5!important;margin-top:8px!important}
+            #personalizationPetPage .ps-pet-behavior-grid{gap:14px!important}
+            #personalizationPetPage .ps-pet-behavior-row{
+                min-height:142px!important;
+                grid-template-columns:50px minmax(0,1fr) auto!important;
+                gap:14px!important;
+                padding:20px 16px!important;
+                border-radius:23px!important;
+            }
+            #personalizationPetPage .ps-pet-behavior-icon{width:50px!important;height:50px!important;border-radius:16px!important}
+            #personalizationPetPage .ps-pet-behavior-icon svg{width:25px!important;height:25px!important}
+            #personalizationPetPage .ps-pet-behavior-copy strong{font-size:1.02rem!important}
+            #personalizationPetPage .ps-pet-behavior-copy small{font-size:.78rem!important;line-height:1.48!important;margin-top:7px!important}
+            #personalizationPetPage .ps-pet-hero > .mini-toggle,
+            #personalizationPetPage .ps-pet-behavior-toggle{width:54px!important;height:32px!important;min-width:54px!important;flex-basis:54px!important}
+            #personalizationPetPage .ps-pet-hero > .mini-toggle span,
+            #personalizationPetPage .ps-pet-behavior-toggle span{width:54px!important;height:32px!important}
+            #personalizationPetPage .ps-pet-hero > .mini-toggle span:after,
+            #personalizationPetPage .ps-pet-behavior-toggle span:after{width:26px!important;height:26px!important}
+            #personalizationPetPage .ps-pet-hero > .mini-toggle input:checked + span:after,
+            #personalizationPetPage .ps-pet-behavior-toggle input:checked + span:after{transform:translateX(22px)!important}
+        }
+        @media(max-width:390px){
+            #personalizationPetPage .ps-pet-list{padding-left:12px!important;padding-right:12px!important}
+            #personalizationPetPage .ps-pet-hero{padding:20px 16px!important}
+            #personalizationPetPage .ps-pet-hero-copy strong{font-size:1.12rem!important}
+            #personalizationPetPage .ps-pet-hero-copy small{font-size:.77rem!important}
+            #personalizationPetPage .ps-pet-behavior-row{
+                grid-template-columns:46px minmax(0,1fr) auto!important;
+                gap:12px!important;
+                padding:18px 14px!important;
+            }
+            #personalizationPetPage .ps-pet-behavior-icon{width:46px!important;height:46px!important;border-radius:15px!important}
+            #personalizationPetPage .ps-pet-behavior-copy strong{font-size:.96rem!important}
+            #personalizationPetPage .ps-pet-behavior-copy small{font-size:.73rem!important}
+        }
+
     </style>
 </head>
 <body>
@@ -2839,16 +3808,85 @@
               <div class="ps-pet-hero-copy"><strong>Choose your companion</strong><small>Pick a pet to personalize the app and subtly shape JepongDevxyz AI's friendly tone.</small></div>
               <label class="mini-toggle" title="Show pet in chat"><input id="psShowPetInChat" type="checkbox" onchange="setPersonalizationToggle('showPetInChat',this.checked)"><span></span></label>
             </div>
+            <div class="ps-pet-behavior-grid" aria-label="Pet interaction options">
+              <div class="ps-pet-behavior-row">
+                <span class="ps-pet-behavior-icon" aria-hidden="true"><i data-lucide="move"></i></span>
+                <div class="ps-pet-behavior-copy">
+                  <strong>Drag pet</strong>
+                  <small>Move the pet out of the way. When released above the floor, it falls back to its normal walking lane.</small>
+                </div>
+                <label class="mini-toggle ps-pet-behavior-toggle" title="Allow pet dragging"><input id="psPetDragEnabled" type="checkbox" onchange="setPersonalizationToggle('petDragEnabled',this.checked)"><span></span></label>
+              </div>
+              <div class="ps-pet-behavior-row">
+                <span class="ps-pet-behavior-icon" aria-hidden="true"><i data-lucide="ghost"></i></span>
+                <div class="ps-pet-behavior-copy">
+                  <strong>Falling scare</strong>
+                  <small>Play a short scared reaction when the pet is dropped from above. Its walking area never moves.</small>
+                </div>
+                <label class="mini-toggle ps-pet-behavior-toggle" title="Enable falling scare animation"><input id="psPetFallScareEnabled" type="checkbox" onchange="setPersonalizationToggle('petFallScareEnabled',this.checked)"><span></span></label>
+              </div>
+            </div>
             <div class="ps-pet-grid" id="psPetOptions"></div>
             <div class="ps-pet-action-grid">
               <label class="ps-pet-action-card" for="psPetUploadInput"><span class="ps-pet-action-icon"><i data-lucide="image-plus"></i></span><span><strong>Upload your pet</strong><small>Use your own image</small></span></label>
-              <button type="button" class="ps-pet-action-card" onclick="toggleCustomPetCreator()"><span class="ps-pet-action-icon"><i data-lucide="sparkles"></i></span><span><strong>Create a pet with AI</strong><small>Generate a unique companion profile</small></span></button>
+              <button type="button" class="ps-pet-action-card" onclick="toggleCustomPetCreator()"><span class="ps-pet-action-icon"><i data-lucide="sparkles"></i></span><span><strong>Create a pet with AI</strong><small>Generate a pet in your website's style</small></span></button>
             </div>
-            <div class="ps-create-pet-fields" id="psCreatePetFields">
-              <input id="psCustomPetName" placeholder="Pet name">
-              <textarea id="psCustomPetDescription" placeholder="Describe the companion you want, e.g. a calm study buddy who cheers me on"></textarea>
-              <button id="psCreatePetAiBtn" onclick="generatePersonalizationPetWithAI()"><i data-lucide="sparkles"></i> Create with AI</button>
-            </div>
+            <section class="ps-create-pet-fields ps-ai-pet-creator" id="psCreatePetFields" aria-hidden="true">
+              <div class="ps-ai-pet-head">
+                <div class="ps-ai-pet-head-copy">
+                  <span class="ps-ai-pet-kicker">AI PET CREATOR</span>
+                  <strong>Create a polished companion pet</strong>
+                  <small>Describe the pet you want, then optionally match the current Luna / Mochi style so every companion feels like it belongs in the same app universe.</small>
+                </div>
+                <button type="button" class="ps-ai-pet-close" onclick="toggleCustomPetCreator(false)" aria-label="Close AI pet creator"><i data-lucide="x"></i></button>
+              </div>
+
+              <div class="ps-ai-pet-body">
+                <div class="ps-ai-pet-preview" id="psAiPetPreview">
+                  <div class="ps-ai-pet-preview-visual">
+                    <div class="ps-ai-pet-preview-placeholder" id="psAiPetPreviewPlaceholder"><i data-lucide="sparkles"></i></div>
+                    <img id="psAiPetPreviewImage" alt="Generated pet preview" hidden>
+                  </div>
+                  <div class="ps-ai-pet-preview-copy">
+                    <strong id="psAiPetPreviewName">Your pet preview</strong>
+                    <small id="psAiPetPreviewDescription">Describe your pet below, then tap Create pet.</small>
+                    <div class="ps-ai-pet-meta-row">
+                      <span class="ps-ai-pet-style-pill" id="psAiPetStyleSummary"><i data-lucide="palette"></i><span>Website pet style • Auto</span></span>
+                    </div>
+                    <span class="ps-ai-pet-status" id="psAiPetStatus"><span class="ps-ai-pet-status-dot"></span><span>Ready</span></span>
+                  </div>
+                </div>
+
+                <div class="ps-ai-pet-form">
+                  <label class="ps-ai-pet-field">
+                    <span>Pet name <small>optional</small></span>
+                    <input id="psCustomPetName" maxlength="60" autocomplete="off" placeholder="e.g. Drax" oninput="previewPersonalizationPetDraft()">
+                  </label>
+                  <label class="ps-ai-pet-field">
+                    <span>Appearance & personality</span>
+                    <textarea id="psCustomPetDescription" maxlength="900" placeholder="e.g. a small blue dragon with white horns, silver wings, bright green eyes, and a cheerful expression" oninput="previewPersonalizationPetDraft()"></textarea>
+                  </label>
+                  <div class="ps-ai-pet-setting-row">
+                    <div class="ps-ai-pet-setting-copy">
+                      <strong>Match website pet style</strong>
+                      <small>Keep the same polished, cute companion style as Luna, Mochi, and the rest.</small>
+                    </div>
+                    <label class="mini-toggle" title="Match website pet style"><input id="psAiPetMatchStyle" type="checkbox" checked onchange="setPetCreatorMatchSiteStyle(this.checked)"><span></span></label>
+                  </div>
+                  <div class="ps-ai-pet-reference-wrap" id="psAiPetReferenceWrap">
+                    <span class="ps-ai-pet-option-label">Reference pet style</span>
+                    <div class="ps-ai-pet-reference-chips" id="psAiPetReferenceList"></div>
+                    <small class="ps-ai-pet-reference-help">The reference pet affects the art style and proportions only. Your written description still controls species, colors, traits, and accessories.</small>
+                  </div>
+                  <div class="ps-ai-pet-hint"><i data-lucide="info"></i><span>More visual details = a closer match. The generator will not add text or a watermark to the pet image.</span></div>
+                  <div class="ps-ai-pet-actions">
+                    <button type="button" class="ps-ai-pet-generate" id="psCreatePetAiBtn" onclick="generatePersonalizationPetWithAI(false)"><i data-lucide="sparkles"></i><span>Create pet</span></button>
+                    <button type="button" class="ps-ai-pet-secondary" id="psGenerateAgainPetBtn" onclick="generatePersonalizationPetWithAI(true)"><i data-lucide="rotate-cw"></i><span>Generate again</span></button>
+                    <button type="button" class="ps-ai-pet-cancel" id="psCreatePetCancelBtn" onclick="cancelPersonalizationPetGeneration()" hidden><i data-lucide="square"></i><span>Cancel</span></button>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
 
@@ -3218,6 +4256,8 @@
             petWorkingMode: true,
             petTapEnabled: true,
             petDoubleTapFeed: true,
+            petDragEnabled: true,
+            petFallScareEnabled: true,
             nickname: '',
             occupation: '',
             moreAbout: '',
@@ -3397,6 +4437,15 @@
         let livePetBubbleTimer = null;
         let livePetLastTap = 0;
         let livePetWorking = false;
+        const LIVE_PET_WALK_BOTTOM = 94;
+        let livePetDragState = null;
+        let livePetSuppressClickUntil = 0;
+        let livePetFallTimer = null;
+        const PET_FALL_REACTIONS = {
+            Luna:'Mrrp! 😳', Kiro:'Woah! 🐾', Mochi:'Eep! 😳', Pixel:'Alert! ⚠️',
+            Nova:'Mrow! 😼', Sunny:'Peep! 😱', Kumo:'Waa! 🐼', Ace:'Whoa! 🦊',
+            default:'Whoa! 😵'
+        };
 
         function getLivePetElements() {
             return {
@@ -3441,12 +4490,130 @@
             }, 30000);
         }
 
+        function clampLivePetX(x, layer, pet) {
+            const max=Math.max(4,(layer?.clientWidth||0)-(pet?.offsetWidth||82)-4);
+            return Math.max(4,Math.min(max,Number(x)||4));
+        }
+
+        function getLivePetWalkTop(layer, pet) {
+            return Math.max(4,(layer?.clientHeight||0)-LIVE_PET_WALK_BOTTOM-(pet?.offsetHeight||96));
+        }
+
+        function triggerPetFallScare() {
+            const {pet}=getLivePetElements();
+            if(!pet || personalizationSettings.petFallScareEnabled===false)return;
+            const reaction=PET_FALL_REACTIONS[personalizationSettings.pet]||PET_FALL_REACTIONS.default;
+            pet.classList.add('falling-scared');
+            livePetSay(reaction,1050);
+            try{playPetSound('tap');}catch(_){ }
+            clearTimeout(livePetFallTimer);
+            livePetFallTimer=setTimeout(()=>pet.classList.remove('falling-scared'),780);
+        }
+
+        function settleLivePetToWalkingLane(x=null, scare=false) {
+            const {pet}=getLivePetElements();
+            const layer=document.getElementById('livePetLayer');
+            if(!pet||!layer)return;
+            const left=clampLivePetX(x==null?(parseFloat(pet.style.left)||pet.offsetLeft):x,layer,pet);
+            const walkTop=getLivePetWalkTop(layer,pet);
+            const rect=pet.getBoundingClientRect();
+            const layerRect=layer.getBoundingClientRect();
+            const currentTop=Math.max(4,Math.min(walkTop,rect.top-layerRect.top));
+            const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+            pet.classList.remove('dragging');
+            pet.classList.add('pet-settling');
+            pet.style.left=`${left}px`;
+            pet.style.bottom='auto';
+            pet.style.top=`${currentTop}px`;
+            if(scare)triggerPetFallScare();
+            const finish=()=>{
+                pet.classList.remove('pet-settling','dragging');
+                pet.style.top='';
+                pet.style.bottom=`${LIVE_PET_WALK_BOTTOM}px`;
+                pet.style.left=`${left}px`;
+                pet.style.transform=left < (layer.clientWidth/2) ? 'scaleX(1)' : 'scaleX(-1)';
+                startLivePetWalking();
+                resetLivePetIdleTimer();
+            };
+            if(reduced){finish();return;}
+            requestAnimationFrame(()=>requestAnimationFrame(()=>{pet.style.top=`${walkTop}px`;}));
+            setTimeout(finish,690);
+        }
+
+        function cancelLivePetDrag(settle=true) {
+            if(!livePetDragState)return;
+            const state=livePetDragState;
+            livePetDragState=null;
+            try{state.pet?.releasePointerCapture?.(state.pointerId);}catch(_){ }
+            if(settle && state.pet)settleLivePetToWalkingLane(parseFloat(state.pet.style.left)||state.pet.offsetLeft,false);
+            else state.pet?.classList.remove('dragging');
+        }
+
+        function installLivePetDrag(pet) {
+            if(!pet || pet.dataset.dragBound==='true')return;
+            pet.dataset.dragBound='true';
+            pet.addEventListener('pointerdown',e=>{
+                if(personalizationSettings.petDragEnabled===false || !livePetVisible() || livePetWorking)return;
+                if(e.pointerType==='mouse' && e.button!==0)return;
+                const layer=document.getElementById('livePetLayer');
+                if(!layer)return;
+                const petRect=pet.getBoundingClientRect();
+                const layerRect=layer.getBoundingClientRect();
+                livePetDragState={
+                    pet,layer,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+                    offsetX:e.clientX-petRect.left,offsetY:e.clientY-petRect.top,
+                    moved:false,lastX:petRect.left-layerRect.left,lastTop:petRect.top-layerRect.top
+                };
+                try{pet.setPointerCapture?.(e.pointerId);}catch(_){ }
+                wakeLivePet();
+            });
+            pet.addEventListener('pointermove',e=>{
+                const state=livePetDragState;
+                if(!state || state.pet!==pet || state.pointerId!==e.pointerId)return;
+                const dx=e.clientX-state.startX,dy=e.clientY-state.startY;
+                if(!state.moved && Math.hypot(dx,dy)<7)return;
+                if(!state.moved){
+                    state.moved=true;
+                    clearInterval(livePetWalkTimer);
+                    clearTimeout(livePetIdleTimer);
+                    pet.classList.remove('sleeping','petting','eating','working','pet-settling','falling-scared');
+                    pet.classList.add('dragging');
+                }
+                e.preventDefault();
+                const layerRect=state.layer.getBoundingClientRect();
+                const maxTop=getLivePetWalkTop(state.layer,pet);
+                const left=clampLivePetX(e.clientX-layerRect.left-state.offsetX,state.layer,pet);
+                const top=Math.max(4,Math.min(maxTop,e.clientY-layerRect.top-state.offsetY));
+                state.lastX=left;state.lastTop=top;
+                pet.style.left=`${left}px`;
+                pet.style.top=`${top}px`;
+                pet.style.bottom='auto';
+                pet.style.transform='none';
+            });
+            const endDrag=e=>{
+                const state=livePetDragState;
+                if(!state || state.pet!==pet || state.pointerId!==e.pointerId)return;
+                livePetDragState=null;
+                try{pet.releasePointerCapture?.(e.pointerId);}catch(_){ }
+                if(!state.moved)return;
+                e.preventDefault();
+                livePetSuppressClickUntil=Date.now()+450;
+                const walkTop=getLivePetWalkTop(state.layer,pet);
+                const fellFromAbove=state.lastTop < walkTop-30;
+                settleLivePetToWalkingLane(state.lastX,fellFromAbove && personalizationSettings.petFallScareEnabled!==false);
+            };
+            pet.addEventListener('pointerup',endDrag);
+            pet.addEventListener('pointercancel',endDrag);
+        }
+
         function moveLivePet() {
             const {pet}=getLivePetElements();
             const layer=document.getElementById('livePetLayer');
-            if(!pet||!layer||!livePetVisible()||livePetWorking||pet.classList.contains('sleeping')||personalizationSettings.petWalkEnabled===false)return;
+            if(!pet||!layer||!livePetVisible()||livePetWorking||livePetDragState||pet.classList.contains('sleeping')||pet.classList.contains('pet-settling')||personalizationSettings.petWalkEnabled===false)return;
             const max=Math.max(8,layer.clientWidth-pet.offsetWidth-8);
             const x=Math.round(8+Math.random()*Math.max(0,max-8));
+            pet.style.top='';
+            pet.style.bottom=`${LIVE_PET_WALK_BOTTOM}px`;
             pet.style.left=x+'px';
             pet.style.transform = x < (layer.clientWidth/2) ? 'scaleX(1)' : 'scaleX(-1)';
             const visual=pet.querySelector('.live-pet-visual'), name=pet.querySelector('.live-pet-name'), bubble=pet.querySelector('.live-pet-bubble');
@@ -3457,7 +4624,7 @@
 
         function startLivePetWalking() {
             clearInterval(livePetWalkTimer);
-            if(!livePetVisible() || personalizationSettings.petWalkEnabled===false)return;
+            if(!livePetVisible() || personalizationSettings.petWalkEnabled===false || livePetDragState)return;
             livePetWalkTimer=setInterval(moveLivePet,4200);
             setTimeout(moveLivePet,500);
         }
@@ -3662,6 +4829,7 @@
         }
 
         function petLiveInteraction() {
+            if(Date.now()<livePetSuppressClickUntil)return;
             unlockPetAudio();
             const now=Date.now();
             const doubleTap=now-livePetLastTap<330;
@@ -3701,6 +4869,7 @@
             const petProfile=selectedPetProfile();
             pet.dataset.petVisual=String(petProfile?.visual||'custom').toLowerCase();
             pet.dataset.petName=String(personalizationSettings.pet||'Pet').toLowerCase();
+            pet.dataset.dragEnabled=personalizationSettings.petDragEnabled===false?'false':'true';
             const visualContent=personalizationSettings.customPetImage
                 ? `<img src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
                 : builtInPetImage
@@ -3708,6 +4877,8 @@
                     : `<span aria-hidden="true">${getSelectedPetVisual()}</span>`;
             visual.innerHTML=visualContent + `<span class="live-pet-sleep-eyes" aria-hidden="true"><i></i><i></i></span>`;
             name.textContent=personalizationSettings.pet;
+            installLivePetDrag(pet);
+            if(!livePetDragState&&!pet.classList.contains('pet-settling')){pet.style.top='';pet.style.bottom=`${LIVE_PET_WALK_BOTTOM}px`;}
             pet.onclick=petLiveInteraction;
             pet.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();petLiveInteraction();}};
             startLivePetWalking();
@@ -3735,6 +4906,8 @@
                 psLibrarySearch: personalizationSettings.librarySearch,
                 psConnectorSearch: personalizationSettings.connectorSearch,
                 psShowPetInChat: personalizationSettings.showPetInChat,
+                psPetDragEnabled: personalizationSettings.petDragEnabled,
+                psPetFallScareEnabled: personalizationSettings.petFallScareEnabled,
                 psVoiceAutoPreview: personalizationSettings.voiceAutoPreview
             };
             Object.entries(values).forEach(([id,val]) => {
@@ -3810,7 +4983,7 @@
             const input = document.getElementById('personalizationSearchInput');
             if (input) input.value = '';
             filterPersonalizationSettings('');
-            document.getElementById('personalizationModalOverlay')?.classList.add('open');
+            openExclusiveSurface('personalizationModalOverlay');
         }
 
         function closePersonalizationSettings() {
@@ -3985,15 +5158,274 @@
             openPersonalizationPicker(key, key, (choices || []).map(x => [x,'']));
         }
 
+        
+        let petGenerationController = null;
+        let isGeneratingPersonalizationPet = false;
+        const PET_CREATOR_REFERENCE_OPTIONS = [
+            {name:'Auto',emoji:'✨',description:'Automatically follow the current website pet style'},
+            ...PERSONALIZATION_PETS.filter(p=>p.name!=='None').map(p=>({name:p.name,emoji:p.emoji||'🐾',description:p.description||''}))
+        ];
+        const petCreatorState = {
+            matchSiteStyle: true,
+            referencePet: 'Auto',
+            lastRequest: null,
+            lastResult: null
+        };
+
+        function getPetCreatorReferencePet() {
+            if (!petCreatorState.matchSiteStyle) return '';
+            if (petCreatorState.referencePet && petCreatorState.referencePet !== 'Auto') return petCreatorState.referencePet;
+            if (PERSONALIZATION_PETS.some(p => p.name === personalizationSettings.pet && p.name !== 'None')) return personalizationSettings.pet;
+            return 'Luna';
+        }
+
+        function updatePetCreatorStyleSummary() {
+            const pill=document.getElementById('psAiPetStyleSummary');
+            if(!pill) return;
+            const label=pill.querySelector('span:last-child');
+            if(!label) return;
+            if(!petCreatorState.matchSiteStyle){
+                label.textContent='Custom visual style only';
+            }else{
+                const ref=getPetCreatorReferencePet() || 'Auto';
+                label.textContent=`Website pet style • ${ref}`;
+            }
+        }
+
+        function renderPetCreatorReferenceOptions() {
+            const host=document.getElementById('psAiPetReferenceList');
+            const wrap=document.getElementById('psAiPetReferenceWrap');
+            const toggle=document.getElementById('psAiPetMatchStyle');
+            if(toggle) toggle.checked = petCreatorState.matchSiteStyle !== false;
+            if(wrap) wrap.hidden = petCreatorState.matchSiteStyle === false;
+            if(!host) { updatePetCreatorStyleSummary(); return; }
+            host.innerHTML = PET_CREATOR_REFERENCE_OPTIONS.map(option => {
+                const active = (petCreatorState.referencePet || 'Auto') === option.name;
+                return `<button type="button" class="ps-ai-pet-ref-chip ${active?'active':''}" data-ref-pet="${escapeHTML(option.name)}"><span class="emoji" aria-hidden="true">${escapeHTML(option.emoji || '🐾')}</span><span>${escapeHTML(option.name)}</span></button>`;
+            }).join('');
+            host.querySelectorAll('.ps-ai-pet-ref-chip').forEach(btn => {
+                btn.addEventListener('click', () => setPetCreatorReferencePet(btn.dataset.refPet || 'Auto'));
+            });
+            updatePetCreatorStyleSummary();
+            refreshLucideIcons();
+        }
+
+        function setPetCreatorReferencePet(name='Auto') {
+            petCreatorState.referencePet = PET_CREATOR_REFERENCE_OPTIONS.some(x => x.name === name) ? name : 'Auto';
+            renderPetCreatorReferenceOptions();
+            previewPersonalizationPetDraft();
+        }
+
+        function setPetCreatorMatchSiteStyle(value) {
+            petCreatorState.matchSiteStyle = !!value;
+            renderPetCreatorReferenceOptions();
+            previewPersonalizationPetDraft();
+        }
+
+        function setAIPetCreatorStatus(state='idle', message='Ready') {
+            const status=document.getElementById('psAiPetStatus');
+            if(!status)return;
+            status.dataset.state=state;
+            const label=status.querySelector('span:last-child');
+            if(label)label.textContent=message;
+        }
+
+        function refreshAIPetActionState() {
+            const againBtn=document.getElementById('psGenerateAgainPetBtn');
+            if(!againBtn) return;
+            const hasFieldContent = !!((document.getElementById('psCustomPetName')?.value||'').trim() || (document.getElementById('psCustomPetDescription')?.value||'').trim());
+            const canAgain = !isGeneratingPersonalizationPet && !!(petCreatorState.lastRequest || hasFieldContent);
+            againBtn.disabled = !canAgain;
+        }
+
+        function setAIPetCreatorBusy(busy=false) {
+            isGeneratingPersonalizationPet=!!busy;
+            const createBtn=document.getElementById('psCreatePetAiBtn');
+            const againBtn=document.getElementById('psGenerateAgainPetBtn');
+            const cancelBtn=document.getElementById('psCreatePetCancelBtn');
+            const nameEl=document.getElementById('psCustomPetName');
+            const descEl=document.getElementById('psCustomPetDescription');
+            const placeholder=document.getElementById('psAiPetPreviewPlaceholder');
+            const matchStyle=document.getElementById('psAiPetMatchStyle');
+            if(createBtn){
+                createBtn.disabled=!!busy;
+                createBtn.innerHTML=busy
+                    ? '<i data-lucide="loader-circle" class="spin"></i><span>Creating…</span>'
+                    : '<i data-lucide="sparkles"></i><span>Create pet</span>';
+            }
+            if(againBtn){
+                againBtn.disabled=!!busy;
+                againBtn.innerHTML=busy
+                    ? '<i data-lucide="rotate-cw" class="spin"></i><span>Generate again</span>'
+                    : '<i data-lucide="rotate-cw"></i><span>Generate again</span>';
+            }
+            if(cancelBtn)cancelBtn.hidden=!busy;
+            if(nameEl)nameEl.disabled=!!busy;
+            if(descEl)descEl.disabled=!!busy;
+            if(matchStyle)matchStyle.disabled=!!busy;
+            document.querySelectorAll('#psAiPetReferenceList .ps-ai-pet-ref-chip').forEach(btn=>btn.disabled=!!busy);
+            placeholder?.classList.toggle('generating',!!busy);
+            refreshAIPetActionState();
+            refreshLucideIcons();
+        }
+
+        function previewPersonalizationPetDraft() {
+            const name=(document.getElementById('psCustomPetName')?.value||'').trim();
+            const description=(document.getElementById('psCustomPetDescription')?.value||'').trim();
+            const namePreview=document.getElementById('psAiPetPreviewName');
+            const descPreview=document.getElementById('psAiPetPreviewDescription');
+            if(namePreview)namePreview.textContent=name||'Your pet preview';
+            if(descPreview)descPreview.textContent=description||'Describe your pet below, then tap Create pet.';
+            updatePetCreatorStyleSummary();
+            if(!isGeneratingPersonalizationPet)setAIPetCreatorStatus('idle','Ready');
+            refreshAIPetActionState();
+        }
+
         function toggleCustomPetCreator(force) {
             const fields = document.getElementById('psCreatePetFields');
             if (!fields) return;
             const next = typeof force === 'boolean' ? force : !fields.classList.contains('open');
+            if(!next && isGeneratingPersonalizationPet)cancelPersonalizationPetGeneration();
             fields.classList.toggle('open', next);
-            if (next) document.getElementById('psCustomPetName')?.focus();
+            fields.setAttribute('aria-hidden',next?'false':'true');
+            if (next) {
+                renderPetCreatorReferenceOptions();
+                previewPersonalizationPetDraft();
+                requestAnimationFrame(()=>{
+                    try{fields.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(_){ }
+                    document.getElementById('psCustomPetName')?.focus({preventScroll:true});
+                });
+            }
         }
 
-        function getVoiceProfile(name = personalizationSettings.voicePersona) {
+        function buildCurrentPetCreatorRequest(forceReuseLast=false) {
+            const currentName=(document.getElementById('psCustomPetName')?.value||'').trim();
+            const currentDescription=(document.getElementById('psCustomPetDescription')?.value||'').trim();
+            if(forceReuseLast && petCreatorState.lastRequest){
+                return {
+                    ...petCreatorState.lastRequest,
+                    name: currentName || petCreatorState.lastRequest.name || 'My Pet',
+                    description: currentDescription || petCreatorState.lastRequest.description || ''
+                };
+            }
+            return {
+                action:'generate-pet-image',
+                name: currentName || 'My Pet',
+                description: currentDescription,
+                matchSiteStyle: petCreatorState.matchSiteStyle !== false,
+                referencePet: getPetCreatorReferencePet()
+            };
+        }
+
+        async function generatePersonalizationPetWithAI(forceReuseLast=false) {
+            if(isGeneratingPersonalizationPet)return;
+
+            const requestPayload=buildCurrentPetCreatorRequest(forceReuseLast);
+            const requestedName=(requestPayload.name||'').trim();
+            const idea=(requestPayload.description||'').trim();
+            if(!requestedName && !idea){
+                setAIPetCreatorStatus('error','Add a name or description first');
+                showModernAlert('Maglagay muna ng pangalan o description ng pet na gusto mo.','Create pet with AI');
+                return;
+            }
+
+            const previousPetState={
+                pet:personalizationSettings.pet,
+                petDescription:personalizationSettings.petDescription,
+                customPetImage:personalizationSettings.customPetImage
+            };
+            petGenerationController=new AbortController();
+            petCreatorState.lastRequest={...requestPayload};
+            setAIPetCreatorBusy(true);
+            setAIPetCreatorStatus('working',forceReuseLast?'Generating another version…':'Generating the pet you described…');
+
+            const previewImage=document.getElementById('psAiPetPreviewImage');
+            const previewPlaceholder=document.getElementById('psAiPetPreviewPlaceholder');
+            const previewName=document.getElementById('psAiPetPreviewName');
+            const previewDescription=document.getElementById('psAiPetPreviewDescription');
+            if(previewName)previewName.textContent=requestedName||'Creating your pet';
+            if(previewDescription)previewDescription.textContent=idea||'A friendly companion';
+
+            try{
+                const res=await fetch('/api/chat',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    signal:petGenerationController.signal,
+                    body:JSON.stringify(requestPayload)
+                });
+                const data=await res.json().catch(()=>({}));
+                if(!res.ok||!data?.imageDataUrl){
+                    throw new Error(data?.error||data?.detail||`Image generator returned ${res.status}`);
+                }
+
+                const imageDataUrl=String(data.imageDataUrl);
+                await new Promise((resolve,reject)=>{
+                    const test=new Image();
+                    const timer=setTimeout(()=>reject(new Error('Generated pet image timed out while loading.')),12000);
+                    test.onload=()=>{clearTimeout(timer);resolve();};
+                    test.onerror=()=>{clearTimeout(timer);reject(new Error('Generated pet image could not be loaded.'));};
+                    test.src=imageDataUrl;
+                });
+
+                personalizationSettings.pet=String(data.name||requestedName||'My Pet').trim().slice(0,60);
+                personalizationSettings.petDescription=String(data.description||idea||'A custom AI companion.').trim().slice(0,500);
+                personalizationSettings.customPetImage=imageDataUrl;
+                persistPersonalization();
+                renderPersonalizationSettings();
+                renderPersonalizationPetOptions();
+                renderPetCompanionAcrossApp();
+                wakeLivePet();
+
+                if(previewImage){previewImage.src=imageDataUrl;previewImage.hidden=false;}
+                if(previewPlaceholder)previewPlaceholder.hidden=true;
+                if(previewName)previewName.textContent=personalizationSettings.pet;
+                if(previewDescription)previewDescription.textContent=personalizationSettings.petDescription;
+                document.getElementById('psCustomPetName').value = personalizationSettings.pet;
+                document.getElementById('psCustomPetDescription').value = personalizationSettings.petDescription;
+                petCreatorState.lastResult={
+                    imageDataUrl,
+                    provider:data.provider||'AI image generation',
+                    model:data.model||'',
+                    referencePet:data.referencePet||requestPayload.referencePet||'',
+                    matchSiteStyle:data.matchSiteStyle ?? requestPayload.matchSiteStyle
+                };
+                updatePetCreatorStyleSummary();
+                setAIPetCreatorStatus('ready',forceReuseLast?`New version created with ${data.provider||'AI'}`:`Created with ${data.provider||'AI image generation'}`);
+                if(typeof showModernToast==='function')showModernToast(forceReuseLast?`${personalizationSettings.pet} regenerated!`:`${personalizationSettings.pet} is ready!`);
+            }catch(e){
+                const cancelled=petGenerationController?.signal?.aborted || e?.name==='AbortError';
+                restorePreviousPetState(previousPetState);
+                if(cancelled){
+                    setAIPetCreatorStatus('idle','Cancelled — your previous pet was kept');
+                }else{
+                    setAIPetCreatorStatus('error',String(e?.message||e).slice(0,150));
+                    if(typeof showModernToast==='function')showModernToast('Pet image generation failed. Your previous pet was kept.');
+                }
+            }finally{
+                petGenerationController=null;
+                setAIPetCreatorBusy(false);
+                previewPersonalizationPetDraft();
+            }
+        }
+
+        function cancelPersonalizationPetGeneration() {
+            if(!isGeneratingPersonalizationPet)return;
+            try{petGenerationController?.abort('user_cancelled');}catch(_){ }
+            setAIPetCreatorStatus('idle','Cancelled');
+        }
+
+        function restorePreviousPetState(previousPetState) {
+            if(!previousPetState)return;
+            personalizationSettings.pet=previousPetState.pet;
+            personalizationSettings.petDescription=previousPetState.petDescription;
+            personalizationSettings.customPetImage=previousPetState.customPetImage;
+            persistPersonalization();
+            renderPersonalizationSettings();
+            renderPersonalizationPetOptions();
+            renderPetCompanionAcrossApp();
+        }
+
+function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return PERSONALIZATION_VOICES.find(v => v.name === name) || PERSONALIZATION_VOICES[0];
         }
 
@@ -4363,6 +5795,7 @@
         }
 
         function stopAllSpeech() {
+            resetActiveReadAloudButton();
             smartSpeechRunId++;
             if(activeNeuralAbort){
                 try{activeNeuralAbort.abort();}catch(_){}
@@ -4658,7 +6091,9 @@
             const page = document.getElementById('personalizationPetPage');
             if (main) main.style.display = 'none';
             page?.classList.add('open');
+            setAIPetCreatorBusy(false);
             renderPersonalizationPetOptions();
+            previewPersonalizationPetDraft();
         }
 
         function closePetPicker() {
@@ -4670,11 +6105,15 @@
 
         function renderPersonalizationPetOptions() {
             const host=document.getElementById('psPetOptions');if(!host)return;
-            const choices=[...PERSONALIZATION_PETS];
-            if(personalizationSettings.pet&&!choices.some(x=>x.name===personalizationSettings.pet))choices.unshift({name:personalizationSettings.pet,emoji:'🐾',description:personalizationSettings.petDescription||'Your custom companion'});
+            const baseChoices=[...PERSONALIZATION_PETS];
+            const hasCustomPet = !!(personalizationSettings.pet && !PERSONALIZATION_PETS.some(x=>x.name===personalizationSettings.pet));
+            const choices = hasCustomPet
+                ? [{name:personalizationSettings.pet,emoji:'✨',description:personalizationSettings.petDescription||'Your custom AI companion',isCustom:true}, ...baseChoices]
+                : baseChoices;
             host.innerHTML=choices.map((pet,index)=>{
                 const selected=personalizationSettings.pet===pet.name;
-                const img=selected&&personalizationSettings.customPetImage
+                const useCustomImage = selected && personalizationSettings.customPetImage || (pet.isCustom && personalizationSettings.customPetImage);
+                const img=useCustomImage
                     ? `<img src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(pet.name)}">`
                     : pet.image
                         ? `<img src="${escapeHTML(pet.image)}" alt="${escapeHTML(pet.name)}">`
@@ -4683,6 +6122,8 @@
             }).join('');
             host.querySelectorAll('.ps-pet-card').forEach(btn=>btn.addEventListener('click',()=>{const pet=choices[Number(btn.dataset.petIndex)];if(pet)choosePersonalizationPet(pet.name,pet.description||'');}));
             const t=document.getElementById('psShowPetInChat');if(t)t.checked=personalizationSettings.showPetInChat!==false;
+            renderPetCreatorReferenceOptions();
+            refreshAIPetActionState();
             refreshLucideIcons();
         }
 
@@ -4696,33 +6137,6 @@
             renderPetCompanionAcrossApp();
             wakeLivePet();
             if (typeof showModernToast === 'function') showModernToast(`${name} selected as your pet`);
-        }
-
-        async function generatePersonalizationPetWithAI() {
-            const nameEl=document.getElementById('psCustomPetName');
-            const descEl=document.getElementById('psCustomPetDescription');
-            const btn=document.getElementById('psCreatePetAiBtn');
-            const requestedName=(nameEl?.value||'').trim();
-            const idea=(descEl?.value||'').trim();
-            if(!requestedName && !idea){showModernAlert('Maglagay ng pet name o maikling description muna.','Create pet with AI');return;}
-            const old=btn?.innerHTML;if(btn){btn.disabled=true;btn.innerHTML='<i data-lucide="loader-circle"></i> Creating…';refreshLucideIcons();btn.querySelector('svg')?.classList.add('spin');}
-            try{
-                const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-                    message:`Create one friendly AI companion pet profile. Desired name: ${requestedName||'Choose a short original name'}. User idea: ${idea||'A friendly helpful companion'}. Return ONLY compact JSON with keys name and description. Description max 12 words.`,
-                    history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'custom',customPrompt:'You create concise, family-friendly companion pet profiles. Output JSON only.',webSearch:false,autoFallback:autoProviderFallback,smartRouter:false,personalization:null
-                })});
-                if(!res.ok)throw new Error(`Server returned ${res.status}`);
-                const raw=await res.text();
-                const jsonText=(raw.match(/\{[\s\S]*\}/)||[])[0];
-                let data={};try{data=JSON.parse(jsonText||raw);}catch(_){data={name:requestedName||'My Pet',description:idea||'A friendly AI companion.'};}
-                personalizationSettings.pet=String(data.name||requestedName||'My Pet').trim().slice(0,60);
-                personalizationSettings.petDescription=String(data.description||idea||'A friendly AI companion.').trim().slice(0,180);
-                personalizationSettings.customPetImage='';
-                persistPersonalization();renderPersonalizationSettings();renderPersonalizationPetOptions();
-                if(nameEl)nameEl.value=personalizationSettings.pet;if(descEl)descEl.value=personalizationSettings.petDescription;
-                showModernAlert(`${personalizationSettings.pet} is ready as your companion.`,`Pet created`);
-            }catch(e){showModernAlert(`Hindi nagawa ng AI ang pet ngayon: ${e.message}`,'Create pet with AI');}
-            finally{if(btn){btn.disabled=false;btn.innerHTML=old||'<i data-lucide="sparkles"></i> Create with AI';refreshLucideIcons();}}
         }
 
         function saveCustomPersonalizationPet() {
@@ -4773,6 +6187,11 @@
                 if (value && personalizationSettings.pet && personalizationSettings.pet !== 'None') {
                     livePetSay(`${personalizationSettings.pet} is here!`, 1200);
                 }
+                renderPetCompanionAcrossApp();
+            } else if (key === 'petDragEnabled') {
+                const {pet}=getLivePetElements();
+                if(pet)pet.dataset.dragEnabled=value?'true':'false';
+                if(!value)cancelLivePetDrag(true);
             }
         }
 
@@ -4859,9 +6278,10 @@
             if (speedLabel) speedLabel.innerText = speechRate.toFixed(1) + 'x';
             updateVoiceLabelUI();
             renderPersonalizationSettings();
+            renderPetCreatorReferenceOptions();
             syncPersonalizationFeatureToggles();
 
-            document.getElementById('settingsModal').classList.add('open');
+            openExclusiveSurface('settingsModal');
         }
 
         function closeSettingsModal() {
@@ -5189,7 +6609,7 @@
         }
 
         function openDolaModal() {
-            document.getElementById('dolaModalOverlay').classList.add('open');
+            openExclusiveSurface('dolaModalOverlay');
         }
 
         function closeDolaModal() {
@@ -5368,10 +6788,28 @@
             if (!card) return;
             card.classList.toggle('complete', success);
             card.classList.toggle('error', !success);
-            const summary = document.getElementById('aiActivitySummary');
+            card.dataset.finalized = 'true';
+            const list = card.querySelector('#aiActivityList');
+            const summary = card.querySelector('#aiActivitySummary');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
             if (summary) summary.textContent = success ? `Completed in ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s` : 'Request stopped because of an error';
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
+
+            // ChatGPT-style lifecycle: keep the result inspectable, but do not leave a large
+            // "working" panel stuck in the conversation or duplicate active element IDs.
+            setTimeout(() => {
+                if (!card.isConnected || card.dataset.finalized !== 'true') return;
+                card.classList.add('collapsed');
+                const toggle = card.querySelector('.ai-activity-toggle');
+                if (toggle) toggle.textContent = 'Show details';
+            }, 420);
+            setTimeout(() => {
+                if (!card.isConnected || card.dataset.finalized !== 'true') return;
+                card.removeAttribute('id');
+                list?.removeAttribute('id');
+                summary?.removeAttribute('id');
+                card.classList.add('ai-activity-archived');
+            }, 900);
         }
 
         function removeAIIndicator() {
@@ -5443,6 +6881,22 @@
             }
         }
 
+        async function consumeSSEPacket(packet, handlers = {}) {
+            const normalized = String(packet || '').replace(/\r\n/g, '\n').trim();
+            if (!normalized || normalized.startsWith(':')) return;
+            let eventName = 'message';
+            const dataLines = [];
+            for (const line of normalized.split('\n')) {
+                if (line.startsWith('event:')) eventName = line.slice(6).trim();
+                else if (line.startsWith('data:')) dataLines.push(line.slice(5).trimStart());
+            }
+            if (!dataLines.length) return;
+            let payload;
+            const raw = dataLines.join('\n');
+            try { payload = JSON.parse(raw); } catch (_) { payload = { text:raw }; }
+            if (handlers[eventName]) await handlers[eventName](payload);
+        }
+
         async function readActivitySSE(response, handlers = {}) {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -5451,22 +6905,17 @@
                 const { done, value } = await reader.read();
                 if (done) break;
                 buffer += decoder.decode(value, { stream:true });
+                buffer = buffer.replace(/\r\n/g, '\n');
                 let boundary;
                 while ((boundary = buffer.indexOf('\n\n')) !== -1) {
                     const packet = buffer.slice(0, boundary);
                     buffer = buffer.slice(boundary + 2);
-                    let eventName = 'message';
-                    const dataLines = [];
-                    for (const line of packet.split('\n')) {
-                        if (line.startsWith('event:')) eventName = line.slice(6).trim();
-                        else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
-                    }
-                    if (!dataLines.length) continue;
-                    let payload;
-                    try { payload = JSON.parse(dataLines.join('\n')); } catch (_) { payload = { text:dataLines.join('\n') }; }
-                    if (handlers[eventName]) await handlers[eventName](payload);
+                    await consumeSSEPacket(packet, handlers);
                 }
             }
+            buffer += decoder.decode();
+            buffer = buffer.replace(/\r\n/g, '\n');
+            if (buffer.trim()) await consumeSSEPacket(buffer, handlers);
         }
 
         function clearWelcomeScreenIfPresent() {
@@ -5558,7 +7007,8 @@
                 }
             }
 
-            modal.classList.toggle('open', show);
+            if (show) openExclusiveSurface('commandsModalOverlay');
+            else modal.classList.remove('open');
         }
 
         /* 1. BIBLE MODE SYSTEM */
@@ -5627,6 +7077,7 @@
                     if (msg.role === 'user') {
                         const userDiv = document.createElement('div');
                         userDiv.className = 'msg user has-bubble';
+                    userDiv.setAttribute('data-message-index', String(messageIndex));
                         userDiv.innerHTML = `
                             <div class="user-bubble-body">${escapeHTML(msg.text)}</div>
                             <div class="user-actions">
@@ -5638,6 +7089,7 @@
                     } else {
                         const botDiv = document.createElement('div');
                         botDiv.className = 'msg bot';
+                    botDiv.setAttribute('data-message-index', String(messageIndex));
                         botDiv.innerHTML = `<div>${renderCustomMarkdown(msg.text)}</div>
                             <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
                                 <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)">🔊 Replay Audio</button>
@@ -5741,6 +7193,8 @@
 
             const botMsgElem = document.createElement('div');
             botMsgElem.className = 'msg bot';
+            if(ctx.id && ctx.sessions[ctx.id]) botMsgElem.setAttribute('data-message-index', String(ctx.sessions[ctx.id].messages.length));
+            activeBotMessageElement=botMsgElem;
             chatBox.appendChild(botMsgElem);
             activeBotMessageElement=botMsgElem;
             scrollToBottom(true);
@@ -5900,7 +7354,7 @@
                     <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                 </button>
             `;
-            session.messages.forEach(m => {
+            session.messages.forEach((m, messageIndex) => {
                 if (m.role === 'user') {
                     let fileHTML = '';
                     if (m.files && Array.isArray(m.files)) {
@@ -5937,6 +7391,7 @@
                             </button>
                             <button class="bot-action-btn" onclick="continueGenerating(this)" title="Manual Continue — usually only needed if automatic continuation reaches its cap">Continue</button>
                             <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
+                            ${assistantReadAloudButtonHTML()}
                             <button class="bot-action-btn" onclick="copyText(this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                 Copy
@@ -6177,14 +7632,492 @@ ${m.text || ''}
 
             if (!code.includes('<html') && !code.includes('<!DOCTYPE')) {
                 if (/^(javascript|js)$/i.test(lang)) {
-                    code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px;color:#333;}</style></head><body><h3>Console Output:</h3><div id="out"></div><script>const log=document.getElementById('out');console.log=(...a)=>{log.innerHTML+=a.join(' ')+'<br>'};try{${code}}catch(e){document.body.innerHTML+='<pre style="color:red">'+e+'</pre>'};<\/script></body></html>`;
+                    code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px;color:#333;}
+        /* ==== Pet creator + pet grid cleanup ==== */
+        #personalizationPetPage .ps-pet-grid{
+            display:grid!important;
+            grid-template-columns:repeat(4,minmax(0,1fr))!important;
+            gap:14px!important;
+            align-items:stretch!important;
+            padding:6px 0 18px!important;
+        }
+        #personalizationPetPage .ps-pet-card{
+            min-height:174px!important;
+            height:100%!important;
+            display:flex!important;
+            flex-direction:column!important;
+            align-items:center!important;
+            justify-content:flex-start!important;
+            gap:0!important;
+            padding:14px 10px 12px!important;
+            border-radius:20px!important;
+            overflow:hidden!important;
+        }
+        #personalizationPetPage .ps-pet-card-visual{
+            width:84px!important;
+            height:84px!important;
+            flex:0 0 84px!important;
+            margin:0 auto 10px!important;
+            border-radius:24px!important;
+            box-shadow:0 10px 30px rgba(15,23,42,.18)!important;
+            background:radial-gradient(circle at 35% 20%, rgba(255,255,255,.22), rgba(129,140,248,.14) 46%, rgba(15,23,42,.18))!important;
+        }
+        #personalizationPetPage .ps-pet-card-name{
+            width:100%!important;
+            margin-top:2px!important;
+            text-align:center!important;
+            font-size:.9rem!important;
+            line-height:1.25!important;
+        }
+        #personalizationPetPage .ps-pet-card-desc{
+            width:100%!important;
+            text-align:center!important;
+            margin-top:6px!important;
+            min-height:2.8em!important;
+            display:-webkit-box!important;
+            -webkit-line-clamp:2!important;
+            -webkit-box-orient:vertical!important;
+            overflow:hidden!important;
+            font-size:.68rem!important;
+            line-height:1.38!important;
+        }
+        #personalizationPetPage .ps-pet-action-grid{
+            display:grid!important;
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+            gap:12px!important;
+            margin:2px 0 16px!important;
+        }
+        #personalizationPetPage .ps-pet-action-card{
+            min-height:84px!important;
+            display:flex!important;
+            align-items:center!important;
+            gap:12px!important;
+            padding:14px!important;
+            border-radius:18px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025))!important;
+            box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
+            text-align:left!important;
+        }
+        #personalizationPetPage .ps-pet-action-card strong,
+        #personalizationPetPage .ps-pet-action-card small{
+            display:block!important;
+        }
+        #personalizationPetPage .ps-pet-action-card small{
+            margin-top:4px!important;
+            line-height:1.4!important;
+        }
+        #personalizationPetPage .ps-ai-pet-creator{
+            border-radius:22px!important;
+            overflow:hidden!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:linear-gradient(180deg, rgba(15,23,42,.48), rgba(2,6,23,.36))!important;
+            box-shadow:0 16px 40px rgba(2,6,23,.22)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-body{
+            grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important;
+            gap:18px!important;
+            align-items:start!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview{
+            position:sticky!important;
+            top:0!important;
+            min-height:320px!important;
+            display:flex!important;
+            flex-direction:column!important;
+            justify-content:flex-start!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-copy{padding:12px 2px 2px!important}
+        #personalizationPetPage .ps-ai-pet-meta-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-top:8px!important}
+        #personalizationPetPage .ps-ai-pet-style-pill{
+            display:inline-flex!important;
+            align-items:center!important;
+            gap:7px!important;
+            max-width:100%!important;
+            padding:7px 10px!important;
+            border-radius:999px!important;
+            background:rgba(99,102,241,.14)!important;
+            border:1px solid rgba(129,140,248,.24)!important;
+            color:#dbe4ff!important;
+            font-size:.64rem!important;
+            line-height:1.25!important;
+        }
+        #personalizationPetPage .ps-ai-pet-style-pill i{width:14px!important;height:14px!important;flex:0 0 14px!important}
+        #personalizationPetPage .ps-ai-pet-setting-row{
+            display:flex!important;
+            align-items:center!important;
+            justify-content:space-between!important;
+            gap:12px!important;
+            padding:12px 14px!important;
+            margin:2px 0 12px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:16px!important;
+            background:rgba(255,255,255,.03)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-setting-copy{min-width:0!important}
+        #personalizationPetPage .ps-ai-pet-setting-copy strong{display:block!important;font-size:.79rem!important;line-height:1.25!important}
+        #personalizationPetPage .ps-ai-pet-setting-copy small{display:block!important;margin-top:4px!important;color:var(--text-muted)!important;font-size:.64rem!important;line-height:1.38!important}
+        #personalizationPetPage .ps-ai-pet-reference-wrap{
+            display:block!important;
+            min-width:0!important;
+            margin:0 0 12px!important;
+            padding:12px 14px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:16px!important;
+            background:rgba(255,255,255,.03)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-reference-wrap[hidden]{display:none!important}
+        #personalizationPetPage .ps-ai-pet-option-label{display:block!important;font-size:.7rem!important;font-weight:800!important;letter-spacing:.04em!important;margin-bottom:9px!important;color:#cbd5e1!important}
+        #personalizationPetPage .ps-ai-pet-reference-chips{
+            display:flex!important;
+            flex-wrap:wrap!important;
+            gap:8px!important;
+            min-width:0!important;
+        }
+        #personalizationPetPage .ps-ai-pet-ref-chip{
+            appearance:none!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:rgba(15,23,42,.22)!important;
+            color:var(--text-main)!important;
+            border-radius:999px!important;
+            padding:8px 11px!important;
+            min-height:36px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            gap:7px!important;
+            cursor:pointer!important;
+            font-size:.69rem!important;
+            font-weight:700!important;
+            line-height:1!important;
+            transition:.16s ease!important;
+        }
+        #personalizationPetPage .ps-ai-pet-ref-chip:hover{transform:translateY(-1px)!important;border-color:rgba(129,140,248,.34)!important;background:rgba(99,102,241,.08)!important}
+        #personalizationPetPage .ps-ai-pet-ref-chip.active{border-color:#8b5cf6!important;background:rgba(139,92,246,.18)!important;box-shadow:0 0 0 1px rgba(139,92,246,.28)!important;color:#f4f0ff!important}
+        #personalizationPetPage .ps-ai-pet-ref-chip span.emoji{font-size:.92rem!important;line-height:1!important}
+        #personalizationPetPage .ps-ai-pet-reference-help{display:block!important;margin-top:10px!important;color:var(--text-muted)!important;font-size:.63rem!important;line-height:1.42!important}
+        #personalizationPetPage .ps-ai-pet-actions{
+            display:flex!important;
+            flex-wrap:wrap!important;
+            gap:10px!important;
+            align-items:center!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate,
+        #personalizationPetPage .ps-ai-pet-secondary,
+        #personalizationPetPage .ps-ai-pet-cancel{
+            min-width:0!important;
+            min-height:44px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            justify-content:center!important;
+            gap:8px!important;
+            padding:0 14px!important;
+            border-radius:14px!important;
+            border:1px solid rgba(148,163,184,.18)!important;
+            font-size:.75rem!important;
+            font-weight:800!important;
+            cursor:pointer!important;
+            transition:.16s ease!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate{background:linear-gradient(135deg,#8b5cf6,#6366f1)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 12px 24px rgba(99,102,241,.24)!important}
+        #personalizationPetPage .ps-ai-pet-secondary{background:rgba(255,255,255,.045)!important;color:var(--text-main)!important}
+        #personalizationPetPage .ps-ai-pet-secondary:disabled{opacity:.52!important;cursor:not-allowed!important}
+        #personalizationPetPage .ps-ai-pet-cancel{background:rgba(239,68,68,.11)!important;color:#fecaca!important;border-color:rgba(248,113,113,.18)!important}
+        #personalizationPetPage .ps-ai-pet-generate:hover,
+        #personalizationPetPage .ps-ai-pet-secondary:hover,
+        #personalizationPetPage .ps-ai-pet-cancel:hover{transform:translateY(-1px)!important}
+        @media (max-width: 980px){
+            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+            #personalizationPetPage .ps-ai-pet-body{grid-template-columns:1fr!important}
+            #personalizationPetPage .ps-ai-pet-preview{position:relative!important;top:auto!important;min-height:unset!important}
+        }
+        @media (max-width: 720px){
+            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+            #personalizationPetPage .ps-pet-action-grid{grid-template-columns:1fr!important}
+            #personalizationPetPage .ps-ai-pet-setting-row{align-items:flex-start!important}
+            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 calc(50% - 5px)!important}
+        }
+        @media (max-width: 540px){
+            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 100%!important}
+            #personalizationPetPage .ps-pet-card{min-height:164px!important}
+            #personalizationPetPage .ps-pet-card-visual{width:78px!important;height:78px!important}
+        }
+
+    </style></head><body><h3>Console Output:</h3><div id="out"></div><script>const log=document.getElementById('out');console.log=(...a)=>{log.innerHTML+=a.join(' ')+'<br>'};try{${code}}catch(e){document.body.innerHTML+='<pre style="color:red">'+e+'</pre>'};<\/script></body></html>`;
                 } else {
                     code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:16px;font-family:sans-serif;}
+
+
+        /* ===== CLEAN SURFACE / ACTIVITY / MIC HARDENING ===== */
+        .ai-activity-card.ai-activity-archived{margin-bottom:10px!important;box-shadow:none!important;background:rgba(30,41,59,.46)!important}
+        .ai-activity-card.ai-activity-archived .ai-activity-head{background:transparent!important;padding-bottom:2px!important;margin-bottom:0!important;position:relative!important}
+        .ai-activity-card.ai-activity-archived.collapsed{padding:9px 11px!important;border-radius:14px!important}
+        .pill-mic-btn.recording{color:#f87171!important;background:rgba(239,68,68,.12)!important;box-shadow:0 0 0 3px rgba(239,68,68,.10)!important}
+        .modal-overlay:not(.open), .ps-choice-overlay:not(.open){pointer-events:none!important}
+        .modal-overlay.open{overscroll-behavior:contain}
+
+        /* ==== Pet creator + pet grid cleanup ==== */
+        #personalizationPetPage .ps-pet-grid{
+            display:grid!important;
+            grid-template-columns:repeat(4,minmax(0,1fr))!important;
+            gap:14px!important;
+            align-items:stretch!important;
+            padding:6px 0 18px!important;
+        }
+        #personalizationPetPage .ps-pet-card{
+            min-height:174px!important;
+            height:100%!important;
+            display:flex!important;
+            flex-direction:column!important;
+            align-items:center!important;
+            justify-content:flex-start!important;
+            gap:0!important;
+            padding:14px 10px 12px!important;
+            border-radius:20px!important;
+            overflow:hidden!important;
+        }
+        #personalizationPetPage .ps-pet-card-visual{
+            width:84px!important;
+            height:84px!important;
+            flex:0 0 84px!important;
+            margin:0 auto 10px!important;
+            border-radius:24px!important;
+            box-shadow:0 10px 30px rgba(15,23,42,.18)!important;
+            background:radial-gradient(circle at 35% 20%, rgba(255,255,255,.22), rgba(129,140,248,.14) 46%, rgba(15,23,42,.18))!important;
+        }
+        #personalizationPetPage .ps-pet-card-name{
+            width:100%!important;
+            margin-top:2px!important;
+            text-align:center!important;
+            font-size:.9rem!important;
+            line-height:1.25!important;
+        }
+        #personalizationPetPage .ps-pet-card-desc{
+            width:100%!important;
+            text-align:center!important;
+            margin-top:6px!important;
+            min-height:2.8em!important;
+            display:-webkit-box!important;
+            -webkit-line-clamp:2!important;
+            -webkit-box-orient:vertical!important;
+            overflow:hidden!important;
+            font-size:.68rem!important;
+            line-height:1.38!important;
+        }
+        #personalizationPetPage .ps-pet-action-grid{
+            display:grid!important;
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+            gap:12px!important;
+            margin:2px 0 16px!important;
+        }
+        #personalizationPetPage .ps-pet-action-card{
+            min-height:84px!important;
+            display:flex!important;
+            align-items:center!important;
+            gap:12px!important;
+            padding:14px!important;
+            border-radius:18px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025))!important;
+            box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
+            text-align:left!important;
+        }
+        #personalizationPetPage .ps-pet-action-card strong,
+        #personalizationPetPage .ps-pet-action-card small{
+            display:block!important;
+        }
+        #personalizationPetPage .ps-pet-action-card small{
+            margin-top:4px!important;
+            line-height:1.4!important;
+        }
+        #personalizationPetPage .ps-ai-pet-creator{
+            border-radius:22px!important;
+            overflow:hidden!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:linear-gradient(180deg, rgba(15,23,42,.48), rgba(2,6,23,.36))!important;
+            box-shadow:0 16px 40px rgba(2,6,23,.22)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-body{
+            grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important;
+            gap:18px!important;
+            align-items:start!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview{
+            position:sticky!important;
+            top:0!important;
+            min-height:320px!important;
+            display:flex!important;
+            flex-direction:column!important;
+            justify-content:flex-start!important;
+        }
+        #personalizationPetPage .ps-ai-pet-preview-copy{padding:12px 2px 2px!important}
+        #personalizationPetPage .ps-ai-pet-meta-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-top:8px!important}
+        #personalizationPetPage .ps-ai-pet-style-pill{
+            display:inline-flex!important;
+            align-items:center!important;
+            gap:7px!important;
+            max-width:100%!important;
+            padding:7px 10px!important;
+            border-radius:999px!important;
+            background:rgba(99,102,241,.14)!important;
+            border:1px solid rgba(129,140,248,.24)!important;
+            color:#dbe4ff!important;
+            font-size:.64rem!important;
+            line-height:1.25!important;
+        }
+        #personalizationPetPage .ps-ai-pet-style-pill i{width:14px!important;height:14px!important;flex:0 0 14px!important}
+        #personalizationPetPage .ps-ai-pet-setting-row{
+            display:flex!important;
+            align-items:center!important;
+            justify-content:space-between!important;
+            gap:12px!important;
+            padding:12px 14px!important;
+            margin:2px 0 12px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:16px!important;
+            background:rgba(255,255,255,.03)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-setting-copy{min-width:0!important}
+        #personalizationPetPage .ps-ai-pet-setting-copy strong{display:block!important;font-size:.79rem!important;line-height:1.25!important}
+        #personalizationPetPage .ps-ai-pet-setting-copy small{display:block!important;margin-top:4px!important;color:var(--text-muted)!important;font-size:.64rem!important;line-height:1.38!important}
+        #personalizationPetPage .ps-ai-pet-reference-wrap{
+            display:block!important;
+            min-width:0!important;
+            margin:0 0 12px!important;
+            padding:12px 14px!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            border-radius:16px!important;
+            background:rgba(255,255,255,.03)!important;
+        }
+        #personalizationPetPage .ps-ai-pet-reference-wrap[hidden]{display:none!important}
+        #personalizationPetPage .ps-ai-pet-option-label{display:block!important;font-size:.7rem!important;font-weight:800!important;letter-spacing:.04em!important;margin-bottom:9px!important;color:#cbd5e1!important}
+        #personalizationPetPage .ps-ai-pet-reference-chips{
+            display:flex!important;
+            flex-wrap:wrap!important;
+            gap:8px!important;
+            min-width:0!important;
+        }
+        #personalizationPetPage .ps-ai-pet-ref-chip{
+            appearance:none!important;
+            border:1px solid rgba(148,163,184,.16)!important;
+            background:rgba(15,23,42,.22)!important;
+            color:var(--text-main)!important;
+            border-radius:999px!important;
+            padding:8px 11px!important;
+            min-height:36px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            gap:7px!important;
+            cursor:pointer!important;
+            font-size:.69rem!important;
+            font-weight:700!important;
+            line-height:1!important;
+            transition:.16s ease!important;
+        }
+        #personalizationPetPage .ps-ai-pet-ref-chip:hover{transform:translateY(-1px)!important;border-color:rgba(129,140,248,.34)!important;background:rgba(99,102,241,.08)!important}
+        #personalizationPetPage .ps-ai-pet-ref-chip.active{border-color:#8b5cf6!important;background:rgba(139,92,246,.18)!important;box-shadow:0 0 0 1px rgba(139,92,246,.28)!important;color:#f4f0ff!important}
+        #personalizationPetPage .ps-ai-pet-ref-chip span.emoji{font-size:.92rem!important;line-height:1!important}
+        #personalizationPetPage .ps-ai-pet-reference-help{display:block!important;margin-top:10px!important;color:var(--text-muted)!important;font-size:.63rem!important;line-height:1.42!important}
+        #personalizationPetPage .ps-ai-pet-actions{
+            display:flex!important;
+            flex-wrap:wrap!important;
+            gap:10px!important;
+            align-items:center!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate,
+        #personalizationPetPage .ps-ai-pet-secondary,
+        #personalizationPetPage .ps-ai-pet-cancel{
+            min-width:0!important;
+            min-height:44px!important;
+            display:inline-flex!important;
+            align-items:center!important;
+            justify-content:center!important;
+            gap:8px!important;
+            padding:0 14px!important;
+            border-radius:14px!important;
+            border:1px solid rgba(148,163,184,.18)!important;
+            font-size:.75rem!important;
+            font-weight:800!important;
+            cursor:pointer!important;
+            transition:.16s ease!important;
+        }
+        #personalizationPetPage .ps-ai-pet-generate{background:linear-gradient(135deg,#8b5cf6,#6366f1)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 12px 24px rgba(99,102,241,.24)!important}
+        #personalizationPetPage .ps-ai-pet-secondary{background:rgba(255,255,255,.045)!important;color:var(--text-main)!important}
+        #personalizationPetPage .ps-ai-pet-secondary:disabled{opacity:.52!important;cursor:not-allowed!important}
+        #personalizationPetPage .ps-ai-pet-cancel{background:rgba(239,68,68,.11)!important;color:#fecaca!important;border-color:rgba(248,113,113,.18)!important}
+        #personalizationPetPage .ps-ai-pet-generate:hover,
+        #personalizationPetPage .ps-ai-pet-secondary:hover,
+        #personalizationPetPage .ps-ai-pet-cancel:hover{transform:translateY(-1px)!important}
+        @media (max-width: 980px){
+            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+            #personalizationPetPage .ps-ai-pet-body{grid-template-columns:1fr!important}
+            #personalizationPetPage .ps-ai-pet-preview{position:relative!important;top:auto!important;min-height:unset!important}
+        }
+        @media (max-width: 720px){
+            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+            #personalizationPetPage .ps-pet-action-grid{grid-template-columns:1fr!important}
+            #personalizationPetPage .ps-ai-pet-setting-row{align-items:flex-start!important}
+            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 calc(50% - 5px)!important}
+        }
+        @media (max-width: 540px){
+            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 100%!important}
+            #personalizationPetPage .ps-pet-card{min-height:164px!important}
+            #personalizationPetPage .ps-pet-card-visual{width:78px!important;height:78px!important}
+        }
+
+    
+        /* ===== Draggable pet anchor + falling scare ===== */
+        #personalizationPetPage .ps-pet-behavior-grid{
+            display:grid!important;
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+            gap:10px!important;
+            margin:0 0 16px!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-row{
+            min-width:0!important;
+            display:flex!important;
+            align-items:center!important;
+            justify-content:space-between!important;
+            gap:12px!important;
+            padding:12px 14px!important;
+            border:1px solid rgba(148,163,184,.15)!important;
+            border-radius:16px!important;
+            background:rgba(255,255,255,.025)!important;
+        }
+        #personalizationPetPage .ps-pet-behavior-copy{min-width:0!important}
+        #personalizationPetPage .ps-pet-behavior-copy strong{display:block!important;font-size:.76rem!important;line-height:1.25!important}
+        #personalizationPetPage .ps-pet-behavior-copy small{display:block!important;margin-top:4px!important;color:var(--text-muted)!important;font-size:.63rem!important;line-height:1.4!important}
+        @media(max-width:640px){#personalizationPetPage .ps-pet-behavior-grid{grid-template-columns:1fr!important}}
+
+        .live-pet[data-drag-enabled="true"]{cursor:grab;touch-action:none}
+        .live-pet.dragging{cursor:grabbing!important;transition:none!important;z-index:25!important;filter:drop-shadow(0 16px 18px rgba(0,0,0,.42))}
+        .live-pet.dragging .live-pet-visual{animation:none!important;transform:scale(1.04)!important}
+        .live-pet.pet-settling{transition:left .18s ease,top .64s cubic-bezier(.22,.82,.28,1),filter .2s ease!important}
+        .live-pet.falling-scared{z-index:25!important}
+        .live-pet.falling-scared .live-pet-visual{animation:petFallScare .72s cubic-bezier(.2,.8,.2,1)!important}
+        .live-pet.falling-scared[data-pet-visual="cat"] .live-pet-visual,
+        .live-pet.falling-scared[data-pet-visual="blackcat"] .live-pet-visual{animation-name:petFallScareCat!important}
+        .live-pet.falling-scared[data-pet-visual="dog"] .live-pet-visual,
+        .live-pet.falling-scared[data-pet-visual="fox"] .live-pet-visual{animation-name:petFallScareTail!important}
+        .live-pet.falling-scared[data-pet-visual="rabbit"] .live-pet-visual,
+        .live-pet.falling-scared[data-pet-visual="chick"] .live-pet-visual{animation-name:petFallScareHop!important}
+        .live-pet.falling-scared[data-pet-visual="robot"] .live-pet-visual{animation-name:petFallScareRobot!important}
+        .live-pet.falling-scared[data-pet-visual="panda"] .live-pet-visual{animation-name:petFallScarePanda!important}
+        @keyframes petFallScare{0%{transform:translateY(-3px) rotate(0) scale(1.03)}18%{transform:translateY(2px) rotate(-10deg) scale(.98)}36%{transform:translateY(-4px) rotate(9deg) scale(1.05)}58%{transform:translateY(1px) rotate(-6deg)}78%{transform:translateY(-2px) rotate(4deg)}100%{transform:none}}
+        @keyframes petFallScareCat{0%{transform:scale(1.05) rotate(0)}25%{transform:scale(.95,1.08) rotate(-12deg)}50%{transform:scale(1.08,.94) rotate(11deg)}75%{transform:scale(.98,1.03) rotate(-5deg)}100%{transform:none}}
+        @keyframes petFallScareTail{0%{transform:translateY(-4px) rotate(0)}22%{transform:translateY(2px) rotate(13deg)}45%{transform:translateY(-5px) rotate(-11deg)}68%{transform:translateY(1px) rotate(7deg)}100%{transform:none}}
+        @keyframes petFallScareHop{0%{transform:translateY(-4px) scaleY(1.08)}25%{transform:translateY(3px) scaleY(.9) rotate(-8deg)}52%{transform:translateY(-8px) scaleY(1.04) rotate(7deg)}76%{transform:translateY(1px) rotate(-3deg)}100%{transform:none}}
+        @keyframes petFallScareRobot{0%{transform:translate(0,-3px) rotate(0)}20%{transform:translate(-5px,1px) rotate(-5deg)}40%{transform:translate(5px,-2px) rotate(5deg)}60%{transform:translate(-4px,1px) rotate(-4deg)}80%{transform:translate(3px,-1px) rotate(3deg)}100%{transform:none}}
+        @keyframes petFallScarePanda{0%{transform:translateY(-3px) rotate(0) scale(1)}30%{transform:translateY(3px) rotate(-9deg) scale(.96)}55%{transform:translateY(-5px) rotate(8deg) scale(1.04)}80%{transform:translateY(1px) rotate(-4deg)}100%{transform:none}}
+        .bot-action-btn.read-aloud-active{border-color:rgba(129,140,248,.45)!important;background:rgba(99,102,241,.12)!important;color:#c7d2fe!important}
+
+
+
 
 </style></head><body>${code}</body></html>`;
                 }
             }
 
+            closeTransientSurfaces('codeRunnerModal');
             iframe.srcdoc = code;
             modal.classList.add('open');
         }
@@ -6207,7 +8140,7 @@ ${m.text || ''}
         /* 5. EXECUTE AI CALL */
         function toggleAutoFallback(v){ autoProviderFallback=!!v; localStorage.setItem('jepong_auto_fallback',JSON.stringify(autoProviderFallback)); }
         function toggleSmartRouter(v){ smartModelRouter=!!v; localStorage.setItem('jepong_smart_router',JSON.stringify(smartModelRouter)); }
-        function openCodeFullscreen(index){ const item=window.executableSnippets[index]; if(!item)return; document.getElementById('fullscreenCodeTitle').textContent=(item.lang||'code').toUpperCase(); document.getElementById('fullscreenCodeContent').textContent=item.code; document.getElementById('fullscreenCodeOverlay').classList.add('open'); }
+        function openCodeFullscreen(index){ const item=window.executableSnippets[index]; if(!item)return; closeTransientSurfaces('fullscreenCodeOverlay'); document.getElementById('fullscreenCodeTitle').textContent=(item.lang||'code').toUpperCase(); document.getElementById('fullscreenCodeContent').textContent=item.code; document.getElementById('fullscreenCodeOverlay').classList.add('open'); }
         function closeCodeFullscreen(){ document.getElementById('fullscreenCodeOverlay')?.classList.remove('open'); }
         function setProviderMeta(provider,patch){ lastProviderMeta[provider]={...(lastProviderMeta[provider]||{}),...patch,updatedAt:Date.now()}; localStorage.setItem('jepong_provider_meta',JSON.stringify(lastProviderMeta)); renderProviderStatus(); renderUsageSyncUI(); }
         function renderProviderStatus(){ const grid=document.getElementById('providerStatusGrid'); if(!grid)return; grid.innerHTML=PROVIDER_ORDER.filter(p=>p!=='image').map(p=>{const m=lastProviderMeta[p]||{};let state=m.rateLimited?'limited':(m.busy?'busy':(m.configured===false?'not-configured':'ready'));let text=state==='limited'?'Rate limit reached':state==='busy'?'Busy / retrying':state==='not-configured'?'Key not configured':(m.remainingRequests!=null?`${m.remainingRequests} requests left`:'Ready');return `<div class="provider-status-card ${state}"><div class="provider-status-name">${providerLabel(p)}</div><div class="provider-status-state">${text}</div></div>`}).join(''); }
@@ -6240,7 +8173,97 @@ ${m.text || ''}
         function showStudyPanel(){clearWelcomeScreenIfPresent();const d=document.createElement('div');d.className='study-panel';d.innerHTML=`<h3>📚 Study Mode</h3><p>Pili ng tool, tapos ilagay ang topic o lesson sa input.</p><div class="study-tools"><button class="study-tool-btn" onclick="activateStudyTool('quiz')">🧠 Quiz</button><button class="study-tool-btn" onclick="activateStudyTool('reviewer')">📝 Reviewer</button><button class="study-tool-btn" onclick="activateStudyTool('flashcards')">🗂️ Flashcards</button><button class="study-tool-btn" onclick="activateStudyTool('explain')">💡 Explain Simply</button></div>`;chatBox.appendChild(d);scrollToBottom(true);}
         function activateStudyTool(tool){pendingStudyTool=tool;const input=document.getElementById('userInput');const names={quiz:'Quiz me about: ',reviewer:'Make a reviewer about: ',flashcards:'Make flashcards about: ',explain:'Explain simply: '};input.value=names[tool]||'';autoResizeTextarea(input);input.focus();}
         function startTemporaryChat(){startIncognitoChat();document.getElementById('brandTitleText').innerText='JepongDevxyz AI • Temporary';}
-        function branchConversation(btn){const ctx=getActiveContext();if(isIncognito||isBibleMode||!ctx.id)return;const node=btn.closest('.msg');const nodes=[...chatBox.querySelectorAll('.msg')];const domIndex=nodes.indexOf(node);const source=ctx.sessions[ctx.id];if(!source)return;const id='chat_'+Date.now();const count=Math.min(source.messages.length,domIndex+1);chatSessions[id]={id,title:`Branch · ${source.title||'Chat'}`,messages:JSON.parse(JSON.stringify(source.messages.slice(0,count))),pinned:false};saveSessions();loadChatSession(id);}
+        function branchMessagesThroughIndex(messages=[], index=-1) {
+            const i=Number(index);
+            if(!Array.isArray(messages)||!Number.isInteger(i)||i<0||i>=messages.length)return [];
+            return messages.slice(0,i+1).map(m=>JSON.parse(JSON.stringify(m)));
+        }
+        function branchConversation(btn){
+            const ctx=getActiveContext();
+            if(isIncognito||isBibleMode||!ctx.id){
+                if(typeof showModernToast==='function')showModernToast('Branch is available in saved normal chats.');
+                return;
+            }
+            const node=btn?.closest?.('.msg');
+            const source=ctx.sessions[ctx.id];
+            if(!node||!source){
+                if(typeof showModernToast==='function')showModernToast('Could not identify this message for branching.');
+                return;
+            }
+            const messageIndex=Number(node.dataset.messageIndex);
+            if(!Number.isInteger(messageIndex)||messageIndex<0){
+                if(typeof showModernToast==='function')showModernToast('Could not identify this message for branching.');
+                return;
+            }
+            if(messageIndex>=source.messages.length){
+                if(typeof showModernToast==='function')showModernToast('Wait for the response to finish before branching.');
+                return;
+            }
+            const messages=branchMessagesThroughIndex(source.messages,messageIndex);
+            if(!messages.length)return;
+            const id=`session_${Date.now()}_branch`;
+            chatSessions[id]={
+                id,
+                title:`Branch · ${source.title||'Chat'}`.slice(0,60),
+                messages,
+                pinned:false,
+                branchFrom:{sessionId:ctx.id,messageIndex,createdAt:Date.now()}
+            };
+            saveSessions();
+            loadChatSession(id);
+            if(typeof showModernToast==='function')showModernToast('Branch created');
+        }
+
+        let activeReadAloudButton=null;
+        function assistantReadAloudButtonHTML(){
+            return `<button class="bot-action-btn read-aloud-btn" onclick="toggleReadAloudForMessage(this)" title="Read this response aloud"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Read aloud</span></button>`;
+        }
+        function setReadAloudButtonState(btn,reading=false){
+            if(!btn)return;
+            btn.dataset.reading=reading?'true':'false';
+            btn.classList.toggle('read-aloud-active',!!reading);
+            btn.innerHTML=reading
+                ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span>Stop reading</span>`
+                : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Read aloud</span>`;
+        }
+        function resetActiveReadAloudButton(){
+            if(activeReadAloudButton)setReadAloudButtonState(activeReadAloudButton,false);
+            activeReadAloudButton=null;
+        }
+        function assistantTextForReadAloud(btn){
+            const actions=btn?.closest?.('.bot-actions');
+            const content=actions?.previousElementSibling;
+            return String(content?.innerText||'').trim();
+        }
+        function toggleReadAloudForMessage(btn){
+            const msgNode=btn?.closest?.('.msg.bot');
+            const ctx=getActiveContext();
+            const messageIndex=Number(msgNode?.dataset?.messageIndex);
+            if(ctx.id && ctx.sessions?.[ctx.id] && Number.isInteger(messageIndex) && messageIndex>=ctx.sessions[ctx.id].messages.length){
+                if(typeof showModernToast==='function')showModernToast('Wait for the response to finish before using Read aloud.');
+                return;
+            }
+            if(btn?.dataset?.reading==='true'){
+                stopAllSpeech();
+                return;
+            }
+            const text=assistantTextForReadAloud(btn);
+            if(!text){
+                if(typeof showModernToast==='function')showModernToast('No readable response text found.');
+                return;
+            }
+            stopAllSpeech();
+            const target=btn;
+            const task=speakSmartVoice(text,{
+                profile:getVoiceProfile(),
+                onstart:()=>{activeReadAloudButton=target;setReadAloudButtonState(target,true);},
+                onend:()=>{if(activeReadAloudButton===target)resetActiveReadAloudButton();},
+                onerror:()=>{if(activeReadAloudButton===target)resetActiveReadAloudButton();if(typeof showModernToast==='function')showModernToast('Read aloud could not start on this device.');}
+            });
+            activeReadAloudButton=target;
+            setReadAloudButtonState(target,true);
+            Promise.resolve(task).catch(()=>{if(activeReadAloudButton===target)resetActiveReadAloudButton();});
+        }
         function continueGenerating(btn){const input=document.getElementById('userInput');input.value='Continue from exactly where you stopped. Do not repeat what you already wrote.';sendMessage();}
         async function prepareHistoryForRequest(history){
             const chars=(history||[]).reduce((n,x)=>n+(x.text?.length||0),0); if(chars<30000||history.length<18)return history;
@@ -6251,6 +8274,7 @@ ${m.text || ''}
         async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:autoProviderFallback,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
 
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
+            closeTransientSurfaces('');
             const requestController=new AbortController();
             activeAIAbortController=requestController;
             activePartialResponse='';
@@ -6342,7 +8366,9 @@ ${m.text || ''}
                         </div>
                     `;
                     if (ctx.id && ctx.sessions[ctx.id]) {
+                        const savedBotIndex=ctx.sessions[ctx.id].messages.length;
                         ctx.sessions[ctx.id].messages.push({ role: 'bot', text: `![Generated Image](${generatedImageUrl})` });
+                        botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                         if (!isIncognito && !isBibleMode) saveSessions();
                     }
                     incrementCounters(promptText);
@@ -6371,7 +8397,7 @@ ${m.text || ''}
                     body: JSON.stringify({ 
                         message: promptText, 
                         history: getHistoryForRequest(continuousChatHistory),
-                        files: personalizationSettings.librarySearch ? currentFiles : [], 
+                        files: currentFiles, 
                         provider: currentSelectedProvider,
                         model: currentSelectedModel, 
                         mode: currentSelectedMode, 
@@ -6382,6 +8408,8 @@ ${m.text || ''}
                         studyTool: pendingStudyTool,
                         activityStream: true,
                         autoTools: true,
+                        clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                        clientUtcOffsetMinutes: -new Date().getTimezoneOffset(),
                         personalization: getPersonalizationPayload()
                     })
                 });
@@ -6416,6 +8444,7 @@ ${m.text || ''}
                             </button>
                             <button class="bot-action-btn" onclick="continueGenerating(this)" title="Manual Continue — usually only needed if automatic continuation reaches its cap">Continue</button>
                             <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
+                            ${assistantReadAloudButtonHTML()}
                             <button class="bot-action-btn" onclick="copyText(this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                 Copy
@@ -6469,7 +8498,9 @@ ${m.text || ''}
                 if (runtimeBadge) { runtimeBadge.className = 'provider-runtime-badge ok'; runtimeBadge.textContent = `${providerLabel(actualProviderUsed)} · ${totalAiMs} ms total`; }
 
                 if (ctx.id && ctx.sessions[ctx.id]) {
+                    const savedBotIndex=ctx.sessions[ctx.id].messages.length;
                     ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse });
+                    botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                     if (!isIncognito && !isBibleMode) { saveSessions(); maybeGenerateAITitle(ctx.sessions[ctx.id], promptText, fullResponse); }
                 }
                 incrementCounters(promptText + ' ' + fullResponse);
@@ -6491,10 +8522,13 @@ ${m.text || ''}
                         botMsgElem.innerHTML=`<div>${renderCustomMarkdown(activePartialResponse)}</div>
                             <div class="bot-actions">
                                 <button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue from the stopped response">Continue</button>
+                                ${assistantReadAloudButtonHTML()}
                                 <button class="bot-action-btn" onclick="copyText(this)">Copy</button>
                             </div>`;
                         if(ctx.id && ctx.sessions[ctx.id]){
+                            const savedBotIndex=ctx.sessions[ctx.id].messages.length;
                             ctx.sessions[ctx.id].messages.push({role:'bot',text:activePartialResponse,stopped:true});
+                            botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                             if(!isIncognito && !isBibleMode)saveSessions();
                         }
                     }else{
@@ -6633,6 +8667,7 @@ ${m.text || ''}
             // GUMAMIT NG APPENDCHILD SA HALIP NA INNERHTML += PARA HINDI MASIRA ANG BOT NODES
             const userMsgDiv = document.createElement('div');
             userMsgDiv.className = 'msg user has-bubble';
+            userMsgDiv.setAttribute('data-message-index', String(activeSession?.messages?.length || 0));
             userMsgDiv.innerHTML = `
                 <div class="user-bubble-body">${escapeHTML(message)}${fileHTML}</div>
                 <div class="user-actions">
@@ -6744,47 +8779,116 @@ ${m.text || ''}
                 }
             });
         }
-        function toggleSpeechRecognition() {
+        let recognition = null;
+        let isRecording = false;
+        let recognitionBaseText = '';
+
+        function voiceInputNotice(message, title = 'Voice input') {
+            if (typeof showModernAlert === 'function') showModernAlert(message, title);
+            else if (typeof showModernToast === 'function') showModernToast(message);
+            else console.warn(`${title}: ${message}`);
+        }
+
+        async function ensureMicrophonePermission() {
+            if (!navigator.mediaDevices?.getUserMedia) return true;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (error) {
+                const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
+                voiceInputNotice(
+                    denied
+                        ? 'Microphone permission is blocked. Allow microphone access for this site in your browser settings, then try again.'
+                        : 'The microphone could not be opened. Check that another app is not using it, then try again.'
+                );
+                return false;
+            }
+        }
+
+        async function toggleSpeechRecognition() {
             const userInput = document.getElementById('userInput');
             const waveContainer = document.getElementById('waveContainer');
-            
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
-            
+            const micBtn = document.getElementById('micBtn');
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (!SpeechRecognition) {
+                voiceInputNotice('Voice input is not supported by this browser. Open the deployed site in Chrome or another browser with speech recognition support.');
+                return;
+            }
+
             if (isRecording) {
-                if (recognition) recognition.stop();
+                try { recognition?.stop(); } catch (_) {}
                 stopRecordingUI();
-            } else {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = preferredLanguageCode() || 'fil-PH';
-                
-                recognition.onstart = () => {
-                    isRecording = true;
-                    userInput.style.display = 'none';
-                    waveContainer.classList.add('active');
-                };
-                recognition.onresult = (event) => {
-                    userInput.value = event.results[0][0].transcript;
-                    autoResizeTextarea(userInput);
-                    stopRecordingUI();
-                };
-                recognition.onerror = () => stopRecordingUI();
-                recognition.onend = () => stopRecordingUI();
-                
-                try {
-                    recognition.start();
-                } catch(e) {
-                    stopRecordingUI();
+                return;
+            }
+
+            if (!(await ensureMicrophonePermission())) return;
+
+            recognitionBaseText = (userInput?.value || '').trim();
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+            recognition.lang = preferredLanguageCode() || 'fil-PH';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                waveContainer?.classList.add('active');
+                micBtn?.classList.add('recording');
+                micBtn?.setAttribute('aria-pressed', 'true');
+            };
+
+            recognition.onresult = (event) => {
+                let finalText = '';
+                let interimText = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    const text = event.results[i]?.[0]?.transcript || '';
+                    if (event.results[i].isFinal) finalText += text;
+                    else interimText += text;
                 }
+                const spoken = `${finalText} ${interimText}`.replace(/\s+/g, ' ').trim();
+                if (userInput) {
+                    userInput.value = [recognitionBaseText, spoken].filter(Boolean).join(recognitionBaseText && spoken ? ' ' : '');
+                    autoResizeTextarea(userInput);
+                    userInput.dispatchEvent(new Event('input', { bubbles:true }));
+                }
+            };
+
+            recognition.onerror = (event) => {
+                const code = String(event?.error || 'unknown');
+                if (code !== 'aborted') {
+                    const messages = {
+                        'not-allowed':'Microphone access was denied. Allow microphone permission for this site and try again.',
+                        'service-not-allowed':'Speech recognition is blocked by this browser or device.',
+                        'audio-capture':'No working microphone was found.',
+                        'network':'Voice recognition needs a network connection. Check your internet and try again.',
+                        'no-speech':'No speech was detected. Tap the mic and speak a little closer to the microphone.'
+                    };
+                    voiceInputNotice(messages[code] || `Voice input stopped (${code}). Please try again.`);
+                }
+                stopRecordingUI();
+            };
+            recognition.onend = () => {
+                stopRecordingUI();
+                recognition = null;
+            };
+
+            try {
+                recognition.start();
+            } catch (error) {
+                stopRecordingUI();
+                recognition = null;
+                voiceInputNotice('Voice input could not start. Wait a moment and tap the microphone again.');
             }
         }
 
         function stopRecordingUI() {
             isRecording = false;
-            document.getElementById('userInput').style.display = 'block';
-            document.getElementById('waveContainer').classList.remove('active');
+            document.getElementById('waveContainer')?.classList.remove('active');
+            const micBtn = document.getElementById('micBtn');
+            micBtn?.classList.remove('recording');
+            micBtn?.setAttribute('aria-pressed', 'false');
         }
 
         function incrementCounters(text) {
@@ -6809,6 +8913,7 @@ ${m.text || ''}
         }
 
         function openMenuFromBrandIcon() {
+            closeTransientSurfaces('sidebar');
             activeDrawerMode = 'bottom';
             sidebar.className = 'sidebar drawer-bottom open';
             sidebarOverlay.classList.add('open');
@@ -6825,6 +8930,20 @@ ${m.text || ''}
         let touchStartY = 0;
         let isEdgeSwipe = false;
         let edgeDirection = null;
+
+        function resetEdgeSwipeState() {
+            isEdgeSwipe = false;
+            edgeDirection = null;
+            sidebar.style.transition = '';
+            sidebarOverlay.style.opacity = '';
+            if (!isDrawerOpen) {
+                sidebar.style.transform = '';
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
+            }
+        }
+
+        window.addEventListener('touchcancel', () => resetEdgeSwipeState(), { passive:true });
 
         window.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
@@ -6901,12 +9020,14 @@ ${m.text || ''}
                 }
             } else {
                 if (edgeDirection === 'left' && diffX > 60) {
+                    closeTransientSurfaces('sidebar');
                     activeDrawerMode = 'left';
                     sidebar.className = 'sidebar drawer-left open';
                     sidebarOverlay.classList.add('open');
                     isDrawerOpen = true;
                     renderSidebarHistory();
                 } else if (edgeDirection === 'right' && diffX < -60) {
+                    closeTransientSurfaces('sidebar');
                     activeDrawerMode = 'right';
                     sidebar.className = 'sidebar drawer-right open';
                     sidebarOverlay.classList.add('open');
@@ -6918,8 +9039,32 @@ ${m.text || ''}
             }
         }, { passive: true });
 
+        function closeTransientSurfaces(exceptId = '') {
+            document.querySelectorAll('.modal-overlay.open').forEach(el => {
+                if (el.id !== exceptId) el.classList.remove('open');
+            });
+            if (exceptId !== 'personalizationChoiceOverlay' && exceptId !== 'personalizationModalOverlay') {
+                document.getElementById('personalizationChoiceOverlay')?.classList.remove('open');
+                personalizationPickerAnchor = null;
+            }
+            if (exceptId !== 'codeRunnerModal') document.getElementById('codeRunnerModal')?.classList.remove('open');
+            if (exceptId !== 'fullscreenCodeOverlay') document.getElementById('fullscreenCodeOverlay')?.classList.remove('open');
+            if (exceptId !== 'sidebar' && typeof closeAllDrawers === 'function') closeAllDrawers();
+        }
+
+        function openExclusiveSurface(id) {
+            closeTransientSurfaces(id);
+            const surface = document.getElementById(id);
+            if (!surface) return false;
+            surface.classList.add('open');
+            return true;
+        }
+
         function toggleModal(id, show) {
-            document.getElementById(id).classList.toggle('open', show);
+            const surface = document.getElementById(id);
+            if (!surface) return;
+            if (show) openExclusiveSurface(id);
+            else surface.classList.remove('open');
         }
 
         function selectMode(key, name) {
@@ -7681,6 +9826,7 @@ ${m.text || ''}
             renderProviderPage();
             updateWebSearchUI();
             renderPersonalizationSettings();
+            renderPetCreatorReferenceOptions();
             syncPersonalizationFeatureToggles();
             setTimeout(()=>loadVoices(),250);
             setTimeout(()=>loadVoices(),1200);
