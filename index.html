@@ -3379,7 +3379,228 @@
             #personalizationPetPage .ps-pet-behavior-copy small{font-size:.73rem!important}
         }
 
-    </style>
+    
+        /* ===== ChatGPT-style response effort + dynamic activity + pet drag fixes ===== */
+        .input-container{overflow:visible!important}
+        .response-effort-wrap{
+            position:relative;
+            flex:0 0 auto;
+            display:flex;
+            align-items:center;
+        }
+        .response-effort-btn{
+            height:34px;
+            min-width:72px;
+            max-width:92px;
+            padding:0 10px;
+            border:1px solid var(--border-color);
+            border-radius:999px;
+            background:rgba(255,255,255,.045);
+            color:var(--text-main);
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:5px;
+            font-size:.70rem;
+            font-weight:650;
+            cursor:pointer;
+            white-space:nowrap;
+            transition:.16s ease;
+        }
+        .response-effort-btn:hover,.response-effort-btn.menu-open{
+            background:rgba(139,92,246,.12);
+            border-color:rgba(139,92,246,.32);
+        }
+        .response-effort-btn svg{width:13px;height:13px;flex:0 0 auto}
+        .response-effort-menu{
+            position:absolute;
+            right:0;
+            bottom:calc(100% + 10px);
+            z-index:1300;
+            width:188px;
+            padding:7px;
+            border:1px solid rgba(148,163,184,.20);
+            border-radius:18px;
+            background:rgba(21,29,45,.98);
+            box-shadow:0 20px 54px rgba(0,0,0,.48);
+            backdrop-filter:blur(18px);
+            -webkit-backdrop-filter:blur(18px);
+            display:none;
+            transform-origin:bottom right;
+        }
+        body.theme-light .response-effort-menu{background:rgba(255,255,255,.98)}
+        .response-effort-menu.open{display:block;animation:effortMenuIn .14s ease-out}
+        @keyframes effortMenuIn{from{opacity:0;transform:translateY(5px) scale(.97)}to{opacity:1;transform:none}}
+        .response-effort-option{
+            width:100%;
+            min-height:46px;
+            border:0;
+            border-radius:12px;
+            background:transparent;
+            color:var(--text-main);
+            display:grid;
+            grid-template-columns:minmax(0,1fr) 20px;
+            align-items:center;
+            gap:8px;
+            padding:8px 10px;
+            cursor:pointer;
+            text-align:left;
+        }
+        .response-effort-option:hover{background:rgba(255,255,255,.055)}
+        .response-effort-option.active{background:rgba(139,92,246,.12)}
+        .response-effort-option strong{display:block;font-size:.78rem}
+        .response-effort-option small{display:block;margin-top:2px;color:var(--text-muted);font-size:.61rem;line-height:1.3}
+        .response-effort-option .effort-check{color:#a78bfa;font-weight:900;text-align:center}
+        @media(max-width:390px){
+            .response-effort-btn{min-width:62px;max-width:72px;padding:0 8px;font-size:.66rem}
+            .pill-dola-btn{width:30px;height:34px}
+            .pill-plus-btn{width:30px;height:34px}
+            .chat-input-pill{gap:4px!important;padding-left:8px!important;padding-right:8px!important}
+        }
+
+        /* The live-pet layer covers the full app. During dragging/falling only,
+           raise the layer above the header without moving its normal walking lane. */
+        #livePetLayer.pet-drag-active{
+            z-index:60!important;
+            overflow:visible!important;
+        }
+        #livePetLayer .live-pet[data-drag-enabled="true"]{
+            cursor:grab!important;
+            touch-action:none!important;
+        }
+        #livePetLayer .live-pet.dragging{
+            cursor:grabbing!important;
+            transition:none!important;
+            z-index:61!important;
+            filter:drop-shadow(0 16px 18px rgba(0,0,0,.42))!important;
+        }
+        #livePetLayer .live-pet.dragging .live-pet-visual{
+            animation:none!important;
+            transform:scale(1.045)!important;
+        }
+        #livePetLayer .live-pet.pet-settling{
+            transition:left .18s ease,top var(--pet-fall-duration,.56s) cubic-bezier(.22,.82,.28,1),filter .2s ease!important;
+        }
+        #livePetLayer .live-pet.pet-falling .live-pet-visual{
+            animation:petFallingPose .42s ease-in-out infinite alternate!important;
+        }
+        #livePetLayer .live-pet.falling-scared{z-index:61!important}
+        #livePetLayer .live-pet.falling-scared .live-pet-visual{
+            animation:petFallScare .72s cubic-bezier(.2,.8,.2,1)!important;
+        }
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="cat"] .live-pet-visual,
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="blackcat"] .live-pet-visual{animation-name:petFallScareCat!important}
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="dog"] .live-pet-visual,
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="fox"] .live-pet-visual{animation-name:petFallScareTail!important}
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="rabbit"] .live-pet-visual,
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="chick"] .live-pet-visual{animation-name:petFallScareHop!important}
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="robot"] .live-pet-visual{animation-name:petFallScareRobot!important}
+        #livePetLayer .live-pet.falling-scared[data-pet-visual="panda"] .live-pet-visual{animation-name:petFallScarePanda!important}
+        @keyframes petFallingPose{from{transform:translateY(-2px) rotate(-4deg) scale(.98,1.04)}to{transform:translateY(2px) rotate(4deg) scale(1.03,.97)}}
+        @keyframes petFallScare{0%{transform:translateY(-3px) rotate(0) scale(1.03)}18%{transform:translateY(2px) rotate(-10deg) scale(.98)}36%{transform:translateY(-4px) rotate(9deg) scale(1.05)}58%{transform:translateY(1px) rotate(-6deg)}78%{transform:translateY(-2px) rotate(4deg)}100%{transform:none}}
+        @keyframes petFallScareCat{0%{transform:scale(1.05) rotate(0)}25%{transform:scale(.95,1.08) rotate(-12deg)}50%{transform:scale(1.08,.94) rotate(11deg)}75%{transform:scale(.98,1.03) rotate(-5deg)}100%{transform:none}}
+        @keyframes petFallScareTail{0%{transform:translateY(-4px) rotate(0)}22%{transform:translateY(2px) rotate(13deg)}45%{transform:translateY(-5px) rotate(-11deg)}68%{transform:translateY(1px) rotate(7deg)}100%{transform:none}}
+        @keyframes petFallScareHop{0%{transform:translateY(-4px) scaleY(1.08)}25%{transform:translateY(3px) scaleY(.9) rotate(-8deg)}52%{transform:translateY(-8px) scaleY(1.04) rotate(7deg)}76%{transform:translateY(1px) rotate(-3deg)}100%{transform:none}}
+        @keyframes petFallScareRobot{0%{transform:translate(0,-3px) rotate(0)}20%{transform:translate(-5px,1px) rotate(-5deg)}40%{transform:translate(5px,-2px) rotate(5deg)}60%{transform:translate(-4px,1px) rotate(-4deg)}80%{transform:translate(3px,-1px) rotate(3deg)}100%{transform:none}}
+        @keyframes petFallScarePanda{0%{transform:translateY(-3px) rotate(0) scale(1)}30%{transform:translateY(3px) rotate(-9deg) scale(.96)}55%{transform:translateY(-5px) rotate(8deg) scale(1.04)}80%{transform:translateY(1px) rotate(-4deg)}100%{transform:none}}
+
+        /* Compact high-level activity timeline: intentionally not a hidden-reasoning display. */
+        .ai-activity-card{
+            width:min(100%,720px)!important;
+            margin:8px 0 12px!important;
+            padding:2px 0!important;
+            border:0!important;
+            border-radius:0!important;
+            background:transparent!important;
+            box-shadow:none!important;
+            overflow:visible!important;
+        }
+        .ai-activity-head{
+            position:relative!important;
+            top:auto!important;
+            display:flex!important;
+            align-items:center!important;
+            justify-content:flex-start!important;
+            gap:8px!important;
+            min-height:26px!important;
+            margin:0 0 4px!important;
+            padding:0 2px!important;
+            background:transparent!important;
+            border:0!important;
+        }
+        .ai-activity-title{font-size:.75rem!important;font-weight:600!important;color:var(--text-muted)!important}
+        .ai-activity-title-dot{display:none!important}
+        .ai-activity-toggle{
+            margin-left:auto!important;
+            padding:4px 7px!important;
+            font-size:.66rem!important;
+            color:var(--text-muted)!important;
+        }
+        .ai-activity-list{
+            display:flex!important;
+            flex-direction:column!important;
+            gap:3px!important;
+            max-height:230px!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            padding:0!important;
+        }
+        .ai-activity-row{
+            position:relative!important;
+            display:grid!important;
+            grid-template-columns:28px minmax(0,1fr)!important;
+            align-items:start!important;
+            gap:8px!important;
+            padding:6px 2px!important;
+            border-radius:10px!important;
+            background:transparent!important;
+        }
+        .ai-activity-row.completed{opacity:.72}
+        .ai-activity-row.warning{opacity:.88}
+        .ai-activity-icon{
+            width:26px!important;
+            height:26px!important;
+            min-width:26px!important;
+            display:grid!important;
+            place-items:center!important;
+            border:0!important;
+            border-radius:8px!important;
+            background:transparent!important;
+            color:var(--text-muted)!important;
+        }
+        .ai-activity-icon svg{width:18px!important;height:18px!important;stroke-width:1.9!important}
+        .ai-activity-row.running .ai-activity-icon{color:#a78bfa!important;animation:activityToolPulse 1.1s ease-in-out infinite}
+        .ai-activity-row.completed .ai-activity-icon::after{
+            content:"";
+            position:absolute;
+            width:6px;height:6px;
+            margin:17px 0 0 17px;
+            border-radius:50%;
+            background:#10b981;
+            box-shadow:0 0 0 2px var(--card-bg);
+        }
+        .ai-activity-copy{padding-top:2px!important}
+        .ai-activity-label{
+            color:var(--text-muted)!important;
+            font-size:.78rem!important;
+            line-height:1.42!important;
+            font-weight:450!important;
+        }
+        .ai-activity-row.running .ai-activity-label{color:var(--text-main)!important}
+        .ai-activity-detail{font-size:.64rem!important;line-height:1.38!important;margin-top:2px!important}
+        .ai-activity-summary{margin:4px 2px 0!important;font-size:.68rem!important}
+        .ai-activity-card.collapsed .ai-activity-list{display:none!important}
+        @keyframes activityToolPulse{0%,100%{opacity:.6;transform:scale(.96)}50%{opacity:1;transform:scale(1.05)}}
+        @media(max-width:520px){
+            .ai-activity-card{margin:5px 0 8px!important}
+            .ai-activity-list{max-height:168px!important}
+            .ai-activity-row{grid-template-columns:25px minmax(0,1fr)!important;gap:7px!important;padding:5px 0!important}
+            .ai-activity-icon{width:24px!important;height:24px!important;min-width:24px!important}
+            .ai-activity-icon svg{width:17px!important;height:17px!important}
+            .ai-activity-label{font-size:.75rem!important}
+        }
+
+</style>
 </head>
 <body>
 
@@ -3521,6 +3742,18 @@
                 
                 <div class="wave-container" id="waveContainer">
                     <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                </div>
+
+                <div class="response-effort-wrap" id="responseEffortWrap">
+                    <button type="button" class="response-effort-btn" id="responseEffortBtn" onclick="toggleResponseEffortMenu(event)" title="Response effort">
+                        <span id="responseEffortLabel">Instant</span>
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="response-effort-menu" id="responseEffortMenu" role="menu" aria-label="Response effort">
+                        <button type="button" class="response-effort-option" data-effort="Instant" onclick="setResponseEffort('Instant')"><span><strong>Instant</strong><small>Fastest direct response</small></span><span class="effort-check"></span></button>
+                        <button type="button" class="response-effort-option" data-effort="Medium" onclick="setResponseEffort('Medium')"><span><strong>Medium</strong><small>Balanced speed and depth</small></span><span class="effort-check"></span></button>
+                        <button type="button" class="response-effort-option" data-effort="High" onclick="setResponseEffort('High')"><span><strong>High</strong><small>More thorough quality pass</small></span><span class="effort-check"></span></button>
+                    </div>
                 </div>
 
                 <button type="button" class="pill-mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice input">
@@ -3784,7 +4017,7 @@
               <h3>Voice</h3>
               <div class="ps-ref-row" onclick="openVoiceSettingsPage()" style="cursor:pointer"><div class="ps-ref-copy"><strong>Voice</strong><small>Choose a voice, hear a sample, and set voice model, intelligence, and language.</small></div><button class="ps-ref-choice" id="psVoicePersonaBtn" type="button" onclick="event.stopPropagation();openVoiceSettingsPage()">Breeze <span class="chev">›</span></button></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Model</strong><small>Voice-interaction preference only; your selected text provider/model remains unchanged.</small></div><button class="ps-ref-choice" id="psVoiceModelBtn" onclick="openPersonalizationPicker('voiceModel','Voice model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)">Live <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Intelligence</strong><small>Choose the preferred balance of speed and depth for voice-style interactions.</small></div><button class="ps-ref-choice" id="psIntelligenceBtn" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']],this)">Instant <span class="chev">⌄</span></button></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Response effort</strong><small>Instant syncs with Fast Answers. Medium and High use progressively deeper response preparation.</small></div><button class="ps-ref-choice" id="psIntelligenceBtn" onclick="openPersonalizationPicker('intelligence','Response effort',[['Instant','Fastest direct response'],['Medium','Balanced speed and depth'],['High','More thorough quality pass']],this)">Instant <span class="chev">⌄</span></button></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Language</strong><small>Preferred language for voice and normal chats.</small></div><button class="ps-ref-choice" id="psLanguageBtn" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']),this)">Auto-detect <span class="chev">⌄</span></button></div>
             </section>
 
@@ -3911,7 +4144,7 @@
             </div>
             <div class="ps-voice-settings">
               <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
-              <div class="ps-voice-setting-row"><strong>Intelligence</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('intelligence','Intelligence',[['Instant','Fast and direct'],['Balanced','Balance speed and depth'],['Deep','More thorough explanations']],this)"><span id="psVoicePageIntelligence">Instant</span><i data-lucide="chevron-down"></i></button></div>
+              <div class="ps-voice-setting-row"><strong>Intelligence</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('intelligence','Response effort',[['Instant','Fastest direct response'],['Medium','Balanced speed and depth'],['High','More thorough quality pass']],this)"><span id="psVoicePageIntelligence">Instant</span><i data-lucide="chevron-down"></i></button></div>
               <div class="ps-voice-setting-row"><strong>Language</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']),this)"><span id="psVoicePageLanguage">Auto-detect</span><i data-lucide="chevron-down"></i></button></div>
             </div>
             <div class="ps-voice-sliders">
@@ -4287,6 +4520,84 @@
             }
         })();
 
+        function normalizeResponseEffortClient(value='Instant') {
+            const raw=String(value||'Instant').trim().toLowerCase();
+            if(raw==='high'||raw==='deep')return 'High';
+            if(raw==='medium'||raw==='balanced')return 'Medium';
+            return 'Instant';
+        }
+
+        // Migrate older Balanced/Deep values and repair inconsistent saved Fast Answers state.
+        personalizationSettings.intelligence=normalizeResponseEffortClient(personalizationSettings.intelligence);
+        if(personalizationSettings.fastAnswers===true){
+            personalizationSettings.intelligence='Instant';
+        }else if(personalizationSettings.intelligence==='Instant'){
+            personalizationSettings.intelligence='Medium';
+        }
+
+        function currentResponseEffort(){
+            return normalizeResponseEffortClient(personalizationSettings.intelligence);
+        }
+
+        function updateResponseEffortUI(){
+            const effort=currentResponseEffort();
+            const label=document.getElementById('responseEffortLabel');
+            const btn=document.getElementById('responseEffortBtn');
+            const menu=document.getElementById('responseEffortMenu');
+            if(label)label.textContent=effort;
+            if(btn)btn.title=`Response effort: ${effort}`;
+            menu?.querySelectorAll('.response-effort-option').forEach(option=>{
+                const active=option.dataset.effort===effort;
+                option.classList.toggle('active',active);
+                const check=option.querySelector('.effort-check');
+                if(check)check.textContent=active?'✓':'';
+            });
+        }
+
+        function closeResponseEffortMenu(){
+            document.getElementById('responseEffortMenu')?.classList.remove('open');
+            document.getElementById('responseEffortBtn')?.classList.remove('menu-open');
+        }
+
+        function toggleResponseEffortMenu(event,force){
+            event?.stopPropagation?.();
+            closeAllDrawers();
+            const menu=document.getElementById('responseEffortMenu');
+            const btn=document.getElementById('responseEffortBtn');
+            if(!menu||!btn)return;
+            const open=typeof force==='boolean'?force:!menu.classList.contains('open');
+            menu.classList.toggle('open',open);
+            btn.classList.toggle('menu-open',open);
+            if(open)updateResponseEffortUI();
+        }
+
+        function setResponseEffort(level, options={}){
+            const effort=normalizeResponseEffortClient(level);
+            personalizationSettings.intelligence=effort;
+            personalizationSettings.fastAnswers=effort==='Instant';
+            persistPersonalization();
+            renderPersonalizationSettings();
+            updateResponseEffortUI();
+            if(options.closeMenu!==false)closeResponseEffortMenu();
+            if(options.toast!==false && typeof showModernToast==='function'){
+                showModernToast(`${effort} response effort selected`);
+            }
+        }
+
+        function syncFastAnswersWithEffort(enabled){
+            if(enabled){
+                setResponseEffort('Instant',{closeMenu:false,toast:false});
+            }else{
+                const next=currentResponseEffort()==='Instant'?'Medium':currentResponseEffort();
+                setResponseEffort(next,{closeMenu:false,toast:false});
+            }
+        }
+
+        document.addEventListener('pointerdown',e=>{
+            const wrap=e.target?.closest?.('#responseEffortWrap');
+            if(!wrap)closeResponseEffortMenu();
+        },{passive:true});
+
         let isResponseSpeechEnabled = JSON.parse(localStorage.getItem('jepong_speech_enabled') || 'false');
         let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
         let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
@@ -4518,26 +4829,35 @@
             const walkTop=getLivePetWalkTop(layer,pet);
             const rect=pet.getBoundingClientRect();
             const layerRect=layer.getBoundingClientRect();
-            const currentTop=Math.max(4,Math.min(walkTop,rect.top-layerRect.top));
+            const currentTop=Math.max(0,Math.min(walkTop,rect.top-layerRect.top));
+            const distance=Math.max(0,walkTop-currentTop);
             const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-            pet.classList.remove('dragging');
+            const duration=reduced?0:Math.max(360,Math.min(760,330+distance*.42));
+
+            pet.classList.remove('dragging','falling-scared');
             pet.classList.add('pet-settling');
+            if(scare && distance>28)pet.classList.add('pet-falling');
+            pet.style.setProperty('--pet-fall-duration',`${duration}ms`);
             pet.style.left=`${left}px`;
             pet.style.bottom='auto';
             pet.style.top=`${currentTop}px`;
-            if(scare)triggerPetFallScare();
+
             const finish=()=>{
-                pet.classList.remove('pet-settling','dragging');
+                pet.classList.remove('pet-settling','dragging','pet-falling');
+                pet.style.removeProperty('--pet-fall-duration');
                 pet.style.top='';
                 pet.style.bottom=`${LIVE_PET_WALK_BOTTOM}px`;
                 pet.style.left=`${left}px`;
                 pet.style.transform=left < (layer.clientWidth/2) ? 'scaleX(1)' : 'scaleX(-1)';
+                layer.classList.remove('pet-drag-active');
+                if(scare && distance>28)requestAnimationFrame(()=>triggerPetFallScare());
                 startLivePetWalking();
                 resetLivePetIdleTimer();
             };
+
             if(reduced){finish();return;}
             requestAnimationFrame(()=>requestAnimationFrame(()=>{pet.style.top=`${walkTop}px`;}));
-            setTimeout(finish,690);
+            setTimeout(finish,duration+45);
         }
 
         function cancelLivePetDrag(settle=true) {
@@ -4564,6 +4884,7 @@
                     offsetX:e.clientX-petRect.left,offsetY:e.clientY-petRect.top,
                     moved:false,lastX:petRect.left-layerRect.left,lastTop:petRect.top-layerRect.top
                 };
+                e.stopPropagation();
                 try{pet.setPointerCapture?.(e.pointerId);}catch(_){ }
                 wakeLivePet();
             });
@@ -4576,14 +4897,16 @@
                     state.moved=true;
                     clearInterval(livePetWalkTimer);
                     clearTimeout(livePetIdleTimer);
-                    pet.classList.remove('sleeping','petting','eating','working','pet-settling','falling-scared');
+                    state.layer.classList.add('pet-drag-active');
+                    pet.classList.remove('sleeping','petting','eating','working','pet-settling','falling-scared','pet-falling');
                     pet.classList.add('dragging');
                 }
                 e.preventDefault();
+                e.stopPropagation();
                 const layerRect=state.layer.getBoundingClientRect();
                 const maxTop=getLivePetWalkTop(state.layer,pet);
                 const left=clampLivePetX(e.clientX-layerRect.left-state.offsetX,state.layer,pet);
-                const top=Math.max(4,Math.min(maxTop,e.clientY-layerRect.top-state.offsetY));
+                const top=Math.max(0,Math.min(maxTop,e.clientY-layerRect.top-state.offsetY));
                 state.lastX=left;state.lastTop=top;
                 pet.style.left=`${left}px`;
                 pet.style.top=`${top}px`;
@@ -4597,6 +4920,7 @@
                 try{pet.releasePointerCapture?.(e.pointerId);}catch(_){ }
                 if(!state.moved)return;
                 e.preventDefault();
+                e.stopPropagation();
                 livePetSuppressClickUntil=Date.now()+450;
                 const walkTop=getLivePetWalkTop(state.layer,pet);
                 const fellFromAbove=state.lastTop < walkTop-30;
@@ -4935,6 +5259,7 @@
             if (prompts) prompts.style.display = personalizationSettings.suggestedPrompts ? '' : 'none';
             if (typeof renderVoiceSettingsPage === 'function') renderVoiceSettingsPage();
             renderPetCompanionAcrossApp();
+            updateResponseEffortUI();
             refreshLucideIcons();
         }
 
@@ -5126,7 +5451,13 @@
         function selectPersonalizationChoice(index) {
             const choice = personalizationPickerChoices[index];
             if (!choice || !personalizationPickerKey) return;
-            personalizationSettings[personalizationPickerKey] = Array.isArray(choice) ? choice[0] : choice;
+            const selectedValue = Array.isArray(choice) ? choice[0] : choice;
+            if(personalizationPickerKey==='intelligence'){
+                personalizationSettings.intelligence=normalizeResponseEffortClient(selectedValue);
+                personalizationSettings.fastAnswers=personalizationSettings.intelligence==='Instant';
+            }else{
+                personalizationSettings[personalizationPickerKey]=selectedValue;
+            }
             persistPersonalization();
             renderPersonalizationSettings();
             renderVoiceSettingsPage();
@@ -6180,6 +6511,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function setPersonalizationToggle(key, value) {
+            if(key==='fastAnswers'){
+                syncFastAnswersWithEffort(!!value);
+                return;
+            }
             personalizationSettings[key] = !!value;
             persistPersonalization();
             renderPersonalizationSettings();
@@ -6682,12 +7017,70 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function activityIconMarkup(kind, state) {
-            if (state === 'running') return '<span class="ai-activity-spinner"></span>';
-            if (state === 'completed') return '<span class="ai-activity-check">✓</span>';
-            if (state === 'warning') return '<span class="ai-activity-warning">!</span>';
-            if (state === 'error') return '<span class="ai-activity-error">×</span>';
-            const icons = { web:'◎', research:'⌕', test:'✓', file:'▧', route:'↗', fallback:'↻', provider:'◉', generate:'✦', process:'•', image:'◇', build:'⌘', deploy:'↥', api:'⇄' };
-            return icons[kind] || '•';
+            const icons={
+                web:'search',research:'search',test:'badge-check',file:'paperclip',route:'route',
+                fallback:'refresh-cw',provider:'sparkles',generate:'sparkles',process:'terminal-square',
+                image:'image',build:'hammer',deploy:'cloud-upload',api:'braces'
+            };
+            return `<i data-lucide="${icons[kind]||'terminal-square'}"></i>`;
+        }
+
+        function initialActivityForRequest(promptText='',files=[]){
+            const list=Array.isArray(files)?files:[];
+            const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
+            const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/'));
+            const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+            const t=String(promptText||'').toLowerCase();
+            if(hasVideo)return {label:'Inspecting uploaded video',kind:'file'};
+            if(hasImage)return {label:'Inspecting uploaded image',kind:'image'};
+            if(hasCode)return {label:'Inspecting attached code',kind:'file'};
+            if(list.length)return {label:`Reviewing ${list.length} attached file${list.length===1?'':'s'}`,kind:'file'};
+            if(/\b(latest|current|today|news|research|search|hanapin|maghanap|verify online)\b/i.test(t))return {label:'Checking what needs current information',kind:'research'};
+            if(/\b(code|debug|bug|error|fix|ayusin|website|html|javascript|api|deploy|vercel)\b/i.test(t))return {label:'Inspecting the requested code task',kind:'process'};
+            return {label:'Understanding your request',kind:'process'};
+        }
+
+        function normalizeActivityEventForUI(evt = {}) {
+            const e={...evt};
+            const id=String(e.id||'');
+            const label=String(e.label||'');
+            const state=e.state||'running';
+            const kind=e.kind||'process';
+
+            // Transport plumbing is intentionally hidden from the user-facing activity list.
+            if(id==='stream-open'||id==='client-start')return null;
+
+            // Credential/provider connection events are collapsed into one high-level response status.
+            if(kind==='provider' && state!=='error' && state!=='warning'){
+                return {
+                    ...e,
+                    id:'response-engine',
+                    label:state==='completed'?'Response model ready':'Preparing response',
+                    kind:'generate'
+                };
+            }
+
+            if(id==='prepare'){
+                return {...e,id:'response-prep',label:'Preparing response',kind:'process'};
+            }
+            if(id==='generation'){
+                const completed=state==='completed'||/\bcomplete\b/i.test(label);
+                return {
+                    ...e,
+                    id:'response-generation',
+                    label:completed?label:'Generating response',
+                    kind:'generate'
+                };
+            }
+            if(id==='quality-orchestrator'){
+                return {
+                    ...e,
+                    id:'response-quality',
+                    label:state==='running'?'Checking response quality':'Response quality checked',
+                    kind:'process'
+                };
+            }
+            return e;
         }
 
         function shouldShowAIActivity(promptText, files = []) {
@@ -6696,8 +7089,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (Array.isArray(files) && files.length > 0) return true;
             if (isWebSearchEnabled) return true;
             if (['coder','school','imagen'].includes(currentSelectedMode)) return true;
+            if (currentResponseEffort()==='High') return true;
             if (text.length >= 180 || text.split(/\s+/).filter(Boolean).length >= 28) return true;
-            const heavyPattern = /(code|coding|debug|error|fix|ayusin|gawan|gumawa|create|build|compile|implement|research|test|verify|validate|inspect|subukan|suriin|real[- ]?time|analy[sz]e|analysis|compare|explain.*detail|step[- ]?by[- ]?step|solve|solution|equation|essay|report|project|summari[sz]e|review|document|file|image|larawan|website|url|html|css|javascript|api|endpoint|backend|frontend|database|deploy|vercel|cloudflare|groq|gemini|openrouter|web search|hanapin|maghanap|latest|current|today|weather|panahon|news|update|status|availability)/i;
+            const heavyPattern = /(code|coding|debug|error|fix|ayusin|gawan|gumawa|create|build|compile|implement|research|test|verify|validate|inspect|subukan|suriin|real[- ]?time|analy[sz]e|analysis|compare|step[- ]?by[- ]?step|solve|solution|equation|essay|report|project|summari[sz]e|review|document|file|image|larawan|video|website|url|html|css|javascript|api|endpoint|backend|frontend|database|deploy|vercel|web search|hanapin|maghanap|latest|current|today|weather|panahon|news|update|status|availability)/i;
             return heavyPattern.test(lower);
         }
 
@@ -6710,77 +7104,62 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             indicator.dataset.startedAt = String(Date.now());
             indicator.innerHTML = `
                 <div class="ai-activity-head">
-                    <div class="ai-activity-title"><span class="ai-activity-title-dot"></span><span>JepongDevxyz activity</span></div>
-                    <button type="button" class="ai-activity-toggle" onclick="toggleActivityDetails(this)">Hide details</button>
+                    <div class="ai-activity-title"><span class="ai-activity-title-dot"></span><span id="aiActivityTitleText">Working…</span></div>
+                    <button type="button" class="ai-activity-toggle" onclick="toggleActivityDetails(this)">Hide</button>
                 </div>
                 <div class="ai-activity-list" id="aiActivityList"></div>
                 <div class="ai-activity-summary" id="aiActivitySummary">Working on your request…</div>
             `;
             chatBox.appendChild(indicator);
-            const shortPrompt = String(promptText||'').replace(/https?:\/\/\S+/g,'').replace(/\s+/g,' ').trim();
-            const taskPreview = shortPrompt.length > 72 ? shortPrompt.slice(0,69).replace(/\s+\S*$/,'') + '…' : shortPrompt;
-            appendActivityEvent({
-                id:'client-start',
-                label: taskPreview ? `Received task: ${taskPreview}` : 'Received your request',
-                state:'completed',
-                kind:'process'
-            });
-            requestAnimationFrame(()=>{
-                try{
-                    indicator.scrollIntoView({behavior:'smooth',block:'center'});
-                }catch(_){
-                    scrollToBottom(true);
-                }
-            });
+            const first=initialActivityForRequest(promptText,files);
+            appendActivityEvent({id:'task-context',label:first.label,state:'running',kind:first.kind});
+            // Deliberately do not scroll the page here. This keeps an uploaded image/file visible.
         }
 
         function toggleActivityDetails(btn) {
             const card = btn.closest('.ai-activity-card');
             if (!card) return;
             card.classList.toggle('collapsed');
-            btn.textContent = card.classList.contains('collapsed') ? 'Show details' : 'Hide details';
+            btn.textContent = card.classList.contains('collapsed') ? 'Show' : 'Hide';
         }
 
         function appendActivityEvent(evt = {}) {
+            const normalized=normalizeActivityEventForUI(evt);
+            if(!normalized)return;
             const card = document.getElementById('activeAiIndicator');
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
-            const id = String(evt.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
+            const id = String(normalized.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
             let row = list.querySelector(`[data-activity-id="${id}"]`);
             if (!row) {
                 row = document.createElement('div');
                 row.dataset.activityId = id;
                 list.appendChild(row);
             }
-            const state = evt.state || 'running';
-            const kind = evt.kind || 'process';
+            const state = normalized.state || 'running';
+            const kind = normalized.kind || 'process';
             row.className = `ai-activity-row ${state}`;
             row.innerHTML = `
                 <div class="ai-activity-icon">${activityIconMarkup(kind,state)}</div>
                 <div class="ai-activity-copy">
-                    <div class="ai-activity-label">${escapeHTML(evt.label || 'Working…')}</div>
-                    ${evt.detail ? `<div class="ai-activity-detail">${escapeHTML(evt.detail)}</div>` : ''}
+                    <div class="ai-activity-label">${escapeHTML(normalized.label || 'Working…')}</div>
+                    ${normalized.detail ? `<div class="ai-activity-detail">${escapeHTML(normalized.detail)}</div>` : ''}
                 </div>`;
             const summary = document.getElementById('aiActivitySummary');
-            if (summary && evt.label) summary.textContent = evt.label;
+            if (summary && normalized.label) summary.textContent = normalized.label;
+
+            // Keep the activity display compact like ChatGPT: at most five high-level rows.
+            const rows=[...list.querySelectorAll('.ai-activity-row')];
+            if(rows.length>5){
+                const removable=rows.find(x=>x.classList.contains('completed')||x.classList.contains('warning')) || rows[0];
+                removable?.remove();
+            }
 
             requestAnimationFrame(()=>{
-                try{
-                    list.scrollTo({top:list.scrollHeight,behavior:'smooth'});
-                }catch(_){
-                    list.scrollTop=list.scrollHeight;
-                }
+                try{list.scrollTo({top:list.scrollHeight,behavior:'smooth'});}catch(_){list.scrollTop=list.scrollHeight;}
+                refreshLucideIcons(list);
             });
-
-            if (!userIsScrollingUp) {
-                const rect=card.getBoundingClientRect();
-                const viewportH=window.visualViewport?.height || window.innerHeight;
-                const safeTop=80;
-                const safeBottom=viewportH-120;
-                if(rect.top>safeBottom || rect.bottom<safeTop){
-                    try{card.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){}
-                }
-            }
+            // No card.scrollIntoView here: attachments should remain visible after sending.
         }
 
         function finishAIIndicator(success = true, elapsedMs = null) {
@@ -6791,25 +7170,27 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             card.dataset.finalized = 'true';
             const list = card.querySelector('#aiActivityList');
             const summary = card.querySelector('#aiActivitySummary');
+            const title = card.querySelector('#aiActivityTitleText');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
-            if (summary) summary.textContent = success ? `Completed in ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s` : 'Request stopped because of an error';
+            const worked=`Worked for ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s`;
+            if(title)title.textContent=success?worked:'Stopped';
+            if (summary) summary.textContent = success ? worked : 'Request stopped because of an error';
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
 
-            // ChatGPT-style lifecycle: keep the result inspectable, but do not leave a large
-            // "working" panel stuck in the conversation or duplicate active element IDs.
             setTimeout(() => {
                 if (!card.isConnected || card.dataset.finalized !== 'true') return;
                 card.classList.add('collapsed');
                 const toggle = card.querySelector('.ai-activity-toggle');
-                if (toggle) toggle.textContent = 'Show details';
-            }, 420);
+                if (toggle) toggle.textContent = 'Show';
+            }, 1800);
             setTimeout(() => {
                 if (!card.isConnected || card.dataset.finalized !== 'true') return;
                 card.removeAttribute('id');
                 list?.removeAttribute('id');
                 summary?.removeAttribute('id');
+                title?.removeAttribute('id');
                 card.classList.add('ai-activity-archived');
-            }, 900);
+            }, 2400);
         }
 
         function removeAIIndicator() {
@@ -8285,7 +8666,9 @@ ${m.text || ''}
             setLivePetWorking(true);
 
             const rawContinuousChatHistory = getContinuousHistory();
-            const continuousChatHistory = await prepareHistoryForRequest(rawContinuousChatHistory);
+            const continuousChatHistory = currentResponseEffort()==='Instant'
+                ? rawContinuousChatHistory.slice(-14)
+                : await prepareHistoryForRequest(rawContinuousChatHistory);
             const ctx = getActiveContext();
 
             if (!isRegenerate && ctx.id && ctx.sessions[ctx.id]) {
@@ -8951,7 +9334,7 @@ ${m.text || ''}
             touchStartY = touch.clientY;
             const screenWidth = window.innerWidth;
 
-            if (e.target.closest('#inputContainer') || e.target.closest('.header-controls') || e.target.closest('.header-tools-group') || e.target.closest('#codeRunnerModal') || e.target.closest('.modal-overlay') || e.target.closest('.floating-search-trigger-btn')) {
+            if (e.target.closest('#livePetCompanion') || document.getElementById('livePetLayer')?.classList.contains('pet-drag-active') || e.target.closest('#inputContainer') || e.target.closest('.header-controls') || e.target.closest('.header-tools-group') || e.target.closest('#codeRunnerModal') || e.target.closest('.modal-overlay') || e.target.closest('.floating-search-trigger-btn')) {
                 isEdgeSwipe = false;
                 return;
             }
@@ -9040,6 +9423,7 @@ ${m.text || ''}
         }, { passive: true });
 
         function closeTransientSurfaces(exceptId = '') {
+            if(exceptId!=='responseEffortMenu')closeResponseEffortMenu();
             document.querySelectorAll('.modal-overlay.open').forEach(el => {
                 if (el.id !== exceptId) el.classList.remove('open');
             });
