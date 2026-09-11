@@ -138,6 +138,14 @@ function wantsCompleteCode(message='') {
   ].some(rx=>rx.test(text));
 }
 
+function normalizeResponseEffort(value='Instant', fastAnswers=false) {
+  if(fastAnswers===true)return 'Instant';
+  const raw=String(value||'Instant').trim().toLowerCase();
+  if(raw==='high'||raw==='deep')return 'High';
+  if(raw==='medium'||raw==='balanced')return 'Medium';
+  return 'Instant';
+}
+
 function outputBudgetFor(message='') {
   // Dynamic response budget: short requests stay efficient, while complex
   // coding/research/troubleshooting tasks have more room to finish properly.
@@ -909,7 +917,10 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
     else if (p.headersLists === 'Less') text += ' Avoid unnecessary headings and lists.';
     if (p.emoji === 'More') text += ' Emoji may be used a little more often when appropriate.';
     else if (p.emoji === 'Less') text += ' Avoid emoji unless clearly useful.';
-    if (p.fastAnswers) text += ' Prefer concise answers first; expand only when the task needs detail.';
+    const responseEffort=normalizeResponseEffort(p.intelligence,p.fastAnswers);
+    if (responseEffort==='Instant') text += ' RESPONSE EFFORT: Instant. Start answering immediately, be direct and concise, and avoid unnecessary preamble or expansion while still completing the request correctly.';
+    else if (responseEffort==='Medium') text += ' RESPONSE EFFORT: Medium. Balance speed with careful reasoning and enough detail to complete the task well.';
+    else if (responseEffort==='High') text += ' RESPONSE EFFORT: High. Favor a more thorough, carefully checked response when useful; preserve relevance and do not pad the answer.';
     if (p.referenceWritingStyle) text += " Match the user's general writing tone and phrasing from the current conversation without copying long passages.";
 
     const pet = safe(p.pet);
@@ -922,9 +933,6 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
     else if (lang === 'English') text += ' Prefer English.';
     else if (lang && lang !== 'Auto-detect') text += ` Prefer ${lang} when practical.`;
 
-    if (p.intelligence === 'Instant') text += ' For voice-style interactions, answer quickly and directly.';
-    else if (p.intelligence === 'Deep') text += ' For voice-style interactions, favor deeper reasoning and fuller explanations.';
-    else if (p.intelligence === 'Balanced') text += ' For voice-style interactions, balance speed and depth.';
 
     const voicePersona = safe(p.voicePersona);
     if (voicePersona) text += ` Spoken-response personality preference: ${voicePersona}.`;
@@ -1540,105 +1548,41 @@ function taskProfile(message='', files=[]){
 
 function contextActivityPlan(message='', files=[]){
   const p=taskProfile(message,files);
-  const steps=[];
+  const list=Array.isArray(files)?files:[];
+  const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
+  const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/'));
+  const hasCode=p.fileNames.some(n=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(n));
 
-  steps.push({
-    id:'task-context',
-    label:`Understanding request: ${p.subject}`,
-    kind:'process'
-  });
+  let first={id:'task-context',label:'Understanding your request',kind:'process'};
+  if(hasVideo)first={id:'task-context',label:'Inspecting uploaded video frames',kind:'file'};
+  else if(hasImage)first={id:'task-context',label:'Inspecting uploaded image',kind:'image'};
+  else if(hasCode)first={id:'task-context',label:'Inspecting attached code',kind:'file'};
+  else if(list.length)first={id:'task-context',label:`Reviewing ${userAttachmentCount(list)} attached file${userAttachmentCount(list)===1?'':'s'}`,kind:'file'};
+  else if(p.kind==='research')first={id:'task-context',label:'Checking what needs current information',kind:'research'};
+  else if(['web','backend','deployment','android','github'].includes(p.kind))first={id:'task-context',label:`Inspecting ${p.kind==='web'?'website':p.kind} requirements`,kind:'process'};
+  else if(p.kind==='study')first={id:'task-context',label:'Working through the problem',kind:'process'};
 
-  if(p.fileNames.length){
-    const sample=p.fileNames.slice(0,2).join(', ');
-    steps.push({
-      id:'task-files',
-      label:`Reviewing ${p.fileNames.length} attached file${p.fileNames.length>1?'s':''}${sample?`: ${sample}`:''}`,
-      kind:'file'
-    });
-  }
+  let second=null;
+  if(p.intent.edit)second={id:'task-next',label:'Planning targeted changes',kind:'process'};
+  else if(p.intent.test)second={id:'task-next',label:'Checking the requested behavior',kind:'test'};
+  else if(p.intent.research)second={id:'task-next',label:'Preparing source-backed findings',kind:'research'};
+  else if(p.intent.create)second={id:'task-next',label:'Preparing the requested output',kind:p.kind==='image'?'image':'process'};
 
-  const byKind={
-    android:[
-      ['task-domain','Mapping Web-to-APK / Android project requirements','process'],
-      ['task-structure','Preparing Android project structure, manifest, and WebView flow','process']
-    ],
-    deployment:[
-      ['task-domain','Reviewing deployment and runtime requirements','process'],
-      ['task-structure','Checking frontend, API routes, and deployment integration','process']
-    ],
-    github:[
-      ['task-domain','Reviewing repository and workflow requirements','process'],
-      ['task-structure','Preparing repository-compatible changes','process']
-    ],
-    backend:[
-      ['task-domain','Mapping API, backend, and data-flow requirements','process'],
-      ['task-structure','Checking routes, request handling, and error paths','process']
-    ],
-    web:[
-      ['task-domain','Reviewing website and interface requirements','process'],
-      ['task-structure','Preparing frontend structure and responsive behavior','process']
-    ],
-    document:[
-      ['task-domain','Organizing the requested document content','process'],
-      ['task-structure','Preparing document sections and formatting','process']
-    ],
-    image:[
-      ['task-domain','Reviewing visual requirements and supplied image context','image'],
-      ['task-structure','Preparing the requested visual changes','image']
-    ],
-    video:[
-      ['task-domain','Reviewing video requirements and available visual/audio evidence','file'],
-      ['task-structure','Preparing a response grounded in the supplied video evidence','file']
-    ],
-    research:[
-      ['task-domain','Identifying facts that need current sources','research'],
-      ['task-structure','Preparing source-backed findings','research']
-    ],
-    study:[
-      ['task-domain','Identifying the topic and learning goal','process'],
-      ['task-structure','Preparing a clear step-by-step explanation','process']
-    ],
-    general:[
-      ['task-domain',`Planning the best way to complete: ${p.subject}`,'process']
-    ]
-  };
-
-  for(const [id,label,kind] of (byKind[p.kind]||byKind.general)){
-    steps.push({id,label,kind});
-  }
-
-  if(p.intent.edit)steps.push({id:'task-edit',label:'Preparing targeted changes while preserving working parts',kind:'process'});
-  if(p.intent.create)steps.push({id:'task-create',label:`Building the requested ${p.kind==='general'?'output':p.kind+' solution'}`,kind:p.kind==='image'?'image':'process'});
-  if(p.intent.test)steps.push({id:'task-test-plan',label:'Preparing checks that match the requested test',kind:'test'});
-  if(p.intent.download)steps.push({id:'task-artifact-plan',label:'Preparing the final result as a downloadable file',kind:'file'});
-
-  return {profile:p,steps:steps.slice(0,7)};
+  return {profile:p,steps:second?[first,second]:[first]};
 }
 
 function emitContextActivityStart(message='', files=[], emit){
   const plan=contextActivityPlan(message,files);
-  for(let i=0;i<plan.steps.length;i++){
-    const step=plan.steps[i];
-    activity(
-      emit,
-      step.id,
-      step.label,
-      i===0?'completed':'running',
-      step.kind,
-      ''
-    );
-    // Only one plan item stays "running" at a time; later actual tools
-    // and provider events take over the timeline.
-    if(i===1)break;
-  }
+  const first=plan.steps[0];
+  if(first)activity(emit,first.id,first.label,'running',first.kind,'');
   return plan;
 }
 
 function completeContextPlan(plan, emit){
   if(!plan?.steps?.length)return;
-  for(const step of plan.steps.slice(1)){
-    activity(emit,step.id,step.label,'completed',step.kind,'');
-  }
+  const [first,second]=plan.steps;
+  if(first)activity(emit,first.id,first.label,'completed',first.kind,'');
+  if(second)activity(emit,second.id,second.label,'completed',second.kind,'');
 }
 
 function linkLabel(raw=''){
@@ -2300,7 +2244,11 @@ function responseMeta(response) {
 async function processChat(body, emit) {
   let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone} = body;
   files=sanitizeIncomingAttachments(files);
-  const fastAnswers=Boolean(personalization?.fastAnswers);
+  const responseEffort=normalizeResponseEffort(personalization?.intelligence,personalization?.fastAnswers);
+  const fastAnswers=responseEffort==='Instant';
+  if(personalization && typeof personalization==='object'){
+    personalization={...personalization,intelligence:responseEffort,fastAnswers};
+  }
   const startedAt=Date.now();
   const contextPlan=emitContextActivityStart(message,files,emit);
 
@@ -2339,8 +2287,12 @@ async function processChat(body, emit) {
   const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
-  if(!fastAnswers && shouldUseQualityOrchestrator(message,files,mode)){
-    activity(emit,'quality-orchestrator',`Preparing a deeper response for: ${contextPlan.profile.subject}`,'running','process');
+  const useQualityOrchestrator = responseEffort==='High'
+    ? true
+    : (responseEffort==='Medium' && shouldUseQualityOrchestrator(message,files,mode));
+
+  if(useQualityOrchestrator){
+    activity(emit,'quality-orchestrator',responseEffort==='High'?'Checking response quality at High effort':'Checking response quality','running','process');
     try{
       const briefPrompt=buildInternalTaskBriefPrompt(message,files);
       const briefSystem=systemInstruction +
@@ -2375,12 +2327,12 @@ async function processChat(body, emit) {
   }
 
   completeContextPlan(contextPlan,emit);
-  activity(emit,'prepare',`Request context ready for: ${contextPlan.profile.subject}`,'completed','process');
+  activity(emit,'prepare',`Preparing ${responseEffort.toLowerCase()} response`,'completed','process');
 
   const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
-    activity(emit,'generation',`${usedProvider} is creating the response for: ${contextPlan.profile.subject}`,'running','generate');
+    activity(emit,'generation','Generating response','running','generate');
     return {
       ok:true,
       response:first.response,
@@ -2404,7 +2356,7 @@ async function processChat(body, emit) {
       const r=await runProvider(p,{model:fallbackModel,history,files,message,systemInstruction,fallbackFrom:provider,routedReason:routedReason||'fallback',emit,autoFallback});
       if(r.ok){
         activity(emit,'fallback',`Fallback connected to ${providerLabel(p)}`,'completed','fallback');
-        activity(emit,'generation',`${providerLabel(p)} is creating the response for: ${contextPlan.profile.subject}`,'running','generate');
+        activity(emit,'generation','Generating response','running','generate');
         return {
           ok:true,
           response:r.response,
