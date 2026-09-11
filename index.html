@@ -3600,6 +3600,18 @@
             .ai-activity-label{font-size:.75rem!important}
         }
 
+
+        /* ===== OFFICIAL MOBILE VIEWPORT + PET VISIBILITY FIX ===== */
+        :root{--jepong-vh:100dvh;--jepong-vv-top:0px}
+        @media(max-width:767px){
+            html,body{height:100dvh!important;min-height:0!important}
+            .app-container{height:var(--jepong-vh)!important;max-height:var(--jepong-vh)!important;min-height:0!important;transform-origin:top left}
+            html.keyboard-open .live-pet{bottom:78px!important}
+            html.keyboard-open .chat-box{overscroll-behavior-y:contain}
+        }
+        .live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important;z-index:60!important}
+        .live-pet.sleeping .live-pet-sleep-eyes i{border-bottom-width:4px!important;filter:drop-shadow(0 1px 1px rgba(255,255,255,.18)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+
 </style>
 </head>
 <body>
@@ -4491,6 +4503,8 @@
             petDoubleTapFeed: true,
             petDragEnabled: true,
             petFallScareEnabled: true,
+            petSoundsEnabled: true,
+            petSoundVolume: 1.0,
             nickname: '',
             occupation: '',
             moreAbout: '',
@@ -4606,18 +4620,34 @@
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-        function adjustViewport() {
-            if (window.visualViewport) {
-                document.body.style.height = `${window.visualViewport.height}px`;
+        function syncVisualViewport() {
+            const vv = window.visualViewport;
+            const layoutHeight = Math.max(320, Math.round(window.innerHeight || document.documentElement.clientHeight || 0));
+            const height = Math.max(320, Math.round(vv?.height || layoutHeight));
+            const offsetTop = Math.max(0, Math.round(vv?.offsetTop || 0));
+            const keyboardOpen = (layoutHeight - height) > 120;
+            document.documentElement.style.setProperty('--jepong-vh', `${height}px`);
+            document.documentElement.style.setProperty('--jepong-vv-top', `${offsetTop}px`);
+            document.documentElement.classList.toggle('keyboard-open', keyboardOpen);
+            const app = document.getElementById('appContainer');
+            if (app && window.matchMedia('(max-width: 767px)').matches) {
+                app.style.height = `${height}px`;
+                app.style.maxHeight = `${height}px`;
+                // Do not follow VisualViewport scroll events. Only compensate the current
+                // viewport offset during resize so Chrome's keyboard cannot drag the app down.
+                app.style.transform = offsetTop ? `translateY(${offsetTop}px)` : '';
             }
         }
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', adjustViewport);
-            window.visualViewport.addEventListener('scroll', adjustViewport);
+            window.visualViewport.addEventListener('resize', syncVisualViewport, {passive:true});
         }
+        window.addEventListener('resize', syncVisualViewport, {passive:true});
+        window.addEventListener('orientationchange', ()=>setTimeout(syncVisualViewport, 120), {passive:true});
+        requestAnimationFrame(syncVisualViewport);
 
         ['pointerdown','keydown','touchstart'].forEach(evt=>{
             document.addEventListener(evt, (e)=>{
+                if(typeof unlockPetAudio==='function') unlockPetAudio();
                 if(e.target?.closest?.('#livePetCompanion')) return;
                 if(typeof wakeLivePet==='function') wakeLivePet();
             }, {passive:true});
@@ -4782,8 +4812,10 @@
 
         function wakeLivePet() {
             const {pet}=getLivePetElements(); if(!pet)return;
+            const wasSleeping=pet.classList.contains('sleeping');
             pet.classList.remove('sleeping');
             pet.setAttribute('aria-label', `${personalizationSettings.pet || 'Pet'} companion`);
+            if(wasSleeping) playPetSound('wake');
             resetLivePetIdleTimer();
         }
 
@@ -4792,13 +4824,14 @@
             if(!livePetVisible() || personalizationSettings.petIdleSleep===false || livePetWorking)return;
             livePetIdleTimer=setTimeout(()=>{
                 const {pet}=getLivePetElements();
-                if(pet && livePetVisible() && !livePetWorking){
-                    pet.classList.remove('petting','eating','working');
+                if(pet && livePetVisible() && !livePetWorking && !livePetDragState){
+                    pet.classList.remove('petting','eating','working','pet-settling','falling-scared','pet-falling');
                     pet.classList.add('sleeping');
                     pet.setAttribute('aria-label', `${personalizationSettings.pet} sleeping`);
                     livePetSay('Zzz…',1200);
+                    playPetSound('sleep');
                 }
-            }, 30000);
+            }, 12000);
         }
 
         function clampLivePetX(x, layer, pet) {
@@ -4960,7 +4993,7 @@
             pet.classList.remove('sleeping','petting','eating');
             pet.classList.toggle('working',livePetWorking && personalizationSettings.petWorkingMode!==false);
             if(active) livePetSay('Working on it ✨',1300);
-            else { livePetSay('Done!',1000); resetLivePetIdleTimer(); }
+            else { livePetSay('Done!',1000); playPetSound('done'); resetLivePetIdleTimer(); }
         }
 
 
@@ -5099,6 +5132,12 @@
             }
         };
 
+        const PET_GLOBAL_SOUND_PATTERNS = {
+            wake:[[0,.08,610,830,'triangle',.050],[.09,.11,820,1080,'sine',.042]],
+            sleep:[[0,.13,520,390,'sine',.040],[.14,.18,390,285,'sine',.032]],
+            done:[[0,.07,650,880,'triangle',.055],[.08,.08,850,1100,'triangle',.052],[.17,.12,1050,1320,'sine',.044]]
+        };
+
         function unlockPetAudio(){
             const ctx=getPetAudioContext();
             if(!ctx)return null;
@@ -5119,18 +5158,23 @@
         }
 
         function playPetSound(action='tap'){
+            if(personalizationSettings.petSoundsEnabled===false)return;
             const ctx=getPetAudioContext();
             if(!ctx)return;
             try{if(ctx.state==='suspended')ctx.resume();}catch(_){}
 
             const petName=String(personalizationSettings.pet||'default');
             const pattern=PET_SOUND_PATTERNS[petName]||PET_SOUND_PATTERNS.default;
-            const notes=pattern[action]||pattern.tap||[];
+            const notes=pattern[action]||PET_GLOBAL_SOUND_PATTERNS[action]||pattern.tap||[];
+            const volume=Math.max(.25,Math.min(1,Number(personalizationSettings.petSoundVolume??1)));
+            // Existing pet tones were intentionally soft. Amplify them while capping
+            // each oscillator to avoid harsh clipping on phone speakers.
+            const loudness=2.65*volume;
             const t=ctx.currentTime+.008;
 
             for(const note of notes){
                 const [delay,duration,f0,f1,type,gain]=note;
-                petTone(ctx,t+delay,duration,f0,f1,type,gain);
+                petTone(ctx,t+delay,duration,f0,f1,type,Math.min(.16,Math.max(.012,gain*loudness)));
             }
         }
 
@@ -6939,8 +6983,36 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
         }
 
+        function countSavedChatWords() {
+            try {
+                const all=[...Object.values(chatSessions||{}),...Object.values(bibleChatSessions||{})];
+                return all.reduce((sum,session)=>sum+(session?.messages||[]).reduce((n,m)=>{
+                    const text=String(m?.text||'').trim();
+                    return n+(text?text.split(/\s+/).filter(Boolean).length:0);
+                },0),0);
+            } catch (_) { return 0; }
+        }
+
         function updateUsageUI() {
-            // Usage/quota UI is temporarily disabled.
+            let words=parseInt(localStorage.getItem('jepong_word_count')||'0',10);
+            if(!Number.isFinite(words)||words<0)words=0;
+            if(words===0){
+                const recovered=countSavedChatWords();
+                if(recovered>0){words=recovered;localStorage.setItem('jepong_word_count',String(words));}
+            }
+            let queries=parseInt(localStorage.getItem('jepong_query_count')||'0',10);
+            if(!Number.isFinite(queries)||queries<0)queries=0;
+            const tokens=Math.ceil(words*1.35);
+            const w=document.getElementById('geminiWordCount');
+            const t=document.getElementById('geminiTokenCount');
+            const q=document.getElementById('geminiQueryCount');
+            const sidebarWordCount=document.getElementById('word-count');
+            if(w)w.textContent=words.toLocaleString();
+            if(t)t.textContent=tokens.toLocaleString();
+            if(q)q.textContent=queries.toLocaleString();
+            if(sidebarWordCount)sidebarWordCount.textContent=words.toLocaleString();
+            try{renderUsageSyncUI();}catch(_){}
+            try{renderProviderStatus();}catch(_){}
         }
 
         function openDolaModal() {
@@ -9275,12 +9347,15 @@ ${m.text || ''}
         }
 
         function incrementCounters(text) {
-            const words = text.trim().split(/\s+/).length;
-            const currentWords = parseInt(localStorage.getItem('jepong_word_count') || '0') + words;
-            const currentQueries = parseInt(localStorage.getItem('jepong_query_count') || '0') + 1;
-
-            localStorage.setItem('jepong_word_count', currentWords);
-            localStorage.setItem('jepong_query_count', currentQueries);
+            const clean=String(text||'').trim();
+            const words=clean?clean.split(/\s+/).filter(Boolean).length:0;
+            const storedWords=parseInt(localStorage.getItem('jepong_word_count')||'0',10);
+            const storedQueries=parseInt(localStorage.getItem('jepong_query_count')||'0',10);
+            const currentWords=(Number.isFinite(storedWords)?storedWords:0)+words;
+            const currentQueries=(Number.isFinite(storedQueries)?storedQueries:0)+1;
+            localStorage.setItem('jepong_word_count',String(currentWords));
+            localStorage.setItem('jepong_query_count',String(currentQueries));
+            updateUsageUI();
         }
 
         /* BI-DIRECTIONAL EDGE-SWIPE & CLICK DRAWER */
