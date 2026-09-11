@@ -1104,6 +1104,94 @@ async function duckDuckGoHtmlSearch(query, emit){
 }
 
 
+
+function decodeXmlText(value=''){
+  return htmlDecode(String(value||'')
+    .replace(/^<!\[CDATA\[/,'').replace(/\]\]>$/,'')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/\s+/g,' ')).trim();
+}
+
+async function safeJsonResponse(res){
+  const text=await res.text().catch(()=> '');
+  if(!text.trim())return null;
+  try{return JSON.parse(text);}catch(_){return null;}
+}
+
+async function bingRssSearch(query){
+  try{
+    const url=`https://www.bing.com/search?format=rss&q=${encodeURIComponent(query)}`;
+    const res=await fetch(url,{
+      headers:{'User-Agent':'Mozilla/5.0 (compatible; JepongDevxyzAI/1.0)','Accept':'application/rss+xml,application/xml,text/xml,*/*'},
+      signal:AbortSignal.timeout(8500)
+    });
+    if(!res.ok)return [];
+    const xml=await res.text();
+    if(!xml.trim())return [];
+    const results=[];
+    const rx=/<item\b[^>]*>([\s\S]*?)<\/item>/gi;
+    let m;
+    while((m=rx.exec(xml))&&results.length<5){
+      const item=m[1];
+      const title=decodeXmlText((item.match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'').slice(0,180);
+      const url=decodeXmlText((item.match(/<link[^>]*>([\s\S]*?)<\/link>/i)||[])[1]||'');
+      const snippet=decodeXmlText((item.match(/<description[^>]*>([\s\S]*?)<\/description>/i)||[])[1]||'').slice(0,500);
+      if(title&&isSafePublicUrl(url))results.push({title,url,snippet,source:'Bing RSS'});
+    }
+    return results;
+  }catch(_){return [];}
+}
+
+async function wikipediaSearch(query){
+  try{
+    const url=`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=5&format=json&utf8=1&origin=*`;
+    const res=await fetch(url,{
+      headers:{'User-Agent':'JepongDevxyzAI/1.0','Accept':'application/json'},
+      signal:AbortSignal.timeout(7000)
+    });
+    if(!res.ok)return [];
+    const d=await safeJsonResponse(res);
+    const rows=d?.query?.search||[];
+    return rows.slice(0,5).map(x=>({
+      title:String(x.title||'').slice(0,180),
+      url:`https://en.wikipedia.org/wiki/${encodeURIComponent(String(x.title||'').replace(/ /g,'_'))}`,
+      snippet:stripHtml(String(x.snippet||'')).slice(0,500),
+      source:'Wikipedia'
+    })).filter(x=>x.title&&isSafePublicUrl(x.url));
+  }catch(_){return [];}
+}
+
+function isSimpleCasualMessage(message=''){
+  const t=String(message||'').trim();
+  return /^(hi|hello|hey|kumusta|kamusta|salamat|thanks|thank you|good morning|good afternoon|good evening|yo|sup)[!.? ]*$/i.test(t);
+}
+
+async function noKeyWebSearch(query, emit){
+  activity(emit,'web-search','Searching the live web','running','web',String(query).slice(0,120));
+  const attempts=[
+    ['Bing',()=>bingRssSearch(query)],
+    ['DuckDuckGo',()=>duckDuckGoInstantSearch(query,null)],
+    ['Wikipedia',()=>wikipediaSearch(query)]
+  ];
+  for(const [label,fn] of attempts){
+    const results=await fn();
+    if(results.length){
+      activity(emit,'web-search',`Searched ${results.length} live web result${results.length===1?'':'s'} • ${label}`,'completed','web');
+      return results;
+    }
+  }
+  // Legacy DDG HTML is last because Vercel may receive HTTP 403 from it.
+  try{
+    const results=await duckDuckGoHtmlSearch(query,null);
+    if(results.length){
+      activity(emit,'web-search',`Searched ${results.length} live web result${results.length===1?'':'s'} • DuckDuckGo`,'completed','web');
+      return results;
+    }
+  }catch(_){}
+  activity(emit,'web-search','Live web search is temporarily unavailable','warning','web','No search source returned usable results.');
+  return [];
+}
+
 async function duckDuckGoInstantSearch(query='', emit){
   activity(emit,'web-search-alt','Checking alternate live search source','running','web');
   try{
@@ -1112,7 +1200,8 @@ async function duckDuckGoInstantSearch(query='', emit){
       signal:AbortSignal.timeout(5500)
     });
     if(!res.ok)throw new Error(`Search HTTP ${res.status}`);
-    const d=await res.json();
+    const d=await safeJsonResponse(res);
+    if(!d)throw new Error('Search returned an empty or non-JSON response');
     const results=[];
     const push=(title,url,snippet='')=>{
       if(results.length>=5||!title||!isSafePublicUrl(url))return;
@@ -1709,7 +1798,8 @@ async function performVerification(message='', files=[], emit){
 async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   if(!message)return '';
 
-  const wantsLive=Boolean(webSearch)||shouldAutoResearch(message);
+  const explicitLive=shouldAutoResearch(message)||extractPublicUrl(message).length>0;
+  const wantsLive=(Boolean(webSearch)||explicitLive) && !isSimpleCasualMessage(message);
   if(!wantsLive)return '';
   const fast=Boolean(options.fast);
   const searchQuery=buildLiveSearchQuery(message);
@@ -1730,7 +1820,8 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
         headers:{'User-Agent':'JepongDevxyz-AI/1.0'},signal:AbortSignal.timeout(fast?4500:7000)
       });
       if(res.ok){
-        const d=await res.json();
+        const d=await safeJsonResponse(res);
+        if(!d)throw new Error('Weather source returned invalid JSON');
         const c=d.current_condition?.[0]||{};
         const n=d.nearest_area?.[0]||{};
         activity(emit,'web-search',`Live weather ready for ${n.areaName?.[0]?.value||location}`,'completed','web');
@@ -1750,7 +1841,7 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
         signal:AbortSignal.timeout(fast?5000:8000)
       });
       if(res.ok){
-        const d=await res.json();
+        const d=await safeJsonResponse(res);
         const basic=(d?.web?.results||[]).slice(0,fast?3:5).map(x=>({
           title:String(x.title||'').slice(0,180),
           url:String(x.url||''),
@@ -1762,8 +1853,7 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
     }catch(_){}
   }
 
-  let results=await duckDuckGoHtmlSearch(searchQuery,emit);
-  if(!results.length) results=await duckDuckGoInstantSearch(searchQuery,emit);
+  const results=await noKeyWebSearch(searchQuery,emit);
   return buildLiveSourceContext(await enrichSearchResults(results,emit,sourcePages));
 }
 
@@ -2846,7 +2936,7 @@ function extractCloudflareImageBase64(payload){
     payload?.result?.data?.[0]?.b64_json,
     payload?.data?.[0]?.b64_json
   ];
-  for(const value of candidates){
+  for(const value of [...candidates,payload?.result]){
     if(typeof value==='string'&&value.length>100)return value.replace(/^data:image\/[^;]+;base64,/i,'');
   }
   return '';
@@ -2870,27 +2960,40 @@ async function generatePetImage(body={},requestSignal=null){
         method:'POST',
         headers:{
           'Authorization':`Bearer ${account.apiToken}`,
-          'Content-Type':'application/json'
+          'Content-Type':'application/json',
+          'Accept':'application/json,image/jpeg,image/png,*/*'
         },
         body:JSON.stringify({prompt,seed,steps:8}),
         signal
       });
       if(res.ok){
-        const payload=await res.json().catch(()=>null);
-        const image=extractCloudflareImageBase64(payload);
-        if(image){
-          return json({
-            ok:true,
-            name,
-            description,
-            imageDataUrl:`data:image/jpeg;base64,${image}`,
-            provider:'Cloudflare Workers AI',
-            model:PET_IMAGE_MODEL,
-            referencePet,
-            matchSiteStyle
-          });
+        const contentType=(res.headers.get('content-type')||'').toLowerCase();
+        if(contentType.startsWith('image/')){
+          const bytes=new Uint8Array(await res.arrayBuffer());
+          if(bytes.length){
+            return json({
+              ok:true,name,description,
+              imageDataUrl:`data:${contentType.split(';')[0]};base64,${bytesToBase64(bytes)}`,
+              provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL,referencePet,matchSiteStyle
+            });
+          }
+        }else{
+          const payload=await safeJsonResponse(res);
+          const image=extractCloudflareImageBase64(payload);
+          if(image){
+            return json({
+              ok:true,
+              name,
+              description,
+              imageDataUrl:`data:image/jpeg;base64,${image}`,
+              provider:'Cloudflare Workers AI',
+              model:PET_IMAGE_MODEL,
+              referencePet,
+              matchSiteStyle
+            });
+          }
         }
-        errors.push('Cloudflare returned no image data.');
+        errors.push('Cloudflare returned no usable image data.');
       }else{
         errors.push(`Cloudflare HTTP ${res.status}: ${(await res.text().catch(()=>'' )).slice(0,220)}`);
       }
