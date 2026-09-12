@@ -1060,9 +1060,12 @@ function isSafePublicUrl(raw=''){
   try{
     const u=new URL(raw);
     if(!['http:','https:'].includes(u.protocol))return false;
-    const h=u.hostname.toLowerCase().replace(/\.$/,'');
+    const h=u.hostname.toLowerCase().replace(/^\[|\]$/g,'').replace(/\.$/,'');
     if(!h || h==='localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal'))return false;
-    if(h==='::1' || h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80:'))return false;
+    if(h.includes(':')){
+      if(h==='::1' || h==='::' || h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80:') || /^fe[89ab][0-9a-f]*:/i.test(h) || h.startsWith('ff'))return false;
+      if(h.startsWith('::ffff:'))return false;
+    }
     if(isPrivateIpv4(h))return false;
     return true;
   }catch(_){return false;}
@@ -1979,6 +1982,17 @@ function smartRoute(mode, files, message) {
 
 function isRetryableStatus(status) { return RETRYABLE.has(Number(status)); }
 
+function isFallbackableProviderFailure(status,error=''){
+  const code=Number(status)||0;
+  if(isRetryableStatus(code))return true;
+  if(![400,404,410,422].includes(code))return false;
+  const text=String(error||'').toLowerCase();
+  const modelHint=/(?:model|deployment|endpoint)/.test(text);
+  const unavailableHint=/(?:not found|unknown|unsupported|unavailable|does not exist|invalid model|retired|deprecated|no longer available)/.test(text);
+  return modelHint&&unavailableHint;
+}
+
+
 function passthroughHeaders(upstream, provider, model, fallbackFrom = '', routedReason = '', keyIndex = 0, keyCount = 1) {
   const h = {
     'Content-Type':'text/plain; charset=utf-8',
@@ -2650,7 +2664,7 @@ async function processChat(body, emit) {
     };
   }
 
-  const fallbackable=isRetryableStatus(first.status);
+  const fallbackable=isFallbackableProviderFailure(first.status,first.error);
   if(autoFallback&&fallbackable){
     activity(emit,'fallback',`${providerLabel(provider)} is unavailable — Auto Fallback is checking alternatives`,'warning','fallback');
     for(const p of FALLBACK_ORDER){
@@ -3180,6 +3194,58 @@ function extractCloudflareImageBase64(payload){
   return '';
 }
 
+async function generateImage(body={},requestSignal=null){
+  const prompt=String(body.prompt||body.message||'').trim().slice(0,2200);
+  if(!prompt)return json({error:'Image prompt is required.'},400);
+  const preference=String(body.model||'auto').toLowerCase();
+  const seed=Math.floor(Math.random()*2147483000)+1;
+  const errors=[];
+  const accounts=shuffle(getCloudflareAccounts());
+
+  if(preference!=='pollinations'){
+    for(const account of accounts){
+      try{
+        const url=`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account.accountId)}/ai/run/${PET_IMAGE_MODEL}`;
+        const res=await fetch(url,{method:'POST',headers:{'Authorization':`Bearer ${account.apiToken}`,'Content-Type':'application/json','Accept':'application/json,image/jpeg,image/png,*/*'},body:JSON.stringify({prompt,seed,steps:8}),signal:requestSignal||AbortSignal.timeout(65000)});
+        if(res.ok){
+          const contentType=(res.headers.get('content-type')||'').toLowerCase();
+          if(contentType.startsWith('image/')){
+            const bytes=new Uint8Array(await res.arrayBuffer());
+            if(bytes.length)return json({ok:true,imageDataUrl:`data:${contentType.split(';')[0]};base64,${bytesToBase64(bytes)}`,provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL});
+          }else{
+            const payload=await safeJsonResponse(res);
+            const image=extractCloudflareImageBase64(payload);
+            if(image)return json({ok:true,imageDataUrl:`data:image/jpeg;base64,${image}`,provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL});
+          }
+          errors.push('Cloudflare returned no usable image data.');
+        }else errors.push(`Cloudflare HTTP ${res.status}: ${(await res.text().catch(()=>'' )).slice(0,220)}`);
+      }catch(e){
+        if(requestSignal?.aborted)return json({error:'Image generation cancelled.',code:'cancelled'},499);
+        errors.push(`Cloudflare: ${String(e?.message||e).slice(0,220)}`);
+      }
+    }
+  }
+
+  const pollinationsKey=String(process.env.POLLINATIONS_API_KEY||'').trim();
+  if(pollinationsKey){
+    try{
+      const url=`https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=flux&width=1024&height=1024&seed=${seed}`;
+      const res=await fetch(url,{headers:{'Authorization':`Bearer ${pollinationsKey}`,'Accept':'image/*'},signal:requestSignal||AbortSignal.timeout(65000)});
+      if(res.ok){
+        const contentType=(res.headers.get('content-type')||'image/jpeg').split(';')[0];
+        const bytes=new Uint8Array(await res.arrayBuffer());
+        if(bytes.length)return json({ok:true,imageDataUrl:`data:${contentType};base64,${bytesToBase64(bytes)}`,provider:'Pollinations',model:'flux'});
+      }else errors.push(`Pollinations HTTP ${res.status}: ${(await res.text().catch(()=>'' )).slice(0,220)}`);
+    }catch(e){
+      if(requestSignal?.aborted)return json({error:'Image generation cancelled.',code:'cancelled'},499);
+      errors.push(`Pollinations: ${String(e?.message||e).slice(0,220)}`);
+    }
+  }
+
+  if(!accounts.length&&!pollinationsKey)return json({error:'No image generator is configured.',detail:'Configure Cloudflare Workers AI credentials or POLLINATIONS_API_KEY.'},503);
+  return json({error:'Image generation is temporarily unavailable.',detail:errors.slice(0,3).join(' | ').slice(0,700)},502);
+}
+
 async function generatePetImage(body={},requestSignal=null){
   const name=String(body.name||'').trim().slice(0,60) || 'My Pet';
   const description=String(body.description||'').trim().slice(0,900) || 'a cute friendly companion pet';
@@ -3292,6 +3358,7 @@ export default async function handler(req){
   if(req.method!=='POST')return json({error:'Method not allowed'},405);
   try{
     const body=await req.json();
+    if(body.action==='generate-image') return generateImage(body,req.signal);
     if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return cloudflareTTS(body);
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
