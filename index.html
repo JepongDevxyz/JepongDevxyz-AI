@@ -3916,7 +3916,7 @@
                     <button class="runner-btn close" onclick="closeCodeRunner()">✕ Close</button>
                 </div>
             </div>
-            <iframe class="runner-iframe" id="codeRunnerIframe" sandbox="allow-scripts allow-modals allow-same-origin allow-forms"></iframe>
+            <iframe class="runner-iframe" id="codeRunnerIframe" sandbox="allow-scripts allow-modals allow-forms"></iframe>
         </div>
     </div>
 
@@ -4413,7 +4413,7 @@
     <div class="modal-overlay" id="modelModalOverlay" onclick="if(event.target === this) toggleModal('modelModalOverlay', false)">
         <div class="floating-modal model-picker-modal" id="modelPickerModal">
             <div class="model-picker-header"><button class="model-nav-btn" type="button" onclick="changeProviderPage(-1)">←</button><div class="model-provider-title" id="modelProviderTitle">Gemini</div><button class="model-nav-btn" type="button" onclick="changeProviderPage(1)">→</button></div>
-            <div class="model-pages-viewport" id="modelPagesViewport"><div class="model-pages-track" id="modelPagesTrack"><section class="model-provider-page" data-provider="gemini"><div class="provider-badge"><span class="provider-badge-dot"></span> Google Gemini API</div><button class="option-item" data-provider="gemini" data-model="gemini-flash-latest" onclick="selectProviderModel('gemini','gemini-flash-latest','Gemini Flash Latest')"><div class="option-info"><div><div class="option-name">Gemini Flash Latest</div><div class="option-desc">Balanced all-around</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.8-flash" onclick="selectProviderModel('gemini','gemini-3.8-flash','Gemini 3.8 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.8 Flash</div><div class="option-desc">Advanced general tasks</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.7-flash" onclick="selectProviderModel('gemini','gemini-3.7-flash','Gemini 3.7 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.7 Flash</div><div class="option-desc">Reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.5-flash-lite" onclick="selectProviderModel('gemini','gemini-3.5-flash-lite','Gemini 3.5 Flash-Lite')"><div class="option-info"><div><div class="option-name">Gemini 3.5 Flash-Lite</div><div class="option-desc">Fast/light</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cloudflare"><div class="provider-badge"><span class="provider-badge-dot"></span> Workers AI · current practical models</div><button class="option-item" data-provider="cloudflare" data-model="@cf/zai-org/glm-4.7-flash" onclick="selectProviderModel('cloudflare','@cf/zai-org/glm-4.7-flash','GLM 4.7 Flash')"><div class="option-info"><div><div class="option-name">GLM 4.7 Flash</div><div class="option-desc">Free-plan friendly · fast multilingual/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/google/gemma-4-26b-a4b-it" onclick="selectProviderModel('cloudflare','@cf/google/gemma-4-26b-a4b-it','Gemma 4 26B')"><div class="option-info"><div><div class="option-name">Gemma 4 26B</div><div class="option-desc">Free-plan friendly · vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/nvidia/nemotron-3-120b-a12b" onclick="selectProviderModel('cloudflare','@cf/nvidia/nemotron-3-120b-a12b','Nemotron 3 Super')"><div class="option-info"><div><div class="option-name">Nemotron 3 Super</div><div class="option-desc">Free-plan friendly · agentic reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/openai/gpt-oss-120b" onclick="selectProviderModel('cloudflare','@cf/openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Strong reasoning + coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/openai/gpt-oss-20b" onclick="selectProviderModel('cloudflare','@cf/openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Fast general model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/qwen/qwen3.8-27b" onclick="selectProviderModel('cloudflare','@cf/qwen/qwen3.8-27b','Qwen 3.8 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.8 27B</div><div class="option-desc">Vision + reasoning + tools</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="groq"><div class="provider-badge"><span class="provider-badge-dot"></span> GroqCloud · current chat models</div><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-120b" onclick="selectProviderModel('groq','openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Production · strong reasoning/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-20b" onclick="selectProviderModel('groq','openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Production · very fast</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="qwen/qwen3.6-27b" onclick="selectProviderModel('groq','qwen/qwen3.6-27b','Qwen 3.6 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.6 27B</div><div class="option-desc">Preview · vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="qwen/qwen3.8-27b" onclick="selectProviderModel('groq','qwen/qwen3.8-27b','Qwen 3.8 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.8 27B</div><div class="option-desc">Preview · newer Qwen</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound" onclick="selectProviderModel('groq','groq/compound','Compound')"><div class="option-info"><div><div class="option-name">Compound</div><div class="option-desc">Multi-tool web + code system</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound-mini" onclick="selectProviderModel('groq','groq/compound-mini','Compound Mini')"><div class="option-info"><div><div class="option-name">Compound Mini</div><div class="option-desc">Lower-latency tool system</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="openrouter"><div class="provider-badge"><span class="provider-badge-dot"></span> OpenRouter · current free models</div><button class="option-item" data-provider="openrouter" data-model="openrouter/free" onclick="selectProviderModel('openrouter','openrouter/free','OpenRouter Free')"><div class="option-info"><div><div class="option-name">OpenRouter Free</div><div class="option-desc">Recommended · auto-selects an available free model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-ultra-550b-a55b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-ultra-550b-a55b:free','Nemotron 3 Ultra Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Ultra Free</div><div class="option-desc">1M context · deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="poolside/laguna-s-2.1:free" onclick="selectProviderModel('openrouter','poolside/laguna-s-2.1:free','Laguna S 2.1 Free')"><div class="option-info"><div><div class="option-name">Laguna S 2.1 Free</div><div class="option-desc">Strong coding agent</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-super-120b-a12b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-super-120b-a12b:free','Nemotron 3 Super Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Super Free</div><div class="option-desc">Agentic reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="cohere/north-mini-code:free" onclick="selectProviderModel('openrouter','cohere/north-mini-code:free','North Mini Code Free')"><div class="option-info"><div><div class="option-name">North Mini Code Free</div><div class="option-desc">Fast agentic coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="poolside/laguna-xs-2.1:free" onclick="selectProviderModel('openrouter','poolside/laguna-xs-2.1:free','Laguna XS 2.1 Free')"><div class="option-info"><div><div class="option-name">Laguna XS 2.1 Free</div><div class="option-desc">Compact coding + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="inclusionai/ling-3.0-tiny:free" onclick="selectProviderModel('openrouter','inclusionai/ling-3.0-tiny:free','Ling 3.0 Tiny Free')"><div class="option-info"><div><div class="option-name">Ling 3.0 Tiny Free</div><div class="option-desc">Fast chat + instructions</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-nano-30b-a3b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-nano-30b-a3b:free','Nemotron 3 Nano Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Nano Free</div><div class="option-desc">Efficient reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="google/gemma-4-26b-a4b-it:free" onclick="selectProviderModel('openrouter','google/gemma-4-26b-a4b-it:free','Gemma 4 26B Free')"><div class="option-info"><div><div class="option-name">Gemma 4 26B Free</div><div class="option-desc">Google open multimodal model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="openai/gpt-oss-20b:free" onclick="selectProviderModel('openrouter','openai/gpt-oss-20b:free','GPT-OSS 20B Free')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B Free</div><div class="option-desc">Fast OpenAI open-weight model</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="mistral"><div class="provider-badge"><span class="provider-badge-dot"></span> Mistral · practical current choices</div><button class="option-item" data-provider="mistral" data-model="mistral-small-latest" onclick="selectProviderModel('mistral','mistral-small-latest','Mistral Small Latest')"><div class="option-info"><div><div class="option-name">Mistral Small Latest</div><div class="option-desc">Fast general-purpose model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-14b-latest" onclick="selectProviderModel('mistral','ministral-14b-latest','Ministral 14B Latest')"><div class="option-info"><div><div class="option-name">Ministral 14B Latest</div><div class="option-desc">Balanced compact model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-8b-latest" onclick="selectProviderModel('mistral','ministral-8b-latest','Ministral 8B Latest')"><div class="option-info"><div><div class="option-name">Ministral 8B Latest</div><div class="option-desc">Lighter / faster</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-3b-latest" onclick="selectProviderModel('mistral','ministral-3b-latest','Ministral 3B Latest')"><div class="option-info"><div><div class="option-name">Ministral 3B Latest</div><div class="option-desc">Smallest lightweight option</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="codestral-latest" onclick="selectProviderModel('mistral','codestral-latest','Codestral')"><div class="option-info"><div><div class="option-name">Codestral</div><div class="option-desc">Coding specialist</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cohere"><div class="provider-badge"><span class="provider-badge-dot"></span> Cohere · live Chat models</div><button class="option-item" data-provider="cohere" data-model="command-a-plus-05-2026" onclick="selectProviderModel('cohere','command-a-plus-05-2026','Command A+')"><div class="option-info"><div><div class="option-name">Command A+</div><div class="option-desc">Vision + reasoning + agents</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-03-2025" onclick="selectProviderModel('cohere','command-a-03-2025','Command A')"><div class="option-info"><div><div class="option-name">Command A</div><div class="option-desc">Multilingual + RAG + tools</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-reasoning-08-2025" onclick="selectProviderModel('cohere','command-a-reasoning-08-2025','Command A Reasoning')"><div class="option-info"><div><div class="option-name">Command A Reasoning</div><div class="option-desc">Deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-r7b-12-2024" onclick="selectProviderModel('cohere','command-r7b-12-2024','Command R7B')"><div class="option-info"><div><div class="option-name">Command R7B</div><div class="option-desc">Fast/light Command</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="tiny-aya-global" onclick="selectProviderModel('cohere','tiny-aya-global','Tiny Aya Global')"><div class="option-info"><div><div class="option-name">Tiny Aya Global</div><div class="option-desc">70-language lightweight chat</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="tiny-aya-water" onclick="selectProviderModel('cohere','tiny-aya-water','Tiny Aya Water')"><div class="option-info"><div><div class="option-name">Tiny Aya Water</div><div class="option-desc">Europe + Asia-Pacific language focus</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="c4ai-aya-expanse-32b" onclick="selectProviderModel('cohere','c4ai-aya-expanse-32b','Aya Expanse 32B')"><div class="option-info"><div><div class="option-name">Aya Expanse 32B</div><div class="option-desc">Strong multilingual generation</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="aihorde"><div class="provider-badge"><span class="provider-badge-dot"></span> AI Horde · your API key</div><button class="option-item" data-provider="aihorde" data-model="auto" onclick="selectProviderModel('aihorde','auto','AI Horde Auto')"><div class="option-info"><div><div class="option-name">AI Horde Auto</div><div class="option-desc">Uses AIHORDE_API_KEY · dynamically selects a currently active safe text model</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="image"><div class="provider-badge"><span class="provider-badge-dot"></span> Image Generation</div><button class="option-item" data-provider="image" data-model="pollinations/flux" onclick="selectImageProviderModel('pollinations/flux','Flux Image')"><div class="option-info"><div><div class="option-name">Flux Image</div><div class="option-desc">Current free image generation route</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="image" data-model="smart-vision" onclick="selectImageProviderModel('smart-vision','Smart Vision Route')"><div class="option-info"><div><div class="option-name">Smart Vision Route</div><div class="option-desc">Automatically uses a vision model for image analysis</div></div></div><div class="radio-icon"></div></button></section></div></div>
+            <div class="model-pages-viewport" id="modelPagesViewport"><div class="model-pages-track" id="modelPagesTrack"><section class="model-provider-page" data-provider="gemini"><div class="provider-badge"><span class="provider-badge-dot"></span> Google Gemini API</div><button class="option-item" data-provider="gemini" data-model="gemini-flash-latest" onclick="selectProviderModel('gemini','gemini-flash-latest','Gemini Flash Latest')"><div class="option-info"><div><div class="option-name">Gemini Flash Latest</div><div class="option-desc">Balanced all-around</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.8-flash" onclick="selectProviderModel('gemini','gemini-3.8-flash','Gemini 3.8 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.8 Flash</div><div class="option-desc">Advanced general tasks</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.7-flash" onclick="selectProviderModel('gemini','gemini-3.7-flash','Gemini 3.7 Flash')"><div class="option-info"><div><div class="option-name">Gemini 3.7 Flash</div><div class="option-desc">Reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="gemini" data-model="gemini-3.5-flash-lite" onclick="selectProviderModel('gemini','gemini-3.5-flash-lite','Gemini 3.5 Flash-Lite')"><div class="option-info"><div><div class="option-name">Gemini 3.5 Flash-Lite</div><div class="option-desc">Fast/light</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cloudflare"><div class="provider-badge"><span class="provider-badge-dot"></span> Workers AI · current practical models</div><button class="option-item" data-provider="cloudflare" data-model="@cf/zai-org/glm-4.7-flash" onclick="selectProviderModel('cloudflare','@cf/zai-org/glm-4.7-flash','GLM 4.7 Flash')"><div class="option-info"><div><div class="option-name">GLM 4.7 Flash</div><div class="option-desc">Free-plan friendly · fast multilingual/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/google/gemma-4-26b-a4b-it" onclick="selectProviderModel('cloudflare','@cf/google/gemma-4-26b-a4b-it','Gemma 4 26B')"><div class="option-info"><div><div class="option-name">Gemma 4 26B</div><div class="option-desc">Free-plan friendly · vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/nvidia/nemotron-3-120b-a12b" onclick="selectProviderModel('cloudflare','@cf/nvidia/nemotron-3-120b-a12b','Nemotron 3 Super')"><div class="option-info"><div><div class="option-name">Nemotron 3 Super</div><div class="option-desc">Free-plan friendly · agentic reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/openai/gpt-oss-120b" onclick="selectProviderModel('cloudflare','@cf/openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Strong reasoning + coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/openai/gpt-oss-20b" onclick="selectProviderModel('cloudflare','@cf/openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Fast general model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cloudflare" data-model="@cf/qwen/qwen3.8-27b" onclick="selectProviderModel('cloudflare','@cf/qwen/qwen3.8-27b','Qwen 3.8 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.8 27B</div><div class="option-desc">Vision + reasoning + tools</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="groq"><div class="provider-badge"><span class="provider-badge-dot"></span> GroqCloud · current chat models</div><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-120b" onclick="selectProviderModel('groq','openai/gpt-oss-120b','GPT-OSS 120B')"><div class="option-info"><div><div class="option-name">GPT-OSS 120B</div><div class="option-desc">Production · strong reasoning/coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="openai/gpt-oss-20b" onclick="selectProviderModel('groq','openai/gpt-oss-20b','GPT-OSS 20B')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B</div><div class="option-desc">Production · very fast</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="qwen/qwen3.6-27b" onclick="selectProviderModel('groq','qwen/qwen3.6-27b','Qwen 3.6 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.6 27B</div><div class="option-desc">Preview · vision + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="qwen/qwen3.8-27b" onclick="selectProviderModel('groq','qwen/qwen3.8-27b','Qwen 3.8 27B')"><div class="option-info"><div><div class="option-name">Qwen 3.8 27B</div><div class="option-desc">Preview · newer Qwen</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound" onclick="selectProviderModel('groq','groq/compound','Compound')"><div class="option-info"><div><div class="option-name">Compound</div><div class="option-desc">Multi-tool web + code system</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="groq" data-model="groq/compound-mini" onclick="selectProviderModel('groq','groq/compound-mini','Compound Mini')"><div class="option-info"><div><div class="option-name">Compound Mini</div><div class="option-desc">Lower-latency tool system</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="openrouter"><div class="provider-badge"><span class="provider-badge-dot"></span> OpenRouter · current free models</div><button class="option-item" data-provider="openrouter" data-model="openrouter/free" onclick="selectProviderModel('openrouter','openrouter/free','OpenRouter Free')"><div class="option-info"><div><div class="option-name">OpenRouter Free</div><div class="option-desc">Recommended · auto-selects an available free model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-ultra-550b-a55b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-ultra-550b-a55b:free','Nemotron 3 Ultra Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Ultra Free</div><div class="option-desc">1M context · deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="poolside/laguna-s-2.1:free" onclick="selectProviderModel('openrouter','poolside/laguna-s-2.1:free','Laguna S 2.1 Free')"><div class="option-info"><div><div class="option-name">Laguna S 2.1 Free</div><div class="option-desc">Strong coding agent</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-super-120b-a12b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-super-120b-a12b:free','Nemotron 3 Super Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Super Free</div><div class="option-desc">Agentic reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="cohere/north-mini-code:free" onclick="selectProviderModel('openrouter','cohere/north-mini-code:free','North Mini Code Free')"><div class="option-info"><div><div class="option-name">North Mini Code Free</div><div class="option-desc">Fast agentic coding</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="poolside/laguna-xs-2.1:free" onclick="selectProviderModel('openrouter','poolside/laguna-xs-2.1:free','Laguna XS 2.1 Free')"><div class="option-info"><div><div class="option-name">Laguna XS 2.1 Free</div><div class="option-desc">Compact coding + reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="inclusionai/ling-3.0-tiny:free" onclick="selectProviderModel('openrouter','inclusionai/ling-3.0-tiny:free','Ling 3.0 Tiny Free')"><div class="option-info"><div><div class="option-name">Ling 3.0 Tiny Free</div><div class="option-desc">Fast chat + instructions</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="nvidia/nemotron-3-nano-30b-a3b:free" onclick="selectProviderModel('openrouter','nvidia/nemotron-3-nano-30b-a3b:free','Nemotron 3 Nano Free')"><div class="option-info"><div><div class="option-name">Nemotron 3 Nano Free</div><div class="option-desc">Efficient reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="google/gemma-4-26b-a4b-it:free" onclick="selectProviderModel('openrouter','google/gemma-4-26b-a4b-it:free','Gemma 4 26B Free')"><div class="option-info"><div><div class="option-name">Gemma 4 26B Free</div><div class="option-desc">Google open multimodal model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="openrouter" data-model="openai/gpt-oss-20b:free" onclick="selectProviderModel('openrouter','openai/gpt-oss-20b:free','GPT-OSS 20B Free')"><div class="option-info"><div><div class="option-name">GPT-OSS 20B Free</div><div class="option-desc">Fast OpenAI open-weight model</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="mistral"><div class="provider-badge"><span class="provider-badge-dot"></span> Mistral · practical current choices</div><button class="option-item" data-provider="mistral" data-model="mistral-small-latest" onclick="selectProviderModel('mistral','mistral-small-latest','Mistral Small Latest')"><div class="option-info"><div><div class="option-name">Mistral Small Latest</div><div class="option-desc">Fast general-purpose model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-14b-latest" onclick="selectProviderModel('mistral','ministral-14b-latest','Ministral 14B Latest')"><div class="option-info"><div><div class="option-name">Ministral 14B Latest</div><div class="option-desc">Balanced compact model</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-8b-latest" onclick="selectProviderModel('mistral','ministral-8b-latest','Ministral 8B Latest')"><div class="option-info"><div><div class="option-name">Ministral 8B Latest</div><div class="option-desc">Lighter / faster</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="ministral-3b-latest" onclick="selectProviderModel('mistral','ministral-3b-latest','Ministral 3B Latest')"><div class="option-info"><div><div class="option-name">Ministral 3B Latest</div><div class="option-desc">Smallest lightweight option</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="mistral" data-model="codestral-latest" onclick="selectProviderModel('mistral','codestral-latest','Codestral')"><div class="option-info"><div><div class="option-name">Codestral</div><div class="option-desc">Coding specialist</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="cohere"><div class="provider-badge"><span class="provider-badge-dot"></span> Cohere · live Chat models</div><button class="option-item" data-provider="cohere" data-model="command-a-plus-05-2026" onclick="selectProviderModel('cohere','command-a-plus-05-2026','Command A+')"><div class="option-info"><div><div class="option-name">Command A+</div><div class="option-desc">Vision + reasoning + agents</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-03-2025" onclick="selectProviderModel('cohere','command-a-03-2025','Command A')"><div class="option-info"><div><div class="option-name">Command A</div><div class="option-desc">Multilingual + RAG + tools</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-a-reasoning-08-2025" onclick="selectProviderModel('cohere','command-a-reasoning-08-2025','Command A Reasoning')"><div class="option-info"><div><div class="option-name">Command A Reasoning</div><div class="option-desc">Deep reasoning</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="command-r7b-12-2024" onclick="selectProviderModel('cohere','command-r7b-12-2024','Command R7B')"><div class="option-info"><div><div class="option-name">Command R7B</div><div class="option-desc">Fast/light Command</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="tiny-aya-global" onclick="selectProviderModel('cohere','tiny-aya-global','Tiny Aya Global')"><div class="option-info"><div><div class="option-name">Tiny Aya Global</div><div class="option-desc">70-language lightweight chat</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="tiny-aya-water" onclick="selectProviderModel('cohere','tiny-aya-water','Tiny Aya Water')"><div class="option-info"><div><div class="option-name">Tiny Aya Water</div><div class="option-desc">Europe + Asia-Pacific language focus</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="cohere" data-model="c4ai-aya-expanse-32b" onclick="selectProviderModel('cohere','c4ai-aya-expanse-32b','Aya Expanse 32B')"><div class="option-info"><div><div class="option-name">Aya Expanse 32B</div><div class="option-desc">Strong multilingual generation</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="aihorde"><div class="provider-badge"><span class="provider-badge-dot"></span> AI Horde · your API key</div><button class="option-item" data-provider="aihorde" data-model="auto" onclick="selectProviderModel('aihorde','auto','AI Horde Auto')"><div class="option-info"><div><div class="option-name">AI Horde Auto</div><div class="option-desc">Uses AIHORDE_API_KEY · dynamically selects a currently active safe text model</div></div></div><div class="radio-icon"></div></button></section><section class="model-provider-page" data-provider="image"><div class="provider-badge"><span class="provider-badge-dot"></span> Image Generation</div><button class="option-item" data-provider="image" data-model="auto" onclick="selectImageProviderModel('auto','Auto Image')"><div class="option-info"><div><div class="option-name">Auto Image</div><div class="option-desc">Uses configured Cloudflare Workers AI first, then keyed Pollinations fallback</div></div></div><div class="radio-icon"></div></button><button class="option-item" data-provider="image" data-model="flux" onclick="selectImageProviderModel('flux','Flux Image')"><div class="option-info"><div><div class="option-name">Flux Image</div><div class="option-desc">Flux generation through your configured image provider</div></div></div><div class="radio-icon"></div></button></section></div></div>
             <div class="model-page-dots"><button class="model-page-dot" type="button" onclick="setProviderPage(0)" aria-label="Gemini"></button><button class="model-page-dot" type="button" onclick="setProviderPage(1)" aria-label="Cloudflare"></button><button class="model-page-dot" type="button" onclick="setProviderPage(2)" aria-label="Groq"></button><button class="model-page-dot" type="button" onclick="setProviderPage(3)" aria-label="OpenRouter"></button><button class="model-page-dot" type="button" onclick="setProviderPage(4)" aria-label="Mistral"></button><button class="model-page-dot" type="button" onclick="setProviderPage(5)" aria-label="Cohere"></button><button class="model-page-dot" type="button" onclick="setProviderPage(6)" aria-label="AI Horde"></button><button class="model-page-dot" type="button" onclick="setProviderPage(7)" aria-label="Image"></button></div>
         </div>
     </div>
@@ -4531,11 +4531,43 @@
             }
             sendMessage();
         }
-        let chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
+        function safeParseJSON(raw, fallback) {
+            if (raw == null || raw === '') return fallback;
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(fallback)) return Array.isArray(parsed) ? parsed : fallback;
+                if (fallback && typeof fallback === 'object') return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
+                if (typeof fallback === 'boolean') return typeof parsed === 'boolean' ? parsed : fallback;
+                return parsed ?? fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+
+        function readLocalJSON(key, fallback) {
+            return safeParseJSON(localStorage.getItem(key), fallback);
+        }
+
+        function safeSetLocalStorage(key, value, quiet = false) {
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (error) {
+                console.warn(`Could not save ${key}:`, error);
+                if (!quiet) {
+                    try { showModernToast('Local storage is full or unavailable. Your latest change may not persist.'); } catch (_) {}
+                }
+                return false;
+            }
+        }
+
+        let chatSessions = readLocalJSON('jepong_ai_chats', {});
         let currentSessionId = localStorage.getItem('jepong_last_session_id') || null;
         
         let currentSelectedProvider = localStorage.getItem('jepong_last_provider') || 'gemini';
         let currentSelectedModel = localStorage.getItem('jepong_last_model') || 'gemini-flash-latest';
+        let currentSelectedImageModel = localStorage.getItem('jepong_image_model') || 'auto';
+        if (!['auto','flux'].includes(currentSelectedImageModel)) currentSelectedImageModel = 'auto';
 
         // Migrate model IDs that were retired or replaced.
         if(currentSelectedProvider==='groq' && ['llama-3.3-70b-versatile','llama-3.1-8b-instant'].includes(currentSelectedModel)){
@@ -4576,12 +4608,12 @@
             localStorage.setItem('jepong_smart_router','false');
             localStorage.setItem('jepong_routing_default_version',ROUTING_DEFAULT_VERSION);
         }
-        let autoProviderFallback = JSON.parse(localStorage.getItem('jepong_auto_fallback') ?? 'false');
-        let smartModelRouter = JSON.parse(localStorage.getItem('jepong_smart_router') ?? 'false');
+        let autoProviderFallback = readLocalJSON('jepong_auto_fallback', false);
+        let smartModelRouter = readLocalJSON('jepong_smart_router', false);
         let pendingStudyTool = null;
-        let lastProviderMeta = JSON.parse(localStorage.getItem('jepong_provider_meta') || '{}');
+        let lastProviderMeta = readLocalJSON('jepong_provider_meta', {});
         let currentSelectedMode = localStorage.getItem('jepong_last_mode') || 'general';
-        let isWebSearchEnabled = JSON.parse(localStorage.getItem('jepong_last_websearch') || 'false');
+        let isWebSearchEnabled = readLocalJSON('jepong_last_websearch', false);
         
         let isIncognito = false;
         let dolaPhotoData = null;
@@ -4592,15 +4624,15 @@
         let inChatMatches = [];
         let currentMatchIndex = -1;
 
-        let customPromptPresets = JSON.parse(localStorage.getItem('jepong_custom_presets') || '[]');
+        let customPromptPresets = readLocalJSON('jepong_custom_presets', []);
 
-        window.executableSnippets = [];
+        // Runnable snippets are read from their rendered DOM blocks to avoid a growing global registry.
 
         let incognitoChatSessions = {};
         let currentIncognitoSessionId = null;
 
         let isBibleMode = false;
-        let bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
+        let bibleChatSessions = readLocalJSON('jepong_bible_chats', {});
         let currentBibleSessionId = null;
 
 
@@ -4649,7 +4681,7 @@
         };
         let personalizationSettings = (() => {
             try {
-                return { ...PERSONALIZATION_DEFAULTS, ...JSON.parse(localStorage.getItem('jepong_personalization') || '{}') };
+                return { ...PERSONALIZATION_DEFAULTS, ...readLocalJSON('jepong_personalization', {}) };
             } catch (_) {
                 return { ...PERSONALIZATION_DEFAULTS };
             }
@@ -4733,9 +4765,10 @@
             if(!wrap)closeResponseEffortMenu();
         },{passive:true});
 
-        let isResponseSpeechEnabled = JSON.parse(localStorage.getItem('jepong_speech_enabled') || 'false');
+        let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
         let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
         let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
+        if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) speechRate = 1.0;
 
         const chatBox = document.getElementById('chatBox');
         const sidebar = document.getElementById('sidebar');
@@ -6931,7 +6964,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
 
             customPromptPresets.push({ title, prompt });
-            localStorage.setItem('jepong_custom_presets', JSON.stringify(customPromptPresets));
+            safeSetLocalStorage('jepong_custom_presets', JSON.stringify(customPromptPresets));
             titleInput.value = '';
             promptInput.value = '';
             renderPresetsList();
@@ -6939,7 +6972,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function deletePreset(idx) {
             customPromptPresets.splice(idx, 1);
-            localStorage.setItem('jepong_custom_presets', JSON.stringify(customPromptPresets));
+            safeSetLocalStorage('jepong_custom_presets', JSON.stringify(customPromptPresets));
             renderPresetsList();
         }
 
@@ -6986,18 +7019,19 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             inChatMatches = [];
             currentMatchIndex = -1;
 
-            if (!query || query.trim() === '') {
+            const needle = String(query || '').trim();
+            if (!needle) {
                 document.getElementById('inChatSearchCount').innerText = '0/0';
                 return;
             }
 
-            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const testRegex = new RegExp(escaped, 'i');
             const walker = document.createTreeWalker(chatBox, NodeFilter.SHOW_TEXT, {
-                acceptNode: function(node) {
-                    if (node.parentElement.closest('.bot-actions') || node.parentElement.closest('.user-actions') || node.parentElement.closest('.ai-indicator-card')) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return regex.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                acceptNode(node) {
+                    const parent = node.parentElement;
+                    if (!parent || parent.closest('.bot-actions, .user-actions, .ai-indicator-card, mark.chat-highlight')) return NodeFilter.FILTER_REJECT;
+                    return testRegex.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
                 }
             });
 
@@ -7005,9 +7039,22 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             while (walker.nextNode()) textNodes.push(walker.currentNode);
 
             textNodes.forEach(node => {
-                const span = document.createElement('span');
-                span.innerHTML = node.nodeValue.replace(regex, '<mark class="chat-highlight">$1</mark>');
-                node.parentNode.replaceChild(span, node);
+                const text = node.nodeValue || '';
+                const regex = new RegExp(escaped, 'gi');
+                const fragment = document.createDocumentFragment();
+                let lastIndex = 0;
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    if (match.index > lastIndex) fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+                    const mark = document.createElement('mark');
+                    mark.className = 'chat-highlight';
+                    mark.textContent = match[0];
+                    fragment.appendChild(mark);
+                    lastIndex = match.index + match[0].length;
+                    if (match[0].length === 0) regex.lastIndex++;
+                }
+                if (lastIndex < text.length) fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+                node.parentNode?.replaceChild(fragment, node);
             });
 
             inChatMatches = Array.from(chatBox.querySelectorAll('mark.chat-highlight'));
@@ -7618,7 +7665,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             isIncognito = false;
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • 📖 Bible';
             
-            bibleChatSessions = JSON.parse(localStorage.getItem('jepong_bible_chats') || '{}');
+            bibleChatSessions = readLocalJSON('jepong_bible_chats', {});
             if (Object.keys(bibleChatSessions).length > 0) {
                 currentBibleSessionId = Object.keys(bibleChatSessions)[Object.keys(bibleChatSessions).length - 1];
                 loadBibleSession(currentBibleSessionId);
@@ -7638,7 +7685,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (!isBibleMode) return;
             isBibleMode = false;
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
-            chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
+            chatSessions = readLocalJSON('jepong_ai_chats', {});
             if (Object.keys(chatSessions).length > 0) {
                 loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
             } else {
@@ -7655,7 +7702,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function saveBibleSessions() {
-            localStorage.setItem('jepong_bible_chats', JSON.stringify(bibleChatSessions));
+            safeSetLocalStorage('jepong_bible_chats', JSON.stringify(bibleChatSessions));
             renderSidebarHistory();
         }
 
@@ -7882,7 +7929,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             incognitoChatSessions = {};
             currentIncognitoSessionId = null;
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI';
-            chatSessions = JSON.parse(localStorage.getItem('jepong_ai_chats') || '{}');
+            chatSessions = readLocalJSON('jepong_ai_chats', {});
             if (Object.keys(chatSessions).length > 0) {
                 loadChatSession(Object.keys(chatSessions)[Object.keys(chatSessions).length - 1]);
             } else {
@@ -8008,7 +8055,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function saveSessions() {
             if (isIncognito || isBibleMode) return;
-            localStorage.setItem('jepong_ai_chats', JSON.stringify(chatSessions));
+            safeSetLocalStorage('jepong_ai_chats', JSON.stringify(chatSessions));
             renderSidebarHistory();
         }
 
@@ -8151,576 +8198,139 @@ ${m.text || ''}
             }
         }
 
+        function sanitizeRenderedMarkdown(root) {
+            if (!root) return root;
+            const blockedTags = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','FORM','META','LINK','BASE','SVG','MATH']);
+            const allowedHrefProtocols = new Set(['http:','https:','mailto:','tel:']);
+            const allowedSrcProtocols = new Set(['http:','https:']);
+            const safeDataImage = /^data:image\/(?:png|jpe?g|gif|webp);base64,/i;
+
+            root.querySelectorAll('*').forEach(el => {
+                if (blockedTags.has(el.tagName)) {
+                    el.replaceWith(document.createTextNode(el.textContent || ''));
+                    return;
+                }
+                [...el.attributes].forEach(attr => {
+                    const name = attr.name.toLowerCase();
+                    const value = String(attr.value || '').trim();
+                    if (name.startsWith('on') || name === 'srcdoc' || name === 'formaction' || name === 'xlink:href' || name === 'style') {
+                        el.removeAttribute(attr.name);
+                        return;
+                    }
+                    if (name === 'href' || name === 'src') {
+                        if (!value || value.startsWith('#')) return;
+                        if (name === 'src' && safeDataImage.test(value)) return;
+                        try {
+                            const url = new URL(value, location.href);
+                            const allowed = name === 'href' ? allowedHrefProtocols.has(url.protocol) : allowedSrcProtocols.has(url.protocol);
+                            if (!allowed) el.removeAttribute(attr.name);
+                        } catch (_) {
+                            el.removeAttribute(attr.name);
+                        }
+                    }
+                });
+                if (el.tagName === 'A' && el.getAttribute('target') === '_blank') el.setAttribute('rel', 'noopener noreferrer');
+            });
+            return root;
+        }
+
         function renderCustomMarkdown(rawMarkdown) {
             const rawHtml = marked.parse(rawMarkdown);
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = rawHtml;
+            sanitizeRenderedMarkdown(tempDiv);
 
             const codeBlocks = tempDiv.querySelectorAll('pre');
             codeBlocks.forEach((pre) => {
                 const codeEl = pre.querySelector('code');
-                const codeContent = codeEl ? codeEl.innerText : pre.innerText;
-                
+                const codeContent = codeEl ? codeEl.textContent : pre.textContent;
                 let lang = 'code';
                 if (codeEl && codeEl.className) {
                     const match = codeEl.className.match(/language-([a-zA-Z0-9_\-]+)/);
                     if (match) lang = match[1];
                 }
-
-                const snippetIndex = window.executableSnippets.length;
-                window.executableSnippets.push({
-                    code: codeContent,
-                    lang: lang
-                });
-
-                const isRunnable = /^(html|htm|javascript|js|css|svg|xml)$/i.test(lang) || 
-                    /<(!doctype|html|head|body|div|p|style|script)/i.test(codeContent);
-
+                const isRunnable = /^(html|htm|javascript|js|css|svg|xml)$/i.test(lang) || /<(!doctype|html|head|body|div|p|style|script)/i.test(codeContent);
                 const container = document.createElement('div');
                 container.className = 'code-container-wrap';
+                container.dataset.lang = lang;
                 container.innerHTML = `
                     <div class="code-block-header">
                         <span class="code-lang-label">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-                            ${lang}
+                            ${escapeHTML(lang)}
                         </span>
                         <div class="code-header-actions">
-                            ${isRunnable ? `
-                                <button type="button" class="code-action-btn run-btn" onclick="executeSnippetByIndex(${snippetIndex})" title="Live Preview">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                    Run
-                                </button>
-                            ` : ''}
-                            <button type="button" class="code-action-btn" onclick="openCodeFullscreen(${snippetIndex})" title="Fullscreen code">⛶ Full</button>
-                            <button type="button" class="code-action-btn" onclick="copySnippetByIndex(this, ${snippetIndex})" title="Copy code">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
-                                <span>Copy</span>
-                            </button>
+                            ${isRunnable ? `<button type="button" class="code-action-btn run-btn" onclick="executeSnippetFromButton(this)" title="Live Preview"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Run</button>` : ''}
+                            <button type="button" class="code-action-btn" onclick="openCodeFullscreenFromButton(this)" title="Fullscreen code">⛶ Full</button>
+                            <button type="button" class="code-action-btn" onclick="copySnippetFromButton(this)" title="Copy code"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg><span>Copy</span></button>
                         </div>
                     </div>
-                    <pre><code class="${codeEl ? codeEl.className : ''}">${codeEl ? codeEl.innerHTML : escapeHTML(codeContent)}</code></pre>
-                `;
-
+                    <pre><code class="${escapeHTML(codeEl ? codeEl.className : '')}">${escapeHTML(codeContent)}</code></pre>`;
                 pre.parentNode.replaceChild(container, pre);
             });
 
             return tempDiv.innerHTML;
         }
 
-        function copySnippetByIndex(btn, index) {
-            const item = window.executableSnippets[index];
+        function snippetFromButton(btn) {
+            const wrap = btn?.closest?.('.code-container-wrap');
+            if (!wrap) return null;
+            return { code: wrap.querySelector('pre code')?.textContent || '', lang: String(wrap.dataset.lang || 'code').toLowerCase() };
+        }
+
+        function copySnippetFromButton(btn) {
+            const item = snippetFromButton(btn);
             if (!item) return;
             navigator.clipboard.writeText(item.code).then(() => {
                 const span = btn.querySelector('span');
-                const prev = span.innerText;
-                span.innerText = 'Copied!';
+                if (!span) return;
+                const prev = span.textContent;
+                span.textContent = 'Copied!';
                 btn.style.color = '#10b981';
-                setTimeout(() => {
-                    span.innerText = prev;
-                    btn.style.color = '';
-                }, 1500);
-            });
+                setTimeout(() => { span.textContent = prev; btn.style.color = ''; }, 1500);
+            }).catch(() => showModernToast('Copy failed. Select the code and copy it manually.'));
         }
 
-        function executeSnippetByIndex(index) {
-            const item = window.executableSnippets[index];
-            if (!item) return;
+        function buildRunnableSnippetDocument(code, lang = 'code') {
+            const source = String(code || '');
+            const language = String(lang || 'code').toLowerCase();
+            const csp = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; media-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">`;
+            const head = `<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${csp}`;
+            if (/<(?:!doctype|html)\b/i.test(source)) {
+                if (/<head[\s>]/i.test(source)) return source.replace(/<head([^>]*)>/i, `<head$1>${csp}`);
+                return source.replace(/<html([^>]*)>/i, `<html$1><head>${head}</head>`);
+            }
+            if (/^(javascript|js)$/i.test(language)) {
+                const scriptCode = source.replace(new RegExp('</'+'script', 'gi'), '<\\/script');
+                const closeScript = '</' + 'script>';
+                return `<!DOCTYPE html><html><head>${head}<style>body{font-family:system-ui,sans-serif;padding:16px;color:#111;background:#fff}#out{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><pre id="out"></pre><script>const out=document.getElementById('out');const write=(...a)=>{out.textContent+=a.map(v=>typeof v==='string'?v:JSON.stringify(v,null,2)).join(' ')+'\\n'};console.log=write;console.warn=write;console.error=write;window.onerror=(m)=>write('Error:',m);try{${scriptCode}}catch(e){write('Error:',e?.stack||e?.message||String(e))}${closeScript}</body></html>`;
+            }
+            if (/^css$/i.test(language)) {
+                const safeCss = source.replace(new RegExp('</'+'style', 'gi'), '<\\/style');
+                const closeStyle = '</' + 'style>';
+                return `<!DOCTYPE html><html><head>${head}<style>${safeCss}${closeStyle}</head><body><main><h2>CSS Preview</h2><p>Preview text</p><button type="button">Button</button></main></body></html>`;
+            }
+            return `<!DOCTYPE html><html><head>${head}<style>body{margin:0;padding:16px;font-family:system-ui,sans-serif}</style></head><body>${source}</body></html>`;
+        }
 
-            let code = item.code;
-            const lang = (item.lang || '').toLowerCase();
+        function executeSnippetFromButton(btn) {
+            const item = snippetFromButton(btn);
+            if (!item) return;
             const modal = document.getElementById('codeRunnerModal');
             const iframe = document.getElementById('codeRunnerIframe');
-
-            if (!code.includes('<html') && !code.includes('<!DOCTYPE')) {
-                if (/^(javascript|js)$/i.test(lang)) {
-                    code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px;color:#333;}
-        /* ==== Pet creator + pet grid cleanup ==== */
-        #personalizationPetPage .ps-pet-grid{
-            display:grid!important;
-            grid-template-columns:repeat(4,minmax(0,1fr))!important;
-            gap:14px!important;
-            align-items:stretch!important;
-            padding:6px 0 18px!important;
-        }
-        #personalizationPetPage .ps-pet-card{
-            min-height:174px!important;
-            height:100%!important;
-            display:flex!important;
-            flex-direction:column!important;
-            align-items:center!important;
-            justify-content:flex-start!important;
-            gap:0!important;
-            padding:14px 10px 12px!important;
-            border-radius:20px!important;
-            overflow:hidden!important;
-        }
-        #personalizationPetPage .ps-pet-card-visual{
-            width:84px!important;
-            height:84px!important;
-            flex:0 0 84px!important;
-            margin:0 auto 10px!important;
-            border-radius:24px!important;
-            box-shadow:0 10px 30px rgba(15,23,42,.18)!important;
-            background:radial-gradient(circle at 35% 20%, rgba(255,255,255,.22), rgba(129,140,248,.14) 46%, rgba(15,23,42,.18))!important;
-        }
-        #personalizationPetPage .ps-pet-card-name{
-            width:100%!important;
-            margin-top:2px!important;
-            text-align:center!important;
-            font-size:.9rem!important;
-            line-height:1.25!important;
-        }
-        #personalizationPetPage .ps-pet-card-desc{
-            width:100%!important;
-            text-align:center!important;
-            margin-top:6px!important;
-            min-height:2.8em!important;
-            display:-webkit-box!important;
-            -webkit-line-clamp:2!important;
-            -webkit-box-orient:vertical!important;
-            overflow:hidden!important;
-            font-size:.68rem!important;
-            line-height:1.38!important;
-        }
-        #personalizationPetPage .ps-pet-action-grid{
-            display:grid!important;
-            grid-template-columns:repeat(2,minmax(0,1fr))!important;
-            gap:12px!important;
-            margin:2px 0 16px!important;
-        }
-        #personalizationPetPage .ps-pet-action-card{
-            min-height:84px!important;
-            display:flex!important;
-            align-items:center!important;
-            gap:12px!important;
-            padding:14px!important;
-            border-radius:18px!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025))!important;
-            box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
-            text-align:left!important;
-        }
-        #personalizationPetPage .ps-pet-action-card strong,
-        #personalizationPetPage .ps-pet-action-card small{
-            display:block!important;
-        }
-        #personalizationPetPage .ps-pet-action-card small{
-            margin-top:4px!important;
-            line-height:1.4!important;
-        }
-        #personalizationPetPage .ps-ai-pet-creator{
-            border-radius:22px!important;
-            overflow:hidden!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            background:linear-gradient(180deg, rgba(15,23,42,.48), rgba(2,6,23,.36))!important;
-            box-shadow:0 16px 40px rgba(2,6,23,.22)!important;
-        }
-        #personalizationPetPage .ps-ai-pet-body{
-            grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important;
-            gap:18px!important;
-            align-items:start!important;
-        }
-        #personalizationPetPage .ps-ai-pet-preview{
-            position:sticky!important;
-            top:0!important;
-            min-height:320px!important;
-            display:flex!important;
-            flex-direction:column!important;
-            justify-content:flex-start!important;
-        }
-        #personalizationPetPage .ps-ai-pet-preview-copy{padding:12px 2px 2px!important}
-        #personalizationPetPage .ps-ai-pet-meta-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-top:8px!important}
-        #personalizationPetPage .ps-ai-pet-style-pill{
-            display:inline-flex!important;
-            align-items:center!important;
-            gap:7px!important;
-            max-width:100%!important;
-            padding:7px 10px!important;
-            border-radius:999px!important;
-            background:rgba(99,102,241,.14)!important;
-            border:1px solid rgba(129,140,248,.24)!important;
-            color:#dbe4ff!important;
-            font-size:.64rem!important;
-            line-height:1.25!important;
-        }
-        #personalizationPetPage .ps-ai-pet-style-pill i{width:14px!important;height:14px!important;flex:0 0 14px!important}
-        #personalizationPetPage .ps-ai-pet-setting-row{
-            display:flex!important;
-            align-items:center!important;
-            justify-content:space-between!important;
-            gap:12px!important;
-            padding:12px 14px!important;
-            margin:2px 0 12px!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            border-radius:16px!important;
-            background:rgba(255,255,255,.03)!important;
-        }
-        #personalizationPetPage .ps-ai-pet-setting-copy{min-width:0!important}
-        #personalizationPetPage .ps-ai-pet-setting-copy strong{display:block!important;font-size:.79rem!important;line-height:1.25!important}
-        #personalizationPetPage .ps-ai-pet-setting-copy small{display:block!important;margin-top:4px!important;color:var(--text-muted)!important;font-size:.64rem!important;line-height:1.38!important}
-        #personalizationPetPage .ps-ai-pet-reference-wrap{
-            display:block!important;
-            min-width:0!important;
-            margin:0 0 12px!important;
-            padding:12px 14px!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            border-radius:16px!important;
-            background:rgba(255,255,255,.03)!important;
-        }
-        #personalizationPetPage .ps-ai-pet-reference-wrap[hidden]{display:none!important}
-        #personalizationPetPage .ps-ai-pet-option-label{display:block!important;font-size:.7rem!important;font-weight:800!important;letter-spacing:.04em!important;margin-bottom:9px!important;color:#cbd5e1!important}
-        #personalizationPetPage .ps-ai-pet-reference-chips{
-            display:flex!important;
-            flex-wrap:wrap!important;
-            gap:8px!important;
-            min-width:0!important;
-        }
-        #personalizationPetPage .ps-ai-pet-ref-chip{
-            appearance:none!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            background:rgba(15,23,42,.22)!important;
-            color:var(--text-main)!important;
-            border-radius:999px!important;
-            padding:8px 11px!important;
-            min-height:36px!important;
-            display:inline-flex!important;
-            align-items:center!important;
-            gap:7px!important;
-            cursor:pointer!important;
-            font-size:.69rem!important;
-            font-weight:700!important;
-            line-height:1!important;
-            transition:.16s ease!important;
-        }
-        #personalizationPetPage .ps-ai-pet-ref-chip:hover{transform:translateY(-1px)!important;border-color:rgba(129,140,248,.34)!important;background:rgba(99,102,241,.08)!important}
-        #personalizationPetPage .ps-ai-pet-ref-chip.active{border-color:#8b5cf6!important;background:rgba(139,92,246,.18)!important;box-shadow:0 0 0 1px rgba(139,92,246,.28)!important;color:#f4f0ff!important}
-        #personalizationPetPage .ps-ai-pet-ref-chip span.emoji{font-size:.92rem!important;line-height:1!important}
-        #personalizationPetPage .ps-ai-pet-reference-help{display:block!important;margin-top:10px!important;color:var(--text-muted)!important;font-size:.63rem!important;line-height:1.42!important}
-        #personalizationPetPage .ps-ai-pet-actions{
-            display:flex!important;
-            flex-wrap:wrap!important;
-            gap:10px!important;
-            align-items:center!important;
-        }
-        #personalizationPetPage .ps-ai-pet-generate,
-        #personalizationPetPage .ps-ai-pet-secondary,
-        #personalizationPetPage .ps-ai-pet-cancel{
-            min-width:0!important;
-            min-height:44px!important;
-            display:inline-flex!important;
-            align-items:center!important;
-            justify-content:center!important;
-            gap:8px!important;
-            padding:0 14px!important;
-            border-radius:14px!important;
-            border:1px solid rgba(148,163,184,.18)!important;
-            font-size:.75rem!important;
-            font-weight:800!important;
-            cursor:pointer!important;
-            transition:.16s ease!important;
-        }
-        #personalizationPetPage .ps-ai-pet-generate{background:linear-gradient(135deg,#8b5cf6,#6366f1)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 12px 24px rgba(99,102,241,.24)!important}
-        #personalizationPetPage .ps-ai-pet-secondary{background:rgba(255,255,255,.045)!important;color:var(--text-main)!important}
-        #personalizationPetPage .ps-ai-pet-secondary:disabled{opacity:.52!important;cursor:not-allowed!important}
-        #personalizationPetPage .ps-ai-pet-cancel{background:rgba(239,68,68,.11)!important;color:#fecaca!important;border-color:rgba(248,113,113,.18)!important}
-        #personalizationPetPage .ps-ai-pet-generate:hover,
-        #personalizationPetPage .ps-ai-pet-secondary:hover,
-        #personalizationPetPage .ps-ai-pet-cancel:hover{transform:translateY(-1px)!important}
-        @media (max-width: 980px){
-            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-            #personalizationPetPage .ps-ai-pet-body{grid-template-columns:1fr!important}
-            #personalizationPetPage .ps-ai-pet-preview{position:relative!important;top:auto!important;min-height:unset!important}
-        }
-        @media (max-width: 720px){
-            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-            #personalizationPetPage .ps-pet-action-grid{grid-template-columns:1fr!important}
-            #personalizationPetPage .ps-ai-pet-setting-row{align-items:flex-start!important}
-            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 calc(50% - 5px)!important}
-        }
-        @media (max-width: 540px){
-            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 100%!important}
-            #personalizationPetPage .ps-pet-card{min-height:164px!important}
-            #personalizationPetPage .ps-pet-card-visual{width:78px!important;height:78px!important}
-        }
-
-    </style></head><body><h3>Console Output:</h3><div id="out"></div><script>const log=document.getElementById('out');console.log=(...a)=>{log.innerHTML+=a.join(' ')+'<br>'};try{${code}}catch(e){document.body.innerHTML+='<pre style="color:red">'+e+'</pre>'};<\/script></body></html>`;
-                } else {
-                    code = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:16px;font-family:sans-serif;}
-
-
-        /* ===== CLEAN SURFACE / ACTIVITY / MIC HARDENING ===== */
-        .ai-activity-card.ai-activity-archived{margin-bottom:10px!important;box-shadow:none!important;background:rgba(30,41,59,.46)!important}
-        .ai-activity-card.ai-activity-archived .ai-activity-head{background:transparent!important;padding-bottom:2px!important;margin-bottom:0!important;position:relative!important}
-        .ai-activity-card.ai-activity-archived.collapsed{padding:9px 11px!important;border-radius:14px!important}
-        .pill-mic-btn.recording{color:#f87171!important;background:rgba(239,68,68,.12)!important;box-shadow:0 0 0 3px rgba(239,68,68,.10)!important}
-        .modal-overlay:not(.open), .ps-choice-overlay:not(.open){pointer-events:none!important}
-        .modal-overlay.open{overscroll-behavior:contain}
-
-        /* ==== Pet creator + pet grid cleanup ==== */
-        #personalizationPetPage .ps-pet-grid{
-            display:grid!important;
-            grid-template-columns:repeat(4,minmax(0,1fr))!important;
-            gap:14px!important;
-            align-items:stretch!important;
-            padding:6px 0 18px!important;
-        }
-        #personalizationPetPage .ps-pet-card{
-            min-height:174px!important;
-            height:100%!important;
-            display:flex!important;
-            flex-direction:column!important;
-            align-items:center!important;
-            justify-content:flex-start!important;
-            gap:0!important;
-            padding:14px 10px 12px!important;
-            border-radius:20px!important;
-            overflow:hidden!important;
-        }
-        #personalizationPetPage .ps-pet-card-visual{
-            width:84px!important;
-            height:84px!important;
-            flex:0 0 84px!important;
-            margin:0 auto 10px!important;
-            border-radius:24px!important;
-            box-shadow:0 10px 30px rgba(15,23,42,.18)!important;
-            background:radial-gradient(circle at 35% 20%, rgba(255,255,255,.22), rgba(129,140,248,.14) 46%, rgba(15,23,42,.18))!important;
-        }
-        #personalizationPetPage .ps-pet-card-name{
-            width:100%!important;
-            margin-top:2px!important;
-            text-align:center!important;
-            font-size:.9rem!important;
-            line-height:1.25!important;
-        }
-        #personalizationPetPage .ps-pet-card-desc{
-            width:100%!important;
-            text-align:center!important;
-            margin-top:6px!important;
-            min-height:2.8em!important;
-            display:-webkit-box!important;
-            -webkit-line-clamp:2!important;
-            -webkit-box-orient:vertical!important;
-            overflow:hidden!important;
-            font-size:.68rem!important;
-            line-height:1.38!important;
-        }
-        #personalizationPetPage .ps-pet-action-grid{
-            display:grid!important;
-            grid-template-columns:repeat(2,minmax(0,1fr))!important;
-            gap:12px!important;
-            margin:2px 0 16px!important;
-        }
-        #personalizationPetPage .ps-pet-action-card{
-            min-height:84px!important;
-            display:flex!important;
-            align-items:center!important;
-            gap:12px!important;
-            padding:14px!important;
-            border-radius:18px!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025))!important;
-            box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
-            text-align:left!important;
-        }
-        #personalizationPetPage .ps-pet-action-card strong,
-        #personalizationPetPage .ps-pet-action-card small{
-            display:block!important;
-        }
-        #personalizationPetPage .ps-pet-action-card small{
-            margin-top:4px!important;
-            line-height:1.4!important;
-        }
-        #personalizationPetPage .ps-ai-pet-creator{
-            border-radius:22px!important;
-            overflow:hidden!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            background:linear-gradient(180deg, rgba(15,23,42,.48), rgba(2,6,23,.36))!important;
-            box-shadow:0 16px 40px rgba(2,6,23,.22)!important;
-        }
-        #personalizationPetPage .ps-ai-pet-body{
-            grid-template-columns:minmax(220px,250px) minmax(0,1fr)!important;
-            gap:18px!important;
-            align-items:start!important;
-        }
-        #personalizationPetPage .ps-ai-pet-preview{
-            position:sticky!important;
-            top:0!important;
-            min-height:320px!important;
-            display:flex!important;
-            flex-direction:column!important;
-            justify-content:flex-start!important;
-        }
-        #personalizationPetPage .ps-ai-pet-preview-copy{padding:12px 2px 2px!important}
-        #personalizationPetPage .ps-ai-pet-meta-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-top:8px!important}
-        #personalizationPetPage .ps-ai-pet-style-pill{
-            display:inline-flex!important;
-            align-items:center!important;
-            gap:7px!important;
-            max-width:100%!important;
-            padding:7px 10px!important;
-            border-radius:999px!important;
-            background:rgba(99,102,241,.14)!important;
-            border:1px solid rgba(129,140,248,.24)!important;
-            color:#dbe4ff!important;
-            font-size:.64rem!important;
-            line-height:1.25!important;
-        }
-        #personalizationPetPage .ps-ai-pet-style-pill i{width:14px!important;height:14px!important;flex:0 0 14px!important}
-        #personalizationPetPage .ps-ai-pet-setting-row{
-            display:flex!important;
-            align-items:center!important;
-            justify-content:space-between!important;
-            gap:12px!important;
-            padding:12px 14px!important;
-            margin:2px 0 12px!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            border-radius:16px!important;
-            background:rgba(255,255,255,.03)!important;
-        }
-        #personalizationPetPage .ps-ai-pet-setting-copy{min-width:0!important}
-        #personalizationPetPage .ps-ai-pet-setting-copy strong{display:block!important;font-size:.79rem!important;line-height:1.25!important}
-        #personalizationPetPage .ps-ai-pet-setting-copy small{display:block!important;margin-top:4px!important;color:var(--text-muted)!important;font-size:.64rem!important;line-height:1.38!important}
-        #personalizationPetPage .ps-ai-pet-reference-wrap{
-            display:block!important;
-            min-width:0!important;
-            margin:0 0 12px!important;
-            padding:12px 14px!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            border-radius:16px!important;
-            background:rgba(255,255,255,.03)!important;
-        }
-        #personalizationPetPage .ps-ai-pet-reference-wrap[hidden]{display:none!important}
-        #personalizationPetPage .ps-ai-pet-option-label{display:block!important;font-size:.7rem!important;font-weight:800!important;letter-spacing:.04em!important;margin-bottom:9px!important;color:#cbd5e1!important}
-        #personalizationPetPage .ps-ai-pet-reference-chips{
-            display:flex!important;
-            flex-wrap:wrap!important;
-            gap:8px!important;
-            min-width:0!important;
-        }
-        #personalizationPetPage .ps-ai-pet-ref-chip{
-            appearance:none!important;
-            border:1px solid rgba(148,163,184,.16)!important;
-            background:rgba(15,23,42,.22)!important;
-            color:var(--text-main)!important;
-            border-radius:999px!important;
-            padding:8px 11px!important;
-            min-height:36px!important;
-            display:inline-flex!important;
-            align-items:center!important;
-            gap:7px!important;
-            cursor:pointer!important;
-            font-size:.69rem!important;
-            font-weight:700!important;
-            line-height:1!important;
-            transition:.16s ease!important;
-        }
-        #personalizationPetPage .ps-ai-pet-ref-chip:hover{transform:translateY(-1px)!important;border-color:rgba(129,140,248,.34)!important;background:rgba(99,102,241,.08)!important}
-        #personalizationPetPage .ps-ai-pet-ref-chip.active{border-color:#8b5cf6!important;background:rgba(139,92,246,.18)!important;box-shadow:0 0 0 1px rgba(139,92,246,.28)!important;color:#f4f0ff!important}
-        #personalizationPetPage .ps-ai-pet-ref-chip span.emoji{font-size:.92rem!important;line-height:1!important}
-        #personalizationPetPage .ps-ai-pet-reference-help{display:block!important;margin-top:10px!important;color:var(--text-muted)!important;font-size:.63rem!important;line-height:1.42!important}
-        #personalizationPetPage .ps-ai-pet-actions{
-            display:flex!important;
-            flex-wrap:wrap!important;
-            gap:10px!important;
-            align-items:center!important;
-        }
-        #personalizationPetPage .ps-ai-pet-generate,
-        #personalizationPetPage .ps-ai-pet-secondary,
-        #personalizationPetPage .ps-ai-pet-cancel{
-            min-width:0!important;
-            min-height:44px!important;
-            display:inline-flex!important;
-            align-items:center!important;
-            justify-content:center!important;
-            gap:8px!important;
-            padding:0 14px!important;
-            border-radius:14px!important;
-            border:1px solid rgba(148,163,184,.18)!important;
-            font-size:.75rem!important;
-            font-weight:800!important;
-            cursor:pointer!important;
-            transition:.16s ease!important;
-        }
-        #personalizationPetPage .ps-ai-pet-generate{background:linear-gradient(135deg,#8b5cf6,#6366f1)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 12px 24px rgba(99,102,241,.24)!important}
-        #personalizationPetPage .ps-ai-pet-secondary{background:rgba(255,255,255,.045)!important;color:var(--text-main)!important}
-        #personalizationPetPage .ps-ai-pet-secondary:disabled{opacity:.52!important;cursor:not-allowed!important}
-        #personalizationPetPage .ps-ai-pet-cancel{background:rgba(239,68,68,.11)!important;color:#fecaca!important;border-color:rgba(248,113,113,.18)!important}
-        #personalizationPetPage .ps-ai-pet-generate:hover,
-        #personalizationPetPage .ps-ai-pet-secondary:hover,
-        #personalizationPetPage .ps-ai-pet-cancel:hover{transform:translateY(-1px)!important}
-        @media (max-width: 980px){
-            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-            #personalizationPetPage .ps-ai-pet-body{grid-template-columns:1fr!important}
-            #personalizationPetPage .ps-ai-pet-preview{position:relative!important;top:auto!important;min-height:unset!important}
-        }
-        @media (max-width: 720px){
-            #personalizationPetPage .ps-pet-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-            #personalizationPetPage .ps-pet-action-grid{grid-template-columns:1fr!important}
-            #personalizationPetPage .ps-ai-pet-setting-row{align-items:flex-start!important}
-            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 calc(50% - 5px)!important}
-        }
-        @media (max-width: 540px){
-            #personalizationPetPage .ps-ai-pet-actions > *{flex:1 1 100%!important}
-            #personalizationPetPage .ps-pet-card{min-height:164px!important}
-            #personalizationPetPage .ps-pet-card-visual{width:78px!important;height:78px!important}
-        }
-
-    
-        /* ===== Draggable pet anchor + falling scare ===== */
-        #personalizationPetPage .ps-pet-behavior-grid{
-            display:grid!important;
-            grid-template-columns:repeat(2,minmax(0,1fr))!important;
-            gap:10px!important;
-            margin:0 0 16px!important;
-        }
-        #personalizationPetPage .ps-pet-behavior-row{
-            min-width:0!important;
-            display:flex!important;
-            align-items:center!important;
-            justify-content:space-between!important;
-            gap:12px!important;
-            padding:12px 14px!important;
-            border:1px solid rgba(148,163,184,.15)!important;
-            border-radius:16px!important;
-            background:rgba(255,255,255,.025)!important;
-        }
-        #personalizationPetPage .ps-pet-behavior-copy{min-width:0!important}
-        #personalizationPetPage .ps-pet-behavior-copy strong{display:block!important;font-size:.76rem!important;line-height:1.25!important}
-        #personalizationPetPage .ps-pet-behavior-copy small{display:block!important;margin-top:4px!important;color:var(--text-muted)!important;font-size:.63rem!important;line-height:1.4!important}
-        @media(max-width:640px){#personalizationPetPage .ps-pet-behavior-grid{grid-template-columns:1fr!important}}
-
-        .live-pet[data-drag-enabled="true"]{cursor:grab;touch-action:none}
-        .live-pet.dragging{cursor:grabbing!important;transition:none!important;z-index:25!important;filter:drop-shadow(0 16px 18px rgba(0,0,0,.42))}
-        .live-pet.dragging .live-pet-visual{animation:none!important;transform:scale(1.04)!important}
-        .live-pet.pet-settling{transition:left .18s ease,top .64s cubic-bezier(.22,.82,.28,1),filter .2s ease!important}
-        .live-pet.falling-scared{z-index:25!important}
-        .live-pet.falling-scared .live-pet-visual{animation:petFallScare .72s cubic-bezier(.2,.8,.2,1)!important}
-        .live-pet.falling-scared[data-pet-visual="cat"] .live-pet-visual,
-        .live-pet.falling-scared[data-pet-visual="blackcat"] .live-pet-visual{animation-name:petFallScareCat!important}
-        .live-pet.falling-scared[data-pet-visual="dog"] .live-pet-visual,
-        .live-pet.falling-scared[data-pet-visual="fox"] .live-pet-visual{animation-name:petFallScareTail!important}
-        .live-pet.falling-scared[data-pet-visual="rabbit"] .live-pet-visual,
-        .live-pet.falling-scared[data-pet-visual="chick"] .live-pet-visual{animation-name:petFallScareHop!important}
-        .live-pet.falling-scared[data-pet-visual="robot"] .live-pet-visual{animation-name:petFallScareRobot!important}
-        .live-pet.falling-scared[data-pet-visual="panda"] .live-pet-visual{animation-name:petFallScarePanda!important}
-        @keyframes petFallScare{0%{transform:translateY(-3px) rotate(0) scale(1.03)}18%{transform:translateY(2px) rotate(-10deg) scale(.98)}36%{transform:translateY(-4px) rotate(9deg) scale(1.05)}58%{transform:translateY(1px) rotate(-6deg)}78%{transform:translateY(-2px) rotate(4deg)}100%{transform:none}}
-        @keyframes petFallScareCat{0%{transform:scale(1.05) rotate(0)}25%{transform:scale(.95,1.08) rotate(-12deg)}50%{transform:scale(1.08,.94) rotate(11deg)}75%{transform:scale(.98,1.03) rotate(-5deg)}100%{transform:none}}
-        @keyframes petFallScareTail{0%{transform:translateY(-4px) rotate(0)}22%{transform:translateY(2px) rotate(13deg)}45%{transform:translateY(-5px) rotate(-11deg)}68%{transform:translateY(1px) rotate(7deg)}100%{transform:none}}
-        @keyframes petFallScareHop{0%{transform:translateY(-4px) scaleY(1.08)}25%{transform:translateY(3px) scaleY(.9) rotate(-8deg)}52%{transform:translateY(-8px) scaleY(1.04) rotate(7deg)}76%{transform:translateY(1px) rotate(-3deg)}100%{transform:none}}
-        @keyframes petFallScareRobot{0%{transform:translate(0,-3px) rotate(0)}20%{transform:translate(-5px,1px) rotate(-5deg)}40%{transform:translate(5px,-2px) rotate(5deg)}60%{transform:translate(-4px,1px) rotate(-4deg)}80%{transform:translate(3px,-1px) rotate(3deg)}100%{transform:none}}
-        @keyframes petFallScarePanda{0%{transform:translateY(-3px) rotate(0) scale(1)}30%{transform:translateY(3px) rotate(-9deg) scale(.96)}55%{transform:translateY(-5px) rotate(8deg) scale(1.04)}80%{transform:translateY(1px) rotate(-4deg)}100%{transform:none}}
-        .bot-action-btn.read-aloud-active{border-color:rgba(129,140,248,.45)!important;background:rgba(99,102,241,.12)!important;color:#c7d2fe!important}
-
-
-
-
-</style></head><body>${code}</body></html>`;
-                }
-            }
-
+            if (!modal || !iframe) return;
             closeTransientSurfaces('codeRunnerModal');
-            iframe.srcdoc = code;
+            iframe.srcdoc = buildRunnableSnippetDocument(item.code, item.lang);
             modal.classList.add('open');
+        }
+
+        function openCodeFullscreenFromButton(btn) {
+            const item = snippetFromButton(btn);
+            if (!item) return;
+            closeTransientSurfaces('fullscreenCodeOverlay');
+            document.getElementById('fullscreenCodeTitle').textContent = (item.lang || 'code').toUpperCase();
+            document.getElementById('fullscreenCodeContent').textContent = item.code;
+            document.getElementById('fullscreenCodeOverlay').classList.add('open');
         }
 
         function closeCodeRunner() {
@@ -8741,9 +8351,8 @@ ${m.text || ''}
         /* 5. EXECUTE AI CALL */
         function toggleAutoFallback(v){ autoProviderFallback=!!v; localStorage.setItem('jepong_auto_fallback',JSON.stringify(autoProviderFallback)); }
         function toggleSmartRouter(v){ smartModelRouter=!!v; localStorage.setItem('jepong_smart_router',JSON.stringify(smartModelRouter)); }
-        function openCodeFullscreen(index){ const item=window.executableSnippets[index]; if(!item)return; closeTransientSurfaces('fullscreenCodeOverlay'); document.getElementById('fullscreenCodeTitle').textContent=(item.lang||'code').toUpperCase(); document.getElementById('fullscreenCodeContent').textContent=item.code; document.getElementById('fullscreenCodeOverlay').classList.add('open'); }
         function closeCodeFullscreen(){ document.getElementById('fullscreenCodeOverlay')?.classList.remove('open'); }
-        function setProviderMeta(provider,patch){ lastProviderMeta[provider]={...(lastProviderMeta[provider]||{}),...patch,updatedAt:Date.now()}; localStorage.setItem('jepong_provider_meta',JSON.stringify(lastProviderMeta)); renderProviderStatus(); renderUsageSyncUI(); }
+        function setProviderMeta(provider,patch){ lastProviderMeta[provider]={...(lastProviderMeta[provider]||{}),...patch,updatedAt:Date.now()}; safeSetLocalStorage('jepong_provider_meta',JSON.stringify(lastProviderMeta),true); renderProviderStatus(); renderUsageSyncUI(); }
         function renderProviderStatus(){ const grid=document.getElementById('providerStatusGrid'); if(!grid)return; grid.innerHTML=PROVIDER_ORDER.filter(p=>p!=='image').map(p=>{const m=lastProviderMeta[p]||{};let state=m.rateLimited?'limited':(m.busy?'busy':(m.configured===false?'not-configured':'ready'));let text=state==='limited'?'Rate limit reached':state==='busy'?'Busy / retrying':state==='not-configured'?'Key not configured':(m.remainingRequests!=null?`${m.remainingRequests} requests left`:'Ready');return `<div class="provider-status-card ${state}"><div class="provider-status-name">${providerLabel(p)}</div><div class="provider-status-state">${text}</div></div>`}).join(''); }
         async function syncProviderStatus(){
             // Provider usage/quota polling is temporarily disabled.
@@ -9004,26 +8613,31 @@ ${m.text || ''}
                     }
 
                     appendActivityEvent({ id:'image-create', label:'Creating your image', state:'running', kind:'image' });
-                    const encodedPrompt = encodeURIComponent(finalImagePrompt);
-                    const randomSeed = Math.floor(Math.random() * 1000000);
-                    const generatedImageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${randomSeed}&width=1024&height=1024&model=flux&nologo=true`;
-
-                    appendActivityEvent({ id:'image-create', label:'Image request prepared', state:'completed', kind:'image' });
+                    const imageResponse = await fetch('/api/chat', {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        signal:requestController.signal,
+                        body:JSON.stringify({action:'generate-image',prompt:finalImagePrompt,model:currentSelectedImageModel})
+                    });
+                    const imageData = await imageResponse.json().catch(() => ({}));
+                    if (!imageResponse.ok || !imageData?.imageDataUrl) throw new Error(imageData?.error || imageData?.detail || `Image provider returned ${imageResponse.status}`);
+                    const generatedImageUrl = imageData.imageDataUrl;
+                    const generatedProvider = imageData.provider || 'Image provider';
+                    const generatedModel = imageData.model || currentSelectedImageModel;
+                    appendActivityEvent({ id:'image-create', label:`Image created with ${generatedProvider}`, state:'completed', kind:'image' });
                     finishAIIndicator(true);
-
                     botMsgElem.innerHTML = `
                         <div>
-                            <p style="margin-bottom: 8px; font-size: 0.88rem; color: #a855f7;">✨ Eto ang nalikhang imahe batay sa estilo ng iyong litrato:</p>
-                            <img src="${generatedImageUrl}" alt="Generated artwork" loading="lazy" onclick="openLightbox('${generatedImageUrl}')" style="max-width: 100%; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            <p style="margin-bottom:8px;font-size:.88rem;color:#a855f7;">✨ Image created with ${escapeHTML(generatedProvider)}.</p>
+                            <img src="${escapeHTML(generatedImageUrl)}" alt="Generated artwork" loading="lazy" onclick="openLightbox(this.src)" style="max-width:100%;border-radius:12px;border:1px solid var(--border-color);cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.3);">
                         </div>
-                        <div class="bot-actions" style="margin-top: 10px; display: flex; gap: 8px;">
-                            <a class="bot-action-btn" href="${generatedImageUrl}" target="_blank" download="generated-art.jpg">📥 Download</a>
-                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy Prompt</button>
-                        </div>
-                    `;
+                        <div class="bot-actions" style="margin-top:10px;display:flex;gap:8px;">
+                            <a class="bot-action-btn" href="${escapeHTML(generatedImageUrl)}" download="generated-art.png">📥 Download</a>
+                            <button class="bot-action-btn" data-prompt="${escapeHTML(finalImagePrompt)}" onclick="copyGeneratedImagePrompt(this)">📋 Copy Prompt</button>
+                        </div>`;
                     if (ctx.id && ctx.sessions[ctx.id]) {
                         const savedBotIndex=ctx.sessions[ctx.id].messages.length;
-                        ctx.sessions[ctx.id].messages.push({ role: 'bot', text: `![Generated Image](${generatedImageUrl})` });
+                        ctx.sessions[ctx.id].messages.push({ role:'bot', text:`🖼️ Generated image via ${generatedProvider} (${generatedModel}) for: ${finalImagePrompt}` });
                         botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                         if (!isIncognito && !isBibleMode) saveSessions();
                     }
@@ -9790,11 +9404,19 @@ ${m.text || ''}
             'c4ai-aya-expanse-32b':'Aya Expanse 32B'
         };
         function providerLabel(p){ return PROVIDER_LABELS[p] || p || 'AI'; }
+        const IMAGE_MODEL_DISPLAY_NAMES={auto:'Auto Image',flux:'Flux Image'};
         function updateSelectedModelUI(){
-            const label=MODEL_DISPLAY_NAMES[currentSelectedModel]||currentSelectedModel;
+            const imageMode=currentSelectedMode==='imagen';
+            const label=imageMode ? (IMAGE_MODEL_DISPLAY_NAMES[currentSelectedImageModel]||currentSelectedImageModel) : (MODEL_DISPLAY_NAMES[currentSelectedModel]||currentSelectedModel);
+            const provider=imageMode ? 'image' : currentSelectedProvider;
             const el=document.getElementById('selectedModelText');
-            if(el) el.innerHTML=`<span class="model-selected-provider">${escapeHTML(providerLabel(currentSelectedProvider))}</span>${escapeHTML(label)}`;
-            document.querySelectorAll('#modelModalOverlay .option-item[data-model]').forEach(btn=>btn.classList.toggle('active',btn.dataset.provider===currentSelectedProvider&&btn.dataset.model===currentSelectedModel));
+            if(el) el.innerHTML=`<span class="model-selected-provider">${escapeHTML(providerLabel(provider))}</span>${escapeHTML(label)}`;
+            document.querySelectorAll('#modelModalOverlay .option-item[data-model]').forEach(btn=>{
+                const active = btn.dataset.provider==='image'
+                    ? imageMode && btn.dataset.model===currentSelectedImageModel
+                    : !imageMode && btn.dataset.provider===currentSelectedProvider && btn.dataset.model===currentSelectedModel;
+                btn.classList.toggle('active',active);
+            });
         }
         function selectProviderModel(provider,key,name){
             currentSelectedProvider=provider; currentSelectedModel=key;
@@ -9802,7 +9424,7 @@ ${m.text || ''}
             if(name) MODEL_DISPLAY_NAMES[key]=name;
             currentProviderPage=Math.max(0,PROVIDER_ORDER.indexOf(provider)); updateSelectedModelUI(); renderProviderPage(); toggleModal('modelModalOverlay',false);
         }
-        function selectImageProviderModel(key,name){ currentSelectedMode='imagen'; localStorage.setItem('jepong_last_mode','imagen'); localStorage.setItem('jepong_last_mode_name','Image Generator'); selectMode('imagen','Image Generator'); toggleModal('modelModalOverlay',false); }
+        function selectImageProviderModel(key,name){ currentSelectedImageModel=key||'auto'; safeSetLocalStorage('jepong_image_model',currentSelectedImageModel,true); if(name)IMAGE_MODEL_DISPLAY_NAMES[currentSelectedImageModel]=name; currentProviderPage=PROVIDER_ORDER.indexOf('image'); selectMode('imagen','Image Generator'); updateSelectedModelUI(); toggleModal('modelModalOverlay',false); }
         function selectModel(key,name){ selectProviderModel(currentSelectedProvider||'gemini',key,name); }
         function renderProviderPage(){
             const track=document.getElementById('modelPagesTrack'); const title=document.getElementById('modelProviderTitle');
@@ -9817,7 +9439,7 @@ ${m.text || ''}
         }
         function setProviderPage(index){ currentProviderPage=Math.max(0,Math.min(PROVIDER_ORDER.length-1,index)); renderProviderPage(); }
         function changeProviderPage(direction){ setProviderPage((currentProviderPage+direction+PROVIDER_ORDER.length)%PROVIDER_ORDER.length); }
-        function openModelPicker(){ currentProviderPage=Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); toggleModal('modelModalOverlay',true); }
+        function openModelPicker(){ currentProviderPage=currentSelectedMode==='imagen' ? PROVIDER_ORDER.indexOf('image') : Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); toggleModal('modelModalOverlay',true); }
         let modelSwipeStartX=0,modelSwipeStartY=0,modelSwipeActive=false;
         document.addEventListener('touchstart',e=>{const viewport=e.target.closest&&e.target.closest('#modelPagesViewport');if(!viewport||!document.getElementById('modelModalOverlay')?.classList.contains('open'))return;const t=e.touches[0];modelSwipeStartX=t.clientX;modelSwipeStartY=t.clientY;modelSwipeActive=true;e.stopPropagation();},{passive:true,capture:true});
         document.addEventListener('touchend',e=>{if(!modelSwipeActive)return;modelSwipeActive=false;const t=e.changedTouches[0],dx=t.clientX-modelSwipeStartX,dy=t.clientY-modelSwipeStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){changeProviderPage(dx<0?1:-1);e.stopPropagation();}},{passive:true,capture:true});
@@ -10462,6 +10084,16 @@ ${m.text || ''}
             const files=[...(e.clipboardData?.files||[])];
             if(files.length)addSelectedFiles(files);
         });
+
+        function copyGeneratedImagePrompt(btn) {
+            const prompt = String(btn?.dataset?.prompt || '');
+            if (!prompt) return;
+            navigator.clipboard.writeText(prompt).then(() => {
+                const previous = btn.textContent;
+                btn.textContent = '✓ Prompt copied';
+                setTimeout(() => { btn.textContent = previous; }, 1400);
+            }).catch(() => showModernToast('Could not copy the prompt automatically.'));
+        }
 
         function copyText(btn) {
             const text = btn.closest('.msg').querySelector('div').innerText;
