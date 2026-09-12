@@ -1,0 +1,88 @@
+name: Apply Mobile UI Fixes V2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.sync/MOBILE_UI_APPLY_V2'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply mobile UI fixes to latest main
+        run: python .sync/apply_mobile_ui_fixes.py
+
+      - name: Verify backend syntax
+        run: |
+          cp api/chat.js /tmp/chat-check.mjs
+          node --check /tmp/chat-check.mjs
+
+      - name: Verify frontend inline JavaScript syntax
+        shell: bash
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.in_script=False; self.external=False; self.parts=[]; self.current=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower()!='script': return
+                  values=dict(attrs); self.in_script=True; self.external=bool(values.get('src')); self.current=[]
+              def handle_data(self, data):
+                  if self.in_script and not self.external: self.current.append(data)
+              def handle_endtag(self, tag):
+                  if tag.lower()=='script' and self.in_script:
+                      if not self.external and ''.join(self.current).strip(): self.parts.append(''.join(self.current))
+                      self.in_script=False; self.external=False; self.current=[]
+          parser=Scripts(); parser.feed(Path('index.html').read_text(encoding='utf-8'))
+          if not parser.parts: raise SystemExit('No inline JavaScript found')
+          Path('/tmp/index-inline.js').write_text('\n;\n'.join(parser.parts),encoding='utf-8')
+          print(f'extracted {len(parser.parts)} inline script block(s)')
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Verify mobile UI contract
+        run: python tests/mobile_ui_contract_test.py
+
+      - name: Verify AI fallback contract
+        run: python tests/public_fallback_contract_test.py
+
+      - name: Verify activity and SSE contract
+        run: python tests/activity_contract_test.py
+
+      - name: Commit verified latest source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "JepongDevxyz Sync Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: mobile scroll word count and pet eyes"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Package synced index and chat
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp index.html dist/index.html
+          cp api/chat.js dist/chat.js
+          cd dist
+          zip -9 JepongDevxyz-AI-synced-mobile-fixes.zip index.html chat.js
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JepongDevxyz-AI-synced-mobile-fixes
+          path: dist/JepongDevxyz-AI-synced-mobile-fixes.zip
+          if-no-files-found: error
