@@ -3356,12 +3356,29 @@ async function generatePetImage(body={},requestSignal=null){
 export default async function handler(req){
   if(req.method==='HEAD')return new Response(null,{status:200});
   if(req.method!=='POST')return json({error:'Method not allowed'},405);
+
+  let body;
   try{
-    const body=await req.json();
+    body=await req.json();
+  }catch(_){
+    return json({error:'Invalid JSON request body.'},400);
+  }
+  if(!body||typeof body!=='object'||Array.isArray(body)){
+    return json({error:'Request body must be a JSON object.'},400);
+  }
+
+  try{
     if(body.action==='generate-image') return generateImage(body,req.signal);
     if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return cloudflareTTS(body);
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
+
+    const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
+    const hasFiles=Array.isArray(body.files)&&body.files.length>0;
+    if(!hasMessage&&!hasFiles){
+      return json({error:'Message or attachment is required.'},400);
+    }
+
     if(body.activityStream===true) return activityStreamResponse(body,req.signal);
 
     const result=await processChat(body,null);

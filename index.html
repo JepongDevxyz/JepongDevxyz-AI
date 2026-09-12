@@ -4768,7 +4768,10 @@
         let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
         let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
         let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
-        if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) speechRate = 1.0;
+if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) {
+    speechRate = 1.0;
+    safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
+}
 
         const chatBox = document.getElementById('chatBox');
         const sidebar = document.getElementById('sidebar');
@@ -6842,11 +6845,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function changeVoiceSpeed(val) {
-            speechRate = parseFloat(val);
-            localStorage.setItem('jepong_speech_rate', speechRate);
-            const label = document.getElementById('speedValueLabel');
-            if (label) label.innerText = speechRate.toFixed(1) + 'x';
-        }
+    const nextRate = parseFloat(val);
+    speechRate = Number.isFinite(nextRate) ? Math.min(2, Math.max(0.5, nextRate)) : 1.0;
+    safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
+    const label = document.getElementById('speedValueLabel');
+    if (label) label.innerText = speechRate.toFixed(1) + 'x';
+}
 
         function openVoiceModal() {
             if (!isResponseSpeechEnabled) return;
