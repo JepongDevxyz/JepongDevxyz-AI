@@ -1,7 +1,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CHAT = (ROOT / 'chat.js').read_text(encoding='utf-8')
+CHAT = (ROOT / 'api' / 'chat.js').read_text(encoding='utf-8')
 INDEX = (ROOT / 'index.html').read_text(encoding='utf-8')
 
 
@@ -44,7 +44,6 @@ def main():
     require('Puter fallback' in INDEX, 'Puter fallback activity/status copy missing')
     require("if(!autoProviderFallback) finishAIIndicator(false);" in INDEX,
             'SSE error handler finalizes the activity card before Puter fallback can run')
-
 
     # The 8-provider model picker must keep its swipe geometry in sync.
     require('width: 800%' in INDEX, 'model picker track is not sized for 8 provider pages')
