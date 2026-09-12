@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.sync/READY'
+      - '.sync/APPLY'
 
 permissions:
   contents: write
@@ -17,24 +17,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Rebuild latest source payload
+      - name: Apply deterministic integration patch
         shell: bash
         run: |
           set -euo pipefail
-          test -f .sync/READY
-          cat .sync/aihorde-payload.* > /tmp/aihorde-sync.b64
-          base64 -d /tmp/aihorde-sync.b64 > /tmp/aihorde-sync.tar.xz
-          expected="$(tr -d '[:space:]' < .sync/READY)"
-          test -n "$expected"
-          echo "$expected  /tmp/aihorde-sync.tar.xz" | sha256sum -c -
-          tar -xJf /tmp/aihorde-sync.tar.xz -C .
+          test -f .sync/APPLY
+          test -f .sync/apply_aihorde_sync.py
+          python .sync/apply_aihorde_sync.py
 
-      - name: Verify backend syntax
+      - name: Verify JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
           cp api/chat.js /tmp/chat-check.mjs
           node --check /tmp/chat-check.mjs
+          node --check api/_aihorde.js
+          node --check assets/puter-fallback.js
 
       - name: Verify frontend inline JavaScript syntax
         shell: bash
@@ -47,61 +45,139 @@ jobs:
           class Scripts(HTMLParser):
               def __init__(self):
                   super().__init__()
-                  self.in_script = False
-                  self.external = False
-                  self.parts = []
-                  self.current = []
-              def handle_starttag(self, tag, attrs):
-                  if tag.lower() != 'script':
-                      return
-                  values = dict(attrs)
-                  self.in_script = True
-                  self.external = bool(values.get('src'))
-                  self.current = []
-              def handle_data(self, data):
-                  if self.in_script and not self.external:
-                      self.current.append(data)
-              def handle_endtag(self, tag):
-                  if tag.lower() == 'script' and self.in_script:
+                  self.in_script=False
+                  self.external=False
+                  self.parts=[]
+                  self.current=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag.lower()!='script': return
+                  values=dict(attrs)
+                  self.in_script=True
+                  self.external=bool(values.get('src'))
+                  self.current=[]
+              def handle_data(self,data):
+                  if self.in_script and not self.external: self.current.append(data)
+              def handle_endtag(self,tag):
+                  if tag.lower()=='script' and self.in_script:
                       if not self.external and ''.join(self.current).strip():
                           self.parts.append(''.join(self.current))
-                      self.in_script = False
-                      self.external = False
-                      self.current = []
+                      self.in_script=False
+                      self.external=False
+                      self.current=[]
 
-          parser = Scripts()
+          parser=Scripts()
           parser.feed(Path('index.html').read_text(encoding='utf-8'))
-          if not parser.parts:
-              raise SystemExit('No inline JavaScript found in index.html')
-          Path('/tmp/index-inline.js').write_text('\n;\n'.join(parser.parts), encoding='utf-8')
+          if not parser.parts: raise SystemExit('No inline JavaScript found in index.html')
+          Path('/tmp/index-inline.js').write_text('\n;\n'.join(parser.parts),encoding='utf-8')
           print(f'extracted {len(parser.parts)} inline script block(s)')
           PY
           node --check /tmp/index-inline.js
 
-      - name: Prepare contract-test compatibility path
-        shell: bash
-        run: cp api/chat.js chat.js
-
-      - name: Verify public fallback contract
-        run: python tests/public_fallback_contract_test.py
-
-      - name: Verify existing activity contract
-        run: python tests/activity_contract_test.py
-
-      - name: Commit synced source
+      - name: Verify routing and fallback contracts
         shell: bash
         run: |
           set -euo pipefail
-          rm -f chat.js
+          python - <<'PY'
+          from pathlib import Path
+
+          chat=Path('api/chat.js').read_text(encoding='utf-8')
+          index=Path('index.html').read_text(encoding='utf-8')
+          horde=Path('api/_aihorde.js').read_text(encoding='utf-8')
+          puter=Path('assets/puter-fallback.js').read_text(encoding='utf-8')
+
+          def require(value,message):
+              if not value: raise AssertionError(message)
+
+          require("import { runAIHordeRequest } from './_aihorde.js';" in chat,'AI Horde module import missing')
+          require('aihorde: {' in chat,'AI Horde provider registry missing')
+          require("AIHORDE_API_KEYS','AIHORDE_API_KEY" in chat,'AI Horde env key rotation missing')
+          require("provider==='aihorde'" in chat,'AI Horde runProvider wiring missing')
+          require('0000000000' in horde,'anonymous AI Horde key missing')
+          require('https://oai.aihorde.net/v1/chat/completions' in horde,'AI Horde chat endpoint missing')
+          require('https://aihorde.net/api/v2/status/models?type=text' in horde,'AI Horde model discovery endpoint missing')
+
+          gate=chat.index('if(autoFallback&&fallbackable)')
+          anon=chat.index("routedReason:'fallback-public'",gate)
+          final_error=chat.index("return {ok:false,status:first.status",gate)
+          require(gate < anon < final_error,'anonymous AI Horde fallback escaped Auto Provider Fallback gate')
+          require('Configured providers exhausted — trying free public AI Horde' in chat,'public fallback order missing')
+
+          require("autoFallback: autoProviderFallback" in index,'frontend is not sending Auto Provider Fallback state')
+          require('if(autoProviderFallback&&!hasImageFallback' in index,'Puter fallback is not gated by Auto Provider Fallback')
+          require('window.JepongPuterFallback?.run' in index,'Puter fallback handoff missing')
+          require('assets/puter-fallback.js' in index and 'https://js.puter.com/v2/' in index,'Puter scripts missing')
+          require('AI Horde Auto' in index,'AI Horde model picker entry missing')
+          require('width: 800%' in index and 'calc(100% / 8)' in index,'8-provider swipe geometry is inconsistent')
+          require('OFF = test only the selected model. ON = allow model/provider fallback.' in index,'routing toggle semantics changed')
+
+          for event in ('activity','meta','text','artifact','done','error'):
+              require(f"send('{event}'" in chat or f'send("{event}"' in chat,f'SSE event missing: {event}')
+          require("Content-Type':'text/event-stream; charset=utf-8'" in chat,'SSE content type changed')
+          for token in ('function normalizeActivityEventForUI','function appendActivityEvent','function finishAIIndicator','MAX_VISIBLE_ACTIVITY_ROWS'):
+              require(token in index,f'activity UI contract missing: {token}')
+          require('Static verification only; code was not arbitrarily executed.' in chat,'verification truthfulness guard missing')
+
+          for model in ('google/gemini-3.8-flash','mistralai/mistral-large-2512','cohere/command-r-plus-08-2024','qwen/qwen3.8-flash','openai/gpt-5.4-nano'):
+              require(model in puter,f'Puter model mapping missing: {model}')
+
+          print('routing, public fallback, SSE, and activity contracts passed')
+          PY
+
+      - name: Unit test AI Horde key rotation and anonymous fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/aihorde-unit.mjs <<'JS'
+          import { runAIHordeRequest } from './api/_aihorde.js';
+          let auth=[];
+          globalThis.fetch=async (url,opts={})=>{
+            if(String(url).includes('/status/models')){
+              return new Response(JSON.stringify([{name:'Qwen-Test-27B',count:2,performance:10,queued:0,eta:0}]),{status:200,headers:{'content-type':'application/json'}});
+            }
+            auth.push(opts.headers.Authorization);
+            if(auth.length===1 && opts.headers.Authorization!=='Bearer 0000000000'){
+              return new Response(JSON.stringify({error:{message:'quota'}}),{status:429});
+            }
+            return new Response(JSON.stringify({model:'Qwen-Test-27B',choices:[{message:{content:'ok'}}]}),{status:200,headers:{'content-type':'application/json'}});
+          };
+
+          const configured=await runAIHordeRequest({keys:['key-one','key-two'],requested:'auto',prompt:'coding',messages:[{role:'user',content:'hi'}]});
+          if(!configured.ok||configured.text!=='ok'||configured.keyIndex!==1) throw new Error('configured key rotation failed');
+          auth=[];
+          const anonymous=await runAIHordeRequest({anonymous:true,requested:'auto',prompt:'hello',messages:[{role:'user',content:'hi'}]});
+          if(!anonymous.ok||auth[0]!=='Bearer 0000000000') throw new Error('anonymous fallback failed');
+          console.log('AI Horde unit contract passed');
+          JS
+          cp /tmp/aihorde-unit.mjs ./aihorde-unit.mjs
+          node ./aihorde-unit.mjs
+          rm -f ./aihorde-unit.mjs
+
+      - name: Live AI Horde discovery smoke
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 15 'https://aihorde.net/api/v2/status/models?type=text' -o /tmp/horde-models.json
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/horde-models.json'))
+          assert isinstance(data,list) and data, 'AI Horde returned no active text models'
+          print(f'live AI Horde discovery OK: {len(data)} active model entries')
+          PY
+
+      - name: Commit verified synced source
+        shell: bash
+        run: |
+          set -euo pipefail
           rm -rf .sync
           git config user.name "JepongDevxyz Sync Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html api/chat.js tests/public_fallback_contract_test.py tests/activity_contract_test.py .sync
+          git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "feat: sync AI Horde and public fallback routing"
+          git commit -m "feat: integrate AI Horde and gated public fallbacks"
           git fetch origin main
           git rebase origin/main
           git push origin HEAD:main
