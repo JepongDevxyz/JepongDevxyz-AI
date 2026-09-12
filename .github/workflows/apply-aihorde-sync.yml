@@ -1,0 +1,72 @@
+name: Apply AI Horde Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.sync/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: gate
+        shell: bash
+        run: |
+          if [ -f .sync/READY ]; then
+            echo "ready=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Rebuild latest files
+        if: steps.gate.outputs.ready == 'yes'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .sync/index.part.* > index.html
+          mkdir -p api tests
+          cat .sync/chat.part.* > api/chat.js
+          cat .sync/test.part.* > tests/public_fallback_contract_test.py
+
+      - name: Verify backend syntax
+        if: steps.gate.outputs.ready == 'yes'
+        shell: bash
+        run: |
+          cp api/chat.js /tmp/chat-check.mjs
+          node --check /tmp/chat-check.mjs
+
+      - name: Verify fallback contract
+        if: steps.gate.outputs.ready == 'yes'
+        run: python tests/public_fallback_contract_test.py
+
+      - name: Verify existing activity contract when present
+        if: steps.gate.outputs.ready == 'yes'
+        shell: bash
+        run: |
+          if [ -f tests/activity_contract_test.py ]; then
+            python tests/activity_contract_test.py
+          fi
+
+      - name: Commit synced source
+        if: steps.gate.outputs.ready == 'yes'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .sync
+          git config user.name "JepongDevxyz Sync Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html api/chat.js tests/public_fallback_contract_test.py .sync
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "feat: sync AI Horde and public fallback routing"
+          git push origin HEAD:main
