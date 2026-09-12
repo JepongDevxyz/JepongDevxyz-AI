@@ -61,6 +61,11 @@ jobs:
             echo "===== $test ====="
             python "$test"
           done
+          for test in tests/*_test.mjs; do
+            [ -e "$test" ] || continue
+            echo "===== $test ====="
+            node "$test"
+          done
 
       - name: Structural HTML and handler scan
         shell: bash
