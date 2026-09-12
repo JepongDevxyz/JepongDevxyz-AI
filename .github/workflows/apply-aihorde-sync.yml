@@ -78,6 +78,10 @@ jobs:
           PY
           node --check /tmp/index-inline.js
 
+      - name: Prepare contract-test compatibility path
+        shell: bash
+        run: cp api/chat.js chat.js
+
       - name: Verify public fallback contract
         run: python tests/public_fallback_contract_test.py
 
@@ -88,6 +92,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -f chat.js
           rm -rf .sync
           git config user.name "JepongDevxyz Sync Bot"
           git config user.email "actions@users.noreply.github.com"
