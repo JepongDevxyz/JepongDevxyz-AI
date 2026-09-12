@@ -35,10 +35,15 @@ const PROVIDERS = {
     label: 'Cohere',
     models: ['command-a-plus-05-2026','command-a-03-2025','command-a-reasoning-08-2025','command-r7b-12-2024','tiny-aya-global','tiny-aya-water','c4ai-aya-expanse-32b'],
     defaultModel: 'command-a-03-2025'
+  },
+  aihorde: {
+    label: 'AI Horde',
+    models: ['auto'],
+    defaultModel: 'auto'
   }
 };
 
-const FALLBACK_ORDER = ['cloudflare','groq','mistral','cohere','openrouter','gemini'];
+const FALLBACK_ORDER = ['cloudflare','groq','mistral','cohere','openrouter','gemini','aihorde'];
 const RETRYABLE = new Set([401,402,403,408,409,425,429,500,502,503,504]);
 
 function json(data, status = 200, extraHeaders = {}) {
@@ -68,6 +73,7 @@ function getProviderKeys(provider) {
   if (provider === 'openrouter') return parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY');
   if (provider === 'mistral') return parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY');
   if (provider === 'cohere') return parseKeys('COHERE_API_KEYS','COHERE_API_KEY');
+  if (provider === 'aihorde') return parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY');
   return [];
 }
 
@@ -99,6 +105,7 @@ function configured(provider) {
 }
 
 function providerLabel(provider) {
+  if(provider==='aihorde-public') return 'AI Horde Anonymous';
   return PROVIDERS[provider]?.label || provider;
 }
 
@@ -119,6 +126,31 @@ function safeEmit(emit, event) {
 
 function activity(emit, id, label, state = 'running', kind = 'process', detail = '') {
   safeEmit(emit, { type:'activity', id, label, state, kind, detail, at:Date.now() });
+}
+
+function providerAttemptDetail({model='',attemptIndex=0,attemptCount=1,attemptNoun='credential',fallbackModel=''}) {
+  const parts=[];
+  if(model) parts.push(modelLabel(model));
+  if(attemptCount>1) parts.push(`${attemptNoun} ${attemptIndex+1}/${attemptCount}`);
+  if(fallbackModel) parts.push(`fallback model ${modelLabel(fallbackModel)}`);
+  return parts.join(' • ');
+}
+
+function providerLifecycleActivity(emit, {
+  provider='', model='', state='running', phase='connecting', detail='',
+  attemptIndex=0, attemptCount=1, attemptNoun='credential', fallbackModel=''
+}={}) {
+  if(!provider) return;
+  const name=providerLabel(provider);
+  const id=`provider-${provider}`;
+  let label=`Connecting to ${providerLabel(provider)}`;
+
+  if(phase==='connected') label=`${providerLabel(provider)} connected`;
+  else if(phase==='retry') label=`Retrying ${name}`;
+  else if(phase==='failed') label='Provider connection failed';
+
+  const attemptDetail=providerAttemptDetail({model,attemptIndex,attemptCount,attemptNoun,fallbackModel});
+  activity(emit,id,label,state,'provider',detail || attemptDetail);
 }
 
 
@@ -2058,13 +2090,19 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
 
   let last=''; let status=500;
   for(let i=0;i<keys.length;i++) {
-    activity(emit,`gemini-key-${i}`,`Connecting to Gemini • ${modelLabel(target)}${keys.length>1?` • credential ${i+1}/${keys.length}`:''}`,'running','provider');
+    providerLifecycleActivity(emit,{
+      provider:'gemini',model:target,state:'running',phase:'connecting',
+      attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+    });
     try {
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
         method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig:{maxOutputTokens:outputBudgetFor(message),temperature:temperatureFor(message,files)}}),signal:AbortSignal.timeout(90000)
       });
       if(res.ok) {
-        activity(emit,`gemini-key-${i}`,`Gemini connected • ${modelLabel(target)}`,'completed','provider');
+        providerLifecycleActivity(emit,{
+          provider:'gemini',model:target,state:'completed',phase:'connected',
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+        });
         const decoder=new TextDecoder(), encoder=new TextEncoder();
         const finishState={reason:''};
         const stream=res.body.pipeThrough(new TransformStream({
@@ -2087,11 +2125,19 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
         return {ok:true,response:new Response(stream,{headers:passthroughHeaders(res,'gemini',target,fallbackFrom,routedReason,i,keys.length)}),finishState};
       }
       status=res.status; last=await res.text().catch(()=>`Gemini ${status}`);
-      activity(emit,`gemini-key-${i}`,retryLabel('gemini',status,i<keys.length-1),i<keys.length-1?'warning':'error','provider');
+      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
+      providerLifecycleActivity(emit,{
+        provider:'gemini',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:retryLabel('gemini',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+      });
       if(!isRetryableStatus(status)) break;
     } catch(e) {
       status=502; last=e?.message||String(e);
-      activity(emit,`gemini-key-${i}`,`Gemini connection timed out${i<keys.length-1?' — trying another credential':''}`,i<keys.length-1?'warning':'error','provider');
+      const canRetry=i<keys.length-1;
+      providerLifecycleActivity(emit,{
+        provider:'gemini',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:`Gemini connection timed out${canRetry?' — trying another credential':''}`,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+      });
     }
   }
   return {ok:false,status,error:last||'Gemini unavailable'};
@@ -2113,23 +2159,37 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
 
   let last=''; let status=500;
   for(let i=0;i<accounts.length;i++) {
-    activity(emit,`cloudflare-key-${i}`,`Connecting to Cloudflare • ${modelLabel(target)}${accounts.length>1?` • account ${i+1}/${accounts.length}`:''}`,'running','provider');
+    providerLifecycleActivity(emit,{
+      provider:'cloudflare',model:target,state:'running',phase:'connecting',
+      attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
+    });
     try {
       const a=accounts[i];
       const res=await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(a.accountId)}/ai/v1/chat/completions`,{
         method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:outputBudgetFor(message),temperature:temperatureFor(message,files)}),signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
-        activity(emit,`cloudflare-key-${i}`,`Cloudflare connected • ${modelLabel(target)}`,'completed','provider');
+        providerLifecycleActivity(emit,{
+          provider:'cloudflare',model:target,state:'completed',phase:'connected',
+          attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
+        });
         const finishState={reason:''};
         return {ok:true,response:new Response(openAIStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'cloudflare',target,fallbackFrom,routedReason,i,accounts.length)}),finishState};
       }
       status=res.status; last=await res.text().catch(()=>`Cloudflare ${status}`);
-      activity(emit,`cloudflare-key-${i}`,retryLabel('cloudflare',status,i<accounts.length-1),i<accounts.length-1?'warning':'error','provider');
+      const canRetry=isRetryableStatus(status)&&i<accounts.length-1;
+      providerLifecycleActivity(emit,{
+        provider:'cloudflare',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:retryLabel('cloudflare',status,canRetry),attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
+      });
       if(!isRetryableStatus(status)) break;
     }catch(e){
       status=502;last=e?.message||String(e);
-      activity(emit,`cloudflare-key-${i}`,`Cloudflare connection timed out${i<accounts.length-1?' — trying another account':''}`,i<accounts.length-1?'warning':'error','provider');
+      const canRetry=i<accounts.length-1;
+      providerLifecycleActivity(emit,{
+        provider:'cloudflare',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:`Cloudflare connection timed out${canRetry?' — trying another account':''}`,attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
+      });
     }
   }
   return {ok:false,status,error:last||'Cloudflare unavailable'};
@@ -2185,12 +2245,11 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
 
     for(let i=0;i<keys.length;i++){
       const substituted=target!==requested;
-      activity(
-        emit,
-        `${provider}-model-${mi}-key-${i}`,
-        `Connecting to ${providerLabel(provider)} • ${modelLabel(requested)}${substituted?` • fallback model ${modelLabel(target)}`:''}${keys.length>1?` • credential ${i+1}/${keys.length}`:''}`,
-        'running','provider'
-      );
+      providerLifecycleActivity(emit,{
+        provider,model:requested,state:'running',phase:'connecting',
+        attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential',
+        fallbackModel:substituted?target:''
+      });
 
       const headers={
         Authorization:`Bearer ${keys[i]}`,
@@ -2219,12 +2278,11 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
         });
 
         if(res.ok){
-          activity(
-            emit,
-            `${provider}-model-${mi}-key-${i}`,
-            `${providerLabel(provider)} connected • ${modelLabel(target)}${substituted?' • fallback active':''}`,
-            'completed','provider'
-          );
+          providerLifecycleActivity(emit,{
+            provider,model:requested,state:'completed',phase:'connected',
+            attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential',
+            fallbackModel:substituted?target:''
+          });
           const finishState={reason:''};
           return {
             ok:true,
@@ -2247,14 +2305,13 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
 
         const hasAnotherKey=i<keys.length-1;
         const hasAnotherModel=autoFallback && mi<modelCandidates.length-1;
-        activity(
-          emit,
-          `${provider}-model-${mi}-key-${i}`,
-          retryLabel(provider,status,hasAnotherKey||hasAnotherModel),
-          (hasAnotherKey||hasAnotherModel)?'warning':'error',
-          'provider',
-          last.slice(0,180)
-        );
+        const canRetry=hasAnotherKey||hasAnotherModel;
+        providerLifecycleActivity(emit,{
+          provider,model:requested,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+          detail:last.slice(0,180) || retryLabel(provider,status,canRetry),
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential',
+          fallbackModel:substituted?target:''
+        });
 
         if(!hasAnotherKey && !hasAnotherModel) break;
       }catch(e){
@@ -2262,12 +2319,13 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
         last=e?.message||String(e);
         const hasAnotherKey=i<keys.length-1;
         const hasAnotherModel=autoFallback && mi<modelCandidates.length-1;
-        activity(
-          emit,
-          `${provider}-model-${mi}-key-${i}`,
-          `${providerLabel(provider)} connection timed out${hasAnotherKey?' — rotating credential':hasAnotherModel?' — trying fallback model':''}`,
-          (hasAnotherKey||hasAnotherModel)?'warning':'error','provider'
-        );
+        const canRetry=hasAnotherKey||hasAnotherModel;
+        providerLifecycleActivity(emit,{
+          provider,model:requested,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+          detail:`${providerLabel(provider)} connection timed out${hasAnotherKey?' — rotating credential':hasAnotherModel?' — trying fallback model':''}`,
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential',
+          fallbackModel:substituted?target:''
+        });
       }
     }
 
@@ -2284,29 +2342,187 @@ async function runCohere({model,history,message,systemInstruction,fallbackFrom='
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   let last='';let status=500;
   for(let i=0;i<keys.length;i++) {
-    activity(emit,`cohere-key-${i}`,`Connecting to Cohere • ${modelLabel(target)}${keys.length>1?` • credential ${i+1}/${keys.length}`:''}`,'running','provider');
+    providerLifecycleActivity(emit,{
+      provider:'cohere',model:target,state:'running',phase:'connecting',
+      attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+    });
     try{
       const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:temperatureFor(message,[])}),signal:AbortSignal.timeout(120000)});
       if(res.ok){
-        activity(emit,`cohere-key-${i}`,`Cohere connected • ${modelLabel(target)}`,'completed','provider');
+        providerLifecycleActivity(emit,{
+          provider:'cohere',model:target,state:'completed',phase:'connected',
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+        });
         const finishState={reason:''};
         return {ok:true,response:new Response(cohereStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'cohere',target,fallbackFrom,routedReason,i,keys.length)}),finishState};
       }
       status=res.status;last=await res.text().catch(()=>`Cohere ${status}`);
-      activity(emit,`cohere-key-${i}`,retryLabel('cohere',status,i<keys.length-1),i<keys.length-1?'warning':'error','provider');
+      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
+      providerLifecycleActivity(emit,{
+        provider:'cohere',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:retryLabel('cohere',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+      });
       if(!isRetryableStatus(status))break;
     }catch(e){
       status=502;last=e?.message||String(e);
-      activity(emit,`cohere-key-${i}`,`Cohere connection timed out${i<keys.length-1?' — rotating credential':''}`,i<keys.length-1?'warning':'error','provider');
+      const canRetry=i<keys.length-1;
+      providerLifecycleActivity(emit,{
+        provider:'cohere',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:`Cohere connection timed out${canRetry?' — rotating credential':''}`,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+      });
     }
   }
   return {ok:false,status,error:last||'Cohere unavailable'};
+}
+
+const AIHORDE_ANONYMOUS_KEY='0000000000';
+const AIHORDE_CLIENT_AGENT='JepongDevxyz-AI:1.0:https://github.com/JepongDevxyz/JepongDevxyz-AI';
+const AIHORDE_BLOCKED_MODEL_PATTERNS=[/nsfw/i,/hentai/i,/porn/i,/erotic/i,/sexual/i,/\bsex\b/i,/\badult\b/i,/\berp\b/i,/explicit/i,/fetish/i];
+
+function isAllowedAIHordeModelName(name=''){
+  const value=String(name||'').trim();
+  return Boolean(value) && !AIHORDE_BLOCKED_MODEL_PATTERNS.some(rx=>rx.test(value));
+}
+
+function numericModelSizeHint(name=''){
+  const values=[...String(name).matchAll(/(?:^|[^0-9])(\d{1,3})\s*[bB](?:\b|[^a-z])/g)]
+    .map(m=>Number(m[1]))
+    .filter(Number.isFinite);
+  return values.length?Math.max(...values):0;
+}
+
+async function getAIHordeActiveModels(signal){
+  const res=await fetch('https://aihorde.net/api/v2/status/models?type=text',{
+    signal,
+    headers:{Accept:'application/json','Client-Agent':AIHORDE_CLIENT_AGENT}
+  });
+  if(!res.ok) throw new Error(`AI Horde model status returned HTTP ${res.status}`);
+  const data=await res.json();
+  if(!Array.isArray(data)) throw new Error('Unexpected AI Horde model status response');
+  return data
+    .filter(item=>item&&isAllowedAIHordeModelName(item.name))
+    .map(item=>({
+      name:String(item.name),
+      workers:Number(item.count??item.workers??item.threads??0)||0,
+      queued:Number(item.queued??0)||0,
+      jobs:Number(item.jobs??0)||0,
+      eta:Number(item.eta??0)||0,
+      performance:Number(item.performance??0)||0
+    }));
+}
+
+function scoreAIHordeModel(item,message='',sourceModel=''){
+  const name=String(item?.name||'');
+  const lower=name.toLowerCase();
+  const prompt=`${normalizeIntentText(message)} ${String(sourceModel||'').toLowerCase()}`;
+  const coding=/\b(code|coding|debug|javascript|html|css|python|node|api|typescript|php|java|react|sql|github|vercel|backend|frontend)\b/i.test(prompt);
+  const reasoning=/\b(reason|reasoning|logic|strategy|plan|complex|architecture|analysis|research|compare|math)\b/i.test(prompt);
+  const size=numericModelSizeHint(name);
+  let score=(Number(item?.workers)||0)*25 + Math.min(Number(item?.performance)||0,250)*0.4;
+  score-=Math.min(Number(item?.eta)||0,1800)*0.05;
+  score-=Math.min(Number(item?.queued)||0,500000)/25000;
+  if(coding && /(qwen|coder|code|deepseek|nemotron|llama)/i.test(lower)) score+=80;
+  if(reasoning && /(qwen|gemma|nemotron|llama|anubis|behemoth)/i.test(lower)) score+=55;
+  if(size>=70) score+=reasoning?75:30;
+  else if(size>=24) score+=45;
+  else if(size>=7) score+=20;
+  else if(size>0) score+=4;
+  return score;
+}
+
+async function resolveAIHordeModel(requested='auto',message='',signal){
+  const models=await getAIHordeActiveModels(signal);
+  if(!models.length) return null;
+  if(requested && requested!=='auto'){
+    const exact=models.find(x=>x.name===requested);
+    if(exact) return exact;
+  }
+  return [...models].sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested))[0]||null;
+}
+
+async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit},{anonymous=false}={}){
+  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:shuffle(getProviderKeys('aihorde'));
+  const runtimeProvider=anonymous?'aihorde-public':'aihorde';
+  if(!keys.length) return {ok:false,status:500,error:'AI Horde API key is not configured.'};
+
+  const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
+  if(hasImage) return {ok:false,status:415,error:'AI Horde text fallback does not directly process image attachments.'};
+
+  let resolved;
+  try{
+    resolved=await resolveAIHordeModel(model||'auto',message,AbortSignal.timeout(12000));
+  }catch(e){
+    return {ok:false,status:503,error:e?.message||'AI Horde model list is unavailable.'};
+  }
+  if(!resolved?.name) return {ok:false,status:503,error:'No suitable AI Horde text model is currently active.'};
+
+  const messages=buildOpenAIMessages(history,message,systemInstruction);
+  let last='';let status=503;
+  for(let i=0;i<keys.length;i++){
+    providerLifecycleActivity(emit,{
+      provider:runtimeProvider,model:resolved.name,state:'running',phase:'connecting',
+      attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+    });
+    try{
+      const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{
+        method:'POST',
+        headers:{
+          Authorization:`Bearer ${keys[i]}`,
+          'Content-Type':'application/json',
+          'Client-Agent':AIHORDE_CLIENT_AGENT
+        },
+        body:JSON.stringify({
+          model:resolved.name,
+          stream:false,
+          messages,
+          max_tokens:Math.min(outputBudgetFor(message),anonymous?1024:4096),
+          temperature:temperatureFor(message,files),
+          timeout:anonymous?45:55
+        }),
+        signal:AbortSignal.timeout(anonymous?55000:70000)
+      });
+      status=res.status;
+      const raw=await res.text();
+      let data;
+      try{data=JSON.parse(raw);}catch(_){data={raw};}
+      const text=data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? '';
+      if(res.ok&&typeof text==='string'&&text.trim()){
+        providerLifecycleActivity(emit,{
+          provider:runtimeProvider,model:resolved.name,state:'completed',phase:'connected',
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+        });
+        const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,routedReason,i,keys.length);
+        return {ok:true,response:new Response(text.trim(),{headers}),finishState:{reason:'stop'}};
+      }
+      last=data?.error?.message||data?.message||raw||`AI Horde ${status}`;
+      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
+      providerLifecycleActivity(emit,{
+        provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:retryLabel(runtimeProvider,status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+      });
+      if(!canRetry) break;
+    }catch(e){
+      status=503;last=e?.message||String(e);
+      const canRetry=i<keys.length-1;
+      providerLifecycleActivity(emit,{
+        provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
+        detail:`${providerLabel(runtimeProvider)} connection failed${canRetry?' — trying another credential':''}`,
+        attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+      });
+    }
+  }
+  return {ok:false,status,error:last||`${providerLabel(runtimeProvider)} unavailable`};
+}
+
+async function runAnonymousAIHordeFallback(args){
+  return runAIHorde({...args,routedReason:'fallback-public'},{anonymous:true});
 }
 
 async function runProvider(provider,args){
   if(provider==='gemini')return runGemini(args);
   if(provider==='cloudflare')return runCloudflare(args);
   if(provider==='cohere')return runCohere(args);
+  if(provider==='aihorde')return runAIHorde(args);
   if(['groq','openrouter','mistral'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
@@ -2458,7 +2674,29 @@ async function processChat(body, emit) {
         };
       }
     }
-    activity(emit,'fallback','No fallback provider was available','error','fallback');
+
+    const hasImageForPublicFallback=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
+    if(!hasImageForPublicFallback){
+      activity(emit,'fallback','Configured providers exhausted — trying free public AI Horde','running','fallback');
+      const publicHorde=await runAnonymousAIHordeFallback({
+        model,history,files,message,systemInstruction,fallbackFrom:provider,
+        routedReason:'fallback-public',emit,autoFallback:false
+      });
+      if(publicHorde.ok){
+        activity(emit,'fallback','Free public fallback connected to AI Horde Anonymous','completed','fallback');
+        activity(emit,'generation','Generating response','running','generate');
+        return {
+          ok:true,
+          response:publicHorde.response,
+          finishState:publicHorde.finishState||{reason:'stop'},
+          startedAt,
+          resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
+          resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',
+          systemInstruction
+        };
+      }
+    }
+    activity(emit,'fallback','No server fallback provider was available — browser may try Puter fallback','error','fallback');
   }
 
   return {ok:false,status:first.status||500,error:first.error||'AI provider unavailable.',provider,startedAt};
