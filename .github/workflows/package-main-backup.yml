@@ -1,0 +1,78 @@
+name: Package Main Backup
+
+on:
+  push:
+    branches: [deep-audit-fixes]
+    paths:
+      - '.github/workflows/package-main-backup.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Export exact verified main files
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_MAIN='9ffdf5624c0f8e57cee587f6406643785ab54bde'
+          EXPECTED_INDEX_BLOB='8a0c37929a58ae94c65eb63ff79b4f4e09ddecf0'
+          EXPECTED_CHAT_BLOB='4dc46981eab2baecb72f0643ad945ede174d5c98'
+          git fetch origin main
+          ACTUAL_MAIN="$(git rev-parse origin/main)"
+          echo "main=$ACTUAL_MAIN"
+          test "$ACTUAL_MAIN" = "$EXPECTED_MAIN"
+          mkdir -p package/api
+          git show "$EXPECTED_MAIN:index.html" > package/index.html
+          git show "$EXPECTED_MAIN:api/chat.js" > package/api/chat.js
+          test "$(git hash-object package/index.html)" = "$EXPECTED_INDEX_BLOB"
+          test "$(git hash-object package/api/chat.js)" = "$EXPECTED_CHAT_BLOB"
+
+      - name: Verify packaged syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp package/api/chat.js /tmp/chat-check.mjs
+          node --check /tmp/chat-check.mjs
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.in_script=False; self.external=False; self.parts=[]; self.current=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag.lower()!='script': return
+                  self.in_script=True; self.external=bool(dict(attrs).get('src')); self.current=[]
+              def handle_data(self,data):
+                  if self.in_script and not self.external: self.current.append(data)
+              def handle_endtag(self,tag):
+                  if tag.lower()=='script' and self.in_script:
+                      text=''.join(self.current)
+                      if not self.external and text.strip(): self.parts.append(text)
+                      self.in_script=False; self.external=False; self.current=[]
+          p=Scripts(); p.feed(Path('package/index.html').read_text(encoding='utf-8'))
+          if not p.parts: raise SystemExit('No inline JavaScript found')
+          Path('/tmp/index-inline.js').write_text('\n;\n'.join(p.parts),encoding='utf-8')
+          print(f'extracted {len(p.parts)} inline script block(s)')
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Create final ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd package && zip -r ../JepongDevxyz-AI-final-main-backup.zip index.html api/chat.js)
+          sha256sum JepongDevxyz-AI-final-main-backup.zip
+          unzip -l JepongDevxyz-AI-final-main-backup.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JepongDevxyz-AI-final-main-backup
+          path: JepongDevxyz-AI-final-main-backup.zip
+          if-no-files-found: error
