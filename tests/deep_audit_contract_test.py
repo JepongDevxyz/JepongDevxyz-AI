@@ -1,0 +1,26 @@
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1]
+INDEX=(ROOT/'index.html').read_text(encoding='utf-8')
+CHAT=(ROOT/'api'/'chat.js').read_text(encoding='utf-8')
+def req(c,m):
+    if not c: raise AssertionError(m)
+def main():
+    req('function safeParseJSON' in INDEX and 'function readLocalJSON' in INDEX,'safe local JSON helpers missing')
+    req('JSON.parse(localStorage.getItem(' not in INDEX,'unsafe localStorage JSON.parse remains')
+    req('function safeSetLocalStorage' in INDEX,'safe localStorage write helper missing')
+    req("safeSetLocalStorage('jepong_ai_chats'" in INDEX,'chat saves can still crash on storage quota')
+    req('function sanitizeRenderedMarkdown' in INDEX and 'sanitizeRenderedMarkdown(tempDiv)' in INDEX,'markdown sanitizer not applied')
+    req("span.innerHTML = node.nodeValue.replace" not in INDEX,'in-chat search still reinterprets text as HTML')
+    req("document.createElement('mark')" in INDEX and 'document.createTextNode' in INDEX,'safe search highlighting missing')
+    req('https://image.pollinations.ai/prompt/' not in INDEX,'frontend still uses obsolete public Pollinations URL')
+    req("action:'generate-image'" in INDEX and "body.action==='generate-image'" in CHAT,'generic backend image route not connected')
+    req("jepong_image_model" in INDEX,'image model selection not persisted')
+    req('![Generated Image](${generatedImageUrl})' not in INDEX,'large image data URLs can still be persisted to localStorage')
+    req('function copyGeneratedImagePrompt' in INDEX and 'onclick="copyGeneratedImagePrompt(this)"' in INDEX,'Copy Prompt button is not wired to the actual generated prompt')
+    req('Number.isFinite(speechRate)' in INDEX,'corrupt saved speech rate is not repaired')
+    req('function isFallbackableProviderFailure' in CHAT,'model-unavailable fallback classifier missing')
+    req('const fallbackable=isFallbackableProviderFailure(first.status,first.error);' in CHAT,'fallback path does not use classifier')
+    req("replace(/^\[|\]$/g,'')" in CHAT,'IPv6 bracket normalization missing')
+    req("h.startsWith('::ffff:')" in CHAT,'IPv4-mapped IPv6 guard missing')
+    print('deep audit contract checks passed')
+if __name__=='__main__': main()
