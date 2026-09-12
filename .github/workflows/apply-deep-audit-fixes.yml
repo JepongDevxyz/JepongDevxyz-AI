@@ -1,0 +1,116 @@
+name: Apply Deep Audit Fixes
+
+on:
+  push:
+    branches: [deep-audit-fixes]
+    paths:
+      - '.deep-audit/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and apply verified patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .deep-audit/patch.* > /tmp/deep-audit.patch.xz.b64
+          base64 -d /tmp/deep-audit.patch.xz.b64 > /tmp/deep-audit.patch.xz
+          echo 'e63e4a34a8dd92a75dc6990f0bfe99425de8d76d014d31382224f460a4579e35  /tmp/deep-audit.patch.xz' | sha256sum -c -
+          xz -dc /tmp/deep-audit.patch.xz > /tmp/deep-audit.patch
+          git apply --check /tmp/deep-audit.patch
+          git apply /tmp/deep-audit.patch
+
+      - name: Verify backend syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp api/chat.js /tmp/chat-check.mjs
+          node --check /tmp/chat-check.mjs
+
+      - name: Verify frontend inline JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.in_script=False; self.external=False; self.parts=[]; self.current=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower()!='script': return
+                  self.in_script=True; self.external=bool(dict(attrs).get('src')); self.current=[]
+              def handle_data(self, data):
+                  if self.in_script and not self.external: self.current.append(data)
+              def handle_endtag(self, tag):
+                  if tag.lower()=='script' and self.in_script:
+                      text=''.join(self.current)
+                      if not self.external and text.strip(): self.parts.append(text)
+                      self.in_script=False; self.external=False; self.current=[]
+          parser=Scripts(); parser.feed(Path('index.html').read_text(encoding='utf-8'))
+          if not parser.parts: raise SystemExit('No inline JavaScript found')
+          Path('/tmp/index-inline.js').write_text('\n;\n'.join(parser.parts),encoding='utf-8')
+          print(f'extracted {len(parser.parts)} inline script block(s)')
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Run all contract and regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in tests/*_test.py; do
+            echo "===== $test ====="
+            python "$test"
+          done
+
+      - name: Structural HTML and handler scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import collections,re
+          src=Path('index.html').read_text(encoding='utf-8')
+          class P(HTMLParser):
+              def __init__(self): super().__init__(); self.ids=[]; self.handlers=[]
+              def handle_starttag(self,tag,attrs):
+                  d=dict(attrs)
+                  if d.get('id'): self.ids.append(d['id'])
+                  for k,v in attrs:
+                      if k.startswith('on') and v: self.handlers.append(v)
+          p=P(); p.feed(src)
+          dup=[x for x,c in collections.Counter(p.ids).items() if c>1]
+          if dup: raise SystemExit(f'Duplicate HTML ids: {dup}')
+          funcs=set(re.findall(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\(',src))
+          calls=set()
+          for handler in p.handlers:
+              calls.update(m.group(1) for m in re.finditer(r'(?<![.\w$])([A-Za-z_$][\w$]*)\s*\(',handler))
+          known={'if','for','while','switch','catch','Math','JSON','String','Number','Boolean','Date','Array','Object','Promise','URL','setTimeout','setInterval','clearTimeout','clearInterval'}
+          unknown=sorted(calls-funcs-known)
+          if unknown: raise SystemExit(f'Undefined inline handlers: {unknown}')
+          counts=collections.Counter(re.findall(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\(',src))
+          dup_funcs=[(k,v) for k,v in counts.items() if v>1]
+          if dup_funcs: raise SystemExit(f'Duplicate named functions: {dup_funcs}')
+          print(f'structural scan passed: {len(p.ids)} ids, {len(funcs)} named functions, {len(calls)} inline calls')
+          PY
+
+      - name: Commit verified branch source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .deep-audit
+          rm -f .github/workflows/apply-deep-audit-fixes.yml
+          git config user.name 'JepongDevxyz Audit Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: deep audit runtime and security regressions'
+          git push origin HEAD:deep-audit-fixes
