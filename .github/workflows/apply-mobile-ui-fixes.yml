@@ -1,0 +1,381 @@
+name: Apply Mobile UI Fixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.sync/MOBILE_UI_APPLY'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply mobile UI fixes to latest main
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global s
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              s = s.replace(old, new, 1)
+
+          replace_once(
+          '''        .sidebar { 
+              position: absolute; 
+              width: var(--drawer-width); 
+              max-width: 85vw;
+              height: 100%; 
+              top: 0;
+              background: #0f172a; 
+              z-index: 901; 
+              display: flex; 
+              flex-direction: column; 
+              padding: 18px 16px; 
+              gap: 14px; 
+              will-change: transform;
+              transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+              box-shadow: 0 0 35px rgba(0,0,0,0.6);
+          }
+          ''',
+          '''        .sidebar { 
+              position: absolute; 
+              width: var(--drawer-width); 
+              max-width: 85vw;
+              height: 100%; 
+              min-height: 0;
+              top: 0;
+              background: #0f172a; 
+              z-index: 901; 
+              display: flex; 
+              flex-direction: column; 
+              padding: 18px 16px max(16px, env(safe-area-inset-bottom)); 
+              gap: 14px; 
+              overflow: hidden;
+              overscroll-behavior: contain;
+              will-change: transform;
+              transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+              box-shadow: 0 0 35px rgba(0,0,0,0.6);
+          }
+          ''', 'sidebar shell')
+
+          replace_once(
+          '''        .sidebar.drawer-bottom {
+              top: auto; bottom: 0; left: 0; right: 0;
+              width: 100%; max-width: 100vw; height: 75vh;
+              border-top: 1px solid var(--border-color);
+              border-top-left-radius: 28px;
+              border-top-right-radius: 28px;
+              border-bottom-left-radius: 0;
+              border-bottom-right-radius: 0;
+              transform: translateY(100%);
+          }
+          ''',
+          '''        .sidebar.drawer-bottom {
+              top: auto; bottom: 0; left: 0; right: 0;
+              width: 100%; max-width: 100vw;
+              height: min(75dvh, calc(var(--jepong-vh, 100dvh) - 10px));
+              max-height: calc(var(--jepong-vh, 100dvh) - 10px);
+              border-top: 1px solid var(--border-color);
+              border-top-left-radius: 28px;
+              border-top-right-radius: 28px;
+              border-bottom-left-radius: 0;
+              border-bottom-right-radius: 0;
+              transform: translateY(100%);
+          }
+          ''', 'bottom drawer viewport clamp')
+
+          replace_once(
+          '''        body.theme-light .search-chat-input { background: #e2e8f0; }
+          
+          .chat-history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+          ''',
+          '''        body.theme-light .search-chat-input { background: #e2e8f0; }
+
+          .sidebar-header,
+          .new-chat-btn,
+          .search-bar-wrap { flex-shrink: 0; }
+          
+          .chat-history-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+          ''', 'history scroll container')
+
+          replace_once(
+          '''        .hist-action-btn.pin-btn.pinned { color: #f59e0b; }
+
+          .chat-viewport-wrapper {
+          ''',
+          '''        .hist-action-btn.pin-btn.pinned { color: #f59e0b; }
+
+          #sidebar-footer-settings {
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap:12px;
+              flex-shrink:0;
+              min-height:52px;
+              padding:12px 2px 2px;
+              border-top:1px solid var(--border-color);
+              background:linear-gradient(180deg, rgba(15,23,42,0), rgba(15,23,42,.96) 24%);
+          }
+          body.theme-light #sidebar-footer-settings { background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.98) 24%); }
+          .sidebar-word-pill {
+              display:inline-flex;
+              align-items:center;
+              gap:7px;
+              min-width:0;
+              padding:7px 10px;
+              border-radius:999px;
+              border:1px solid var(--border-color);
+              background:rgba(255,255,255,.04);
+              color:var(--text-muted);
+              font-size:12px;
+              white-space:nowrap;
+          }
+          .sidebar-word-pill b { color:var(--text-main); font-size:12px; }
+          body.theme-light .sidebar-word-pill { background:rgba(15,23,42,.04); }
+
+          .chat-viewport-wrapper {
+          ''', 'pinned sidebar footer')
+
+          replace_once('''            align-items: center; 
+              gap: 6px; 
+              box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+          ''', '''            align-items: flex-end; 
+              gap: 6px; 
+              box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+          ''', 'composer alignment')
+
+          replace_once(
+          '''        .pill-input { 
+              flex: 1; 
+              background: transparent; 
+              border: none; 
+              color: var(--text-main) !important; 
+              font-size: 0.95rem; 
+              caret-color: #3b82f6; 
+              padding: 6px 4px; 
+              min-width: 0; 
+              resize: none;
+              height: 28px;
+              max-height: 100px;
+              line-height: 1.4;
+              overflow-y: auto;
+              scrollbar-width: none;
+          }
+          ''',
+          '''        .pill-input { 
+              flex: 1; 
+              background: transparent; 
+              border: none; 
+              color: var(--text-main) !important; 
+              font-size: 0.95rem; 
+              caret-color: #3b82f6; 
+              padding: 7px 4px; 
+              min-width: 0; 
+              min-height: 28px;
+              resize: none;
+              height: 28px;
+              max-height: 120px;
+              line-height: 1.45;
+              overflow-y: hidden;
+              overscroll-behavior: contain;
+              -webkit-overflow-scrolling: touch;
+              touch-action: pan-y;
+              scrollbar-width: none;
+          }
+          ''', 'composer internal scroll CSS')
+
+          replace_once(
+          '''            <div id="sidebar-footer-settings" style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 11px;">
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Words: <b id="word-count">0</b></span>
+                <button onclick="openSettingsModal()" title="Settings" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
+          ''',
+          '''            <div id="sidebar-footer-settings">
+                <span class="sidebar-word-pill" title="Saved conversation words"><span>Words</span><b id="word-count">0</b></span>
+                <button onclick="openSettingsModal()" title="Settings" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex; align-items: center; border-radius: 999px;">
+          ''', 'word count footer markup')
+
+          replace_once(
+          '''                // Do not follow VisualViewport scroll events. Only compensate the current
+                  // viewport offset during resize so Chrome's keyboard cannot drag the app down.
+                  app.style.transform = offsetTop ? `translateY(${offsetTop}px)` : '';
+          ''',
+          '''                // Keep the fixed app anchored to the layout viewport. Chrome Android may
+                  // report a non-zero visualViewport.offsetTop while the keyboard is open; translating
+                  // the entire app by that value causes the blank/"scrolled away" screen.
+                  app.style.transform = '';
+          ''', 'Android visual viewport anchoring')
+
+          replace_once(
+          '''        function autoResizeTextarea(textarea) {
+              textarea.style.height = 'auto';
+              textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+          }
+          ''',
+          '''        function autoResizeTextarea(textarea) {
+              if (!textarea) return;
+              const maxHeight = 120;
+              textarea.style.height = 'auto';
+              const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+              textarea.style.height = nextHeight + 'px';
+              const shouldScroll = textarea.scrollHeight > maxHeight;
+              textarea.style.overflowY = shouldScroll ? 'auto' : 'hidden';
+              if (shouldScroll) textarea.scrollTop = textarea.scrollHeight;
+          }
+          ''', 'composer auto resize')
+
+          replace_once(
+          '''        function updateUsageUI() {
+              let words=parseInt(localStorage.getItem('jepong_word_count')||'0',10);
+              if(!Number.isFinite(words)||words<0)words=0;
+              if(words===0){
+                  const recovered=countSavedChatWords();
+                  if(recovered>0){words=recovered;localStorage.setItem('jepong_word_count',String(words));}
+              }
+              let queries=parseInt(localStorage.getItem('jepong_query_count')||'0',10);
+              if(!Number.isFinite(queries)||queries<0)queries=0;
+              const tokens=Math.ceil(words*1.35);
+              const w=document.getElementById('geminiWordCount');
+              const t=document.getElementById('geminiTokenCount');
+              const q=document.getElementById('geminiQueryCount');
+              const sidebarWordCount=document.getElementById('word-count');
+              if(w)w.textContent=words.toLocaleString();
+              if(t)t.textContent=tokens.toLocaleString();
+              if(q)q.textContent=queries.toLocaleString();
+              if(sidebarWordCount)sidebarWordCount.textContent=words.toLocaleString();
+              try{renderUsageSyncUI();}catch(_){}
+              try{renderProviderStatus();}catch(_){}
+          }
+          ''',
+          '''        function updateUsageUI() {
+              let words=parseInt(localStorage.getItem('jepong_word_count')||'0',10);
+              if(!Number.isFinite(words)||words<0)words=0;
+              const savedWords=countSavedChatWords();
+              const sidebarWords=Math.max(words,savedWords);
+              let queries=parseInt(localStorage.getItem('jepong_query_count')||'0',10);
+              if(!Number.isFinite(queries)||queries<0)queries=0;
+              const tokens=Math.ceil(words*1.35);
+              const w=document.getElementById('geminiWordCount');
+              const t=document.getElementById('geminiTokenCount');
+              const q=document.getElementById('geminiQueryCount');
+              const sidebarWordCount=document.getElementById('word-count');
+              if(w)w.textContent=words.toLocaleString();
+              if(t)t.textContent=tokens.toLocaleString();
+              if(q)q.textContent=queries.toLocaleString();
+              if(sidebarWordCount)sidebarWordCount.textContent=sidebarWords.toLocaleString();
+              try{renderUsageSyncUI();}catch(_){}
+              try{renderProviderStatus();}catch(_){}
+          }
+          ''', 'word count recovery')
+
+          replace_once(
+          '''            isDrawerOpen = true;
+              renderSidebarHistory();
+          }
+          ''',
+          '''            isDrawerOpen = true;
+              renderSidebarHistory();
+              updateUsageUI();
+          }
+          ''', 'word count drawer refresh')
+
+          replace_once(
+          '''        .live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important;z-index:60!important}
+          .live-pet.sleeping .live-pet-sleep-eyes i{border-bottom-width:4px!important;filter:drop-shadow(0 1px 1px rgba(255,255,255,.18)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+
+          </style>
+          ''',
+          '''        .live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important;z-index:60!important}
+          .live-pet.sleeping .live-pet-sleep-eyes i{border-bottom-width:4px!important;filter:drop-shadow(0 1px 1px rgba(255,255,255,.18)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+          /* Built-in PNG pets already contain their eyes. Hiding this overlay prevents the
+             duplicate/floating closed eyes seen above Luna while keeping emoji/custom fallback logic intact. */
+          .live-pet-visual img + .live-pet-sleep-eyes,
+          .live-pet.sleeping .live-pet-visual img + .live-pet-sleep-eyes{
+              display:none!important;
+              opacity:0!important;
+          }
+
+          </style>
+          ''', 'pet duplicate eye guard')
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Verify backend syntax
+        run: |
+          cp api/chat.js /tmp/chat-check.mjs
+          node --check /tmp/chat-check.mjs
+
+      - name: Verify frontend inline JavaScript syntax
+        shell: bash
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.in_script=False; self.external=False; self.parts=[]; self.current=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower()!='script': return
+                  values=dict(attrs); self.in_script=True; self.external=bool(values.get('src')); self.current=[]
+              def handle_data(self, data):
+                  if self.in_script and not self.external: self.current.append(data)
+              def handle_endtag(self, tag):
+                  if tag.lower()=='script' and self.in_script:
+                      if not self.external and ''.join(self.current).strip(): self.parts.append(''.join(self.current))
+                      self.in_script=False; self.external=False; self.current=[]
+          parser=Scripts(); parser.feed(Path('index.html').read_text(encoding='utf-8'))
+          Path('/tmp/index-inline.js').write_text('\n;\n'.join(parser.parts), encoding='utf-8')
+          print(f'extracted {len(parser.parts)} inline script block(s)')
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Verify mobile UI contract
+        run: python tests/mobile_ui_contract_test.py
+
+      - name: Verify AI fallback contract
+        run: python tests/public_fallback_contract_test.py
+
+      - name: Verify activity and SSE contract
+        run: python tests/activity_contract_test.py
+
+      - name: Commit verified latest source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "JepongDevxyz Sync Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: mobile scroll word count and pet eyes"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Package synced index and chat
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp index.html dist/index.html
+          cp api/chat.js dist/chat.js
+          cd dist
+          zip -9 JepongDevxyz-AI-synced-mobile-fixes.zip index.html chat.js
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JepongDevxyz-AI-synced-mobile-fixes
+          path: dist/JepongDevxyz-AI-synced-mobile-fixes.zip
+          if-no-files-found: error
