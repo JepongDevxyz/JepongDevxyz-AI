@@ -23,64 +23,36 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          import re
 
-          # Harden speech-rate persistence against corrupt/invalid values.
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old="""        let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
-          if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) speechRate = 1.0;
-          """
-          new="""        let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
+
+          speech_pattern=r"let speechRate = parseFloat\(localStorage\.getItem\('jepong_speech_rate'\) \|\| '1\.0'\);\s*if \(!Number\.isFinite\(speechRate\) \|\| speechRate < 0\.5 \|\| speechRate > 2\) speechRate = 1\.0;"
+          speech_replacement="""let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
           if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) {
               speechRate = 1.0;
               safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
-          }
-          """
-          if old not in s:
-              raise SystemExit('speech-rate init patch target missing')
-          s=s.replace(old,new,1)
+          }"""
+          s,n=re.subn(speech_pattern,speech_replacement,s,count=1)
+          if n!=1: raise SystemExit(f'speech-rate init patch expected 1 match, found {n}')
 
-          old="""        function changeVoiceSpeed(val) {
-              speechRate = parseFloat(val);
-              localStorage.setItem('jepong_speech_rate', speechRate);
-              const label = document.getElementById('speedValueLabel');
-              if (label) label.innerText = speechRate.toFixed(1) + 'x';
-          }
-          """
-          new="""        function changeVoiceSpeed(val) {
+          speed_pattern=r"function changeVoiceSpeed\(val\) \{\s*speechRate = parseFloat\(val\);\s*localStorage\.setItem\('jepong_speech_rate', speechRate\);\s*const label = document\.getElementById\('speedValueLabel'\);\s*if \(label\) label\.innerText = speechRate\.toFixed\(1\) \+ 'x';\s*\}"
+          speed_replacement="""function changeVoiceSpeed(val) {
               const nextRate = parseFloat(val);
               speechRate = Number.isFinite(nextRate) ? Math.min(2, Math.max(0.5, nextRate)) : 1.0;
               safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
               const label = document.getElementById('speedValueLabel');
               if (label) label.innerText = speechRate.toFixed(1) + 'x';
-          }
-          """
-          if old not in s:
-              raise SystemExit('changeVoiceSpeed patch target missing')
-          s=s.replace(old,new,1)
+          }"""
+          s,n=re.subn(speed_pattern,speed_replacement,s,count=1)
+          if n!=1: raise SystemExit(f'changeVoiceSpeed patch expected 1 match, found {n}')
           p.write_text(s,encoding='utf-8')
 
-          # Return 400 for malformed/non-object/empty chat requests instead of 500.
           p=Path('api/chat.js')
           s=p.read_text(encoding='utf-8')
-          old="""export default async function handler(req){
-            if(req.method==='HEAD')return new Response(null,{status:200});
-            if(req.method!=='POST')return json({error:'Method not allowed'},405);
-            try{
-              const body=await req.json();
-              if(body.action==='generate-image') return generateImage(body,req.signal);
-              if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
-              if(body.action==='tts') return cloudflareTTS(body);
-              if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
-              if(body.activityStream===true) return activityStreamResponse(body,req.signal);
-
-              const result=await processChat(body,null);
-              if(result.ok)return result.response;
-              return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'gemini'});
-            }catch(e){return json({error:e?.message||String(e)},500);}
-          }
-          """
-          new="""export default async function handler(req){
+          handler_pattern=r"export default async function handler\(req\)\{[\s\S]*\}\s*$"
+          handler_replacement="""export default async function handler(req){
             if(req.method==='HEAD')return new Response(null,{status:200});
             if(req.method!=='POST')return json({error:'Method not allowed'},405);
 
@@ -114,9 +86,8 @@ jobs:
             }catch(e){return json({error:e?.message||String(e)},500);}
           }
           """
-          if old not in s:
-              raise SystemExit('API handler patch target missing')
-          s=s.replace(old,new,1)
+          s,n=re.subn(handler_pattern,handler_replacement,s,count=1)
+          if n!=1: raise SystemExit(f'API handler patch expected 1 match, found {n}')
           p.write_text(s,encoding='utf-8')
           PY
 
