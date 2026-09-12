@@ -1,0 +1,205 @@
+name: Apply Final Audit Fixes
+
+on:
+  push:
+    branches: [deep-audit-fixes]
+    paths:
+      - '.sync/FINAL_AUDIT_READY'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-verify-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply final audit fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          # Harden speech-rate persistence against corrupt/invalid values.
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""        let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
+          if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) speechRate = 1.0;
+          """
+          new="""        let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
+          if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) {
+              speechRate = 1.0;
+              safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
+          }
+          """
+          if old not in s:
+              raise SystemExit('speech-rate init patch target missing')
+          s=s.replace(old,new,1)
+
+          old="""        function changeVoiceSpeed(val) {
+              speechRate = parseFloat(val);
+              localStorage.setItem('jepong_speech_rate', speechRate);
+              const label = document.getElementById('speedValueLabel');
+              if (label) label.innerText = speechRate.toFixed(1) + 'x';
+          }
+          """
+          new="""        function changeVoiceSpeed(val) {
+              const nextRate = parseFloat(val);
+              speechRate = Number.isFinite(nextRate) ? Math.min(2, Math.max(0.5, nextRate)) : 1.0;
+              safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
+              const label = document.getElementById('speedValueLabel');
+              if (label) label.innerText = speechRate.toFixed(1) + 'x';
+          }
+          """
+          if old not in s:
+              raise SystemExit('changeVoiceSpeed patch target missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          # Return 400 for malformed/non-object/empty chat requests instead of 500.
+          p=Path('api/chat.js')
+          s=p.read_text(encoding='utf-8')
+          old="""export default async function handler(req){
+            if(req.method==='HEAD')return new Response(null,{status:200});
+            if(req.method!=='POST')return json({error:'Method not allowed'},405);
+            try{
+              const body=await req.json();
+              if(body.action==='generate-image') return generateImage(body,req.signal);
+              if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
+              if(body.action==='tts') return cloudflareTTS(body);
+              if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
+              if(body.activityStream===true) return activityStreamResponse(body,req.signal);
+
+              const result=await processChat(body,null);
+              if(result.ok)return result.response;
+              return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'gemini'});
+            }catch(e){return json({error:e?.message||String(e)},500);}
+          }
+          """
+          new="""export default async function handler(req){
+            if(req.method==='HEAD')return new Response(null,{status:200});
+            if(req.method!=='POST')return json({error:'Method not allowed'},405);
+
+            let body;
+            try{
+              body=await req.json();
+            }catch(_){
+              return json({error:'Invalid JSON request body.'},400);
+            }
+            if(!body||typeof body!=='object'||Array.isArray(body)){
+              return json({error:'Request body must be a JSON object.'},400);
+            }
+
+            try{
+              if(body.action==='generate-image') return generateImage(body,req.signal);
+              if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
+              if(body.action==='tts') return cloudflareTTS(body);
+              if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
+
+              const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
+              const hasFiles=Array.isArray(body.files)&&body.files.length>0;
+              if(!hasMessage&&!hasFiles){
+                return json({error:'Message or attachment is required.'},400);
+              }
+
+              if(body.activityStream===true) return activityStreamResponse(body,req.signal);
+
+              const result=await processChat(body,null);
+              if(result.ok)return result.response;
+              return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'gemini'});
+            }catch(e){return json({error:e?.message||String(e)},500);}
+          }
+          """
+          if old not in s:
+              raise SystemExit('API handler patch target missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Verify syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp api/chat.js /tmp/chat-check.mjs
+          node --check /tmp/chat-check.mjs
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self): super().__init__(); self.in_script=False; self.external=False; self.parts=[]; self.current=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag.lower()!='script': return
+                  self.in_script=True; self.external=bool(dict(attrs).get('src')); self.current=[]
+              def handle_data(self,data):
+                  if self.in_script and not self.external: self.current.append(data)
+              def handle_endtag(self,tag):
+                  if tag.lower()=='script' and self.in_script:
+                      text=''.join(self.current)
+                      if not self.external and text.strip(): self.parts.append(text)
+                      self.in_script=False; self.external=False; self.current=[]
+          p=Scripts(); p.feed(Path('index.html').read_text(encoding='utf-8'))
+          Path('/tmp/index-inline.js').write_text('\n;\n'.join(p.parts),encoding='utf-8')
+          print(f'extracted {len(p.parts)} inline script block(s)')
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Run full regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in tests/*_test.py; do
+            echo "===== $test ====="
+            python "$test"
+          done
+          for test in tests/*_test.mjs; do
+            [ -e "$test" ] || continue
+            echo "===== $test ====="
+            node "$test"
+          done
+
+      - name: Structural scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import collections,re
+          src=Path('index.html').read_text(encoding='utf-8')
+          class P(HTMLParser):
+              def __init__(self): super().__init__(); self.ids=[]; self.handlers=[]
+              def handle_starttag(self,tag,attrs):
+                  d=dict(attrs)
+                  if d.get('id'): self.ids.append(d['id'])
+                  for k,v in attrs:
+                      if k.startswith('on') and v: self.handlers.append(v)
+          p=P(); p.feed(src)
+          dup=[x for x,c in collections.Counter(p.ids).items() if c>1]
+          if dup: raise SystemExit(f'Duplicate HTML ids: {dup}')
+          funcs=set(re.findall(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\(',src))
+          calls=set()
+          for handler in p.handlers:
+              calls.update(m.group(1) for m in re.finditer(r'(?<![.\w$])([A-Za-z_$][\w$]*)\s*\(',handler))
+          known={'if','for','while','switch','catch','Math','JSON','String','Number','Boolean','Date','Array','Object','Promise','URL','setTimeout','setInterval','clearTimeout','clearInterval'}
+          unknown=sorted(calls-funcs-known)
+          if unknown: raise SystemExit(f'Undefined inline handlers: {unknown}')
+          counts=collections.Counter(re.findall(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\(',src))
+          dup_funcs=[(k,v) for k,v in counts.items() if v>1]
+          if dup_funcs: raise SystemExit(f'Duplicate named functions: {dup_funcs}')
+          print(f'structural scan passed: {len(p.ids)} ids, {len(funcs)} named functions')
+          PY
+
+      - name: Commit verified fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "JepongDevxyz Audit Bot"
+          git config user.email "actions@users.noreply.github.com"
+          rm -f .sync/FINAL_AUDIT_READY .github/workflows/apply-final-audit-fixes.yml
+          git add -A
+          git commit -m "fix: complete deep audit hardening"
+          git push origin HEAD:deep-audit-fixes
