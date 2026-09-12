@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-CHAT = (ROOT / "chat.js").read_text(encoding="utf-8")
+CHAT = (ROOT / "api" / "chat.js").read_text(encoding="utf-8")
 INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
 
 
