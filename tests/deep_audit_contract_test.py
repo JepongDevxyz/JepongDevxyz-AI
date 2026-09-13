@@ -20,7 +20,7 @@ def main():
     req('Number.isFinite(speechRate)' in INDEX,'corrupt saved speech rate is not repaired')
     req('function isFallbackableProviderFailure' in CHAT,'model-unavailable fallback classifier missing')
     req('const fallbackable=isFallbackableProviderFailure(first.status,first.error);' in CHAT,'fallback path does not use classifier')
-    req("replace(/^\[|\]$/g,'')" in CHAT,'IPv6 bracket normalization missing')
+    req(r"replace(/^\[|\]$/g,'')" in CHAT,'IPv6 bracket normalization missing')
     req("h.startsWith('::ffff:')" in CHAT,'IPv4-mapped IPv6 guard missing')
     print('deep audit contract checks passed')
 if __name__=='__main__': main()

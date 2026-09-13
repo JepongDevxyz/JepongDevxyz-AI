@@ -19,7 +19,7 @@ def main():
     req('sandbox="allow-scripts allow-modals allow-same-origin allow-forms"' not in INDEX,
         'code runner still permits same-origin access')
 
-    req("replace(/^\[|\]$/g,'')" in CHAT,
+    req(r"replace(/^\[|\]$/g,'')" in CHAT,
         'URL hostname does not normalize IPv6 brackets')
     req("h==='::1'" in CHAT and "h.startsWith('fe80:')" in CHAT,
         'private IPv6 guards missing')
