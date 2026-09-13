@@ -37,13 +37,13 @@ def main():
     require("AI Horde Auto" in INDEX, 'AI Horde auto model option missing')
     require("autoFallback: autoProviderFallback" in INDEX, 'frontend no longer sends Auto Provider Fallback state')
 
-    # Puter is a keyless browser-side last resort, but only when Auto Provider Fallback is ON.
-    require('https://js.puter.com/v2/' in INDEX, 'Puter.js loader missing')
-    require('async function tryPuterPublicFallback' in INDEX, 'Puter public fallback helper missing')
-    require('if(!autoProviderFallback)' in INDEX, 'Puter helper is not explicitly gated by Auto Provider Fallback')
-    require('Puter fallback' in INDEX, 'Puter fallback activity/status copy missing')
-    require("if(!autoProviderFallback) finishAIIndicator(false);" in INDEX,
-            'SSE error handler finalizes the activity card before Puter fallback can run')
+    # Puter fallback was intentionally removed. It must not load or execute.
+    require('https://js.puter.com/v2/' not in INDEX, 'Puter.js loader still present')
+    require('Trying Puter fallback' not in INDEX, 'Puter fallback activity/status copy still present')
+    require('Puter · fallback' not in INDEX, 'Puter runtime fallback badge still present')
+    require('function puterFallbackModel' not in INDEX, 'Puter model routing helper still present')
+    require('function puterConversation' not in INDEX, 'Puter conversation helper still present')
+    require('function tryPuterPublicFallback' not in INDEX, 'Puter execution fallback still present')
 
     # The 8-provider model picker must keep its swipe geometry in sync.
     require('width: 800%' in INDEX, 'model picker track is not sized for 8 provider pages')
@@ -55,15 +55,11 @@ def main():
     require("model,history,files,message,systemInstruction" in CHAT[CHAT.index('runAnonymousAIHordeFallback'):],
             'anonymous fallback is not given the failed model as a hint')
 
-    # Puter model IDs are pinned to currently documented routes.
-    for token in (
-        'google/gemini-3.8-flash',
-        'mistralai/mistral-large-2512',
-        'cohere/command-r-plus-08-2024',
-        'qwen/qwen3.8-flash',
-        'openai/gpt-5.4-nano',
-    ):
-        require(token in INDEX, f'documented Puter fallback model missing: {token}')
+    # Invalid Horde credentials should be eligible for provider fallback when fallback is enabled.
+    classifier = CHAT[CHAT.index('function isFallbackableProviderFailure'):CHAT.index('function passthroughHeaders')]
+    require('401,402,403' in classifier, 'credential HTTP statuses are not fallbackable')
+    require('no user matching sent api key' in classifier, 'AI Horde rejected-key text is not fallbackable')
+    require('summarizeAIHordeError' in CHAT, 'AI Horde user-facing error sanitizer missing')
 
     # Routing UI contract from the user's screenshot must remain unchanged.
     require('OFF = test only the selected model. ON = allow model/provider fallback.' in INDEX,

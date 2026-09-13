@@ -38,12 +38,16 @@ def main():
     require('renderSidebarHistory();\n            updateUsageUI();' in INDEX,
             'opening chat history does not refresh the word count')
 
-    # Built-in image pets already have eyes in the art; hide duplicate floating sleepy eyes.
+    # Sleeping image pets must visibly close their eyes instead of leaving pupils open.
     guard = '.live-pet-visual img + .live-pet-sleep-eyes{'
-    require(guard in INDEX, 'image-pet duplicate eye overlay guard missing')
-    block = INDEX[INDEX.index(guard):INDEX.index(guard) + 180]
-    require('display:none!important;' in block,
-            'image-pet eye overlay is not hidden')
+    require(guard in INDEX, 'image-pet sleeping-eye overlay guard missing')
+    block = INDEX[INDEX.index(guard):INDEX.index(guard) + 260]
+    require('display:flex!important;' in block,
+            'image-pet sleeping-eye overlay is not enabled')
+    require('.live-pet.sleeping .live-pet-visual img + .live-pet-sleep-eyes{' in INDEX,
+            'sleeping image-pet selector missing')
+    require('--pet-sleep-lid' in INDEX,
+            'per-pet sleeping eyelid styling missing')
 
     print('mobile UI contract checks passed')
 

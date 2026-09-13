@@ -1985,8 +1985,10 @@ function isRetryableStatus(status) { return RETRYABLE.has(Number(status)); }
 function isFallbackableProviderFailure(status,error=''){
   const code=Number(status)||0;
   if(isRetryableStatus(code))return true;
-  if(![400,404,410,422].includes(code))return false;
   const text=String(error||'').toLowerCase();
+  if([401,402,403].includes(code))return true;
+  if(/no user matching sent api key|api key is not configured|credential was rejected|invalid api key|unauthorized|forbidden/.test(text))return true;
+  if(![400,404,410,422].includes(code))return false;
   const modelHint=/(?:model|deployment|endpoint)/.test(text);
   const unavailableHint=/(?:not found|unknown|unsupported|unavailable|does not exist|invalid model|retired|deprecated|no longer available)/.test(text);
   return modelHint&&unavailableHint;
@@ -2444,6 +2446,23 @@ function scoreAIHordeModel(item,message='',sourceModel=''){
   return score;
 }
 
+function summarizeAIHordeError(status, data, raw=''){
+  const combined=`${data?.error?.message||''} ${data?.message||''} ${raw||''}`.replace(/\s+/g,' ').trim();
+  const lower=combined.toLowerCase();
+  if(/no user matching sent api key/.test(lower)) return 'AI Horde API key was rejected. Check AIHORDE_API_KEY or switch to another provider.';
+  if(/api key is not configured/.test(lower)) return 'AI Horde is not configured on the server yet.';
+  if(status===401||status===403) return 'AI Horde rejected the current credential.';
+  if(status===429) return 'AI Horde rate limit reached.';
+  if(status>=500) return 'AI Horde is temporarily unavailable.';
+  return combined || `AI Horde ${status}`;
+}
+
+function isAIHordeCredentialFailure(status,error=''){
+  const code=Number(status)||0;
+  const text=String(error||'').toLowerCase();
+  return [401,403,406].includes(code) || /no user matching sent api key|invalid api key|credential was rejected|unauthorized|forbidden/.test(text);
+}
+
 async function resolveAIHordeModel(requested='auto',message='',signal){
   const models=await getAIHordeActiveModels(signal);
   if(!models.length) return null;
@@ -2508,11 +2527,15 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
         const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,routedReason,i,keys.length);
         return {ok:true,response:new Response(text.trim(),{headers}),finishState:{reason:'stop'}};
       }
-      last=data?.error?.message||data?.message||raw||`AI Horde ${status}`;
-      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
+      last=summarizeAIHordeError(status,data,raw);
+      const credentialFailure=isAIHordeCredentialFailure(status,last);
+      const canRetry=(isRetryableStatus(status)||credentialFailure)&&i<keys.length-1;
       providerLifecycleActivity(emit,{
         provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:retryLabel(runtimeProvider,status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+        detail:credentialFailure
+          ? `${providerLabel(runtimeProvider)} credential was rejected${canRetry?' — trying another':''}`
+          : retryLabel(runtimeProvider,status,canRetry),
+        attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
       });
       if(!canRetry) break;
     }catch(e){
@@ -2710,7 +2733,7 @@ async function processChat(body, emit) {
         };
       }
     }
-    activity(emit,'fallback','No server fallback provider was available — browser may try Puter fallback','error','fallback');
+    activity(emit,'fallback','No server fallback provider was available','error','fallback');
   }
 
   return {ok:false,status:first.status||500,error:first.error||'AI provider unavailable.',provider,startedAt};
