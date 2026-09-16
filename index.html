@@ -225,6 +225,25 @@
         .modal-overlay.open { display: flex; align-items: center; justify-content: center; }
         
         .floating-modal { background: var(--modal-bg); border: 1px solid var(--border-color); border-radius: 20px; width: 90%; max-width: 380px; padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: modalPop 0.2s ease-out; max-height: 85vh; overflow-y: auto; color: var(--text-main); }
+
+        .dola-modal{max-width:400px;padding:20px;gap:14px;border-radius:24px;text-align:center;align-items:center}
+        .dola-modal-head{display:flex;align-items:center;justify-content:space-between;width:100%}
+        .dola-modal-title{flex:1;font-size:1.02rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text-main);margin:0}
+        .dola-modal-title i{width:19px;height:19px;color:#a855f7;flex-shrink:0}
+        .dola-modal-close{background:rgba(255,255,255,.06);border:0;color:var(--text-muted);cursor:pointer;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+        .dola-modal-close:hover{background:rgba(255,255,255,.12);color:var(--text-main)}
+        .dola-modal-close i{width:15px;height:15px}
+        .dola-modal-desc{font-size:.8rem;color:var(--text-muted);line-height:1.5;margin:0;text-align:center}
+        .dola-dropzone{width:100%;border:2px dashed rgba(168,85,247,.38);border-radius:18px;padding:26px 16px;text-align:center;cursor:pointer;transition:.15s ease;background:rgba(168,85,247,.04)}
+        .dola-dropzone:hover{border-color:rgba(168,85,247,.65);background:rgba(168,85,247,.08)}
+        .dola-preview-img{max-height:150px;max-width:100%;border-radius:12px;object-fit:contain}
+        .dola-drop-text{display:flex;flex-direction:column;align-items:center;gap:9px;font-size:.82rem;color:var(--text-muted)}
+        .dola-drop-text i{width:30px;height:30px;color:#a855f7;opacity:.85}
+        .dola-prompt-input{width:100%;min-height:78px;background:rgba(255,255,255,.03);border:1px solid var(--border-color);border-radius:14px;padding:12px;font-size:.84rem;color:var(--text-main);resize:none;font-family:inherit}
+        .dola-prompt-input:focus{outline:none;border-color:rgba(168,85,247,.55)}
+        .dola-submit-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent-gradient);color:#fff;border:none;padding:13px;border-radius:14px;font-weight:700;font-size:.9rem;cursor:pointer}
+        .dola-submit-btn:hover{filter:brightness(1.08)}
+        .dola-submit-btn i{width:17px;height:17px}
         @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .option-item { background: transparent; border: none; border-radius: 12px; padding: 10px 12px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--text-main); width: 100%; }
@@ -663,7 +682,10 @@
 
         .bot-actions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
         .bot-action-btn { background: transparent; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; }
+        .bot-action-btn:hover { background: rgba(255,255,255,.06); color: var(--text-main); }
         .bot-action-btn.active-action { color: #8b5cf6; background: rgba(139, 92, 246, 0.15); }
+        .bot-action-btn i, .bot-action-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .bot-disclaimer { font-size: .66rem; color: var(--text-muted); opacity: .68; margin: 4px 2px 0; }
 
         .input-container { 
             width: 100%;
@@ -1105,6 +1127,7 @@
         @keyframes activityPulse{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:.9;transform:scale(1.08)}}
         @keyframes activityIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
         @media(max-width:520px){.ai-activity-card{margin:7px 0 9px}.ai-activity-row{grid-template-columns:21px minmax(0,1fr);gap:5px;padding:4px 1px}.ai-activity-icon{width:21px;height:21px}.ai-activity-label{font-size:.76rem}.ai-activity-head{margin-bottom:3px}}
+
 
 
         /* =========================================================
@@ -2048,7 +2071,6 @@
             pointer-events:none;
             opacity:0;
             transform:translateY(-1px);
-            transition:opacity .16s ease;
         }
         .live-pet-sleep-eyes i{
             display:block;
@@ -2742,6 +2764,7 @@
             background:linear-gradient(180deg,rgba(139,92,246,.085),rgba(255,255,255,.018))!important;
             box-shadow:0 14px 34px rgba(0,0,0,.14)!important;
             overflow:hidden!important;
+            flex-shrink:0!important;
         }
         #personalizationPetPage .ps-ai-pet-creator.open{
             display:block!important;
@@ -3713,6 +3736,22 @@
             .ai-activity-label{font-size:.75rem!important}
         }
 
+        /* Compact Claude-style activity row: clock icon + one-line dynamic label + chevron, collapsed by default. */
+        .ai-activity-summary-row{display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;background:none!important;border:0!important;padding:2px 0!important;cursor:pointer!important;text-align:left!important;color:var(--text-muted)!important;font:inherit!important;}
+        .ai-activity-summary-icon{width:16px!important;height:16px!important;display:grid!important;place-items:center!important;flex-shrink:0!important;color:var(--text-muted)!important;}
+        .ai-activity-summary-icon svg{width:14px!important;height:14px!important}
+        .ai-activity-summary-text{flex:1 1 auto!important;min-width:0!important;font-size:.8rem!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:var(--text-muted)!important;}
+        .ai-activity-chevron{flex-shrink:0!important;display:grid!important;place-items:center!important;color:var(--text-muted)!important;transition:transform .18s ease!important;}
+        .ai-activity-chevron svg{width:15px!important;height:15px!important}
+        .ai-activity-card:not(.collapsed) .ai-activity-chevron{transform:rotate(90deg)!important}
+        .ai-activity-card.complete .ai-activity-summary-text{color:color-mix(in srgb,var(--text-main) 82%,transparent)!important}
+        .ai-activity-card.complete .ai-activity-summary-icon{color:#34d399!important}
+        .ai-activity-card.error .ai-activity-summary-text{color:#fca5a5!important}
+        .ai-activity-card.error .ai-activity-summary-icon{color:#fca5a5!important}
+        .ai-activity-card .ai-activity-list{margin-top:6px!important;padding:8px 9px 6px!important;border:1px solid rgba(148,163,184,.18)!important;border-radius:14px!important;background:rgba(255,255,255,.02)!important;}
+        [data-theme="light"] .ai-activity-card .ai-activity-list{background:rgba(15,23,42,.03)!important;border-color:rgba(100,116,139,.18)!important}
+
+
 
         /* ===== OFFICIAL MOBILE VIEWPORT + PET VISIBILITY FIX ===== */
         :root{--jepong-vh:100dvh;--jepong-vv-top:0px}
@@ -3722,18 +3761,9 @@
             html.keyboard-open .live-pet{bottom:max(104px,calc(env(safe-area-inset-bottom) + 96px))!important}
             html.keyboard-open .chat-box{overscroll-behavior-y:contain}
         }
+        /* Sleeping eyes: single source of truth (image pets and emoji pets both use this). */
         .live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important;z-index:60!important}
         .live-pet.sleeping .live-pet-sleep-eyes i{border-bottom-width:4px!important;filter:drop-shadow(0 1px 1px rgba(255,255,255,.18)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}
-
-        /* Sleeping image pets: cover the open pupils with soft eyelids, then draw closed eyes. */
-        .live-pet-visual img + .live-pet-sleep-eyes{
-            display:flex!important;
-            opacity:0!important;
-        }
-        .live-pet.sleeping .live-pet-visual img + .live-pet-sleep-eyes{
-            display:flex!important;
-            opacity:1!important;
-        }
         .live-pet.sleeping .live-pet-sleep-eyes i{
             width:15px!important;
             height:10px!important;
@@ -3826,6 +3856,43 @@
             .speech-mini-player{top:8px;width:min(calc(100vw - 18px),400px);padding:9px 10px;border-radius:16px}
         }
 
+        /* "Get notified when Claude responds" style permission prompt */
+        .notify-permission-card{
+            position:fixed;
+            left:50%;
+            bottom:calc(env(safe-area-inset-bottom, 0px) + 96px);
+            transform:translateX(-50%) translateY(14px);
+            width:min(calc(100vw - 28px),380px);
+            padding:16px 16px 14px;
+            border-radius:18px;
+            border:1px solid rgba(148,163,184,.22);
+            background:rgba(10,14,24,.96);
+            backdrop-filter:blur(14px);
+            -webkit-backdrop-filter:blur(14px);
+            box-shadow:0 16px 38px rgba(0,0,0,.38);
+            z-index:88;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity .2s ease, transform .2s ease;
+        }
+        body.theme-light .notify-permission-card{
+            background:rgba(255,255,255,.97);
+            box-shadow:0 16px 38px rgba(15,23,42,.16);
+        }
+        .notify-permission-card.visible{
+            opacity:1;
+            pointer-events:auto;
+            transform:translateX(-50%) translateY(0);
+        }
+        .notify-permission-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+        .notify-permission-bell{width:34px;height:34px;min-width:34px;border-radius:50%;display:grid;place-items:center;background:rgba(139,92,246,.16);color:#a78bfa}
+        .notify-permission-close{border:0;background:transparent;color:var(--text-muted);cursor:pointer;width:26px;height:26px;display:grid;place-items:center;border-radius:8px;flex-shrink:0}
+        .notify-permission-close:hover{background:rgba(255,255,255,.08);color:var(--text-main)}
+        .notify-permission-title{font-size:.92rem;font-weight:700;color:var(--text-main);margin-top:10px;line-height:1.3}
+        .notify-permission-desc{font-size:.76rem;color:var(--text-muted);line-height:1.42;margin-top:6px}
+        .notify-permission-btn{width:100%;margin-top:12px;padding:10px;border-radius:12px;border:1px solid rgba(148,163,184,.22);background:rgba(255,255,255,.04);color:#60a5fa;font-size:.86rem;font-weight:700;cursor:pointer}
+        .notify-permission-btn:hover{background:rgba(96,165,250,.12)}
+
 
         /* ChatGPT-style code card: compact sticky toolbar and smooth code scrolling. */
         .code-block-header{position:sticky;top:0;z-index:3;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
@@ -3849,6 +3916,16 @@
         <button type="button" class="speech-mini-btn" onclick="closeSpeechMiniPlayer()" title="Close read aloud">
             <i data-lucide="x"></i>
         </button>
+    </div>
+
+    <div class="notify-permission-card" id="notifyPermissionCard" aria-live="polite">
+        <div class="notify-permission-head">
+            <span class="notify-permission-bell"><i data-lucide="bell"></i></span>
+            <button type="button" class="notify-permission-close" onclick="dismissNotifyPermissionCard()" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="notify-permission-title">Get notified when AI responds</div>
+        <div class="notify-permission-desc">Feel free to step away, JepongDevxyz AI will notify you as soon as it responds.</div>
+        <button type="button" class="notify-permission-btn" onclick="turnOnResponseNotifications()">Turn on</button>
     </div>
 
     <div class="app-container" id="appContainer">
@@ -3905,6 +3982,7 @@
                     <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
                 </div>
                 <div class="header-tools-group">
+                    <button type="button" class="pet-header-companion" id="petHeaderCompanion" onclick="openPetHeaderCompanion()" title="Pet companion" aria-label="Pet companion settings"></button>
                     <div class="network-status" id="networkStatus" onclick="measureNetworkPing()" title="Click to refresh ping">
                         <div class="signal-bars">
                             <div class="bar bar-1 active" id="bar1"></div>
@@ -3975,7 +4053,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 </button>
                 
-                <button type="button" class="pill-dola-btn" onclick="openDolaModal()" title="Dola AI Vision Prompt">
+                <button type="button" class="pill-dola-btn" onclick="openDolaModal()" title="JepongDevxyz AI Vision Prompt">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
                 
@@ -4092,6 +4170,20 @@
           </label>
         </div>
 
+        <div class="ios-switch-container">
+          <span style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px; min-width:0;">
+            <i data-lucide="bell" style="width:18px;height:18px;flex:0 0 auto;"></i>
+            <span style="min-width:0;">
+              <strong style="display:block;font-size:.85rem;font-weight:600;">Replies</strong>
+              <small style="display:block;color:var(--text-muted);font-size:.68rem;line-height:1.35;margin-top:2px;">Get notified when AI finishes a reply.</small>
+            </span>
+          </span>
+          <label class="ios-switch">
+            <input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)">
+            <span class="ios-slider"></span>
+          </label>
+        </div>
+
         <div class="speech-settings-group disabled" id="speechSettingsGroup">
           <div style="display: flex; flex-direction: column; gap: 6px;">
             <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
@@ -4113,7 +4205,7 @@
               <span id="speedValueLabel" style="font-size: 0.8rem; font-weight: 700; color: #8b5cf6;">1.0x</span>
             </div>
             <div class="speed-slider-wrap">
-              <input type="range" class="modern-slider" id="speedSlider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="changeVoiceSpeed(this.value)">
+              <input type="range" class="modern-slider" id="speedSlider" min="0.7" max="1.3" step="0.05" value="1.0" oninput="changeVoiceSpeed(this.value)">
             </div>
           </div>
         </div>
@@ -4167,6 +4259,41 @@
           </div>
         </div>
 
+
+        <div class="divider"></div>
+
+        <div class="usage-section">
+          <div class="usage-title">Usage &amp; Limits</div>
+          <div class="usage-metric-card">
+            <div class="metric-box"><h5>Words</h5><p id="geminiWordCount">0</p></div>
+            <div class="metric-box"><h5>Tokens</h5><p id="geminiTokenCount">0</p></div>
+            <div class="metric-box"><h5>Queries</h5><p id="geminiQueryCount">0</p></div>
+          </div>
+          <div class="usage-limits-deck">
+            <div class="limit-card">
+              <div class="limit-card-header">
+                <div class="limit-title-wrap">
+                  <span id="currentUsageTitle">Provider quota</span>
+                  <span class="info-circle" title="How much of this provider's quota looks used, based on what it reports.">i</span>
+                </div>
+                <span class="limit-percent" id="currentUsagePercent">Synced · ready</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="currentUsageBar"></div></div>
+              <div class="limit-card-footer" id="currentUsageResetText">Exact remaining quota is shown only when this provider reports it.</div>
+            </div>
+            <div class="limit-card">
+              <div class="limit-card-header">
+                <div class="limit-title-wrap">
+                  <span>Context window used</span>
+                  <span class="info-circle" title="Estimated from this conversation's length against a ~128k token budget.">i</span>
+                </div>
+                <span class="limit-percent" id="weeklyUsagePercent">0% used</span>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="weeklyUsageBar"></div></div>
+              <div class="limit-card-footer">Resets automatically when you start a new chat.</div>
+            </div>
+          </div>
+        </div>
 
         <div class="divider"></div>
 
@@ -4463,33 +4590,30 @@
         </div>
     </div>
 
-    <!-- Dola AI Prompt Modal -->
+    <!-- JepongDevxyz AI Vision Modal -->
     <div class="modal-overlay" id="dolaModalOverlay" onclick="if(event.target === this) closeDolaModal()">
-        <div class="floating-modal" style="max-width: 400px; padding: 18px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="font-size: 1rem; color: #a855f7; display: flex; align-items: center; gap: 6px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    Dola AI Vision Note
-                </h3>
-                <button onclick="closeDolaModal()" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
+        <div class="floating-modal dola-modal">
+            <div class="dola-modal-head">
+                <h3 class="dola-modal-title"><i data-lucide="eye"></i> JepongDevxyz AI Vision Note</h3>
+                <button onclick="closeDolaModal()" class="dola-modal-close" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
             </div>
-            <p style="font-size: 0.75rem; color: var(--text-muted);">Mag-upload ng larawan para basahin, suriin at gawan ng bagong visual generation o pagsusuri.</p>
-            
+            <p class="dola-modal-desc">Mag-upload ng larawan para basahin, suriin at gawan ng bagong visual generation o pagsusuri.</p>
+
             <input type="file" id="dolaFileInput" accept="image/*" style="display:none" onchange="handleDolaFile(event)">
-            
-            <div id="dolaDropzone" onclick="document.getElementById('dolaFileInput').click()" style="border: 2px dashed rgba(168,85,247,0.4); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; margin-top: 6px;">
-                <div id="dolaPreviewBox" style="display:none; margin-bottom: 8px;">
-                    <img id="dolaImgPreview" src="" alt="Upload Preview" style="max-height: 120px; border-radius: 8px; object-fit: contain;">
+
+            <div id="dolaDropzone" class="dola-dropzone" onclick="document.getElementById('dolaFileInput').click()">
+                <div id="dolaPreviewBox" class="dola-preview-box" style="display:none;">
+                    <img id="dolaImgPreview" src="" alt="Upload Preview" class="dola-preview-img">
                 </div>
-                <div id="dolaDropText" style="display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-muted);">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                    Click here to pick or snap a photo
+                <div id="dolaDropText" class="dola-drop-text">
+                    <i data-lucide="camera"></i>
+                    <span>Click here to pick or snap a photo</span>
                 </div>
             </div>
 
-            <textarea id="dolaPromptInput" placeholder="Ano ang nais mong ipagawa o baguhin sa photo na ito? Hal: Palitan mo ito ng logo ng kabayo..." style="width:100%; height:75px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:8px; padding:8px; font-size:0.8rem; color:var(--text-main); margin-top:8px; resize:none;"></textarea>
-            
-            <button onclick="submitDolaPrompt()" style="background:var(--accent-gradient); color:#fff; border:none; padding:10px; border-radius:10px; font-weight:600; font-size:0.85rem; cursor:pointer; margin-top:6px;">Suriin gamit ang Dola AI</button>
+            <textarea id="dolaPromptInput" class="dola-prompt-input" placeholder="Ano ang nais mong ipagawa o baguhin sa photo na ito? Hal: Palitan mo ito ng logo ng kabayo..."></textarea>
+
+            <button onclick="submitDolaPrompt()" class="dola-submit-btn"><i data-lucide="sparkles"></i><span>Suriin gamit ang JepongDevxyz AI</span></button>
         </div>
     </div>
 
@@ -4882,7 +5006,7 @@
         let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
         let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
         let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
-if (!Number.isFinite(speechRate) || speechRate < 0.5 || speechRate > 2) {
+if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
     speechRate = 1.0;
     safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
 }
@@ -6165,6 +6289,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const n=Math.max(.7,Math.min(1.3,Number(value)||1));
             personalizationSettings[key]=n;persistPersonalization();
             const out=document.getElementById(key==='voiceSpeed'?'psVoiceSpeedValue':'psVoicePitchValue');if(out)out.textContent=`${n.toFixed(1)}x`;
+            if(key==='voiceSpeed'){
+                speechRate=n;
+                safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
+                const label=document.getElementById('speedValueLabel');if(label)label.innerText=n.toFixed(1)+'x';
+                const slider=document.getElementById('speedSlider');if(slider)slider.value=n;
+            }
         }
 
         /* ===== LANGUAGE-AWARE VOICE / PRONUNCIATION ENGINE ===== */
@@ -6756,6 +6886,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             });
         }
 
+        function openPetHeaderCompanion() {
+            openExclusiveSurface('personalizationModalOverlay');
+            openPetPicker();
+        }
+
         function openPetPicker() {
             closeVoiceSettingsPage();
             setPersonalizationActiveTab('pet');
@@ -6949,7 +7084,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (speechToggle) speechToggle.checked = isResponseSpeechEnabled;
             const webToggle = document.getElementById('settingsWebSearchToggle');
             if (webToggle) webToggle.checked = !!isWebSearchEnabled;
+            const notifyToggle = document.getElementById('settingsNotifyToggle');
+            if (notifyToggle) notifyToggle.checked = (typeof Notification !== 'undefined' && Notification.permission === 'granted' && localStorage.getItem('jepong_notify_enabled') === 'true');
             if (group) group.classList.toggle('disabled', !isResponseSpeechEnabled);
+            speechRate = Math.max(0.7, Math.min(1.3, Number(personalizationSettings.voiceSpeed) || speechRate || 1.0));
             if (speedSlider) speedSlider.value = speechRate;
             if (speedLabel) speedLabel.innerText = speechRate.toFixed(1) + 'x';
             updateVoiceLabelUI();
@@ -6957,6 +7095,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             renderPetCreatorReferenceOptions();
             syncPersonalizationFeatureToggles();
 
+            updateUsageUI();
             openExclusiveSurface('settingsModal');
         }
 
@@ -6979,10 +7118,16 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function changeVoiceSpeed(val) {
     const nextRate = parseFloat(val);
-    speechRate = Number.isFinite(nextRate) ? Math.min(2, Math.max(0.5, nextRate)) : 1.0;
+    speechRate = Number.isFinite(nextRate) ? Math.min(1.3, Math.max(0.7, nextRate)) : 1.0;
     safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
+    personalizationSettings.voiceSpeed = speechRate;
+    persistPersonalization();
     const label = document.getElementById('speedValueLabel');
     if (label) label.innerText = speechRate.toFixed(1) + 'x';
+    const psOut = document.getElementById('psVoiceSpeedValue');
+    if (psOut) psOut.textContent = speechRate.toFixed(1) + 'x';
+    const psSlider = document.getElementById('psVoiceSpeedRange');
+    if (psSlider) psSlider.value = speechRate;
 }
 
         function openVoiceModal() {
@@ -7363,7 +7508,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             closeDolaModal();
             const input = document.getElementById('userInput');
-            input.value = `[Dola AI Vision]: ${promptText}`;
+            input.value = `[JepongDevxyz AI Vision]: ${promptText}`;
             autoResizeTextarea(input);
             sendMessage();
         }
@@ -7399,6 +7544,83 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         const MAX_VISIBLE_ACTIVITY_ROWS = 5;
+
+        let notifyPromptTimer = null;
+        let notifyRequestInFlight = false;
+
+        function shouldOfferNotifyPrompt() {
+            return typeof Notification !== 'undefined' &&
+                Notification.permission === 'default' &&
+                localStorage.getItem('jepong_notify_dismissed') !== 'true';
+        }
+
+        function maybeOfferNotifyPermission() {
+            notifyRequestInFlight = true;
+            if (!shouldOfferNotifyPrompt()) return;
+            clearTimeout(notifyPromptTimer);
+            notifyPromptTimer = setTimeout(() => {
+                if (!notifyRequestInFlight) return; // request already finished
+                const card = document.getElementById('notifyPermissionCard');
+                if (card) { card.classList.add('visible'); refreshLucideIcons(card); }
+            }, 4000);
+        }
+
+        function hideNotifyPermissionCard() {
+            clearTimeout(notifyPromptTimer);
+            document.getElementById('notifyPermissionCard')?.classList.remove('visible');
+        }
+
+        function dismissNotifyPermissionCard() {
+            localStorage.setItem('jepong_notify_dismissed', 'true');
+            hideNotifyPermissionCard();
+        }
+
+        function toggleResponseNotifications(checked) {
+            const toggle = document.getElementById('settingsNotifyToggle');
+            if (!checked) {
+                localStorage.setItem('jepong_notify_enabled', 'false');
+                return;
+            }
+            if (typeof Notification === 'undefined') {
+                if (toggle) toggle.checked = false;
+                localStorage.setItem('jepong_notify_enabled', 'false');
+                return;
+            }
+            Notification.requestPermission().then(perm => {
+                const granted = perm === 'granted';
+                localStorage.setItem('jepong_notify_enabled', granted ? 'true' : 'false');
+                localStorage.setItem('jepong_notify_dismissed', 'true');
+                if (toggle) toggle.checked = granted;
+                hideNotifyPermissionCard();
+            }).catch(() => { if (toggle) toggle.checked = false; });
+        }
+
+        function turnOnResponseNotifications() {
+            if (typeof Notification === 'undefined') { dismissNotifyPermissionCard(); return; }
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') localStorage.setItem('jepong_notify_enabled', 'true');
+                localStorage.setItem('jepong_notify_dismissed', 'true');
+                const toggle = document.getElementById('settingsNotifyToggle');
+                if (toggle) toggle.checked = (perm === 'granted');
+                hideNotifyPermissionCard();
+            }).catch(() => hideNotifyPermissionCard());
+        }
+
+        function notifyResponseReady(success = true) {
+            notifyRequestInFlight = false;
+            try {
+                hideNotifyPermissionCard();
+                if (typeof Notification === 'undefined') return;
+                if (Notification.permission !== 'granted') return;
+                if (localStorage.getItem('jepong_notify_enabled') !== 'true') return;
+                if (!document.hidden) return; // only notify when the user actually stepped away
+                const n = new Notification('JepongDevxyz AI', {
+                    body: success ? 'Tapos na ang sagot. Bumalik ka para makita.' : 'May naganap na error sa huling request.',
+                    tag: 'jepong-ai-response'
+                });
+                n.onclick = () => { try { window.focus(); } catch (_) {} n.close(); };
+            } catch (_) {}
+        }
 
         function activityIconMarkup(kind, state) {
             const icons={
@@ -7519,6 +7741,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 text=String(parsed.detail || parsed.error || parsed.message || text).trim();
             }
             text=text.replace(/^error\s*:\s*/i,'').replace(/\s+/g,' ').trim();
+            if(/failed to fetch|network\s*error|networkerror|load failed|err_internet_disconnected|err_connection|err_name_not_resolved|the internet connection appears to be offline/i.test(text)) return 'JepongDevxyz AI is currently under maintenance.';
             if(/no user matching sent api key/i.test(text)) return 'AI Horde API key was rejected. Check or replace AIHORDE_API_KEY, or use another provider.';
             if(/api key is not configured/i.test(text)) return 'This provider is not configured on the server yet.';
             if(/rate limit/i.test(text)) return 'Rate limit reached. Please try again in a moment.';
@@ -7607,19 +7830,21 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (!shouldShowAIActivity(promptText, files)) return;
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
-            indicator.className = 'ai-activity-card';
+            indicator.className = 'ai-activity-card collapsed';
             indicator.dataset.startedAt = String(Date.now());
             indicator.innerHTML = `
-                <div class="ai-activity-head">
-                    <div class="ai-activity-title"><span class="ai-activity-title-dot"></span><span id="aiActivityTitleText">Working…</span></div>
-                    <button type="button" class="ai-activity-toggle" onclick="toggleActivityDetails(this)">Hide</button>
-                </div>
+                <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="false">
+                    <span class="ai-activity-summary-icon" id="aiActivitySummaryIcon"><i data-lucide="clock"></i></span>
+                    <span class="ai-activity-summary-text" id="aiActivitySummary">Working on your request…</span>
+                    <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
+                </button>
                 <div class="ai-activity-list" id="aiActivityList"></div>
-                <div class="ai-activity-summary" id="aiActivitySummary">Working on your request…</div>
             `;
             chatBox.appendChild(indicator);
             const first=initialActivityForRequest(promptText,files);
             appendActivityEvent({id:'task-context',label:first.label,state:'running',kind:first.kind});
+            maybeOfferNotifyPermission();
+            refreshLucideIcons(indicator);
             // Deliberately do not scroll the page here. This keeps an uploaded image/file visible.
         }
 
@@ -7627,7 +7852,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const card = btn.closest('.ai-activity-card');
             if (!card) return;
             card.classList.toggle('collapsed');
-            btn.textContent = card.classList.contains('collapsed') ? 'Show' : 'Hide';
+            btn.setAttribute('aria-expanded', card.classList.contains('collapsed') ? 'false' : 'true');
         }
 
         function appendActivityEvent(evt = {}) {
@@ -7676,6 +7901,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function finishAIIndicator(success = true, elapsedMs = null) {
+            notifyResponseReady(success);
             const card = document.getElementById('activeAiIndicator');
             if (!card) return;
             card.classList.toggle('complete', success);
@@ -7683,30 +7909,31 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             card.dataset.finalized = 'true';
             const list = card.querySelector('#aiActivityList');
             const summary = card.querySelector('#aiActivitySummary');
-            const title = card.querySelector('#aiActivityTitleText');
+            const icon = card.querySelector('#aiActivitySummaryIcon');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
             const worked=`Worked for ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s`;
-            if(title)title.textContent=success?worked:'Stopped';
-            if (summary) summary.textContent = success ? worked : 'Request stopped because of an error';
+            if (summary) summary.textContent = success ? worked : 'Stopped because of an error';
+            if (icon) icon.innerHTML = success ? '<i data-lucide="check"></i>' : '<i data-lucide="alert-triangle"></i>';
+            refreshLucideIcons(card);
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
 
             setTimeout(() => {
                 if (!card.isConnected || card.dataset.finalized !== 'true') return;
                 card.classList.add('collapsed');
-                const toggle = card.querySelector('.ai-activity-toggle');
-                if (toggle) toggle.textContent = 'Show';
             }, 1800);
             setTimeout(() => {
                 if (!card.isConnected || card.dataset.finalized !== 'true') return;
                 card.removeAttribute('id');
                 list?.removeAttribute('id');
                 summary?.removeAttribute('id');
-                title?.removeAttribute('id');
+                icon?.removeAttribute('id');
                 card.classList.add('ai-activity-archived');
             }, 2400);
         }
 
         function removeAIIndicator() {
+            notifyRequestInFlight = false;
+            hideNotifyPermissionCard();
             const el = document.getElementById('activeAiIndicator');
             if (el) el.remove();
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
@@ -7986,10 +8213,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     botDiv.setAttribute('data-message-index', String(messageIndex));
                         botDiv.innerHTML = `<div>${renderCustomMarkdown(msg.text)}</div>
                             <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
-                                <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)">🔊 Replay Audio</button>
-                                <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
+                                <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)" title="Replay audio"><i data-lucide="volume-2"></i></button>
+                                <button class="bot-action-btn" onclick="copyText(this)" title="Copy"><i data-lucide="copy"></i></button>
                             </div>`;
                         chatBox.appendChild(botDiv);
+                        refreshLucideIcons(botDiv);
                     }
                 });
             }
@@ -8084,6 +8312,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
 
             showAIIndicator(userText);
+            maybeOfferNotifyPermission();
 
             const botMsgElem = document.createElement('div');
             botMsgElem.className = 'msg bot';
@@ -8126,9 +8355,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     fullResponse += decoder.decode(value, { stream: true });
                     botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
                         <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
-                            <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)">🔊 Replay Audio</button>
-                            <button class="bot-action-btn" onclick="copyText(this)">📋 Copy</button>
+                            <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)" title="Replay audio"><i data-lucide="volume-2"></i></button>
+                            <button class="bot-action-btn" onclick="copyText(this)" title="Copy"><i data-lucide="copy"></i></button>
                         </div>`;
+                    refreshLucideIcons(botMsgElem);
                     
                     if (userIsScrollingUp) {
                         unreadMessagesCount++;
@@ -8148,7 +8378,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
             } catch (err) {
                 removeAIIndicator();
-                botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(err.message)}</span>`;
+                botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ ${escapeHTML(sanitizeUiErrorMessage(err.message))}</span>`;
                 scrollToBottom(true);
             }
         }
@@ -8272,26 +8502,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     const botDiv = document.createElement('div');
                     botDiv.className = 'msg bot';
                     botDiv.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>
-                        <div class="bot-actions">
-                            <button class="bot-action-btn" onclick="voteMessage(this, 'like')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
-                            </button>
-                            <button class="bot-action-btn" onclick="voteMessage(this, 'dislike')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>
-                            </button>
-                            <button class="bot-action-btn" onclick="regenerateAnswer(this)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                                Regenerate
-                            </button>
-                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Manual Continue — usually only needed if automatic continuation reaches its cap">Continue</button>
-                            <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
-                            ${assistantReadAloudButtonHTML()}
-                            <button class="bot-action-btn" onclick="copyText(this)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                                Copy
-                            </button>
-                        </div>`;
+                        ${botActionsHTML()}`;
                     chatBox.appendChild(botDiv);
+                    refreshLucideIcons(botDiv);
                 }
             });
             scrollToBottom(true);
@@ -8671,6 +8884,22 @@ ${m.text || ''}
         }
 
         let activeReadAloudButton=null;
+        function botActionsHTML({ vote = true, continueBtn = true, branch = true, readAloud = true, disclaimer = true } = {}) {
+            return `
+                <div class="bot-actions">
+                    ${vote ? `
+                    <button class="bot-action-btn" onclick="voteMessage(this, 'like')" title="Helpful"><i data-lucide="thumbs-up"></i></button>
+                    <button class="bot-action-btn" onclick="voteMessage(this, 'dislike')" title="Not helpful"><i data-lucide="thumbs-down"></i></button>
+                    <button class="bot-action-btn" onclick="regenerateAnswer(this)" title="Regenerate"><i data-lucide="refresh-cw"></i></button>` : ''}
+                    ${continueBtn ? `<button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue from where it stopped"><i data-lucide="chevrons-right"></i></button>` : ''}
+                    ${branch ? `<button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation"><i data-lucide="git-branch"></i></button>` : ''}
+                    ${readAloud ? assistantReadAloudButtonHTML() : ''}
+                    <button class="bot-action-btn" onclick="copyText(this)" title="Copy"><i data-lucide="copy"></i></button>
+                </div>
+                ${disclaimer ? `<div class="bot-disclaimer">JepongDevxyz AI can make mistakes. Check important info.</div>` : ''}
+            `;
+        }
+
         function assistantReadAloudButtonHTML(){
             return `<button class="bot-action-btn read-aloud-btn" onclick="toggleReadAloudForMessage(this)" title="Read this response aloud"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Read aloud</span></button>`;
         }
@@ -8746,6 +8975,7 @@ ${m.text || ''}
             updateGenerationActionButton(true,false);
 
             showAIIndicator(promptText, currentFiles);
+            maybeOfferNotifyPermission();
             setLivePetWorking(true);
 
             const rawContinuousChatHistory = getContinuousHistory();
@@ -8767,7 +8997,7 @@ ${m.text || ''}
             botMsgElem.className = 'msg bot';
             chatBox.appendChild(botMsgElem);
 
-            const isDolaVisionPrompt = promptText.startsWith('[Dola AI Vision]:');
+            const isDolaVisionPrompt = promptText.startsWith('[JepongDevxyz AI Vision]:');
             const isImageCreationRequest = (currentSelectedMode === 'imagen') || 
                 (isDolaVisionPrompt && /(palitan|gawan|drawing|draw|generate image|create image|mag-drawing|logo ng|larawan ng|picture of|icon ng)/i.test(promptText));
 
@@ -8775,7 +9005,7 @@ ${m.text || ''}
                 appendActivityEvent({ id:'image-mode', label:'Image generation mode detected', state:'completed', kind:'image' });
                 try {
                     let finalImagePrompt = promptText
-                        .replace(/\[Dola AI Vision\]:/gi, '')
+                        .replace(/\[JepongDevxyz AI Vision\]:/gi, '')
                         .replace(/(paki palitan naman ng|palitan mo yan ng|palitan ng|gawan mo ako ng|generate an image of|draw a|gumawa ka ng)/gi, '')
                         .trim();
 
@@ -8833,9 +9063,10 @@ ${m.text || ''}
                             <img src="${escapeHTML(generatedImageUrl)}" alt="Generated artwork" loading="lazy" onclick="openLightbox(this.src)" style="max-width:100%;border-radius:12px;border:1px solid var(--border-color);cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.3);">
                         </div>
                         <div class="bot-actions" style="margin-top:10px;display:flex;gap:8px;">
-                            <a class="bot-action-btn" href="${escapeHTML(generatedImageUrl)}" download="generated-art.png">📥 Download</a>
-                            <button class="bot-action-btn" data-prompt="${escapeHTML(finalImagePrompt)}" onclick="copyGeneratedImagePrompt(this)">📋 Copy Prompt</button>
+                            <a class="bot-action-btn" href="${escapeHTML(generatedImageUrl)}" download="generated-art.png" title="Download"><i data-lucide="download"></i>Download</a>
+                            <button class="bot-action-btn" data-prompt="${escapeHTML(finalImagePrompt)}" onclick="copyGeneratedImagePrompt(this)" title="Copy prompt"><i data-lucide="copy"></i>Copy Prompt</button>
                         </div>`;
+                    refreshLucideIcons(botMsgElem);
                     if (ctx.id && ctx.sessions[ctx.id]) {
                         const savedBotIndex=ctx.sessions[ctx.id].messages.length;
                         ctx.sessions[ctx.id].messages.push({ role:'bot', text:`🖼️ Generated image via ${generatedProvider} (${generatedModel}) for: ${finalImagePrompt}` });
@@ -8850,7 +9081,7 @@ ${m.text || ''}
                     return;
                 } catch (err) {
                     removeAIIndicator();
-                    botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Image Generation Error: ${escapeHTML(err.message)}</span>`;
+                    botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ ${escapeHTML(sanitizeUiErrorMessage(err.message))}</span>`;
                     scrollToBottom(true);
                     if(activeAIAbortController===requestController)activeAIAbortController=null;
                     updateGenerationActionButton(false,false);
@@ -8903,25 +9134,8 @@ ${m.text || ''}
 
                 const renderLiveResponse = () => {
                     botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
-                        <div class="bot-actions">
-                            <button class="bot-action-btn" onclick="voteMessage(this, 'like')" title="Helpful">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
-                            </button>
-                            <button class="bot-action-btn" onclick="voteMessage(this, 'dislike')" title="Not helpful">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>
-                            </button>
-                            <button class="bot-action-btn" onclick="regenerateAnswer(this)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                                Regenerate
-                            </button>
-                            <button class="bot-action-btn" onclick="continueGenerating(this)" title="Manual Continue — usually only needed if automatic continuation reaches its cap">Continue</button>
-                            <button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation">Branch</button>
-                            ${assistantReadAloudButtonHTML()}
-                            <button class="bot-action-btn" onclick="copyText(this)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                                Copy
-                            </button>
-                        </div>`;
+                        ${botActionsHTML()}`;
+                    refreshLucideIcons(botMsgElem);
                     if (userIsScrollingUp) {
                         unreadMessagesCount++;
                         const badge = document.getElementById('unreadBadge');
@@ -8992,11 +9206,8 @@ ${m.text || ''}
                     finishAIIndicator(true);
                     if(activePartialResponse){
                         botMsgElem.innerHTML=`<div>${renderCustomMarkdown(activePartialResponse)}</div>
-                            <div class="bot-actions">
-                                <button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue from the stopped response">Continue</button>
-                                ${assistantReadAloudButtonHTML()}
-                                <button class="bot-action-btn" onclick="copyText(this)">Copy</button>
-                            </div>`;
+                            ${botActionsHTML({ vote:false, branch:false })}`;
+                        refreshLucideIcons(botMsgElem);
                         if(ctx.id && ctx.sessions[ctx.id]){
                             const savedBotIndex=ctx.sessions[ctx.id].messages.length;
                             ctx.sessions[ctx.id].messages.push({role:'bot',text:activePartialResponse,stopped:true});
@@ -9010,7 +9221,7 @@ ${m.text || ''}
                     const cleanError=sanitizeUiErrorMessage(err?.message || 'Request failed');
                     appendActivityEvent({ id:'client-catch', label:cleanError, state:'error', kind:'provider' });
                     finishAIIndicator(false);
-                    botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ Error: ${escapeHTML(cleanError)}</span>`;
+                    botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ ${escapeHTML(cleanError)}</span>`;
                 }
                 scrollToBottom(true);
             } finally {
