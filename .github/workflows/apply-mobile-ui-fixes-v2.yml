@@ -17,8 +17,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply Personalization Navigation v7
-        run: python .sync/apply_personalization_v7.py
+      - name: Apply mobile UI fixes to latest main
+        run: python .sync/apply_mobile_ui_fixes.py
 
       - name: Verify backend syntax
         run: |
@@ -50,25 +50,39 @@ jobs:
           PY
           node --check /tmp/index-inline.js
 
-      - name: Verify Personalization Navigation v7 regressions
-        run: |
-          printf '{"type":"commonjs"}\n' > tests/package.json
-          node tests/test_activity_voice_v3.js
-          node tests/test_personalization_navigation_v7.js
-          node tests/test_personalization_redesign_v6.js
-          node tests/test_runtime_regressions.js
-          node tests/test_settings_personalization_v5.js
-          python regression_mobile_runtime.py
-          rm -f tests/package.json
+      - name: Verify mobile UI contract
+        run: python tests/mobile_ui_contract_test.py
 
-      - name: Commit verified Personalization Navigation v7
+      - name: Verify AI fallback contract
+        run: python tests/public_fallback_contract_test.py
+
+      - name: Verify activity and SSE contract
+        run: python tests/activity_contract_test.py
+
+      - name: Commit verified latest source
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "JepongDevxyz Sync Bot"
           git config user.email "actions@users.noreply.github.com"
-          rm -f .sync/apply_personalization_v7.py .sync/v7_payload_*.txt tests/package.json
-          git add -A
-          git commit -m "feat: apply Personalization Navigation v7"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: mobile scroll word count and pet eyes"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Package synced index and chat
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp index.html dist/index.html
+          cp api/chat.js dist/chat.js
+          cd dist
+          zip -9 JepongDevxyz-AI-synced-mobile-fixes.zip index.html chat.js
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JepongDevxyz-AI-synced-mobile-fixes
+          path: dist/JepongDevxyz-AI-synced-mobile-fixes.zip
+          if-no-files-found: error
