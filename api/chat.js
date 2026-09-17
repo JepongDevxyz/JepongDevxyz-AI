@@ -211,26 +211,39 @@ function detectArtifactRequest(message='') {
   const text=String(message||'').trim();
   if(!text) return null;
 
-  const lower=text.toLowerCase();
-  const explicitExt=(text.match(/(?:^|[\s"'`(])([a-zA-Z0-9._-]{1,80}\.([a-zA-Z0-9]{1,10}))(?=$|[\s"'`),.!?])/i)||[]);
-  const filename=explicitExt[1] || '';
-  const ext=(explicitExt[2] || '').toLowerCase();
+  // Only create a downloadable artifact when the USER explicitly asks for one.
+  // Dotted code identifiers (req.method, res.ok), URLs and ordinary filename mentions
+  // must never be treated as download requests by themselves.
+  const knownExts=new Set([
+    'zip','pdf','txt','md','html','htm','js','mjs','cjs','css','py','json','csv','xml','svg',
+    'sql','ts','tsx','jsx','php','java','c','cpp','h','hpp','cs','yaml','yml','sh'
+  ]);
 
-  const imperative =
-    /\b(?:download|downloadable|i-download|idownload|gawan|gumawa|create|generate|export|bigay|ibigay|bigyan|send|save)\b/i.test(text) &&
-    /\b(?:file|zip|pdf|document|doc|download)\b/i.test(text);
+  const fileMatch=(text.match(/(?:^|[\s\"'`(])([a-zA-Z0-9_-][a-zA-Z0-9_.-]{0,79}\.([a-zA-Z0-9]{1,10}))(?=$|[\s\"'`),!?])/i)||[]);
+  const candidateFilename=fileMatch[1]||'';
+  const candidateExt=(fileMatch[2]||'').toLowerCase();
+  const filename=knownExts.has(candidateExt) ? candidateFilename : '';
+  const ext=filename ? candidateExt : '';
 
-  const directType =
-    /\b(?:\.zip|zip file|\.pdf|pdf file|download file|downloadable file)\b/i.test(text);
+  const deliveryVerb=/\b(?:download|downloadable|i-download|idownload|export|save(?:\s+as)?|send(?:\s+me)?|pa[ -]?send|paki[ -]?send|bigay|ibigay|bigyan)\b/i.test(text);
+  const createVerb=/\b(?:gawan|gumawa|create|generate)\b/i.test(text);
+  const artifactNoun=/\b(?:file|zip|pdf|document|doc|archive|download)\b/i.test(text);
+  const typedFile=/\b(?:html|javascript|js|css|python|json|markdown|text|txt|csv|xml|svg|sql|typescript|tsx|jsx|php|java|c\+\+|cpp|c#|yaml|yml|shell|bash)\s+(?:file|document|code)\b/i.test(text);
+  const directType=/(?:^|\s)\.(?:zip|pdf|txt|md|html|js|css|py|json|csv|xml|svg|sql|ts|tsx|jsx|php|java|cpp|cs|yaml|yml|sh)\b/i.test(text) ||
+    /\b(?:zip file|pdf file|downloadable file|download file)\b/i.test(text);
 
-  if(!imperative && !directType && !filename) return null;
+  const explicitlyRequested =
+    (deliveryVerb && (artifactNoun || directType || !!filename || typedFile)) ||
+    (createVerb && (artifactNoun || typedFile || directType));
+
+  if(!explicitlyRequested) return null;
 
   let kind='file';
   let wantedExt=ext;
 
-  if(ext==='zip' || /\b(?:\.zip|zip file)\b/i.test(text)) {
+  if(ext==='zip' || /(?:^|\s)\.zip\b|\bzip file\b/i.test(text)) {
     kind='zip'; wantedExt='zip';
-  } else if(ext==='pdf' || /\b(?:\.pdf|pdf file|pdf document)\b/i.test(text)) {
+  } else if(ext==='pdf' || /(?:^|\s)\.pdf\b|\bpdf (?:file|document)\b/i.test(text)) {
     kind='pdf'; wantedExt='pdf';
   } else if(!wantedExt) {
     const words=[
@@ -238,10 +251,10 @@ function detectArtifactRequest(message='') {
       ['json','json'],['markdown','md'],['text','txt'],['txt','txt'],['csv','csv'],
       ['xml','xml'],['svg','svg'],['sql','sql'],['typescript','ts'],['tsx','tsx'],
       ['jsx','jsx'],['php','php'],['java','java'],['c++','cpp'],['cpp','cpp'],
-      ['c#','cs'],['yaml','yaml'],['yml','yml']
+      ['c#','cs'],['yaml','yaml'],['yml','yml'],['shell','sh'],['bash','sh']
     ];
     for(const [word,x] of words){
-      const rx=new RegExp(`\\b${word.replace(/[+]/g,'\\+')}\\s+(?:file|code)\\b`,'i');
+      const rx=new RegExp(`\\b${word.replace(/[+]/g,'\\+')}\\s+(?:file|document|code)\\b`,'i');
       if(rx.test(text)){wantedExt=x;break;}
     }
     if(!wantedExt) wantedExt='txt';
@@ -3271,7 +3284,8 @@ async function generateImage(body={},requestSignal=null){
 
 async function generatePetImage(body={},requestSignal=null){
   const name=String(body.name||'').trim().slice(0,60) || 'My Pet';
-  const description=String(body.description||'').trim().slice(0,900) || 'a cute friendly companion pet';
+  const description=String(body.description||body.prompt||'').trim().slice(0,900);
+  if(!description)return json({error:'Describe the pet you want to generate.',code:'pet_prompt_required'},400);
   const matchSiteStyle = body.matchSiteStyle !== false;
   const referencePet = String(body.referencePet||'').trim();
   const prompt=buildPetImagePrompt({name,description,matchSiteStyle,referencePet});

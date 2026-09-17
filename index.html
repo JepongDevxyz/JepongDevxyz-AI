@@ -3758,7 +3758,6 @@
         @media(max-width:767px){
             html,body{height:100dvh!important;min-height:0!important}
             .app-container{height:var(--jepong-vh)!important;max-height:var(--jepong-vh)!important;min-height:0!important;transform-origin:top left}
-            html.keyboard-open .live-pet{bottom:max(104px,calc(env(safe-area-inset-bottom) + 96px))!important}
             html.keyboard-open .chat-box{overscroll-behavior-y:contain}
         }
         /* Sleeping eyes: single source of truth (image pets and emoji pets both use this). */
@@ -3900,6 +3899,184 @@
         .code-container-wrap pre code{display:block;min-width:max-content;padding-bottom:4px}
         @media(max-width:430px){.code-container-wrap{border-radius:16px;margin:12px 0}.code-block-header{padding:9px 11px}.code-container-wrap pre{max-height:54vh}}
 
+</style>
+
+
+    <style id="jepong-mobile-runtime-bugfix">
+        /* JEPONG MOBILE RUNTIME BUGFIX 2026-09-16
+           Real-device fixes: pet lane, long text, activity overlap, composer scrolling. */
+        .chat-viewport-wrapper,
+        .chat-box,
+        .msg,
+        .msg > *,
+        .user-bubble-body,
+        .ai-activity-card,
+        .ai-activity-list,
+        .ai-activity-row,
+        .ai-activity-copy { min-width:0!important; max-width:100%!important; }
+
+        html, body { overscroll-behavior:none!important; }
+        .chat-viewport-wrapper,
+        .chat-box { overflow-x:hidden!important; overscroll-behavior-y:contain; }
+
+        .msg p,.msg li,.msg blockquote,.msg td,.msg th,
+        .user-bubble-body,.ai-activity-label,.ai-activity-detail {
+            overflow-wrap:anywhere!important;
+            word-break:break-word!important;
+            white-space:normal!important;
+        }
+        .msg pre { max-width:100%!important; overflow-x:auto!important; white-space:pre!important; }
+        .msg pre code,.msg code { overflow-wrap:normal!important; word-break:normal!important; }
+        .msg table { display:block!important; max-width:100%!important; overflow-x:auto!important; }
+
+        /* One authoritative pet bottom. It is updated from the real composer geometry in JS. */
+        #livePetLayer #livePetCompanion:not(.dragging):not(.pet-settling) {
+            bottom:var(--live-pet-bottom,112px)!important;
+        }
+        #livePetLayer #livePetCompanion.dragging,
+        #livePetLayer #livePetCompanion.pet-settling { bottom:auto!important; }
+        #livePetLayer { overflow:hidden!important; contain:layout paint; }
+
+        /* Activity rows are normal-flow content, never stacked on top of one another. */
+        .ai-activity-card { position:relative!important; height:auto!important; min-height:0!important; overflow:visible!important; contain:layout; }
+        .ai-activity-list {
+            position:relative!important;
+            display:flex!important;
+            flex-direction:column!important;
+            align-items:stretch!important;
+            gap:6px!important;
+            height:auto!important;
+            min-height:0!important;
+            overflow-y:auto!important;
+            overflow-x:hidden!important;
+            scroll-behavior:auto!important;
+        }
+        .ai-activity-card.collapsed .ai-activity-list { display:none!important; }
+        .ai-activity-row {
+            position:relative!important;
+            inset:auto!important;
+            display:grid!important;
+            grid-template-columns:28px minmax(0,1fr)!important;
+            align-items:start!important;
+            flex:0 0 auto!important;
+            width:100%!important;
+            height:auto!important;
+            min-height:34px!important;
+            transform:none!important;
+        }
+        .ai-activity-copy,
+        .ai-activity-label,
+        .ai-activity-detail {
+            position:static!important;
+            inset:auto!important;
+            display:block!important;
+            height:auto!important;
+            min-height:0!important;
+            overflow:visible!important;
+            transform:none!important;
+        }
+
+        @media(max-width:767px){
+            /* Reserve a clear lane for the floating pet so the latest response does not sit underneath it. */
+            .chat-box { padding-bottom:148px!important; scroll-padding-bottom:160px!important; }
+            html.keyboard-open .chat-box { padding-bottom:138px!important; scroll-padding-bottom:150px!important; }
+        }
+    </style>
+
+
+<style id="jepong-activity-spacing-v3">
+.ai-activity-list { row-gap:12px!important; padding:6px 4px!important; }
+.ai-activity-row { min-height:44px!important; padding:10px 8px!important; column-gap:10px!important; border-radius:12px!important; }
+.ai-activity-copy { padding-top:0!important; display:flex!important; flex-direction:column!important; gap:4px!important; }
+.ai-activity-label,.ai-activity-detail { line-height:1.45!important; }
+.ai-activity-detail { margin-top:0!important; }
+@media(max-width:520px){.ai-activity-list{row-gap:10px!important}.ai-activity-row{min-height:42px!important;padding:9px 7px!important}}
+</style>
+
+<style id="settingsHomeV4Styles">
+.settings-home-overlay{padding:0!important;align-items:stretch!important;justify-content:stretch!important;background:rgba(0,0,0,.64)!important;backdrop-filter:blur(14px)!important}
+.settings-home-overlay.open{display:flex!important}
+.settings-home{width:100%;height:100dvh;min-height:0;background:#090909;color:var(--text-main);display:flex;flex-direction:column;overflow:hidden;animation:settingsIn .2s ease-out}
+body.theme-light .settings-home{background:#f6f6f6}
+@keyframes settingsIn{from{opacity:.7;transform:translateY(12px)}to{opacity:1;transform:none}}
+.settings-home-header{flex:0 0 auto;display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;padding:max(18px,env(safe-area-inset-top)) 20px 14px;border-bottom:1px solid rgba(148,163,184,.12);background:inherit;z-index:2}
+.settings-back{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:#242424;color:#fff;display:grid;place-items:center;cursor:pointer}.settings-back i{width:25px;height:25px}body.theme-light .settings-back{background:#fff;color:#111;border-color:rgba(15,23,42,.12)}
+.settings-profile{grid-column:2;display:flex;align-items:center;justify-content:center;gap:12px;min-width:0}.settings-avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#5b8cff,#8b5cf6);font-weight:700;font-size:1rem;color:#fff;flex:0 0 auto}.settings-profile h2{font-size:1.05rem;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.settings-profile p{font-size:.72rem;color:var(--text-muted);margin:3px 0 0}
+.settings-home-scroll{flex:1;min-height:0;overflow-y:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:20px 18px calc(32px + env(safe-area-inset-bottom));scrollbar-width:none}.settings-home-scroll::-webkit-scrollbar{display:none}
+.settings-section-label{font-size:.9rem;font-weight:500;color:#aaa;margin:14px 10px 10px}.settings-card-group{border-radius:26px;overflow:hidden;background:#333;border:1px solid rgba(255,255,255,.05);margin-bottom:26px}body.theme-light .settings-card-group{background:#fff;border-color:rgba(15,23,42,.08)}
+.settings-nav-row,.settings-toggle-row{width:100%;min-height:76px;padding:14px 18px;border:0;border-bottom:1px solid rgba(0,0,0,.7);background:transparent;color:inherit;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left}.settings-card-group>:last-child{border-bottom:0}.settings-nav-row{cursor:pointer}.settings-nav-row:active{background:rgba(255,255,255,.06)}body.theme-light .settings-nav-row:active{background:rgba(15,23,42,.04)}.settings-nav-row>i,.settings-toggle-row>i{width:24px;height:24px;color:#f8fafc}body.theme-light .settings-nav-row>i,body.theme-light .settings-toggle-row>i{color:#111827}.settings-nav-row>span,.settings-toggle-row>span{min-width:0}.settings-nav-row strong,.settings-toggle-row strong{display:block;font-size:1rem;font-weight:500;line-height:1.2}.settings-nav-row small,.settings-toggle-row small{display:block;color:#b5b5b5;font-size:.75rem;line-height:1.35;margin-top:4px;overflow-wrap:anywhere}body.theme-light .settings-nav-row small,body.theme-light .settings-toggle-row small{color:#64748b}.settings-nav-row>i:last-child{width:18px;height:18px;color:#9ca3af}.settings-static-row{cursor:default}.settings-home-foot{text-align:center;color:var(--text-muted);font-size:.72rem;padding:4px 0 12px}
+@media(min-width:768px){.settings-home{max-width:560px;margin:auto;height:min(92dvh,900px);border-radius:30px;border:1px solid rgba(255,255,255,.1)}.settings-home-overlay{align-items:center!important;justify-content:center!important;padding:20px!important}}
+
+
+/* ===== Settings + Personalization containment fix v5 ===== */
+#settingsModal #speechSettingsGroup{display:none!important;visibility:hidden!important;position:absolute!important;inset:auto!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important}
+.personalization-modal.ps-reference-ui{overflow:hidden!important;contain:layout paint;}
+#personalizationContent{overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch;scroll-padding-bottom:28px;}
+#psStyleSection .ps-ref-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(96px,auto)!important;align-items:center!important;gap:18px!important;min-height:68px!important;padding:16px 0!important;}
+#psStyleSection .ps-ref-copy{min-width:0!important;overflow:visible!important;}
+#psStyleSection .ps-ref-copy strong,#psStyleSection .ps-ref-copy small{overflow-wrap:break-word!important;word-break:normal!important;}
+#psStyleSection .ps-ref-choice{justify-self:end!important;min-width:96px!important;width:auto!important;max-width:150px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+@media(max-width:430px){
+  #psStyleSection .ps-ref-row{grid-template-columns:minmax(0,1fr) minmax(96px,auto)!important;gap:12px!important;}
+  #psStyleSection .ps-ref-choice{min-width:96px!important;max-width:122px!important;}
+  #personalizationContent{padding-left:16px!important;padding-right:16px!important;}
+}
+</style>
+
+<style id="personalizationV6Styles">
+/* Personalization v6 — dedicated, card-based mobile settings */
+#personalizationModalOverlay .personalization-v6-page{display:flex;flex-direction:column;gap:14px;padding:4px 0 24px;background:transparent!important;border:0!important}
+#personalizationModalOverlay .ps-personality-hero{display:flex;align-items:center;gap:13px;padding:8px 2px 12px}
+#personalizationModalOverlay .ps-personality-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(99,102,241,.28),rgba(168,85,247,.28));border:1px solid rgba(168,85,247,.32);color:#c4b5fd;flex:0 0 auto}
+#personalizationModalOverlay .ps-personality-icon svg{width:21px;height:21px}
+#personalizationModalOverlay .ps-personality-hero h3{margin:0!important;font-size:1.18rem!important;line-height:1.25;color:var(--text-main)}
+#personalizationModalOverlay .ps-personality-hero p{margin:4px 0 0;color:var(--text-muted);font-size:.84rem;line-height:1.4}
+#personalizationModalOverlay .ps-v6-card{background:rgba(255,255,255,.035);border:1px solid var(--border-color);border-radius:18px;padding:4px 16px;overflow:hidden}
+body.theme-light #personalizationModalOverlay .ps-v6-card{background:#f8fafc}
+#personalizationModalOverlay .ps-v6-card-head{padding:15px 0 12px;border-bottom:1px solid rgba(148,163,184,.12)}
+#personalizationModalOverlay .ps-v6-eyebrow{display:block;color:#a78bfa;font-size:.66rem;font-weight:800;letter-spacing:.1em;margin-bottom:5px}
+#personalizationModalOverlay .ps-v6-card-head h4{margin:0;color:var(--text-main);font-size:1rem;line-height:1.3}
+#personalizationModalOverlay .ps-v6-card-head p{margin:5px 0 0;color:var(--text-muted);font-size:.79rem;line-height:1.45}
+#personalizationModalOverlay .ps-v6-primary-row{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:15px 0;background:transparent;border:0;color:var(--text-main);text-align:left;cursor:pointer}
+#personalizationModalOverlay .ps-v6-primary-row>span:first-child{min-width:0}
+#personalizationModalOverlay .ps-v6-primary-row strong{display:block;font-size:.94rem}
+#personalizationModalOverlay .ps-v6-primary-row small{display:block;margin-top:4px;color:var(--text-muted);font-size:.76rem;line-height:1.35}
+#personalizationModalOverlay .ps-v6-primary-row .ps-ref-choice{pointer-events:none;padding:0;min-width:86px}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-row{padding:14px 0!important;min-height:66px!important}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-row+.ps-ref-row{border-top:1px solid rgba(148,163,184,.12)!important}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-copy strong{font-size:.92rem!important}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-copy small{display:block;margin-top:4px;font-size:.75rem!important;line-height:1.38!important;color:var(--text-muted)}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-choice{font-size:.9rem!important;min-width:92px!important;max-width:122px!important}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-field{margin:12px 0 14px}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-field label{font-size:.78rem;font-weight:700;color:var(--text-main);margin-bottom:7px}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-field input,#personalizationModalOverlay .personalization-v6-page .ps-ref-field textarea{width:100%;border-radius:13px;border:1px solid var(--border-color);background:rgba(0,0,0,.14);color:var(--text-main);padding:12px 13px;font:inherit;font-size:.84rem;line-height:1.45;resize:vertical}
+body.theme-light #personalizationModalOverlay .personalization-v6-page .ps-ref-field input,body.theme-light #personalizationModalOverlay .personalization-v6-page .ps-ref-field textarea{background:#fff}
+#personalizationModalOverlay .personalization-v6-page .ps-ref-field textarea{min-height:86px}
+#personalizationModalOverlay .ps-v6-instructions textarea{min-height:120px!important}
+#personalizationModalOverlay .ps-v6-instructions>small{display:block;color:var(--text-muted);font-size:.7rem;line-height:1.4;margin-top:7px}
+@media(max-width:430px){#personalizationModalOverlay .ps-v6-card{padding-left:14px;padding-right:14px;border-radius:17px}#personalizationModalOverlay .personalization-v6-page .ps-ref-row{grid-template-columns:minmax(0,1fr) 94px!important;gap:10px!important}#personalizationModalOverlay .personalization-v6-page .ps-ref-choice{min-width:88px!important;max-width:94px!important;font-size:.86rem!important}#personalizationModalOverlay .ps-personality-hero{padding-top:2px}}
+</style>
+
+<style id="personalizationV7NavigationStyles">
+/* Personalization v7 — dedicated page, no legacy search or tab strip. */
+#personalizationModalOverlay{padding:0!important;align-items:stretch!important;justify-content:stretch!important;background:rgba(0,0,0,.64)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
+#personalizationModalOverlay.open{display:flex!important}
+#personalizationModalOverlay .personalization-modal.ps-reference-ui{width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:0!important;background:#090909!important;overflow:hidden!important;display:flex!important;flex-direction:column!important}
+body.theme-light #personalizationModalOverlay .personalization-modal.ps-reference-ui{background:#f6f6f6!important}
+#personalizationModalOverlay .ps-v7-head{display:grid!important;grid-template-columns:48px minmax(0,1fr) auto!important;align-items:center!important;gap:12px!important;padding:max(16px,env(safe-area-inset-top)) 18px 14px!important;border-bottom:1px solid rgba(148,163,184,.12)!important;background:inherit!important}
+#personalizationModalOverlay .ps-ref-back{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:#242424;color:#fff;display:grid;place-items:center;cursor:pointer}
+#personalizationModalOverlay .ps-ref-back svg{width:23px;height:23px}
+body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color:#111;border-color:rgba(15,23,42,.12)}
+#personalizationModalOverlay .ps-v7-head-copy{min-width:0}
+#personalizationModalOverlay .ps-v7-head-copy h2{margin:0!important;font-size:1.2rem!important;font-weight:650!important;line-height:1.2!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#personalizationModalOverlay .ps-v7-head-copy p{margin:4px 0 0!important;font-size:.72rem!important;color:var(--text-muted)!important;line-height:1.3!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#personalizationModalOverlay #personalizationMainPage{height:100%!important;min-height:0!important}
+#personalizationModalOverlay #personalizationContent{flex:1!important;min-height:0!important;padding:18px 18px calc(30px + env(safe-area-inset-bottom))!important;overflow-y:auto!important;overflow-x:hidden!important}
+#personalizationModalOverlay .ps-personality-hero{padding-top:2px!important}
+@media(min-width:768px){
+  #personalizationModalOverlay{align-items:center!important;justify-content:center!important;padding:20px!important}
+  #personalizationModalOverlay .personalization-modal.ps-reference-ui{max-width:560px!important;height:min(92dvh,900px)!important;max-height:min(92dvh,900px)!important;border-radius:30px!important;border:1px solid rgba(255,255,255,.1)!important}
+}
 </style>
 </head>
 <body>
@@ -4062,6 +4239,7 @@
                     id="userInput" 
                     placeholder="Ask anything…" 
                     rows="1"
+                    enterkeyhint="enter"
                     onkeydown="handleKeyDown(event)"
                     oninput="autoResizeTextarea(this)"></textarea>
                 
@@ -4123,246 +4301,103 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal-overlay" onclick="if(event.target === this) closeSettingsModal()">
-      <div class="floating-modal">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.72l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            Settings
-          </h3>
-          <button onclick="closeSettingsModal()" style="background:none; border:none; color:inherit; cursor:pointer;">✕</button>
-        </div>
-
-        <div class="ios-switch-container">
-          <span style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-            Light Mode
-          </span>
-          <label class="ios-switch">
-            <input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)">
-            <span class="ios-slider"></span>
-          </label>
-        </div>
-
-        <div class="ios-switch-container">
-          <span style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px; min-width:0;">
-            <i data-lucide="globe-2" style="width:18px;height:18px;flex:0 0 auto;"></i>
-            <span style="min-width:0;">
-              <strong style="display:block;font-size:.85rem;font-weight:600;">Live Web Search</strong>
-              <small style="display:block;color:var(--text-muted);font-size:.68rem;line-height:1.35;margin-top:2px;">Use current web results when a request needs live information.</small>
-            </span>
-          </span>
-          <label class="ios-switch">
-            <input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)">
-            <span class="ios-slider"></span>
-          </label>
-        </div>
-
-        <div class="ios-switch-container">
-          <span style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-            Response Speech
-          </span>
-          <label class="ios-switch">
-            <input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)">
-            <span class="ios-slider"></span>
-          </label>
-        </div>
-
-        <div class="ios-switch-container">
-          <span style="font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px; min-width:0;">
-            <i data-lucide="bell" style="width:18px;height:18px;flex:0 0 auto;"></i>
-            <span style="min-width:0;">
-              <strong style="display:block;font-size:.85rem;font-weight:600;">Replies</strong>
-              <small style="display:block;color:var(--text-muted);font-size:.68rem;line-height:1.35;margin-top:2px;">Get notified when AI finishes a reply.</small>
-            </span>
-          </span>
-          <label class="ios-switch">
-            <input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)">
-            <span class="ios-slider"></span>
-          </label>
-        </div>
-
-        <div class="speech-settings-group disabled" id="speechSettingsGroup">
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-              Text-to-Speech Voice
-            </label>
-            <button type="button" class="modern-select-btn" id="voiceSelectBtn" onclick="openVoiceModal()">
-              <span id="voiceSelectLabel" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Default Voice</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
+    <!-- Settings Home — organized mobile settings -->
+    <div id="settingsModal" class="modal-overlay settings-home-overlay" onclick="if(event.target === this) closeSettingsModal()">
+      <section class="settings-home" role="dialog" aria-modal="true" aria-labelledby="settingsHomeTitle">
+        <header class="settings-home-header">
+          <button class="settings-back" type="button" onclick="closeSettingsModal()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+          <div class="settings-profile">
+            <div class="settings-avatar">JD</div>
+            <div><h2 id="settingsHomeTitle">JepongDevxyz</h2><p>JepongDevxyz AI settings</p></div>
+          </div>
+        </header>
+        <div class="settings-home-scroll">
+          <h3 class="settings-section-label">My AI</h3>
+          <div class="settings-card-group">
+            <button class="settings-nav-row" type="button" onclick="openPersonalizationSettings()"><i data-lucide="smile"></i><span><strong>Personalization</strong><small>Style, instructions, writing and preferences</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="openSettingsMemory()"><i data-lucide="book-open"></i><span><strong>Memory</strong><small>Saved local memory and chat-history references</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="openSettingsPet()"><i data-lucide="cat"></i><span><strong>Pet & Luna</strong><small>Pet companion, behavior and Create a Pet with AI</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="openSettingsVoice()"><i data-lucide="audio-lines"></i><span><strong>Voice & Read Aloud</strong><small>Voice preview, read aloud, speed and language</small></span><i data-lucide="chevron-right"></i></button>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 2-2 10h9L7 22l2-10H0Z"/></svg>
-                Voice Speed
-              </label>
-              <span id="speedValueLabel" style="font-size: 0.8rem; font-weight: 700; color: #8b5cf6;">1.0x</span>
-            </div>
-            <div class="speed-slider-wrap">
-              <input type="range" class="modern-slider" id="speedSlider" min="0.7" max="1.3" step="0.05" value="1.0" oninput="changeVoiceSpeed(this.value)">
-            </div>
+          <h3 class="settings-section-label">AI & tools</h3>
+          <div class="settings-card-group">
+            <label class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="ios-switch"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="ios-slider"></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="ios-switch"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="ios-slider"></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small>Notify when an AI reply finishes</small></span><label class="ios-switch"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)"><span class="ios-slider"></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>Try another provider if the selected one fails</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Allow automatic model selection</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
+            <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openPresetsModal()"><i data-lucide="notebook-pen"></i><span><strong>Prompt Presets</strong><small>Manage reusable prompts</small></span><i data-lucide="chevron-right"></i></button>
           </div>
+
+          <h3 class="settings-section-label">App</h3>
+          <div class="settings-card-group">
+            <label class="settings-toggle-row"><i data-lucide="sun-moon"></i><span><strong>Light Mode</strong><small>Switch between dark and light appearance</small></span><label class="ios-switch"><input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)"><span class="ios-slider"></span></label></label>
+            <button class="settings-nav-row" type="button" onclick="cycleSettingsAccent()"><i data-lucide="palette"></i><span><strong>Accent</strong><small id="settingsAccentLabel">Default</small></span><i data-lucide="chevron-right"></i></button>
+            <div class="settings-nav-row settings-static-row"><i data-lucide="chart-no-axes-column"></i><span><strong>Usage & Limits</strong><small><b id="geminiWordCount">0</b> words · <b id="geminiTokenCount">0</b> tokens · <b id="geminiQueryCount">0</b> queries</small></span></div>
+            <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openSidebar()"><i data-lucide="history"></i><span><strong>Chat History</strong><small>Return to saved conversations and exports</small></span><i data-lucide="chevron-right"></i></button>
+          </div>
+          <p class="settings-home-foot">JepongDevxyz AI</p>
         </div>
-
-        <div class="divider"></div>
-
-
-        <button type="button" class="personalization-entry" onclick="openPersonalizationSettings()">
-            <span class="left">
-                <span style="width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(139,92,246,.16);color:#a78bfa;">✦</span>
-                <span>
-                    <strong>Personalization</strong>
-                    <small>Style, about you, memory, writing, advanced & voice behavior</small>
-                </span>
-            </span>
-            <span style="color:var(--text-muted);font-size:1rem;">›</span>
-        </button>
-
-        <div class="divider"></div>
-        <button type="button" class="modern-select-btn" onclick="openPresetsModal()" style="margin-top: 2px;">
-            <span style="display: flex; align-items: center; gap: 8px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                Prompt Presets Manager
-            </span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
-
-        <div class="divider"></div>
-
-        <div class="routing-settings-section">
-          <h4 class="routing-settings-title">Model Routing</h4>
-          <div class="feature-toggle-row">
-            <span>
-              <strong style="display:block;font-weight:600">Auto Provider Fallback</strong>
-              <small style="display:block;color:var(--text-muted);margin-top:3px">OFF = test only the selected model. ON = allow model/provider fallback.</small>
-            </span>
-            <label class="mini-toggle">
-              <input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)">
-              <span></span>
-            </label>
-          </div>
-          <div class="feature-toggle-row">
-            <span>
-              <strong style="display:block;font-weight:600">Smart Model Router</strong>
-              <small style="display:block;color:var(--text-muted);margin-top:3px">OFF = keep your selected model. ON = router may choose another model.</small>
-            </span>
-            <label class="mini-toggle">
-              <input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)">
-              <span></span>
-            </label>
-          </div>
-        </div>
-
-
-        <div class="divider"></div>
-
-        <div class="usage-section">
-          <div class="usage-title">Usage &amp; Limits</div>
-          <div class="usage-metric-card">
-            <div class="metric-box"><h5>Words</h5><p id="geminiWordCount">0</p></div>
-            <div class="metric-box"><h5>Tokens</h5><p id="geminiTokenCount">0</p></div>
-            <div class="metric-box"><h5>Queries</h5><p id="geminiQueryCount">0</p></div>
-          </div>
-          <div class="usage-limits-deck">
-            <div class="limit-card">
-              <div class="limit-card-header">
-                <div class="limit-title-wrap">
-                  <span id="currentUsageTitle">Provider quota</span>
-                  <span class="info-circle" title="How much of this provider's quota looks used, based on what it reports.">i</span>
-                </div>
-                <span class="limit-percent" id="currentUsagePercent">Synced · ready</span>
-              </div>
-              <div class="progress-track"><div class="progress-fill" id="currentUsageBar"></div></div>
-              <div class="limit-card-footer" id="currentUsageResetText">Exact remaining quota is shown only when this provider reports it.</div>
-            </div>
-            <div class="limit-card">
-              <div class="limit-card-header">
-                <div class="limit-title-wrap">
-                  <span>Context window used</span>
-                  <span class="info-circle" title="Estimated from this conversation's length against a ~128k token budget.">i</span>
-                </div>
-                <span class="limit-percent" id="weeklyUsagePercent">0% used</span>
-              </div>
-              <div class="progress-track"><div class="progress-fill" id="weeklyUsageBar"></div></div>
-              <div class="limit-card-footer">Resets automatically when you start a new chat.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div style="margin-top: 4px;">
-          <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Preset Accents</h4>
-          <div style="display: flex; gap: 8px;">
-            <button onclick="setTheme('')" class="option-item" style="flex:1; justify-content:center; border: 1px solid var(--border-color); font-size: 0.75rem;">Default</button>
-            <button onclick="setTheme('theme-neon')" class="option-item" style="flex:1; justify-content:center; border: 1px solid var(--border-color); font-size: 0.75rem;">Neon</button>
-            <button onclick="setTheme('theme-sunset')" class="option-item" style="flex:1; justify-content:center; border: 1px solid var(--border-color); font-size: 0.75rem;">Sunset</button>
-          </div>
-        </div>
-      </div>
+        <div id="speechSettingsGroup" class="speech-settings-group disabled" hidden><button id="voiceSelectBtn" type="button"><span id="voiceSelectLabel">Default Voice</span></button><input id="speedSlider" type="range" min="0.7" max="1.3" step="0.05" value="1"><span id="speedValueLabel">1.0x</span></div>
+        <span id="currentUsageTitle" hidden></span><span id="currentUsagePercent" hidden></span><span id="currentUsageResetText" hidden></span><span id="weeklyUsagePercent" hidden></span><span id="currentUsageBar" hidden></span><span id="weeklyUsageBar" hidden></span>
+      </section>
     </div>
-
 
     <!-- PERSONALIZATION SETTINGS — reference-video style -->
     <div class="modal-overlay" id="personalizationModalOverlay" onclick="if(event.target===this) closePersonalizationSettings()">
       <div class="floating-modal personalization-modal ps-reference-ui">
         <div id="personalizationMainPage" style="display:flex;flex-direction:column;height:100%;min-height:0;">
-          <div class="ps-ref-head">
-            <h2>Settings</h2>
-            <span class="ps-badge" id="psMemoryBadge" style="display:none">Local only</span>
-            <button class="ps-ref-close" onclick="closePersonalizationSettings()" aria-label="Close">×</button>
-          </div>
-
-          <div class="ps-ref-search-wrap">
-            <div class="ps-ref-search">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              <input id="personalizationSearchInput" type="search" placeholder="Search settings" oninput="filterPersonalizationSettings(this.value)">
+          <div class="ps-ref-head ps-v7-head">
+            <button class="ps-ref-back" type="button" onclick="backToSettingsFromPersonalization()" aria-label="Back to Settings"><i data-lucide="arrow-left"></i></button>
+            <div class="ps-v7-head-copy">
+              <h2>Personalization</h2>
+              <p>Customize how JepongDevxyz AI responds to you</p>
             </div>
-          </div>
-
-          <div class="ps-ref-tabs" id="personalizationTabs">
-            <button class="ps-ref-tab active" id="psPersonalizationTabBtn" onclick="openPersonalizationHomeTab()"><i data-lucide="sliders-horizontal"></i><span>Personalization</span></button>
-            <button class="ps-ref-tab" id="psVoiceTabBtn" onclick="openVoiceSettingsPage()"><i data-lucide="audio-lines"></i><span>Voice</span></button>
-            <button class="ps-ref-tab" id="psPetTabBtn" onclick="openPetPicker()"><i data-lucide="paw-print"></i><span>Pet</span></button>
+            <span class="ps-badge" id="psMemoryBadge" style="display:none">Local only</span>
           </div>
 
           <div class="ps-ref-content" id="personalizationContent">
-            <section class="ps-ref-section" id="psStyleSection" data-ps-search="base style tone characteristics warm enthusiastic headers lists emoji fast answers suggested prompts custom instructions">
-              <h3>Base style and tone</h3>
-              <div class="ps-ref-row">
-                <div class="ps-ref-copy"><strong>Base style and tone</strong><small>Choose the overall personality JepongDevxyz AI should use in replies.</small></div>
-                <button class="ps-ref-choice" id="psBaseStyleBtn" onclick="openPersonalizationPicker('baseStyle','Base style and tone',[['Default','Balanced for everyday use'],['Professional','Polished and precise'],['Friendly','Warm and conversational'],['Candid','Direct and straightforward'],['Quirky','Playful and imaginative'],['Efficient','Concise and task-focused'],['Cynical','Dry and skeptical']],this)">Default <span class="chev">⌄</span></button>
+            <section class="ps-ref-section personalization-v6-page" id="psStyleSection" data-ps-search="personalization base style tone warm enthusiastic headers lists emoji custom instructions nickname occupation about you">
+              <div class="ps-personality-hero" id="ps-personality-hero">
+                <span class="ps-personality-icon"><i data-lucide="sparkles"></i></span>
+                <div>
+                  <h3>Personalization</h3>
+                  <p>Customize how JepongDevxyz AI responds to you</p>
+                </div>
               </div>
-              <div class="section-help">Choose additional customizations on top of your base style and tone.</div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Warm</strong></div><button class="ps-ref-choice" id="psWarmBtn" onclick="openPersonalizationPicker('warm','Warm',[['More','Friendlier and more personable'],['Default','Balanced warmth'],['Less','More professional and factual']],this)">Default <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enthusiastic</strong></div><button class="ps-ref-choice" id="psEnthusiasticBtn" onclick="openPersonalizationPicker('enthusiastic','Enthusiastic',[['More','More energetic and expressive'],['Default','Balanced energy'],['Less','Calmer and more restrained']],this)">Default <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Headers & Lists</strong></div><button class="ps-ref-choice" id="psHeadersBtn" onclick="openPersonalizationPicker('headersLists','Headers & Lists',[['More','Use structured headings and lists more often'],['Default','Use structure when useful'],['Less','Prefer flowing paragraphs']],this)">Default <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Emoji</strong></div><button class="ps-ref-choice" id="psEmojiBtn" onclick="openPersonalizationPicker('emoji','Emoji',[['More','Use emoji a little more often'],['Default','Use emoji when natural'],['Less','Prefer little or no emoji']],this)">Default <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Fast answers</strong><small>Prefer concise answers first when the question does not need a long explanation.</small></div><label class="mini-toggle"><input id="psFastAnswers" type="checkbox" onchange="setPersonalizationToggle('fastAnswers',this.checked)"><span></span></label></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Suggested prompts</strong><small>Show personalized prompt suggestions based on your current mode.</small></div><label class="mini-toggle"><input id="psSuggestedPrompts" type="checkbox" onchange="setPersonalizationToggle('suggestedPrompts',this.checked)"><span></span></label></div>
-              <div class="ps-ref-field"><label>Custom instructions</label><textarea id="psCustomInstructions" placeholder="Additional behavior, style, and tone preferences…" oninput="savePersonalizationField('customInstructions',this.value)"></textarea></div>
-            </section>
 
-            <section class="ps-ref-section" id="psPetSection" data-ps-search="pet companion choose pet upload custom create">
-              <h3>Pet companion</h3>
-              <div class="ps-ref-row" onclick="openPetPicker()" style="cursor:pointer">
-                <div class="ps-ref-copy"><strong>Pet</strong><small>Choose a companion persona that can subtly influence friendliness and style.</small></div>
-                <button class="ps-ref-choice" id="psPetBtn" type="button" onclick="event.stopPropagation();openPetPicker()">None <span class="chev">›</span></button>
+              <div class="ps-v6-card" id="ps-style-summary">
+                <div class="ps-v6-card-head">
+                  <div><span class="ps-v6-eyebrow">PERSONALITY</span><h4>Base style and tone</h4><p>Choose the overall voice used in replies. You can fine-tune it below.</p></div>
+                </div>
+                <button class="ps-v6-primary-row" type="button" onclick="openPersonalizationPicker('baseStyle','Base style and tone',[['Default','Balanced for everyday use'],['Professional','Polished and precise'],['Friendly','Warm and conversational'],['Candid','Direct and straightforward'],['Quirky','Playful and imaginative'],['Efficient','Concise and task-focused'],['Cynical','Dry and skeptical']],document.getElementById('psBaseStyleBtn'))">
+                  <span><strong>Base style and tone</strong><small>Overall response personality</small></span>
+                  <span class="ps-ref-choice" id="psBaseStyleBtn">Default <span class="chev">›</span></span>
+                </button>
               </div>
-            </section>
 
-            <section class="ps-ref-section" id="psAboutSection" data-ps-search="about you nickname occupation more about you profile">
-              <h3>About you</h3>
-              <div class="ps-ref-field"><label>Nickname</label><input id="psNickname" placeholder="What should JepongDevxyz AI call you?" oninput="savePersonalizationField('nickname',this.value)"></div>
-              <div class="ps-ref-field"><label>Occupation</label><input id="psOccupation" placeholder="Example: Student, developer, creator…" oninput="savePersonalizationField('occupation',this.value)"></div>
-              <div class="ps-ref-field"><label>More about you</label><textarea id="psMoreAbout" placeholder="Interests, preferences, goals, or context you want the AI to keep in mind" oninput="savePersonalizationField('moreAbout',this.value)"></textarea></div>
-              <div class="ps-ref-note">Only save information you are comfortable keeping on this device.</div>
+              <div class="ps-v6-card" id="ps-writing-controls">
+                <div class="ps-v6-card-head"><div><span class="ps-v6-eyebrow">CHARACTERISTICS</span><h4>Fine-tune responses</h4><p>These settings layer on top of your base style.</p></div></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Warm</strong><small>How friendly and personable replies feel.</small></div><button class="ps-ref-choice" id="psWarmBtn" onclick="openPersonalizationPicker('warm','Warm',[['More','Friendlier and more personable'],['Default','Balanced warmth'],['Less','More professional and factual']],this)">Default <span class="chev">›</span></button></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enthusiastic</strong><small>Control the energy and expressiveness of replies.</small></div><button class="ps-ref-choice" id="psEnthusiasticBtn" onclick="openPersonalizationPicker('enthusiastic','Enthusiastic',[['More','More energetic and expressive'],['Default','Balanced energy'],['Less','Calmer and more restrained']],this)">Default <span class="chev">›</span></button></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Headers &amp; Lists</strong><small>Choose how often structured formatting is used.</small></div><button class="ps-ref-choice" id="psHeadersBtn" onclick="openPersonalizationPicker('headersLists','Headers & Lists',[['More','Use structured headings and lists more often'],['Default','Use structure when useful'],['Less','Prefer flowing paragraphs']],this)">Default <span class="chev">›</span></button></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Emoji</strong><small>Choose how often emoji appear naturally in replies.</small></div><button class="ps-ref-choice" id="psEmojiBtn" onclick="openPersonalizationPicker('emoji','Emoji',[['More','Use emoji a little more often'],['Default','Use emoji when natural'],['Less','Prefer little or no emoji']],this)">Default <span class="chev">›</span></button></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Fast answers</strong><small>Prefer a concise answer first when extra detail is unnecessary.</small></div><label class="mini-toggle"><input id="psFastAnswers" type="checkbox" onchange="setPersonalizationToggle('fastAnswers',this.checked)"><span></span></label></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Suggested prompts</strong><small>Show prompt suggestions based on your current mode.</small></div><label class="mini-toggle"><input id="psSuggestedPrompts" type="checkbox" onchange="setPersonalizationToggle('suggestedPrompts',this.checked)"><span></span></label></div>
+              </div>
+
+              <div class="ps-v6-card" id="ps-about-you-card">
+                <div class="ps-v6-card-head"><div><span class="ps-v6-eyebrow">ABOUT YOU</span><h4>What should the AI know?</h4><p>This context is included only when personalization is available for the chat.</p></div></div>
+                <div class="ps-ref-field"><label>Nickname</label><input id="psNickname" placeholder="What should JepongDevxyz AI call you?" oninput="savePersonalizationField('nickname',this.value)"></div>
+                <div class="ps-ref-field"><label>Occupation</label><input id="psOccupation" placeholder="Example: Student, developer, creator…" oninput="savePersonalizationField('occupation',this.value)"></div>
+                <div class="ps-ref-field"><label>More about you</label><textarea id="psMoreAbout" placeholder="Interests, preferences, goals, or useful context" oninput="savePersonalizationField('moreAbout',this.value)"></textarea></div>
+              </div>
+
+              <div class="ps-v6-card" id="ps-custom-instructions-card">
+                <div class="ps-v6-card-head"><div><span class="ps-v6-eyebrow">CUSTOM INSTRUCTIONS</span><h4>Additional preferences</h4><p>Add behavior or response preferences not covered by the controls above.</p></div></div>
+                <div class="ps-ref-field ps-v6-instructions"><textarea id="psCustomInstructions" placeholder="Example: Explain technical topics in simple Tagalog first, then show the code…" oninput="savePersonalizationField('customInstructions',this.value)"></textarea><small>Your changes are saved automatically on this device.</small></div>
+              </div>
             </section>
 
             <section class="ps-ref-section" id="psMemorySection" data-ps-search="memory enable memory summary manage chat history saved memories">
@@ -4387,14 +4422,6 @@
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Connector search preference</strong><small>Saves your preference for future connected-service integrations. It does not connect an external account by itself.</small></div><label class="mini-toggle"><input id="psConnectorSearch" type="checkbox" onchange="setPersonalizationToggle('connectorSearch',this.checked)"><span></span></label></div>
             </section>
 
-            <section class="ps-ref-section" id="psVoiceSection" data-ps-search="voice personality model intelligence language response speech">
-              <h3>Voice</h3>
-              <div class="ps-ref-row" onclick="openVoiceSettingsPage()" style="cursor:pointer"><div class="ps-ref-copy"><strong>Voice</strong><small>Choose a voice, hear a sample, and set voice model, intelligence, and language.</small></div><button class="ps-ref-choice" id="psVoicePersonaBtn" type="button" onclick="event.stopPropagation();openVoiceSettingsPage()">Breeze <span class="chev">›</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Model</strong><small>Voice-interaction preference only; your selected text provider/model remains unchanged.</small></div><button class="ps-ref-choice" id="psVoiceModelBtn" onclick="openPersonalizationPicker('voiceModel','Voice model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)">Live <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Response effort</strong><small>Instant syncs with Fast Answers. Medium and High use progressively deeper response preparation.</small></div><button class="ps-ref-choice" id="psIntelligenceBtn" onclick="openPersonalizationPicker('intelligence','Response effort',[['Instant','Fastest direct response'],['Medium','Balanced speed and depth'],['High','More thorough quality pass']],this)">Instant <span class="chev">⌄</span></button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Language</strong><small>Preferred language for voice and normal chats.</small></div><button class="ps-ref-choice" id="psLanguageBtn" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']),this)">Auto-detect <span class="chev">⌄</span></button></div>
-            </section>
-
             <section class="ps-ref-section" id="psPrivacySection" data-ps-search="privacy storage reset personalization local browser">
               <h3>Privacy & reset</h3>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Storage</strong><small>Personalization, custom pet settings, and memory summary are stored in this browser's LocalStorage.</small></div><span class="ps-badge">Local</span></div>
@@ -4405,7 +4432,7 @@
 
         <div class="ps-pet-page" id="personalizationPetPage">
           <div class="ps-pet-toolbar">
-            <button class="ps-pet-back" onclick="closePetPicker()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+            <button class="ps-pet-back" onclick="backFromPetSettingsPage()" aria-label="Back to Settings"><i data-lucide="arrow-left"></i></button>
             <h3>Your pet</h3>
             <label class="ps-upload-btn" for="psPetUploadInput"><i data-lucide="image-up"></i><span>Upload pet</span></label>
             <input id="psPetUploadInput" type="file" accept="image/*" hidden onchange="handlePersonalizationPetUpload(event)">
@@ -4499,7 +4526,7 @@
 
         <div class="ps-voice-page" id="personalizationVoicePage">
           <div class="ps-voice-toolbar">
-            <button class="ps-voice-back" onclick="closeVoiceSettingsPage()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+            <button class="ps-voice-back" onclick="backFromVoiceSettingsPage()" aria-label="Back to Settings"><i data-lucide="arrow-left"></i></button>
             <h3>Voice</h3>
           </div>
           <div class="ps-voice-scroll">
@@ -5015,6 +5042,14 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
 
+        let visualViewportSyncRaf = 0;
+        function lockDocumentViewport() {
+            // The document itself never scrolls. Only intentional internal surfaces (chat, modals, code) scroll.
+            const root = document.scrollingElement || document.documentElement;
+            if (root && root.scrollTop) root.scrollTop = 0;
+            if (document.body && document.body.scrollTop) document.body.scrollTop = 0;
+        }
+
         function syncVisualViewport() {
             const vv = window.visualViewport;
             const layoutHeight = Math.max(320, Math.round(window.innerHeight || document.documentElement.clientHeight || 0));
@@ -5026,20 +5061,44 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             document.documentElement.classList.toggle('keyboard-open', keyboardOpen);
             const app = document.getElementById('appContainer');
             if (app && window.matchMedia('(max-width: 767px)').matches) {
+                // Chrome Android can PAN the visual viewport while keeping a focused textarea visible.
+                // Anchor the app to the visual viewport itself so the UI does not jump/flash into a blank area.
+                app.style.position = 'fixed';
+                app.style.left = '0';
+                app.style.right = '0';
+                app.style.bottom = 'auto';
+                app.style.top = `${offsetTop}px`;
                 app.style.height = `${height}px`;
                 app.style.maxHeight = `${height}px`;
-                // Keep the fixed app anchored. Chrome Android may report a non-zero
-                // visualViewport.offsetTop while the keyboard is open; translating the whole
-                // app by that value causes the blank/"scrolled away" screen.
-                app.style.transform = '';
+                app.style.transform = 'none';
+                app.style.transition = 'none';
             }
+            lockDocumentViewport();
+            if (typeof syncLivePetSafeLane === 'function') syncLivePetSafeLane();
+        }
+        function scheduleVisualViewportSync() {
+            cancelAnimationFrame(visualViewportSyncRaf);
+            visualViewportSyncRaf = requestAnimationFrame(syncVisualViewport);
         }
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', syncVisualViewport, {passive:true});
+            window.visualViewport.addEventListener('resize', scheduleVisualViewportSync, {passive:true});
+            window.visualViewport.addEventListener('scroll', scheduleVisualViewportSync, {passive:true});
         }
-        window.addEventListener('resize', syncVisualViewport, {passive:true});
-        window.addEventListener('orientationchange', ()=>setTimeout(syncVisualViewport, 120), {passive:true});
+        window.addEventListener('resize', scheduleVisualViewportSync, {passive:true});
+        window.addEventListener('scroll', lockDocumentViewport, {passive:true});
+        window.addEventListener('orientationchange', ()=>setTimeout(scheduleVisualViewportSync, 120), {passive:true});
         requestAnimationFrame(syncVisualViewport);
+        requestAnimationFrame(() => {
+            if (!window.ResizeObserver) return;
+            const input = document.getElementById('inputContainer');
+            const layer = document.getElementById('livePetLayer');
+            if (!input || !layer) return;
+            try { window.__jepongPetResizeObserver?.disconnect?.(); } catch (_) {}
+            const observer = new ResizeObserver(() => syncLivePetSafeLane());
+            observer.observe(input);
+            observer.observe(layer);
+            window.__jepongPetResizeObserver = observer;
+        });
 
         ['pointerdown','keydown','touchstart'].forEach(evt=>{
             document.addEventListener(evt, (e)=>{
@@ -5076,10 +5135,13 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             const shouldScroll = textarea.scrollHeight > maxHeight;
             textarea.style.overflowY = shouldScroll ? 'auto' : 'hidden';
             if (shouldScroll) textarea.scrollTop = textarea.scrollHeight;
+            if (typeof syncLivePetSafeLane === 'function') syncLivePetSafeLane();
         }
 
         function handleKeyDown(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Plain Enter/Return must behave like a normal multiline textarea on mobile and desktop.
+            // Keep Ctrl/Cmd+Enter as an optional keyboard shortcut for Send.
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.isComposing) {
                 e.preventDefault();
                 sendMessage();
             }
@@ -5181,10 +5243,41 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         let livePetLastTap = 0;
         let livePetWorking = false;
         const LIVE_PET_MIN_BOTTOM = 112;
+        let livePetLaneRaf = 0;
         function getLivePetWalkBottom() {
+            const layer = document.getElementById('livePetLayer');
             const input = document.getElementById('inputContainer');
-            const inputHeight = Math.max(0, Number(input?.offsetHeight || 0));
-            return Math.max(LIVE_PET_MIN_BOTTOM, inputHeight + 22);
+            if (!layer || !input) return LIVE_PET_MIN_BOTTOM;
+
+            const layerRect = layer.getBoundingClientRect();
+            const inputRect = input.getBoundingClientRect();
+            // Distance from the bottom of the app to the TOP of the composer + a visual gap.
+            // This automatically follows textarea growth, browser chrome and the Android keyboard.
+            const geometryBottom = Math.round(layerRect.bottom - inputRect.top + 12);
+            const maxBottom = Math.max(LIVE_PET_MIN_BOTTOM, Math.round(layer.clientHeight - 108));
+            return Math.max(LIVE_PET_MIN_BOTTOM, Math.min(maxBottom, geometryBottom));
+        }
+
+        function applyLivePetWalkBottom(pet, bottom = getLivePetWalkBottom()) {
+            if (!pet) return;
+            const safeBottom = Math.max(8, Math.round(Number(bottom) || LIVE_PET_MIN_BOTTOM));
+            pet.style.setProperty('--live-pet-bottom', `${safeBottom}px`);
+            pet.style.bottom = `${safeBottom}px`;
+        }
+
+        function syncLivePetSafeLane() {
+            cancelAnimationFrame(livePetLaneRaf);
+            livePetLaneRaf = requestAnimationFrame(() => {
+                const {pet} = getLivePetElements();
+                const layer = document.getElementById('livePetLayer');
+                if (!pet || !layer || livePetDragState || pet.classList.contains('dragging') || pet.classList.contains('pet-settling')) return;
+
+                const left = clampLivePetX(parseFloat(pet.style.left) || pet.offsetLeft || 8, layer, pet);
+                pet.style.left = `${left}px`;
+                pet.style.top = '';
+                applyLivePetWalkBottom(pet);
+                pet.style.transform = left < (layer.clientWidth / 2) ? 'scaleX(1)' : 'scaleX(-1)';
+            });
         }
         let livePetDragState = null;
         let livePetSuppressClickUntil = 0;
@@ -5299,7 +5392,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 pet.classList.remove('pet-settling','dragging','pet-falling');
                 pet.style.removeProperty('--pet-fall-duration');
                 pet.style.top='';
-                pet.style.bottom=`${getLivePetWalkBottom()}px`;
+                applyLivePetWalkBottom(pet);
                 pet.style.left=`${left}px`;
                 pet.style.transform=left < (layer.clientWidth/2) ? 'scaleX(1)' : 'scaleX(-1)';
                 layer.classList.remove('pet-drag-active');
@@ -5390,7 +5483,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             const max=Math.max(8,layer.clientWidth-pet.offsetWidth-8);
             const x=Math.round(8+Math.random()*Math.max(0,max-8));
             pet.style.top='';
-            pet.style.bottom=`${getLivePetWalkBottom()}px`;
+            applyLivePetWalkBottom(pet);
             pet.style.left=x+'px';
             pet.style.transform = x < (layer.clientWidth/2) ? 'scaleX(1)' : 'scaleX(-1)';
             const visual=pet.querySelector('.live-pet-visual'), name=pet.querySelector('.live-pet-name'), bubble=pet.querySelector('.live-pet-bubble');
@@ -5666,7 +5759,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             visual.innerHTML=visualContent + `<span class="live-pet-sleep-eyes" aria-hidden="true"><i></i><i></i></span>`;
             name.textContent=personalizationSettings.pet;
             installLivePetDrag(pet);
-            if(!livePetDragState&&!pet.classList.contains('pet-settling')){pet.style.top='';pet.style.bottom=`${getLivePetWalkBottom()}px`;}
+            if(!livePetDragState&&!pet.classList.contains('pet-settling')){pet.style.top='';applyLivePetWalkBottom(pet);}
             pet.onclick=petLiveInteraction;
             pet.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();petLiveInteraction();}};
             startLivePetWalking();
@@ -5768,17 +5861,32 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             closeVoiceSettingsPage();
             closePetPicker();
             renderPersonalizationSettings();
-            setPersonalizationActiveTab('personalization');
-            const input = document.getElementById('personalizationSearchInput');
-            if (input) input.value = '';
             filterPersonalizationSettings('');
             openExclusiveSurface('personalizationModalOverlay');
+            document.getElementById('personalizationContent')?.scrollTo({top:0,behavior:'auto'});
         }
 
         function closePersonalizationSettings() {
             closeVoiceSettingsPage();
             closePersonalizationPicker();
             document.getElementById('personalizationModalOverlay')?.classList.remove('open');
+        }
+
+        function backToSettingsFromPersonalization() {
+            closePersonalizationSettings();
+            openSettingsModal();
+        }
+
+        function backFromVoiceSettingsPage() {
+            closeVoiceSettingsPage();
+            document.getElementById('personalizationModalOverlay')?.classList.remove('open');
+            openSettingsModal();
+        }
+
+        function backFromPetSettingsPage() {
+            closePetPicker();
+            document.getElementById('personalizationModalOverlay')?.classList.remove('open');
+            openSettingsModal();
         }
 
         function openGeneralSettingsFromPersonalization() {
@@ -6107,6 +6215,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 action:'generate-pet-image',
                 name: currentName || 'My Pet',
                 description: currentDescription,
+                prompt: currentDescription,
                 matchSiteStyle: petCreatorState.matchSiteStyle !== false,
                 referencePet: getPetCreatorReferencePet()
             };
@@ -6118,9 +6227,10 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             const requestPayload=buildCurrentPetCreatorRequest(forceReuseLast);
             const requestedName=(requestPayload.name||'').trim();
             const idea=(requestPayload.description||'').trim();
-            if(!requestedName && !idea){
-                setAIPetCreatorStatus('error','Add a name or description first');
-                showModernAlert('Maglagay muna ng pangalan o description ng pet na gusto mo.','Create pet with AI');
+            if(!idea){
+                setAIPetCreatorStatus('error','Describe the pet you want first');
+                showModernAlert('Maglagay muna ng prompt/description ng pet na gusto mong i-generate. Ang AI image ay ibabase mismo sa prompt mo.','Create pet with AI');
+                document.getElementById('psCustomPetDescription')?.focus({preventScroll:true});
                 return;
             }
 
@@ -6499,6 +6609,31 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return voices.some(v=>voiceLanguageScore(v,langCode)>0);
         }
 
+        async function ensureAudioPlaybackUnlocked(){
+            // Called directly from a tap/click before network/voice loading. This keeps
+            // Android Chrome/WebView audio playback eligible after asynchronous TTS work.
+            try{
+                const Ctx=window.AudioContext||window.webkitAudioContext;
+                if(Ctx){
+                    window.__jepongAudioContext=window.__jepongAudioContext||new Ctx();
+                    if(window.__jepongAudioContext.state==='suspended') await window.__jepongAudioContext.resume();
+                }
+            }catch(_){}
+            try{
+                if('speechSynthesis' in window){
+                    window.speechSynthesis.resume();
+                    // Prime Web Speech while the user gesture is still active.
+                    if(!window.__jepongSpeechPrimed){
+                        const warm=new SpeechSynthesisUtterance(' ');
+                        warm.volume=0; warm.rate=1;
+                        window.speechSynthesis.speak(warm);
+                        window.__jepongSpeechPrimed=true;
+                    }
+                }
+            }catch(_){}
+            return true;
+        }
+
         async function speakChunksSequentially(chunks,options={}){
             if(!chunks.length){
                 options.onend?.();
@@ -6702,6 +6837,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(!chunks.length) return;
 
             let fallbackFrom=0;
+            let neuralStarted=false;
 
             try{
                 for(let i=0;i<chunks.length;i++){
@@ -6725,7 +6861,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     await playAudioBlob(blob,runId,{
                         ...options,
                         onstart:(utter,voice,index,engine)=>{
-                            options.onstart?.(utter,voice,i+1,engine);
+                            neuralStarted=true; options.onstart?.(utter,voice,i+1,engine);
                         }
                     },'Cloudflare Neural • MeloTTS');
 
@@ -6739,12 +6875,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                             await playAudioBlob(ready.blob,runId,{
                                 ...options,
                                 onstart:(utter,voice,index,engine)=>{
-                                    options.onstart?.(utter,voice,i+1,engine);
+                                    neuralStarted=true; options.onstart?.(utter,voice,i+1,engine);
                                 }
                             },'Cloudflare Neural • MeloTTS');
                             fallbackFrom=i+1;
                         }
                     }
+                }
+                if(!neuralStarted){
+                    const deviceChunks=speechChunks(clean,150);
+                    speakChunksSequentially(deviceChunks,{...options,profile,onstart:(utter,voice,index)=>options.onstart?.(utter,voice,index,'Device fallback')});
+                    return;
                 }
                 if(runId===smartSpeechRunId) options.onend?.();
             }catch(err){
@@ -6806,6 +6947,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         async function playPersonalizationVoiceSample(name=personalizationSettings.voicePersona) {
+            await ensureAudioPlaybackUnlocked();
             const status=document.getElementById('psVoiceSampleStatus');
             const orb=document.getElementById('psVoiceOrb');
             const btn=document.getElementById('psVoicePreviewBtn');
@@ -7074,6 +7216,33 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
 
+        function openSettingsVoice(){
+            closeSettingsModal();
+            openExclusiveSurface('personalizationModalOverlay');
+            openVoiceSettingsPage();
+        }
+
+        function openSettingsPet(){
+            closeSettingsModal();
+            openExclusiveSurface('personalizationModalOverlay');
+            openPetPicker();
+        }
+
+        function openSettingsMemory(){
+            closeSettingsModal();
+            openPersonalizationSettings();
+            filterPersonalizationSettings('memory');
+            setTimeout(()=>document.getElementById('psMemorySection')?.scrollIntoView({block:'start'}),0);
+        }
+
+        function cycleSettingsAccent(){
+            const current=document.body.classList.contains('theme-neon')?'neon':document.body.classList.contains('theme-sunset')?'sunset':'default';
+            const next=current==='default'?'neon':current==='neon'?'sunset':'default';
+            setTheme(next==='default'?'':`theme-${next}`);
+            const label=document.getElementById('settingsAccentLabel');
+            if(label) label.textContent=next.charAt(0).toUpperCase()+next.slice(1);
+        }
+
         function openSettingsModal() {
             
             const speechToggle = document.getElementById('responseSpeechToggle');
@@ -7096,7 +7265,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             syncPersonalizationFeatureToggles();
 
             updateUsageUI();
+            const accentLabel=document.getElementById('settingsAccentLabel');
+            if(accentLabel) accentLabel.textContent=document.body.classList.contains('theme-neon')?'Neon':document.body.classList.contains('theme-sunset')?'Sunset':'Default';
             openExclusiveSurface('settingsModal');
+            requestAnimationFrame(refreshLucideIcons);
         }
 
         function closeSettingsModal() {
@@ -8928,7 +9100,8 @@ ${m.text || ''}
             clone.querySelectorAll('button,script,style').forEach(el=>el.remove());
             return String(clone.innerText||clone.textContent||'').replace(/\n{3,}/g,'\n\n').trim();
         }
-        function toggleReadAloudForMessage(btn){
+        async function toggleReadAloudForMessage(btn){
+            await ensureAudioPlaybackUnlocked();
             const msgNode=btn?.closest?.('.msg.bot');
             const ctx=getActiveContext();
             const messageIndex=Number(msgNode?.dataset?.messageIndex);
