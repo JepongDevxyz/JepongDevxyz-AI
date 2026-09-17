@@ -52,11 +52,16 @@ jobs:
 
       - name: Verify Personalization Navigation v7 regressions
         run: |
-          node tests/test_activity_voice_v3.js
-          node tests/test_personalization_navigation_v7.js
-          node tests/test_personalization_redesign_v6.js
-          node tests/test_runtime_regressions.js
-          node tests/test_settings_personalization_v5.js
+          cp tests/test_activity_voice_v3.js /tmp/test_activity_voice_v3.cjs
+          cp tests/test_personalization_navigation_v7.js /tmp/test_personalization_navigation_v7.cjs
+          cp tests/test_personalization_redesign_v6.js /tmp/test_personalization_redesign_v6.cjs
+          cp tests/test_runtime_regressions.js /tmp/test_runtime_regressions.cjs
+          cp tests/test_settings_personalization_v5.js /tmp/test_settings_personalization_v5.cjs
+          node /tmp/test_activity_voice_v3.cjs
+          node /tmp/test_personalization_navigation_v7.cjs
+          node /tmp/test_personalization_redesign_v6.cjs
+          node /tmp/test_runtime_regressions.cjs
+          node /tmp/test_settings_personalization_v5.cjs
           python regression_mobile_runtime.py
 
       - name: Commit verified Personalization Navigation v7
