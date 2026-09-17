@@ -67,7 +67,6 @@ jobs:
           set -euo pipefail
           git config user.name "JepongDevxyz Sync Bot"
           git config user.email "actions@users.noreply.github.com"
-          git show 0d12b1d19884cbeab255f1190d89d2c23d2d916c > .github/workflows/apply-mobile-ui-fixes-v2.yml
           rm -f .sync/apply_personalization_v7.py .sync/v7_payload_*.txt tests/package.json
           git add -A
           git commit -m "feat: apply Personalization Navigation v7"
