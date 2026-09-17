@@ -17,8 +17,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply mobile UI fixes to latest main
-        run: python .sync/apply_mobile_ui_fixes.py
+      - name: Apply Personalization Navigation v7
+        run: python .sync/apply_personalization_v7.py
 
       - name: Verify backend syntax
         run: |
@@ -50,39 +50,24 @@ jobs:
           PY
           node --check /tmp/index-inline.js
 
-      - name: Verify mobile UI contract
-        run: python tests/mobile_ui_contract_test.py
+      - name: Verify Personalization Navigation v7 regressions
+        run: |
+          node tests/test_activity_voice_v3.js
+          node tests/test_personalization_navigation_v7.js
+          node tests/test_personalization_redesign_v6.js
+          node tests/test_runtime_regressions.js
+          node tests/test_settings_personalization_v5.js
+          python regression_mobile_runtime.py
 
-      - name: Verify AI fallback contract
-        run: python tests/public_fallback_contract_test.py
-
-      - name: Verify activity and SSE contract
-        run: python tests/activity_contract_test.py
-
-      - name: Commit verified latest source
+      - name: Commit verified Personalization Navigation v7
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "JepongDevxyz Sync Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html
-          if ! git diff --cached --quiet; then
-            git commit -m "fix: mobile scroll word count and pet eyes"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
-
-      - name: Package synced index and chat
-        shell: bash
-        run: |
-          mkdir -p dist
-          cp index.html dist/index.html
-          cp api/chat.js dist/chat.js
-          cd dist
-          zip -9 JepongDevxyz-AI-synced-mobile-fixes.zip index.html chat.js
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: JepongDevxyz-AI-synced-mobile-fixes
-          path: dist/JepongDevxyz-AI-synced-mobile-fixes.zip
-          if-no-files-found: error
+          git show 0d12b1d19884cbeab255f1190d89d2c23d2d916c > .github/workflows/apply-mobile-ui-fixes-v2.yml
+          rm -f .sync/apply_personalization_v7.py .sync/v7_payload_*.txt
+          git add -A
+          git commit -m "feat: apply Personalization Navigation v7"
+          git pull --rebase origin main
+          git push origin HEAD:main
