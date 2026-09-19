@@ -8206,13 +8206,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function showAIIndicator(promptText, files = []) {
             removeAIIndicator();
-            if (!shouldShowAIActivity(promptText, files)) return;
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
-            indicator.className = 'ai-activity-card collapsed';
+            indicator.className = 'ai-activity-card';
             indicator.dataset.startedAt = String(Date.now());
             indicator.innerHTML = `
-                <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="false">
+                <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
                     <span class="ai-activity-summary-icon" id="aiActivitySummaryIcon"><i data-lucide="clock"></i></span>
                     <span class="ai-activity-summary-text" id="aiActivitySummary">Working on your request…</span>
                     <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
