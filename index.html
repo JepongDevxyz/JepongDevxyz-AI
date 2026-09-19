@@ -1113,6 +1113,17 @@
 
 
 
+        /* Final ChatGPT-like Activity timeline tuning */
+        .ai-activity-card{background:transparent!important;border:0!important;box-shadow:none!important;padding:2px 0!important;overflow:visible!important}
+        .ai-activity-summary-row{padding:4px 0!important;background:transparent!important;border:0!important}
+        .ai-activity-list{max-height:none!important;overflow:visible!important}
+        .ai-activity-row{position:relative!important;grid-template-columns:24px minmax(0,1fr)!important;min-height:32px!important;padding:4px 0!important}
+        .ai-activity-row:not(:last-child)::after{content:"";position:absolute;left:11px;top:26px;bottom:-6px;width:1px;background:var(--border-color);opacity:.55}
+        .ai-activity-row.completed .ai-activity-label{color:var(--text-muted)!important}
+        .ai-activity-row.ai-activity-current .ai-activity-label{color:var(--text-main)!important;font-weight:600}
+        .ai-activity-row.ai-activity-current .ai-activity-icon{animation:activityPulse 1.15s ease-in-out infinite}
+        @media(max-width:520px){.ai-activity-card{margin:8px 0 30px!important}.ai-activity-list{max-height:none!important}.ai-activity-row{grid-template-columns:24px minmax(0,1fr)!important;padding:5px 0!important}}
+
         /* =========================================================
            PERSONALIZATION SETTINGS
         ========================================================= */
@@ -8204,6 +8215,19 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             else hideSpeechMiniPlayer();
         }
 
+        function completeRunningActivityRows(exceptId='') {
+            const list=document.getElementById('aiActivityList');
+            if(!list)return;
+            [...list.querySelectorAll('.ai-activity-row.running')].forEach(row=>{
+                if(exceptId && row.dataset.activityId===exceptId)return;
+                row.classList.remove('running','ai-activity-current');
+                row.classList.add('completed');
+                const icon=row.querySelector('.ai-activity-icon');
+                if(icon)icon.innerHTML=activityIconMarkup('process','completed');
+            });
+            refreshLucideIcons(list);
+        }
+
         function showAIIndicator(promptText, files = []) {
             removeAIIndicator();
             const indicator = document.createElement('div');
@@ -8262,6 +8286,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
+            if(state==='running') completeRunningActivityRows(id);
             row.className = `ai-activity-row ${state}`;
             row.innerHTML = `
                 <div class="ai-activity-icon">${activityIconMarkup(kind,state)}</div>
@@ -8305,6 +8330,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const icon = card.querySelector('#aiActivitySummaryIcon');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
             const worked=`Worked for ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s`;
+            completeRunningActivityRows();
+            const responseRow=list?.querySelector('[data-activity-id="response"]');
+            if(responseRow && success){
+                responseRow.className='ai-activity-row completed';
+                const responseIcon=responseRow.querySelector('.ai-activity-icon');
+                if(responseIcon)responseIcon.innerHTML=activityIconMarkup('process','completed');
+            }
             if (summary) summary.textContent = success ? worked : 'Stopped because of an error';
             if (icon) icon.innerHTML = success ? '<i data-lucide="check"></i>' : '<i data-lucide="alert-triangle"></i>';
             refreshLucideIcons(card);
