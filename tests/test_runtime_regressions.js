@@ -13,6 +13,7 @@ function loadDetector(source) {
     // Strip the known ESM import only in this isolated eval harness; the real
     // backend resolves it through Node/Vercel's module loader.
     .replace(/^import \{ fetchPublicGitHubContext \} from '\.\/plugins\.js';\s*/m, '')
+    .replace(/^import \{ getGitHubSession \} from '\.\/_github_oauth\.js';\s*/m, '')
     .replace(/^export const config/m, 'const config')
     .replace(/^export default async function handler/m, 'async function handler');
   s += '\n;globalThis.__detectArtifactRequest = detectArtifactRequest;';
