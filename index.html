@@ -8446,6 +8446,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (buffer.trim()) await consumeSSEPacket(buffer, handlers);
         }
 
+        function sanitizeVisibleAssistantResponse(text='') {
+            let out=String(text||'');
+            out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');
+            out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');
+            return out.replace(/\n{3,}/g,'\n\n').trim();
+        }
+
         function clearWelcomeScreenIfPresent() {
             const welcome = chatBox.querySelector('.welcome-screen');
             if (welcome) {
@@ -8687,13 +8694,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
 
             return false;
-        }
-
-        function sanitizeVisibleAssistantResponse(text='') {
-            let out=String(text||'');
-            out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');
-            out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');
-            return out.replace(/\n{3,}/g,'\n\n').trim();
         }
 
         async function processBiblePrompt(userText, isRegenerate = false) {
