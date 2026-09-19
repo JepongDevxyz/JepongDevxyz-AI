@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
@@ -2262,6 +2263,38 @@
         }
 
     
+        /* ===== CHATGPT-STYLE COMPOSER + PLUS TOOL SHEET (pending preview) ===== */
+        .composer-tool-sheet{
+            position:absolute;left:12px;right:12px;bottom:calc(100% - 4px);z-index:80;
+            display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;
+            padding:10px;border:1px solid var(--border-color);border-radius:22px;
+            background:color-mix(in srgb,var(--modal-bg) 96%,transparent);
+            box-shadow:0 -10px 35px rgba(0,0,0,.28);backdrop-filter:blur(18px);
+            transform-origin:bottom left;animation:composerToolsIn .16s ease-out;
+        }
+        .composer-tool-sheet.open{display:grid}
+        @keyframes composerToolsIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+        .composer-tool-btn{
+            min-width:0;border:0;background:transparent;color:var(--text-main);border-radius:15px;
+            padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;
+            font-size:.67rem;font-weight:600;text-align:center;
+        }
+        .composer-tool-btn:active{background:rgba(148,163,184,.12);transform:scale(.97)}
+        .composer-tool-icon{
+            width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
+            background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.12);color:var(--text-main)
+        }
+        .composer-tool-icon i,.composer-tool-icon svg{width:19px;height:19px}
+        .composer-tool-btn.think-active .composer-tool-icon{background:rgba(139,92,246,.16);color:#a78bfa;border-color:rgba(139,92,246,.30)}
+        .pill-plus-btn.plus-open{background:rgba(148,163,184,.14);color:var(--text-main);transform:rotate(45deg)}
+        .pill-plus-btn{transition:transform .16s ease,background .16s ease,color .16s ease}
+        html.keyboard-open .composer-tool-sheet{max-height:min(180px,34dvh)}
+        @media(max-width:520px){
+            .composer-tool-sheet{grid-template-columns:repeat(5,minmax(58px,1fr));overflow-x:auto;overscroll-behavior-x:contain}
+            .composer-tool-btn{font-size:.62rem;padding:7px 2px}.composer-tool-icon{width:36px;height:36px}
+        }
+        @media(max-width:360px){.composer-tool-sheet{grid-template-columns:repeat(5,62px)}}
+
         /* ===== MULTI ATTACHMENT UI ===== */
         .file-preview-row{
             width:100%;
@@ -2350,6 +2383,19 @@
         }
 
     
+
+        /* ===== REAL ATTACHMENT PREPARATION PROGRESS v9 ===== */
+        .attachment-chip{min-height:82px;align-items:start;padding-top:8px}
+        .attachment-progress-wrap{margin-top:5px;width:100%}
+        .attachment-progress-track{height:4px;width:100%;overflow:hidden;border-radius:999px;background:rgba(148,163,184,.16)}
+        .attachment-progress-fill{height:100%;width:0;border-radius:inherit;background:currentColor;transition:width .12s linear}
+        .attachment-progress-fill.indeterminate{width:36%!important;animation:attachmentProgressSlide 1s ease-in-out infinite}
+        @keyframes attachmentProgressSlide{0%{transform:translateX(-110%)}100%{transform:translateX(300%)}}
+        .attachment-progress-stats{display:flex;justify-content:space-between;gap:6px;margin-top:3px;color:var(--text-muted);font-size:.52rem;white-space:nowrap}
+        .attachment-overall-status{display:none;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:2px 4px 6px;color:var(--text-muted);font-size:.61rem}
+        .file-preview-row.has-files{flex-wrap:wrap;overflow:visible}
+        .file-preview-row.has-files .attachment-overall-status{display:flex;flex:1 0 100%}
+
         /* ===== CHATGPT-LIKE SEND / CANCEL BUTTON ===== */
         .pill-action-btn{
             position:relative;
@@ -3899,6 +3945,12 @@
         .code-container-wrap pre code{display:block;min-width:max-content;padding-bottom:4px}
         @media(max-width:430px){.code-container-wrap{border-radius:16px;margin:12px 0}.code-block-header{padding:9px 11px}.code-container-wrap pre{max-height:54vh}}
 
+
+        /* Cloud account + Library v11 */
+        .cloud-pill{border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-main);border-radius:999px;padding:7px 10px;font-size:11px;cursor:pointer}
+        .cloud-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-height:55vh;overflow:auto}
+        .library-card{border:1px solid var(--border-color);background:var(--bg-secondary);border-radius:14px;padding:10px;min-width:0}.library-card img{width:100%;height:100px;object-fit:cover;border-radius:10px}.library-card b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;margin-top:7px}.library-card small{color:var(--text-muted);font-size:10px}.library-actions{display:flex;gap:6px;margin-top:8px}.library-actions button{flex:1;border:1px solid var(--border-color);border-radius:9px;background:transparent;color:var(--text-main);padding:6px;font-size:10px}
+        .auth-stack{display:grid;gap:9px}.auth-provider{width:100%;padding:11px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-secondary);color:var(--text-main);font-weight:600}.auth-email{display:flex;gap:7px}.auth-email input,.otp-input{border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-main);border-radius:10px;padding:10px;min-width:0}.otp-row{display:flex;gap:5px;justify-content:center}.otp-input{width:34px;text-align:center;font-size:18px}.cloud-status{font-size:11px;color:var(--text-muted);margin:8px 0}
 </style>
 
 
@@ -4078,6 +4130,66 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
   #personalizationModalOverlay .personalization-modal.ps-reference-ui{max-width:560px!important;height:min(92dvh,900px)!important;max-height:min(92dvh,900px)!important;border-radius:30px!important;border:1px solid rgba(255,255,255,.1)!important}
 }
 </style>
+
+<style id="petSleepEyesV4Calibrated">
+/* PET SLEEP EYES v4 — calibrated per built-in pet. No runtime/image asset changes. */
+.live-pet-sleep-eyes{
+  position:absolute!important;
+  left:var(--sleep-eyes-left,17px)!important;
+  top:var(--sleep-eyes-top,27px)!important;
+  width:var(--sleep-eyes-width,48px)!important;
+  height:var(--sleep-eyes-height,18px)!important;
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:flex-start!important;
+  pointer-events:none!important;
+  opacity:0!important;
+  z-index:999!important;
+}
+.live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important;animation:petClosedEyeBreathV4 2.3s ease-in-out infinite!important}
+.live-pet-sleep-eyes i{
+  display:block!important;
+  width:var(--sleep-eye-w,19px)!important;
+  height:var(--sleep-eye-h,13px)!important;
+  box-sizing:border-box!important;
+  background:var(--pet-sleep-lid,#eef2ff)!important;
+  border:0!important;
+  border-bottom:var(--sleep-line,3px) solid var(--sleep-line-color,rgba(24,24,34,.96))!important;
+  border-radius:58% 58% 52% 52%!important;
+  box-shadow:0 -2px 3px rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)!important;
+  transform:rotate(var(--sleep-left-rot,3deg))!important;
+}
+.live-pet-sleep-eyes i:last-child{transform:rotate(var(--sleep-right-rot,-3deg))!important}
+/* Built-in pet face calibration: Luna, Kiro, Mochi, Pixel, Nova, Sunny, Kumo, Ace. */
+.live-pet[data-pet-visual="cat"]{--sleep-eyes-left:17px;--sleep-eyes-top:27px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#eef2ff}
+.live-pet[data-pet-visual="dog"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:49px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f0d3ad}
+.live-pet[data-pet-visual="rabbit"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f7e9ef}
+.live-pet[data-pet-visual="robot"]{--sleep-eyes-left:16px;--sleep-eyes-top:27px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:12px;--pet-sleep-lid:#d8e0f0}
+.live-pet[data-pet-visual="blackcat"]{--sleep-eyes-left:17px;--sleep-eyes-top:27px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#242632;--sleep-line-color:#d8dbe7}
+.live-pet[data-pet-visual="chick"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#ffe07b}
+.live-pet[data-pet-visual="panda"]{--sleep-eyes-left:16px;--sleep-eyes-top:27px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:13px;--pet-sleep-lid:#f3f4f6}
+.live-pet[data-pet-visual="fox"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f5b06d}
+@keyframes petClosedEyeBreathV4{0%,100%{transform:translateY(0)}50%{transform:translateY(1px)}}
+</style>
+
+<style id="petCleanHeadV5">
+/* v5: hide the decorative head-top excess from the live companion only.
+   The original pet assets remain untouched for Settings/header previews. */
+.live-pet-visual{overflow:visible!important}
+.live-pet-visual img{
+  clip-path:inset(var(--pet-head-crop-top,0px) 0 0 0 round 0)!important;
+}
+/* Built-in pet calibration. Luna's two detached top pieces are removed by cropping
+   only the transparent top band; other pets keep their natural silhouette. */
+.live-pet[data-pet-name="luna"]{--pet-head-crop-top:14px}
+.live-pet[data-pet-name="kiro"]{--pet-head-crop-top:0px}
+.live-pet[data-pet-name="mochi"]{--pet-head-crop-top:0px}
+.live-pet[data-pet-name="pixel"]{--pet-head-crop-top:0px}
+.live-pet[data-pet-name="nova"]{--pet-head-crop-top:0px}
+.live-pet[data-pet-name="sunny"]{--pet-head-crop-top:0px}
+.live-pet[data-pet-name="kumo"]{--pet-head-crop-top:0px}
+.live-pet[data-pet-name="ace"]{--pet-head-crop-top:0px}
+</style>
 </head>
 <body>
 
@@ -4169,7 +4281,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
                         </div>
                         <span id="pingText">Checking...</span>
                     </div>
-                    <button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
+                    <button class="cloud-pill" id="libraryHeaderBtn" onclick="openLibrary()">Library</button><button class="cloud-pill" id="accountHeaderBtn" onclick="openAccountModal()">Sign in</button><button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
                 </div>
             </div>
 
@@ -4225,8 +4337,19 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 
             <div class="chat-input-pill">
                 <input type="file" id="fileInput" hidden multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xlsx,.xls,.ods,.csv,.txt,.md,.rtf,.json,.xml,.yaml,.yml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.php,.java,.c,.cpp,.h,.hpp,.cs,.sql,.sh,.log,.zip,.epub" onchange="handleFileSelect(event)">
+                <input type="file" id="cameraInput" hidden accept="image/*" capture="environment" onchange="handleFileSelect(event)">
+                <input type="file" id="photoInput" hidden multiple accept="image/*,video/*" onchange="handleFileSelect(event)">
+
+                <div class="composer-tool-sheet" id="composerToolSheet" role="menu" aria-label="Add tools">
+                    <button type="button" class="composer-tool-btn" onclick="composerToolAction('camera')"><span class="composer-tool-icon"><i data-lucide="camera"></i></span><span>Camera</span></button>
+                    <button type="button" class="composer-tool-btn" onclick="composerToolAction('photos')"><span class="composer-tool-icon"><i data-lucide="image"></i></span><span>Photos</span></button>
+                    <button type="button" class="composer-tool-btn" onclick="composerToolAction('files')"><span class="composer-tool-icon"><i data-lucide="paperclip"></i></span><span>Files</span></button>
+                    <button type="button" class="composer-tool-btn" onclick="closeComposerTools();openLibrary()"><span class="composer-tool-icon"><i data-lucide="library"></i></span><span>Library</span></button>
+                    <button type="button" class="composer-tool-btn" onclick="composerToolAction('plugins')"><span class="composer-tool-icon"><i data-lucide="blocks"></i></span><span>Plugins</span></button>
+                    <button type="button" class="composer-tool-btn" id="composerThinkBtn" onclick="composerToolAction('think')"><span class="composer-tool-icon"><i data-lucide="brain"></i></span><span>Think harder</span></button>
+                </div>
                 
-                <button type="button" class="pill-plus-btn" onclick="document.getElementById('fileInput').click()" title="Attach files, photos or videos">
+                <button type="button" class="pill-plus-btn" id="composerPlusBtn" onclick="toggleComposerTools(event)" aria-expanded="false" aria-controls="composerToolSheet" title="Add">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 </button>
                 
@@ -4268,6 +4391,30 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Cloud Account / Authentication -->
+    <div class="modal-overlay" id="cloudAccountModal" onclick="if(event.target===this)this.classList.remove('open')">
+      <div class="modal-content" style="max-width:390px;padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">JepongDevxyz Account</h3><button class="personalization-close" onclick="document.getElementById('cloudAccountModal').classList.remove('open')">✕</button></div>
+        <div class="cloud-status" id="cloudAccountStatus">Sign in to sync Memory, Library, settings and chats across devices.</div>
+        <div id="cloudSignedOut" class="auth-stack">
+          <button class="auth-provider" onclick="cloudOAuth('google')">Continue with Google</button>
+          <button class="auth-provider" onclick="cloudOAuth('facebook')">Continue with Facebook</button>
+          <button class="auth-provider" onclick="cloudOAuth('github')">Continue with GitHub</button>
+          <div style="text-align:center;color:var(--text-muted);font-size:11px">or</div>
+          <div class="auth-email"><input id="cloudEmail" type="email" placeholder="Email" style="flex:1"><button class="auth-provider" style="width:auto" onclick="sendEmailOtp()">Continue with Email</button></div>
+          <div id="cloudOtpBox" style="display:none"><div class="otp-row" id="cloudOtpRow">${[0,1,2,3,4,5].map(i=>`<input class="otp-input" inputmode="numeric" maxlength="1" data-otp="${i}" oninput="otpAdvance(this)" onpaste="otpPaste(event)">`).join('')}</div><button class="auth-provider" style="margin-top:8px" onclick="verifyEmailOtp()">Verify code</button><button class="auth-provider" style="margin-top:6px" onclick="sendEmailOtp()">Resend code</button></div>
+        </div>
+        <div id="cloudSignedIn" style="display:none"><div id="cloudUserLabel" style="font-weight:700;margin:12px 0"></div><button class="auth-provider" onclick="syncCloudNow()">Sync now</button><button class="auth-provider" style="margin-top:8px" onclick="cloudSignOut()">Sign out</button></div>
+      </div>
+    </div>
+    <!-- Per-user Library -->
+    <div class="modal-overlay" id="libraryModal" onclick="if(event.target===this)this.classList.remove('open')">
+      <div class="modal-content" style="max-width:760px;padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0">Library</h3><small style="color:var(--text-muted)">Your uploaded files, private to your account</small></div><button class="personalization-close" onclick="document.getElementById('libraryModal').classList.remove('open')">✕</button></div>
+        <div class="cloud-status" id="libraryStatus"></div><div class="cloud-grid" id="libraryGrid"></div>
+      </div>
     </div>
 
     <!-- CODE RUNNER MODAL -->
@@ -4401,7 +4548,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
             </section>
 
             <section class="ps-ref-section" id="psMemorySection" data-ps-search="memory enable memory summary manage chat history saved memories">
-              <h3>Memory <span class="info-circle" title="Stored locally in this browser">?</span></h3>
+              <h3>Memory <span class="info-circle" title="Synced privately to your account when signed in">?</span></h3>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enable memory</strong><small>Let JepongDevxyz AI personalize future chats using your saved local memory summary and personalization settings.</small></div><label class="mini-toggle"><input id="psMemoryEnabled" type="checkbox" onchange="setPersonalizationToggle('memoryEnabled',this.checked)"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Memory summary</strong><small id="psMemorySummaryPreview">View and edit an overview of information you want JepongDevxyz AI to keep in mind.</small></div><button class="ps-ref-manage" onclick="openMemorySummaryEditor()">Manage</button></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference chat history</strong><small>Use the active conversation history as context for your next response.</small></div><label class="mini-toggle"><input id="psReferenceHistory" type="checkbox" onchange="setPersonalizationToggle('referenceChatHistory',this.checked)"><span></span></label></div>
@@ -4424,7 +4571,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 
             <section class="ps-ref-section" id="psPrivacySection" data-ps-search="privacy storage reset personalization local browser">
               <h3>Privacy & reset</h3>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Storage</strong><small>Personalization, custom pet settings, and memory summary are stored in this browser's LocalStorage.</small></div><span class="ps-badge">Local</span></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Storage</strong><small>Local-first, with private Supabase cloud sync when signed in.</small></div><span class="ps-badge">Local</span></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong class="ps-ref-danger">Reset personalization</strong><small>Restore defaults and clear your local memory summary and custom pet data.</small></div><button class="ps-ref-reset" onclick="resetPersonalization()">Reset</button></div>
             </section>
           </div>
@@ -4952,6 +5099,79 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
             }
         })();
 
+        // Supabase Cloud Sync v11: auth-scoped settings, memory, chats and private Library.
+        const SUPABASE_URL='https://czjdygnhdojpqfdpfugo.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY='sb_publishable_MJuzXQ_YRPV0yGPCTEpjMA_gPImrvin';
+        const cloudClient=(window.supabase?.createClient)?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+        let cloudUser=null, cloudSyncTimer=null;
+        const cloudSafeName=name=>String(name||'file').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-120);
+        function queueCloudSync(){ if(!cloudUser||!cloudClient)return; clearTimeout(cloudSyncTimer); cloudSyncTimer=setTimeout(()=>syncCloudNow(true),900); }
+        async function initCloud(){
+            if(!cloudClient)return;
+            const {data}=await cloudClient.auth.getSession(); cloudUser=data?.session?.user||null; renderCloudAccount();
+            if(cloudUser)await loadCloudState();
+            cloudClient.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;renderCloudAccount();if(cloudUser)await loadCloudState();});
+        }
+        function renderCloudAccount(){
+            const signed=!!cloudUser; const out=document.getElementById('cloudSignedOut'), inside=document.getElementById('cloudSignedIn'), btn=document.getElementById('accountHeaderBtn');
+            if(out)out.style.display=signed?'none':'grid'; if(inside)inside.style.display=signed?'block':'none';
+            if(btn)btn.textContent=signed?'Account':'Sign in';
+            const label=document.getElementById('cloudUserLabel'); if(label)label.textContent=cloudUser?.email||cloudUser?.user_metadata?.full_name||'';
+            const status=document.getElementById('cloudAccountStatus'); if(status)status.textContent=signed?'Cloud sync is active for this account.':'Sign in to sync Memory, Library, settings and chats across devices.';
+            const badge=document.getElementById('psMemoryBadge'); if(badge)badge.textContent=signed?(personalizationSettings.memoryEnabled?'Cloud memory on':'Cloud synced'):(personalizationSettings.memoryEnabled?'Memory on':'Local only');
+        }
+        function openAccountModal(){document.getElementById('cloudAccountModal')?.classList.add('open');renderCloudAccount();}
+        async function cloudOAuth(provider){if(!cloudClient)return showModernAlert('Cloud authentication is unavailable.','Account');await cloudClient.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname}});}
+        async function sendEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();if(!email)return showModernAlert('Enter your email first.','Email sign in');const {error}=await cloudClient.auth.signInWithOtp({email,options:{shouldCreateUser:true}});if(error)return showModernAlert(error.message,'Email sign in');document.getElementById('cloudOtpBox').style.display='block';showModernAlert('Verification code sent.','Email sign in');}
+        function otpAdvance(el){el.value=el.value.replace(/\D/g,'').slice(0,1);if(el.value)el.nextElementSibling?.focus();}
+        function otpPaste(e){const digits=(e.clipboardData?.getData('text')||'').replace(/\D/g,'').slice(0,6);if(digits.length<2)return;e.preventDefault();document.querySelectorAll('#cloudOtpRow .otp-input').forEach((x,i)=>x.value=digits[i]||'');}
+        async function verifyEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();const token=[...document.querySelectorAll('#cloudOtpRow .otp-input')].map(x=>x.value).join('');if(token.length!==6)return showModernAlert('Enter the 6-digit code.','Verify');const {error}=await cloudClient.auth.verifyOtp({email,token,type:'email'});if(error)return showModernAlert(error.message,'Verify');document.getElementById('cloudAccountModal')?.classList.remove('open');}
+        async function cloudSignOut(){await cloudClient?.auth.signOut();cloudUser=null;renderCloudAccount();}
+        async function loadCloudState(){
+            if(!cloudUser)return;
+            const {data,error}=await cloudClient.from('user_settings').select('personalization,appearance,voice,pet,preferences,updated_at').eq('user_id',cloudUser.id).maybeSingle();
+            if(error){console.warn('Cloud state load:',error.message);return;}
+            const remote=data?.personalization||{}; const localUpdated=Number(localStorage.getItem('jepong_personalization_updated_at')||0); const remoteUpdated=data?.updated_at?Date.parse(data.updated_at):0;
+            if(Object.keys(remote).length && remoteUpdated>=localUpdated){personalizationSettings={...PERSONALIZATION_DEFAULTS,...personalizationSettings,...remote};localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));renderPersonalizationSettings();syncPersonalizationFeatureToggles();}
+            // Memory is deliberately stored separately from settings/chat history and scoped by auth.uid() RLS.
+            const mem=await cloudClient.from('memories').select('id,content,updated_at').eq('user_id',cloudUser.id).eq('source','memory_summary').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+            if(!mem.error && mem.data?.content){personalizationSettings.memorySummary=mem.data.content;localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));}
+            const prefs=data?.preferences||{}; if(prefs.chatSessions&&Object.keys(prefs.chatSessions).length){chatSessions={...chatSessions,...prefs.chatSessions};safeSetLocalStorage('jepong_ai_chats',JSON.stringify(chatSessions));if(typeof renderChatHistory==='function')renderChatHistory();}
+            if(localUpdated>remoteUpdated||!data)await syncCloudNow(true); renderCloudAccount();
+        }
+        async function syncCloudNow(silent=false){
+            if(!cloudUser||!cloudClient){if(!silent)openAccountModal();return;}
+            const now=new Date().toISOString();
+            const payload={user_id:cloudUser.id,personalization:personalizationSettings,appearance:{theme:localStorage.getItem('jepong_theme')||''},voice:{enabled:!!personalizationSettings.voiceEnabled,persona:personalizationSettings.voicePersona},pet:{pet:personalizationSettings.pet,description:personalizationSettings.petDescription},preferences:{chatSessions},updated_at:now};
+            const {error}=await cloudClient.from('user_settings').upsert(payload,{onConflict:'user_id'}); if(error){if(!silent)showModernAlert(error.message,'Cloud sync');return;}
+            // Keep user-controlled memory in its own per-user table; never mix it with another user's state.
+            const existing=await cloudClient.from('memories').select('id').eq('user_id',cloudUser.id).eq('source','memory_summary').limit(1).maybeSingle();
+            const memoryPayload={user_id:cloudUser.id,content:String(personalizationSettings.memorySummary||'').slice(0,12000),source:'memory_summary',metadata:{enabled:!!personalizationSettings.memoryEnabled},updated_at:now};
+            const memoryResult=existing.data?.id?await cloudClient.from('memories').update(memoryPayload).eq('id',existing.data.id).eq('user_id',cloudUser.id):await cloudClient.from('memories').insert(memoryPayload);
+            if(memoryResult.error){if(!silent)showModernAlert(memoryResult.error.message,'Memory sync');return;}
+            localStorage.setItem('jepong_personalization_updated_at',String(Date.now()));if(!silent)showModernAlert('Memory, settings and chats synced.','Cloud sync');renderCloudAccount();
+        }
+        async function saveFileToLibrary(file,item){
+            if(!cloudUser||!cloudClient||!file)return;
+            const path=`${cloudUser.id}/${Date.now()}-${crypto.randomUUID?.()||Math.random().toString(36).slice(2)}-${cloudSafeName(file.name)}`;
+            item.cloudStatus='uploading';renderFilePreviews();
+            const up=await cloudClient.storage.from('user-library').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});
+            if(up.error){item.cloudStatus='error';item.cloudError=up.error.message;renderFilePreviews();return;}
+            const {error}=await cloudClient.from('library_items').insert({user_id:cloudUser.id,storage_path:path,file_name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_conversation_id:null,metadata:{kind:item.kind,last_modified:file.lastModified||null}});
+            item.cloudStatus=error?'error':'saved';item.cloudError=error?.message||'';renderFilePreviews();
+        }
+        async function openLibrary(){document.getElementById('libraryModal')?.classList.add('open');await renderLibrary();}
+        async function renderLibrary(){
+            const grid=document.getElementById('libraryGrid'), status=document.getElementById('libraryStatus');if(!grid)return;
+            if(!cloudUser){grid.innerHTML='';status.textContent='Sign in first to use your private Library.';return;}
+            status.textContent='Loading…';const {data,error}=await cloudClient.from('library_items').select('id,storage_path,file_name,mime_type,size_bytes,created_at,metadata').eq('user_id',cloudUser.id).order('created_at',{ascending:false}).limit(100);
+            if(error){status.textContent=error.message;return;}status.textContent=`${data.length} item${data.length===1?'':'s'}`;
+            grid.innerHTML=data.map(x=>`<div class="library-card"><div style="font-size:30px">${x.mime_type?.startsWith('image/')?'🖼️':'📄'}</div><b title="${escapeHTML(x.file_name)}">${escapeHTML(x.file_name)}</b><small>${humanFileSize(x.size_bytes||0)} · ${new Date(x.created_at).toLocaleDateString()}</small><div class="library-actions"><button onclick="downloadLibraryItem('${x.id}','${encodeURIComponent(x.storage_path)}')">Open</button><button onclick="deleteLibraryItem('${x.id}','${encodeURIComponent(x.storage_path)}')">Delete</button></div></div>`).join('')||'<div style="color:var(--text-muted)">No files yet. Files you send while signed in will appear here.</div>';
+        }
+        async function downloadLibraryItem(id,encodedPath){const path=decodeURIComponent(encodedPath);const {data,error}=await cloudClient.storage.from('user-library').createSignedUrl(path,60);if(error)return showModernAlert(error.message,'Library');window.open(data.signedUrl,'_blank','noopener');}
+        async function deleteLibraryItem(id,encodedPath){const path=decodeURIComponent(encodedPath);await cloudClient.storage.from('user-library').remove([path]);const {error}=await cloudClient.from('library_items').delete().eq('id',id).eq('user_id',cloudUser.id);if(error)return showModernAlert(error.message,'Library');await renderLibrary();}
+        window.addEventListener('DOMContentLoaded',()=>initCloud().catch(e=>console.warn('Cloud init:',e)));
+
         function normalizeResponseEffortClient(value='Instant') {
             const raw=String(value||'Instant').trim().toLowerCase();
             if(raw==='high'||raw==='deep')return 'High';
@@ -4978,6 +5198,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
             const menu=document.getElementById('responseEffortMenu');
             if(label)label.textContent=effort;
             if(btn)btn.title=`Response effort: ${effort}`;
+            document.getElementById('composerThinkBtn')?.classList.toggle('think-active',effort==='High');
             menu?.querySelectorAll('.response-effort-option').forEach(option=>{
                 const active=option.dataset.effort===effort;
                 option.classList.toggle('active',active);
@@ -5126,6 +5347,77 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             custom: 'Custom Persona'
         };
 
+        function closeComposerTools(){
+            const sheet=document.getElementById('composerToolSheet');
+            const plus=document.getElementById('composerPlusBtn');
+            sheet?.classList.remove('open');
+            plus?.classList.remove('plus-open');
+            plus?.setAttribute('aria-expanded','false');
+        }
+
+        function toggleComposerTools(event, force){
+            event?.stopPropagation?.();
+            closeResponseEffortMenu();
+            const sheet=document.getElementById('composerToolSheet');
+            const plus=document.getElementById('composerPlusBtn');
+            if(!sheet||!plus)return;
+            const open=typeof force==='boolean'?force:!sheet.classList.contains('open');
+            sheet.classList.toggle('open',open);
+            plus.classList.toggle('plus-open',open);
+            plus.setAttribute('aria-expanded',String(open));
+            if(open)refreshLucideIcons(sheet);
+        }
+
+        function openPluginsFromComposer(){
+            // Plugins is a real navigation action: it opens the app's capability/settings surface.
+            // Connected-provider execution remains capability-gated; the UI must never claim a provider is connected when it is not.
+            closeComposerTools();
+            if(typeof openSettingsModal==='function') openSettingsModal();
+            requestAnimationFrame(()=>{
+                const advanced=document.getElementById('psAdvancedSection');
+                if(advanced){
+                    if(typeof openPersonalizationSettings==='function') openPersonalizationSettings();
+                    setTimeout(()=>advanced.scrollIntoView({behavior:'smooth',block:'center'}),80);
+                }
+            });
+        }
+
+        function composerToolAction(action){
+            if(action==='camera'){
+                closeComposerTools();
+                document.getElementById('cameraInput')?.click();
+                return;
+            }
+            if(action==='photos'){
+                closeComposerTools();
+                document.getElementById('photoInput')?.click();
+                return;
+            }
+            if(action==='files'){
+                closeComposerTools();
+                document.getElementById('fileInput')?.click();
+                return;
+            }
+            if(action==='plugins'){
+                openPluginsFromComposer();
+                return;
+            }
+            if(action==='think'){
+                const next=currentResponseEffort()==='High'?'Medium':'High';
+                setResponseEffort(next,{toast:false});
+                document.getElementById('composerThinkBtn')?.classList.toggle('think-active',next==='High');
+                showModernToast?.(next==='High'?'Think harder enabled':'Think harder disabled');
+                closeComposerTools();
+                document.getElementById('userInput')?.focus({preventScroll:true});
+            }
+        }
+
+        document.addEventListener('pointerdown',e=>{
+            if(!e.target?.closest?.('#composerToolSheet')&&!e.target?.closest?.('#composerPlusBtn')) closeComposerTools();
+        },{passive:true});
+        document.addEventListener('keydown',e=>{if(e.key==='Escape')closeComposerTools();});
+        window.addEventListener('popstate',closeComposerTools);
+
         function autoResizeTextarea(textarea) {
             if (!textarea) return;
             const maxHeight = 120;
@@ -5206,6 +5498,8 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         function persistPersonalization() {
             localStorage.setItem('jepong_personalization', JSON.stringify(personalizationSettings));
+            localStorage.setItem('jepong_personalization_updated_at', String(Date.now()));
+            queueCloudSync();
         }
 
         function personalizationElementMap() {
@@ -6634,87 +6928,94 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return true;
         }
 
+        let speechChunkToken = 0;
+
+        function isRetryableSpeechError(error){
+            const code=String(error?.error||error?.name||error?.message||'').toLowerCase();
+            return !code || ['interrupted','canceled','cancelled','audio-busy','network','synthesis-failed','synthesis-unavailable'].some(x=>code.includes(x));
+        }
+
         async function speakChunksSequentially(chunks,options={}){
-            if(!chunks.length){
-                options.onend?.();
-                return;
-            }
+            if(!chunks.length){ options.onend?.(); return; }
             if(!('speechSynthesis' in window)){
                 options.onerror?.(new Error('Speech synthesis is unavailable in this browser.'));
                 return;
             }
 
-            await ensureSpeechVoicesReady();
+            await ensureSpeechVoicesReady(1800);
+            const token=++speechChunkToken;
             window.speechSynthesis.cancel();
             try{window.speechSynthesis.resume();}catch(_){}
-
             let index=0;
-            let startedAny=false;
+            let finished=false;
 
-            const next=()=>{
-                if(index>=chunks.length){
-                    options.onend?.();
-                    return;
-                }
+            const finish=()=>{
+                if(finished || token!==speechChunkToken)return;
+                finished=true;
+                options.onend?.();
+            };
 
-                const rawText=chunks[index++];
+            const retrySpeechChunk=(rawText,attempt=0)=>{
+                if(finished || token!==speechChunkToken)return;
                 const langCode=options.languageOverride || detectSpeechLanguage(rawText);
                 const text=normalizeBrandForSpeech(rawText,langCode);
                 const utter=new SpeechSynthesisUtterance(text);
                 const profile=options.profile||getVoiceProfile();
                 const voice=resolvePersonalizationSystemVoice(profile,text,langCode);
-
-                if(voice){
-                    utter.voice=voice;
-                    utter.lang=voice.lang || langCode;
-                }else{
-                    utter.lang=langCode || 'en-US';
-                }
-
+                if(voice){ utter.voice=voice; utter.lang=voice.lang||langCode; }
+                else utter.lang=langCode||'en-US';
                 utter.rate=clearerSpeechRate(profile.rate||1,utter.lang);
                 utter.pitch=clearerSpeechPitch(profile.pitch||1);
                 utter.volume=1;
-
+                let started=false;
                 let watchdog=null;
+
                 utter.onstart=()=>{
-                    startedAny=true;
-                    if(watchdog)clearTimeout(watchdog);
+                    if(token!==speechChunkToken)return;
+                    started=true;
+                    clearTimeout(watchdog);
                     options.onstart?.(utter,voice,index);
                 };
                 utter.onend=()=>{
-                    if(watchdog)clearTimeout(watchdog);
-                    setTimeout(next,90);
+                    clearTimeout(watchdog);
+                    if(token!==speechChunkToken)return;
+                    setTimeout(next,55);
                 };
                 utter.onerror=e=>{
-                    if(watchdog)clearTimeout(watchdog);
+                    clearTimeout(watchdog);
+                    if(token!==speechChunkToken)return;
+                    if(attempt<1 && isRetryableSpeechError(e)){
+                        try{window.speechSynthesis.cancel(); window.speechSynthesis.resume();}catch(_){}
+                        return setTimeout(()=>retrySpeechChunk(rawText,attempt+1),120);
+                    }
+                    // Some Android engines report an error even though the voice can continue.
+                    // Skip only this chunk instead of killing the entire Read Aloud session.
+                    if(isRetryableSpeechError(e)) return setTimeout(next,80);
+                    finished=true;
                     options.onerror?.(e);
                 };
 
-                window.speechSynthesis.speak(utter);
-
-                // Android/Chrome sometimes stays paused after cancel() or after the page regains focus.
-                setTimeout(()=>{
-                    try{
-                        if(window.speechSynthesis.paused) window.speechSynthesis.resume();
-                    }catch(_){}
-                },80);
+                try{ window.speechSynthesis.speak(utter); window.speechSynthesis.resume(); }
+                catch(e){ utter.onerror?.(e); return; }
 
                 watchdog=setTimeout(()=>{
-                    if(!startedAny && !window.speechSynthesis.speaking){
-                        try{
-                            window.speechSynthesis.cancel();
-                            window.speechSynthesis.speak(utter);
-                            window.speechSynthesis.resume();
-                        }catch(err){
-                            options.onerror?.(err);
-                        }
+                    if(finished || token!==speechChunkToken || started)return;
+                    try{window.speechSynthesis.resume();}catch(_){}
+                    if(attempt<1){
+                        try{window.speechSynthesis.cancel();}catch(_){}
+                        retrySpeechChunk(rawText,attempt+1);
                     }
-                },650);
+                },1100);
             };
 
+            const next=()=>{
+                if(finished || token!==speechChunkToken)return;
+                if(index>=chunks.length)return finish();
+                const rawText=chunks[index++];
+                retrySpeechChunk(rawText,0);
+            };
             next();
         }
-
 
         /* ===== SMART VOICE ENGINE: CLOUDFLARE NEURAL + DEVICE FALLBACK ===== */
         let activeNeuralAudio = null;
@@ -6827,7 +7128,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     ...options,
                     profile,
                     onstart:(utter,voice,index)=>{
-                        options.onstart?.(utter,voice,index,'Device voice');
+                        options.onstart?.(utter,voice,index,'Device voice fallback');
                     }
                 });
                 return;
@@ -6900,7 +7201,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     ...options,
                     profile,
                     onstart:(utter,voice,index)=>{
-                        options.onstart?.(utter,voice,index,'Device fallback');
+                        options.onstart?.(utter,voice,index,'Device voice fallback');
                     }
                 });
             }finally{
@@ -7169,7 +7470,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             persistPersonalization();
             renderPersonalizationSettings();
             closeMemorySummaryEditor();
-            showModernAlert('Na-save ang memory summary sa browser na ito.', 'Memory updated');
+            queueCloudSync();
+            showModernAlert(cloudUser?'Na-save at isi-sync ang memory sa account mo.':'Na-save locally. Sign in para ma-cloud sync.', 'Memory updated');
         }
 
         function resetPersonalization() {
@@ -8519,13 +8821,19 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
+                const sanitizeVisibleAssistantResponse = (text='') => {
+                    let out=String(text||'');
+                    out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');
+                    out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');
+                    return out.replace(/\n{3,}/g,'\n\n').trim();
+                };
                 let fullResponse = '';
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
                     fullResponse += decoder.decode(value, { stream: true });
-                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
+                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(sanitizeVisibleAssistantResponse(fullResponse))}</div>
                         <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
                             <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)" title="Replay audio"><i data-lucide="volume-2"></i></button>
                             <button class="bot-action-btn" onclick="copyText(this)" title="Copy"><i data-lucide="copy"></i></button>
@@ -8687,6 +8995,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function saveSessions() {
             if (isIncognito || isBibleMode) return;
             safeSetLocalStorage('jepong_ai_chats', JSON.stringify(chatSessions));
+            queueCloudSync();
             renderSidebarHistory();
         }
 
@@ -9351,6 +9660,10 @@ ${m.text || ''}
                     }
                     finishAIIndicator(true);
                 }
+
+                fullResponse = sanitizeVisibleAssistantResponse(fullResponse);
+                activePartialResponse = fullResponse;
+                renderLiveResponse();
 
                 const totalAiMs = Math.max(1, Math.round(performance.now() - aiRequestStartedAt));
                 const runtimeBadge = document.getElementById('providerRuntimeBadge');
@@ -10397,14 +10710,72 @@ ${m.text || ''}
             }
         }
 
+        function attachmentProgressStats(item){
+            const total=Math.max(0,Number(item.size)||0);
+            const loaded=Math.max(0,Math.min(total,Number(item.progressBytes)||0));
+            const elapsed=Math.max(.001,(performance.now()-(item.progressStartedAt||performance.now()))/1000);
+            const speed=loaded/elapsed;
+            const remaining=Math.max(0,total-loaded);
+            const eta=speed>0?remaining/speed:null;
+            return {total,loaded,speed,eta,percent:total?Math.min(100,(loaded/total)*100):0};
+        }
+
+        function attachmentRate(bytesPerSecond){
+            if(!Number.isFinite(bytesPerSecond)||bytesPerSecond<=0)return '—';
+            return `${humanFileSize(bytesPerSecond)}/s`;
+        }
+
+        function attachmentEta(seconds){
+            if(!Number.isFinite(seconds)||seconds<0)return '—';
+            if(seconds<1)return '<1s';
+            if(seconds<60)return `${Math.ceil(seconds)}s`;
+            return `${Math.floor(seconds/60)}m ${Math.ceil(seconds%60)}s`;
+        }
+
+        async function measureAttachmentReadProgress(file,placeholder){
+            placeholder.progressStartedAt=performance.now();
+            placeholder.progressBytes=0;
+            placeholder.progressPercent=0;
+            placeholder.progressIndeterminate=!file.size;
+            placeholder.statusText='Preparing…';
+            renderFilePreviews();
+
+            if(!file.size){return;}
+            if(file.stream && typeof file.stream==='function'){
+                const reader=file.stream().getReader();
+                try{
+                    while(true){
+                        const {done,value}=await reader.read();
+                        if(done)break;
+                        placeholder.progressBytes=Math.min(file.size,placeholder.progressBytes+(value?.byteLength||0));
+                        placeholder.progressPercent=Math.min(96,(placeholder.progressBytes/file.size)*96);
+                        const now=performance.now();
+                        if(!placeholder.lastProgressPaint||now-placeholder.lastProgressPaint>90){
+                            placeholder.lastProgressPaint=now;
+                            renderFilePreviews();
+                            await new Promise(r=>requestAnimationFrame(r));
+                        }
+                    }
+                }finally{try{reader.releaseLock();}catch(_){}}
+            }else{
+                // Older WebViews: the browser does not expose byte-level local-read progress.
+                placeholder.progressIndeterminate=true;
+                renderFilePreviews();
+            }
+        }
+
         async function processAttachmentFile(file, placeholder){
             const kind=attachmentKind(file);
             placeholder.kind=kind;
             placeholder.status='processing';
-            placeholder.statusText='Reading…';
+            placeholder.statusText='Preparing…';
             renderFilePreviews();
 
             try{
+                await measureAttachmentReadProgress(file,placeholder);
+                placeholder.statusText='Processing…';
+                placeholder.progressIndeterminate=true;
+                renderFilePreviews();
                 let result={};
                 if(kind==='image') result=await compressImageAttachment(file);
                 else if(kind==='video') result=await extractVideoAttachment(file);
@@ -10432,11 +10803,17 @@ ${m.text || ''}
 
                 Object.assign(placeholder,result);
                 placeholder.mimeType=result.processedMimeType||file.type||'application/octet-stream';
+                placeholder.progressBytes=file.size||placeholder.progressBytes||0;
+                placeholder.progressPercent=100;
+                placeholder.progressIndeterminate=false;
+                placeholder.progressCompletedAt=performance.now();
                 placeholder.status=result.extractionWarning?'warning':'ready';
-                placeholder.statusText=result.extractionWarning?'Metadata only':'Ready';
+                placeholder.statusText=result.extractionWarning?'Ready with warning':'Ready';
+                if(cloudUser) saveFileToLibrary(file,placeholder).catch(()=>{});
             }catch(err){
                 placeholder.status='error';
-                placeholder.statusText='Could not fully read';
+                placeholder.progressIndeterminate=false;
+                placeholder.statusText='Failed';
                 placeholder.extractionError=String(err?.message||err).slice(0,220);
                 placeholder.extractedText=
                     `File: ${file.name}\nType: ${file.type||'unknown'}\nSize: ${humanFileSize(file.size)}\nExtraction error: ${placeholder.extractionError}`;
@@ -10468,7 +10845,11 @@ ${m.text || ''}
                     lastModified:file.lastModified,
                     kind:attachmentKind(file),
                     status:'processing',
-                    statusText:'Reading…',
+                    statusText:'Queued…',
+                    progressBytes:0,
+                    progressPercent:0,
+                    progressStartedAt:performance.now(),
+                    progressIndeterminate:false,
                     extractedText:'',
                     frames:[],
                     data:'',
@@ -10503,26 +10884,41 @@ ${m.text || ''}
             const c=document.getElementById('filePreviewContainer');
             if(!c)return;
             c.innerHTML='';
+            c.classList.toggle('has-files',selectedFilesData.length>0);
             if(!selectedFilesData.length){c.style.display='none';return;}
             c.style.display='flex';
+
+            const done=selectedFilesData.filter(f=>['ready','warning'].includes(f.status)).length;
+            const failed=selectedFilesData.filter(f=>f.status==='error').length;
+            const active=selectedFilesData.length-done-failed;
+            const overall=document.createElement('div');
+            overall.className='attachment-overall-status';
+            overall.innerHTML=`<span>${active?`Preparing ${selectedFilesData.length} file${selectedFilesData.length===1?'':'s'}`:`${done} ready${failed?` · ${failed} failed`:''}`}</span><span>${done}/${selectedFilesData.length} done</span>`;
+            c.appendChild(overall);
 
             selectedFilesData.forEach(f=>{
                 const el=document.createElement('div');
                 el.className='attachment-chip';
-
                 const thumb=f.fullData
                     ? `<img src="${escapeHTML(f.fullData)}" alt="">`
                     : `<span aria-hidden="true">${attachmentIcon(f.kind)}</span>`;
-
                 const statusClass=f.status==='processing'?'processing':f.status==='warning'?'warning':f.status==='error'?'error':'';
                 const statusIcon=f.status==='processing'?'<span class="attachment-spinner"></span>':f.status==='error'?'!':f.status==='warning'?'!':'✓';
-
+                const stats=attachmentProgressStats(f);
+                const percent=f.status==='ready'||f.status==='warning'?100:Math.max(0,Math.min(100,Number(f.progressPercent)||0));
+                const indeterminate=f.status==='processing'&&f.progressIndeterminate;
+                const speed=f.status==='processing'&&!indeterminate?attachmentRate(stats.speed):'—';
+                const eta=f.status==='processing'&&!indeterminate?attachmentEta(stats.eta):'—';
                 el.innerHTML=`
                     <div class="attachment-thumb">${thumb}</div>
                     <div class="attachment-info">
                         <span class="attachment-name" title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</span>
                         <span class="attachment-meta">${escapeHTML(String(f.kind||'file').toUpperCase())} • ${humanFileSize(f.size)}</span>
                         <span class="attachment-status ${statusClass}">${statusIcon} ${escapeHTML(f.statusText||'Ready')}</span>
+                        <div class="attachment-progress-wrap">
+                            <div class="attachment-progress-track"><div class="attachment-progress-fill ${indeterminate?'indeterminate':''}" style="width:${percent.toFixed(1)}%"></div></div>
+                            <div class="attachment-progress-stats"><span>${indeterminate?'Processing':`${Math.round(percent)}% · ${speed}`}</span><span>${f.status==='processing'&&!indeterminate?`ETA ${eta}`:(f.status==='ready'||f.status==='warning'?'Completed':'')}</span></div>
+                        </div>
                     </div>
                     <button class="attachment-remove" type="button" aria-label="Remove ${escapeHTML(f.name)}" onclick="removeAttachment('${f.id}')">×</button>`;
                 c.appendChild(el);

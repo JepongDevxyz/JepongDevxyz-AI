@@ -46,6 +46,67 @@ const PROVIDERS = {
 const FALLBACK_ORDER = ['cloudflare','groq','mistral','cohere','openrouter','gemini','aihorde'];
 const RETRYABLE = new Set([401,402,403,408,409,425,429,500,502,503,504]);
 
+
+/* =========================================================
+   API COST / ABUSE GUARD
+   Best-effort edge-instance guard. For production-wide hard limits,
+   back this with a shared store (Supabase/Redis) when available.
+========================================================= */
+const API_GUARD = {
+  windowMs: Math.max(10_000, Number(process.env.API_RATE_WINDOW_MS || 60_000)),
+  maxRequests: Math.max(1, Number(process.env.API_RATE_MAX_REQUESTS || 20)),
+  maxHeavyRequests: Math.max(1, Number(process.env.API_RATE_MAX_HEAVY_REQUESTS || 6)),
+  maxBodyChars: Math.max(20_000, Number(process.env.API_MAX_BODY_CHARS || 1_200_000)),
+  maxDailyEstimatedTokens: Math.max(10_000, Number(process.env.API_DAILY_ESTIMATED_TOKEN_BUDGET || 250_000)),
+  maxProviderCredentialsPerRequest: Math.max(1, Math.min(4, Number(process.env.API_MAX_CREDENTIAL_RETRIES || 2))),
+  maxFallbackProviders: Math.max(0, Math.min(6, Number(process.env.API_MAX_FALLBACK_PROVIDERS || 2))),
+  abnormalBurst: Math.max(2, Number(process.env.API_ABNORMAL_BURST || 12))
+};
+const apiGuardWindows = new Map();
+const apiGuardDaily = new Map();
+function stableClientKey(req){
+  const raw=String(req?.headers?.get('x-forwarded-for')||req?.headers?.get('x-real-ip')||req?.headers?.get('cf-connecting-ip')||'unknown').split(',')[0].trim();
+  let h=2166136261;
+  for(let i=0;i<raw.length;i++){h^=raw.charCodeAt(i);h=Math.imul(h,16777619);}
+  return `c${(h>>>0).toString(36)}`;
+}
+function pruneGuardMaps(now=Date.now()){
+  if(apiGuardWindows.size>5000) for(const [k,v] of apiGuardWindows) if(now-v.startedAt>API_GUARD.windowMs*3) apiGuardWindows.delete(k);
+  if(apiGuardDaily.size>5000) for(const [k,v] of apiGuardDaily) if(now-v.startedAt>86_400_000) apiGuardDaily.delete(k);
+}
+function estimatedTokensFromBody(body){
+  let chars=String(body?.message||'').length;
+  try{ chars+=JSON.stringify(body?.history||[]).length; }catch(_){}
+  for(const f of (Array.isArray(body?.files)?body.files:[])) chars+=String(f?.extractedText||'').length+Math.ceil(String(f?.data||'').length*.08);
+  return Math.max(1,Math.ceil(chars/4));
+}
+function isHeavyApiRequest(body){
+  return body?.responseEffort==='High'||body?.activityStream===true||body?.action==='generate-image'||body?.action==='generate-pet-image'||(Array.isArray(body?.files)&&body.files.length>2);
+}
+function checkApiGuard(req,body){
+  const now=Date.now(); pruneGuardMaps(now);
+  const key=stableClientKey(req), heavy=isHeavyApiRequest(body);
+  let w=apiGuardWindows.get(key);
+  if(!w||now-w.startedAt>=API_GUARD.windowMs) w={startedAt:now,count:0,heavy:0};
+  w.count++; if(heavy)w.heavy++; apiGuardWindows.set(key,w);
+  if(w.count===API_GUARD.abnormalBurst) console.warn('[API-GUARD] abnormal request burst', {client:key,count:w.count,windowMs:API_GUARD.windowMs});
+  if(w.count>API_GUARD.maxRequests||w.heavy>API_GUARD.maxHeavyRequests){
+    const retry=Math.max(1,Math.ceil((API_GUARD.windowMs-(now-w.startedAt))/1000));
+    return {ok:false,status:429,error:'Too many requests. Please wait before trying again.',headers:{'Retry-After':String(retry),'X-App-RateLimit-Limit':String(API_GUARD.maxRequests),'X-App-RateLimit-Remaining':'0'}};
+  }
+  let d=apiGuardDaily.get(key);
+  if(!d||now-d.startedAt>=86_400_000)d={startedAt:now,estimatedTokens:0,requests:0};
+  const estimate=estimatedTokensFromBody(body); d.estimatedTokens+=estimate; d.requests++; apiGuardDaily.set(key,d);
+  if(d.estimatedTokens>API_GUARD.maxDailyEstimatedTokens){
+    console.warn('[API-GUARD] estimated daily token budget reached',{client:key,estimatedTokens:d.estimatedTokens});
+    return {ok:false,status:429,error:'Daily usage limit reached for this device/session. Please try again later.',headers:{'Retry-After':'3600'}};
+  }
+  return {ok:true,key,estimate,remaining:Math.max(0,API_GUARD.maxRequests-w.count)};
+}
+function guardResponseHeaders(guard){
+  return {'X-App-RateLimit-Limit':String(API_GUARD.maxRequests),'X-App-RateLimit-Remaining':String(guard?.remaining??API_GUARD.maxRequests),'X-App-Estimated-Tokens':String(guard?.estimate||0)};
+}
+
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -68,12 +129,12 @@ function shuffle(input) {
 }
 
 function getProviderKeys(provider) {
-  if (provider === 'gemini') return parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY');
-  if (provider === 'groq') return parseKeys('GROQ_API_KEYS','GROQ_API_KEY');
-  if (provider === 'openrouter') return parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY');
-  if (provider === 'mistral') return parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY');
-  if (provider === 'cohere') return parseKeys('COHERE_API_KEYS','COHERE_API_KEY');
-  if (provider === 'aihorde') return parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY');
+  if (provider === 'gemini') return parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'groq') return parseKeys('GROQ_API_KEYS','GROQ_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'openrouter') return parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'mistral') return parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'cohere') return parseKeys('COHERE_API_KEYS','COHERE_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'aihorde') return parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
   return [];
 }
 
@@ -93,7 +154,7 @@ function getCloudflareAccounts() {
   if (accountId && apiToken && !accounts.some(x => x.accountId === accountId && x.apiToken === apiToken)) {
     accounts.push({ accountId, apiToken });
   }
-  return accounts;
+  return accounts.slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
 function credentialCount(provider) {
@@ -847,6 +908,14 @@ async function readInternalProviderText(response, maxChars=9000){
   }
 }
 
+function sanitizeAssistantOutput(text='') {
+  let out=String(text||'');
+  // Strip provider/router diagnostics that must never become the conversational answer.
+  out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');
+  out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');
+  return out.replace(/\n{3,}/g,'\n\n').trim();
+}
+
 function finalAnswerAuditInstruction(){
   return (
     ' FINAL ANSWER AUDIT: Before sending, silently check that the response ' +
@@ -939,9 +1008,12 @@ Treat this server instant as authoritative for words such as today, now, current
 
 function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='', history=[], files=[]) {
   let text =
-    'You are JepongDevxyz AI, a capable general-purpose assistant created by Jepong Devxyz (Jay-Ar Lee Espiritu). ' +
-    'Your job is to understand what the user is actually trying to accomplish and help them reach that goal efficiently. ' +
-    'Be accurate, useful, natural, and honest about uncertainty. Put programming code inside fenced Markdown code blocks.';
+    'You are JepongDevxyz AI, a capable general-purpose conversational assistant created by Jepong Devxyz (Jay-Ar Lee Espiritu). ' +
+    'Your job is to answer the user directly, understand what they are actually trying to accomplish, and help them reach that goal efficiently. ' +
+    'Respond like a polished modern chat assistant: natural, context-aware, concise by default, thorough when the task needs it, and never robotic. ' +
+    'For greetings and casual conversation, reply conversationally instead of exposing analysis or classifications. For technical tasks, be precise and actionable. ' +
+    'Internal safety checks, moderation labels, routing decisions, provider names, hidden analysis, quality briefs, and classification metadata are never the final answer and must never replace the answer to the user. ' +
+    'Be accurate, useful, natural, and honest about uncertainty. Do not claim knowledge you do not have; use conversation, supplied files, tools, or model knowledge appropriately. Put programming code inside fenced Markdown code blocks.';
 
   if (personalization && typeof personalization === 'object') {
     const p = personalization;
@@ -2643,9 +2715,8 @@ async function processChat(body, emit) {
   const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
-  const useQualityOrchestrator = responseEffort==='High'
-    ? true
-    : (responseEffort==='Medium' && shouldUseQualityOrchestrator(message,files,mode));
+  // Cost guard: an extra preflight model call is reserved for explicit High/Think-harder requests.
+  const useQualityOrchestrator = responseEffort==='High' && shouldUseQualityOrchestrator(message,files,mode);
 
   if(useQualityOrchestrator){
     activity(emit,'quality-orchestrator',responseEffort==='High'?'Checking response quality at High effort':'Checking response quality','running','process');
@@ -2703,8 +2774,11 @@ async function processChat(body, emit) {
   const fallbackable=isFallbackableProviderFailure(first.status,first.error);
   if(autoFallback&&fallbackable){
     activity(emit,'fallback',`${providerLabel(provider)} is unavailable — Auto Fallback is checking alternatives`,'warning','fallback');
+    let fallbackAttempts=0;
     for(const p of FALLBACK_ORDER){
       if(p===provider||!configured(p))continue;
+      if(fallbackAttempts>=API_GUARD.maxFallbackProviders)break;
+      fallbackAttempts++;
       const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/'));
       if(hasImage&&!['gemini','cloudflare'].includes(p))continue;
       const fallbackModel=PROVIDERS[p].defaultModel;
@@ -2771,7 +2845,7 @@ async function providerUsageSnapshot(){
 }
 
 
-const MAX_AUTO_CONTINUATIONS = 5;
+const MAX_AUTO_CONTINUATIONS = 2;
 
 function finishReasonNeedsContinuation(reason=''){
   const r=String(reason||'').toLowerCase();
@@ -2955,6 +3029,8 @@ function activityStreamResponse(body, requestSignal=null) {
               at:Date.now()
             });
           }
+
+          generatedText=sanitizeAssistantOutput(generatedText);
 
           if(cancelled){
             clearInterval(keepAlive);
@@ -3403,12 +3479,17 @@ export default async function handler(req){
   if(!body||typeof body!=='object'||Array.isArray(body)){
     return json({error:'Request body must be a JSON object.'},400);
   }
+  let bodyChars=0;
+  try{bodyChars=JSON.stringify(body).length;}catch(_){}
+  if(bodyChars>API_GUARD.maxBodyChars)return json({error:'Request is too large.'},413);
+  const apiGuard=checkApiGuard(req,body);
+  if(!apiGuard.ok)return json({error:apiGuard.error,rateLimited:apiGuard.status===429},apiGuard.status,apiGuard.headers||{});
 
   try{
     if(body.action==='generate-image') return generateImage(body,req.signal);
     if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return cloudflareTTS(body);
-    if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'}});
+    if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
 
     const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
     const hasFiles=Array.isArray(body.files)&&body.files.length>0;
