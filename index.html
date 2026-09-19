@@ -879,34 +879,11 @@
         .runner-btn.close { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .runner-iframe { width: 100%; flex: 1; border: none; background: #ffffff; }
 
-        .floating-scroll-pill {
-            display: none;
-            position: absolute;
-            bottom: 85px;
-            right: 20px;
-            background: var(--accent-gradient);
-            color: #fff;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 24px;
-            cursor: pointer;
-            z-index: 25;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-            font-size: 0.8rem;
-            font-weight: 600;
-            align-items: center;
-            gap: 6px;
-            animation: modalPop 0.2s ease-out;
-        }
-        .floating-scroll-pill.active { display: flex; }
-        .unread-badge {
-            background: #ef4444;
-            color: #fff;
-            font-size: 0.65rem;
-            font-weight: 700;
-            border-radius: 10px;
-            padding: 2px 6px;
-        }
+        .floating-scroll-pill{display:none;position:absolute;left:50%;right:auto;bottom:18px;width:42px;height:42px;padding:0;transform:translateX(-50%);align-items:center;justify-content:center;background:color-mix(in srgb,var(--modal-bg) 94%,transparent);color:var(--text-main);border:1px solid var(--border-color);border-radius:50%;cursor:pointer;z-index:25;box-shadow:0 5px 18px rgba(0,0,0,.32);font-size:1.25rem;line-height:1;animation:modalPop .2s ease-out}
+        .floating-scroll-pill.active{display:flex}
+        .floating-scroll-pill .latest-label{font-size:0;line-height:0}
+        .floating-scroll-pill .latest-label::after{content:'↓';font-size:1.25rem;line-height:1}
+        .unread-badge{position:absolute;top:-2px;right:-2px;width:9px;height:9px;min-width:9px;padding:0;overflow:hidden;text-indent:-999px;background:#ef4444;border:2px solid var(--bg-primary);border-radius:50%}
 
         .image-lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 3000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .image-lightbox-overlay.open { display: flex; }
@@ -2195,21 +2172,10 @@
 
     
         /* ===== CHATGPT-STYLE COMPOSER + PLUS TOOL SHEET (pending preview) ===== */
-        .composer-tool-sheet{
-            position:absolute;left:12px;right:12px;bottom:calc(100% - 4px);z-index:80;
-            display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;
-            padding:10px;border:1px solid var(--border-color);border-radius:22px;
-            background:color-mix(in srgb,var(--modal-bg) 96%,transparent);
-            box-shadow:0 -10px 35px rgba(0,0,0,.28);backdrop-filter:blur(18px);
-            transform-origin:bottom left;animation:composerToolsIn .16s ease-out;
-        }
-        .composer-tool-sheet.open{display:grid}
+        .composer-tool-sheet{position:absolute;left:12px;right:auto;bottom:calc(100% + 8px);z-index:80;width:min(270px,calc(100vw - 32px));max-height:min(520px,70dvh);display:none;flex-direction:column;gap:4px;padding:10px;border:1px solid var(--border-color);border-radius:22px;background:color-mix(in srgb,var(--modal-bg) 96%,transparent);box-shadow:0 -10px 35px rgba(0,0,0,.28);backdrop-filter:blur(18px);overflow-y:auto;overscroll-behavior:contain;transform-origin:bottom left;animation:composerToolsIn .16s ease-out}
+        .composer-tool-sheet.open{display:flex}
         @keyframes composerToolsIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
-        .composer-tool-btn{
-            min-width:0;border:0;background:transparent;color:var(--text-main);border-radius:15px;
-            padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;
-            font-size:.67rem;font-weight:600;text-align:center;
-        }
+        .composer-tool-btn{width:100%;min-width:0;border:0;background:transparent;color:var(--text-main);border-radius:15px;padding:8px 10px;display:flex;flex-direction:row;align-items:center;gap:12px;cursor:pointer;font-size:.88rem;font-weight:650;text-align:left}
         .composer-tool-btn:active{background:rgba(148,163,184,.12);transform:scale(.97)}
         .composer-tool-icon{
             width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
@@ -2220,11 +2186,8 @@
         .pill-plus-btn.plus-open{background:rgba(148,163,184,.14);color:var(--text-main);transform:rotate(45deg)}
         .pill-plus-btn{transition:transform .16s ease,background .16s ease,color .16s ease}
         html.keyboard-open .composer-tool-sheet{max-height:min(180px,34dvh)}
-        @media(max-width:520px){
-            .composer-tool-sheet{grid-template-columns:repeat(5,minmax(58px,1fr));overflow-x:auto;overscroll-behavior-x:contain}
-            .composer-tool-btn{font-size:.62rem;padding:7px 2px}.composer-tool-icon{width:36px;height:36px}
-        }
-        @media(max-width:360px){.composer-tool-sheet{grid-template-columns:repeat(5,62px)}}
+        @media(max-width:520px){.composer-tool-sheet{width:min(260px,calc(100vw - 28px));max-height:min(500px,68dvh)}.composer-tool-btn{font-size:.86rem;padding:7px 9px}.composer-tool-icon{width:38px;height:38px;flex:0 0 38px}}
+        @media(max-width:360px){.composer-tool-sheet{width:min(248px,calc(100vw - 24px))}}
 
         /* ===== MULTI ATTACHMENT UI ===== */
         .file-preview-row{
@@ -4254,7 +4217,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 
             <div class="chat-box" id="chatBox">
                 <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span>↓ Latest</span>
+                    <span class="latest-label">Latest</span>
                     <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                 </button>
             </div>
@@ -8148,7 +8111,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 text=String(parsed.detail || parsed.error || parsed.message || text).trim();
             }
             text=text.replace(/^error\s*:\s*/i,'').replace(/\s+/g,' ').trim();
-            if(/failed to fetch|network\s*error|networkerror|load failed|err_internet_disconnected|err_connection|err_name_not_resolved|the internet connection appears to be offline/i.test(text)) return 'JepongDevxyz AI is currently under maintenance.';
+            if(/failed to fetch|network\s*error|networkerror|load failed|err_internet_disconnected|err_connection|err_name_not_resolved|the internet connection appears to be offline/i.test(text)) return 'Connection interrupted. Check your internet connection and try again.';
             if(/no user matching sent api key/i.test(text)) return 'AI Horde API key was rejected. Check or replace AIHORDE_API_KEY, or use another provider.';
             if(/api key is not configured/i.test(text)) return 'This provider is not configured on the server yet.';
             if(/rate limit/i.test(text)) return 'Rate limit reached. Please try again in a moment.';
@@ -8458,7 +8421,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (welcome) {
                 chatBox.innerHTML = `
                     <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                        <span>↓ Latest</span>
+                        <span class="latest-label">Latest</span>
                         <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                     </button>
                 `;
@@ -8604,7 +8567,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             } else {
                 chatBox.innerHTML = `
                     <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                        <span>↓ Latest</span>
+                        <span class="latest-label">Latest</span>
                         <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                     </button>
                 `;
@@ -8650,7 +8613,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span>↓ Latest</span>
+                    <span class="latest-label">Latest</span>
                     <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                 </button>
             `;
@@ -8767,7 +8730,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     const { done, value } = await reader.read();
                     if (done) break;
                     fullResponse += decoder.decode(value, { stream: true });
-                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(sanitizeVisibleAssistantResponse(fullResponse))}</div>
+                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(safeAssistantText(fullResponse))}</div>
                         <div class="bot-actions" style="margin-top: 8px; display: flex; gap: 8px;">
                             <button class="bot-action-btn" onclick="speakRawText(this.parentElement.previousElementSibling.innerText, true)" title="Replay audio"><i data-lucide="volume-2"></i></button>
                             <button class="bot-action-btn" onclick="copyText(this)" title="Copy"><i data-lucide="copy"></i></button>
@@ -8837,7 +8800,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span>↓ Latest</span>
+                    <span class="latest-label">Latest</span>
                     <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                 </button>
             `;
@@ -8871,7 +8834,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
                 <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span>↓ Latest</span>
+                    <span class="latest-label">Latest</span>
                     <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                 </button>
             `;
@@ -8888,7 +8851,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             chatBox.innerHTML = `
                 <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span>↓ Latest</span>
+                    <span class="latest-label">Latest</span>
                     <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
                 </button>
             `;
@@ -9382,6 +9345,16 @@ ${m.text || ''}
         }
         async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:autoProviderFallback,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
 
+        const safeAssistantText = (text='') => {
+            try {
+                return typeof sanitizeVisibleAssistantResponse === 'function'
+                    ? sanitizeVisibleAssistantResponse(text)
+                    : String(text||'');
+            } catch (_) {
+                return String(text||'');
+            }
+        };
+
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
             closeTransientSurfaces('');
             const requestController=new AbortController();
@@ -9549,7 +9522,7 @@ ${m.text || ''}
                 const contentType = response.headers.get('content-type') || '';
 
                 const renderLiveResponse = () => {
-                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(sanitizeVisibleAssistantResponse(fullResponse))}</div>
+                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(safeAssistantText(fullResponse))}</div>
                         ${botActionsHTML()}`;
                     refreshLucideIcons(botMsgElem);
                     if (userIsScrollingUp) {
@@ -9595,7 +9568,7 @@ ${m.text || ''}
                     finishAIIndicator(true);
                 }
 
-                fullResponse = sanitizeVisibleAssistantResponse(fullResponse);
+                fullResponse = safeAssistantText(fullResponse);
                 activePartialResponse = fullResponse;
                 renderLiveResponse();
 
