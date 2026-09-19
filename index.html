@@ -4131,88 +4131,25 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 }
 </style>
 
-<style id="petSleepEyesV4Calibrated">
-/* PET SLEEP EYES v4 — calibrated per built-in pet. No runtime/image asset changes. */
-.live-pet-sleep-eyes{
-  position:absolute!important;
-  left:var(--sleep-eyes-left,17px)!important;
-  top:var(--sleep-eyes-top,27px)!important;
-  width:var(--sleep-eyes-width,48px)!important;
-  height:var(--sleep-eyes-height,18px)!important;
-  display:flex!important;
-  justify-content:space-between!important;
-  align-items:flex-start!important;
-  pointer-events:none!important;
-  opacity:0!important;
-  z-index:999!important;
-}
-.live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important;animation:petClosedEyeBreathV4 2.3s ease-in-out infinite!important}
-.live-pet-sleep-eyes i{
-  display:block!important;
-  width:var(--sleep-eye-w,19px)!important;
-  height:var(--sleep-eye-h,13px)!important;
-  box-sizing:border-box!important;
-  background:var(--pet-sleep-lid,#eef2ff)!important;
-  border:0!important;
-  border-bottom:var(--sleep-line,3px) solid var(--sleep-line-color,rgba(24,24,34,.96))!important;
-  border-radius:58% 58% 52% 52%!important;
-  box-shadow:0 -2px 3px rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)!important;
-  transform:rotate(var(--sleep-left-rot,3deg))!important;
-}
-.live-pet-sleep-eyes i:last-child{transform:rotate(var(--sleep-right-rot,-3deg))!important}
-/* Built-in pet face calibration: Luna, Kiro, Mochi, Pixel, Nova, Sunny, Kumo, Ace. */
-.live-pet[data-pet-visual="cat"]{--sleep-eyes-left:17px;--sleep-eyes-top:27px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#eef2ff}
-.live-pet[data-pet-visual="dog"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:49px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f0d3ad}
-.live-pet[data-pet-visual="rabbit"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f7e9ef}
-.live-pet[data-pet-visual="robot"]{--sleep-eyes-left:16px;--sleep-eyes-top:27px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:12px;--pet-sleep-lid:#d8e0f0}
-.live-pet[data-pet-visual="blackcat"]{--sleep-eyes-left:17px;--sleep-eyes-top:27px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#242632;--sleep-line-color:#d8dbe7}
-.live-pet[data-pet-visual="chick"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#ffe07b}
-.live-pet[data-pet-visual="panda"]{--sleep-eyes-left:16px;--sleep-eyes-top:27px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:13px;--pet-sleep-lid:#f3f4f6}
-.live-pet[data-pet-visual="fox"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f5b06d}
-@keyframes petClosedEyeBreathV4{0%,100%{transform:translateY(0)}50%{transform:translateY(1px)}}
-</style>
-
-<style id="petCleanHeadV5">
-/* v5: hide the decorative head-top excess from the live companion only.
-   The original pet assets remain untouched for Settings/header previews. */
-.live-pet-visual{overflow:hidden!important;border-radius:20px}
-.live-pet-visual img{
-  clip-path:inset(var(--pet-head-crop-top,0px) 0 0 0 round 0)!important;
-  object-position:center bottom!important;
-}
-/* Remove detached head-top artifacts from every built-in live pet.
-   Crop the live visual only; Settings preview/original assets stay untouched. */
-.live-pet[data-pet-name="luna"] .live-pet-visual,
-.live-pet[data-pet-name="kiro"] .live-pet-visual,
-.live-pet[data-pet-name="mochi"] .live-pet-visual,
-.live-pet[data-pet-name="pixel"] .live-pet-visual,
-.live-pet[data-pet-name="nova"] .live-pet-visual,
-.live-pet[data-pet-name="sunny"] .live-pet-visual,
-.live-pet[data-pet-name="kumo"] .live-pet-visual,
-.live-pet[data-pet-name="ace"] .live-pet-visual{overflow:hidden!important;clip-path:inset(var(--pet-head-crop-top,14px) 0 0 0 round 20px)!important}
-/* Force the calibrated geometry onto the actual runtime data-pet-visual values. */
-.live-pet-sleep-eyes{left:var(--sleep-eyes-left,18px)!important;top:var(--sleep-eyes-top,28px)!important;width:var(--sleep-eyes-width,46px)!important}
-.live-pet[data-pet-visual="cat"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#eef2ff;--sleep-line-color:#242632}
-.live-pet[data-pet-visual="dog"]{--sleep-eyes-left:17px;--sleep-eyes-top:29px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:12px;--pet-sleep-lid:#d6a36f;--sleep-line-color:#33251c}
-.live-pet[data-pet-visual="rabbit"]{--sleep-eyes-left:18px;--sleep-eyes-top:29px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#f3e8ff;--sleep-line-color:#30283a}
-.live-pet[data-pet-visual="robot"]{--sleep-eyes-left:16px;--sleep-eyes-top:28px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:11px;--pet-sleep-lid:#cbd5e1;--sleep-line-color:#0f172a}
-.live-pet[data-pet-visual="blackcat"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#242632;--sleep-line-color:#d8dbe7}
-.live-pet[data-pet-visual="chick"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#ffe07b;--sleep-line-color:#4a3710}
-.live-pet[data-pet-visual="panda"]{--sleep-eyes-left:16px;--sleep-eyes-top:27px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:13px;--pet-sleep-lid:#f3f4f6;--sleep-line-color:#111827}
-.live-pet[data-pet-visual="fox"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f5b06d;--sleep-line-color:#3b2418}
-/* Sleeping state applies to every built-in pet: cover source-image open eyes, then draw calibrated closed lids. */
-.live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important}
-.live-pet.sleeping .live-pet-sleep-eyes i{background:var(--pet-sleep-lid,#eef2ff);height:var(--sleep-eye-h,12px);width:var(--sleep-eye-w,18px);border:0!important;border-bottom:3px solid var(--sleep-line-color,#242632)!important;border-radius:50% 50% 55% 55%!important;box-shadow:0 -5px 0 3px var(--pet-sleep-lid,#eef2ff)}
-/* Built-in pet calibration. Luna's two detached top pieces are removed by cropping
-   only the transparent top band; other pets keep their natural silhouette. */
-.live-pet[data-pet-name="luna"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="kiro"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="mochi"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="pixel"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="nova"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="sunny"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="kumo"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="ace"]{--pet-head-crop-top:14px}
+<style id="petRuntimeVisualFixV6">
+/* One authoritative live-pet visual layer. Prevents old sleep-eye/head rules from fighting each other. */
+.live-pet-visual{position:relative!important;overflow:visible!important}
+.live-pet-visual img{width:68px!important;height:68px!important;object-fit:cover!important;object-position:center bottom!important;border-radius:20px!important;clip-path:none!important}
+.live-pet-sleep-eyes{position:absolute!important;z-index:60!important;display:none!important;pointer-events:none!important}
+.live-pet.sleeping .live-pet-sleep-eyes{display:flex!important;opacity:1!important;justify-content:space-between!important;align-items:flex-start!important;left:var(--eye-left,18px)!important;top:var(--eye-top,28px)!important;width:var(--eye-span,46px)!important;height:16px!important;animation:petClosedEyeBreathV6 2.3s ease-in-out infinite!important}
+.live-pet.sleeping .live-pet-sleep-eyes i{display:block!important;width:var(--eye-w,18px)!important;height:var(--eye-h,12px)!important;background:var(--lid,#eef2ff)!important;border:0!important;border-bottom:3px solid var(--lid-line,#242632)!important;border-radius:52% 52% 60% 60%!important;box-shadow:0 -4px 0 2px var(--lid,#eef2ff)!important}
+.live-pet.sleeping .live-pet-sleep-eyes i:first-child{transform:rotate(3deg)!important}.live-pet.sleeping .live-pet-sleep-eyes i:last-child{transform:rotate(-3deg)!important}
+.live-pet[data-pet-visual="cat"]{--eye-left:18px;--eye-top:28px;--eye-span:46px;--lid:#eef2ff;--lid-line:#242632}
+.live-pet[data-pet-visual="dog"]{--eye-left:17px;--eye-top:29px;--eye-span:48px;--lid:#f0d3ad;--lid-line:#33251c}
+.live-pet[data-pet-visual="rabbit"]{--eye-left:18px;--eye-top:29px;--eye-span:46px;--lid:#f7e9ef;--lid-line:#30283a}
+.live-pet[data-pet-visual="robot"]{--eye-left:16px;--eye-top:28px;--eye-span:50px;--eye-w:20px;--lid:#d8e0f0;--lid-line:#0f172a}
+.live-pet[data-pet-visual="blackcat"]{--eye-left:18px;--eye-top:28px;--eye-span:46px;--lid:#242632;--lid-line:#d8dbe7}
+.live-pet[data-pet-visual="chick"]{--eye-left:18px;--eye-top:28px;--eye-span:46px;--lid:#ffe07b;--lid-line:#4a3710}
+.live-pet[data-pet-visual="panda"]{--eye-left:16px;--eye-top:27px;--eye-span:50px;--eye-w:20px;--lid:#f3f4f6;--lid-line:#111827}
+.live-pet[data-pet-visual="fox"]{--eye-left:17px;--eye-top:28px;--eye-span:48px;--eye-w:19px;--lid:#f5b06d;--lid-line:#3b2418}
+@keyframes petClosedEyeBreathV6{0%,100%{transform:translateY(0)}50%{transform:translateY(1px)}}
+/* The unwanted floating shapes are outside the actual 68px pet image. Mask that area at the layer level. */
+.live-pet[data-pet-name] .live-pet-visual{height:68px!important;overflow:hidden!important;border-radius:20px!important}
 </style>
 </head>
 <body>
