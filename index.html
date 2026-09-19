@@ -7596,7 +7596,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Never show timed pseudo-work, internal transport, or generic
             // response plumbing as if those were independently executed tools.
             if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
-            if (['prepare','generation','response-prep','response-generation','task-next','quality-orchestrator'].includes(id)) return null;
+            if (['prepare','response-prep','response-generation','task-next','quality-orchestrator'].includes(id)) return null;
+            // Only show Thinking after the real backend starts generating.
+            // Do not retain the startup placeholder as a duplicate row.
+            if (id==='generation') return {...e,id:'thinking',label:'Thinking',kind:'thinking'};
             if (kind==='provider' && id.startsWith('provider-') &&
                 (state==='running'||state==='completed')) return null;
 
@@ -7792,6 +7795,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Start with one neutral status only. The server will emit the
             // task-specific request/tool/source rows from the real execution path.
             appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
+            list.querySelector('[data-activity-id="thinking"]')?.setAttribute('data-placeholder','true');
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
             // Keep the newly-created Activity status in the visible conversation viewport.
@@ -7821,6 +7825,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
             const id = String(normalized.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
+            if(id==='task-context'){
+                const placeholder=list.querySelector('[data-activity-id="thinking"]');
+                if(placeholder?.dataset.placeholder==='true') placeholder.remove();
+            }
             const normalizedLabelKey=[
                 String(normalized.kind||'process'),
                 String(normalized.label||'').toLowerCase().replace(/\s+/g,' ').trim(),
@@ -7836,6 +7844,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 row = document.createElement('div');
                 list.appendChild(row);
             }
+            if(id==='thinking'&&normalized.kind==='thinking') row.dataset.placeholder='false';
+            if(normalized.state==='running'&&row!==list.lastElementChild) list.appendChild(row);
             row.dataset.activityId=id;
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
