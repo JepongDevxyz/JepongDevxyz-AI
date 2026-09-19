@@ -7575,10 +7575,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame'||f?.kind==='video');
             const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/')&&f?.mediaRole!=='video-frame');
             const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
-            if(hasVideo)return {label:`Preparing uploaded video${name?`: ${name}`:''}`,kind:'file'};
-            if(hasImage)return {label:`Preparing uploaded image${name?`: ${name}`:''}`,kind:'image'};
-            if(hasCode)return {label:`Preparing attached source code${name?`: ${name}`:''}`,kind:'file'};
-            if(list.length)return {label:`Preparing ${new Set(list.map(f=>f.parentName||f.name||f.filename)).size} attached file(s)`,kind:'file'};
+            if(hasVideo)return {label:`Reviewing request with uploaded video${name?`: ${name}`:''}`,kind:'file'};
+            if(hasImage)return {label:`Reviewing request with uploaded image${name?`: ${name}`:''}`,kind:'image'};
+            if(hasCode)return {label:`Reviewing request with attached code${name?`: ${name}`:''}`,kind:'file'};
+            if(list.length)return {label:`Reviewing request with ${new Set(list.map(f=>f.parentName||f.name||f.filename)).size} attached file(s)`,kind:'file'};
             const subject=String(promptText||'').replace(/https?:\/\/\S+/gi,' ').replace(/\s+/g,' ').trim();
             return {label:subject?`Reviewing your request: ${subject.slice(0,72)}`:'Reviewing your request',kind:'process'};
         }
@@ -7809,9 +7809,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list=indicator.querySelector('#aiActivityList');
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
-            // One initial status only. Subsequent rows must correspond to
-            // actual backend operations rather than client-predicted task steps.
-            appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
+            // Immediately show the actual user request while waiting for server
+            // events. Thinking starts later, when the server begins its model call,
+            // so it appears AFTER real research/file/tool operations.
+            const initial=initialActivityForRequest(promptText,files);
+            appendActivityEvent({id:'task-context',label:initial.label,state:'running',kind:initial.kind});
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
             // Keep the newly-created Activity status in the visible conversation viewport.
@@ -9254,6 +9256,9 @@ ${m.text || ''}
                 updateGenerationActionButton(false,false);
 
             } catch (err) {
+                // The assistant bubble was intentionally hidden while buffering the
+                // response; errors and user-stopped partial answers must be visible.
+                botMsgElem.style.removeProperty('display');
                 const wasCancelled = requestController.signal.aborted || err?.name==='AbortError';
                 if(wasCancelled){
                     finishAIIndicator(true);
