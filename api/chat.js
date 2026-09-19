@@ -1079,6 +1079,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   text += languageQualityInstruction(userMessage, personalization);
   text += artifactInstruction(userMessage);
   text += ' When tool results are supplied in bracketed LIVE/VERIFICATION/PROVIDED LINK sections, use them only when relevant to the user request and distinguish actual fetched/tested results from inference. Never say you searched, tested, ran, compiled, inspected an environment, or opened a website unless the supplied tool context confirms that action. For code, report static verification as static verification—not successful execution. Keep the final answer tightly aligned to the user\'s actual task, attached files, provided URLs, and requested output.';
+  text += ' When reporting a concrete VERIFIED software/project result (for example CI passed, deployment status, PR status, build verification, or repository work), you may use at most two compact status cards. A card must be a Markdown blockquote whose first line is exactly > [!STATUS success|Badge text], > [!STATUS info|Badge text], > [!STATUS warning|Badge text], or > [!STATUS error|Badge text]. Put a short heading, optional metadata such as Repository:/Commit:/Branch:, a concise checklist, and at most one normal Markdown link inside the same blockquote. Use success only for facts actually verified by tool context. Do not use status cards for ordinary chat, explanations, guesses, or unverified claims.';
   return text;
 }
 
