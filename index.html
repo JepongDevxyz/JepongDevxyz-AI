@@ -8223,6 +8223,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             appendActivityEvent({id:'task-context',label:first.label,state:'running',kind:first.kind});
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
+            // Paint Activity immediately before any network/history work can delay it.
+            requestAnimationFrame(() => {
+                appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
+            });
             // Keep the newly-created Activity status in the visible conversation viewport.
             // The previous no-scroll behavior left it below large image/video attachments,
             // which made Activity look missing on mobile even though it existed in the DOM.
@@ -9372,7 +9376,6 @@ ${m.text || ''}
             updateGenerationActionButton(true,false);
 
             showAIIndicator(promptText, currentFiles);
-            appendActivityEvent({ id:'thinking', label:'Thinking', state:'running', kind:'thinking' });
             maybeOfferNotifyPermission();
             setLivePetWorking(true);
 
