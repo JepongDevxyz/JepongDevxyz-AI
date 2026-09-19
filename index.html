@@ -7596,7 +7596,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Never show timed pseudo-work, internal transport, or generic
             // response plumbing as if those were independently executed tools.
             if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
-            if (['prepare','generation','response-prep','response-generation','task-next'].includes(id)) return null;
+            if (['prepare','generation','response-prep','response-generation','task-next','quality-orchestrator'].includes(id)) return null;
             if (kind==='provider' && id.startsWith('provider-') &&
                 (state==='running'||state==='completed')) return null;
 
@@ -7634,26 +7634,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             if(id==='fallback' && state==='running'){
                 return {...e,label:'Trying fallback provider',detail:sanitizeUiErrorMessage(e.detail||''),kind:'fallback'};
-            }
-            if(id==='prepare'){
-                return {...e,id:'response-prep',label:'Preparing response',kind:'process'};
-            }
-            if(id==='generation'){
-                const completed=state==='completed'||/\bcomplete\b/i.test(label);
-                return {
-                    ...e,
-                    id:'response-generation',
-                    label:completed?label:'Generating response',
-                    kind:'generate'
-                };
-            }
-            if(id==='quality-orchestrator'){
-                return {
-                    ...e,
-                    id:'response-quality',
-                    label:state==='running'?'Checking response quality':'Response quality checked',
-                    kind:'process'
-                };
             }
             return e;
         }
@@ -7809,11 +7789,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list=indicator.querySelector('#aiActivityList');
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
-            // Immediately show the actual user request while waiting for server
-            // events. Thinking starts later, when the server begins its model call,
-            // so it appears AFTER real research/file/tool operations.
-            const initial=initialActivityForRequest(promptText,files);
-            appendActivityEvent({id:'task-context',label:initial.label,state:'running',kind:initial.kind});
+            // Start with one neutral status only. The server will emit the
+            // task-specific request/tool/source rows from the real execution path.
+            appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
             // Keep the newly-created Activity status in the visible conversation viewport.
