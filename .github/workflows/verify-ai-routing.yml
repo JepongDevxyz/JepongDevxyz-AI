@@ -1,11 +1,25 @@
 name: Verify AI Routing
 
 on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'index.html'
+      - 'tests/**'
+      - 'supabase/**'
+      - 'assets/**'
+      - 'manifest.json'
+      - 'package.json'
+      - '.github/workflows/verify-ai-routing.yml'
   push:
     branches: [main]
     paths:
-      - 'api/chat.js'
+      - 'api/**'
       - 'index.html'
+      - 'supabase/**'
+      - 'assets/**'
+      - 'manifest.json'
+      - 'package.json'
       - 'tests/**'
       - '.github/workflows/verify-ai-routing.yml'
   workflow_dispatch:
@@ -61,13 +75,14 @@ jobs:
             echo "===== $test ====="
             python "$test"
           done
-          for test in tests/*_test.mjs; do
+          for test in tests/*_test.mjs tests/test_*.js; do
             [ -e "$test" ] || continue
             echo "===== $test ====="
             node "$test"
           done
 
       - name: Structural HTML and handler scan
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
