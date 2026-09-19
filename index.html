@@ -4082,6 +4082,17 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
  .floating-scroll-pill{bottom:calc(var(--composer-height,78px) + env(safe-area-inset-bottom,0px) + 10px)!important;width:40px!important;height:40px!important;min-width:40px!important}
  .ai-activity-list{max-height:190px!important}
 }
+<style id="mobile-composer-and-runtime-hotfix">
+.floating-scroll-pill{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;border-radius:999px!important}
+.floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:21px!important;line-height:1!important}
+.composer-tool-sheet{width:min(224px,calc(100vw - 34px))!important;max-height:min(62dvh,390px)!important;padding:7px!important;border-radius:21px!important;gap:0!important}
+.composer-tool-btn{min-height:47px!important;padding:4px 7px!important;grid-template-columns:37px minmax(0,1fr)!important;gap:9px!important;border-radius:13px!important;font-size:.86rem!important}
+.composer-tool-icon{width:36px!important;height:36px!important;min-width:36px!important}.composer-tool-icon i,.composer-tool-icon svg{width:19px!important;height:19px!important}
+.chat-input-pill{min-width:0!important}.pill-input{width:100%!important;min-width:0!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-height:min(32dvh,150px)!important;overflow-x:hidden!important}
+</style>
+<script id="assistant-runtime-guard">
+window.safeVisibleAssistantResponse=window.safeVisibleAssistantResponse||function(text){try{if(typeof window.sanitizeVisibleAssistantResponse==='function')return window.sanitizeVisibleAssistantResponse(text);}catch(_){}return String(text==null?'':text);};
+</script>
 </style>
 </head>
 <body>
@@ -9346,13 +9357,8 @@ ${m.text || ''}
         async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:autoProviderFallback,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
 
         const safeAssistantText = (text='') => {
-            try {
-                return typeof sanitizeVisibleAssistantResponse === 'function'
-                    ? sanitizeVisibleAssistantResponse(text)
-                    : String(text||'');
-            } catch (_) {
-                return String(text||'');
-            }
+            try { return window.safeVisibleAssistantResponse ? window.safeVisibleAssistantResponse(text) : String(text||''); }
+            catch (_) { return String(text||''); }
         };
 
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
