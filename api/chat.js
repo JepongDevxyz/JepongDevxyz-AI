@@ -1329,7 +1329,11 @@ function isSimpleCasualMessage(message=''){
 
 async function noKeyWebSearch(query, emit){
   const searchTopic=String(query||'').replace(/\s+/g,' ').trim().slice(0,100);
-  activity(emit,'web-search',searchTopic?`Searching for relevant sources: ${searchTopic}`:'Searching the web','running','web');
+  const securityTopic=/\b(OWASP|website security|web security|security headers|Content Security Policy|HSTS|TLS|SSL)\b/i.test(searchTopic);
+  const activityLabel=securityTopic
+    ? 'Searching trusted website security guidance'
+    : (searchTopic?`Searching for relevant sources: ${searchTopic}`:'Searching the web');
+  activity(emit,'web-search',activityLabel,'running','web');
   const attempts=[
     ['Bing',()=>bingRssSearch(query)],
     ['DuckDuckGo',()=>duckDuckGoInstantSearch(query,null)],
@@ -1339,7 +1343,10 @@ async function noKeyWebSearch(query, emit){
     const results=await fn();
     const relevant=relevantWebResults(results,query);
     if(relevant.length){
-      activity(emit,'web-search',`Found ${relevant.length} relevant web result${relevant.length===1?'':'s'} • ${label}`,'completed','web');
+      activity(emit,'web-search',securityTopic
+        ? `Found ${relevant.length} relevant website security source${relevant.length===1?'':'s'} • ${label}`
+        : `Found ${relevant.length} relevant web result${relevant.length===1?'':'s'} • ${label}`,
+        'completed','web');
       return relevant;
     }
   }
@@ -1807,24 +1814,46 @@ function contextActivityPlan(message='', files=[]){
   const list=Array.isArray(files)?files:[];
   const firstFile=list.find(f=>!['video-frame','pdf-page'].includes(f?.mediaRole))||list[0];
   const name=String(firstFile?.parentName||firstFile?.name||firstFile?.filename||'').slice(0,64);
-  const subject=cleanTaskText(message)
-    .replace(/```[\s\S]*?```/g,'[attached code]')
-    .replace(/[\r\n]+/g,' ')
-    .replace(/\s+/g,' ').trim();
-  // The title describes the user's actual request, not a guessed tool action.
-  // Tool-specific Activity rows are emitted separately by the real tool code.
-  let label=isWebsiteSecurityRequest(message)
-    ? 'Reviewing website security requirements'
-    : profile.kind==='research' ? 'Identifying the requested research topic'
-    : profile.kind==='github' ? 'Reviewing repository request'
-    : profile.kind==='web' ? 'Reviewing website task'
-    : subject ? 'Reviewing your request' : 'Understanding your request';
+  const subject=shortTaskSubject(message);
+  let label='Understanding your request';
+
   if(list.length){
     const kind=list.some(f=>f?.mediaRole==='video-frame'||f?.kind==='video'||String(f?.mimeType||'').startsWith('video/'))
       ? 'video'
       : list.some(f=>f?.mediaRole==='image'||String(f?.mimeType||'').startsWith('image/'))?'image':'file';
-    label=`Reviewing request with uploaded ${kind}${name?': '+name:''}`;
+    label=`Inspecting uploaded ${kind}${name?': '+name:''}`;
+  }else if(isWebsiteSecurityRequest(message)){
+    label=subject && subject!=='your request'
+      ? `Analyzing website security request: ${subject}`
+      : 'Analyzing website security request';
+  }else if(profile.kind==='github'){
+    label=subject && subject!=='your request'
+      ? `Reviewing repository task: ${subject}`
+      : 'Reviewing repository task';
+  }else if(profile.kind==='deployment'){
+    label=subject && subject!=='your request'
+      ? `Reviewing deployment task: ${subject}`
+      : 'Reviewing deployment task';
+  }else if(profile.kind==='backend'){
+    label=subject && subject!=='your request'
+      ? `Analyzing API/backend task: ${subject}`
+      : 'Analyzing API/backend task';
+  }else if(profile.kind==='web'){
+    label=subject && subject!=='your request'
+      ? `Analyzing website task: ${subject}`
+      : 'Analyzing website task';
+  }else if(profile.kind==='research'){
+    label=subject && subject!=='your request'
+      ? `Researching: ${subject}`
+      : 'Identifying the requested research topic';
+  }else if(profile.kind==='study'){
+    label=subject && subject!=='your request'
+      ? `Working through: ${subject}`
+      : 'Working through the problem';
+  }else if(subject && subject!=='your request'){
+    label=`Understanding: ${subject}`;
   }
+
   return {profile,steps:[{id:'task-context',label,kind:list.length?'file':'process'}]};
 }
 
