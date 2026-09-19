@@ -1988,10 +1988,10 @@ function publicSecurityHeaderObservations(response, requestedUrl=''){
   const checks=[
     ['Strict-Transport-Security',https&&Boolean(h.get('strict-transport-security'))],
     ['Content-Security-Policy',Boolean(h.get('content-security-policy'))],
-    ['X-Content-Type-Options: nosniff',/\\bnosniff\\b/i.test(h.get('x-content-type-options')||'')],
+    ['X-Content-Type-Options: nosniff',/\bnosniff\b/i.test(h.get('x-content-type-options')||'')],
     ['Referrer-Policy',Boolean(h.get('referrer-policy'))],
     ['Permissions-Policy',Boolean(h.get('permissions-policy'))],
-    ['Frame protection',Boolean(h.get('x-frame-options'))||/\\bframe-ancestors\\b/i.test(h.get('content-security-policy')||'')]
+    ['Frame protection',Boolean(h.get('x-frame-options'))||/\bframe-ancestors\b/i.test(h.get('content-security-policy')||'')]
   ];
   return {
     finalUrl,
