@@ -1359,12 +1359,6 @@
         @media(max-width:430px){.ps-ref-tabs{gap:6px!important;padding-left:10px!important;padding-right:10px!important}.ps-ref-tab{font-size:.76rem!important;padding:10px 7px!important}.ps-ref-tab svg{width:16px;height:16px}}
         .ps-voice-stage{border:1px solid rgba(148,163,184,.15);border-radius:20px;background:linear-gradient(180deg,rgba(99,102,241,.055),rgba(255,255,255,.018));padding:18px 14px 20px!important;margin-bottom:12px}
         .ps-voice-settings,.ps-voice-sliders{border:1px solid rgba(148,163,184,.15)!important;border-radius:18px!important;background:rgba(255,255,255,.02)!important;overflow:hidden}
-        .live-pet-visual{position:relative}
-        .live-pet.sleeping .live-pet-visual::before{content:"";position:absolute;z-index:5;width:12px;height:6px;left:20px;top:31px;border-bottom:3px solid rgba(25,25,35,.92);border-radius:0 0 14px 14px;transform:rotate(2deg);filter:drop-shadow(20px 0 0 rgba(25,25,35,.92));pointer-events:none}
-        .live-pet.sleeping .live-pet-visual img{filter:brightness(.93) saturate(.82)}
-        .live-pet.sleeping .live-pet-visual{animation:petSleep 2.3s ease-in-out infinite!important}
-
-    
         /* ===== Personalization rows: clean reference-style layout ===== */
         #psStyleSection .ps-ref-row{
             display:grid!important;
@@ -2049,69 +2043,6 @@
             #modelPagesTrack .model-provider-page{
                 padding-bottom:96px!important;
             }
-        }
-
-    
-        /* ===== PET SLEEPING EYES v2 =====
-           Dedicated closed-eye overlay placed over each built-in pet image.
-           The old generic ::before eye line is disabled below. */
-        .live-pet.sleeping .live-pet-visual::before{
-            content:none!important;
-            display:none!important;
-        }
-        .live-pet-sleep-eyes{
-            position:absolute;
-            z-index:40;
-            left:21px;
-            top:31px;
-            width:40px;
-            height:13px;
-            display:flex;
-            align-items:flex-start;
-            justify-content:space-between;
-            pointer-events:none;
-            opacity:0;
-            transform:translateY(-1px);
-        }
-        .live-pet-sleep-eyes i{
-            display:block;
-            width:11px;
-            height:7px;
-            border-bottom:3px solid rgba(24,24,34,.96);
-            border-radius:0 0 12px 12px;
-            transform:rotate(2deg);
-            filter:drop-shadow(0 1px 0 rgba(255,255,255,.12));
-        }
-        .live-pet-sleep-eyes i:last-child{transform:rotate(-2deg)}
-        .live-pet.sleeping .live-pet-sleep-eyes{
-            opacity:1;
-            animation:petClosedEyeBreath 2.3s ease-in-out infinite;
-        }
-
-        /* Fine-tuned face positions for the built-in companions. */
-        .live-pet[data-pet-visual="cat"] .live-pet-sleep-eyes{left:21px;top:31px;width:40px}
-        .live-pet[data-pet-visual="dog"] .live-pet-sleep-eyes{left:20px;top:32px;width:42px}
-        .live-pet[data-pet-visual="rabbit"] .live-pet-sleep-eyes{left:21px;top:32px;width:41px}
-        .live-pet[data-pet-visual="robot"] .live-pet-sleep-eyes{left:20px;top:31px;width:43px}
-        .live-pet[data-pet-visual="blackcat"] .live-pet-sleep-eyes{left:21px;top:31px;width:40px}
-        .live-pet[data-pet-visual="chick"] .live-pet-sleep-eyes{left:22px;top:31px;width:38px}
-        .live-pet[data-pet-visual="panda"] .live-pet-sleep-eyes{left:20px;top:31px;width:42px}
-        .live-pet[data-pet-visual="fox"] .live-pet-sleep-eyes{left:21px;top:32px;width:40px}
-
-        /* Dark pets need a brighter sleepy-eye stroke to remain visible. */
-        .live-pet[data-pet-visual="blackcat"] .live-pet-sleep-eyes i{
-            border-bottom-color:rgba(221,214,254,.96);
-            filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));
-        }
-        .live-pet[data-pet-visual="robot"] .live-pet-sleep-eyes i{
-            border-bottom-color:rgba(15,23,42,.96);
-            border-radius:0;
-            height:5px;
-        }
-
-        @keyframes petClosedEyeBreath{
-            0%,100%{transform:translateY(0) scaleX(1)}
-            50%{transform:translateY(1px) scaleX(.96)}
         }
 
     
@@ -3806,28 +3737,6 @@
             .app-container{height:var(--jepong-vh)!important;max-height:var(--jepong-vh)!important;min-height:0!important;transform-origin:top left}
             html.keyboard-open .chat-box{overscroll-behavior-y:contain}
         }
-        /* Sleeping eyes: single source of truth (image pets and emoji pets both use this). */
-        .live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important;z-index:60!important}
-        .live-pet.sleeping .live-pet-sleep-eyes i{border-bottom-width:4px!important;filter:drop-shadow(0 1px 1px rgba(255,255,255,.18)) drop-shadow(0 1px 2px rgba(0,0,0,.35))}
-        .live-pet.sleeping .live-pet-sleep-eyes i{
-            width:15px!important;
-            height:10px!important;
-            background:var(--pet-sleep-lid,#eef2ff)!important;
-            border:0!important;
-            border-bottom:3px solid rgba(24,24,34,.96)!important;
-            border-radius:60% 60% 48% 48%!important;
-            box-shadow:0 -1px 2px rgba(255,255,255,.45)!important;
-        }
-        .live-pet[data-pet-visual="blackcat"]{--pet-sleep-lid:#242632}
-        .live-pet[data-pet-visual="robot"]{--pet-sleep-lid:#d8e0f0}
-        .live-pet[data-pet-visual="dog"]{--pet-sleep-lid:#f0d3ad}
-        .live-pet[data-pet-visual="rabbit"]{--pet-sleep-lid:#f7e9ef}
-        .live-pet[data-pet-visual="chick"]{--pet-sleep-lid:#ffe07b}
-        .live-pet[data-pet-visual="panda"]{--pet-sleep-lid:#f3f4f6}
-        .live-pet[data-pet-visual="fox"]{--pet-sleep-lid:#f5b06d}
-
-
-
         /* ===== Mobile composer + activity + read-aloud polish ===== */
         .ai-activity-list{
             overflow-y:auto!important;
@@ -3956,7 +3865,7 @@
 #cloudAccountModal .modal-content{width:min(92vw,420px)!important;max-width:420px!important;padding:24px!important;border-radius:26px!important}
 #cloudAccountModal .auth-stack{gap:12px!important}
 #cloudAccountModal .auth-provider{min-height:52px!important;border-radius:16px!important;font-size:15px!important;font-weight:700!important;background:rgba(255,255,255,.025)!important}
-#cloudAccountModal #cloudEmailStage .auth-provider{background:var(--text-main)!important;color:var(--bg-primary)!important;border-color:transparent!important}
+#cloudAccountModal #cloudEmailStage .auth-provider{background:linear-gradient(135deg,#7c3aed,#a855f7)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 24px rgba(124,58,237,.22)!important}
 #cloudAccountModal .auth-email{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
 #cloudAccountModal .auth-email input{width:100%!important;min-height:52px!important;border-radius:16px!important;padding:0 16px!important;font-size:16px!important}
 #cloudAccountModal .otp-row{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important;width:100%!important}
@@ -4145,22 +4054,23 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 }
 </style>
 
-<style id="petRuntimeVisualFixV7">
+<style id="petSleepFinal">
+/* Image-reference sleeping visual: one authoritative renderer for all built-in pets. */
 .live-pet-visual{position:relative!important;width:82px!important;height:82px!important;overflow:visible!important}
 .live-pet-visual img{width:82px!important;height:82px!important;object-fit:contain!important;object-position:center!important;border-radius:0!important;clip-path:none!important;filter:drop-shadow(0 9px 11px rgba(0,0,0,.28))!important}
-.live-pet-sleep-eyes{position:absolute!important;z-index:60!important;display:none!important;pointer-events:none!important}
-.live-pet.sleeping .live-pet-sleep-eyes{display:flex!important;opacity:1!important;justify-content:space-between!important;align-items:center!important;left:var(--eye-left,22px)!important;top:var(--eye-top,38px)!important;width:var(--eye-span,39px)!important;height:8px!important;animation:petClosedEyeBreathV7 2.3s ease-in-out infinite!important}
-.live-pet.sleeping .live-pet-sleep-eyes i{display:block!important;width:var(--eye-w,12px)!important;height:4px!important;background:transparent!important;border:0!important;border-bottom:3px solid var(--eye-line,#1b1d28)!important;border-radius:0 0 12px 12px!important;box-shadow:none!important;filter:none!important}
-.live-pet.sleeping .live-pet-sleep-eyes i:first-child{transform:rotate(3deg)!important}.live-pet.sleeping .live-pet-sleep-eyes i:last-child{transform:rotate(-3deg)!important}
-.live-pet[data-pet-visual="cat"]{--eye-left:22px;--eye-top:38px;--eye-span:39px;--eye-line:#252633}
-.live-pet[data-pet-visual="dog"]{--eye-left:21px;--eye-top:39px;--eye-span:41px;--eye-line:#35271f}
-.live-pet[data-pet-visual="rabbit"]{--eye-left:22px;--eye-top:39px;--eye-span:40px;--eye-line:#342b37}
-.live-pet[data-pet-visual="robot"]{--eye-left:20px;--eye-top:38px;--eye-span:43px;--eye-w:13px;--eye-line:#111827}
-.live-pet[data-pet-visual="blackcat"]{--eye-left:22px;--eye-top:38px;--eye-span:39px;--eye-line:#e4e0f3}
-.live-pet[data-pet-visual="chick"]{--eye-left:23px;--eye-top:38px;--eye-span:37px;--eye-line:#49370f}
-.live-pet[data-pet-visual="panda"]{--eye-left:21px;--eye-top:38px;--eye-span:42px;--eye-w:13px;--eye-line:#111827}
-.live-pet[data-pet-visual="fox"]{--eye-left:21px;--eye-top:39px;--eye-span:41px;--eye-w:12px;--eye-line:#3a2419}
-@keyframes petClosedEyeBreathV7{0%,100%{transform:translateY(0)}50%{transform:translateY(1px)}}
+.live-pet-sleep-eyes{display:none!important;position:absolute!important;z-index:80!important;pointer-events:none!important;height:7px!important;align-items:center!important;justify-content:space-between!important;left:var(--sleep-x)!important;top:var(--sleep-y)!important;width:var(--sleep-gap)!important;transform-origin:center!important}
+.live-pet.sleeping .live-pet-sleep-eyes{display:flex!important;opacity:1!important;animation:petSleepBlinkFinal 2.4s ease-in-out infinite!important}
+.live-pet.sleeping .live-pet-sleep-eyes i{display:block!important;box-sizing:border-box!important;width:var(--sleep-eye-w,13px)!important;height:7px!important;background:var(--sleep-mask,#edf3ff)!important;border:0!important;border-bottom:3px solid var(--sleep-line,#202331)!important;border-radius:0 0 50% 50%!important;box-shadow:none!important;filter:none!important}
+.live-pet.sleeping .live-pet-sleep-eyes i:first-child{transform:rotate(5deg)!important}.live-pet.sleeping .live-pet-sleep-eyes i:last-child{transform:rotate(-5deg)!important}
+.live-pet[data-pet-name="luna"]{--sleep-x:23px;--sleep-y:38px;--sleep-gap:37px;--sleep-eye-w:13px;--sleep-mask:#eef5ff;--sleep-line:#202331}
+.live-pet[data-pet-name="kiro"]{--sleep-x:22px;--sleep-y:39px;--sleep-gap:39px;--sleep-eye-w:13px;--sleep-mask:#f0d3ad;--sleep-line:#35271f}
+.live-pet[data-pet-name="mochi"]{--sleep-x:23px;--sleep-y:39px;--sleep-gap:37px;--sleep-eye-w:12px;--sleep-mask:#f7e9ef;--sleep-line:#342b37}
+.live-pet[data-pet-name="pixel"]{--sleep-x:21px;--sleep-y:38px;--sleep-gap:41px;--sleep-eye-w:14px;--sleep-mask:#d8e0f0;--sleep-line:#111827}
+.live-pet[data-pet-name="nova"]{--sleep-x:23px;--sleep-y:38px;--sleep-gap:37px;--sleep-eye-w:13px;--sleep-mask:#242632;--sleep-line:#e4e0f3}
+.live-pet[data-pet-name="sunny"]{--sleep-x:24px;--sleep-y:38px;--sleep-gap:35px;--sleep-eye-w:12px;--sleep-mask:#ffe07b;--sleep-line:#49370f}
+.live-pet[data-pet-name="kumo"]{--sleep-x:22px;--sleep-y:38px;--sleep-gap:39px;--sleep-eye-w:14px;--sleep-mask:#f3f4f6;--sleep-line:#111827}
+.live-pet[data-pet-name="ace"]{--sleep-x:22px;--sleep-y:39px;--sleep-gap:39px;--sleep-eye-w:13px;--sleep-mask:#f5b06d;--sleep-line:#3a2419}
+@keyframes petSleepBlinkFinal{0%,100%{transform:translateY(0) scaleX(1)}50%{transform:translateY(1px) scaleX(.97)}}
 </style>
 </head>
 <body>
