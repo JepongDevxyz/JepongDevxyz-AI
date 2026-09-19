@@ -7837,12 +7837,23 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
             const id = String(normalized.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
+            const normalizedLabelKey=String(normalized.label||'')
+                .toLowerCase()
+                .replace(/[•·].*$/,'')
+                .replace(/\s+/g,' ')
+                .trim();
             let row = list.querySelector(`[data-activity-id="${id}"]`);
+            if (!row && normalizedLabelKey) {
+                row=[...list.querySelectorAll('.ai-activity-row')].find(candidate =>
+                    candidate.dataset.activityLabelKey===normalizedLabelKey
+                ) || null;
+            }
             if (!row) {
                 row = document.createElement('div');
                 row.dataset.activityId = id;
                 list.appendChild(row);
             }
+            if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
             if(state==='running') completeRunningActivityRows(id);
@@ -7863,6 +7874,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
             // ChatGPT-style activity history: keep completed statuses visible in order.
             // A repeated id updates that same operation, while distinct operations remain as history.
+            // Defensive de-duplication: a backend retry/reconnect may replay the same
+            // semantic activity with a different event id. Keep only the newest row.
+            if(normalizedLabelKey){
+                [...list.querySelectorAll('.ai-activity-row')].forEach(candidate=>{
+                    if(candidate!==row && candidate.dataset.activityLabelKey===normalizedLabelKey) candidate.remove();
+                });
+            }
             const rows=[...list.querySelectorAll('.ai-activity-row')];
             rows.forEach(x=>x.classList.remove('ai-activity-current'));
             if(state==='running') row.classList.add('ai-activity-current');
