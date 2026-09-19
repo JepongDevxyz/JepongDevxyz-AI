@@ -4180,15 +4180,16 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
   clip-path:inset(var(--pet-head-crop-top,0px) 0 0 0 round 0)!important;
   object-position:center bottom!important;
 }
-/* Keep detached pixels/decorations above the live pet out of the visible frame. */
-.live-pet[data-pet-name="luna"] .live-pet-visual{clip-path:inset(14px 0 0 0 round 20px)}
+/* Remove detached head-top artifacts from every built-in live pet.
+   Crop the live visual only; Settings preview/original assets stay untouched. */
+.live-pet[data-pet-name="luna"] .live-pet-visual,
 .live-pet[data-pet-name="kiro"] .live-pet-visual,
 .live-pet[data-pet-name="mochi"] .live-pet-visual,
 .live-pet[data-pet-name="pixel"] .live-pet-visual,
 .live-pet[data-pet-name="nova"] .live-pet-visual,
 .live-pet[data-pet-name="sunny"] .live-pet-visual,
 .live-pet[data-pet-name="kumo"] .live-pet-visual,
-.live-pet[data-pet-name="ace"] .live-pet-visual{overflow:hidden!important}
+.live-pet[data-pet-name="ace"] .live-pet-visual{overflow:hidden!important;clip-path:inset(var(--pet-head-crop-top,14px) 0 0 0 round 20px)!important}
 /* Force the calibrated geometry onto the actual runtime data-pet-visual values. */
 .live-pet-sleep-eyes{left:var(--sleep-eyes-left,18px)!important;top:var(--sleep-eyes-top,28px)!important;width:var(--sleep-eyes-width,46px)!important}
 .live-pet[data-pet-visual="cat"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#eef2ff;--sleep-line-color:#242632}
@@ -4205,13 +4206,13 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 /* Built-in pet calibration. Luna's two detached top pieces are removed by cropping
    only the transparent top band; other pets keep their natural silhouette. */
 .live-pet[data-pet-name="luna"]{--pet-head-crop-top:14px}
-.live-pet[data-pet-name="kiro"]{--pet-head-crop-top:0px}
-.live-pet[data-pet-name="mochi"]{--pet-head-crop-top:0px}
-.live-pet[data-pet-name="pixel"]{--pet-head-crop-top:0px}
-.live-pet[data-pet-name="nova"]{--pet-head-crop-top:0px}
-.live-pet[data-pet-name="sunny"]{--pet-head-crop-top:0px}
-.live-pet[data-pet-name="kumo"]{--pet-head-crop-top:0px}
-.live-pet[data-pet-name="ace"]{--pet-head-crop-top:0px}
+.live-pet[data-pet-name="kiro"]{--pet-head-crop-top:14px}
+.live-pet[data-pet-name="mochi"]{--pet-head-crop-top:14px}
+.live-pet[data-pet-name="pixel"]{--pet-head-crop-top:14px}
+.live-pet[data-pet-name="nova"]{--pet-head-crop-top:14px}
+.live-pet[data-pet-name="sunny"]{--pet-head-crop-top:14px}
+.live-pet[data-pet-name="kumo"]{--pet-head-crop-top:14px}
+.live-pet[data-pet-name="ace"]{--pet-head-crop-top:14px}
 </style>
 </head>
 <body>
