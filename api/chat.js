@@ -1766,6 +1766,29 @@ function cleanTaskText(message=''){
     .trim();
 }
 
+function historyMessageText(item={}){
+  return String(item?.text ?? item?.content ?? item?.message ?? '').replace(/\s+/g,' ').trim();
+}
+
+function contextualTaskMessage(message='', history=[]){
+  const current=String(message||'').replace(/\s+/g,' ').trim();
+  if(!current)return current;
+
+  const words=current.split(/\s+/).filter(Boolean);
+  const vague=words.length<=8 || /^(?:ito|iyan|yan|yun|iyon|ganito|ganyan|same|still|ulit|again|security|safe|working|gumagana|okay|ayos|fix|why|bakit|paano|how|what about|e kung|eh kung)\b/i.test(current);
+  if(!vague)return current;
+
+  const prior=(Array.isArray(history)?history:[])
+    .filter(x=>String(x?.role||'').toLowerCase()==='user')
+    .map(historyMessageText)
+    .filter(Boolean)
+    .slice(-2);
+
+  if(!prior.length)return current;
+  const context=prior.join(' / ').slice(-420);
+  return `${context} / Follow-up: ${current}`;
+}
+
 function shortTaskSubject(message=''){
   let t=cleanTaskText(message)
     .replace(/^(paki\s+)?(gawan|gumawa|ayusin|i-?test|itest|test|verify|check|suriin|review|hanapin|maghanap|create|build|make|fix|please)\s+(mo\s+)?(ako\s+|kami\s+|naman\s+|ito\s+|itong\s+)?/i,'')
@@ -2889,7 +2912,8 @@ async function processChat(body, emit) {
     personalization={...personalization,intelligence:responseEffort,fastAnswers};
   }
   const startedAt=Date.now();
-  const contextPlan=emitContextActivityStart(message,files,emit);
+  const taskMessage=contextualTaskMessage(message,history);
+  const contextPlan=emitContextActivityStart(taskMessage,files,emit);
 
   // Source-specific milestones are emitted after the corresponding input has
   // really been read or added to model context (never on a fixed timer).
@@ -2897,7 +2921,7 @@ async function processChat(body, emit) {
   let routedReason='';
   if(smartRouter){
     activity(emit,'router','Smart Router is choosing the best provider','running','route');
-    const route=smartRoute(mode,files,message);
+    const route=smartRoute(mode,files,taskMessage);
     if(route&&configured(route.provider)){
       provider=route.provider;model=route.model;routedReason=route.reason;
       activity(emit,'router',`Smart Router selected ${providerLabel(provider)} • ${modelLabel(model)} for ${route.reason}`,'completed','route');
@@ -2908,7 +2932,7 @@ async function processChat(body, emit) {
 
   if(!PROVIDERS[provider])provider='gemini';
   model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
-  const attachmentSourceContext=buildAttachmentSourceContext(files,message);
+  const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   if(files.length){
     const grouped=new Map();
     for(const file of files){
@@ -2938,10 +2962,10 @@ async function processChat(body, emit) {
       }
     }
   }
-  const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,message,provider,emit);
+  const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit);
   const githubContext=await inspectPublicGitHubRepository(message,emit);
-  const providedLinkContext=await inspectProvidedLinks(message,emit);
-  const verificationContext=await performVerification(message,files,emit);
+  const providedLinkContext=await inspectProvidedLinks(extractPublicUrl(message).length?message:taskMessage,emit);
+  const verificationContext=await performVerification(taskMessage,files,emit);
   // A site-security request needs evidence about the user's specified site.
   // Generic HTTPS/Wikipedia results are not evidence about that site and must not
   // create misleading Activity entries. User can still ask separately for sources.
