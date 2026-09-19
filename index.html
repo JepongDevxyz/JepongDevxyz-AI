@@ -4089,9 +4089,20 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .composer-tool-btn{min-height:47px!important;padding:4px 7px!important;grid-template-columns:37px minmax(0,1fr)!important;gap:9px!important;border-radius:13px!important;font-size:.86rem!important}
 .composer-tool-icon{width:36px!important;height:36px!important;min-width:36px!important}.composer-tool-icon i,.composer-tool-icon svg{width:19px!important;height:19px!important}
 .chat-input-pill{min-width:0!important}.pill-input{width:100%!important;min-width:0!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-height:min(32dvh,150px)!important;overflow-x:hidden!important}
+/* consolidated mobile composer / scroll / activity fixes */
+@media(max-width:700px){
+.floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;bottom:calc(env(safe-area-inset-bottom) + 86px)!important;transform:translateX(-50%)!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:50%!important;display:none;align-items:center!important;justify-content:center!important;z-index:72!important}
+.floating-scroll-pill.show{display:flex!important}.floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:22px!important}.floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important}
+.composer-tool-sheet{left:10px!important;right:auto!important;width:min(218px,calc(100vw - 28px))!important;max-height:min(60dvh,340px)!important;padding:6px!important;border-radius:20px!important}
+.composer-tool-btn{min-height:45px!important;padding:4px 7px!important;gap:9px!important;font-size:.84rem!important}.composer-tool-icon{width:35px!important;height:35px!important;flex:0 0 35px!important}
+.pill-input{min-width:0!important;width:100%!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;overflow-x:hidden!important;max-height:min(30dvh,144px)!important}
+.ai-activity-card{position:relative!important;z-index:1!important;max-width:100%!important;overflow:hidden!important}.ai-activity-list{max-height:260px!important;overflow:hidden!important}
+.bot-message,.bot-content,.message-content{overflow-wrap:anywhere!important;word-break:break-word!important}
+}
 </style>
 <script id="assistant-runtime-guard">
 window.safeVisibleAssistantResponse=window.safeVisibleAssistantResponse||function(text){try{if(typeof window.sanitizeVisibleAssistantResponse==='function')return window.sanitizeVisibleAssistantResponse(text);}catch(_){}return String(text==null?'':text);};
+window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse||function(text){let out=String(text==null?'':text);out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');return out.replace(/\n{3,}/g,'\n\n').trim();};
 </script>
 </style>
 </head>
