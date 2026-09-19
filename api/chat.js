@@ -1761,21 +1761,34 @@ function contextActivityPlan(message='', files=[]){
   const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
   const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/'));
   const hasCode=p.fileNames.some(n=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(n));
+  const subject=p.subject && p.subject.length>2 ? p.subject : '';
 
-  let first={id:'task-context',label:'Understanding your request',kind:'process'};
+  const labels={
+    github:{inspect:subject?`Reviewing repository task: ${subject}`:'Reviewing repository request',edit:'Planning repository changes',test:'Checking repository status and changes',create:'Preparing repository implementation'},
+    deployment:{inspect:subject?`Reviewing deployment task: ${subject}`:'Reviewing deployment requirements',edit:'Planning deployment fixes',test:'Checking deployment status',create:'Preparing deployment changes'},
+    backend:{inspect:subject?`Analyzing backend task: ${subject}`:'Analyzing backend request',edit:'Planning backend changes',test:'Checking API/backend behavior',create:'Preparing backend implementation'},
+    web:{inspect:subject?`Analyzing web task: ${subject}`:'Analyzing website request',edit:'Planning UI/code changes',test:'Checking website behavior',create:'Preparing website implementation'},
+    android:{inspect:subject?`Reviewing Android task: ${subject}`:'Reviewing Android project request',edit:'Planning Android project changes',test:'Checking Android build behavior',create:'Preparing Android implementation'},
+    document:{inspect:subject?`Reviewing document task: ${subject}`:'Reviewing document request',edit:'Planning document revisions',test:'Checking document output',create:'Preparing requested document'},
+    video:{inspect:'Reviewing video request',edit:'Planning video-related changes',test:'Checking video content',create:'Preparing video output'},
+    image:{inspect:'Reviewing image request',edit:'Planning image changes',test:'Checking image details',create:'Preparing image output'},
+    research:{inspect:subject?`Researching: ${subject}`:'Identifying research requirements',edit:'Organizing research findings',test:'Cross-checking findings',create:'Preparing research output'},
+    study:{inspect:subject?`Working through: ${subject}`:'Working through the problem',edit:'Refining the solution',test:'Checking the solution',create:'Preparing the solution'},
+    general:{inspect:subject?`Understanding: ${subject}`:'Understanding your request',edit:'Planning requested changes',test:'Checking the requested behavior',create:'Preparing the requested output'}
+  };
+
+  let first={id:'task-context',label:labels[p.kind]?.inspect||labels.general.inspect,kind:p.kind==='research'?'research':'process'};
   if(hasVideo)first={id:'task-context',label:'Inspecting uploaded video frames',kind:'file'};
   else if(hasImage)first={id:'task-context',label:'Inspecting uploaded image',kind:'image'};
   else if(hasCode)first={id:'task-context',label:'Inspecting attached code',kind:'file'};
   else if(list.length)first={id:'task-context',label:`Reviewing ${userAttachmentCount(list)} attached file${userAttachmentCount(list)===1?'':'s'}`,kind:'file'};
-  else if(p.kind==='research')first={id:'task-context',label:'Checking what needs current information',kind:'research'};
-  else if(['web','backend','deployment','android','github'].includes(p.kind))first={id:'task-context',label:`Inspecting ${p.kind==='web'?'website':p.kind} requirements`,kind:'process'};
-  else if(p.kind==='study')first={id:'task-context',label:'Working through the problem',kind:'process'};
 
   let second=null;
-  if(p.intent.edit)second={id:'task-next',label:'Planning targeted changes',kind:'process'};
-  else if(p.intent.test)second={id:'task-next',label:'Checking the requested behavior',kind:'test'};
-  else if(p.intent.research)second={id:'task-next',label:'Preparing source-backed findings',kind:'research'};
-  else if(p.intent.create)second={id:'task-next',label:'Preparing the requested output',kind:p.kind==='image'?'image':'process'};
+  const domain=labels[p.kind]||labels.general;
+  if(p.intent.edit)second={id:'task-next',label:domain.edit,kind:'process'};
+  else if(p.intent.test)second={id:'task-next',label:domain.test,kind:'test'};
+  else if(p.intent.research)second={id:'task-next',label:p.kind==='research'?'Preparing source-backed findings':domain.test,kind:'research'};
+  else if(p.intent.create)second={id:'task-next',label:domain.create,kind:p.kind==='image'?'image':'process'};
 
   return {profile:p,steps:second?[first,second]:[first]};
 }
