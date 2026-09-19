@@ -2935,28 +2935,30 @@ function activityStreamResponse(body, requestSignal=null) {
       // Keep the Activity panel visibly alive during longer provider/tool work.
       // These are presentation heartbeat updates only; they never claim a tool ran.
       let heartbeatIndex=0;
+      const heartbeatProfile=taskProfile(body?.message||'',body?.files||[]);
       const heartbeatLabels=(()=>{
-        const profile=taskProfile(body?.message||'',body?.files||[]);
+        const subject=heartbeatProfile.subject&&heartbeatProfile.subject.length>2?heartbeatProfile.subject:'';
         const byKind={
-          github:['Reviewing repository context','Tracing the requested repository behavior','Checking relevant implementation details','Organizing repository findings'],
-          deployment:['Reviewing deployment context','Checking deployment configuration','Tracing deployment behavior','Organizing deployment findings'],
-          backend:['Analyzing API/backend context','Tracing request flow','Reviewing relevant backend logic','Checking implementation details'],
-          web:['Analyzing website context','Reviewing relevant UI logic','Tracing interface behavior','Checking implementation details'],
-          android:['Reviewing Android project context','Tracing app behavior','Checking relevant project configuration','Reviewing implementation details'],
-          document:['Reviewing document context','Organizing relevant content','Checking requested document details','Preparing response structure'],
-          video:['Reviewing video context','Inspecting relevant media details','Organizing observations','Preparing response'],
-          image:['Reviewing image context','Inspecting relevant visual details','Organizing observations','Preparing response'],
-          research:['Identifying relevant information','Reviewing available context','Cross-checking relevant details','Organizing findings'],
-          study:['Working through the problem','Checking relevant concepts','Verifying the reasoning','Preparing the explanation'],
-          general:['Understanding the request','Reviewing relevant context','Working through the details','Preparing the response']
+          github:[subject?`Reviewing repository context for ${subject}`:'Reviewing repository context','Locating relevant repository logic','Tracing the requested repository behavior','Checking related implementation details','Reviewing repository changes'],
+          deployment:[subject?`Reviewing deployment context for ${subject}`:'Reviewing deployment context','Locating deployment configuration','Checking deployment behavior','Reviewing runtime details','Preparing deployment findings'],
+          backend:[subject?`Analyzing backend context for ${subject}`:'Analyzing backend context','Locating relevant API logic','Tracing request flow','Checking backend implementation details','Reviewing response handling'],
+          web:[subject?`Analyzing website context for ${subject}`:'Analyzing website context','Locating relevant UI logic','Tracing interface behavior','Checking responsive implementation','Reviewing page behavior'],
+          android:[subject?`Reviewing Android context for ${subject}`:'Reviewing Android project context','Locating relevant app logic','Tracing app behavior','Checking project configuration','Reviewing implementation details'],
+          document:['Reviewing document context','Locating relevant content','Organizing requested details','Checking document structure','Preparing response content'],
+          video:['Reviewing video context','Inspecting relevant frames','Checking visible details','Organizing observations','Preparing response'],
+          image:['Reviewing image context','Inspecting visible details','Checking relevant visual elements','Organizing observations','Preparing response'],
+          research:[subject?`Researching ${subject}`:'Identifying relevant information','Locating relevant sources','Reviewing available information','Cross-checking relevant details','Organizing findings'],
+          study:[subject?`Working through ${subject}`:'Working through the problem','Identifying relevant concepts','Checking the reasoning','Verifying the solution','Preparing the explanation'],
+          general:[subject?`Understanding ${subject}`:'Understanding the request','Identifying relevant context','Working through the details','Checking the response direction','Preparing the response']
         };
-        return byKind[profile.kind]||byKind.general;
+        return byKind[heartbeatProfile.kind]||byKind.general;
       })();
       const activityHeartbeat=setInterval(()=>{
         if(cancelled)return;
-        const label=heartbeatLabels[heartbeatIndex++%heartbeatLabels.length];
-        send('activity',{type:'activity',id:`progress-heartbeat-${heartbeatIndex}`,label,state:'running',kind:'process',at:Date.now()});
-      },900);
+        const label=heartbeatLabels[heartbeatIndex%heartbeatLabels.length];
+        heartbeatIndex++;
+        send('activity',{type:'activity',id:`live-progress-${heartbeatIndex}`,label,state:'running',kind:heartbeatProfile.kind==='research'?'research':'process',at:Date.now()});
+      },650);
       // Flush immediately so Vercel/browser sees an active streaming response.
       send('activity',{type:'activity',id:'stream-open',label:'Response stream opened',state:'completed',kind:'process',at:Date.now()});
       const keepAlive=setInterval(()=>{
@@ -2967,7 +2969,7 @@ function activityStreamResponse(body, requestSignal=null) {
           const result=await processChat(body,emit);
           if(!result.ok){
             send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'gemini'});
-            clearInterval(keepAlive); clearInterval(activityHeartbeat); clearInterval(activityHeartbeat);
+            clearInterval(keepAlive); clearInterval(activityHeartbeat);
             controller.close();
             return;
           }
