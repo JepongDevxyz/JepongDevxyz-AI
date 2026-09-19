@@ -4189,6 +4189,16 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .live-pet[data-pet-name="sunny"] .live-pet-visual,
 .live-pet[data-pet-name="kumo"] .live-pet-visual,
 .live-pet[data-pet-name="ace"] .live-pet-visual{overflow:hidden!important}
+/* Force the calibrated geometry onto the actual runtime data-pet-visual values. */
+.live-pet-sleep-eyes{left:var(--sleep-eyes-left,18px)!important;top:var(--sleep-eyes-top,28px)!important;width:var(--sleep-eyes-width,46px)!important}
+.live-pet[data-pet-visual="cat"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#eef2ff;--sleep-line-color:#242632}
+.live-pet[data-pet-visual="dog"]{--sleep-eyes-left:17px;--sleep-eyes-top:29px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:12px;--pet-sleep-lid:#d6a36f;--sleep-line-color:#33251c}
+.live-pet[data-pet-visual="rabbit"]{--sleep-eyes-left:18px;--sleep-eyes-top:29px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#f3e8ff;--sleep-line-color:#30283a}
+.live-pet[data-pet-visual="robot"]{--sleep-eyes-left:16px;--sleep-eyes-top:28px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:11px;--pet-sleep-lid:#cbd5e1;--sleep-line-color:#0f172a}
+.live-pet[data-pet-visual="blackcat"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#242632;--sleep-line-color:#d8dbe7}
+.live-pet[data-pet-visual="chick"]{--sleep-eyes-left:18px;--sleep-eyes-top:28px;--sleep-eyes-width:46px;--sleep-eye-w:18px;--sleep-eye-h:12px;--pet-sleep-lid:#ffe07b;--sleep-line-color:#4a3710}
+.live-pet[data-pet-visual="panda"]{--sleep-eyes-left:16px;--sleep-eyes-top:27px;--sleep-eyes-width:50px;--sleep-eye-w:20px;--sleep-eye-h:13px;--pet-sleep-lid:#f3f4f6;--sleep-line-color:#111827}
+.live-pet[data-pet-visual="fox"]{--sleep-eyes-left:17px;--sleep-eyes-top:28px;--sleep-eyes-width:48px;--sleep-eye-w:19px;--sleep-eye-h:13px;--pet-sleep-lid:#f5b06d;--sleep-line-color:#3b2418}
 /* Sleeping state applies to every built-in pet: cover source-image open eyes, then draw calibrated closed lids. */
 .live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important}
 .live-pet.sleeping .live-pet-sleep-eyes i{background:var(--pet-sleep-lid,#eef2ff);height:var(--sleep-eye-h,12px);width:var(--sleep-eye-w,18px);border:0!important;border-bottom:3px solid var(--sleep-line-color,#242632)!important;border-radius:50% 50% 55% 55%!important;box-shadow:0 -5px 0 3px var(--pet-sleep-lid,#eef2ff)}
