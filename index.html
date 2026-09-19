@@ -1826,37 +1826,6 @@
         }
 
     
-        /* ===== Context-aware activity timeline: mobile-safe ===== */
-        .ai-activity-card{max-width:100%!important;overflow:hidden!important}
-        .ai-activity-list{min-width:0!important}
-        .ai-activity-row{
-            display:grid!important;
-            grid-template-columns:28px minmax(0,1fr)!important;
-            align-items:start!important;
-            column-gap:10px!important;
-            width:100%!important;
-            min-width:0!important;
-        }
-        .ai-activity-icon{width:28px!important;min-width:28px!important;padding-top:1px!important}
-        .ai-activity-copy{min-width:0!important;width:100%!important}
-        .ai-activity-label,.ai-activity-detail{
-            white-space:normal!important;
-            overflow:visible!important;
-            text-overflow:clip!important;
-            overflow-wrap:anywhere!important;
-            word-break:normal!important;
-        }
-        .ai-activity-label{line-height:1.42!important}
-        .ai-activity-detail{line-height:1.4!important;margin-top:3px!important}
-        @media(max-width:430px){
-            .ai-activity-card{padding:12px!important}
-            .ai-activity-row{grid-template-columns:26px minmax(0,1fr)!important;column-gap:9px!important}
-            .ai-activity-icon{width:26px!important;min-width:26px!important}
-            .ai-activity-label{font-size:.8rem!important}
-            .ai-activity-detail{font-size:.69rem!important}
-        }
-
-    
         /* ===== PET FOOD + PER-PET SOUND FIX ===== */
         .live-pet.eating::before{content:none!important;display:none!important}
         .live-pet-visual{position:relative!important;z-index:5!important}
@@ -1914,138 +1883,6 @@
             #modelPagesTrack .model-provider-page{
                 padding-bottom:96px!important;
             }
-        }
-
-    
-        /* ===== ACTIVITY TIMELINE VISIBILITY / MOBILE POSITION FIX ===== */
-        .ai-activity-card{
-            position:relative!important;
-            width:min(100%,720px)!important;
-            margin:12px 0 18px!important;
-            padding:14px 14px 12px!important;
-            border:1px solid rgba(148,163,184,.20)!important;
-            border-radius:18px!important;
-            background:linear-gradient(180deg,rgba(30,41,59,.92),rgba(15,23,42,.88))!important;
-            box-shadow:0 12px 34px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.03)!important;
-            color:var(--text-main)!important;
-            overflow:hidden!important;
-            scroll-margin-block:22px!important;
-        }
-        [data-theme="light"] .ai-activity-card{
-            background:linear-gradient(180deg,rgba(255,255,255,.99),rgba(248,250,252,.97))!important;
-            border-color:rgba(100,116,139,.22)!important;
-            box-shadow:0 10px 28px rgba(15,23,42,.10)!important;
-        }
-        .ai-activity-head{
-            position:sticky!important;
-            top:0!important;
-            z-index:3!important;
-            margin:0 0 8px!important;
-            padding:1px 1px 8px!important;
-            background:linear-gradient(180deg,rgba(26,36,56,.98) 72%,rgba(26,36,56,0))!important;
-        }
-        [data-theme="light"] .ai-activity-head{
-            background:linear-gradient(180deg,rgba(255,255,255,.98) 72%,rgba(255,255,255,0))!important;
-        }
-        .ai-activity-title{
-            color:var(--text-main)!important;
-            font-size:.80rem!important;
-            font-weight:800!important;
-            letter-spacing:.01em!important;
-        }
-        .ai-activity-toggle{
-            color:color-mix(in srgb,var(--text-main) 76%,transparent)!important;
-            font-size:.72rem!important;
-        }
-        .ai-activity-list{
-            display:flex!important;
-            flex-direction:column!important;
-            gap:4px!important;
-            max-height:min(46dvh,380px)!important;
-            overflow-y:auto!important;
-            overflow-x:hidden!important;
-            overscroll-behavior:contain!important;
-            -webkit-overflow-scrolling:touch!important;
-            scrollbar-width:thin!important;
-            padding:0 2px 7px 0!important;
-        }
-        .ai-activity-card.collapsed .ai-activity-list{
-            max-height:0!important;
-            overflow:hidden!important;
-            padding:0!important;
-        }
-        .ai-activity-row{
-            grid-template-columns:32px minmax(0,1fr)!important;
-            gap:9px!important;
-            padding:9px 8px!important;
-            border-radius:12px!important;
-            min-width:0!important;
-        }
-        .ai-activity-row.completed{background:rgba(255,255,255,.022)!important}
-        .ai-activity-row.running{
-            background:linear-gradient(90deg,rgba(139,92,246,.16),rgba(139,92,246,.04))!important;
-            border:1px solid rgba(139,92,246,.14)!important;
-        }
-        .ai-activity-row.warning{background:rgba(245,158,11,.08)!important}
-        .ai-activity-row.error{background:rgba(239,68,68,.08)!important}
-        .ai-activity-icon{
-            width:30px!important;
-            height:30px!important;
-            background:rgba(255,255,255,.045)!important;
-            border-color:rgba(148,163,184,.11)!important;
-        }
-        .ai-activity-copy{min-width:0!important;padding-top:2px!important}
-        .ai-activity-label{
-            color:color-mix(in srgb,var(--text-main) 88%,transparent)!important;
-            font-size:.82rem!important;
-            line-height:1.46!important;
-            font-weight:520!important;
-            overflow-wrap:anywhere!important;
-        }
-        .ai-activity-row.running .ai-activity-label{
-            color:var(--text-main)!important;
-            font-weight:680!important;
-        }
-        .ai-activity-row.warning .ai-activity-label{color:#fbbf24!important}
-        .ai-activity-row.error .ai-activity-label{color:#fca5a5!important}
-        .ai-activity-detail{
-            color:color-mix(in srgb,var(--text-main) 66%,transparent)!important;
-            opacity:1!important;
-            font-size:.70rem!important;
-            line-height:1.4!important;
-        }
-        .ai-activity-summary{
-            color:color-mix(in srgb,var(--text-main) 80%,transparent)!important;
-            font-size:.72rem!important;
-            line-height:1.4!important;
-            padding:2px 2px 1px!important;
-        }
-        @media(max-width:520px){
-            .ai-activity-card{
-                margin:10px 0 32px!important;
-                padding:12px 11px 11px!important;
-                border-radius:16px!important;
-                isolation:isolate!important;
-            }
-            .ai-activity-card + .message,
-            .ai-activity-card + .assistant-message,
-            .ai-activity-card + [class*="message"]{
-                margin-top:0!important;
-                position:relative!important;
-                z-index:1!important;
-            }
-            .ai-activity-list{max-height:min(39dvh,330px)!important}
-            .ai-activity-row{
-                grid-template-columns:29px minmax(0,1fr)!important;
-                gap:8px!important;
-                padding:8px 5px!important;
-            }
-            .ai-activity-icon{width:28px!important;height:28px!important}
-            .ai-activity-label{font-size:.79rem!important;line-height:1.45!important}
-            .ai-activity-title{font-size:.78rem!important}
-        }
-        @media(max-height:700px){
-            .ai-activity-list{max-height:32dvh!important}
         }
 
     
@@ -3489,20 +3326,7 @@
             .app-container{height:var(--jepong-vh)!important;max-height:var(--jepong-vh)!important;min-height:0!important;transform-origin:top left}
             html.keyboard-open .chat-box{overscroll-behavior-y:contain}
         }
-        /* ===== Mobile composer + activity + read-aloud polish ===== */
-        .ai-activity-list{
-            overflow-y:auto!important;
-            overscroll-behavior:contain;
-            scrollbar-width:none;
-            -ms-overflow-style:none;
-        }
-        .ai-activity-list::-webkit-scrollbar{display:none}
-        .ai-activity-detail{
-            display:-webkit-box;
-            -webkit-box-orient:vertical;
-            -webkit-line-clamp:3;
-            overflow:hidden!important;
-        }
+        /* ===== Mobile composer + read-aloud polish ===== */
         .speech-mini-player{
             position:fixed;
             top:12px;
