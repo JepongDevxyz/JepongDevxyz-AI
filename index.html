@@ -8223,7 +8223,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             appendActivityEvent({id:'task-context',label:first.label,state:'running',kind:first.kind});
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
-            // Deliberately do not scroll the page here. This keeps an uploaded image/file visible.
+            // Keep the newly-created Activity status in the visible conversation viewport.
+            // The previous no-scroll behavior left it below large image/video attachments,
+            // which made Activity look missing on mobile even though it existed in the DOM.
+            requestAnimationFrame(() => {
+                if (!indicator.isConnected) return;
+                try {
+                    indicator.scrollIntoView({behavior:'smooth', block:'nearest'});
+                } catch (_) {
+                    scrollToBottom(true);
+                }
+            });
         }
 
         function toggleActivityDetails(btn) {
