@@ -8234,6 +8234,16 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             indicator.id = 'activeAiIndicator';
             indicator.className = 'ai-activity-card';
             indicator.dataset.startedAt = String(Date.now());
+            // Runtime visibility is authoritative: legacy stylesheet layers must never
+            // be able to hide or clip the live Activity timeline.
+            indicator.style.setProperty('display','block','important');
+            indicator.style.setProperty('visibility','visible','important');
+            indicator.style.setProperty('opacity','1','important');
+            indicator.style.setProperty('height','auto','important');
+            indicator.style.setProperty('max-height','none','important');
+            indicator.style.setProperty('overflow','visible','important');
+            indicator.style.setProperty('position','relative','important');
+            indicator.style.setProperty('z-index','2','important');
             indicator.innerHTML = `
                 <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
                     <span class="ai-activity-summary-icon" id="aiActivitySummaryIcon"><i data-lucide="clock"></i></span>
@@ -8243,14 +8253,22 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 <div class="ai-activity-list" id="aiActivityList"></div>
             `;
             chatBox.appendChild(indicator);
+            const list=indicator.querySelector('#aiActivityList');
+            if(list){
+                list.style.setProperty('display','flex','important');
+                list.style.setProperty('visibility','visible','important');
+                list.style.setProperty('opacity','1','important');
+                list.style.setProperty('height','auto','important');
+                list.style.setProperty('max-height','none','important');
+                list.style.setProperty('overflow','visible','important');
+            }
             const first=initialActivityForRequest(promptText,files);
-            appendActivityEvent({id:'task-context',label:first.label,state:'running',kind:first.kind});
+            appendActivityEvent({id:'task-context',label:first.label,state:'completed',kind:first.kind});
+            // Add Thinking synchronously. Do not defer this to animation frames:
+            // fast provider responses can otherwise finish before the frame is painted.
+            appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
-            // Paint Activity immediately before any network/history work can delay it.
-            requestAnimationFrame(() => {
-                appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
-            });
             // Keep the newly-created Activity status in the visible conversation viewport.
             // The previous no-scroll behavior left it below large image/video attachments,
             // which made Activity look missing on mobile even though it existed in the DOM.
@@ -8288,6 +8306,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const kind = normalized.kind || 'process';
             if(state==='running') completeRunningActivityRows(id);
             row.className = `ai-activity-row ${state}`;
+            row.style.setProperty('display','grid','important');
+            row.style.setProperty('visibility','visible','important');
+            row.style.setProperty('opacity','1','important');
+            row.style.setProperty('height','auto','important');
+            row.style.setProperty('min-height','30px','important');
             row.innerHTML = `
                 <div class="ai-activity-icon">${activityIconMarkup(kind,state)}</div>
                 <div class="ai-activity-copy">
