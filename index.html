@@ -4271,7 +4271,6 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
                     <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
                 </div>
                 <div class="header-tools-group">
-                    <button type="button" class="pet-header-companion" id="petHeaderCompanion" onclick="openPetHeaderCompanion()" title="Pet companion" aria-label="Pet companion settings"></button>
                     <div class="network-status" id="networkStatus" onclick="measureNetworkPing()" title="Click to refresh ping">
                         <div class="signal-bars">
                             <div class="bar bar-1 active" id="bar1"></div>
@@ -4281,7 +4280,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
                         </div>
                         <span id="pingText">Checking...</span>
                     </div>
-                    <button class="cloud-pill" id="libraryHeaderBtn" onclick="openLibrary()">Library</button><button class="cloud-pill" id="accountHeaderBtn" onclick="openAccountModal()">Sign in</button><button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
+<button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
                 </div>
             </div>
 
@@ -4461,6 +4460,8 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
         <div class="settings-home-scroll">
           <h3 class="settings-section-label">My AI</h3>
           <div class="settings-card-group">
+            <button class="settings-nav-row" type="button" onclick="closeSettingsModal(); setTimeout(openAccountModal,0)"><i data-lucide="user-round"></i><span><strong>Account</strong><small>Sign in and sync your data across devices</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="closeSettingsModal(); setTimeout(openLibrary,0)"><i data-lucide="folder-open"></i><span><strong>Library</strong><small>Manage your private uploaded files</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="openPersonalizationSettings()"><i data-lucide="smile"></i><span><strong>Personalization</strong><small>Style, instructions, writing and preferences</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="openSettingsMemory()"><i data-lucide="book-open"></i><span><strong>Memory</strong><small>Saved local memory and chat-history references</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="openSettingsPet()"><i data-lucide="cat"></i><span><strong>Pet & Luna</strong><small>Pet companion, behavior and Create a Pet with AI</small></span><i data-lucide="chevron-right"></i></button>
