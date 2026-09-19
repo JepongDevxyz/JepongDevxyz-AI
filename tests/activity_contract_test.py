@@ -73,8 +73,11 @@ def main():
 
     # Attachment status comes from completed server preprocessing, not a
     # generic invented client label.
-    require("activity(emit,'attachments'" in CHAT and "Prepared ${labelParts" in CHAT,
-            "server attachment preparation activity missing")
+    # Current implementation emits evidence-backed milestones per actual file group.
+    require("const attachmentSourceContext=buildAttachmentSourceContext" in CHAT
+            and "activity(emit,id,`Prepared ${videoFrames}" in CHAT
+            and "activity(emit,id,`Read attached ${" in CHAT,
+            "per-file attachment preparation milestones missing")
 
     truthful_pairs = (
         ("getEnhancedLiveWebContext", "activity(emit"),

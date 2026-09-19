@@ -24,8 +24,12 @@ def main():
     req('function sanitizeUiErrorMessage' in INDEX, 'frontend provider error sanitizer missing')
     req('AI Horde API key was rejected. Check or replace AIHORDE_API_KEY' in INDEX,
         'frontend does not convert the raw AI Horde key error to concise copy')
-    req("else if(state==='error') normalizedLabel=`${providerName} request failed`;" in INDEX,
-        'provider timeline error row is not normalized')
+    # The current activity normalizer hides routine provider plumbing and
+    # sanitizes only real warning/error milestones before displaying them.
+    req("if(state==='warning'||state==='error')" in INDEX
+        and "sanitizeUiErrorMessage(label||'Provider issue')" in INDEX
+        and "return null;" in INDEX,
+        'provider timeline warning/error sanitation is missing')
     req('-webkit-line-clamp:3' in INDEX and 'overflow-y:auto!important' in INDEX,
         'activity detail can still grow into an oversized mobile block')
 
