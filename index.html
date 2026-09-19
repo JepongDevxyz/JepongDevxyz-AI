@@ -7593,37 +7593,18 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Transport plumbing is intentionally hidden from the user-facing activity list.
             if(id==='stream-open'||id==='client-start')return null;
 
-            // Never show timed pseudo-work, internal transport, or generic
-            // response plumbing as if those were independently executed tools.
+            // Never show timed pseudo-work, internal transport, provider internals,
+            // or generic response plumbing as Activity rows.
             if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
-            if (['prepare','response-prep','response-generation','task-next','quality-orchestrator'].includes(id)) return null;
-            // Only show Thinking after the real backend starts generating.
-            // Do not retain the startup placeholder as a duplicate row.
+            if (['prepare','response-prep','response-generation','task-next','quality-orchestrator','router'].includes(id)) return null;
             if (id==='generation') return {...e,id:'thinking',label:'Thinking',kind:'thinking'};
-            if (kind==='provider' && id.startsWith('provider-') &&
-                (state==='running'||state==='completed')) return null;
-
-            // Provider identity stays visible and truthful. The backend has already normalized
-            // retries/connection state into a stable provider row.
-            if(kind==='provider'){
-                const providerName=providerDisplayName(id);
-                let normalizedLabel=label || (state==='completed'?'Response model ready':'Preparing response');
-                if(id && id.startsWith('provider-')){
-                    if(state==='running') normalizedLabel=`Connecting to ${providerName}`;
-                    else if(state==='completed') normalizedLabel=`${providerName} connected`;
-                    else if(state==='warning') normalizedLabel=`Retrying ${providerName}`;
-                    else if(state==='error') normalizedLabel=`${providerName} request failed`;
-                }else{
-                    normalizedLabel=sanitizeUiErrorMessage(normalizedLabel);
+            if (kind==='provider') {
+                // Only surface provider failures/fallback problems; normal connect/ready
+                // states are implementation details and make the timeline noisy.
+                if(state==='warning'||state==='error'){
+                    return {...e,label:sanitizeUiErrorMessage(label||'Provider issue'),detail:sanitizeUiErrorMessage(e.detail||''),kind:'provider'};
                 }
-                const normalizedDetail=sanitizeUiErrorMessage(e.detail||'');
-                return {
-                    ...e,
-                    id:id || 'response-engine',
-                    label:normalizedLabel,
-                    detail: normalizedDetail && normalizedDetail!==normalizedLabel ? normalizedDetail : '',
-                    kind:'provider'
-                };
+                return null;
             }
 
             // Only real tool/context operations receive ChatGPT-style wording.
