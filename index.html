@@ -9133,13 +9133,18 @@ ${m.text || ''}
                 }
 
                 let fullResponse = '';
+                let responseStreamFinished = false;
                 let actualProviderUsed = currentSelectedProvider;
                 let actualModelUsed = currentSelectedModel;
                 const contentType = response.headers.get('content-type') || '';
 
-                const renderLiveResponse = () => {
+                // Keep the assistant answer hidden while Activity is still running.
+                // We buffer streamed text, then collapse Activity and reveal the answer together.
+                const renderLiveResponse = (force=false) => {
+                    if (!force && !responseStreamFinished) return;
                     botMsgElem.innerHTML = `<div>${renderCustomMarkdown(safeAssistantText(fullResponse))}</div>
                         ${botActionsHTML()}`;
+                    botMsgElem.style.removeProperty('display');
                     refreshLucideIcons(botMsgElem);
                     if (userIsScrollingUp) {
                         unreadMessagesCount++;
@@ -9150,6 +9155,7 @@ ${m.text || ''}
                         scrollToBottom(false);
                     }
                 };
+                botMsgElem.style.setProperty('display','none','important');
 
                 if (contentType.includes('text/event-stream')) {
                     await readActivitySSE(response, {
@@ -9167,7 +9173,11 @@ ${m.text || ''}
                         artifact: (payload) => {
                             attachGeneratedArtifact(botMsgElem, payload);
                         },
-                        done: (payload) => finishAIIndicator(true, payload.elapsedMs),
+                        done: (payload) => {
+                            responseStreamFinished = true;
+                            finishAIIndicator(true, payload.elapsedMs);
+                            renderLiveResponse(true);
+                        },
                         error: (payload) => {
                             appendActivityEvent({ id:'server-error', label:sanitizeUiErrorMessage(payload.message || 'AI provider unavailable'), state:'error', kind:'provider' });
                             if(!autoProviderFallback) finishAIIndicator(false);
@@ -9189,12 +9199,17 @@ ${m.text || ''}
                         activePartialResponse=fullResponse;
                         renderLiveResponse();
                     }
+                    responseStreamFinished = true;
                     finishAIIndicator(true);
+                    renderLiveResponse(true);
                 }
 
                 fullResponse = safeAssistantText(fullResponse);
                 activePartialResponse = fullResponse;
-                renderLiveResponse();
+                responseStreamFinished = true;
+                const activeActivityCard=document.getElementById('activeAiIndicator');
+                if(activeActivityCard && activeActivityCard.dataset.finalized!=='true') finishAIIndicator(true);
+                renderLiveResponse(true);
 
                 const totalAiMs = Math.max(1, Math.round(performance.now() - aiRequestStartedAt));
                 const runtimeBadge = document.getElementById('providerRuntimeBadge');
