@@ -1838,46 +1838,86 @@ function contextActivityPlan(message='', files=[]){
   const firstFile=list.find(f=>!['video-frame','pdf-page'].includes(f?.mediaRole))||list[0];
   const name=String(firstFile?.parentName||firstFile?.name||firstFile?.filename||'').slice(0,64);
   const subject=shortTaskSubject(message);
+  const urls=extractPublicUrl(message);
   let label='Understanding your request';
+  let kind='process';
+
+  const firstPublicUrl=urls.find(isSafePublicUrl)||'';
+  let host='';
+  try{ host=firstPublicUrl?new URL(firstPublicUrl).hostname.replace(/^www\./,''):''; }catch(_){}
 
   if(list.length){
-    const kind=list.some(f=>f?.mediaRole==='video-frame'||f?.kind==='video'||String(f?.mimeType||'').startsWith('video/'))
-      ? 'video'
-      : list.some(f=>f?.mediaRole==='image'||String(f?.mimeType||'').startsWith('image/'))?'image':'file';
-    label=`Inspecting uploaded ${kind}${name?': '+name:''}`;
+    const hasVideo=list.some(f=>f?.mediaRole==='video-frame'||f?.kind==='video'||String(f?.mimeType||'').startsWith('video/'));
+    const hasImage=list.some(f=>f?.mediaRole==='image'||String(f?.mimeType||'').startsWith('image/'));
+    const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+    if(hasVideo){ label=`Inspecting uploaded video${name?': '+name:''}`; kind='file'; }
+    else if(hasImage){ label=`Inspecting uploaded image${name?': '+name:''}`; kind='image'; }
+    else if(hasCode){ label=`Reviewing attached code${name?': '+name:''}`; kind='file'; }
+    else { label=`Reviewing attached file${name?': '+name:''}`; kind='file'; }
   }else if(isWebsiteSecurityRequest(message)){
-    label=subject && subject!=='your request'
-      ? `Analyzing website security request: ${subject}`
-      : 'Analyzing website security request';
+    label=host
+      ? `Checking website security for ${host}`
+      : subject && subject!=='your request'
+        ? `Checking website security: ${subject}`
+        : 'Checking website security';
+    kind='research';
   }else if(profile.kind==='github'){
-    label=subject && subject!=='your request'
-      ? `Reviewing repository task: ${subject}`
-      : 'Reviewing repository task';
+    const repo=(()=>{
+      try{
+        const u=urls.map(x=>{try{return new URL(x)}catch(_){return null}}).find(x=>x?.hostname==='github.com');
+        const parts=u?.pathname.split('/').filter(Boolean)||[];
+        return parts.length>=2?`${parts[0]}/${parts[1].replace(/\.git$/i,'')}`:'';
+      }catch(_){return ''}
+    })();
+    if(profile.intent.edit) label=repo?`Reviewing requested changes in ${repo}`:`Reviewing requested repository changes: ${subject}`;
+    else if(profile.intent.test) label=repo?`Checking repository behavior in ${repo}`:`Checking repository task: ${subject}`;
+    else label=repo?`Inspecting repository ${repo}`:`Inspecting repository task: ${subject}`;
+    kind='process';
   }else if(profile.kind==='deployment'){
-    label=subject && subject!=='your request'
-      ? `Reviewing deployment task: ${subject}`
-      : 'Reviewing deployment task';
+    label=profile.intent.test
+      ? `Checking deployment status: ${subject}`
+      : profile.intent.edit
+        ? `Reviewing deployment fix: ${subject}`
+        : `Reviewing deployment task: ${subject}`;
+    kind='deploy';
   }else if(profile.kind==='backend'){
-    label=subject && subject!=='your request'
-      ? `Analyzing API/backend task: ${subject}`
-      : 'Analyzing API/backend task';
+    label=profile.intent.test
+      ? `Checking API/backend behavior: ${subject}`
+      : profile.intent.edit
+        ? `Analyzing backend fix: ${subject}`
+        : `Analyzing API/backend task: ${subject}`;
+    kind='api';
   }else if(profile.kind==='web'){
-    label=subject && subject!=='your request'
-      ? `Analyzing website task: ${subject}`
-      : 'Analyzing website task';
+    label=profile.intent.edit
+      ? `Analyzing requested website/UI fix: ${subject}`
+      : profile.intent.test
+        ? `Checking website behavior: ${subject}`
+        : `Analyzing website task: ${subject}`;
+    kind='process';
   }else if(profile.kind==='research'){
-    label=subject && subject!=='your request'
-      ? `Researching: ${subject}`
-      : 'Identifying the requested research topic';
+    label=`Researching: ${subject}`;
+    kind='research';
   }else if(profile.kind==='study'){
-    label=subject && subject!=='your request'
-      ? `Working through: ${subject}`
-      : 'Working through the problem';
+    label=`Working through: ${subject}`;
+    kind='process';
+  }else if(profile.kind==='document'){
+    label=profile.intent.edit?`Reviewing document changes: ${subject}`:`Reviewing document task: ${subject}`;
+    kind='file';
+  }else if(profile.kind==='image'){
+    label=`Reviewing image task: ${subject}`;
+    kind='image';
+  }else if(profile.kind==='video'){
+    label=`Reviewing video task: ${subject}`;
+    kind='file';
   }else if(subject && subject!=='your request'){
-    label=`Understanding: ${subject}`;
+    label=profile.intent.edit
+      ? `Analyzing requested change: ${subject}`
+      : profile.intent.test
+        ? `Checking requested behavior: ${subject}`
+        : `Understanding: ${subject}`;
   }
 
-  return {profile,steps:[{id:'task-context',label,kind:list.length?'file':'process'}]};
+  return {profile,steps:[{id:'task-context',label,kind}]};
 }
 
 function emitContextActivityStart(message='', files=[], emit){
