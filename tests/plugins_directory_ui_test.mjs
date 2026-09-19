@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const ui=fs.readFileSync('plugins.js','utf8');
+const panel=JSON.parse(ui.split('\n')[0].replace(/^const PANEL_HTML=/,'').replace(/;$/,''));
 const css=fs.readFileSync('plugins.css','utf8');
 const page=fs.readFileSync('index.html','utf8');
 
@@ -9,7 +10,7 @@ for(const id of ['jdplugTabPlugins','jdplugTabSkills','jdplugDirectory','jdplugS
   'jdplugInstalled','jdplugAvailable','jdplugDetail','jdplugTry','jdplugManage',
   'jdplugManageView','jdplugRepoInput','jdplugResults','jdplugSuperEnabled',
   'jdplugPhase','jdplugGitEnabled']){
-  assert(ui.includes('id="'+id+'"'),'missing directory component '+id);
+  assert(panel.includes('id="'+id+'"'),'missing directory component '+id);
 }
 for(const term of ['function renderDirectory(', 'function tryInChat(', 'function openRepo(',
   "call('repo')", "call('read'", "call('prs')", 'function renderSkillRows(', 'function persist()',
