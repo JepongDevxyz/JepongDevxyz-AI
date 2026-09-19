@@ -1,4 +1,4 @@
-const fs=require('fs'), assert=require('assert');
+import fs from 'node:fs'; import assert from 'node:assert';
 const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('row-gap:12px!important'),'activity rows need readable 12px vertical spacing');
 assert(html.includes('padding:10px 8px!important'),'activity rows need readable padding');

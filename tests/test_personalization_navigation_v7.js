@@ -1,5 +1,5 @@
-const fs=require('fs');
-const html=fs.readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
+import fs from 'node:fs';
+const html=fs.readFileSync(new URL('../index.html', import.meta.url),'utf8');
 function expect(cond,msg){if(!cond){console.error('FAIL:',msg);process.exitCode=1}else console.log('PASS:',msg)}
 expect(!html.includes('id="personalizationSearchInput"'),'Personalization page no longer contains the legacy settings search bar');
 expect(!html.includes('id="personalizationTabs"'),'Personalization page no longer contains legacy tabs');

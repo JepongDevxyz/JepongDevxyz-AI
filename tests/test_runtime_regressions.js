@@ -1,8 +1,10 @@
-const fs = require('fs');
-const assert = require('assert');
-
-const htmlPath = require('path').join(__dirname,'..','index.html');
-const apiPath = require('path').join(__dirname,'..','api','chat.js');
+import fs from 'node:fs';
+import assert from 'node:assert';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const htmlPath = path.join(__dirname,'..','index.html');
+const apiPath = path.join(__dirname,'..','api','chat.js');
 const html = fs.readFileSync(htmlPath, 'utf8');
 let api = fs.readFileSync(apiPath, 'utf8');
 
@@ -31,7 +33,9 @@ assert(htmlReq && htmlReq.ext === 'html', 'explicit downloadable HTML request mu
 // Android keyboard/viewport regression: app must follow the visual viewport rather than letting Chrome pan it away.
 assert(/visualViewport\.addEventListener\(['\"]scroll['\"]/.test(html), 'visualViewport scroll listener missing');
 assert(/app\.style\.position\s*=\s*['\"]fixed['\"]/.test(html), 'mobile app is not fixed to the visual viewport');
-assert(/app\.style\.top\s*=\s*`\$\{offsetTop\}px`/.test(html), 'mobile app is not anchored to visualViewport.offsetTop');
+assert(/app\.style\.top\s*=\s*['\"]0['\"]/.test(html), 'mobile app top must remain anchored at zero');
+assert(!/app\.style\.top\s*=\s*`\$\{offsetTop\}px`/.test(html), 'visualViewport offsetTop must not shift the whole app');
+assert(/app\.style\.transform\s*=\s*['\"]['\"]/.test(html), 'mobile app transform must be cleared');
 assert(/overscroll-behavior\s*:\s*none/.test(html), 'root overscroll lock missing');
 assert(/function\s+lockDocumentViewport\s*\(/.test(html), 'document viewport lock helper missing');
 

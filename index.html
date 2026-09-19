@@ -1305,16 +1305,12 @@
         .live-pet-name{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font-size:10px;font-weight:700;padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.78);border:1px solid rgba(255,255,255,.1);color:white;white-space:nowrap;backdrop-filter:blur(8px)}
         .live-pet-bubble{position:absolute;left:50%;bottom:91px;transform:translateX(-50%) translateY(6px);max-width:150px;padding:7px 10px;border-radius:13px;background:rgba(15,23,42,.92);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:10px;line-height:1.25;text-align:center;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap}
         .live-pet-bubble.show{opacity:1;transform:translateX(-50%) translateY(0)}
-        .live-pet.sleeping .live-pet-visual{animation:petSleep 2.2s ease-in-out infinite;filter:saturate(.7)}
-        .live-pet.sleeping::after{content:"Z z";position:absolute;right:-3px;top:0;color:#a78bfa;font-weight:800;font-size:14px;animation:petZ 1.5s ease-in-out infinite}
         .live-pet.working .live-pet-visual{animation:petWork .38s ease-in-out infinite alternate}
         .live-pet.petting .live-pet-visual{animation:petHappy .45s ease-in-out 3}
         .live-pet.eating .live-pet-visual{animation:petEat .28s ease-in-out 6}
         .live-pet.eating::before{content:"🍪";position:absolute;left:3px;top:48px;font-size:25px;animation:petFood 1.7s ease forwards}
         @keyframes petEnter{from{opacity:0;transform:translateY(25px) scale(.75)}to{opacity:1;transform:none}}
         @keyframes petWalkBob{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-5px) rotate(2deg)}}
-        @keyframes petSleep{0%,100%{transform:translateY(5px) rotate(-5deg) scaleY(.92)}50%{transform:translateY(7px) rotate(-5deg) scaleY(.87)}}
-        @keyframes petZ{0%{opacity:0;transform:translate(0,8px) scale(.7)}70%{opacity:1}100%{opacity:0;transform:translate(12px,-18px) scale(1.15)}}
         @keyframes petWork{from{transform:translateY(0) rotate(-5deg) scale(1)}to{transform:translateY(-7px) rotate(5deg) scale(1.04)}}
         @keyframes petHappy{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-12px) scale(1.08) rotate(5deg)}}
         @keyframes petEat{from{transform:rotate(-3deg) scale(1)}to{transform:rotate(3deg) scale(.96)}}
@@ -4021,21 +4017,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 /* Clean pet runtime: one visual, one state layer, no legacy floating-eye elements. */
 .live-pet-visual{position:relative!important;width:82px!important;height:82px!important;overflow:visible!important}
 .live-pet-visual .pet-state-image{display:block!important;width:82px!important;height:82px!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:0!important;clip-path:none!important;filter:drop-shadow(0 9px 11px rgba(0,0,0,.28))!important}
-.pet-sleep-face{display:none!important;position:absolute!important;z-index:100!important;pointer-events:none!important;left:var(--face-x,23px)!important;top:var(--face-y,35px)!important;width:var(--face-w,37px)!important;height:var(--face-h,15px)!important}
-.live-pet.sleeping .pet-sleep-face{display:block!important;animation:petSleepBreathClean 2.5s ease-in-out infinite!important}
-.pet-sleep-face::before,.pet-sleep-face::after{content:""!important;position:absolute!important;top:0!important;width:var(--cover-w,15px)!important;height:var(--cover-h,13px)!important;background:var(--face,#eef3fb)!important;border-radius:50%!important}
-.pet-sleep-face::before{left:0!important}.pet-sleep-face::after{right:0!important}
-.pet-sleep-face i,.pet-sleep-face b{position:absolute!important;z-index:2!important;top:4px!important;width:var(--lid-w,12px)!important;height:6px!important;background:transparent!important;border:0!important;border-bottom:2.5px solid var(--lid,#202331)!important;border-radius:0 0 50% 50%!important}
-.pet-sleep-face i{left:2px!important;transform:rotate(5deg)!important}.pet-sleep-face b{right:2px!important;transform:rotate(-5deg)!important}
-.live-pet[data-pet-name="luna"]{--face-x:23px;--face-y:39px;--face-w:37px;--face:#eef3fb;--lid:#252938}
-.live-pet[data-pet-name="kiro"]{--face-x:22px;--face-y:40px;--face-w:39px;--face:#e7c69c;--lid:#35271f}
-.live-pet[data-pet-name="mochi"]{--face-x:23px;--face-y:40px;--face-w:37px;--face:#f3e7ed;--lid:#342b37}
-.live-pet[data-pet-name="pixel"]{--face-x:21px;--face-y:39px;--face-w:41px;--face:#cfd8e8;--lid:#111827}
-.live-pet[data-pet-name="nova"]{--face-x:23px;--face-y:39px;--face-w:37px;--face:#292936;--lid:#e5e7eb}
-.live-pet[data-pet-name="sunny"]{--face-x:24px;--face-y:39px;--face-w:35px;--face:#ffdf73;--lid:#49370f}
-.live-pet[data-pet-name="kumo"]{--face-x:21px;--face-y:39px;--face-w:41px;--face:#f1f2f4;--lid:#111827}
-.live-pet[data-pet-name="ace"]{--face-x:22px;--face-y:40px;--face-w:39px;--face:#efa663;--lid:#3a2419}
-@keyframes petSleepBreathClean{0%,100%{margin-top:0}50%{margin-top:1px}}
+
 </style>
 <style id="composerVerticalReferenceFix">
 .composer-tool-sheet{left:0!important;right:auto!important;bottom:calc(100% + 10px)!important;width:min(330px,calc(100vw - 34px))!important;max-height:min(72dvh,520px)!important;display:none!important;grid-template-columns:1fr!important;gap:3px!important;padding:12px!important;border-radius:28px!important;overflow-y:auto!important;overflow-x:hidden!important;background:color-mix(in srgb,var(--modal-bg) 98%,transparent)!important;box-shadow:0 18px 48px rgba(0,0,0,.38)!important}.composer-tool-sheet.open{display:grid!important}.composer-tool-btn{width:100%!important;min-height:58px!important;padding:7px 10px!important;display:grid!important;grid-template-columns:48px 1fr!important;align-items:center!important;justify-items:start!important;gap:12px!important;border-radius:17px!important;font-size:.96rem!important;font-weight:600!important;text-align:left!important}.composer-tool-btn:active{background:rgba(148,163,184,.12)!important}.composer-tool-icon{width:46px!important;height:46px!important;border-radius:50%!important;background:rgba(148,163,184,.14)!important}.composer-tool-icon i,.composer-tool-icon svg{width:23px!important;height:23px!important}.composer-tool-btn.think-active .composer-tool-icon{background:rgba(139,92,246,.22)!important;color:#a78bfa!important}@media(max-width:520px){.composer-tool-sheet{width:min(310px,calc(100vw - 30px))!important}.composer-tool-btn{font-size:.94rem!important}}
@@ -4389,7 +4371,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             <label class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="ios-switch"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="ios-slider"></span></label></label>
             <label class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="ios-switch"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="ios-slider"></span></label></label>
             <label class="settings-toggle-row"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small>Notify when an AI reply finishes</small></span><label class="ios-switch"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)"><span class="ios-slider"></span></label></label>
-            <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>Try another provider if the selected one fails</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>OFF = test only the selected model. ON = allow model/provider fallback.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
             <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Allow automatic model selection</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openPresetsModal()"><i data-lucide="notebook-pen"></i><span><strong>Prompt Presets</strong><small>Manage reusable prompts</small></span><i data-lucide="chevron-right"></i></button>
           </div>
@@ -4399,7 +4381,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             <label class="settings-toggle-row"><i data-lucide="sun-moon"></i><span><strong>Light Mode</strong><small>Switch between dark and light appearance</small></span><label class="ios-switch"><input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)"><span class="ios-slider"></span></label></label>
             <button class="settings-nav-row" type="button" onclick="cycleSettingsAccent()"><i data-lucide="palette"></i><span><strong>Accent</strong><small id="settingsAccentLabel">Default</small></span><i data-lucide="chevron-right"></i></button>
             <div class="settings-nav-row settings-static-row"><i data-lucide="chart-no-axes-column"></i><span><strong>Usage & Limits</strong><small><b id="geminiWordCount">0</b> words · <b id="geminiTokenCount">0</b> tokens · <b id="geminiQueryCount">0</b> queries</small></span></div>
-            <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openSidebar()"><i data-lucide="history"></i><span><strong>Chat History</strong><small>Return to saved conversations and exports</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openMenuFromBrandIcon()"><i data-lucide="history"></i><span><strong>Chat History</strong><small>Return to saved conversations and exports</small></span><i data-lucide="chevron-right"></i></button>
           </div>
           <p class="settings-home-foot">JepongDevxyz AI</p>
         </div>
@@ -5209,10 +5191,10 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 app.style.left = '0';
                 app.style.right = '0';
                 app.style.bottom = 'auto';
-                app.style.top = `${offsetTop}px`;
+                app.style.top = '0';
                 app.style.height = `${height}px`;
                 app.style.maxHeight = `${height}px`;
-                app.style.transform = 'none';
+                app.style.transform = '';
                 app.style.transition = 'none';
             }
             lockDocumentViewport();
@@ -5530,7 +5512,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if(!pet || !livePetVisible()) return;
             pet.classList.toggle('speaking', !!active);
             if(active){
-                pet.classList.remove('sleeping');
+                pet.classList.remove('speaking');
                 livePetSay(text ? 'Reading aloud 🔊' : 'Speaking 🔊', 1400);
             }else{
                 pet.classList.remove('speaking');
@@ -5540,17 +5522,14 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         function wakeLivePet() {
             const {pet}=getLivePetElements(); if(!pet)return;
-            const wasSleeping=pet.classList.contains('sleeping');
-            pet.classList.remove('sleeping','speaking');
-            pet.setAttribute('aria-label', `${personalizationSettings.pet || 'Pet'} companion`);
-            if(wasSleeping) playPetSound('wake');
+            pet.classList.remove('speaking');
             resetLivePetIdleTimer();
         }
 
         function resetLivePetIdleTimer() {
             clearTimeout(livePetIdleTimer);
             const {pet}=getLivePetElements();
-            if(pet) pet.classList.remove('sleeping');
+            if(pet) pet.classList.remove('speaking');
             // Sleeping is intentionally disabled: pets remain awake at all times.
             return;
         }
@@ -5652,7 +5631,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                     clearInterval(livePetWalkTimer);
                     clearTimeout(livePetIdleTimer);
                     state.layer.classList.add('pet-drag-active');
-                    pet.classList.remove('sleeping','petting','eating','working','pet-settling','falling-scared','pet-falling');
+                    pet.classList.remove('petting','eating','working','pet-settling','falling-scared','pet-falling');
                     pet.classList.add('dragging');
                 }
                 e.preventDefault();
@@ -5687,7 +5666,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         function moveLivePet() {
             const {pet}=getLivePetElements();
             const layer=document.getElementById('livePetLayer');
-            if(!pet||!layer||!livePetVisible()||livePetWorking||livePetDragState||pet.classList.contains('sleeping')||pet.classList.contains('pet-settling')||personalizationSettings.petWalkEnabled===false)return;
+            if(!pet||!layer||!livePetVisible()||livePetWorking||livePetDragState||pet.classList.contains('pet-settling')||personalizationSettings.petWalkEnabled===false)return;
             const max=Math.max(8,layer.clientWidth-pet.offsetWidth-8);
             const x=Math.round(8+Math.random()*Math.max(0,max-8));
             pet.style.top='';
@@ -5711,7 +5690,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             livePetWorking=!!active;
             const {pet}=getLivePetElements(); if(!pet||!livePetVisible())return;
             clearTimeout(livePetIdleTimer);
-            pet.classList.remove('sleeping','petting','eating','speaking');
+            pet.classList.remove('petting','eating','speaking');
             pet.classList.toggle('working',livePetWorking && personalizationSettings.petWorkingMode!==false);
             if(active){ setLivePetSpeaking(false); livePetSay('Working on it ✨',1300); }
             else { livePetSay('Done!',1000); playPetSound('done'); resetLivePetIdleTimer(); }
@@ -5855,7 +5834,6 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         const PET_GLOBAL_SOUND_PATTERNS = {
             wake:[[0,.08,610,830,'triangle',.050],[.09,.11,820,1080,'sine',.042]],
-            sleep:[[0,.13,520,390,'sine',.040],[.14,.18,390,285,'sine',.032]],
             done:[[0,.07,650,880,'triangle',.055],[.08,.08,850,1100,'triangle',.052],[.17,.12,1050,1320,'sine',.044]]
         };
 
@@ -5965,10 +5943,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 : builtInPetImage
                     ? `<img class="pet-state-image" src="${escapeHTML(builtInPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
                     : `<span class="pet-state-emoji" aria-hidden="true">${getSelectedPetVisual()}</span>`;
-            const builtInSleepFace = !personalizationSettings.customPetImage && !!builtInPetImage
-                ? `<span class="pet-sleep-face" aria-hidden="true"><i></i><b></b></span>`
-                : '';
-            visual.innerHTML=visualContent + builtInSleepFace;
+            visual.innerHTML=visualContent;
             name.textContent=personalizationSettings.pet;
             installLivePetDrag(pet);
             if(!livePetDragState&&!pet.classList.contains('pet-settling')){pet.style.top='';applyLivePetWalkBottom(pet);}

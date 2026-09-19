@@ -1,4 +1,4 @@
-const fs=require('fs'); const h=fs.readFileSync(__dirname+'/../index.html','utf8');
+import fs from 'node:fs'; const h=fs.readFileSync(new URL('../index.html', import.meta.url),'utf8');
 function ok(v,m){if(!v){console.error('FAIL:',m);process.exit(1)}}
 ok(/#speechSettingsGroup\s*\{[^}]*display\s*:\s*none\s*!important/s.test(h),'legacy speech controls must be force-hidden outside Voice page');
 ok(/\.personalization-modal\.ps-reference-ui\s*\{[^}]*overflow\s*:\s*hidden/s.test(h),'personalization shell must clip child overflow');

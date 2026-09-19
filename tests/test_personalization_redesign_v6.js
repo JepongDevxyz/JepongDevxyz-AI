@@ -1,4 +1,4 @@
-const fs=require('fs');
+import fs from 'node:fs';
 const html=fs.readFileSync('index.html','utf8');
 const api=fs.readFileSync('api/chat.js','utf8');
 const must=[

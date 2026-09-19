@@ -38,16 +38,14 @@ def main():
     require('renderSidebarHistory();\n            updateUsageUI();' in INDEX,
             'opening chat history does not refresh the word count')
 
-    # Sleeping image pets must visibly close their eyes instead of leaving pupils open.
-    guard = '.live-pet-visual img + .live-pet-sleep-eyes{'
-    require(guard in INDEX, 'image-pet sleeping-eye overlay guard missing')
-    block = INDEX[INDEX.index(guard):INDEX.index(guard) + 260]
-    require('display:flex!important;' in block,
-            'image-pet sleeping-eye overlay is not enabled')
-    require('.live-pet.sleeping .live-pet-visual img + .live-pet-sleep-eyes{' in INDEX,
-            'sleeping image-pet selector missing')
-    require('--pet-sleep-lid' in INDEX,
-            'per-pet sleeping eyelid styling missing')
+    # Pets are intentionally always awake. Sleeping behavior must never be
+    # reintroduced as a mobile UI requirement.
+    require('.live-pet.sleeping' not in INDEX,
+            'legacy sleeping pet state was reintroduced')
+    require('live-pet-sleep-eyes' not in INDEX,
+            'legacy sleeping-eye overlay was reintroduced')
+    require('--pet-sleep-lid' not in INDEX,
+            'legacy per-pet sleeping eyelid styling was reintroduced')
 
     print('mobile UI contract checks passed')
 
