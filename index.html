@@ -7843,11 +7843,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
             const id = String(normalized.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
-            const normalizedLabelKey=String(normalized.label||'')
-                .toLowerCase()
-                .replace(/[•·].*$/,'')
-                .replace(/\s+/g,' ')
-                .trim();
+            const normalizedLabelKey=[
+                String(normalized.kind||'process'),
+                String(normalized.label||'').toLowerCase().replace(/\s+/g,' ').trim(),
+                String(normalized.detail||'').toLowerCase().replace(/\s+/g,' ').trim()
+            ].join('|');
             let row = list.querySelector(`[data-activity-id="${id}"]`);
             if (!row && normalizedLabelKey) {
                 row=[...list.querySelectorAll('.ai-activity-row')].find(candidate =>
@@ -7856,9 +7856,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             if (!row) {
                 row = document.createElement('div');
-                row.dataset.activityId = id;
                 list.appendChild(row);
             }
+            row.dataset.activityId=id;
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
@@ -7876,8 +7876,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     ${normalized.detail ? `<div class="ai-activity-detail">${escapeHTML(normalized.detail)}</div>` : ''}
                 </div>`;
             const summary = document.getElementById('aiActivitySummary');
-            if (summary && normalized.label) summary.textContent = normalized.label;
 
+            // A completed event can arrive for an earlier operation. It must not replace
+            // the summary/current marker of a later operation that is still running.
             // ChatGPT-style activity history: keep completed statuses visible in order.
             // A repeated id updates that same operation, while distinct operations remain as history.
             // Defensive de-duplication: a backend retry/reconnect may replay the same
@@ -7888,8 +7889,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 });
             }
             const rows=[...list.querySelectorAll('.ai-activity-row')];
-            rows.forEach(x=>x.classList.remove('ai-activity-current'));
-            if(state==='running') row.classList.add('ai-activity-current');
+            const currentlyRunning=rows.filter(x=>x.classList.contains('running'));
+            const current=currentlyRunning.length?currentlyRunning[currentlyRunning.length-1]:rows[rows.length-1];
+            rows.forEach(x=>x.classList.toggle('ai-activity-current',x===current && x.classList.contains('running')));
+            if(summary && current){
+                const label=current.querySelector('.ai-activity-label');
+                if(label)summary.textContent=label.textContent||'Working on your request…';
+            }
 
             // Keep a generous bounded history for unusually long tool runs without deleting
             // ordinary completed steps from normal conversations.
@@ -9275,12 +9281,14 @@ ${m.text || ''}
                     }else{
                         botMsgElem.innerHTML='<span style="color:var(--text-muted)">Generation stopped.</span>';
                     }
+                    botMsgElem.style.removeProperty('display');
                 }else{
                     const cleanError=sanitizeUiErrorMessage(err?.message || 'Request failed');
                     appendActivityEvent({ id:'client-catch', label:cleanError, state:'error', kind:'provider' });
                     finishAIIndicator(false);
                     botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ ${escapeHTML(cleanError)}</span>`;
                 }
+                botMsgElem.style.removeProperty('display');
                 scrollToBottom(true);
             } finally {
                 if(activeAIAbortController===requestController)activeAIAbortController=null;
