@@ -38,7 +38,7 @@ assert(process.includes("activity(emit,'thinking','Thinking','running','thinking
   'Thinking must start at real model invocation after context/tool operations');
 assert(process.includes("activity(emit,'attachment-content'"),
   'extracted attachment content must have a real event');
-const show=between(ui,'function showAIIndicator(','\nfunction toggleActivityDetails');
+const show=between(ui,'function showAIIndicator(','function toggleActivityDetails(');
 assert(show.includes("appendActivityEvent({id:'task-context'"),'show the request while waiting for the backend');
 assert(!show.includes("appendActivityEvent({id:'thinking'"),'do not put Thinking ahead of tool work');
 const streamUI=between(ui,"if (contentType.includes('text/event-stream')) {","\n                fullResponse = safeAssistantText(fullResponse);");
