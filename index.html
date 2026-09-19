@@ -9382,13 +9382,21 @@ ${m.text || ''}
                 : await prepareHistoryForRequest(rawContinuousChatHistory);
             const ctx = getActiveContext();
 
+            // Normal sends are persisted synchronously in sendMessage() before this
+            // async request begins. Keep this fallback only for callers that invoke
+            // executeAICall directly and do not already have the user turn persisted.
             if (!isRegenerate && ctx.id && ctx.sessions[ctx.id]) {
-                ctx.sessions[ctx.id].messages.push({ 
-                    role: 'user', 
-                    text: promptText, 
-                    files: historySafeAttachments(historyFiles)
-                });
-                if (!isIncognito && !isBibleMode) saveSessions();
+                const messages=ctx.sessions[ctx.id].messages;
+                const last=messages[messages.length-1];
+                const alreadyPersisted=last?.role==='user' && last?.text===promptText;
+                if(!alreadyPersisted){
+                    messages.push({
+                        role:'user',
+                        text:promptText,
+                        files:historySafeAttachments(historyFiles)
+                    });
+                    if (!isIncognito && !isBibleMode) saveSessions();
+                }
             }
 
             const botMsgElem = document.createElement('div');
@@ -9755,8 +9763,21 @@ ${m.text || ''}
             }
 
             const selectedAttachmentSnapshot = [...selectedFilesData];
+            const persistedAttachmentSnapshot = historySafeAttachments(selectedAttachmentSnapshot);
             const tempFiles = prepareAttachmentsForRequest(selectedAttachmentSnapshot);
             const fileHTML = userAttachmentHTML(selectedAttachmentSnapshot);
+
+            // Persist the user's message immediately, before the request starts or the
+            // composer attachment state is cleared. This makes refresh safe even while
+            // the AI request is still running or if it later fails.
+            if (activeSession) {
+                activeSession.messages.push({
+                    role:'user',
+                    text:message,
+                    files:persistedAttachmentSnapshot
+                });
+                if (!isIncognito && !isBibleMode) saveSessions();
+            }
 
             // GUMAMIT NG APPENDCHILD SA HALIP NA INNERHTML += PARA HINDI MASIRA ANG BOT NODES
             const userMsgDiv = document.createElement('div');
