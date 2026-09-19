@@ -1834,11 +1834,11 @@ async function inspectPublicGitHubRepository(message='', emit){
   for(const name of repos.slice(0,2)){
     const root=`https://api.github.com/repos/${name}`;
     const headers={'Accept':'application/vnd.github+json','User-Agent':'JepongDevxyz-AI/1.0'};
-    const opts={headers,signal:AbortSignal.timeout(9000)};
+    const requestOptions=()=>({headers,signal:AbortSignal.timeout(9000)});
     const id=`github-${name.replace(/[^a-zA-Z0-9]/g,'-')}`;
     activity(emit,id,`Checking public GitHub repository: ${name}`,'running','web');
     try{
-      const res=await safePublicFetch(root,opts,1);
+      const res=await safePublicFetch(root,requestOptions(),1);
       if(!res.ok){
         activity(emit,id,`Could not access public repository: ${name} • HTTP ${res.status}`,'warning','web');
         context.push(`Repository ${name}: metadata unavailable (HTTP ${res.status}). Do not claim that its contents were inspected.`);
@@ -1849,7 +1849,7 @@ async function inspectPublicGitHubRepository(message='', emit){
       context.push(`Repository: ${name}\nDescription: ${String(info.description||'').slice(0,250)}\nDefault branch: ${String(info.default_branch||'unknown')}\nPublic repository URL: https://github.com/${name}`);
       const treeId=`github-files-${name.replace(/[^a-zA-Z0-9]/g,'-')}`;
       activity(emit,treeId,`Listing repository files: ${name}`,'running','web');
-      const listing=await safePublicFetch(`${root}/contents`,opts,1);
+      const listing=await safePublicFetch(`${root}/contents`,requestOptions(),1);
       if(!listing.ok){
         activity(emit,treeId,`Could not list repository files: ${name} • HTTP ${listing.status}`,'warning','web');
         continue;
@@ -1866,7 +1866,7 @@ async function inspectPublicGitHubRepository(message='', emit){
       const task=String(message).toLowerCase();
       const relevant=files.filter(x=>/^(readme(?:\.md)?|index\.html|package\.json|vercel\.json)$/i.test(x.name));
       if(/\b(api|backend|chat|webhook|activity|status)\b/i.test(task) && dirs.some(x=>x.name==='api')){
-        const apiList=await safePublicFetch(`${root}/contents/api`,opts,1);
+        const apiList=await safePublicFetch(`${root}/contents/api`,requestOptions(),1);
         if(apiList.ok){
           const apiFiles=await apiList.json();
           if(Array.isArray(apiFiles)){
@@ -1878,15 +1878,16 @@ async function inspectPublicGitHubRepository(message='', emit){
       }
       const chosen=[...new Map(relevant.map(x=>[x.path,x])).values()].slice(0,2);
       for(const [index,file] of chosen.entries()){
-        if(!file.download_url || !/^https:\/\/raw\.githubusercontent\.com\//.test(file.download_url) || Number(file.size)>100000)continue;
+        if(!file.download_url || !/^https:\/\/raw\.githubusercontent\.com\//.test(file.download_url) || Number(file.size)>750000)continue;
         const fileId=`github-source-${name.replace(/[^a-zA-Z0-9]/g,'-')}-${index}`;
         activity(emit,fileId,`Reading repository file: ${file.path}`,'running','file');
         try{
           const source=await safePublicFetch(file.download_url,{headers:{'User-Agent':'JepongDevxyz-AI/1.0'},signal:AbortSignal.timeout(9000)},1);
           if(!source.ok)throw new Error(`HTTP ${source.status}`);
-          const content=(await source.text()).slice(0,12000);
-          context.push(`Repository file ${file.path}:\n${content}`);
-          activity(emit,fileId,`Read repository file: ${file.path}`,'completed','file');
+          const completeText=await source.text();
+          const excerpt=completeText.slice(0,16000);
+          context.push(`Repository file ${file.path} (only the first ${excerpt.length} of ${completeText.length} characters are supplied for context):\n${excerpt}`);
+          activity(emit,fileId,`Read ${completeText.length>excerpt.length?'excerpt from':'repository file'}: ${file.path}`,'completed','file');
         }catch(err){
           activity(emit,fileId,`Could not read repository file: ${file.path}`,'warning','file',String(err?.message||err).slice(0,100));
         }
