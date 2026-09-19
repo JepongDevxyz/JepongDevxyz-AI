@@ -1757,17 +1757,23 @@ function taskProfile(message='', files=[]){
 
 function contextActivityPlan(message='', files=[]){
   const list=Array.isArray(files)?files:[];
-  const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
-  const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/'));
-  const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
-  let first={id:'task-context',label:'Understanding your request',kind:'process'};
-  if(hasVideo)first={id:'task-context',label:'Preparing uploaded video',kind:'file'};
-  else if(hasImage)first={id:'task-context',label:'Preparing uploaded image',kind:'image'};
-  else if(hasCode)first={id:'task-context',label:'Preparing attached code',kind:'file'};
-  else if(list.length)first={id:'task-context',label:`Preparing ${userAttachmentCount(list)} attached file${userAttachmentCount(list)===1?'':'s'}`,kind:'file'};
-  // This is only an initial request milestone, not a claim that GitHub was
-  // searched, code was edited, sources were fetched, or any tool was invoked.
-  return {steps:[first]};
+  const profile=taskProfile(message,list);
+  const subject=profile.subject && profile.subject!=='your request'
+    ?profile.subject.slice(0,72):'';
+  const firstFile=list.find(f=>f?.mediaRole!=='video-frame'&&f?.mediaRole!=='pdf-page')||list[0];
+  const fileName=String(firstFile?.parentName||firstFile?.name||'').slice(0,64);
+  const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.kind==='video'||String(f?.mediaRole||'').startsWith('video-'));
+  const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/') && f?.mediaRole!=='video-frame');
+  const hasCode=list.some(f=>/\\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+  let label=subject?`Reviewing your request: ${subject}`:'Reviewing your request';
+  let kind='process';
+  if(hasVideo){ label=`Preparing uploaded video${fileName?`: ${fileName}`:''}`;kind='file'; }
+  else if(hasImage){ label=`Preparing uploaded image${fileName?`: ${fileName}`:''}`;kind='image'; }
+  else if(hasCode){ label=`Preparing attached source code${fileName?`: ${fileName}`:''}`;kind='file'; }
+  else if(list.length){ label=`Preparing ${userAttachmentCount(list)} attached file${userAttachmentCount(list)===1?'':'s'}`;kind='file'; }
+  // This reflects request classification and attachment preparation only. It
+  // does not assert that the model searched GitHub, edited files, or used tools.
+  return {profile,steps:[{id:'task-context',label,kind}]};
 }
 
 function emitContextActivityStart(message='', files=[], emit){
@@ -2695,6 +2701,21 @@ async function processChat(body, emit) {
   if(!PROVIDERS[provider])provider='gemini';
   model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
   const attachmentSourceContext=buildAttachmentSourceContext(files,message);
+  if(files.length){
+    const sourceRoots=[...new Set(files.map(f=>attachmentRootName(f)))];
+    const frameCount=files.filter(f=>f?.mediaRole==='video-frame'&&f?.data).length;
+    const pageCount=files.filter(f=>f?.mediaRole==='pdf-page'&&f?.data).length;
+    const textCount=files.filter(f=>!!textFromAttachment(f)).length;
+    if(frameCount)activity(emit,'video-frames',
+      `Added ${frameCount} extracted video frame${frameCount===1?'':'s'} to request context`,
+      'completed','file',sourceRoots.slice(0,2).join(', '));
+    if(pageCount)activity(emit,'pdf-pages',
+      `Added ${pageCount} PDF page preview${pageCount===1?'':'s'} to request context`,
+      'completed','file');
+    if(textCount)activity(emit,'attachment-text',
+      `Added readable text from ${textCount} attachment part${textCount===1?'':'s'} to request context`,
+      'completed','file');
+  }
   const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,message,provider,emit);
   const providedLinkContext=await inspectProvidedLinks(message,emit);
   const verificationContext=await performVerification(message,files,emit);
@@ -2749,7 +2770,7 @@ async function processChat(body, emit) {
   const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
-    activity(emit,'generation','Generating response','running','generate');
+    activity(emit,'generation',contextPlan.profile.subject && contextPlan.profile.subject!=='your request' ? `Generating answer for: ${contextPlan.profile.subject.slice(0,72)}` : 'Generating response','running','generate');
     return {
       ok:true,
       response:first.response,
@@ -2776,7 +2797,7 @@ async function processChat(body, emit) {
       const r=await runProvider(p,{model:fallbackModel,history,files,message,systemInstruction,fallbackFrom:provider,routedReason:routedReason||'fallback',emit,autoFallback});
       if(r.ok){
         activity(emit,'fallback',`Fallback connected to ${providerLabel(p)}`,'completed','fallback');
-        activity(emit,'generation','Generating response','running','generate');
+        activity(emit,'generation',contextPlan.profile.subject && contextPlan.profile.subject!=='your request' ? `Generating answer for: ${contextPlan.profile.subject.slice(0,72)}` : 'Generating response','running','generate');
         return {
           ok:true,
           response:r.response,
@@ -2798,7 +2819,7 @@ async function processChat(body, emit) {
       });
       if(publicHorde.ok){
         activity(emit,'fallback','Free public fallback connected to AI Horde Anonymous','completed','fallback');
-        activity(emit,'generation','Generating response','running','generate');
+        activity(emit,'generation',contextPlan.profile.subject && contextPlan.profile.subject!=='your request' ? `Generating answer for: ${contextPlan.profile.subject.slice(0,72)}` : 'Generating response','running','generate');
         return {
           ok:true,
           response:publicHorde.response,
