@@ -4054,25 +4054,25 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 }
 </style>
 
-<style id="petSleepFinal">
-/* Final reference sleep renderer: small eyelid patches anchored on the real face, never above the head. */
+<style id="petSystemCleanV2">
+/* Clean pet runtime: one visual, one state layer, no legacy floating-eye elements. */
 .live-pet-visual{position:relative!important;width:82px!important;height:82px!important;overflow:visible!important}
-.live-pet-visual img{display:block!important;width:82px!important;height:82px!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:0!important;clip-path:none!important;filter:drop-shadow(0 9px 11px rgba(0,0,0,.28))!important}
-.live-pet-sleep-mask{display:none!important;position:absolute!important;z-index:90!important;pointer-events:none!important;left:50%!important;top:50%!important;width:42px!important;height:13px!important;transform:translate(-50%,-50%) translate(var(--sleep-dx,0px),var(--sleep-dy,7px))!important}
-.live-pet.sleeping .live-pet-sleep-mask{display:block!important;animation:petSleepBreathFinal 2.5s ease-in-out infinite!important}
-.live-pet-sleep-mask::before,.live-pet-sleep-mask::after{content:""!important;position:absolute!important;top:0!important;width:17px!important;height:12px!important;background:var(--face-mask,#eef3fb)!important;border-radius:48%!important}
-.live-pet-sleep-mask::before{left:1px!important}.live-pet-sleep-mask::after{right:1px!important}
-.live-pet-sleep-mask i,.live-pet-sleep-mask b{position:absolute!important;z-index:2!important;top:3px!important;width:13px!important;height:6px!important;background:transparent!important;border:0!important;border-bottom:2.5px solid var(--eye-line,#202331)!important;border-radius:0 0 50% 50%!important;box-shadow:none!important}
-.live-pet-sleep-mask i{left:3px!important;transform:rotate(5deg)!important}.live-pet-sleep-mask b{right:3px!important;transform:rotate(-5deg)!important}
-.live-pet[data-pet-name="luna"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#eef3fb;--eye-line:#252938}
-.live-pet[data-pet-name="kiro"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#e7c69c;--eye-line:#35271f}
-.live-pet[data-pet-name="mochi"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#f3e7ed;--eye-line:#342b37}
-.live-pet[data-pet-name="pixel"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#cfd8e8;--eye-line:#111827}
-.live-pet[data-pet-name="nova"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#292936;--eye-line:#e5e7eb}
-.live-pet[data-pet-name="sunny"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#ffdf73;--eye-line:#49370f}
-.live-pet[data-pet-name="kumo"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#f1f2f4;--eye-line:#111827}
-.live-pet[data-pet-name="ace"]{--sleep-dx:0px;--sleep-dy:7px;--face-mask:#efa663;--eye-line:#3a2419}
-@keyframes petSleepBreathFinal{0%,100%{margin-top:0}50%{margin-top:1px}}
+.live-pet-visual .pet-state-image{display:block!important;width:82px!important;height:82px!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:0!important;clip-path:none!important;filter:drop-shadow(0 9px 11px rgba(0,0,0,.28))!important}
+.pet-sleep-face{display:none!important;position:absolute!important;z-index:100!important;pointer-events:none!important;left:var(--face-x,23px)!important;top:var(--face-y,35px)!important;width:var(--face-w,37px)!important;height:var(--face-h,15px)!important}
+.live-pet.sleeping .pet-sleep-face{display:block!important;animation:petSleepBreathClean 2.5s ease-in-out infinite!important}
+.pet-sleep-face::before,.pet-sleep-face::after{content:""!important;position:absolute!important;top:0!important;width:var(--cover-w,15px)!important;height:var(--cover-h,13px)!important;background:var(--face,#eef3fb)!important;border-radius:50%!important}
+.pet-sleep-face::before{left:0!important}.pet-sleep-face::after{right:0!important}
+.pet-sleep-face i,.pet-sleep-face b{position:absolute!important;z-index:2!important;top:4px!important;width:var(--lid-w,12px)!important;height:6px!important;background:transparent!important;border:0!important;border-bottom:2.5px solid var(--lid,#202331)!important;border-radius:0 0 50% 50%!important}
+.pet-sleep-face i{left:2px!important;transform:rotate(5deg)!important}.pet-sleep-face b{right:2px!important;transform:rotate(-5deg)!important}
+.live-pet[data-pet-name="luna"]{--face-x:23px;--face-y:39px;--face-w:37px;--face:#eef3fb;--lid:#252938}
+.live-pet[data-pet-name="kiro"]{--face-x:22px;--face-y:40px;--face-w:39px;--face:#e7c69c;--lid:#35271f}
+.live-pet[data-pet-name="mochi"]{--face-x:23px;--face-y:40px;--face-w:37px;--face:#f3e7ed;--lid:#342b37}
+.live-pet[data-pet-name="pixel"]{--face-x:21px;--face-y:39px;--face-w:41px;--face:#cfd8e8;--lid:#111827}
+.live-pet[data-pet-name="nova"]{--face-x:23px;--face-y:39px;--face-w:37px;--face:#292936;--lid:#e5e7eb}
+.live-pet[data-pet-name="sunny"]{--face-x:24px;--face-y:39px;--face-w:35px;--face:#ffdf73;--lid:#49370f}
+.live-pet[data-pet-name="kumo"]{--face-x:21px;--face-y:39px;--face-w:41px;--face:#f1f2f4;--lid:#111827}
+.live-pet[data-pet-name="ace"]{--face-x:22px;--face-y:40px;--face-w:39px;--face:#efa663;--lid:#3a2419}
+@keyframes petSleepBreathClean{0%,100%{margin-top:0}50%{margin-top:1px}}
 </style>
 </head>
 <body>
@@ -5936,11 +5936,14 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             pet.dataset.petName=String(personalizationSettings.pet||'Pet').toLowerCase();
             pet.dataset.dragEnabled=personalizationSettings.petDragEnabled===false?'false':'true';
             const visualContent=personalizationSettings.customPetImage
-                ? `<img src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
+                ? `<img class="pet-state-image" src="${escapeHTML(personalizationSettings.customPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
                 : builtInPetImage
-                    ? `<img src="${escapeHTML(builtInPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
-                    : `<span aria-hidden="true">${getSelectedPetVisual()}</span>`;
-            visual.innerHTML=visualContent + `<span class="live-pet-sleep-mask" aria-hidden="true"><i></i><b></b></span>`;
+                    ? `<img class="pet-state-image" src="${escapeHTML(builtInPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
+                    : `<span class="pet-state-emoji" aria-hidden="true">${getSelectedPetVisual()}</span>`;
+            const builtInSleepFace = !personalizationSettings.customPetImage && !!builtInPetImage
+                ? `<span class="pet-sleep-face" aria-hidden="true"><i></i><b></b></span>`
+                : '';
+            visual.innerHTML=visualContent + builtInSleepFace;
             name.textContent=personalizationSettings.pet;
             installLivePetDrag(pet);
             if(!livePetDragState&&!pet.classList.contains('pet-settling')){pet.style.top='';applyLivePetWalkBottom(pet);}
