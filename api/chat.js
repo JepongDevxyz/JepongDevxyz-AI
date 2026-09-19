@@ -1287,7 +1287,8 @@ function isSimpleCasualMessage(message=''){
 }
 
 async function noKeyWebSearch(query, emit){
-  activity(emit,'web-search','Searching the live web','running','web',String(query).slice(0,120));
+  const searchTopic=String(query||'').replace(/\s+/g,' ').trim().slice(0,100);
+  activity(emit,'web-search',searchTopic?`Searching the web for: ${searchTopic}`:'Searching the web','running','web');
   const attempts=[
     ['Bing',()=>bingRssSearch(query)],
     ['DuckDuckGo',()=>duckDuckGoInstantSearch(query,null)],
@@ -1760,23 +1761,25 @@ function taskProfile(message='', files=[]){
 
 function contextActivityPlan(message='', files=[]){
   const profile=taskProfile(message,files);
-  // Avoid parroting raw prompts (which can contain long quotes, OCR errors,
-  // personal data, or unrelated code). Report the type of the actual input.
-  const labels={
-    github:'Understanding the repository request',
-    deployment:'Understanding the deployment request',
-    backend:'Understanding the API request',
-    web:'Understanding the website request',
-    android:'Understanding the Android request',
-    document:'Understanding the document request',
-    video:'Understanding the video request',
-    image:'Understanding the image request',
-    research:'Understanding the research question',
-    study:'Understanding the problem',
-    general:'Understanding your request'
-  };
-  const first=labels[profile.kind]||labels.general;
-  return {profile,steps:[{id:'task-context',label:first,kind:'process'}]};
+  const list=Array.isArray(files)?files:[];
+  const firstFile=list.find(f=>!['video-frame','pdf-page'].includes(f?.mediaRole))||list[0];
+  const name=String(firstFile?.parentName||firstFile?.name||firstFile?.filename||'').slice(0,64);
+  const subject=cleanTaskText(message)
+    .replace(/```[\s\S]*?```/g,'[attached code]')
+    .replace(/[\r\n]+/g,' ')
+    .replace(/\s+/g,' ').trim();
+  // The title describes the user's actual request, not a guessed tool action.
+  // Tool-specific Activity rows are emitted separately by the real tool code.
+  let label=subject && subject.length<=240
+    ? `Reviewing your request: ${subject.slice(0,94)}${subject.length>94?'…':''}`
+    : 'Reviewing your request';
+  if(list.length){
+    const kind=list.some(f=>f?.mediaRole==='video-frame'||f?.kind==='video'||String(f?.mimeType||'').startsWith('video/'))
+      ? 'video'
+      : list.some(f=>f?.mediaRole==='image'||String(f?.mimeType||'').startsWith('image/'))?'image':'file';
+    label=`Reviewing request with uploaded ${kind}${name?': '+name:''}`;
+  }
+  return {profile,steps:[{id:'task-context',label,kind:list.length?'file':'process'}]};
 }
 
 function emitContextActivityStart(message='', files=[], emit){
