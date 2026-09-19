@@ -7570,17 +7570,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function initialActivityForRequest(promptText='',files=[]){
             const list=Array.isArray(files)?files:[];
-            const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
-            const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/'));
-            const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
-            const t=String(promptText||'').toLowerCase();
-            if(hasVideo)return {label:'Inspecting uploaded video',kind:'file'};
-            if(hasImage)return {label:'Inspecting uploaded image',kind:'image'};
-            if(hasCode)return {label:'Inspecting attached code',kind:'file'};
-            if(list.length)return {label:`Reviewing ${list.length} attached file${list.length===1?'':'s'}`,kind:'file'};
-            if(/\b(latest|current|today|news|research|search|hanapin|maghanap|verify online)\b/i.test(t))return {label:'Checking what needs current information',kind:'research'};
-            if(/\b(code|debug|bug|error|fix|ayusin|website|html|javascript|api|deploy|vercel)\b/i.test(t))return {label:'Inspecting the requested code task',kind:'process'};
-            return {label:'Understanding your request',kind:'process'};
+            const first=list.find(f=>f?.mediaRole!=='video-frame'&&f?.mediaRole!=='pdf-page')||list[0];
+            const name=String(first?.parentName||first?.name||first?.filename||'').slice(0,64);
+            const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame'||f?.kind==='video');
+            const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/')&&f?.mediaRole!=='video-frame');
+            const hasCode=list.some(f=>/\\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+            if(hasVideo)return {label:`Preparing uploaded video${name?`: ${name}`:''}`,kind:'file'};
+            if(hasImage)return {label:`Preparing uploaded image${name?`: ${name}`:''}`,kind:'image'};
+            if(hasCode)return {label:`Preparing attached source code${name?`: ${name}`:''}`,kind:'file'};
+            if(list.length)return {label:`Preparing ${new Set(list.map(f=>f.parentName||f.name||f.filename)).size} attached file(s)`,kind:'file'};
+            const subject=String(promptText||'').replace(/https?:\\/\\/\\S+/gi,' ').replace(/\\s+/g,' ').trim();
+            return {label:subject?`Reviewing your request: ${subject.slice(0,72)}`:'Reviewing your request',kind:'process'};
         }
 
         function normalizeActivityEventForUI(evt = {}) {
@@ -7627,9 +7627,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(kind==='web'||kind==='research'||kind==='search'){
                 return {...e,label:label || 'Searching the web',kind:'web'};
             }
-            if(id==='attachments'){
-                return {...e,label:'Checking attached files',kind:'file'};
-            }
+            // Attachment labels are emitted from actual preprocessing; retain their details.
+            if(id==='attachments') return {...e,kind:'file'};
             if(id==='output-verification'){
                 return {...e,label:label || 'Checking generated code',kind:'test'};
             }
