@@ -1756,24 +1756,13 @@ function taskProfile(message='', files=[]){
 }
 
 function contextActivityPlan(message='', files=[]){
-  const list=Array.isArray(files)?files:[];
-  const profile=taskProfile(message,list);
+  const profile=taskProfile(message,files);
   const subject=profile.subject && profile.subject!=='your request'
-    ?profile.subject.slice(0,72):'';
-  const firstFile=list.find(f=>f?.mediaRole!=='video-frame'&&f?.mediaRole!=='pdf-page')||list[0];
-  const fileName=String(firstFile?.parentName||firstFile?.name||'').slice(0,64);
-  const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.kind==='video'||String(f?.mediaRole||'').startsWith('video-'));
-  const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/') && f?.mediaRole!=='video-frame');
-  const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
-  let label=subject?`Reviewing your request: ${subject}`:'Reviewing your request';
-  let kind='process';
-  if(hasVideo){ label=`Preparing uploaded video${fileName?`: ${fileName}`:''}`;kind='file'; }
-  else if(hasImage){ label=`Preparing uploaded image${fileName?`: ${fileName}`:''}`;kind='image'; }
-  else if(hasCode){ label=`Preparing attached source code${fileName?`: ${fileName}`:''}`;kind='file'; }
-  else if(list.length){ label=`Preparing ${userAttachmentCount(list)} attached file${userAttachmentCount(list)===1?'':'s'}`;kind='file'; }
-  // This reflects request classification and attachment preparation only. It
-  // does not assert that the model searched GitHub, edited files, or used tools.
-  return {profile,steps:[{id:'task-context',label,kind}]};
+    ? profile.subject.slice(0,72) : '';
+  // Classify the user's task; never claim a file was read or a tool was used
+  // until that operation actually completes and emits its own activity event.
+  const label=subject?`Reviewing your request: ${subject}`:'Reviewing your request';
+  return {profile,steps:[{id:'task-context',label,kind:'process'}]};
 }
 
 function emitContextActivityStart(message='', files=[], emit){
@@ -2683,7 +2672,7 @@ async function processChat(body, emit) {
     if(videos)labelParts.push(`${videos} video${videos===1?'':'s'}`);
     const other=Math.max(0,roots-images-videos);
     if(other)labelParts.push(`${other} file${other===1?'':'s'}`);
-    activity(emit,'attachments',`Preparing ${labelParts.join(', ')||`${roots} attachment${roots===1?'':'s'}`}`,'completed','file');
+    activity(emit,'attachments',`Prepared ${labelParts.join(', ')||`${roots} attachment${roots===1?'':'s'}`}`,'completed','file');
   }
 
   let routedReason='';
@@ -2701,6 +2690,11 @@ async function processChat(body, emit) {
   if(!PROVIDERS[provider])provider='gemini';
   model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
   const attachmentSourceContext=buildAttachmentSourceContext(files,message);
+  if(attachmentSourceContext){
+    const fileNames=[...new Set(files.map(f=>String(f?.parentName||f?.name||f?.filename||'').trim()).filter(Boolean))];
+    const suffix=fileNames.length===1?`: ${fileNames[0].slice(0,64)}`:` from ${fileNames.length} attached sources`;
+    activity(emit,'attachment-content',`Extracted usable attachment content${suffix}`,'completed','file');
+  }
   if(files.length){
     const sourceRoots=[...new Set(files.map(f=>attachmentRootName(f)))];
     const frameCount=files.filter(f=>f?.mediaRole==='video-frame'&&f?.data).length;
@@ -2767,6 +2761,9 @@ async function processChat(body, emit) {
   // until the entire streamed answer has been finalized.
   activity(emit,'thinking','Thinking','running','thinking');
 
+  // The model request genuinely starts here. Tool activity above is complete;
+  // keep Thinking as the active final status until the provider stream finishes.
+  activity(emit,'thinking','Thinking','running','thinking');
   const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
