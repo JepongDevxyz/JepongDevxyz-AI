@@ -1764,7 +1764,7 @@ function contextActivityPlan(message='', files=[]){
   const fileName=String(firstFile?.parentName||firstFile?.name||'').slice(0,64);
   const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.kind==='video'||String(f?.mediaRole||'').startsWith('video-'));
   const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/') && f?.mediaRole!=='video-frame');
-  const hasCode=list.some(f=>/\\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+  const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
   let label=subject?`Reviewing your request: ${subject}`:'Reviewing your request';
   let kind='process';
   if(hasVideo){ label=`Preparing uploaded video${fileName?`: ${fileName}`:''}`;kind='file'; }
