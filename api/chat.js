@@ -1978,19 +1978,50 @@ async function inspectPublicGitHubRepository(message='', emit){
   return context.length?`\n\n[ACTUALLY FETCHED PUBLIC GITHUB REPOSITORY CONTEXT]\n${context.join('\n\n')}\n[/ACTUALLY FETCHED PUBLIC GITHUB REPOSITORY CONTEXT]`:'';
 }
 
+
+// Passive, non-invasive site-specific observations; a successful HTTP request
+// or the presence of some headers cannot prove a website is secure.
+function publicSecurityHeaderObservations(response, requestedUrl=''){
+  const h=response.headers;
+  const finalUrl=String(response.url||requestedUrl);
+  const https=finalUrl.startsWith('https://');
+  const checks=[
+    ['Strict-Transport-Security',https&&Boolean(h.get('strict-transport-security'))],
+    ['Content-Security-Policy',Boolean(h.get('content-security-policy'))],
+    ['X-Content-Type-Options: nosniff',/\\bnosniff\\b/i.test(h.get('x-content-type-options')||'')],
+    ['Referrer-Policy',Boolean(h.get('referrer-policy'))],
+    ['Permissions-Policy',Boolean(h.get('permissions-policy'))],
+    ['Frame protection',Boolean(h.get('x-frame-options'))||/\\bframe-ancestors\\b/i.test(h.get('content-security-policy')||'')]
+  ];
+  return {
+    finalUrl,
+    https,
+    checks,
+    observed:checks.filter(([,present])=>present).length,
+    notes:[
+      'This is a passive HTTP/response-header observation, not a penetration test, malware scan, code review, or proof the site is safe.',
+      'A missing header is a configuration item to review; not a confirmed exploitable vulnerability.',
+      'HTTPS alone does not prove overall website safety. Do not give an overall safety verdict from HTTP 200 or these headers.'
+    ]
+  };
+}
+
 async function inspectProvidedLinks(message='', emit){
   const urls=[...new Set(extractPublicUrl(message))].filter(isSafePublicUrl)
     .filter(raw=>{try{const u=new URL(raw);return !(u.hostname==='github.com' && u.pathname.split('/').filter(Boolean).length===2);}catch(_){return true;}})
     .slice(0,4);
   if(!urls.length)return '';
 
+  const securityRequest=isWebsiteSecurityRequest(message);
   let context=`\n\n[PROVIDED LINK INSPECTION — fetched ${new Date().toISOString()}]\n`;
 
   for(let i=0;i<urls.length;i++){
     const url=urls[i];
     const label=linkLabel(url);
     const purpose=linkPurpose(url,message);
-    activity(emit,`provided-link-${i}`,`Opening provided ${purpose}: ${label}`,'running','web');
+    activity(emit,`provided-link-${i}`,securityRequest
+      ? `Checking website security response: ${label}`
+      : `Opening provided ${purpose}: ${label}`,'running','web');
 
     const started=Date.now();
     try{
@@ -2011,16 +2042,24 @@ async function inspectProvidedLinks(message='', emit){
         extract=stripHtml(raw).slice(0,4500);
       }
 
+      const security=securityRequest?publicSecurityHeaderObservations(res,url):null;
       activity(
         emit,
         `provided-link-${i}`,
-        `Reviewed ${purpose}: ${label} • HTTP ${res.status}`,
+        security
+          ? `Checked security headers for ${label} • ${security.observed}/${security.checks.length} observed`
+          : `Reviewed ${purpose}: ${label} • HTTP ${res.status}`,
         res.ok?'completed':'warning',
         'web',
-        `${elapsed} ms${type?` • ${type.split(';')[0]}`:''}`
+        security?`HTTP ${res.status} • ${elapsed} ms • passive inspection only`:`${elapsed} ms${type?` • ${type.split(';')[0]}`:''}`
       );
 
       context+=`\nLink ${i+1}: ${url}\nPurpose: ${purpose}\nHTTP: ${res.status}\nResponse time: ${elapsed} ms\nContent type: ${type||'unknown'}\n`;
+      if(security){
+        context+=`[PASSIVE WEBSITE SECURITY OBSERVATIONS]\nFinal URL: ${security.finalUrl}\nHTTPS connection: ${security.https?'observed':'not observed'}\n`;
+        for(const [name,present] of security.checks)context+=`${name}: ${present?'observed':'not observed in this HTTP response'}\n`;
+        context+=security.notes.join(' ')+'\n';
+      }
       if(extract)context+=`Relevant page text: ${extract}\n`;
     }catch(e){
       activity(emit,`provided-link-${i}`,`Could not open ${purpose}: ${label}`,'warning','web',String(e?.message||e).slice(0,130));
@@ -2055,7 +2094,9 @@ async function performVerification(message='', files=[], emit){
   if(!reports.length && !explicitUrls.length)return executionEnvironmentContext(message);
   if(reports.length)activity(emit,'verification',`Checking ${reports.length} supplied code item${reports.length===1?'':'s'}`,'running','test');
 
-  const urlResults=await probeRequestedUrls(message,emit);
+  // A website-safety request already receives a targeted HTTP inspection above.
+  // Avoid the duplicate generic GET probe and its misleading second status row.
+  const urlResults=isWebsiteSecurityRequest(message)?[]:await probeRequestedUrls(message,emit);
 
   const env=executionEnvironmentContext(message);
   let context=env;
@@ -2901,13 +2942,17 @@ async function processChat(body, emit) {
   const githubContext=await inspectPublicGitHubRepository(message,emit);
   const providedLinkContext=await inspectProvidedLinks(message,emit);
   const verificationContext=await performVerification(message,files,emit);
-  const liveWebContext=await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
+  // A site-security request needs evidence about the user's specified site.
+  // Generic HTTPS/Wikipedia results are not evidence about that site and must not
+  // create misleading Activity entries. User can still ask separately for sources.
+  const liveWebContext=isWebsiteSecurityRequest(message)
+    ? ''
+    : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
   // General security advice cannot establish whether a particular site is safe.
   // If the user did not identify a site in this turn or provide files, say so.
   const noWebsiteIdentifier=isWebsiteSecurityRequest(message)
-    && !extractPublicUrl(message).length
-    && !(Array.isArray(files)&&files.length)
-    && !/\b(?:[a-z0-9-]+\.)+(?:com|org|net|app|dev|io|ph|site|xyz|info|edu|gov)\b/i.test(message);
+    && !extractPublicUrl(message).some(isSafePublicUrl)
+    && !(Array.isArray(files)&&files.length);
   const websiteScopeContext=noWebsiteIdentifier
     ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
     : '';
