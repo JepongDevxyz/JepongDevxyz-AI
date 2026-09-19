@@ -948,6 +948,31 @@
         .study-panel{margin:12px auto;max-width:560px;border:1px solid rgba(139,92,246,.32);background:rgba(139,92,246,.08);border-radius:16px;padding:14px}.study-panel h3{font-size:.95rem;margin:0 0 5px}.study-panel p{font-size:.74rem;color:var(--text-muted);margin:0 0 10px}.study-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.study-tool-btn{border:1px solid var(--border-color);background:rgba(255,255,255,.04);color:var(--text-main);border-radius:11px;padding:10px;font-size:.75rem;cursor:pointer;text-align:left}
         .branch-badge{display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:#a78bfa;margin-left:4px}
         .code-container-wrap table,.msg table{width:100%;border-collapse:collapse;display:block;overflow-x:auto;margin:10px 0;font-size:.82rem}.msg th,.msg td{border:1px solid var(--border-color);padding:8px 10px;text-align:left;min-width:90px}.msg th{background:rgba(139,92,246,.09)}
+        /* Verified-result cards: compact ChatGPT-style project/status summaries. */
+        .jd-result-card{width:100%;margin:16px 0 20px;padding:18px 18px 16px;border:1px solid rgba(148,163,184,.22);border-radius:24px;background:color-mix(in srgb,var(--bg-color) 88%,#111 12%);box-shadow:0 10px 34px rgba(0,0,0,.12);overflow:hidden}
+        body.theme-light .jd-result-card{background:#fff;border-color:rgba(15,23,42,.13);box-shadow:0 8px 28px rgba(15,23,42,.07)}
+        .jd-result-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+        .jd-result-card-title{margin:0!important;font-size:1.08rem!important;line-height:1.35!important;font-weight:760!important;color:var(--text-main)!important}
+        .jd-result-badge{flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:5px 11px;border-radius:999px;font-size:.72rem;font-weight:760;line-height:1;background:rgba(148,163,184,.12);color:var(--text-main);white-space:nowrap}
+        .jd-result-card-success .jd-result-badge{background:rgba(34,197,94,.13);color:#4ade80}
+        .jd-result-card-info .jd-result-badge{background:rgba(59,130,246,.14);color:#60a5fa}
+        .jd-result-card-warning .jd-result-badge{background:rgba(245,158,11,.14);color:#fbbf24}
+        .jd-result-card-error .jd-result-badge{background:rgba(239,68,68,.14);color:#f87171}
+        .jd-result-card > p,.jd-result-card > .jd-result-meta{color:var(--text-muted);font-size:.88rem;line-height:1.55;margin:0 0 14px}
+        .jd-result-meta{padding-bottom:14px!important;border-bottom:1px solid rgba(148,163,184,.14)}
+        .jd-result-card ul{display:grid;gap:12px;margin:0 0 16px!important;padding:14px 0 2px!important;list-style:none!important}
+        .jd-result-card li{position:relative;margin:0!important;padding:0 0 0 30px!important;line-height:1.5;color:var(--text-main)}
+        .jd-result-card li::before{content:'✓';position:absolute;left:1px;top:.05em;width:20px;height:20px;border:2px solid #22c55e;border-radius:50%;display:grid;place-items:center;color:#4ade80;font-size:.67rem;font-weight:900;line-height:1}
+        .jd-result-card-info li::before{border-color:#3b82f6;color:#60a5fa}
+        .jd-result-card-warning li::before{border-color:#f59e0b;color:#fbbf24}
+        .jd-result-card-error li::before{border-color:#ef4444;color:#f87171}
+        .jd-result-card code{font-size:.84em;padding:2px 6px;border-radius:7px;background:rgba(148,163,184,.1)}
+        .jd-result-action-wrap{margin:14px 0 0!important}
+        .jd-result-action{width:100%;min-height:50px;padding:11px 16px;border:1px solid rgba(148,163,184,.25);border-radius:999px;display:flex!important;align-items:center;justify-content:center;gap:8px;background:var(--text-main);color:var(--bg-color)!important;font-weight:760;text-decoration:none!important;text-align:center;transition:transform .16s ease,opacity .16s ease}
+        .jd-result-action::after{content:'↗';font-size:1rem;line-height:1}.jd-result-action:active{transform:scale(.985);opacity:.88}
+        body.theme-light .jd-result-action{background:#111827;color:#fff!important}
+        @media(max-width:520px){.jd-result-card{padding:16px 15px 14px;border-radius:22px}.jd-result-card-head{gap:9px}.jd-result-card-title{font-size:1rem!important}.jd-result-badge{font-size:.66rem;min-height:28px;padding:5px 9px}.jd-result-card li{padding-left:28px!important}.jd-result-action{min-height:48px;font-size:.9rem}}
+
         .fullscreen-code-overlay{position:fixed;inset:0;z-index:5000;background:rgba(2,6,23,.97);display:none;flex-direction:column}.fullscreen-code-overlay.open{display:flex}.fullscreen-code-head{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.fullscreen-code-body{flex:1;overflow:auto;padding:18px}.fullscreen-code-body pre{margin:0;min-height:100%;white-space:pre;overflow:auto}.fullscreen-code-close{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:white;border-radius:9px;padding:7px 11px;cursor:pointer}
         .usage-sync-note{font-size:.65rem;line-height:1.4;color:var(--text-muted);margin-top:8px;text-align:left;width:100%}.usage-sync-note strong{color:var(--text-main)}
         .model-provider-tabs{overflow-x:auto;justify-content:flex-start;scrollbar-width:none}.model-provider-tabs::-webkit-scrollbar{display:none}.model-provider-tab{flex:0 0 auto;min-width:82px}
@@ -8668,11 +8693,66 @@ ${m.text || ''}
             return root;
         }
 
+        function upgradeVerifiedResultCards(root) {
+            if (!root) return root;
+            [...root.querySelectorAll('blockquote')].forEach(block => {
+                const first = block.firstElementChild;
+                if (!first || first.tagName !== 'P') return;
+                const markerText = String(first.textContent || '').trim();
+                const match = markerText.match(/^\[!STATUS\s+(success|info|warning|error)(?:\|([^\]]{1,60}))?\]/i);
+                if (!match) return;
+
+                const tone = match[1].toLowerCase();
+                const badgeText = (match[2] || ({success:'Verified',info:'Status',warning:'Needs attention',error:'Failed'}[tone])).trim();
+                const markerPattern = /^\s*\[!STATUS\s+(?:success|info|warning|error)(?:\|[^\]]{1,60})?\]\s*/i;
+                first.innerHTML = first.innerHTML.replace(markerPattern, '');
+                if (!first.textContent.trim()) first.remove();
+
+                const card = document.createElement('section');
+                card.className = `jd-result-card jd-result-card-${tone}`;
+                card.setAttribute('role','group');
+
+                while (block.firstChild) card.appendChild(block.firstChild);
+
+                const title = card.querySelector('h1,h2,h3,h4');
+                const head = document.createElement('div');
+                head.className = 'jd-result-card-head';
+                if (title) {
+                    title.classList.add('jd-result-card-title');
+                    title.parentNode.insertBefore(head,title);
+                    head.appendChild(title);
+                } else {
+                    card.insertBefore(head,card.firstChild);
+                }
+                const badge = document.createElement('span');
+                badge.className = 'jd-result-badge';
+                badge.textContent = badgeText;
+                head.appendChild(badge);
+
+                [...card.querySelectorAll(':scope > p')].forEach(p => {
+                    if (/^(repository|branch|commit|deployment|workflow|build|pr|pull request)\s*:/i.test(String(p.textContent||'').trim())) {
+                        p.classList.add('jd-result-meta');
+                    }
+                    const links = p.querySelectorAll(':scope > a[href]');
+                    if (links.length===1 && String(p.textContent||'').trim()===String(links[0].textContent||'').trim()) {
+                        p.classList.add('jd-result-action-wrap');
+                        links[0].classList.add('jd-result-action');
+                        links[0].setAttribute('target','_blank');
+                        links[0].setAttribute('rel','noopener noreferrer');
+                    }
+                });
+
+                block.replaceWith(card);
+            });
+            return root;
+        }
+
         function renderCustomMarkdown(rawMarkdown) {
             const rawHtml = marked.parse(rawMarkdown);
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = rawHtml;
             sanitizeRenderedMarkdown(tempDiv);
+            upgradeVerifiedResultCards(tempDiv);
 
             const codeBlocks = tempDiv.querySelectorAll('pre');
             codeBlocks.forEach((pre) => {
