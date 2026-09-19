@@ -31,8 +31,10 @@ def main():
 
     req('Ask anything…' in INDEX and 'function syncComposerPlaceholder' in INDEX,
         'compact mobile composer placeholder missing')
-    req('html.keyboard-open .live-pet{bottom:max(104px' in INDEX,
-        'pet can still overlap the composer with the keyboard open')
+    req('function getLivePetWalkBottom()' in INDEX and 'layerRect.bottom - inputRect.top + 12' in INDEX and 'syncLivePetSafeLane()' in INDEX,
+        'pet safe lane is not dynamically anchored above the composer')
+    req("document.documentElement.classList.toggle('keyboard-open', keyboardOpen)" in INDEX,
+        'keyboard-open viewport state is missing')
 
     req('.live-pet.sleeping' not in INDEX,
         'legacy sleeping pet state was reintroduced')
