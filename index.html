@@ -7783,7 +7783,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             indicator.innerHTML = `
                 <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
                     <span class="ai-activity-summary-icon" id="aiActivitySummaryIcon"><i data-lucide="clock"></i></span>
-                    <span class="ai-activity-summary-text" id="aiActivitySummary">Working on your request…</span>
+                    <span class="ai-activity-summary-text" id="aiActivitySummary">Thinking</span>
                     <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
                 </button>
                 <div class="ai-activity-list" id="aiActivityList"></div>
@@ -7792,10 +7792,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list=indicator.querySelector('#aiActivityList');
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
-            // Start with one neutral status only. The server will emit the
-            // task-specific request/tool/source rows from the real execution path.
-            appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
-            list.querySelector('[data-activity-id="thinking"]')?.setAttribute('data-placeholder','true');
+            // The header itself says "Thinking". Do not insert a fake startup row:
+            // detailed rows must come only from real backend/tool activity.
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
             // Keep the newly-created Activity status in the visible conversation viewport.
@@ -7825,10 +7823,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
             const id = String(normalized.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
-            if(id==='task-context'){
-                const placeholder=list.querySelector('[data-activity-id="thinking"]');
-                if(placeholder?.dataset.placeholder==='true') placeholder.remove();
-            }
             const normalizedLabelKey=[
                 String(normalized.kind||'process'),
                 String(normalized.label||'').toLowerCase().replace(/\s+/g,' ').trim(),
@@ -7844,7 +7838,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 row = document.createElement('div');
                 list.appendChild(row);
             }
-            if(id==='thinking'&&normalized.kind==='thinking') row.dataset.placeholder='false';
             if(normalized.state==='running'&&row!==list.lastElementChild) list.appendChild(row);
             row.dataset.activityId=id;
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
@@ -7880,10 +7873,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const currentlyRunning=rows.filter(x=>x.classList.contains('running'));
             const current=currentlyRunning.length?currentlyRunning[currentlyRunning.length-1]:rows[rows.length-1];
             rows.forEach(x=>x.classList.toggle('ai-activity-current',x===current && x.classList.contains('running')));
-            if(summary && current){
-                const label=current.querySelector('.ai-activity-label');
-                if(label)summary.textContent=label.textContent||'Working on your request…';
-            }
+            // Keep the header stable like ChatGPT: "Thinking" while work is active.
+            // Detailed operation names belong only in the timeline rows below.
+            if(summary && card.dataset.finalized!=='true') summary.textContent='Thinking';
 
             // Keep a generous bounded history for unusually long tool runs without deleting
             // ordinary completed steps from normal conversations.
