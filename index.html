@@ -7922,7 +7922,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             });
         }
 
-        const MAX_VISIBLE_ACTIVITY_ROWS = 5;
+        const MAX_VISIBLE_ACTIVITY_ROWS = 24;
 
         let notifyPromptTimer = null;
         let notifyRequestInFlight = false;
@@ -8259,16 +8259,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const summary = document.getElementById('aiActivitySummary');
             if (summary && normalized.label) summary.textContent = normalized.label;
 
-            // Keep the activity display compact like ChatGPT while never pruning the active row.
+            // ChatGPT-style activity history: keep completed statuses visible in order.
+            // A repeated id updates that same operation, while distinct operations remain as history.
             const rows=[...list.querySelectorAll('.ai-activity-row')];
             rows.forEach(x=>x.classList.remove('ai-activity-current'));
             if(state==='running') row.classList.add('ai-activity-current');
 
+            // Keep a generous bounded history for unusually long tool runs without deleting
+            // ordinary completed steps from normal conversations.
             if(rows.length>MAX_VISIBLE_ACTIVITY_ROWS){
                 const refreshed=[...list.querySelectorAll('.ai-activity-row')];
-                const removable=refreshed.find(x=>
-                    x!==row && (x.classList.contains('completed')||x.classList.contains('warning'))
-                ) || refreshed.find(x=>x!==row) || refreshed[0];
+                const removable=refreshed.find(x=>x!==row && !x.classList.contains('ai-activity-current'));
                 removable?.remove();
             }
 
@@ -8296,10 +8297,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             refreshLucideIcons(card);
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
 
-            setTimeout(() => {
-                if (!card.isConnected || card.dataset.finalized !== 'true') return;
-                card.classList.add('collapsed');
-            }, 1800);
+            // Keep the completed activity history expanded, matching ChatGPT's visible
+            // per-step status trail. The user can still collapse it manually with the header.
+            card.classList.remove('collapsed');
+            const toggle = card.querySelector('.ai-activity-summary-row');
+            toggle?.setAttribute('aria-expanded','true');
             setTimeout(() => {
                 if (!card.isConnected || card.dataset.finalized !== 'true') return;
                 card.removeAttribute('id');
