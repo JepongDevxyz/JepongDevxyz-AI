@@ -2742,7 +2742,9 @@ async function processChat(body, emit) {
   }
 
   completeContextPlan(contextPlan,emit);
-  activity(emit,'prepare',`Preparing ${responseEffort.toLowerCase()} response`,'completed','process');
+  // A genuine model invocation is starting; this remains the current status
+  // until the entire streamed answer has been finalized.
+  activity(emit,'thinking','Thinking','running','thinking');
 
   const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback});
   if(first.ok){
@@ -3072,6 +3074,7 @@ function activityStreamResponse(body, requestSignal=null) {
           }
 
           const elapsedMs=Math.max(1,Date.now()-result.startedAt);
+          send('activity',{type:'activity',id:'thinking',label:'Thinking',state:'completed',kind:'thinking',at:Date.now()});
           send('activity',{type:'activity',id:'generation',label:`Response complete in ${(elapsedMs/1000).toFixed(elapsedMs>=1000?1:2)}s`,state:'completed',kind:'generate',at:Date.now()});
           send('done',{elapsedMs,autoContinuations:continuationCount,...meta});
           clearInterval(keepAlive);
