@@ -1297,7 +1297,7 @@ async function noKeyWebSearch(query, emit){
   for(const [label,fn] of attempts){
     const results=await fn();
     if(results.length){
-      activity(emit,'web-search',`Searched ${results.length} live web result${results.length===1?'':'s'} • ${label}`,'completed','web');
+      activity(emit,'web-search',`Searched ${results.length} result${results.length===1?'':'s'} for: ${searchTopic} • ${label}`,'completed','web');
       return results;
     }
   }
@@ -1305,7 +1305,7 @@ async function noKeyWebSearch(query, emit){
   try{
     const results=await duckDuckGoHtmlSearch(query,null);
     if(results.length){
-      activity(emit,'web-search',`Searched ${results.length} live web result${results.length===1?'':'s'} • DuckDuckGo`,'completed','web');
+      activity(emit,'web-search',`Searched ${results.length} result${results.length===1?'':'s'} for: ${searchTopic} • DuckDuckGo`,'completed','web');
       return results;
     }
   }catch(_){}
