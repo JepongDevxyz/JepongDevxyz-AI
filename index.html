@@ -3660,45 +3660,6 @@
         #livePetLayer #livePetCompanion.pet-settling { bottom:auto!important; }
         #livePetLayer { overflow:hidden!important; contain:layout paint; }
 
-        /* Activity rows are normal-flow content, never stacked on top of one another. */
-        .ai-activity-card { position:relative!important; height:auto!important; min-height:0!important; overflow:visible!important; contain:layout; }
-        .ai-activity-list {
-            position:relative!important;
-            display:flex!important;
-            flex-direction:column!important;
-            align-items:stretch!important;
-            gap:6px!important;
-            height:auto!important;
-            min-height:0!important;
-            overflow-y:auto!important;
-            overflow-x:hidden!important;
-            scroll-behavior:auto!important;
-        }
-        .ai-activity-card.collapsed .ai-activity-list { display:none!important; }
-        .ai-activity-row {
-            position:relative!important;
-            inset:auto!important;
-            display:grid!important;
-            grid-template-columns:28px minmax(0,1fr)!important;
-            align-items:start!important;
-            flex:0 0 auto!important;
-            width:100%!important;
-            height:auto!important;
-            min-height:34px!important;
-            transform:none!important;
-        }
-        .ai-activity-copy,
-        .ai-activity-label,
-        .ai-activity-detail {
-            position:static!important;
-            inset:auto!important;
-            display:block!important;
-            height:auto!important;
-            min-height:0!important;
-            overflow:visible!important;
-            transform:none!important;
-        }
-
         @media(max-width:767px){
             /* Reserve a clear lane for the floating pet so the latest response does not sit underneath it. */
             .chat-box { padding-bottom:148px!important; scroll-padding-bottom:160px!important; }
@@ -3853,7 +3814,6 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 window.safeVisibleAssistantResponse=window.safeVisibleAssistantResponse||function(text){try{if(typeof window.sanitizeVisibleAssistantResponse==='function')return window.sanitizeVisibleAssistantResponse(text);}catch(_){}return String(text==null?'':text);};
 window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse||function(text){let out=String(text==null?'':text);out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');return out.replace(/\n{3,}/g,'\n\n').trim();};
 </script>
-</style>
 <style id="activityTimelineV4">
 /* Single authoritative Activity timeline stylesheet. Do not duplicate these selectors elsewhere. */
 .ai-activity-card{clear:both;position:relative;z-index:2;display:block;width:min(100%,720px);height:auto;margin:10px 0 30px;padding:0;color:var(--text-main);background:transparent;border:0;box-shadow:none;overflow:visible;animation:activityIn .18s ease-out}
