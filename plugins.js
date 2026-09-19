@@ -239,4 +239,21 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   window.JDPlugins=Object.freeze({open,close,contextForChat(){
     return {superpowers:{enabled:state.superpowers,phase:state.phase},github:{enabled:state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
   }});
+
+  // Complete the OAuth round trip without leaving stale query parameters in the chat URL.
+  try{
+    const params=new URLSearchParams(location.search);
+    const githubResult=params.get('github');
+    if(githubResult==='connected'||githubResult==='error'){
+      setTimeout(async()=>{
+        open('plugins');selected='github';view='manage';render();
+        await refreshGithubSession({loadRepos:githubResult==='connected'});
+        if(githubResult==='connected')notice('GitHub account connected.');
+        else notice(params.get('github_error')||'GitHub authorization failed.',true);
+      },0);
+      params.delete('github');params.delete('github_error');
+      const clean=location.pathname+(params.toString()?'?'+params.toString():'')+location.hash;
+      history.replaceState(history.state,'',clean);
+    }
+  }catch(_){}
 })();
