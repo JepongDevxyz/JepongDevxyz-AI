@@ -1756,41 +1756,18 @@ function taskProfile(message='', files=[]){
 }
 
 function contextActivityPlan(message='', files=[]){
-  const p=taskProfile(message,files);
   const list=Array.isArray(files)?files:[];
   const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
   const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/'));
-  const hasCode=p.fileNames.some(n=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(n));
-  const subject=p.subject && p.subject.length>2 ? p.subject : '';
-
-  const labels={
-    github:{inspect:subject?`Reviewing repository task: ${subject}`:'Reviewing repository request',edit:'Planning repository changes',test:'Checking repository status and changes',create:'Preparing repository implementation'},
-    deployment:{inspect:subject?`Reviewing deployment task: ${subject}`:'Reviewing deployment requirements',edit:'Planning deployment fixes',test:'Checking deployment status',create:'Preparing deployment changes'},
-    backend:{inspect:subject?`Analyzing backend task: ${subject}`:'Analyzing backend request',edit:'Planning backend changes',test:'Checking API/backend behavior',create:'Preparing backend implementation'},
-    web:{inspect:subject?`Analyzing web task: ${subject}`:'Analyzing website request',edit:'Planning UI/code changes',test:'Checking website behavior',create:'Preparing website implementation'},
-    android:{inspect:subject?`Reviewing Android task: ${subject}`:'Reviewing Android project request',edit:'Planning Android project changes',test:'Checking Android build behavior',create:'Preparing Android implementation'},
-    document:{inspect:subject?`Reviewing document task: ${subject}`:'Reviewing document request',edit:'Planning document revisions',test:'Checking document output',create:'Preparing requested document'},
-    video:{inspect:'Reviewing video request',edit:'Planning video-related changes',test:'Checking video content',create:'Preparing video output'},
-    image:{inspect:'Reviewing image request',edit:'Planning image changes',test:'Checking image details',create:'Preparing image output'},
-    research:{inspect:subject?`Researching: ${subject}`:'Identifying research requirements',edit:'Organizing research findings',test:'Cross-checking findings',create:'Preparing research output'},
-    study:{inspect:subject?`Working through: ${subject}`:'Working through the problem',edit:'Refining the solution',test:'Checking the solution',create:'Preparing the solution'},
-    general:{inspect:subject?`Understanding: ${subject}`:'Understanding your request',edit:'Planning requested changes',test:'Checking the requested behavior',create:'Preparing the requested output'}
-  };
-
-  let first={id:'task-context',label:labels[p.kind]?.inspect||labels.general.inspect,kind:p.kind==='research'?'research':'process'};
-  if(hasVideo)first={id:'task-context',label:'Inspecting uploaded video frames',kind:'file'};
-  else if(hasImage)first={id:'task-context',label:'Inspecting uploaded image',kind:'image'};
-  else if(hasCode)first={id:'task-context',label:'Inspecting attached code',kind:'file'};
-  else if(list.length)first={id:'task-context',label:`Reviewing ${userAttachmentCount(list)} attached file${userAttachmentCount(list)===1?'':'s'}`,kind:'file'};
-
-  let second=null;
-  const domain=labels[p.kind]||labels.general;
-  if(p.intent.edit)second={id:'task-next',label:domain.edit,kind:'process'};
-  else if(p.intent.test)second={id:'task-next',label:domain.test,kind:'test'};
-  else if(p.intent.research)second={id:'task-next',label:p.kind==='research'?'Preparing source-backed findings':domain.test,kind:'research'};
-  else if(p.intent.create)second={id:'task-next',label:domain.create,kind:p.kind==='image'?'image':'process'};
-
-  return {profile:p,steps:second?[first,second]:[first]};
+  const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+  let first={id:'task-context',label:'Understanding your request',kind:'process'};
+  if(hasVideo)first={id:'task-context',label:'Preparing uploaded video',kind:'file'};
+  else if(hasImage)first={id:'task-context',label:'Preparing uploaded image',kind:'image'};
+  else if(hasCode)first={id:'task-context',label:'Preparing attached code',kind:'file'};
+  else if(list.length)first={id:'task-context',label:`Preparing ${userAttachmentCount(list)} attached file${userAttachmentCount(list)===1?'':'s'}`,kind:'file'};
+  // This is only an initial request milestone, not a claim that GitHub was
+  // searched, code was edited, sources were fetched, or any tool was invoked.
+  return {steps:[first]};
 }
 
 function emitContextActivityStart(message='', files=[], emit){
@@ -1801,10 +1778,8 @@ function emitContextActivityStart(message='', files=[], emit){
 }
 
 function completeContextPlan(plan, emit){
-  if(!plan?.steps?.length)return;
-  const [first,second]=plan.steps;
+  const first=plan?.steps?.[0];
   if(first)activity(emit,first.id,first.label,'completed',first.kind,'');
-  if(second)activity(emit,second.id,second.label,'completed',second.kind,'');
 }
 
 function linkLabel(raw=''){
@@ -2932,33 +2907,8 @@ function activityStreamResponse(body, requestSignal=null) {
         try{controller.enqueue(encoder.encode(sseEvent(event,data)));}catch(_){cancelled=true;}
       };
       const emit=data=>send('activity',data);
-      // Keep the Activity panel visibly alive during longer provider/tool work.
-      // These are presentation heartbeat updates only; they never claim a tool ran.
-      let heartbeatIndex=0;
-      const heartbeatProfile=taskProfile(body?.message||'',body?.files||[]);
-      const heartbeatLabels=(()=>{
-        const subject=heartbeatProfile.subject&&heartbeatProfile.subject.length>2?heartbeatProfile.subject:'';
-        const byKind={
-          github:[subject?`Reviewing repository context for ${subject}`:'Reviewing repository context','Locating relevant repository logic','Tracing the requested repository behavior','Checking related implementation details','Reviewing repository changes'],
-          deployment:[subject?`Reviewing deployment context for ${subject}`:'Reviewing deployment context','Locating deployment configuration','Checking deployment behavior','Reviewing runtime details','Preparing deployment findings'],
-          backend:[subject?`Analyzing backend context for ${subject}`:'Analyzing backend context','Locating relevant API logic','Tracing request flow','Checking backend implementation details','Reviewing response handling'],
-          web:[subject?`Analyzing website context for ${subject}`:'Analyzing website context','Locating relevant UI logic','Tracing interface behavior','Checking responsive implementation','Reviewing page behavior'],
-          android:[subject?`Reviewing Android context for ${subject}`:'Reviewing Android project context','Locating relevant app logic','Tracing app behavior','Checking project configuration','Reviewing implementation details'],
-          document:['Reviewing document context','Locating relevant content','Organizing requested details','Checking document structure','Preparing response content'],
-          video:['Reviewing video context','Inspecting relevant frames','Checking visible details','Organizing observations','Preparing response'],
-          image:['Reviewing image context','Inspecting visible details','Checking relevant visual elements','Organizing observations','Preparing response'],
-          research:[subject?`Researching ${subject}`:'Identifying relevant information','Locating relevant sources','Reviewing available information','Cross-checking relevant details','Organizing findings'],
-          study:[subject?`Working through ${subject}`:'Working through the problem','Identifying relevant concepts','Checking the reasoning','Verifying the solution','Preparing the explanation'],
-          general:[subject?`Understanding ${subject}`:'Understanding the request','Identifying relevant context','Working through the details','Checking the response direction','Preparing the response']
-        };
-        return byKind[heartbeatProfile.kind]||byKind.general;
-      })();
-      const activityHeartbeat=setInterval(()=>{
-        if(cancelled)return;
-        const label=heartbeatLabels[heartbeatIndex%heartbeatLabels.length];
-        heartbeatIndex++;
-        send('activity',{type:'activity',id:`live-progress-${heartbeatIndex}`,label,state:'running',kind:heartbeatProfile.kind==='research'?'research':'process',at:Date.now()});
-      },650);
+      // Activity events are emitted only by real request/tool lifecycle operations.
+      // No timed pseudo-steps: a model may spend several seconds on one operation.
       // Flush immediately so Vercel/browser sees an active streaming response.
       send('activity',{type:'activity',id:'stream-open',label:'Response stream opened',state:'completed',kind:'process',at:Date.now()});
       const keepAlive=setInterval(()=>{
@@ -2969,7 +2919,7 @@ function activityStreamResponse(body, requestSignal=null) {
           const result=await processChat(body,emit);
           if(!result.ok){
             send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'gemini'});
-            clearInterval(keepAlive); clearInterval(activityHeartbeat);
+            clearInterval(keepAlive);
             controller.close();
             return;
           }
@@ -3073,7 +3023,7 @@ function activityStreamResponse(body, requestSignal=null) {
           generatedText=sanitizeAssistantOutput(generatedText);
 
           if(cancelled){
-            clearInterval(keepAlive); clearInterval(activityHeartbeat); clearInterval(activityHeartbeat);
+            clearInterval(keepAlive);
             try{controller.close();}catch(_){}
             return;
           }
@@ -3124,11 +3074,11 @@ function activityStreamResponse(body, requestSignal=null) {
           const elapsedMs=Math.max(1,Date.now()-result.startedAt);
           send('activity',{type:'activity',id:'generation',label:`Response complete in ${(elapsedMs/1000).toFixed(elapsedMs>=1000?1:2)}s`,state:'completed',kind:'generate',at:Date.now()});
           send('done',{elapsedMs,autoContinuations:continuationCount,...meta});
-          clearInterval(keepAlive); clearInterval(activityHeartbeat);
+          clearInterval(keepAlive);
           controller.close();
         }catch(e){
           send('error',{message:e?.message||String(e),status:500});
-          clearInterval(keepAlive); clearInterval(activityHeartbeat);
+          clearInterval(keepAlive);
           controller.close();
         }
       })();
