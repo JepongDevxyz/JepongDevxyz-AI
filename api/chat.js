@@ -1132,8 +1132,12 @@ function relevantWebResults(results=[], query=''){
     const snippet=String(r?.snippet||'').toLowerCase();
     const hay=`${title} ${url} ${snippet}`;
     if(security){
-      return /\b(owasp|web\s*security|website\s*security|application\s*security|security\s*headers|content\s*security\s*policy|hsts|tls|https|ssl|csp|http\s*headers|mozilla\s*observatory)\b/i.test(hay)
-        && /\b(security|secure|https|tls|hsts|owasp|csp|headers|ssl)\b/i.test(hay);
+      // An HTTPS link or generic mention of "security" does not establish that
+      // a page covers website security. Require a specific topic match in text.
+      const content=`${title} ${snippet}`;
+      return /\b(owasp|web\s*security|website\s*security|web\s*application\s*security|application\s*security|security\s*headers|content\s*security\s*policy|hsts|tls|csp|http\s*headers|mozilla\s*observatory|https\s*(?:configuration|setup|security)|ssl\s*(?:configuration|security))\b/i.test(content)
+        || (/\b(owasp\.org|developer\.mozilla\.org|web\.dev)\b/i.test(url)
+            && /\b(security|http|https|headers|csp|hsts|tls|ssl)\b/i.test(content));
     }
     if(!terms.length)return true;
     const matches=terms.filter(t=>hay.includes(t)).length;
@@ -2869,8 +2873,17 @@ async function processChat(body, emit) {
   const providedLinkContext=await inspectProvidedLinks(message,emit);
   const verificationContext=await performVerification(message,files,emit);
   const liveWebContext=await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
+  // General security advice cannot establish whether a particular site is safe.
+  // If the user did not identify a site in this turn or provide files, say so.
+  const noWebsiteIdentifier=isWebsiteSecurityRequest(message)
+    && !extractPublicUrl(message).length
+    && !(Array.isArray(files)&&files.length)
+    && !/\b(?:[a-z0-9-]+\.)+(?:com|org|net|app|dev|io|ph|site|xyz|info|edu|gov)\b/i.test(message);
+  const websiteScopeContext=noWebsiteIdentifier
+    ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
+    : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
-  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
   // Cost guard: an extra preflight model call is reserved for explicit High/Think-harder requests.
