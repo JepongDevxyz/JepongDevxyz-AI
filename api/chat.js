@@ -1091,7 +1091,10 @@ function shouldAutoResearch(message=''){
   const currentYear=new Date().getUTCFullYear();
   const years=[...t.matchAll(/\b((?:19|20)\d{2})\b/g)].map(m=>Number(m[1]));
   if(years.some(year=>year>=currentYear-1)) return true;
-  return /\b(latest|current|currently|today|tonight|this week|this month|this year|what year|anong taon|what date|anong petsa|now|real[- ]?time|news|update|updated|price|presyo|weather|panahon|forecast|status|outage|release|released|version|available|availability|schedule|result|score|standing|search|research|verify online|check online|hanapin|maghanap|tingnan online|web|online|kasalukuyan|ngayon)\b/i.test(t);
+  // Deliberately exclude generic words such as "status", "version", "available",
+  // "result", and "online". Those commonly appear in ordinary troubleshooting
+  // prompts and previously caused unrelated live searches.
+  return /\b(latest|current|currently|today|tonight|this week|this month|this year|what year|anong taon|what date|anong petsa|now|real[- ]?time|news|price|presyo|weather|panahon|forecast|outage|release date|released today|schedule today|search|research|verify online|check online|hanapin|maghanap|tingnan online|kasalukuyan|ngayon)\b/i.test(t);
 }
 
 function isWebsiteSecurityRequest(message=''){
@@ -3018,9 +3021,13 @@ async function processChat(body, emit) {
   // Never launch a generic web search for a vague security follow-up; inspect the
   // actual carried-forward URL when present, otherwise keep the answer scoped.
   const websiteSecurityTask=isWebsiteSecurityRequest(taskMessage);
+  // Generic web research must be triggered by the CURRENT user message, not by
+  // inherited history text. Short follow-ups can still use carried-forward URLs
+  // through inspectProvidedLinks()/GitHub inspection above, but they must not
+  // accidentally launch an unrelated broad search.
   const liveWebContext=websiteSecurityTask
     ? ''
-    : await getEnhancedLiveWebContext(taskMessage,webSearch,emit,{fast:fastAnswers});
+    : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
 
   // General security advice cannot establish whether a particular site is safe.
   // The context-aware task may contain a URL from the immediately preceding user turn.
