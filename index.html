@@ -4175,10 +4175,16 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 <style id="petCleanHeadV5">
 /* v5: hide the decorative head-top excess from the live companion only.
    The original pet assets remain untouched for Settings/header previews. */
-.live-pet-visual{overflow:visible!important}
+.live-pet-visual{overflow:hidden!important;border-radius:20px}
 .live-pet-visual img{
   clip-path:inset(var(--pet-head-crop-top,0px) 0 0 0 round 0)!important;
+  object-position:center bottom!important;
 }
+/* Keep detached pixels/decorations above the live pet out of the visible frame. */
+.live-pet[data-pet-name="luna"] .live-pet-visual{clip-path:inset(14px 0 0 0 round 20px)}
+/* Sleeping state: cover the source-image open eyes, then draw calibrated closed lids. */
+.live-pet.sleeping .live-pet-sleep-eyes{opacity:1!important}
+.live-pet.sleeping .live-pet-sleep-eyes i{background:var(--pet-sleep-lid,#eef2ff);height:var(--sleep-eye-h,12px);width:var(--sleep-eye-w,18px);border:0!important;border-bottom:3px solid var(--sleep-line-color,#242632)!important;border-radius:50% 50% 55% 55%!important;box-shadow:0 -5px 0 3px var(--pet-sleep-lid,#eef2ff)}
 /* Built-in pet calibration. Luna's two detached top pieces are removed by cropping
    only the transparent top band; other pets keep their natural silhouette. */
 .live-pet[data-pet-name="luna"]{--pet-head-crop-top:14px}
@@ -4402,8 +4408,8 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
           <button class="auth-provider" onclick="cloudOAuth('facebook')">Continue with Facebook</button>
           <button class="auth-provider" onclick="cloudOAuth('github')">Continue with GitHub</button>
           <div style="text-align:center;color:var(--text-muted);font-size:11px">or</div>
-          <div class="auth-email"><input id="cloudEmail" type="email" placeholder="Email" style="flex:1"><button class="auth-provider" style="width:auto" onclick="sendEmailOtp()">Continue with Email</button></div>
-          <div id="cloudOtpBox" style="display:none"><div class="otp-row" id="cloudOtpRow">${[0,1,2,3,4,5].map(i=>`<input class="otp-input" inputmode="numeric" maxlength="1" data-otp="${i}" oninput="otpAdvance(this)" onpaste="otpPaste(event)">`).join('')}</div><button class="auth-provider" style="margin-top:8px" onclick="verifyEmailOtp()">Verify code</button><button class="auth-provider" style="margin-top:6px" onclick="sendEmailOtp()">Resend code</button></div>
+          <div class="auth-email"><input id="cloudEmail" type="email" placeholder="Email address" style="flex:1"><button class="auth-provider" style="width:auto" onclick="sendEmailOtp()">Continue with Email</button></div>
+          <div id="cloudOtpBox" style="display:none"><div class="cloud-status" style="text-align:center;margin:4px 0 10px">Enter the 6-digit code sent to your email.</div><div class="otp-row" id="cloudOtpRow"><input class="otp-input" inputmode="numeric" maxlength="1" data-otp="0" aria-label="OTP digit 1" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" maxlength="1" data-otp="1" aria-label="OTP digit 2" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" maxlength="1" data-otp="2" aria-label="OTP digit 3" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" maxlength="1" data-otp="3" aria-label="OTP digit 4" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" maxlength="1" data-otp="4" aria-label="OTP digit 5" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" maxlength="1" data-otp="5" aria-label="OTP digit 6" oninput="otpAdvance(this)" onpaste="otpPaste(event)"></div><button class="auth-provider" style="margin-top:10px" onclick="verifyEmailOtp()">Verify code</button><button class="auth-provider" style="margin-top:6px" onclick="sendEmailOtp()">Resend code</button></div>
         </div>
         <div id="cloudSignedIn" style="display:none"><div id="cloudUserLabel" style="font-weight:700;margin:12px 0"></div><button class="auth-provider" onclick="syncCloudNow()">Sync now</button><button class="auth-provider" style="margin-top:8px" onclick="cloudSignOut()">Sign out</button></div>
       </div>
