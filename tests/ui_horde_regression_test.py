@@ -34,10 +34,10 @@ def main():
     req('html.keyboard-open .live-pet{bottom:max(104px' in INDEX,
         'pet can still overlap the composer with the keyboard open')
 
-    req('.live-pet.sleeping .live-pet-visual img + .live-pet-sleep-eyes' in INDEX,
-        'image pets do not have a sleeping-eye overlay')
-    req('opacity:1!important' in INDEX and '--pet-sleep-lid' in INDEX,
-        'sleeping image pets do not visibly cover open pupils')
+    req('.live-pet.sleeping' not in INDEX,
+        'legacy sleeping pet state was reintroduced')
+    req('live-pet-sleep-eyes' not in INDEX and '--pet-sleep-lid' not in INDEX,
+        'legacy sleeping-eye visuals were reintroduced')
 
     req('speech-mini-player' in INDEX and 'function toggleSpeechMiniPlayback' in INDEX,
         'read-aloud mini player is missing')
