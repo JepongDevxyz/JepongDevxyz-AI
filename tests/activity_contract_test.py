@@ -65,12 +65,16 @@ def main():
         "ai-activity-card.collapsed",
         "Worked for ${",
         "Searching the web",
-        "Checking attached files",
         "Checking generated code",
         "Trying fallback provider",
     )
     for token in visual_tokens:
         require(token in INDEX, f"frontend activity token missing: {token}")
+
+    # Attachment status comes from completed server preprocessing, not a
+    # generic invented client label.
+    require("activity(emit,'attachments'" in CHAT and "Prepared ${labelParts" in CHAT,
+            "server attachment preparation activity missing")
 
     truthful_pairs = (
         ("getEnhancedLiveWebContext", "activity(emit"),
