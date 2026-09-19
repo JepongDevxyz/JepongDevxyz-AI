@@ -3950,7 +3950,7 @@
         .cloud-pill{border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-main);border-radius:999px;padding:7px 10px;font-size:11px;cursor:pointer}
         .cloud-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-height:55vh;overflow:auto}
         .library-card{border:1px solid var(--border-color);background:var(--bg-secondary);border-radius:14px;padding:10px;min-width:0}.library-card img{width:100%;height:100px;object-fit:cover;border-radius:10px}.library-card b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;margin-top:7px}.library-card small{color:var(--text-muted);font-size:10px}.library-actions{display:flex;gap:6px;margin-top:8px}.library-actions button{flex:1;border:1px solid var(--border-color);border-radius:9px;background:transparent;color:var(--text-main);padding:6px;font-size:10px}
-        .auth-stack{display:grid;gap:9px}.auth-provider{width:100%;padding:11px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-secondary);color:var(--text-main);font-weight:600}.auth-email{display:flex;gap:7px}.auth-email input,.otp-input{border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-main);border-radius:10px;padding:10px;min-width:0}.otp-row{display:flex;gap:5px;justify-content:center}.otp-input{width:34px;text-align:center;font-size:18px}.cloud-status{font-size:11px;color:var(--text-muted);margin:8px 0}
+        .auth-stack{display:grid;gap:9px}.auth-provider{width:100%;padding:11px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-secondary);color:var(--text-main);font-weight:600}.auth-email{display:flex;gap:7px}.auth-email input,.otp-input,.otp-email-field{border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-main);border-radius:12px;padding:11px;min-width:0}.otp-email-field{width:100%;font-size:16px}.otp-row{display:flex;gap:8px;justify-content:center}.otp-input{width:42px;height:50px;text-align:center;font-size:20px;padding:0}.otp-input:focus,.otp-email-field:focus{border-color:#8b5cf6;box-shadow:0 0 0 2px rgba(139,92,246,.16)}@media(max-width:380px){.otp-row{gap:5px}.otp-input{width:38px;height:48px}}.cloud-status{font-size:11px;color:var(--text-muted);margin:8px 0}
 </style>
 
 
@@ -4271,7 +4271,6 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
                     <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
                 </div>
                 <div class="header-tools-group">
-                    <button type="button" class="pet-header-companion" id="petHeaderCompanion" onclick="openPetHeaderCompanion()" title="Pet companion" aria-label="Pet companion settings"></button>
                     <div class="network-status" id="networkStatus" onclick="measureNetworkPing()" title="Click to refresh ping">
                         <div class="signal-bars">
                             <div class="bar bar-1 active" id="bar1"></div>
@@ -4281,7 +4280,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
                         </div>
                         <span id="pingText">Checking...</span>
                     </div>
-                    <button class="cloud-pill" id="libraryHeaderBtn" onclick="openLibrary()">Library</button><button class="cloud-pill" id="accountHeaderBtn" onclick="openAccountModal()">Sign in</button><button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
+                    <button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
                 </div>
             </div>
 
@@ -4399,12 +4398,26 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
         <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">JepongDevxyz Account</h3><button class="personalization-close" onclick="document.getElementById('cloudAccountModal').classList.remove('open')">✕</button></div>
         <div class="cloud-status" id="cloudAccountStatus">Sign in to sync Memory, Library, settings and chats across devices.</div>
         <div id="cloudSignedOut" class="auth-stack">
-          <button class="auth-provider" onclick="cloudOAuth('google')">Continue with Google</button>
-          <button class="auth-provider" onclick="cloudOAuth('facebook')">Continue with Facebook</button>
-          <button class="auth-provider" onclick="cloudOAuth('github')">Continue with GitHub</button>
-          <div style="text-align:center;color:var(--text-muted);font-size:11px">or</div>
-          <div class="auth-email"><input id="cloudEmail" type="email" placeholder="Email" style="flex:1"><button class="auth-provider" style="width:auto" onclick="sendEmailOtp()">Continue with Email</button></div>
-          <div id="cloudOtpBox" style="display:none"><div class="otp-row" id="cloudOtpRow">${[0,1,2,3,4,5].map(i=>`<input class="otp-input" inputmode="numeric" maxlength="1" data-otp="${i}" oninput="otpAdvance(this)" onpaste="otpPaste(event)">`).join('')}</div><button class="auth-provider" style="margin-top:8px" onclick="verifyEmailOtp()">Verify code</button><button class="auth-provider" style="margin-top:6px" onclick="sendEmailOtp()">Resend code</button></div>
+          <div id="cloudAuthProviders" class="auth-stack">
+            <button class="auth-provider" onclick="cloudOAuth('google')">Continue with Google</button>
+            <button class="auth-provider" onclick="cloudOAuth('facebook')">Continue with Facebook</button>
+            <button class="auth-provider" onclick="cloudOAuth('github')">Continue with GitHub</button>
+            <div style="text-align:center;color:var(--text-muted);font-size:11px">or</div>
+            <button class="auth-provider" onclick="showCloudEmailStage()">Continue with Email</button>
+          </div>
+          <div id="cloudEmailStage" class="auth-stack" style="display:none">
+            <button class="header-btn" style="justify-content:flex-start;width:max-content" onclick="showCloudAuthProviders()">← Back</button>
+            <div style="text-align:center"><strong>Continue with Email</strong><div class="cloud-status">We'll send a 6-digit code to your email.</div></div>
+            <input id="cloudEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email address" class="otp-email-field">
+            <button class="auth-provider" id="cloudSendOtpBtn" onclick="sendEmailOtp()">Send code</button>
+          </div>
+          <div id="cloudOtpBox" class="auth-stack" style="display:none">
+            <button class="header-btn" style="justify-content:flex-start;width:max-content" onclick="showCloudEmailStage()">← Back</button>
+            <div style="text-align:center"><strong>Enter verification code</strong><div class="cloud-status" id="cloudOtpHint">Enter the 6-digit code sent to your email.</div></div>
+            <div class="otp-row" id="cloudOtpRow"><input class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="1" data-otp="0" aria-label="Digit 1" onkeydown="otpKeydown(event,this)" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="1" aria-label="Digit 2" onkeydown="otpKeydown(event,this)" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="2" aria-label="Digit 3" onkeydown="otpKeydown(event,this)" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="3" aria-label="Digit 4" onkeydown="otpKeydown(event,this)" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="4" aria-label="Digit 5" onkeydown="otpKeydown(event,this)" oninput="otpAdvance(this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="5" aria-label="Digit 6" onkeydown="otpKeydown(event,this)" oninput="otpAdvance(this)" onpaste="otpPaste(event)"></div>
+            <button class="auth-provider" onclick="verifyEmailOtp()">Verify code</button>
+            <button class="auth-provider" id="cloudResendOtpBtn" onclick="sendEmailOtp(true)">Resend code</button>
+          </div>
         </div>
         <div id="cloudSignedIn" style="display:none"><div id="cloudUserLabel" style="font-weight:700;margin:12px 0"></div><button class="auth-provider" onclick="syncCloudNow()">Sync now</button><button class="auth-provider" style="margin-top:8px" onclick="cloudSignOut()">Sign out</button></div>
       </div>
@@ -4461,6 +4474,8 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
         <div class="settings-home-scroll">
           <h3 class="settings-section-label">My AI</h3>
           <div class="settings-card-group">
+            <button class="settings-nav-row" type="button" onclick="openAccountModal()"><i data-lucide="user-round"></i><span><strong>Account</strong><small>Sign in and sync your data across devices</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="openLibrary()"><i data-lucide="folder-open"></i><span><strong>Library</strong><small>Manage your private uploaded files</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="openPersonalizationSettings()"><i data-lucide="smile"></i><span><strong>Personalization</strong><small>Style, instructions, writing and preferences</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="openSettingsMemory()"><i data-lucide="book-open"></i><span><strong>Memory</strong><small>Saved local memory and chat-history references</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="openSettingsPet()"><i data-lucide="cat"></i><span><strong>Pet & Luna</strong><small>Pet companion, behavior and Create a Pet with AI</small></span><i data-lucide="chevron-right"></i></button>
@@ -5120,12 +5135,18 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
             const status=document.getElementById('cloudAccountStatus'); if(status)status.textContent=signed?'Cloud sync is active for this account.':'Sign in to sync Memory, Library, settings and chats across devices.';
             const badge=document.getElementById('psMemoryBadge'); if(badge)badge.textContent=signed?(personalizationSettings.memoryEnabled?'Cloud memory on':'Cloud synced'):(personalizationSettings.memoryEnabled?'Memory on':'Local only');
         }
-        function openAccountModal(){document.getElementById('cloudAccountModal')?.classList.add('open');renderCloudAccount();}
+        let cloudOtpTimer=null,cloudOtpRemaining=0;
+        function showCloudAuthProviders(){document.getElementById('cloudAuthProviders').style.display='grid';document.getElementById('cloudEmailStage').style.display='none';document.getElementById('cloudOtpBox').style.display='none';}
+        function showCloudEmailStage(){document.getElementById('cloudAuthProviders').style.display='none';document.getElementById('cloudEmailStage').style.display='grid';document.getElementById('cloudOtpBox').style.display='none';setTimeout(()=>document.getElementById('cloudEmail')?.focus(),60);}
+        function showCloudOtpStage(){document.getElementById('cloudAuthProviders').style.display='none';document.getElementById('cloudEmailStage').style.display='none';document.getElementById('cloudOtpBox').style.display='grid';const email=document.getElementById('cloudEmail')?.value?.trim()||'';const hint=document.getElementById('cloudOtpHint');if(hint)hint.textContent='We sent a 6-digit code to '+email+'.';setTimeout(()=>document.querySelector('#cloudOtpRow .otp-input')?.focus(),60);}
+        function openAccountModal(){document.getElementById('cloudAccountModal')?.classList.add('open');renderCloudAccount();if(!cloudUser)showCloudAuthProviders();}
         async function cloudOAuth(provider){if(!cloudClient)return showModernAlert('Cloud authentication is unavailable.','Account');await cloudClient.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname}});}
-        async function sendEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();if(!email)return showModernAlert('Enter your email first.','Email sign in');const {error}=await cloudClient.auth.signInWithOtp({email,options:{shouldCreateUser:true}});if(error)return showModernAlert(error.message,'Email sign in');document.getElementById('cloudOtpBox').style.display='block';showModernAlert('Verification code sent.','Email sign in');}
-        function otpAdvance(el){el.value=el.value.replace(/\D/g,'').slice(0,1);if(el.value)el.nextElementSibling?.focus();}
-        function otpPaste(e){const digits=(e.clipboardData?.getData('text')||'').replace(/\D/g,'').slice(0,6);if(digits.length<2)return;e.preventDefault();document.querySelectorAll('#cloudOtpRow .otp-input').forEach((x,i)=>x.value=digits[i]||'');}
-        async function verifyEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();const token=[...document.querySelectorAll('#cloudOtpRow .otp-input')].map(x=>x.value).join('');if(token.length!==6)return showModernAlert('Enter the 6-digit code.','Verify');const {error}=await cloudClient.auth.verifyOtp({email,token,type:'email'});if(error)return showModernAlert(error.message,'Verify');document.getElementById('cloudAccountModal')?.classList.remove('open');}
+        function startCloudOtpCountdown(){clearInterval(cloudOtpTimer);cloudOtpRemaining=60;const btn=document.getElementById('cloudResendOtpBtn');const paint=()=>{if(!btn)return;if(cloudOtpRemaining>0){btn.disabled=true;btn.textContent='Resend code in '+cloudOtpRemaining+'s';}else{btn.disabled=false;btn.textContent='Resend code';clearInterval(cloudOtpTimer);}};paint();cloudOtpTimer=setInterval(()=>{cloudOtpRemaining--;paint();},1000);}
+        async function sendEmailOtp(isResend=false){const email=document.getElementById('cloudEmail')?.value?.trim();if(!email||!/^\S+@\S+\.\S+$/.test(email))return showModernAlert('Enter a valid email address.','Email sign in');const send=document.getElementById('cloudSendOtpBtn');if(send){send.disabled=true;send.textContent='Sending…';}const {error}=await cloudClient.auth.signInWithOtp({email,options:{shouldCreateUser:true}});if(send){send.disabled=false;send.textContent='Send code';}if(error)return showModernAlert(error.message,'Email sign in');document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');showCloudOtpStage();startCloudOtpCountdown();if(isResend)showModernToast('New verification code sent.');}
+        function otpAdvance(el){el.value=el.value.replace(/\D/g,'').slice(0,1);if(el.value){const next=el.nextElementSibling;if(next?.classList?.contains('otp-input'))next.focus();}}
+        function otpKeydown(e,el){if(e.key==='Backspace'&&!el.value){const prev=el.previousElementSibling;if(prev?.classList?.contains('otp-input')){prev.focus();prev.value='';}}}
+        function otpPaste(e){const digits=(e.clipboardData?.getData('text')||'').replace(/\D/g,'').slice(0,6);if(digits.length<2)return;e.preventDefault();const boxes=[...document.querySelectorAll('#cloudOtpRow .otp-input')];boxes.forEach((x,i)=>x.value=digits[i]||'');boxes[Math.min(digits.length,6)-1]?.focus();}
+        async function verifyEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();const token=[...document.querySelectorAll('#cloudOtpRow .otp-input')].map(x=>x.value).join('');if(token.length!==6)return showModernAlert('Enter the complete 6-digit code.','Verify');const {error}=await cloudClient.auth.verifyOtp({email,token,type:'email'});if(error)return showModernAlert(error.message,'Verify');clearInterval(cloudOtpTimer);document.getElementById('cloudAccountModal')?.classList.remove('open');}
         async function cloudSignOut(){await cloudClient?.auth.signOut();cloudUser=null;renderCloudAccount();}
         async function loadCloudState(){
             if(!cloudUser)return;
