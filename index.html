@@ -7593,6 +7593,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Transport plumbing is intentionally hidden from the user-facing activity list.
             if(id==='stream-open'||id==='client-start')return null;
 
+            // Never show timed pseudo-work, internal transport, or generic
+            // response plumbing as if those were independently executed tools.
+            if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
+            if (['prepare','generation','response-prep','response-generation','task-next'].includes(id)) return null;
+            if (kind==='provider' && id.startsWith('provider-') &&
+                (state==='running'||state==='completed')) return null;
+
             // Provider identity stays visible and truthful. The backend has already normalized
             // retries/connection state into a stable provider row.
             if(kind==='provider'){
@@ -7803,10 +7810,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list=indicator.querySelector('#aiActivityList');
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
-            const first=initialActivityForRequest(promptText,files);
-            appendActivityEvent({id:'task-context',label:first.label,state:'completed',kind:first.kind});
-            // Add Thinking synchronously. Do not defer this to animation frames:
-            // fast provider responses can otherwise finish before the frame is painted.
+            // One initial status only. Subsequent rows must correspond to
+            // actual backend operations rather than client-predicted task steps.
             appendActivityEvent({id:'thinking',label:'Thinking',state:'running',kind:'thinking'});
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
