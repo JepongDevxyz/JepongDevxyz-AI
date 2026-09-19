@@ -59,7 +59,8 @@ def main():
         require(token not in combined, f"out-of-scope OpenAI/Luna token found: {token}")
 
     visual_tokens = (
-        "const MAX_VISIBLE_ACTIVITY_ROWS = 5",
+        "const MAX_VISIBLE_ACTIVITY_ROWS = 24",
+        "ChatGPT-style activity history: keep completed statuses visible in order.",
         "ai-activity-current",
         "ai-activity-card.collapsed",
         "Worked for ${",
