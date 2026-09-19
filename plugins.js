@@ -244,12 +244,13 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   try{
     const params=new URLSearchParams(location.search);
     const githubResult=params.get('github');
+    const githubError=params.get('github_error')||'GitHub authorization failed.';
     if(githubResult==='connected'||githubResult==='error'){
       setTimeout(async()=>{
         open('plugins');selected='github';view='manage';render();
         await refreshGithubSession({loadRepos:githubResult==='connected'});
         if(githubResult==='connected')notice('GitHub account connected.');
-        else notice(params.get('github_error')||'GitHub authorization failed.',true);
+        else notice(githubError,true);
       },0);
       params.delete('github');params.delete('github_error');
       const clean=location.pathname+(params.toString()?'?'+params.toString():'')+location.hash;
