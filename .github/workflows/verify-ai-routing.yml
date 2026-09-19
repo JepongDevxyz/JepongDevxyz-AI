@@ -5,6 +5,8 @@ on:
     paths:
       - 'api/**'
       - 'index.html'
+      - 'plugins.js'
+      - 'plugins.css'
       - 'tests/**'
       - 'supabase/**'
       - 'assets/**'
@@ -16,6 +18,8 @@ on:
     paths:
       - 'api/**'
       - 'index.html'
+      - 'plugins.js'
+      - 'plugins.css'
       - 'supabase/**'
       - 'assets/**'
       - 'manifest.json'
@@ -39,6 +43,8 @@ jobs:
           set -euo pipefail
           cp api/chat.js /tmp/chat-check.mjs
           node --check /tmp/chat-check.mjs
+          node --check api/plugins.js
+          node --check plugins.js
 
       - name: Verify frontend inline JavaScript syntax
         shell: bash
