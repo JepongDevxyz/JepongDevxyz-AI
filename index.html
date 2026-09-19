@@ -4086,6 +4086,40 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .composer-tool-btn.think-active .composer-tool-icon{background:rgba(139,92,246,.22)!important;color:#a78bfa!important}
 @media(max-width:390px){.composer-tool-sheet{width:min(232px,calc(100vw - 36px))!important;padding:8px!important}.composer-tool-btn{min-height:50px!important;grid-template-columns:40px minmax(0,1fr)!important;gap:10px!important;font-size:.86rem!important}.composer-tool-icon{width:38px!important;height:38px!important;min-width:38px!important}}
 </style>
+<style id="latest-and-activity-layout-fix">
+/* Bottom-center arrow-only jump control. */
+.floating-scroll-pill{
+  position:fixed!important;
+  left:50%!important;right:auto!important;
+  bottom:calc(var(--composer-height,84px) + env(safe-area-inset-bottom,0px) + 14px)!important;
+  transform:translateX(-50%)!important;
+  width:42px!important;height:42px!important;min-width:42px!important;
+  padding:0!important;border-radius:50%!important;
+  display:none!important;align-items:center!important;justify-content:center!important;
+  background:color-mix(in srgb,var(--card-bg) 94%,#8b5cf6 6%)!important;
+  border:1px solid var(--border-color)!important;color:var(--text-main)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.30)!important;z-index:70!important;
+}
+.floating-scroll-pill.active{display:flex!important}
+.floating-scroll-pill>span:first-child{font-size:0!important;line-height:0!important}
+.floating-scroll-pill>span:first-child::after{content:"↓";font-size:22px!important;line-height:1!important;font-weight:500!important}
+.floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important;min-width:17px!important;height:17px!important;padding:0 4px!important;display:grid;place-items:center;font-size:9px!important}
+.floating-scroll-pill .unread-badge[style*="display:none"]{display:none!important}
+
+/* Activity details stay in their own normal-flow block and cannot cover the answer. */
+.ai-activity-card{clear:both!important;position:relative!important;display:block!important;width:100%!important;max-width:720px!important;height:auto!important;overflow:visible!important;margin:10px 0 14px!important;contain:layout!important}
+.ai-activity-head,.ai-activity-summary-row{position:relative!important;inset:auto!important}
+.ai-activity-list{position:relative!important;inset:auto!important;width:100%!important;height:auto!important;max-height:240px!important;overflow-y:auto!important;overflow-x:hidden!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;margin-top:6px!important}
+.ai-activity-card.collapsed .ai-activity-list{display:none!important}
+.ai-activity-row{position:relative!important;inset:auto!important;transform:none!important;flex:0 0 auto!important;width:100%!important;height:auto!important;min-height:34px!important;display:grid!important;grid-template-columns:28px minmax(0,1fr)!important;align-items:start!important;gap:8px!important;padding:6px 4px!important}
+.ai-activity-copy,.ai-activity-label,.ai-activity-detail{position:static!important;inset:auto!important;transform:none!important;height:auto!important;min-height:0!important;max-height:none!important}
+.ai-activity-copy{display:flex!important;flex-direction:column!important;gap:2px!important}
+.ai-activity-label,.ai-activity-detail{white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere!important;-webkit-line-clamp:unset!important;-webkit-box-orient:initial!important}
+@media(max-width:520px){
+ .floating-scroll-pill{bottom:calc(var(--composer-height,78px) + env(safe-area-inset-bottom,0px) + 10px)!important;width:40px!important;height:40px!important;min-width:40px!important}
+ .ai-activity-list{max-height:190px!important}
+}
+</style>
 </head>
 <body>
 
