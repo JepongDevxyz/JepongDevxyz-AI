@@ -2773,17 +2773,13 @@ async function processChat(body, emit) {
   }
 
   completeContextPlan(contextPlan,emit);
-  // A genuine model invocation is starting; this remains the current status
-  // until the entire streamed answer has been finalized.
-  activity(emit,'thinking','Thinking','running','thinking');
-
-  // The model request genuinely starts here. Tool activity above is complete;
-  // keep Thinking as the active final status until the provider stream finishes.
+  // The model request starts here; a single Thinking row stays active
+  // until the provider stream finishes or an actual tool event supersedes it.
   activity(emit,'thinking','Thinking','running','thinking');
   const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
-    activity(emit,'generation',contextPlan.profile.subject && contextPlan.profile.subject!=='your request' ? `Generating answer for: ${contextPlan.profile.subject.slice(0,72)}` : 'Generating response','running','generate');
+    activity(emit,'generation','Generating response','running','generate');
     return {
       ok:true,
       response:first.response,
@@ -2810,7 +2806,7 @@ async function processChat(body, emit) {
       const r=await runProvider(p,{model:fallbackModel,history,files,message,systemInstruction,fallbackFrom:provider,routedReason:routedReason||'fallback',emit,autoFallback});
       if(r.ok){
         activity(emit,'fallback',`Fallback connected to ${providerLabel(p)}`,'completed','fallback');
-        activity(emit,'generation',contextPlan.profile.subject && contextPlan.profile.subject!=='your request' ? `Generating answer for: ${contextPlan.profile.subject.slice(0,72)}` : 'Generating response','running','generate');
+        activity(emit,'generation','Generating response','running','generate');
         return {
           ok:true,
           response:r.response,
@@ -2832,7 +2828,7 @@ async function processChat(body, emit) {
       });
       if(publicHorde.ok){
         activity(emit,'fallback','Free public fallback connected to AI Horde Anonymous','completed','fallback');
-        activity(emit,'generation',contextPlan.profile.subject && contextPlan.profile.subject!=='your request' ? `Generating answer for: ${contextPlan.profile.subject.slice(0,72)}` : 'Generating response','running','generate');
+        activity(emit,'generation','Generating response','running','generate');
         return {
           ok:true,
           response:publicHorde.response,
