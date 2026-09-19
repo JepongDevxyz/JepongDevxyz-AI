@@ -8877,14 +8877,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             `;
             session.messages.forEach((m, messageIndex) => {
                 if (m.role === 'user') {
-                    let fileHTML = '';
-                    if (m.files && Array.isArray(m.files)) {
-                        m.files.forEach(f => {
-                            if (f.mimeType && f.mimeType.startsWith('image/')) {
-                                fileHTML += `<div><img src="${f.fullData}" style="max-width:200px; border-radius:10px; margin-top:4px;"></div>`;
-                            }
-                        });
-                    }
+                    const fileHTML = userAttachmentHTML(Array.isArray(m.files) ? m.files : []);
                     const userDiv = document.createElement('div');
                     userDiv.className = 'msg user has-bubble';
                     userDiv.innerHTML = `
@@ -10933,7 +10926,11 @@ ${m.text || ''}
                     mimeType:f.originalMimeType||f.mimeType,
                     kind:f.kind,
                     size:f.size||0,
-                    extractedText:String(f.extractedText||'').slice(0,24000)
+                    extractedText:String(f.extractedText||'').slice(0,24000),
+                    // Persist the lightweight preview so user-sent attachment content
+                    // can be reconstructed after a refresh. Never persist request-only
+                    // extracted frames/base64 payloads here.
+                    fullData:typeof f.fullData==='string' ? f.fullData : ''
                 }));
         }
 
