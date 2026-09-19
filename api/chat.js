@@ -1363,10 +1363,13 @@ async function enrichSearchResults(results=[], emit, maxSources=3){
         extract=stripHtml(raw).slice(0,2500);
       }
       enriched.push({...r,status:res.status,extract});
-      activity(emit,`web-source-${i}`,`Reviewed source ${i+1}`,'completed','web');
+      activity(emit,`web-source-${i}`,res.ok && extract
+        ?`Read source: ${r.title.slice(0,72)}`
+        :`Could not read source: ${r.title.slice(0,72)} • HTTP ${res.status}`,
+        res.ok&&extract?'completed':'warning','web');
     }catch(_){
       enriched.push(r);
-      activity(emit,`web-source-${i}`,`Could not open source ${i+1}; using search snippet`,'warning','web');
+      activity(emit,`web-source-${i}`,`Could not open source: ${r.title.slice(0,72)}; using search snippet`,'warning','web');
     }
   }
   return enriched;
@@ -1757,12 +1760,23 @@ function taskProfile(message='', files=[]){
 
 function contextActivityPlan(message='', files=[]){
   const profile=taskProfile(message,files);
-  const subject=profile.subject && profile.subject!=='your request'
-    ? profile.subject.slice(0,72) : '';
-  // Classify the user's task; never claim a file was read or a tool was used
-  // until that operation actually completes and emits its own activity event.
-  const label=subject?`Reviewing your request: ${subject}`:'Reviewing your request';
-  return {profile,steps:[{id:'task-context',label,kind:'process'}]};
+  // Avoid parroting raw prompts (which can contain long quotes, OCR errors,
+  // personal data, or unrelated code). Report the type of the actual input.
+  const labels={
+    github:'Understanding the repository request',
+    deployment:'Understanding the deployment request',
+    backend:'Understanding the API request',
+    web:'Understanding the website request',
+    android:'Understanding the Android request',
+    document:'Understanding the document request',
+    video:'Understanding the video request',
+    image:'Understanding the image request',
+    research:'Understanding the research question',
+    study:'Understanding the problem',
+    general:'Understanding your request'
+  };
+  const first=labels[profile.kind]||labels.general;
+  return {profile,steps:[{id:'task-context',label:first,kind:'process'}]};
 }
 
 function emitContextActivityStart(message='', files=[], emit){
@@ -1853,8 +1867,6 @@ async function inspectProvidedLinks(message='', emit){
 
 async function performVerification(message='', files=[], emit){
   if(!shouldVerifyTask(message,files))return '';
-
-  activity(emit,'verification','Preparing safe verification checks','running','test');
   const reports=[];
 
   const promptBlocks=extractCodeBlocks(message);
@@ -1869,6 +1881,12 @@ async function performVerification(message='', files=[], emit){
     }
   }
 
+  const explicitUrls=extractPublicUrl(message).filter(isSafePublicUrl);
+  // Do not show a "verification" step when there is no source/code to check.
+  // URLs are probed by the existing real URL-checking function below.
+  if(!reports.length && !explicitUrls.length)return executionEnvironmentContext(message);
+  if(reports.length)activity(emit,'verification',`Checking ${reports.length} supplied code item${reports.length===1?'':'s'}`,'running','test');
+
   const urlResults=await probeRequestedUrls(message,emit);
 
   const env=executionEnvironmentContext(message);
@@ -1881,8 +1899,6 @@ async function performVerification(message='', files=[], emit){
     context+=`\n\n[SAFE STATIC VERIFICATION]\n`;
     for(const r of reports)context+=`${r.name}: ${r.status.toUpperCase()} — ${r.findings.join(' ')}\n`;
     context+=`These are static checks, not proof that the program executed successfully.`;
-  }else{
-    activity(emit,'verification','No testable attached/source-code text found; capability check completed','completed','test');
   }
 
   if(urlResults.length){
