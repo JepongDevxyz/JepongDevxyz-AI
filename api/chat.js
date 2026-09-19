@@ -1,4 +1,5 @@
 import { fetchPublicGitHubContext } from './plugins.js';
+import { getGitHubSession } from './_github_oauth.js';
 
 export const config = { runtime: 'edge' };
 
@@ -3021,10 +3022,10 @@ async function processChat(body, emit) {
   let pluginGithubContext='';
   if(body.plugins?.github?.enabled===true){
     try{
-      pluginGithubContext=await fetchPublicGitHubContext(body.plugins.github);
-      activity(emit,'plugin-github','Read selected public GitHub source','completed','github');
+      pluginGithubContext=await fetchPublicGitHubContext(body.plugins.github,undefined,body._githubAccessToken||'');
+      activity(emit,'plugin-github','Read selected GitHub source','completed','github');
     }catch(_){
-      pluginGithubContext='\n[PUBLIC GITHUB PLUGIN] Selected source could not be retrieved; do not claim it was inspected.\n';
+      pluginGithubContext='\n[GITHUB PLUGIN] Selected source could not be retrieved; do not claim it was inspected.\n';
       activity(emit,'plugin-github','Selected GitHub source unavailable','warning','github');
     }
   }
@@ -3853,6 +3854,9 @@ export default async function handler(req){
     if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return cloudflareTTS(body);
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
+
+    const githubSession=await getGitHubSession(req);
+    body._githubAccessToken=githubSession?.token||'';
 
     const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
     const hasFiles=Array.isArray(body.files)&&body.files.length>0;
