@@ -2150,7 +2150,11 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   if(!message)return '';
 
   const explicitLive=shouldAutoResearch(message)||extractPublicUrl(message).length>0;
-  const wantsLive=(Boolean(webSearch)||explicitLive) && !isSimpleCasualMessage(message);
+  // Web Search being enabled is permission to use the web, not a command to search
+  // every non-casual prompt. Only search when the request itself asks for/currently
+  // depends on live information, a URL, or an explicit search/research action.
+  const webIntent=/\b(search|research|look up|find online|check online|verify online|hanapin|maghanap|tingnan online|latest|current|currently|today|news|update|updated|status|outage|price|presyo|weather|panahon|forecast|release|schedule|availability|real[- ]?time)\b/i.test(normalizeIntentText(message));
+  const wantsLive=(explicitLive || (Boolean(webSearch)&&webIntent)) && !isSimpleCasualMessage(message);
   if(!wantsLive)return '';
   const fast=Boolean(options.fast);
   const searchQuery=buildLiveSearchQuery(message);
@@ -2963,19 +2967,25 @@ async function processChat(body, emit) {
     }
   }
   const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit);
-  const githubContext=await inspectPublicGitHubRepository(message,emit);
-  const providedLinkContext=await inspectProvidedLinks(extractPublicUrl(message).length?message:taskMessage,emit);
+  // Use the context-aware task text for tool routing too, not only for the first
+  // Activity label. Short follow-ups such as "security?", "ganyan pa rin", or
+  // "check it" must inherit the website/repository/topic from recent user context.
+  const githubContext=await inspectPublicGitHubRepository(taskMessage,emit);
+  const providedLinkContext=await inspectProvidedLinks(taskMessage,emit);
   const verificationContext=await performVerification(taskMessage,files,emit);
-  // A site-security request needs evidence about the user's specified site.
-  // Generic HTTPS/Wikipedia results are not evidence about that site and must not
-  // create misleading Activity entries. User can still ask separately for sources.
-  const liveWebContext=isWebsiteSecurityRequest(message)
+
+  // A site-security request needs evidence about the specific site in context.
+  // Never launch a generic web search for a vague security follow-up; inspect the
+  // actual carried-forward URL when present, otherwise keep the answer scoped.
+  const websiteSecurityTask=isWebsiteSecurityRequest(taskMessage);
+  const liveWebContext=websiteSecurityTask
     ? ''
-    : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
+    : await getEnhancedLiveWebContext(taskMessage,webSearch,emit,{fast:fastAnswers});
+
   // General security advice cannot establish whether a particular site is safe.
-  // If the user did not identify a site in this turn or provide files, say so.
-  const noWebsiteIdentifier=isWebsiteSecurityRequest(message)
-    && !extractPublicUrl(message).some(isSafePublicUrl)
+  // The context-aware task may contain a URL from the immediately preceding user turn.
+  const noWebsiteIdentifier=websiteSecurityTask
+    && !extractPublicUrl(taskMessage).some(isSafePublicUrl)
     && !(Array.isArray(files)&&files.length);
   const websiteScopeContext=noWebsiteIdentifier
     ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
