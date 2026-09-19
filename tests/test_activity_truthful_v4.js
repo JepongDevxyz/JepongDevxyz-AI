@@ -15,7 +15,12 @@ const makePlan=vm.runInNewContext(planSource+'\ncontextActivityPlan',{
     kind:/github/i.test(message)?'github':files.length?'image':'general',
     subject:String(message).slice(0,90),
     intent:{}
-  })
+  }),
+  // The extracted function uses these independent helpers in production.
+  shortTaskSubject:message=>String(message||'').trim(),
+  extractPublicUrl:()=>[],
+  isSafePublicUrl:()=>false,
+  isWebsiteSecurityRequest:()=>false
 });
 for(const [message,files] of [
   ['Hi',[]],['Check GitHub workflow for my app',[]],
@@ -24,7 +29,10 @@ for(const [message,files] of [
   const plan=makePlan(message,files);
   assert.equal(plan.steps.length,1,'only one real request-classification milestone');
   assert.equal(plan.steps[0].id,'task-context');
-  assert(plan.steps[0].label.includes(message.slice(0,Math.min(message.length,20))));
+  if(files.length) assert(plan.steps[0].label.includes(files[0].name),
+    'attachment activity must identify the actual uploaded file');
+  else assert(plan.steps[0].label.includes(message.slice(0,Math.min(message.length,20))),
+    'text task activity must identify the current request');
   assert(!/Searching GitHub|Fetching GitHub|Running tests|Reading uploaded image/i.test(plan.steps[0].label),
     'classification must not claim an unperformed operation');
 }
