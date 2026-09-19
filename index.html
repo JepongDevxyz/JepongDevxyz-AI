@@ -9134,6 +9134,7 @@ ${m.text || ''}
 
                 let fullResponse = '';
                 let responseStreamFinished = false;
+                let responseRevealScheduled = false;
                 let actualProviderUsed = currentSelectedProvider;
                 let actualModelUsed = currentSelectedModel;
                 const contentType = response.headers.get('content-type') || '';
@@ -9157,27 +9158,32 @@ ${m.text || ''}
                 };
                 botMsgElem.style.setProperty('display','none','important');
 
+                const revealFinalResponse = (elapsedMs=null) => {
+                    if (responseRevealScheduled) return;
+                    responseRevealScheduled = true;
+                    responseStreamFinished = true;
+                    finishAIIndicator(true, elapsedMs);
+                    // Let the collapsed Activity state paint first, then reveal the answer.
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        renderLiveResponse(true);
+                    }));
+                };
+
                 if (contentType.includes('text/event-stream')) {
                     await readActivitySSE(response, {
                         activity: (evt) => appendActivityEvent(evt),
                         meta: (meta) => { actualProviderUsed = meta.provider || actualProviderUsed; actualModelUsed = meta.model || actualModelUsed; captureProviderMetaEvent(meta, aiRequestStartedAt); },
                         text: (payload) => {
-                            if (!fullResponse) {
-                                appendActivityEvent({ id:'thinking', label:'Thinking complete', state:'completed', kind:'thinking' });
-                                appendActivityEvent({ id:'response', label:'Writing response', state:'running', kind:'thinking' });
-                            }
+                            // Text is buffered while Activity remains visible. Do not add a
+                            // synthetic "Writing response" row; server/tool activity is the
+                            // source of truth for the timeline.
                             fullResponse += payload.text || '';
                             activePartialResponse=fullResponse;
-                            renderLiveResponse();
                         },
                         artifact: (payload) => {
                             attachGeneratedArtifact(botMsgElem, payload);
                         },
-                        done: (payload) => {
-                            responseStreamFinished = true;
-                            finishAIIndicator(true, payload.elapsedMs);
-                            renderLiveResponse(true);
-                        },
+                        done: (payload) => revealFinalResponse(payload.elapsedMs),
                         error: (payload) => {
                             appendActivityEvent({ id:'server-error', label:sanitizeUiErrorMessage(payload.message || 'AI provider unavailable'), state:'error', kind:'provider' });
                             if(!autoProviderFallback) finishAIIndicator(false);
@@ -9191,25 +9197,18 @@ ${m.text || ''}
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
-                        if (!fullResponse) {
-                            appendActivityEvent({ id:'thinking', label:'Thinking complete', state:'completed', kind:'thinking' });
-                            appendActivityEvent({ id:'response', label:'Writing response', state:'running', kind:'thinking' });
-                        }
                         fullResponse += decoder.decode(value, { stream: true });
                         activePartialResponse=fullResponse;
-                        renderLiveResponse();
                     }
-                    responseStreamFinished = true;
-                    finishAIIndicator(true);
-                    renderLiveResponse(true);
+                    revealFinalResponse();
                 }
 
                 fullResponse = safeAssistantText(fullResponse);
                 activePartialResponse = fullResponse;
                 responseStreamFinished = true;
                 const activeActivityCard=document.getElementById('activeAiIndicator');
-                if(activeActivityCard && activeActivityCard.dataset.finalized!=='true') finishAIIndicator(true);
-                renderLiveResponse(true);
+                if(activeActivityCard && activeActivityCard.dataset.finalized!=='true') revealFinalResponse();
+                else if(!responseRevealScheduled) renderLiveResponse(true);
 
                 const totalAiMs = Math.max(1, Math.round(performance.now() - aiRequestStartedAt));
                 const runtimeBadge = document.getElementById('providerRuntimeBadge');
