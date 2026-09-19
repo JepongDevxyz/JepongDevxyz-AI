@@ -2129,9 +2129,17 @@
         }
         @media(max-width:520px){
             .ai-activity-card{
-                margin:10px 0 20px!important;
+                margin:10px 0 32px!important;
                 padding:12px 11px 11px!important;
                 border-radius:16px!important;
+                isolation:isolate!important;
+            }
+            .ai-activity-card + .message,
+            .ai-activity-card + .assistant-message,
+            .ai-activity-card + [class*="message"]{
+                margin-top:0!important;
+                position:relative!important;
+                z-index:1!important;
             }
             .ai-activity-list{max-height:min(39dvh,330px)!important}
             .ai-activity-row{
