@@ -1812,8 +1812,97 @@ function linkPurpose(url='', message=''){
   return 'website';
 }
 
+
+// Public GitHub repository inspection is read-only. Report repository steps only
+// when their HTTP requests are actually performed; private repos need an authorized connector.
+async function inspectPublicGitHubRepository(message='', emit){
+  const urls=extractPublicUrl(message);
+  const repos=[];
+  for(const raw of urls){
+    try{
+      const url=new URL(raw);
+      if(url.hostname.toLowerCase()!=='github.com')continue;
+      const parts=url.pathname.split('/').filter(Boolean);
+      if(parts.length<2||!/^[\w.-]{1,100}$/.test(parts[0])||!/^[\w.-]{1,100}$/.test(parts[1]))continue;
+      const repoName=parts[1].replace(/\.git$/i,'');
+      const key=`${parts[0]}/${repoName}`;
+      if(!repos.includes(key))repos.push(key);
+    }catch(_){}
+  }
+  if(!repos.length)return '';
+  const context=[];
+  for(const name of repos.slice(0,2)){
+    const root=`https://api.github.com/repos/${name}`;
+    const headers={'Accept':'application/vnd.github+json','User-Agent':'JepongDevxyz-AI/1.0'};
+    const opts={headers,signal:AbortSignal.timeout(9000)};
+    const id=`github-${name.replace(/[^a-zA-Z0-9]/g,'-')}`;
+    activity(emit,id,`Checking public GitHub repository: ${name}`,'running','web');
+    try{
+      const res=await safePublicFetch(root,opts,1);
+      if(!res.ok){
+        activity(emit,id,`Could not access public repository: ${name} • HTTP ${res.status}`,'warning','web');
+        context.push(`Repository ${name}: metadata unavailable (HTTP ${res.status}). Do not claim that its contents were inspected.`);
+        continue;
+      }
+      const info=await res.json();
+      activity(emit,id,`Read repository metadata: ${name}`,'completed','web');
+      context.push(`Repository: ${name}\nDescription: ${String(info.description||'').slice(0,250)}\nDefault branch: ${String(info.default_branch||'unknown')}\nPublic repository URL: https://github.com/${name}`);
+      const treeId=`github-files-${name.replace(/[^a-zA-Z0-9]/g,'-')}`;
+      activity(emit,treeId,`Listing repository files: ${name}`,'running','web');
+      const listing=await safePublicFetch(`${root}/contents`,opts,1);
+      if(!listing.ok){
+        activity(emit,treeId,`Could not list repository files: ${name} • HTTP ${listing.status}`,'warning','web');
+        continue;
+      }
+      const entries=await listing.json();
+      if(!Array.isArray(entries)){
+        activity(emit,treeId,`Repository listing unavailable: ${name}`,'warning','web');
+        continue;
+      }
+      const files=entries.filter(x=>x.type==='file');
+      const dirs=entries.filter(x=>x.type==='dir');
+      activity(emit,treeId,`Listed ${files.length} files and ${dirs.length} folders: ${name}`,'completed','web');
+      context.push(`Top-level files: ${files.map(x=>x.name).slice(0,45).join(', ')}\nTop-level folders: ${dirs.map(x=>x.name).slice(0,20).join(', ')}`);
+      const task=String(message).toLowerCase();
+      const relevant=files.filter(x=>/^(readme(?:\.md)?|index\.html|package\.json|vercel\.json)$/i.test(x.name));
+      if(/\b(api|backend|chat|webhook|activity|status)\b/i.test(task) && dirs.some(x=>x.name==='api')){
+        const apiList=await safePublicFetch(`${root}/contents/api`,opts,1);
+        if(apiList.ok){
+          const apiFiles=await apiList.json();
+          if(Array.isArray(apiFiles)){
+            context.push(`API files: ${apiFiles.map(x=>x.name).slice(0,30).join(', ')}`);
+            for(const candidate of apiFiles.filter(x=>/^(chat|webhook)\.(?:js|mjs)$/i.test(x.name)).slice(0,1)) relevant.push(candidate);
+            activity(emit,`github-api-${name.replace(/[^a-zA-Z0-9]/g,'-')}`,`Listed API implementation files: ${name}`,'completed','web');
+          }
+        }
+      }
+      const chosen=[...new Map(relevant.map(x=>[x.path,x])).values()].slice(0,2);
+      for(const [index,file] of chosen.entries()){
+        if(!file.download_url || !/^https:\/\/raw\.githubusercontent\.com\//.test(file.download_url) || Number(file.size)>100000)continue;
+        const fileId=`github-source-${name.replace(/[^a-zA-Z0-9]/g,'-')}-${index}`;
+        activity(emit,fileId,`Reading repository file: ${file.path}`,'running','file');
+        try{
+          const source=await safePublicFetch(file.download_url,{headers:{'User-Agent':'JepongDevxyz-AI/1.0'},signal:AbortSignal.timeout(9000)},1);
+          if(!source.ok)throw new Error(`HTTP ${source.status}`);
+          const content=(await source.text()).slice(0,12000);
+          context.push(`Repository file ${file.path}:\n${content}`);
+          activity(emit,fileId,`Read repository file: ${file.path}`,'completed','file');
+        }catch(err){
+          activity(emit,fileId,`Could not read repository file: ${file.path}`,'warning','file',String(err?.message||err).slice(0,100));
+        }
+      }
+    }catch(err){
+      activity(emit,id,`Could not inspect public repository: ${name}`,'warning','web',String(err?.message||err).slice(0,100));
+      context.push(`Repository ${name}: inspection unavailable. Do not claim repository code was read.`);
+    }
+  }
+  return context.length?`\n\n[ACTUALLY FETCHED PUBLIC GITHUB REPOSITORY CONTEXT]\n${context.join('\n\n')}\n[/ACTUALLY FETCHED PUBLIC GITHUB REPOSITORY CONTEXT]`:'';
+}
+
 async function inspectProvidedLinks(message='', emit){
-  const urls=[...new Set(extractPublicUrl(message))].filter(isSafePublicUrl).slice(0,4);
+  const urls=[...new Set(extractPublicUrl(message))].filter(isSafePublicUrl)
+    .filter(raw=>{try{const u=new URL(raw);return !(u.hostname==='github.com' && u.pathname.split('/').filter(Boolean).length===2);}catch(_){return true;}})
+    .slice(0,4);
   if(!urls.length)return '';
 
   let context=`\n\n[PROVIDED LINK INSPECTION — fetched ${new Date().toISOString()}]\n`;
@@ -2679,17 +2768,8 @@ async function processChat(body, emit) {
   const startedAt=Date.now();
   const contextPlan=emitContextActivityStart(message,files,emit);
 
-  if(Array.isArray(files)&&files.length){
-    const roots=userAttachmentCount(files);
-    const images=files.filter(f=>f?.mediaRole==='image'||(f?.mimeType?.startsWith('image/')&&!f?.parentName)).length;
-    const videos=new Set(files.filter(f=>f?.kind==='video'||f?.mediaRole==='video-native'||f?.mediaRole==='video-frame').map(f=>attachmentRootName(f))).size;
-    const labelParts=[];
-    if(images)labelParts.push(`${images} image${images===1?'':'s'}`);
-    if(videos)labelParts.push(`${videos} video${videos===1?'':'s'}`);
-    const other=Math.max(0,roots-images-videos);
-    if(other)labelParts.push(`${other} file${other===1?'':'s'}`);
-    activity(emit,'attachments',`Prepared ${labelParts.join(', ')||`${roots} attachment${roots===1?'':'s'}`}`,'completed','file');
-  }
+  // Source-specific milestones are emitted after the corresponding input has
+  // really been read or added to model context (never on a fixed timer).
 
   let routedReason='';
   if(smartRouter){
@@ -2706,32 +2786,42 @@ async function processChat(body, emit) {
   if(!PROVIDERS[provider])provider='gemini';
   model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
   const attachmentSourceContext=buildAttachmentSourceContext(files,message);
-  if(attachmentSourceContext){
-    const fileNames=[...new Set(files.map(f=>String(f?.parentName||f?.name||f?.filename||'').trim()).filter(Boolean))];
-    const suffix=fileNames.length===1?`: ${fileNames[0].slice(0,64)}`:` from ${fileNames.length} attached sources`;
-    activity(emit,'attachment-content',`Extracted usable attachment content${suffix}`,'completed','file');
-  }
   if(files.length){
-    const sourceRoots=[...new Set(files.map(f=>attachmentRootName(f)))];
-    const frameCount=files.filter(f=>f?.mediaRole==='video-frame'&&f?.data).length;
-    const pageCount=files.filter(f=>f?.mediaRole==='pdf-page'&&f?.data).length;
-    const textCount=files.filter(f=>!!textFromAttachment(f)).length;
-    if(frameCount)activity(emit,'video-frames',
-      `Added ${frameCount} extracted video frame${frameCount===1?'':'s'} to request context`,
-      'completed','file',sourceRoots.slice(0,2).join(', '));
-    if(pageCount)activity(emit,'pdf-pages',
-      `Added ${pageCount} PDF page preview${pageCount===1?'':'s'} to request context`,
-      'completed','file');
-    if(textCount)activity(emit,'attachment-text',
-      `Added readable text from ${textCount} attachment part${textCount===1?'':'s'} to request context`,
-      'completed','file');
+    const grouped=new Map();
+    for(const file of files){
+      const name=attachmentRootName(file);
+      if(!grouped.has(name))grouped.set(name,[]);
+      grouped.get(name).push(file);
+    }
+    let sourceIndex=0;
+    for(const [name,parts] of grouped){
+      const id=`source-${sourceIndex++}`;
+      const printableName=String(name).slice(0,72);
+      const videoFrames=parts.filter(p=>p?.mediaRole==='video-frame'&&p?.data).length;
+      const pdfPages=parts.filter(p=>p?.mediaRole==='pdf-page'&&p?.data).length;
+      const imageParts=parts.filter(p=>p?.data && String(p?.mimeType||'').startsWith('image/')).length;
+      const textParts=parts.filter(p=>!!textFromAttachment(p)).length;
+      const errors=parts.filter(p=>p?.extractionError).length;
+      if(videoFrames){
+        activity(emit,id,`Prepared ${videoFrames} video frame${videoFrames===1?'':'s'}: ${printableName}`,'completed','file');
+      }else if(pdfPages){
+        activity(emit,id,`Prepared ${pdfPages} PDF page preview${pdfPages===1?'':'s'}: ${printableName}`,'completed','file');
+      }else if(textParts){
+        activity(emit,id,`Read attached ${/\\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|java|c|cpp|cs|sql)$/i.test(name)?'source file':'document'}: ${printableName}`,'completed','file');
+      }else if(imageParts){
+        activity(emit,id,`Prepared uploaded image: ${printableName}`,'completed','image');
+      }else{
+        activity(emit,id,`Could not read attached file: ${printableName}`,errors?'warning':'completed','file');
+      }
+    }
   }
   const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,message,provider,emit);
+  const githubContext=await inspectPublicGitHubRepository(message,emit);
   const providedLinkContext=await inspectProvidedLinks(message,emit);
   const verificationContext=await performVerification(message,files,emit);
   const liveWebContext=await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
-  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
   // Cost guard: an extra preflight model call is reserved for explicit High/Think-harder requests.
@@ -2938,7 +3028,15 @@ function activityStreamResponse(body, requestSignal=null) {
         if(cancelled)return;
         try{controller.enqueue(encoder.encode(sseEvent(event,data)));}catch(_){cancelled=true;}
       };
-      const emit=data=>send('activity',data);
+      const emittedMilestones=new Map();
+      const emit=data=>{
+        if(!data || data.type!=='activity')return;
+        const key=String(data.id||'');
+        const signature=[data.label,data.state,data.kind,data.detail].join('|');
+        if(key && emittedMilestones.get(key)===signature)return;
+        if(key)emittedMilestones.set(key,signature);
+        send('activity',data);
+      };
       // Activity events are emitted only by real request/tool lifecycle operations.
       // No timed pseudo-steps: a model may spend several seconds on one operation.
       // Flush immediately so Vercel/browser sees an active streaming response.
