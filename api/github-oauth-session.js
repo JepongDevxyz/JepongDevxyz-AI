@@ -7,7 +7,7 @@ export default async function handler(request){
   if(request.method==='GET'){
     if(!session)return json({connected:false});
     const userRes=await githubApi('/user',session.token,{signal:request.signal}).catch(()=>null);
-    if(!userRes||!userRes.ok)return json({connected:false,expired:true},{status:401});
+    if(!userRes||!userRes.ok)return json({connected:false,expired:true},401,{'Set-Cookie':clearCookie(GITHUB_SESSION_COOKIE)});
     const user=await userRes.json();
     return json({connected:true,user:{login:user.login,name:user.name||'',avatar:user.avatar_url||'',url:user.html_url||''},scopes:session.scopes||[]});
   }
