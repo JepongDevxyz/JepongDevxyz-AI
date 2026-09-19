@@ -5518,17 +5518,10 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         function resetLivePetIdleTimer() {
             clearTimeout(livePetIdleTimer);
-            if(!livePetVisible() || personalizationSettings.petIdleSleep===false || livePetWorking)return;
-            livePetIdleTimer=setTimeout(()=>{
-                const {pet}=getLivePetElements();
-                if(pet && livePetVisible() && !livePetWorking && !livePetDragState){
-                    pet.classList.remove('petting','eating','working','speaking','pet-settling','falling-scared','pet-falling');
-                    pet.classList.add('sleeping');
-                    pet.setAttribute('aria-label', `${personalizationSettings.pet} sleeping`);
-                    livePetSay('Zzz…',1200);
-                    playPetSound('sleep');
-                }
-            }, 12000);
+            const {pet}=getLivePetElements();
+            if(pet) pet.classList.remove('sleeping');
+            // Sleeping is intentionally disabled: pets remain awake at all times.
+            return;
         }
 
         function clampLivePetX(x, layer, pet) {
@@ -5916,6 +5909,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         }
 
         function renderPetCompanionAcrossApp() {
+            personalizationSettings.petIdleSleep=false;
             const btn=document.getElementById('petHeaderCompanion');
             const {pet,visual,name}=getLivePetElements();
             const visible=livePetVisible();
