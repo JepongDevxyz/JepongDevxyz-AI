@@ -9363,7 +9363,7 @@ ${m.text || ''}
             catch (_) { return String(text||''); }
         };
 
-        async function executeAICall(promptText, currentFiles = [], isRegenerate = false) {
+        async function executeAICall(promptText, currentFiles = [], isRegenerate = false, historyFiles = currentFiles) {
             closeTransientSurfaces('');
             const requestController=new AbortController();
             activeAIAbortController=requestController;
@@ -9372,6 +9372,7 @@ ${m.text || ''}
             updateGenerationActionButton(true,false);
 
             showAIIndicator(promptText, currentFiles);
+            appendActivityEvent({ id:'thinking', label:'Thinking', state:'running', kind:'thinking' });
             maybeOfferNotifyPermission();
             setLivePetWorking(true);
 
@@ -9385,7 +9386,7 @@ ${m.text || ''}
                 ctx.sessions[ctx.id].messages.push({ 
                     role: 'user', 
                     text: promptText, 
-                    files: historySafeAttachments(currentFiles)
+                    files: historySafeAttachments(historyFiles)
                 });
                 if (!isIncognito && !isBibleMode) saveSessions();
             }
@@ -9548,6 +9549,10 @@ ${m.text || ''}
                         activity: (evt) => appendActivityEvent(evt),
                         meta: (meta) => { actualProviderUsed = meta.provider || actualProviderUsed; actualModelUsed = meta.model || actualModelUsed; captureProviderMetaEvent(meta, aiRequestStartedAt); },
                         text: (payload) => {
+                            if (!fullResponse) {
+                                appendActivityEvent({ id:'thinking', label:'Thinking complete', state:'completed', kind:'thinking' });
+                                appendActivityEvent({ id:'response', label:'Writing response', state:'running', kind:'thinking' });
+                            }
                             fullResponse += payload.text || '';
                             activePartialResponse=fullResponse;
                             renderLiveResponse();
@@ -9569,6 +9574,10 @@ ${m.text || ''}
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
+                        if (!fullResponse) {
+                            appendActivityEvent({ id:'thinking', label:'Thinking complete', state:'completed', kind:'thinking' });
+                            appendActivityEvent({ id:'response', label:'Writing response', state:'running', kind:'thinking' });
+                        }
                         fullResponse += decoder.decode(value, { stream: true });
                         activePartialResponse=fullResponse;
                         renderLiveResponse();
@@ -9768,7 +9777,7 @@ ${m.text || ''}
             renderFilePreviews();
             scrollToBottom(true);
 
-            executeAICall(message, tempFiles, false);
+            executeAICall(message, tempFiles, false, selectedAttachmentSnapshot);
         }
 
         /* 7. REAL-TIME PING & NETWORK STATUS MONITOR */
