@@ -1094,14 +1094,51 @@ function shouldAutoResearch(message=''){
   return /\b(latest|current|currently|today|tonight|this week|this month|this year|what year|anong taon|what date|anong petsa|now|real[- ]?time|news|update|updated|price|presyo|weather|panahon|forecast|status|outage|release|released|version|available|availability|schedule|result|score|standing|search|research|verify online|check online|hanapin|maghanap|tingnan online|web|online|kasalukuyan|ngayon)\b/i.test(t);
 }
 
+function isWebsiteSecurityRequest(message=''){
+  return /\b(website|web\s*site|site|webpage|web\s*app|webapp|domain)\b/i.test(message)
+    && /\b(safe|safety|secure|security|ligtas|seguridad|vulnerab|prote[ck]|hack|harden|headers|ssl|https|audit)\b/i.test(message);
+}
+
 function buildLiveSearchQuery(message=''){
   const raw=String(message||'').trim();
   const t=normalizeIntentText(raw);
+  // A conversational request is not a search query. Search for relevant
+  // security guidance, not the user's full Filipino sentence or filler words.
+  if(isWebsiteSecurityRequest(raw)){
+    return 'OWASP website security checklist HTTPS HSTS Content Security Policy security headers';
+  }
+  const clean=raw.replace(/https?:\/\/[^\s]+/gi,' ')
+    .replace(/\b(?:paki|please|nga|naman|sana|tignan|tingnan|mo|ako|yung|itong|kung|ano|rin|pwede|bang|natin|give|me|can|you|could|would|tell|find|look|up|search|about)\b/gi,' ')
+    .replace(/\s+/g,' ').trim().slice(0,170);
+  const q=clean||raw.slice(0,170);
   const currentYear=new Date().getUTCFullYear();
-  const hasExplicitYear=/\b(?:19|20)\d{2}\b/.test(t);
-  const needsFreshness=/\b(latest|current|currently|today|tonight|this week|this month|this year|now|news|update|updated|price|presyo|status|outage|release|released|available|availability|schedule|result|score|standing|kasalukuyan|ngayon)\b/i.test(t);
-  if(needsFreshness&&!hasExplicitYear) return `${raw} ${currentYear}`.trim();
-  return raw;
+  const needsFreshness=/\b(latest|current|today|this week|this month|this year|news|price|presyo|outage|release|released|schedule|ngayon)\b/i.test(t);
+  return needsFreshness&&!/\b(?:19|20)\d{2}\b/.test(q)?`${q} ${currentYear}`:q;
+}
+
+// Search providers can return unrelated results even for a correctly scoped
+// query. Never show those pages as if they were sources for the user's task.
+function relevantWebResults(results=[], query=''){
+  const security=isWebsiteSecurityRequest(query)
+    || /\bOWASP\b/i.test(query)&&/\bsecurity\b/i.test(query);
+  const terms=[...new Set(String(query).toLowerCase()
+    .replace(/https?:\/\/\S+/g,' ')
+    .match(/[a-z]{4,}/g)||[])].filter(w=>
+      !['https','http','www','with','from','about','that','this','your','please','check','look','find','search','latest','current','results','status','today','site'].includes(w)
+    );
+  return (Array.isArray(results)?results:[]).filter(r=>{
+    const title=String(r?.title||'').toLowerCase();
+    const url=String(r?.url||'').toLowerCase();
+    const snippet=String(r?.snippet||'').toLowerCase();
+    const hay=`${title} ${url} ${snippet}`;
+    if(security){
+      return /\b(owasp|web\s*security|website\s*security|application\s*security|security\s*headers|content\s*security\s*policy|hsts|tls|https|ssl|csp|http\s*headers|mozilla\s*observatory)\b/i.test(hay)
+        && /\b(security|secure|https|tls|hsts|owasp|csp|headers|ssl)\b/i.test(hay);
+    }
+    if(!terms.length)return true;
+    const matches=terms.filter(t=>hay.includes(t)).length;
+    return matches>=Math.min(2,terms.length);
+  }).slice(0,5);
 }
 
 function shouldVerifyTask(message='', files=[]){
@@ -1288,7 +1325,7 @@ function isSimpleCasualMessage(message=''){
 
 async function noKeyWebSearch(query, emit){
   const searchTopic=String(query||'').replace(/\s+/g,' ').trim().slice(0,100);
-  activity(emit,'web-search',searchTopic?`Searching the web for: ${searchTopic}`:'Searching the web','running','web');
+  activity(emit,'web-search',searchTopic?`Searching for relevant sources: ${searchTopic}`:'Searching the web','running','web');
   const attempts=[
     ['Bing',()=>bingRssSearch(query)],
     ['DuckDuckGo',()=>duckDuckGoInstantSearch(query,null)],
@@ -1296,17 +1333,19 @@ async function noKeyWebSearch(query, emit){
   ];
   for(const [label,fn] of attempts){
     const results=await fn();
-    if(results.length){
-      activity(emit,'web-search',`Searched ${results.length} result${results.length===1?'':'s'} for: ${searchTopic} • ${label}`,'completed','web');
-      return results;
+    const relevant=relevantWebResults(results,query);
+    if(relevant.length){
+      activity(emit,'web-search',`Found ${relevant.length} relevant web result${relevant.length===1?'':'s'} • ${label}`,'completed','web');
+      return relevant;
     }
   }
   // Legacy DDG HTML is last because Vercel may receive HTTP 403 from it.
   try{
     const results=await duckDuckGoHtmlSearch(query,null);
-    if(results.length){
-      activity(emit,'web-search',`Searched ${results.length} result${results.length===1?'':'s'} for: ${searchTopic} • DuckDuckGo`,'completed','web');
-      return results;
+    const relevant=relevantWebResults(results,query);
+    if(relevant.length){
+      activity(emit,'web-search',`Found ${relevant.length} relevant web result${relevant.length===1?'':'s'} • DuckDuckGo`,'completed','web');
+      return relevant;
     }
   }catch(_){}
   activity(emit,'web-search','Live web search is temporarily unavailable','warning','web','No search source returned usable results.');
@@ -1770,9 +1809,12 @@ function contextActivityPlan(message='', files=[]){
     .replace(/\s+/g,' ').trim();
   // The title describes the user's actual request, not a guessed tool action.
   // Tool-specific Activity rows are emitted separately by the real tool code.
-  let label=subject && subject.length<=240
-    ? `Reviewing your request: ${subject.slice(0,94)}${subject.length>94?'…':''}`
-    : 'Reviewing your request';
+  let label=isWebsiteSecurityRequest(message)
+    ? 'Reviewing website security requirements'
+    : profile.kind==='research' ? 'Identifying the requested research topic'
+    : profile.kind==='github' ? 'Reviewing repository request'
+    : profile.kind==='web' ? 'Reviewing website task'
+    : subject ? 'Reviewing your request' : 'Understanding your request';
   if(list.length){
     const kind=list.some(f=>f?.mediaRole==='video-frame'||f?.kind==='video'||String(f?.mimeType||'').startsWith('video/'))
       ? 'video'
@@ -2059,8 +2101,11 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
           url:String(x.url||''),
           snippet:stripHtml(String(x.description||'')).slice(0,500)
         })).filter(x=>x.title&&isSafePublicUrl(x.url));
-        activity(emit,'web-search',`Searched ${basic.length} live web results`,'completed','web');
-        if(basic.length) return buildLiveSourceContext(await enrichSearchResults(basic,emit,sourcePages));
+        const relevant=relevantWebResults(basic,searchQuery);
+        if(relevant.length){
+          activity(emit,'web-search',`Found ${relevant.length} relevant web results • Brave`,'completed','web');
+          return buildLiveSourceContext(await enrichSearchResults(relevant,emit,sourcePages));
+        }
       }
     }catch(_){}
   }
