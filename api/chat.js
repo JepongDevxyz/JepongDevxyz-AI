@@ -2932,6 +2932,31 @@ function activityStreamResponse(body, requestSignal=null) {
         try{controller.enqueue(encoder.encode(sseEvent(event,data)));}catch(_){cancelled=true;}
       };
       const emit=data=>send('activity',data);
+      // Keep the Activity panel visibly alive during longer provider/tool work.
+      // These are presentation heartbeat updates only; they never claim a tool ran.
+      let heartbeatIndex=0;
+      const heartbeatLabels=(()=>{
+        const profile=taskProfile(body?.message||'',body?.files||[]);
+        const byKind={
+          github:['Reviewing repository context','Tracing the requested repository behavior','Checking relevant implementation details','Organizing repository findings'],
+          deployment:['Reviewing deployment context','Checking deployment configuration','Tracing deployment behavior','Organizing deployment findings'],
+          backend:['Analyzing API/backend context','Tracing request flow','Reviewing relevant backend logic','Checking implementation details'],
+          web:['Analyzing website context','Reviewing relevant UI logic','Tracing interface behavior','Checking implementation details'],
+          android:['Reviewing Android project context','Tracing app behavior','Checking relevant project configuration','Reviewing implementation details'],
+          document:['Reviewing document context','Organizing relevant content','Checking requested document details','Preparing response structure'],
+          video:['Reviewing video context','Inspecting relevant media details','Organizing observations','Preparing response'],
+          image:['Reviewing image context','Inspecting relevant visual details','Organizing observations','Preparing response'],
+          research:['Identifying relevant information','Reviewing available context','Cross-checking relevant details','Organizing findings'],
+          study:['Working through the problem','Checking relevant concepts','Verifying the reasoning','Preparing the explanation'],
+          general:['Understanding the request','Reviewing relevant context','Working through the details','Preparing the response']
+        };
+        return byKind[profile.kind]||byKind.general;
+      })();
+      const activityHeartbeat=setInterval(()=>{
+        if(cancelled)return;
+        const label=heartbeatLabels[heartbeatIndex++%heartbeatLabels.length];
+        send('activity',{type:'activity',id:`progress-heartbeat-${heartbeatIndex}`,label,state:'running',kind:'process',at:Date.now()});
+      },900);
       // Flush immediately so Vercel/browser sees an active streaming response.
       send('activity',{type:'activity',id:'stream-open',label:'Response stream opened',state:'completed',kind:'process',at:Date.now()});
       const keepAlive=setInterval(()=>{
@@ -2942,7 +2967,7 @@ function activityStreamResponse(body, requestSignal=null) {
           const result=await processChat(body,emit);
           if(!result.ok){
             send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'gemini'});
-            clearInterval(keepAlive);
+            clearInterval(keepAlive); clearInterval(activityHeartbeat); clearInterval(activityHeartbeat);
             controller.close();
             return;
           }
@@ -3046,7 +3071,7 @@ function activityStreamResponse(body, requestSignal=null) {
           generatedText=sanitizeAssistantOutput(generatedText);
 
           if(cancelled){
-            clearInterval(keepAlive);
+            clearInterval(keepAlive); clearInterval(activityHeartbeat); clearInterval(activityHeartbeat);
             try{controller.close();}catch(_){}
             return;
           }
@@ -3097,11 +3122,11 @@ function activityStreamResponse(body, requestSignal=null) {
           const elapsedMs=Math.max(1,Date.now()-result.startedAt);
           send('activity',{type:'activity',id:'generation',label:`Response complete in ${(elapsedMs/1000).toFixed(elapsedMs>=1000?1:2)}s`,state:'completed',kind:'generate',at:Date.now()});
           send('done',{elapsedMs,autoContinuations:continuationCount,...meta});
-          clearInterval(keepAlive);
+          clearInterval(keepAlive); clearInterval(activityHeartbeat);
           controller.close();
         }catch(e){
           send('error',{message:e?.message||String(e),status:500});
-          clearInterval(keepAlive);
+          clearInterval(keepAlive); clearInterval(activityHeartbeat);
           controller.close();
         }
       })();
