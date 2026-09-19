@@ -1305,8 +1305,6 @@
         .live-pet-name{position:absolute;left:50%;bottom:0;transform:translateX(-50%);font-size:10px;font-weight:700;padding:4px 8px;border-radius:999px;background:rgba(15,23,42,.78);border:1px solid rgba(255,255,255,.1);color:white;white-space:nowrap;backdrop-filter:blur(8px)}
         .live-pet-bubble{position:absolute;left:50%;bottom:91px;transform:translateX(-50%) translateY(6px);max-width:150px;padding:7px 10px;border-radius:13px;background:rgba(15,23,42,.92);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:10px;line-height:1.25;text-align:center;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap}
         .live-pet-bubble.show{opacity:1;transform:translateX(-50%) translateY(0)}
-        .live-pet.sleeping .live-pet-visual{animation:petSleep 2.2s ease-in-out infinite;filter:saturate(.7)}
-        .live-pet.sleeping::after{content:"Z z";position:absolute;right:-3px;top:0;color:#a78bfa;font-weight:800;font-size:14px;animation:petZ 1.5s ease-in-out infinite}
         .live-pet.working .live-pet-visual{animation:petWork .38s ease-in-out infinite alternate}
         .live-pet.petting .live-pet-visual{animation:petHappy .45s ease-in-out 3}
         .live-pet.eating .live-pet-visual{animation:petEat .28s ease-in-out 6}
@@ -5530,7 +5528,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if(!pet || !livePetVisible()) return;
             pet.classList.toggle('speaking', !!active);
             if(active){
-                pet.classList.remove('sleeping');
+                pet.classList.remove('speaking');
                 livePetSay(text ? 'Reading aloud 🔊' : 'Speaking 🔊', 1400);
             }else{
                 pet.classList.remove('speaking');
@@ -5540,17 +5538,14 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         function wakeLivePet() {
             const {pet}=getLivePetElements(); if(!pet)return;
-            const wasSleeping=pet.classList.contains('sleeping');
-            pet.classList.remove('sleeping','speaking');
-            pet.setAttribute('aria-label', `${personalizationSettings.pet || 'Pet'} companion`);
-            if(wasSleeping) playPetSound('wake');
+            pet.classList.remove('speaking');
             resetLivePetIdleTimer();
         }
 
         function resetLivePetIdleTimer() {
             clearTimeout(livePetIdleTimer);
             const {pet}=getLivePetElements();
-            if(pet) pet.classList.remove('sleeping');
+            if(pet) pet.classList.remove('speaking');
             // Sleeping is intentionally disabled: pets remain awake at all times.
             return;
         }
@@ -5652,7 +5647,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                     clearInterval(livePetWalkTimer);
                     clearTimeout(livePetIdleTimer);
                     state.layer.classList.add('pet-drag-active');
-                    pet.classList.remove('sleeping','petting','eating','working','pet-settling','falling-scared','pet-falling');
+                    pet.classList.remove('petting','eating','working','pet-settling','falling-scared','pet-falling');
                     pet.classList.add('dragging');
                 }
                 e.preventDefault();
@@ -5687,7 +5682,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         function moveLivePet() {
             const {pet}=getLivePetElements();
             const layer=document.getElementById('livePetLayer');
-            if(!pet||!layer||!livePetVisible()||livePetWorking||livePetDragState||pet.classList.contains('sleeping')||pet.classList.contains('pet-settling')||personalizationSettings.petWalkEnabled===false)return;
+            if(!pet||!layer||!livePetVisible()||livePetWorking||livePetDragState||pet.classList.contains('pet-settling')||personalizationSettings.petWalkEnabled===false)return;
             const max=Math.max(8,layer.clientWidth-pet.offsetWidth-8);
             const x=Math.round(8+Math.random()*Math.max(0,max-8));
             pet.style.top='';
@@ -5711,7 +5706,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             livePetWorking=!!active;
             const {pet}=getLivePetElements(); if(!pet||!livePetVisible())return;
             clearTimeout(livePetIdleTimer);
-            pet.classList.remove('sleeping','petting','eating','speaking');
+            pet.classList.remove('petting','eating','speaking');
             pet.classList.toggle('working',livePetWorking && personalizationSettings.petWorkingMode!==false);
             if(active){ setLivePetSpeaking(false); livePetSay('Working on it ✨',1300); }
             else { livePetSay('Done!',1000); playPetSound('done'); resetLivePetIdleTimer(); }
@@ -5855,7 +5850,6 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         const PET_GLOBAL_SOUND_PATTERNS = {
             wake:[[0,.08,610,830,'triangle',.050],[.09,.11,820,1080,'sine',.042]],
-            sleep:[[0,.13,520,390,'sine',.040],[.14,.18,390,285,'sine',.032]],
             done:[[0,.07,650,880,'triangle',.055],[.08,.08,850,1100,'triangle',.052],[.17,.12,1050,1320,'sine',.044]]
         };
 
@@ -5965,10 +5959,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 : builtInPetImage
                     ? `<img class="pet-state-image" src="${escapeHTML(builtInPetImage)}" alt="${escapeHTML(personalizationSettings.pet)}">`
                     : `<span class="pet-state-emoji" aria-hidden="true">${getSelectedPetVisual()}</span>`;
-            const builtInSleepFace = !personalizationSettings.customPetImage && !!builtInPetImage
-                ? `<span class="pet-sleep-face" aria-hidden="true"><i></i><b></b></span>`
-                : '';
-            visual.innerHTML=visualContent + builtInSleepFace;
+            visual.innerHTML=visualContent;
             name.textContent=personalizationSettings.pet;
             installLivePetDrag(pet);
             if(!livePetDragState&&!pet.classList.contains('pet-settling')){pet.style.top='';applyLivePetWalkBottom(pet);}
