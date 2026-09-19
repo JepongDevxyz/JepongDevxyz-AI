@@ -1104,7 +1104,12 @@
         @keyframes activitySpin{to{transform:rotate(360deg)}}
         @keyframes activityPulse{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:.9;transform:scale(1.08)}}
         @keyframes activityIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-        @media(max-width:520px){.ai-activity-card{margin:7px 0 9px}.ai-activity-row{grid-template-columns:21px minmax(0,1fr);gap:5px;padding:4px 1px}.ai-activity-icon{width:21px;height:21px}.ai-activity-label{font-size:.76rem}.ai-activity-head{margin-bottom:3px}}
+        /* Keep Activity visually separate from the following assistant message. */
+        .ai-activity-card{position:relative;z-index:0;clear:both;margin-bottom:22px}
+        .ai-activity-card + .message,
+        .ai-activity-card + .assistant-message,
+        .ai-activity-card + [class*="message"]{margin-top:10px!important}
+        @media(max-width:520px){.ai-activity-card{margin:7px 0 24px;clear:both}.ai-activity-row{grid-template-columns:21px minmax(0,1fr);gap:5px;padding:4px 1px}.ai-activity-icon{width:21px;height:21px}.ai-activity-label{font-size:.76rem}.ai-activity-head{margin-bottom:3px}}
 
 
 
