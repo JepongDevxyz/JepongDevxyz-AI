@@ -1,5 +1,6 @@
 import {getGitHubSession,githubApi,json} from './_github_oauth.js';
 import {parseGitHubTarget} from './plugins.js';
+import {resolveGitHubAccess} from './_github_app.js';
 
 export const config={runtime:'edge'};
 const MAX_BODY=3500;
@@ -29,9 +30,9 @@ async function apiData(path,token,signal,{method='GET',body}={}){
   }
   return {ok:true,response,data};
 }
-async function requireWritableRepo(repo,token,signal){
+async function requireWritableRepo(repo,token,signal,kind='oauth'){
   const {data}=await apiData('/repos/'+repo,token,signal);
-  if(data?.permissions?.push!==true)fail('You do not have write access to this repository.',403);
+  if(kind!=='github-app'&&data?.permissions?.push!==true)fail('You do not have write access to this repository.',403);
   return data;
 }
 async function availableWorkflows(repo,token,signal){
@@ -88,9 +89,10 @@ export default async function handler(request){
     if(!session?.token)fail('Connect GitHub before running repository workflows.',401);
     const action=String(body.action||'');
     const repo=parseGitHubTarget(body.repo);
-    const token=session.token,signal=request.signal;
+    const access=await resolveGitHubAccess(request,{repository:repo,permissions:{actions:'write',contents:'read'}});
+    const token=access.token,signal=request.signal;
     if(action==='list'){
-      const meta=await requireWritableRepo(repo,token,signal);
+      const meta=await requireWritableRepo(repo,token,signal,access.kind);
       const workflows=await availableWorkflows(repo,token,signal);
       return json({repo,defaultBranch:String(meta.default_branch||'main'),workflows,authenticated:true,canRun:true});
     }
@@ -105,7 +107,7 @@ export default async function handler(request){
     if(action!=='dispatch')fail('Unsupported plugin execution action.',400);
     if(body.confirm!==true)fail('Confirm the exact repository, workflow, and branch before running CI.',403);
     const ref=requireRef(body.ref);
-    await requireWritableRepo(repo,token,signal);
+    await requireWritableRepo(repo,token,signal,access.kind);
     // Reject non-existent refs: never let a model invent a branch or inject workflow inputs.
     await apiData('/repos/'+repo+'/branches/'+ref.split('/').map(encodeURIComponent).join('/'),token,signal);
     const workflow=await ensureWorkflow(repo,id,ref,token,signal);
