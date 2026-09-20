@@ -287,7 +287,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     install.hidden=!!app?.installed;
     install.disabled=!connected||app?.configured===false;
     manage.hidden=!app?.installed;
-    if(manage.hidden)manage.removeAttribute('href');
+    if(manage.hidden)manage.removeAttribute?.('href');
     else manage.href=app.manageUrl;
     const permissions=$('jdplugAppPermissions');
     permissions.hidden=!app?.installed;
