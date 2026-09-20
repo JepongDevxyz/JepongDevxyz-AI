@@ -818,6 +818,13 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     $('jdplugChangeSource').value=stagedProposal;
     $('jdplugChangePreview').hidden=true;
     $('jdplugChangeSource').focus();
+  },openWorkspace(type='issues'){
+    open('plugins');
+    if(!installed('github')){selected='github';showPluginConfirmation('github','install');return;}
+    selected='github';view='manage';render();
+    if(state.accountConnected&&state.repoLoaded){
+      loadWorkspace(type==='pr'?'listPR':'listIssues');
+    }else workspaceNotice('Connect GitHub and open a repository in Manage to use Issues or PR reviews.',true);
   },openRunner(){
     open('plugins');
     if(!installed('github')){selected='github';showPluginConfirmation('github','install');return;}
