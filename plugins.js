@@ -28,6 +28,67 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   function makeButton(label,handler,className='jdplug-button'){const el=document.createElement('button');el.type='button';el.className=className;el.textContent=label;el.addEventListener('click',handler);return el;}
   function icon(className,character){const el=document.createElement('span');el.className='jdplug-entry-icon '+className;el.textContent=character;el.setAttribute('aria-hidden','true');return el;}
   function makeEntry(data,handler,small=''){const row=makeButton('',handler,'jdplug-entry');row.append(icon(data.className,data.icon));const copy=document.createElement('span');copy.className='jdplug-entry-copy';const strong=document.createElement('strong');strong.textContent=data.name;const desc=document.createElement('small');desc.textContent=small||data.tagline;copy.append(strong,desc);const trail=document.createElement('span');trail.className='jdplug-entry-trail';trail.textContent='›';row.append(copy,trail);return row;}
+  function showPluginConfirmation(id,action='install'){
+    if(!catalogue[id])return;
+    if(action==='install'&&installed(id)){selected=id;openDetail(id);return;}
+    if(action==='uninstall'&&!installed(id))return;
+    pendingPluginAction={id,action};
+    const c=catalogue[id];
+    const uninstall=action==='uninstall';
+    text('jdplugConfirmIcon',c.icon);
+    $('jdplugConfirmIcon').className='jdplug-entry-icon '+c.className;
+    text('jdplugConfirmTitle',(uninstall?'Uninstall ':'Install ')+c.name+'?');
+    text('jdplugConfirmDescription',uninstall
+      ? id==='github'
+        ? 'This removes GitHub from this browser and disconnects the linked GitHub account. Repository context will stop being sent to chat.'
+        : 'This removes the Superpowers coding workflow from this browser and disables its skills in chat.'
+      : id==='github'
+        ? 'Adds the GitHub repository browser to your installed plugins. You can inspect public repositories or connect your GitHub account separately. This step does not authorize account access.'
+        : 'Adds the Superpowers coding workflow and makes its planning, implementation, debugging and review skills available in chat. No code is executed by installing.');
+    text('jdplugConfirmInstall',uninstall?'Uninstall':'Install');
+    $('jdplugConfirmInstall').disabled=false;
+    $('jdplugConfirm').hidden=false;
+    $('jdplugConfirmInstall').focus();
+  }
+  function hidePluginConfirmation(){
+    pendingPluginAction=null;
+    const confirm=$('jdplugConfirm');if(confirm)confirm.hidden=true;
+  }
+  async function confirmPluginAction(){
+    if(!pendingPluginAction)return;
+    const {id,action}=pendingPluginAction;
+    const control=$('jdplugConfirmInstall');if(control)control.disabled=true;
+    if(action==='uninstall'){
+      if(id==='github'&&state.accountConnected){
+        try{
+          const result=await fetch('/api/github-oauth-session',{method:'DELETE',credentials:'same-origin',headers:{Accept:'application/json'}});
+          if(!result.ok)throw new Error('Could not disconnect the GitHub account. Try again.');
+        }catch(error){
+          if(control)control.disabled=false;
+          notice(error?.message||'Could not disconnect GitHub. Try again.',true);
+          text('jdplugConfirmDescription','GitHub could not be disconnected. Check your connection and try Uninstall again.');
+          return;
+        }
+      }
+      state.installed[id]=false;
+      if(id==='github'){
+        state.github=false;state.repoLoaded=false;state.repo='';state.path='';state.ref='';state.directory='';
+        state.accountConnected=false;state.accountUser=null;state.accountScopes=[];state.accountRepos=[];
+        $('jdplugResults')?.replaceChildren();
+        $('jdplugPreview').hidden=true;
+        $('jdplugGitEnabled').checked=false;
+      }else{state.superpowers=false;}
+      persist();hidePluginConfirmation();view='directory';history.length=0;render();
+      notice(catalogue[id].name+' uninstalled.');
+      if(typeof window.showModernToast==='function')window.showModernToast(catalogue[id].name+' uninstalled');
+      return;
+    }
+    state.installed[id]=true;
+    if(id==='superpowers')state.superpowers=true;
+    persist();hidePluginConfirmation();render();
+    notice(catalogue[id].name+' installed. You can now use it in chat.');
+    if(typeof window.showModernToast==='function')window.showModernToast(catalogue[id].name+' installed');
+  }
   function installed(id){return state.installed?.[id]===true;}
   function enabled(id){return installed(id);}
   function catalogueItem(id){
@@ -51,30 +112,30 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     text('jdplugDirectoryHint',skills?'Select a coding skill to guide this conversation.':'Work with developer tools in JepongDevxyz AI.');
     $('jdplugSearch').placeholder=skills?'Search skills':'Search plugins';
     const query=$('jdplugSearch').value.trim().toLowerCase();
-    const installed=$('jdplugInstalled'),available=$('jdplugAvailable');
-    installed.replaceChildren();available.replaceChildren();
+    const installedList=$('jdplugInstalled'),available=$('jdplugAvailable');
+    installedList.replaceChildren();available.replaceChildren();
     if(skills){
       for(const phase of phases){
         if(!(phase.name+' '+phase.description).toLowerCase().includes(query))continue;
         const data={name:phase.name,tagline:phase.description,className:'super',icon:'⚡'};
-        const list=installed('superpowers')&&state.superpowers&&state.phase===phase.id?installed:available;
+        const list=installed('superpowers')&&state.superpowers&&state.phase===phase.id?installedList:available;
         list.append(makeEntry(data,()=>{if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}state.phase=phase.id;state.superpowers=true;persist();openDetail('superpowers');},phase.description));
       }
     }else{
       for(const id of ['github','superpowers']){
         const data=catalogue[id];
         if(!(data.name+' '+data.tagline+' '+data.description).toLowerCase().includes(query))continue;
-        (enabled(id)?installed:available).append(catalogueItem(id));
+        (enabled(id)?installedList:available).append(catalogueItem(id));
       }
     }
-    if(!installed.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill matches.':'No enabled plugins match.';installed.append(empty);}
+    if(!installedList.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill matches.':'No plugins installed yet.';installedList.append(empty);}
     if(!available.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent='Nothing else matches your search.';available.append(empty);}
     text('jdplugInstalledLabel',skills?'Active skill':'Installed');
     text('jdplugAvailableLabel',skills?'Included skills':'Available to install');
     $('jdplugTabPlugins').classList.toggle('active',!skills);$('jdplugTabSkills').classList.toggle('active',skills);
   }
   function nav(next,id){if(view!==next||selected!==id)history.push({view,selected,tab});view=next;selected=id||selected;render();}
-  function back(){if(history.length){const p=history.pop();view=p.view;selected=p.selected;tab=p.tab;render();}else if(view!=='directory'){view='directory';render();}else close();}
+  function back(){if(pendingPluginAction){hidePluginConfirmation();return;}if(history.length){const p=history.pop();view=p.view;selected=p.selected;tab=p.tab;render();}else if(view!=='directory'){view='directory';render();}else close();}
   function render(){
     $('jdplugDirectory').hidden=view!=='directory';$('jdplugDetail').hidden=view!=='detail';$('jdplugManageView').hidden=view!=='manage';
     $('jdplugTabs').hidden=view!=='directory';
@@ -97,6 +158,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       text('jdplugManageTitle',catalogue[selected].name+' settings');
       text('jdplugManageSubtitle',selected==='github'?'Connect GitHub or choose a repository, branch and file.':'Turn the coding workflow on or off and choose a skill.');
       $('jdplugGithubManage').hidden=selected!=='github';$('jdplugSuperManage').hidden=selected!=='superpowers';
+      $('jdplugUninstall').hidden=!installed(selected);
       if(selected==='github'){$('jdplugRepoInput').value=state.repo;selectedInfo();renderGithubAccount();}
       else{$('jdplugSuperEnabled').checked=state.superpowers;$('jdplugPhase').value=state.phase;renderSkillRows('jdplugManageSkillList');}
     }
@@ -109,8 +171,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   }
   function openDetail(id){nav('detail',id);}
   function openManage(){if(!installed(selected)){showPluginConfirmation(selected,'install');return;}nav('manage',selected);}
-  function statusForChat(){text('jdplugSelected',state.github&&state.repoLoaded?'In chat: '+state.repo+(state.path?' / '+state.path:'')+(state.ref?' @ '+state.ref:''):'Not included in chat.');}
-  function selectedInfo(){statusForChat();$('jdplugGitEnabled').checked=state.github&&state.repoLoaded;}
+  function statusForChat(){text('jdplugSelected',installed('github')&&state.github&&state.repoLoaded?'In chat: '+state.repo+(state.path?' / '+state.path:'')+(state.ref?' @ '+state.ref:''):'Not included in chat.');}
+  function selectedInfo(){statusForChat();$('jdplugGitEnabled').checked=installed('github')&&state.github&&state.repoLoaded;}
   function renderGithubAccount(){
     const signedOut=$('jdplugGithubSignedOut'), signedIn=$('jdplugGithubSignedIn'), reposCard=$('jdplugAccountReposCard');
     if(!signedOut||!signedIn)return;
@@ -240,6 +302,9 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     $('jdplugTabSkills').addEventListener('click',()=>{tab='skills';$('jdplugSearch').value='';render();});
     $('jdplugSearch').addEventListener('input',renderDirectory);
     $('jdplugManage').addEventListener('click',openManage);$('jdplugTry').addEventListener('click',tryInChat);
+    $('jdplugUninstall').addEventListener('click',()=>showPluginConfirmation(selected,'uninstall'));
+    $('jdplugCancelInstall').addEventListener('click',hidePluginConfirmation);
+    $('jdplugConfirmInstall').addEventListener('click',confirmPluginAction);
     $('jdplugConnectGithub').addEventListener('click',connectGithub);
     $('jdplugDisconnectGithub').addEventListener('click',disconnectGithub);
     $('jdplugRefreshRepos').addEventListener('click',loadAccountRepos);
@@ -248,8 +313,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     $('jdplugRepoInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();openRepo();}});
     $('jdplugPRs').addEventListener('click',prs);
     $('jdplugBranch').addEventListener('change',e=>{state.ref=e.target.value;state.path='';$('jdplugPreview').hidden=true;statusForChat();browse('');});
-    $('jdplugGitEnabled').addEventListener('change',e=>{state.github=e.target.checked&&state.repoLoaded;if(e.target.checked&&!state.repoLoaded){e.target.checked=false;notice('Open a repository first.',true);}persist();statusForChat();});
-    $('jdplugSuperEnabled').addEventListener('change',e=>{state.superpowers=e.target.checked;persist();notice(state.superpowers?'Superpowers workflow enabled.':'Superpowers workflow disabled.');});
+    $('jdplugGitEnabled').addEventListener('change',e=>{state.github=installed('github')&&e.target.checked&&state.repoLoaded;if(e.target.checked&&(!installed('github')||!state.repoLoaded)){e.target.checked=false;notice(installed('github')?'Open a repository first.':'Install GitHub first.',true);}persist();statusForChat();});
+    $('jdplugSuperEnabled').addEventListener('change',e=>{if(!installed('superpowers')){e.target.checked=false;showPluginConfirmation('superpowers','install');return;}state.superpowers=e.target.checked;persist();notice(state.superpowers?'Superpowers workflow enabled.':'Superpowers workflow disabled.');});
     const phaseSelect=$('jdplugPhase');for(const phase of phases){const option=document.createElement('option');option.value=phase.id;option.textContent=phase.name;phaseSelect.append(option);}
     phaseSelect.addEventListener('change',e=>{state.phase=e.target.value;persist();renderSkillRows('jdplugManageSkillList');notice('Active skill: '+(phases.find(p=>p.id===state.phase)?.name||state.phase));});
   }
@@ -262,7 +327,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     if(!state.repo)try{state.repo=localStorage.getItem('jepong_plugin_public_repo')||'';}catch(_){}
     $('jdplugRepoInput').value=state.repo;
   }
-  function close(){$('jdplugPanel')?.classList.remove('open');}
+  function close(){hidePluginConfirmation();$('jdplugPanel')?.classList.remove('open');}
   window.JDPlugins=Object.freeze({open,close,contextForChat(){
     return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
   }});
@@ -281,7 +346,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       },0);
       params.delete('github');params.delete('github_error');
       const clean=location.pathname+(params.toString()?'?'+params.toString():'')+location.hash;
-      history.replaceState(history.state,'',clean);
+      window.history.replaceState(window.history.state,'',clean);
     }
   }catch(_){}
 })();
