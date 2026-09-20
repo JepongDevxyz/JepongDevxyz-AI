@@ -2,6 +2,7 @@ import { fetchPublicGitHubContext } from './plugins.js';
 import { getGitHubSession } from './_github_oauth.js';
 import { resolveGitHubAccess } from './_github_app.js';
 import { fetchGitHubRunContext } from './_plugin_execution_context.js';
+import { fetchGitHubIssuesContext,shouldReadGitHubIssues } from './_plugin_issues_context.js';
 
 export const config = { runtime: 'edge' };
 
@@ -3040,6 +3041,17 @@ async function processChat(body, emit) {
       if(githubExecutionContext)activity(emit,'plugin-github-actions','Read real GitHub Actions and PR status','completed','github');
     }catch(_){activity(emit,'plugin-github-actions','GitHub Actions status could not be read','warning','github');}
   }
+  let githubIssuesContext='';
+  if(body.plugins?.github?.enabled===true&&shouldReadGitHubIssues(message)){
+    try{
+      if(body._githubIssuesPermissionDenied)throw new Error('GitHub Issues read permission was not granted.');
+      githubIssuesContext=await fetchGitHubIssuesContext(body.plugins.github,body._githubIssuesToken||'',message);
+      if(githubIssuesContext)activity(emit,'plugin-github-issues','Read current GitHub issues','completed','github');
+    }catch(_){
+      githubIssuesContext='\n[GITHUB ISSUES TOOL] Issues cannot be inspected without GitHub Issues read access.\n';
+      activity(emit,'plugin-github-issues','GitHub Issues are not accessible','warning','github');
+    }
+  }
   const providedLinkContext=await inspectProvidedLinks(taskMessage,emit);
   const verificationContext=await performVerification(taskMessage,files,emit);
 
@@ -3064,7 +3076,7 @@ async function processChat(body, emit) {
     ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
-  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
   if(body.plugins?.superpowers?.enabled===true){
     const phases={
@@ -3880,6 +3892,13 @@ export default async function handler(req){
       }
     }
 
+    body._githubIssuesToken='';
+    if(githubSession?.token&&body.plugins?.github?.enabled===true&&body.plugins.github.repo&&shouldReadGitHubIssues(body.message)){
+      try{
+        const issueAccess=await resolveGitHubAccess(req,{repository:body.plugins.github.repo,permissions:{issues:'read'}});
+        body._githubIssuesToken=issueAccess.token;
+      }catch(_){body._githubIssuesPermissionDenied=true;}
+    }
     const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
     const hasFiles=Array.isArray(body.files)&&body.files.length>0;
     if(!hasMessage&&!hasFiles){
