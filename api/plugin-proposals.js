@@ -1,5 +1,6 @@
 import {getGitHubSession,githubApi,json} from './_github_oauth.js';
 import {parseGitHubTarget} from './plugins.js';
+import {resolveGitHubAccess} from './_github_app.js';
 
 export const config={runtime:'edge'};
 const enc=new TextEncoder();
@@ -31,9 +32,9 @@ async function github(path,token,{method='GET',body,signal}={}){
   }
   return data;
 }
-async function baseInfo(repo,token,signal){
+async function baseInfo(repo,token,signal,kind='oauth'){
   const metadata=await github('/repos/'+repo,token,{signal});
-  if(metadata?.permissions?.push!==true)fail('You need push permission to propose changes to this repository.',403);
+  if(kind!=='github-app'&&metadata?.permissions?.push!==true)fail('You need push permission to propose changes to this repository.',403);
   const base=String(metadata.default_branch||'');
   if(!base||base.length>100||!(/^[A-Za-z0-9_./-]+$/).test(base))fail('Repository has no valid default branch.',400);
   const branch=await github('/repos/'+repo+'/branches/'+encodeURIComponent(base),token,{signal});
@@ -116,8 +117,9 @@ export default async function handler(request){
     const action=String(body.action||''),repo=parseGitHubTarget(body.repo),path=filePath(body.path);
     const content=body.content;
     if(typeof content!=='string'||!content.trim()||enc.encode(content).length>MAX_CONTENT||content.includes('\0'))fail('Provide UTF-8 source text up to 80 KB.',413);
-    const token=session.token,signal=request.signal;
-    const {base,baseSha}=await baseInfo(repo,token,signal);
+    const access=await resolveGitHubAccess(request,{repository:repo,permissions:{contents:'write',pull_requests:'write'}});
+    const token=access.token,signal=request.signal;
+    const {base,baseSha}=await baseInfo(repo,token,signal,access.kind);
     const original=await originalFile(repo,path,base,token,signal);
     if(original.content===content)fail('No source changes to propose.',400);
     const fingerprint=await digest(session.token);
