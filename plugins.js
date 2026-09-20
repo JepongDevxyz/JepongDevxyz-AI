@@ -26,7 +26,13 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   function notice(message,error=false){text('jdplugStatus',message);$('jdplugStatus')?.classList.toggle('error',!!error);}
   function setBusy(flag){busy=!!flag;document.querySelectorAll('#jdplugPanel .jdplug-button, #jdplugPanel .jdplug-entry').forEach(el=>{if(el.tagName==='BUTTON')el.disabled=busy;});}
   function makeButton(label,handler,className='jdplug-button'){const el=document.createElement('button');el.type='button';el.className=className;el.textContent=label;el.addEventListener('click',handler);return el;}
-  function icon(className,character){const el=document.createElement('span');el.className='jdplug-entry-icon '+className;el.textContent=character;el.setAttribute('aria-hidden','true');return el;}
+  function icon(className,character){
+    const el=document.createElement('span');el.className='jdplug-entry-icon '+className;
+    if(className==='git'){
+      el.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" width="25" height="25"><path d="M12 .8a11.2 11.2 0 0 0-3.54 21.82c.56.1.76-.24.76-.54v-2.05c-3.1.67-3.75-1.31-3.75-1.31-.5-1.28-1.24-1.62-1.24-1.62-1.01-.69.08-.67.08-.67 1.12.08 1.71 1.15 1.71 1.15.99 1.7 2.6 1.21 3.23.93.1-.72.39-1.21.7-1.49-2.48-.28-5.09-1.24-5.09-5.53 0-1.22.44-2.22 1.15-3-.12-.29-.5-1.42.11-2.96 0 0 .94-.3 3.08 1.14a10.7 10.7 0 0 1 5.6 0c2.14-1.45 3.08-1.14 3.08-1.14.61 1.54.23 2.67.11 2.96.72.78 1.15 1.78 1.15 3 0 4.3-2.62 5.24-5.12 5.52.4.35.75 1.03.75 2.08v3.1c0 .3.2.65.77.54A11.2 11.2 0 0 0 12 .8Z"/></svg>';
+    }else el.textContent=character;
+    el.setAttribute('aria-hidden','true');return el;
+  }
   function makeEntry(data,handler,small=''){const row=makeButton('',handler,'jdplug-entry');row.append(icon(data.className,data.icon));const copy=document.createElement('span');copy.className='jdplug-entry-copy';const strong=document.createElement('strong');strong.textContent=data.name;const desc=document.createElement('small');desc.textContent=small||data.tagline;copy.append(strong,desc);const trail=document.createElement('span');trail.className='jdplug-entry-trail';trail.textContent='›';row.append(copy,trail);return row;}
   function showPluginConfirmation(id,action='install'){
     if(!catalogue[id])return;
@@ -109,29 +115,54 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   }
   function renderDirectory(){
     const skills=tab==='skills';text('jdplugDirectoryTitle',skills?'Skills':'Plugins');
-    text('jdplugDirectoryHint',skills?'Select a coding skill to guide this conversation.':'Work with developer tools in JepongDevxyz AI.');
+    text('jdplugDirectoryHint',skills?'Choose a coding skill to guide the next chat.':'Work with JepongDevxyz AI across your favorite tools.');
     $('jdplugSearch').placeholder=skills?'Search skills':'Search plugins';
     const query=$('jdplugSearch').value.trim().toLowerCase();
-    const installedList=$('jdplugInstalled'),available=$('jdplugAvailable');
-    installedList.replaceChildren();available.replaceChildren();
+    const installedList=$('jdplugInstalled'),strip=$('jdplugInstalledStrip'),available=$('jdplugAvailable');
+    installedList.replaceChildren();strip.replaceChildren();available.replaceChildren();
+    $('jdplugInstalledLabel').hidden=skills;$('jdplugInstalledStrip').hidden=skills;
+    $('jdplugAvailableLabel').hidden=false;
     if(skills){
       for(const phase of phases){
         if(!(phase.name+' '+phase.description).toLowerCase().includes(query))continue;
         const data={name:phase.name,tagline:phase.description,className:'super',icon:'⚡'};
         const list=installed('superpowers')&&state.superpowers&&state.phase===phase.id?installedList:available;
-        list.append(makeEntry(data,()=>{if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}state.phase=phase.id;state.superpowers=true;persist();openDetail('superpowers');},phase.description));
+        list.append(makeEntry(data,()=>{
+          if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}
+          state.phase=phase.id;state.superpowers=true;persist();openDetail('superpowers');
+        },phase.description));
       }
     }else{
       for(const id of ['github','superpowers']){
         const data=catalogue[id];
         if(!(data.name+' '+data.tagline+' '+data.description).toLowerCase().includes(query))continue;
-        (enabled(id)?installedList:available).append(catalogueItem(id));
+        if(installed(id)){
+          // Preserve the accessible installed list for keyboard and legacy navigation.
+          installedList.append(catalogueItem(id));
+          const chip=makeButton('',()=>openDetail(id),'jdplug-installed-chip');
+          chip.append(icon(data.className,data.icon));
+          const name=document.createElement('span');name.textContent=data.name;chip.append(name);
+          chip.setAttribute('role','listitem');chip.setAttribute('aria-label','Open installed '+data.name);
+          strip.append(chip);
+        }else available.append(catalogueItem(id));
+      }
+      if(!strip.children.length){
+        const empty=document.createElement('p');empty.className='jdplug-installed-empty';
+        empty.textContent=query?'No installed plugins match.':'Install a plugin to find it here.';
+        strip.append(empty);
       }
     }
-    if(!installedList.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill matches.':'No plugins installed yet.';installedList.append(empty);}
-    if(!available.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent='Nothing else matches your search.';available.append(empty);}
+    if(!installedList.children.length){
+      const empty=document.createElement('div');empty.className='jdplug-empty';
+      empty.textContent=skills?'No active skill matches.':'No plugins installed yet.';
+      installedList.append(empty);
+    }
+    if(!available.children.length){
+      const empty=document.createElement('div');empty.className='jdplug-empty';
+      empty.textContent='Nothing else matches your search.';available.append(empty);
+    }
     text('jdplugInstalledLabel',skills?'Active skill':'Installed');
-    text('jdplugAvailableLabel',skills?'Included skills':'Available to install');
+    text('jdplugAvailableLabel',skills?'Skills':'Popular');
     $('jdplugTabPlugins').classList.toggle('active',!skills);$('jdplugTabSkills').classList.toggle('active',skills);
   }
   function nav(next,id){if(view!==next||selected!==id)history.push({view,selected,tab});view=next;selected=id||selected;render();}
