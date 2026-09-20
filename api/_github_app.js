@@ -9,7 +9,7 @@ function settings(){
   const slug=String(process.env.GITHUB_APP_SLUG||'').trim();
   const id=String(process.env.GITHUB_APP_ID||'').trim();
   const key=String(process.env.GITHUB_APP_PRIVATE_KEY||'').replace(/\\n/g,'\n').trim();
-  if(!validSlug(slug)||!/^\d{1,20}$/.test(id)||!key.includes('-----BEGIN PRIVATE KEY-----')||!key.includes('-----END PRIVATE KEY-----'))
+  if(!validSlug(slug)||!/^\d{1,20}$/.test(id)||!(/-----BEGIN (?:RSA )?PRIVATE KEY-----/.test(key))||!(/-----END (?:RSA )?PRIVATE KEY-----/.test(key)))
     problem('JepongDevxyz GitHub App needs GITHUB_APP_SLUG, GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY in Vercel.',503);
   return {slug,id,key};
 }
@@ -24,11 +24,25 @@ function base64url(bytes){
   let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
   return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
+function derLength(n){
+  if(n<128)return [n];
+  const bytes=[];while(n>0){bytes.unshift(n&255);n=Math.floor(n/256);}
+  return [0x80|bytes.length,...bytes];
+}
+function wrapRsaPkcs1(raw){
+  const version=[0x02,0x01,0x00];
+  const rsaAlgorithm=[0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x01,0x05,0x00];
+  const key=[0x04,...derLength(raw.length),...raw];
+  const inner=[...version,...rsaAlgorithm,...key];
+  return new Uint8Array([0x30,...derLength(inner.length),...inner]);
+}
 async function appJWT(){
   const {id,key}=settings();
-  const pem=key.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g,'');
+  const pkcs1=key.includes('-----BEGIN RSA PRIVATE KEY-----');
+  const pem=key.replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----|-----END (?:RSA )?PRIVATE KEY-----|\s/g,'');
   let binary;try{binary=atob(pem);}catch(_){problem('GitHub App private key is not valid PEM.',503);}
-  const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  const raw=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  const bytes=pkcs1?wrapRsaPkcs1(raw):raw;
   let rsa;
   try{rsa=await crypto.subtle.importKey('pkcs8',bytes,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);}
   catch(_){problem('GitHub App private key could not be imported.',503);}
