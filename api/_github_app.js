@@ -138,6 +138,13 @@ export async function githubAppRepositories(request){
 // Uses the App's *selected-repository* boundary when installed. Legacy OAuth remains
 // usable ONLY when the user has not yet installed the GitHub App.
 export async function resolveGitHubAccess(request,{repository='',permissions={contents:'read'}}={}){
+  // Preserve the existing OAuth-only integration without extra identity API calls
+  // until this site's separate GitHub App has actually been configured.
+  if(!configuredGitHubApp()){
+    const session=await getGitHubSession(request);
+    if(!session?.token)problem('Connect your GitHub account to use this feature.',401);
+    return {token:session.token,kind:'oauth',permissions:null};
+  }
   const app=await githubAppToken(request,{repository,permissions});
   if(app)return app;
   const user=await verifiedOAuthUser(request);
