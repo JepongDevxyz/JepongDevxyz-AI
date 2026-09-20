@@ -8775,6 +8775,7 @@ ${m.text || ''}
                         </span>
                         <div class="code-header-actions">
                             ${isRunnable ? `<button type="button" class="code-action-btn run-btn" onclick="executeSnippetFromButton(this)" title="Live Preview"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Run</button>` : ''}
+                            <button type="button" class="code-action-btn" onclick="stageCodeSnippetFromButton(this)" title="Stage reviewed code for a GitHub pull request">GitHub PR</button>
                             <button type="button" class="code-action-btn" onclick="openCodeFullscreenFromButton(this)" title="Fullscreen code">⛶ Full</button>
                             <button type="button" class="code-action-btn" onclick="copySnippetFromButton(this)" title="Copy code"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg><span>Copy</span></button>
                         </div>
@@ -8790,6 +8791,17 @@ ${m.text || ''}
             const wrap = btn?.closest?.('.code-container-wrap');
             if (!wrap) return null;
             return { code: wrap.querySelector('pre code')?.textContent || '', lang: String(wrap.dataset.lang || 'code').toLowerCase() };
+        }
+
+        function stageCodeSnippetFromButton(btn) {
+            const item = snippetFromButton(btn);
+            if (!item || !item.code.trim()) return;
+            if (item.code.length > 80000) {
+                showModernToast('Code is too large for the GitHub proposal tool (80 KB max).');
+                return;
+            }
+            if (window.JDPlugins?.stageChange) window.JDPlugins.stageChange(item.code);
+            else showModernToast('The GitHub plugin is not available yet.');
         }
 
         function copySnippetFromButton(btn) {
