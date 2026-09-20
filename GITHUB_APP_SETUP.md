@@ -8,7 +8,7 @@ The screenshot showing All repositories, Only select repositories, Permissions, 
 2. Homepage URL: the live JepongDevxyz AI domain.
 3. Setup URL: https://YOUR-DOMAIN/api/github-app-setup . Enable Redirect on update if available. Do not request GitHub App OAuth user authorization during installation; this website has a separately configured OAuth App for user identity.
 4. Webhooks: this integration does not implement webhooks, so disable Active if GitHub allows it.
-5. Request Metadata: Read, Contents: Read and write, Pull requests: Read and write, Actions: Read and write for existing browsing/PR/CI capabilities. Request fewer permissions if you do not need write features. Do not request Issues, Administration, Workflows, secrets or other unrelated permissions.
+5. Request Metadata: Read, Contents: Read and write, Pull requests: Read and write, Actions: Read and write for browsing, reviewed PRs and existing CI workflows. For the new Issues/PR review tools, also grant Issues: Read and write and Checks: Read-only (to inspect check runs). Request fewer permissions if you do not need these features. Never grant Administration, Secrets or other unrelated permissions. Do not enable Workflows write merely for test dispatch; workflow-file editing is not implemented in this tool.
 6. Where can this App be installed? For the present implementation, choose only your personal account. Organization installations require additional ownership/membership authorization that is not currently implemented.
 7. Register. Generate and download a GitHub App private key from the App settings; do not share or commit it.
 
@@ -29,3 +29,11 @@ Only personal-account installations are verified by this implementation. Organiz
 https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/about-the-setup-url
 https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app
 https://docs.github.com/en/rest/apps/apps
+
+## Issues, PR review and Superpowers skills
+
+After installing and connecting the GitHub plugin, open its Manage page. The GitHub Issues & Pull Request Review section can read open issues, create an issue after explicit approval, comment and open/close issues, inspect open pull requests and their changed-file patches, submit a GitHub review comment/request changes/approval when GitHub permits, and read head-commit checks. From any chat/model, type `/issues` or `/review-pr` to open this panel. Relevant chat questions about issues retrieve actual authorized GitHub Issues data server-side; repository source context and the existing CI/PR status tool remain available.
+
+The installed Superpowers workflow now defaults to automatic task-specific selection among planning, implementation/TDD, debugging, and review, across all AI model providers. GitHub execution controls are available in either plugin's Manage page; each write still requires a user confirmation. This is **not** a full unattended coding environment: there is no hosted per-user sandbox, iterative agent tool loop, automatic multi-file commits, background subagent execution, or unattended merge. Do not treat the presence of a permission as proof those operations are implemented or verified.
+
+GitHub App permissions changed after installation must be accepted by the user on GitHub's own permissions/update screen. If the user's installation has not granted Issues write or Checks read, the corresponding operations will return a permission error rather than silently broadening access.
