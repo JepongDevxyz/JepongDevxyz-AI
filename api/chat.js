@@ -1,5 +1,6 @@
 import { fetchPublicGitHubContext } from './plugins.js';
 import { getGitHubSession } from './_github_oauth.js';
+import { resolveGitHubAccess } from './_github_app.js';
 import { fetchGitHubRunContext } from './_plugin_execution_context.js';
 
 export const config = { runtime: 'edge' };
@@ -3023,6 +3024,7 @@ async function processChat(body, emit) {
   let pluginGithubContext='';
   if(body.plugins?.github?.enabled===true){
     try{
+      if(body._githubPermissionDenied)throw new Error('GitHub App has not authorized this repository.');
       pluginGithubContext=await fetchPublicGitHubContext(body.plugins.github,undefined,body._githubAccessToken||'',taskMessage);
       activity(emit,'plugin-github','Read selected GitHub source','completed','github');
     }catch(_){
@@ -3033,6 +3035,7 @@ async function processChat(body, emit) {
   let githubExecutionContext='';
   if(body.plugins?.github?.enabled===true){
     try{
+      if(body._githubPermissionDenied)throw new Error('GitHub App has not authorized this repository.');
       githubExecutionContext=await fetchGitHubRunContext(body.plugins.github,body._githubAccessToken||'',message);
       if(githubExecutionContext)activity(emit,'plugin-github-actions','Read real GitHub Actions and PR status','completed','github');
     }catch(_){activity(emit,'plugin-github-actions','GitHub Actions status could not be read','warning','github');}
@@ -3865,6 +3868,17 @@ export default async function handler(req){
 
     const githubSession=await getGitHubSession(req);
     body._githubAccessToken=githubSession?.token||'';
+    if(githubSession?.token&&body.plugins?.github?.enabled===true&&body.plugins.github.repo){
+      // Installed Apps receive a short-lived repository-scoped token. Their
+      // GitHub-side repository selection cannot be bypassed with the older OAuth token.
+      try{
+        const access=await resolveGitHubAccess(req,{repository:body.plugins.github.repo,permissions:{contents:'read'}});
+        body._githubAccessToken=access.token;
+      }catch(_){
+        body._githubAccessToken='';
+        body._githubPermissionDenied=true;
+      }
+    }
 
     const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
     const hasFiles=Array.isArray(body.files)&&body.files.length>0;
