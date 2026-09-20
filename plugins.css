@@ -149,3 +149,11 @@
  #jdplugPanel .jdplug-detail-try{min-width:75px;padding:8px 10px}
  #jdplugPanel .jdplug-preview-stage{min-height:197px;padding:20px 16px}
 }
+
+#jdplugPanel .jdplug-issue-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#jdplugPanel .jdplug-issue-actions .jdplug-button{flex:1;min-width:105px}
+#jdplugPanel .jdplug-item-row{display:flex;align-items:center;gap:9px;justify-content:space-between;padding:10px 8px;border-bottom:1px solid var(--border-color,#343434)}
+#jdplugPanel .jdplug-item-row:last-child{border-bottom:0}
+#jdplugPanel .jdplug-item-link{flex:1;min-width:0;color:var(--text-main,#fff);font-size:.75rem;line-height:1.45;overflow-wrap:anywhere;text-decoration:none}
+#jdplugPanel .jdplug-item-link:hover{text-decoration:underline}
+#jdplugPanel .jdplug-use-item{flex:0 0 auto;min-height:31px;padding:6px 9px;font-size:.67rem}
