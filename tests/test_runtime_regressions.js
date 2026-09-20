@@ -16,6 +16,7 @@ function loadDetector(source) {
     .replace(/^import \{ getGitHubSession \} from '\.\/_github_oauth\.js';\s*/m, '')
     .replace(/^import \{ fetchGitHubRunContext \} from '\.\/_plugin_execution_context\.js';\s*/m, '')
     .replace(/^import \{ resolveGitHubAccess \} from '\.\/_github_app\.js';\s*/m, '')
+    .replace(/^import \{ fetchGitHubIssuesContext,shouldReadGitHubIssues \} from '\.\/_plugin_issues_context\.js';\s*/m, '')
     .replace(/^export const config/m, 'const config')
     .replace(/^export default async function handler/m, 'async function handler');
   s += '\n;globalThis.__detectArtifactRequest = detectArtifactRequest;';

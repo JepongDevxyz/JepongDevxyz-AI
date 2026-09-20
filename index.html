@@ -9359,6 +9359,13 @@ ${m.text || ''}
 
             await waitForAttachmentJobs();
 
+            if (message.toLowerCase() === '/issues' || message.toLowerCase() === '/review-pr') {
+                input.value = '';
+                autoResizeTextarea(input);
+                window.JDPlugins?.openWorkspace?.(message.toLowerCase() === '/review-pr' ? 'pr' : 'issues');
+                return;
+            }
+
             if (message.toLowerCase() === '/run-tests' || message.toLowerCase() === '/run-ci') {
                 input.value = '';
                 autoResizeTextarea(input);
