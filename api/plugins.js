@@ -44,7 +44,7 @@ async function githubGet(repo,suffix,signal,token=''){
       });
   if(!response.ok){
     if(response.status===401)fail('GitHub authorization expired. Reconnect your account.',401);
-    if(response.status===404)fail(token?'Repository or file not found, or your account cannot access it.':'Repository or file not found.',404);
+    if(response.status===404)fail(token?'Repository or file not found, or your account cannot access it.':'Repository not found or private. Check owner/name, or connect GitHub to access private repositories.',404);
     if(response.status===403||response.status===429)fail('GitHub API limit or permission check blocked this request.',429);
     fail('GitHub request failed ('+response.status+').',502);
   }
@@ -126,8 +126,13 @@ function json(data,status=200){return new Response(JSON.stringify(data),{status,
 export default async function handler(request){
   if(request.method==='HEAD')return new Response(null,{status:200});
   if(request.method==='GET'){
+    let sameCallbackOrigin=true;
+    try{
+      const callback=String(process.env.GITHUB_OAUTH_CALLBACK_URL||'').trim();
+      if(callback)sameCallbackOrigin=new URL(callback).origin===new URL(request.url).origin;
+    }catch(_){sameCallbackOrigin=false;}
     return json({github:{publicRepositories:true,accountConnectionConfigured:
-      !!(String(process.env.GITHUB_OAUTH_CLIENT_ID||'').trim()&&String(process.env.GITHUB_OAUTH_CLIENT_SECRET||'').trim()&&String(process.env.GITHUB_SESSION_SECRET||'').length>=32)}}); 
+      !!(sameCallbackOrigin&&String(process.env.GITHUB_OAUTH_CLIENT_ID||'').trim()&&String(process.env.GITHUB_OAUTH_CLIENT_SECRET||'').trim()&&String(process.env.GITHUB_SESSION_SECRET||'').length>=32)}});
   }
   if(request.method!=='POST')return json({error:'Method not allowed.'},405);
   const origin=request.headers.get('origin');
