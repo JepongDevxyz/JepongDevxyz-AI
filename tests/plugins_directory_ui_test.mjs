@@ -17,7 +17,7 @@ for(const id of ['jdplugTabPlugins','jdplugTabSkills','jdplugDirectory','jdplugS
 for(const term of ['function renderDirectory(', 'function tryInChat(', 'function openRepo(',
   "call('repo')", "call('read'", "call('prs')", "call('repos')", 'function renderSkillRows(', 'function persist()',
   'function connectGithub(', 'function disconnectGithub(', 'function refreshGithubSession(',
-  'window.JDPlugins=Object.freeze({open,close,contextForChat()']){
+  'window.JDPlugins=Object.freeze({open,close,ready(){']){
   assert(ui.includes(term),'missing functional plugin behavior: '+term);
 }
 assert(ui.includes('state.repoLoaded'),'GitHub chat access must be scoped to an inspected repo');
