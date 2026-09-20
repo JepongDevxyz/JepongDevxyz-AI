@@ -10,6 +10,7 @@ const headers={
   Cookie:'jdgh_session='+encodeURIComponent(sealed)
 };
 let dispatches=0;
+let returnRunId=false;
 let allowPush=true;
 let allowManual=true;
 const requests=[];
@@ -37,7 +38,9 @@ globalThis.fetch=async (url,options={})=>{
     assert.equal(options.method,'POST');
     assert.deepEqual(JSON.parse(options.body),{ref:'main'});
     dispatches++;
-    return new Response(null,{status:204});
+    return returnRunId
+      ? Response.json({workflow_run_id:77,html_url:'https://github.com/owner/project/actions/runs/77'})
+      : new Response(null,{status:204});
   }
   if(path==='/repos/owner/project/actions/workflows/101/runs')return Response.json({workflow_runs:[
     {id:55,name:'Verify Project Tests',status:'completed',conclusion:'success',
@@ -73,6 +76,13 @@ try{
   assert.equal(executed.status,200,JSON.stringify(executed.data));
   assert.equal(executed.data.accepted,true);
   assert.equal(dispatches,1);
+  assert.equal(executed.data.run,null,'GitHub may acknowledge a dispatch without returning a run ID');
+  returnRunId=true;
+  const executedWithId=await post('dispatch',{workflowId:101,ref:'main',confirm:true});
+  assert.equal(executedWithId.status,200,JSON.stringify(executedWithId.data));
+  assert.equal(executedWithId.data.run.id,77);
+  assert.equal(executedWithId.data.run.url,'https://github.com/owner/project/actions/runs/77');
+  assert.equal(dispatches,2);
   assert.match(executed.data.message,/check Actions for actual execution/i);
   assert(!JSON.stringify(executed.data).includes('gho_mock_scoped_token'),'OAuth token must never reach client');
   const runs=await post('runs',{workflowId:101});
