@@ -6,13 +6,15 @@ import pluginHandler,{fetchPublicGitHubContext} from '../api/plugins.js';
 const saved={
   id:process.env.GITHUB_OAUTH_CLIENT_ID,
   secret:process.env.GITHUB_OAUTH_CLIENT_SECRET,
-  session:process.env.GITHUB_SESSION_SECRET
+  session:process.env.GITHUB_SESSION_SECRET,
+  callback:process.env.GITHUB_OAUTH_CALLBACK_URL
 };
 const request=()=>new Request('https://example.test/api/plugins',{method:'GET'});
 try{
   delete process.env.GITHUB_OAUTH_CLIENT_ID;
   delete process.env.GITHUB_OAUTH_CLIENT_SECRET;
   delete process.env.GITHUB_SESSION_SECRET;
+  delete process.env.GITHUB_OAUTH_CALLBACK_URL;
   let response=await pluginHandler(request());
   assert.equal(response.status,200);
   let data=await response.json();
@@ -23,11 +25,19 @@ try{
   process.env.GITHUB_SESSION_SECRET='0123456789abcdefghijklmnopqrstuv';
   response=await pluginHandler(request());
   assert.equal((await response.json()).github.accountConnectionConfigured,true);
+  process.env.GITHUB_OAUTH_CALLBACK_URL='https://preview.other.test/api/github-oauth-callback';
+  response=await pluginHandler(request());
+  assert.equal((await response.json()).github.accountConnectionConfigured,false,
+    'OAuth must not advertise readiness on a preview domain with a different callback host');
+  process.env.GITHUB_OAUTH_CALLBACK_URL='https://example.test/api/github-oauth-callback';
+  response=await pluginHandler(request());
+  assert.equal((await response.json()).github.accountConnectionConfigured,true);
 }finally{
   for(const [key,value] of Object.entries({
     GITHUB_OAUTH_CLIENT_ID:saved.id,
     GITHUB_OAUTH_CLIENT_SECRET:saved.secret,
-    GITHUB_SESSION_SECRET:saved.session
+    GITHUB_SESSION_SECRET:saved.session,
+    GITHUB_OAUTH_CALLBACK_URL:saved.callback
   })){if(value===undefined)delete process.env[key];else process.env[key]=value;}
 }
 
