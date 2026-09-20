@@ -1,4 +1,5 @@
 import {getGitHubSession,githubApi} from './_github_oauth.js';
+import {configuredGitHubApp,githubAppRepositories,resolveGitHubAccess} from './_github_app.js';
 
 export const config = { runtime: 'edge' };
 
@@ -131,7 +132,7 @@ export default async function handler(request){
       const callback=String(process.env.GITHUB_OAUTH_CALLBACK_URL||'').trim();
       if(callback)sameCallbackOrigin=new URL(callback).origin===new URL(request.url).origin;
     }catch(_){sameCallbackOrigin=false;}
-    return json({github:{publicRepositories:true,accountConnectionConfigured:
+    return json({github:{publicRepositories:true,appInstallationConfigured:configuredGitHubApp(),accountConnectionConfigured:
       !!(sameCallbackOrigin&&String(process.env.GITHUB_OAUTH_CLIENT_ID||'').trim()&&String(process.env.GITHUB_OAUTH_CLIENT_SECRET||'').trim()&&String(process.env.GITHUB_SESSION_SECRET||'').length>=32)}});
   }
   if(request.method!=='POST')return json({error:'Method not allowed.'},405);
@@ -150,6 +151,13 @@ export default async function handler(request){
 
     if(action==='repos'){
       if(!token)fail('Connect your GitHub account first.',401);
+      const appRepos=await githubAppRepositories(request);
+      if(appRepos){
+        return json({provider:'github-app',repositorySelection:'github-managed',repositories:appRepos.repositories.map(x=>({
+          repo:x.full_name,description:String(x.description||'').slice(0,240),private:!!x.private,
+          visibility:String(x.visibility||''),defaultBranch:x.default_branch,updatedAt:x.pushed_at,url:x.html_url
+        }))});
+      }
       const response=await githubApi('/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member',token,{signal:request.signal});
       if(!response.ok)fail(response.status===401?'GitHub authorization expired. Reconnect your account.':'Could not list GitHub repositories.',response.status===401?401:502);
       const entries=await readJsonBounded(response);
@@ -160,24 +168,31 @@ export default async function handler(request){
     }
 
     const repo=parseGitHubTarget(body.repo);
-    if(action==='repo')return json(await repoInfo(repo,request.signal,token));
+    let credential=token;
+    if(configuredGitHubApp()&&token){
+      // If the user installed the App, do not silently fall back to a broader
+      // OAuth token for repositories excluded on GitHub's installation page.
+      const access=await resolveGitHubAccess(request,{repository:repo,permissions:{contents:'read'}});
+      credential=access.token;
+    }
+    if(action==='repo')return json(await repoInfo(repo,request.signal,credential));
     if(action==='list'){
       const path=body.path?'/'+encodedPath(body.path):'';
       const ref=safeRef(body.ref),query=ref?'?ref='+encodeURIComponent(ref):'';
-      const result=await githubGet(repo,'/contents'+path+query,request.signal,token);
+      const result=await githubGet(repo,'/contents'+path+query,request.signal,credential);
       if(!Array.isArray(result))fail('This path is not a directory.',400);
       return json({repo,path:body.path||'',entries:result.slice(0,200).map(x=>({name:x.name,path:x.path,type:x.type,size:x.size,sha:x.sha}))});
     }
     if(action==='read'){
-      const file=await readFile(repo,body.path,safeRef(body.ref),request.signal,token);
+      const file=await readFile(repo,body.path,safeRef(body.ref),request.signal,credential);
       return json({...file,content:file.content.slice(0,80_000)});
     }
     if(action==='branches'){
-      const entries=await githubGet(repo,'/branches?per_page=50',request.signal,token);
+      const entries=await githubGet(repo,'/branches?per_page=50',request.signal,credential);
       return json({repo,branches:entries.map(x=>({name:x.name,sha:x.commit?.sha}))});
     }
     if(action==='prs'){
-      const entries=await githubGet(repo,'/pulls?state=open&per_page=50',request.signal,token);
+      const entries=await githubGet(repo,'/pulls?state=open&per_page=50',request.signal,credential);
       return json({repo,pullRequests:entries.map(x=>({number:x.number,title:x.title,url:x.html_url,head:x.head?.ref,base:x.base?.ref,draft:!!x.draft}))});
     }
     fail('Unknown GitHub plugin action.',400);
