@@ -49,9 +49,9 @@ async function appJWT(){
   const now=Math.floor(Date.now()/1000);
   const head=base64url(textEncoder.encode(JSON.stringify({alg:'RS256',typ:'JWT'})));
   const payload=base64url(textEncoder.encode(JSON.stringify({iat:now-60,exp:now+8*60,iss:id})));
-  const raw=head+'.'+payload;
-  const signature=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',rsa,textEncoder.encode(raw));
-  return raw+'.'+base64url(new Uint8Array(signature));
+  const unsignedJWT=head+'.'+payload;
+  const signature=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',rsa,textEncoder.encode(unsignedJWT));
+  return unsignedJWT+'.'+base64url(new Uint8Array(signature));
 }
 async function githubText(path,token,{method='GET',body,signal}={}){
   const response=await githubApi(path,token,{method,body,signal:signal||AbortSignal.timeout(12_000)});
