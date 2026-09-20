@@ -91,8 +91,11 @@ const superRow=installedRows.find(x=>x.children[0]?.children[1]?.children[0]?.te
 assert(superRow,'installed Superpowers must be listed under Installed');
 superRow.children[0].click();
 assert.equal(get('jdplugTry').textContent,'Try in chat');
-assert.equal(get('jdplugManage').hidden,false);
-get('jdplugUninstall').click();
+assert.equal(get('jdplugManage').hidden,true,'detail page keeps Manage behind the overflow action');
+assert.equal(get('jdplugOverflow').hidden,false,'installed detail must expose overflow management');
+get('jdplugOverflow').click();
+assert.equal(get('jdplugManageView').hidden,false,'overflow opens Manage');
+get('jdplugManageUninstall').click();
 assert.equal(get('jdplugConfirmTitle').textContent,'Uninstall Superpowers?');
 get('jdplugConfirmInstall').click();
 saved=JSON.parse(store.get('jepong_plugins_directory_v2'));
@@ -108,7 +111,8 @@ const githubRow=get('jdplugInstalled').children.find(x=>x.children[0]?.children[
 assert(githubRow,'installed GitHub should remain in the installed list');
 githubRow.children[0].click();
 assert.equal(get('jdplugTry').textContent,'Try in chat');
-get('jdplugUninstall').click();
+get('jdplugOverflow').click();
+get('jdplugManageUninstall').click();
 await get('jdplugConfirmInstall').click();
 saved=JSON.parse(store.get('jepong_plugins_directory_v2'));
 assert.equal(disconnected,true,'uninstall must call backend disconnect for a connected account');
