@@ -23,6 +23,7 @@ function ui(){
   if(window.JDPlugins?.stageAgentFiles?.(proposal)!==false)panel.hidden=true;
  });
 }
+function close(){abort?.abort();if(panel)panel.hidden=true;}
 function open(task=''){
  ui();panel.hidden=false;
  const ctx=window.JDPlugins?.contextForChat?.();
