@@ -43,7 +43,7 @@ const sandbox={
   },
   getJDPluginActiveModel:()=>({provider:'groq',model:'openai/gpt-oss-20b'})
  },
- AbortController,TextEncoder,console,
+ AbortController,TextEncoder,TextDecoder,console,
  fetch:async(url,options={})=>{
   calls.push({url,body:JSON.parse(options.body||'{}')});
   if(options.method!=='POST')mutatingCalls++;
