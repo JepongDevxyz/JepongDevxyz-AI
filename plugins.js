@@ -137,14 +137,15 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
         const data=catalogue[id];
         if(!(data.name+' '+data.tagline+' '+data.description).toLowerCase().includes(query))continue;
         if(installed(id)){
-          // Preserve the accessible installed list for keyboard and legacy navigation.
+          // Installed tools stay discoverable under Popular, with Manage in their overflow menu.
           installedList.append(catalogueItem(id));
           const chip=makeButton('',()=>openDetail(id),'jdplug-installed-chip');
           chip.append(icon(data.className,data.icon));
           const name=document.createElement('span');name.textContent=data.name;chip.append(name);
           chip.setAttribute('role','listitem');chip.setAttribute('aria-label','Open installed '+data.name);
           strip.append(chip);
-        }else available.append(catalogueItem(id));
+        }
+        available.append(catalogueItem(id));
       }
       if(!strip.children.length){
         const empty=document.createElement('p');empty.className='jdplug-installed-empty';
@@ -356,12 +357,19 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     if(!installed(selected)){showPluginConfirmation(selected,'install');return;}
     let prompt='';
     if(selected==='github'){
-      if(!state.repoLoaded){
+      if(!state.repoLoaded&&!state.accountConnected){
         openManage();
-        notice('Choose a GitHub repository first so the AI can read its actual source.',true);
+        notice('Connect GitHub or open a public repository to use this plugin in chat.',true);
         return;
       }
       state.github=true;
+      if(!state.repoLoaded){
+        prompt='Show me the GitHub repositories my connected account can access and help me choose one to inspect.';
+        persist();close();
+        const input=$('userInput');
+        if(input){input.value=prompt;input.dispatchEvent(new Event('input',{bubbles:true}));if(typeof window.autoResizeTextarea==='function')window.autoResizeTextarea(input);input.focus();}
+        return;
+      }
       const source=state.repo+(state.item?' / '+state.item.kind+' #'+state.item.id:state.path?' / '+state.path:'');
       prompt=state.item
         ? 'Summarize the actual GitHub '+state.item.kind+' #'+state.item.id+' in '+state.repo+'. Explain the evidence, current status, and concrete next steps.'
@@ -439,7 +447,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   }
   function close(){hidePluginConfirmation();$('jdplugPanel')?.classList.remove('open');}
   window.JDPlugins=Object.freeze({open,close,contextForChat(){
-    return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.item?'':state.path,ref:state.ref,item:state.item?{kind:state.item.kind,id:state.item.id}:null}};
+    return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},github:{enabled:installed('github')&&state.github&&(state.repoLoaded||state.accountConnected),repo:state.repoLoaded?state.repo:'',path:state.repoLoaded&&!state.item?state.path:'',ref:state.ref,item:state.repoLoaded&&state.item?{kind:state.item.kind,id:state.item.id}:null}};
   }});
 
   // Complete the OAuth round trip without leaving stale query parameters in the chat URL.
