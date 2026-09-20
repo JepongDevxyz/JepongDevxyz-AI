@@ -14,7 +14,7 @@ for(const id of ['jdplugTabPlugins','jdplugTabSkills','jdplugDirectory','jdplugS
   assert(panel.includes('id="'+id+'"'),'missing directory component '+id);
 }
 for(const term of ['function renderDirectory(', 'function tryInChat(', 'function openRepo(',
-  "call('repo')", "call('read'", "call('prs')", "call('repos')", 'function renderSkillRows(', 'function persist()',
+  "call('repo')", "call('read'", "showGitHubItems('prs')", "call('repos')", 'function renderSkillRows(', 'function persist()',
   'function connectGithub(', 'function disconnectGithub(', 'function refreshGithubSession(',
   'window.JDPlugins=Object.freeze({open,close,contextForChat()']){
   assert(ui.includes(term),'missing functional plugin behavior: '+term);
