@@ -9161,6 +9161,8 @@ ${m.text || ''}
 
             const aiRequestStartedAt = performance.now();
             try {
+                // Install/configuration is shared across chats and independent of the selected AI provider.
+                await window.JDPlugins?.ready?.();
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -9344,6 +9346,13 @@ ${m.text || ''}
             if (!message && selectedFilesData.length === 0) return;
 
             await waitForAttachmentJobs();
+
+            if (message.toLowerCase() === '/run-tests' || message.toLowerCase() === '/run-ci') {
+                input.value = '';
+                autoResizeTextarea(input);
+                window.JDPlugins?.openRunner?.();
+                return;
+            }
 
             if (message.toLowerCase() === '/commands') {
                 input.value = '';
