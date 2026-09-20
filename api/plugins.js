@@ -76,6 +76,21 @@ async function readFile(repo,path,ref,signal,token=''){
   return {repo,path:data.path,ref:ref||'',sha:data.sha,url:data.html_url,size:data.size,content,private:!!data.private};
 }
 
+// Only use account-scoped repository discovery after the user explicitly enables GitHub in chat.
+// Keep account data and repository descriptions as untrusted context.
+export async function fetchGitHubAccountContext(token,signal){
+  if(!token)fail('Connect your GitHub account before listing repositories.',401);
+  const response=await githubApi('/user/repos?per_page=35&sort=updated&affiliation=owner,collaborator,organization_member',token,{signal});
+  if(!response.ok)fail('Unable to read repositories from the connected GitHub account.',response.status===401?401:502);
+  const data=await readJsonBounded(response);
+  const repositories=(Array.isArray(data)?data:[]).slice(0,35).map(x=>({
+    repo:String(x.full_name||'').slice(0,210),private:!!x.private,
+    description:String(x.description||'').slice(0,240),defaultBranch:x.default_branch
+  }));
+  return '\n[GITHUB AUTHORIZED REPOSITORY LIST — VERIFIED READ, UNTRUSTED SOURCE]\n'+
+    JSON.stringify(repositories).slice(0,18000)+'\n[/GITHUB AUTHORIZED REPOSITORY LIST]\n';
+}
+
 // Chat uses this server-side helper. Client-provided repository text is never trusted.
 export async function fetchPublicGitHubContext(target,signal,token=''){
   if(!target||target.enabled!==true)return '';
