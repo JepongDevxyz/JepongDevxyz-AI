@@ -182,7 +182,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       $('jdplugGithubSummary').hidden=selected!=='github';$('jdplugSkillSummary').hidden=selected!=='superpowers';
       const isInstalled=installed(selected);
       $('jdplugTry').textContent=isInstalled?'Try in chat':'Install';
-      $('jdplugManage').hidden=!isInstalled;
+      $('jdplugManage').hidden=true;
       $('jdplugOverflow').hidden=!isInstalled;
       $('jdplugUninstall').hidden=true;
       renderDemo();
