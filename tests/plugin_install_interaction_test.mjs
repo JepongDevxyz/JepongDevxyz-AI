@@ -66,7 +66,7 @@ assert.equal(get('jdplugConfirmTitle').textContent,'Install GitHub?');
 assert.equal(win.JDPlugins.contextForChat().github.enabled,false,'consent step must not install yet');
 get('jdplugCancelInstall').click();
 assert.equal(get('jdplugConfirm').hidden,true,'cancel must close confirmation');
-assert.equal(JSON.parse(store.get('jepong_plugins_directory_v2')||'{}').installed?.github,true,'cancel should not install');
+assert.notEqual(JSON.parse(store.get('jepong_plugins_directory_v2')||'{}').installed?.github,true,'cancel should not install');
 
 currentPlus('GitHub').click();
 get('jdplugConfirmInstall').click();
