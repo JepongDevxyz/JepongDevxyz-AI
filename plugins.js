@@ -15,21 +15,37 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     github:{name:'GitHub',tagline:'Connect your account and browse repositories',description:'Connect GitHub with the official OAuth web flow, browse repositories your account can access, inspect source files, branches and pull requests, and use selected source as chat context.',icon:'GH',className:'git'},
     superpowers:{name:'Superpowers',tagline:'Make your coding workflow more structured',description:'Built-in conversational coding skills for planning, implementation, debugging and review. Enable a workflow and choose its active phase before asking your coding question.',icon:'⚡',className:'super'}
   };
-  const defaultState={repo:'',path:'',ref:'',directory:'',github:false,repoLoaded:false,superpowers:false,phase:'plan',accountConnected:false,accountUser:null,accountScopes:[],accountRepos:[]};
+  const defaultState={repo:'',path:'',ref:'',directory:'',github:false,repoLoaded:false,superpowers:false,phase:'plan',installed:{github:false,superpowers:false},accountConnected:false,accountUser:null,accountScopes:[],accountRepos:[]};
   const state=Object.assign({},defaultState);
-  let tab='plugins',view='directory',selected='github',busy=false;
+  let tab='plugins',view='directory',selected='github',busy=false,pendingPluginAction=null;
   const history=[];
   function text(id,value){const el=$(id);if(el)el.textContent=String(value||'');}
-  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,github:state.github,superpowers:state.superpowers,phase:state.phase}));}catch(_){}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.github=false;state.superpowers=s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'plan';}}catch(_){}}
+  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,installed:{github:!!state.installed.github,superpowers:!!state.installed.superpowers},github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
+  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed={github:s.installed?.github===true,superpowers:s.installed?.superpowers===true};state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'plan';}}catch(_){}}
   restore();
   function notice(message,error=false){text('jdplugStatus',message);$('jdplugStatus')?.classList.toggle('error',!!error);}
   function setBusy(flag){busy=!!flag;document.querySelectorAll('#jdplugPanel .jdplug-button, #jdplugPanel .jdplug-entry').forEach(el=>{if(el.tagName==='BUTTON')el.disabled=busy;});}
   function makeButton(label,handler,className='jdplug-button'){const el=document.createElement('button');el.type='button';el.className=className;el.textContent=label;el.addEventListener('click',handler);return el;}
   function icon(className,character){const el=document.createElement('span');el.className='jdplug-entry-icon '+className;el.textContent=character;el.setAttribute('aria-hidden','true');return el;}
   function makeEntry(data,handler,small=''){const row=makeButton('',handler,'jdplug-entry');row.append(icon(data.className,data.icon));const copy=document.createElement('span');copy.className='jdplug-entry-copy';const strong=document.createElement('strong');strong.textContent=data.name;const desc=document.createElement('small');desc.textContent=small||data.tagline;copy.append(strong,desc);const trail=document.createElement('span');trail.className='jdplug-entry-trail';trail.textContent='›';row.append(copy,trail);return row;}
-  function enabled(id){return id==='superpowers'?state.superpowers:(state.accountConnected||state.repoLoaded);}
-  function catalogueItem(id){return makeEntry(catalogue[id],()=>openDetail(id),enabled(id)?'Enabled · '+catalogue[id].tagline:catalogue[id].tagline);}
+  function installed(id){return state.installed?.[id]===true;}
+  function enabled(id){return installed(id);}
+  function catalogueItem(id){
+    const container=document.createElement('div');container.className='jdplug-list-item';
+    container.append(makeEntry(catalogue[id],()=>openDetail(id),catalogue[id].tagline));
+    const trailing=makeButton(installed(id)?'⋯':'+',installed(id)?()=>{
+      document.querySelectorAll('.jdplug-entry-menu').forEach(item=>{if(item!==menu)item.hidden=true;});
+      menu.hidden=!menu.hidden;
+    }:()=>showPluginConfirmation(id,'install'),'jdplug-entry-trailing');
+    trailing.setAttribute('aria-label',(installed(id)?'Manage ':'Install ')+catalogue[id].name);
+    const menu=document.createElement('div');menu.className='jdplug-entry-menu';menu.hidden=true;
+    if(installed(id)){
+      menu.append(makeButton('Manage',()=>{menu.hidden=true;selected=id;openManage();},'jdplug-menu-action'));
+      menu.append(makeButton('Uninstall',()=>{menu.hidden=true;showPluginConfirmation(id,'uninstall');},'jdplug-menu-action danger'));
+    }
+    container.append(trailing,menu);
+    return container;
+  }
   function renderDirectory(){
     const skills=tab==='skills';text('jdplugDirectoryTitle',skills?'Skills':'Plugins');
     text('jdplugDirectoryHint',skills?'Select a coding skill to guide this conversation.':'Work with developer tools in JepongDevxyz AI.');
@@ -41,8 +57,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       for(const phase of phases){
         if(!(phase.name+' '+phase.description).toLowerCase().includes(query))continue;
         const data={name:phase.name,tagline:phase.description,className:'super',icon:'⚡'};
-        const list=state.superpowers&&state.phase===phase.id?installed:available;
-        list.append(makeEntry(data,()=>{state.phase=phase.id;persist();openDetail('superpowers');},phase.description));
+        const list=installed('superpowers')&&state.superpowers&&state.phase===phase.id?installed:available;
+        list.append(makeEntry(data,()=>{if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}state.phase=phase.id;state.superpowers=true;persist();openDetail('superpowers');},phase.description));
       }
     }else{
       for(const id of ['github','superpowers']){
@@ -53,8 +69,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     }
     if(!installed.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill matches.':'No enabled plugins match.';installed.append(empty);}
     if(!available.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent='Nothing else matches your search.';available.append(empty);}
-    text('jdplugInstalledLabel',skills?'Active skill':'Enabled');
-    text('jdplugAvailableLabel',skills?'Included skills':'Available');
+    text('jdplugInstalledLabel',skills?'Active skill':'Installed');
+    text('jdplugAvailableLabel',skills?'Included skills':'Available to install');
     $('jdplugTabPlugins').classList.toggle('active',!skills);$('jdplugTabSkills').classList.toggle('active',skills);
   }
   function nav(next,id){if(view!==next||selected!==id)history.push({view,selected,tab});view=next;selected=id||selected;render();}
@@ -69,6 +85,10 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       $('jdplugHeroIcon').className='jdplug-entry-icon '+c.className;
       text('jdplugHeroTitle',c.name);text('jdplugHeroTagline',c.tagline);text('jdplugDescription',c.description);
       $('jdplugGithubSummary').hidden=selected!=='github';$('jdplugSkillSummary').hidden=selected!=='superpowers';
+      const isInstalled=installed(selected);
+      $('jdplugTry').textContent=isInstalled?'Try in chat':'Install';
+      $('jdplugManage').hidden=!isInstalled;
+      $('jdplugUninstall').hidden=!isInstalled;
       if(selected==='github'){text('jdplugCurrentRepo',state.repoLoaded?state.repo:'No repository selected');
         text('jdplugRepoSummary',state.repoLoaded?(state.path?'Selected file: '+state.path:'Default branch: '+state.ref):'Open a public repository in Manage to browse its files.');}
       else renderSkillRows('jdplugDetailSkillList');
@@ -83,16 +103,18 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   }
   function renderSkillRows(id){const list=$(id);list.replaceChildren();
     for(const phase of phases){const row=makeEntry({name:phase.name,tagline:phase.description,className:'super',icon:'⚡'},()=>{
+      if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}
       state.phase=phase.id;state.superpowers=true;persist();$('jdplugPhase').value=phase.id;render();notice('Skill selected: '+phase.name);
-    },phase.description+(state.superpowers&&state.phase===phase.id?' · Active':''));list.append(row);}
+    },phase.description+(installed('superpowers')&&state.superpowers&&state.phase===phase.id?' · Active':''));list.append(row);}
   }
   function openDetail(id){nav('detail',id);}
-  function openManage(){nav('manage',selected);}
+  function openManage(){if(!installed(selected)){showPluginConfirmation(selected,'install');return;}nav('manage',selected);}
   function statusForChat(){text('jdplugSelected',state.github&&state.repoLoaded?'In chat: '+state.repo+(state.path?' / '+state.path:'')+(state.ref?' @ '+state.ref:''):'Not included in chat.');}
   function selectedInfo(){statusForChat();$('jdplugGitEnabled').checked=state.github&&state.repoLoaded;}
   function renderGithubAccount(){
     const signedOut=$('jdplugGithubSignedOut'), signedIn=$('jdplugGithubSignedIn'), reposCard=$('jdplugAccountReposCard');
     if(!signedOut||!signedIn)return;
+    if(!installed('github')){signedOut.hidden=true;signedIn.hidden=true;if(reposCard)reposCard.hidden=true;return;}
     signedOut.hidden=!!state.accountConnected;signedIn.hidden=!state.accountConnected;
     if(reposCard)reposCard.hidden=!state.accountConnected;
     if(state.accountConnected&&state.accountUser){
@@ -124,6 +146,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     }catch(_){state.accountConnected=false;state.accountUser=null;state.accountScopes=[];state.accountRepos=[];renderGithubAccount();return false;}
   }
   function connectGithub(){
+    if(!installed('github')){showPluginConfirmation('github','install');return;}
     const returnTo=location.pathname+location.search+location.hash;
     location.href='/api/github-oauth-start?return_to='+encodeURIComponent(returnTo);
   }
@@ -136,6 +159,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     finally{setBusy(false);}
   }
   async function loadAccountRepos(){
+    if(!installed('github')){showPluginConfirmation('github','install');return;}
     if(!state.accountConnected){notice('Connect GitHub first.',true);return;}
     const data=await call('repos');if(!data)return;
     state.accountRepos=Array.isArray(data.repositories)?data.repositories:[];
@@ -143,6 +167,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     notice(state.accountRepos.length+' repositories loaded.');
   }
   async function call(action,extras={}){
+    if(!installed('github')){notice('Install GitHub before using its tools.',true);return null;}
     if(busy)return null;setBusy(true);notice('Reading GitHub…');
     try{const response=await fetch('/api/plugins',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action,repo:state.repo},extras))});
       const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'GitHub request failed.');
@@ -170,6 +195,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     notice('Read '+data.path+'. The AI will request this source again for chat.');
   }
   async function openRepo(){
+    if(!installed('github')){showPluginConfirmation('github','install');return;}
     const input=$('jdplugRepoInput').value.trim();
     if(!/^(?:https:\/\/github\.com\/)?[\w.-]+\/[\w.-]+\/?$/.test(input)){notice('Enter a public repository URL or owner/repository.',true);return;}
     state.repo=input.replace(/^https:\/\/github\.com\//,'').replace(/\/$/,'');
@@ -190,6 +216,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     if(!(data.pullRequests||[]).length)area.append(document.createTextNode('No open pull requests.'));
   }
   function tryInChat(){
+    if(!installed(selected)){showPluginConfirmation(selected,'install');return;}
     let prompt='';
     if(selected==='github'){
       if(!state.repoLoaded){openManage();notice('Open a GitHub repository before trying it in chat.',true);return;}
@@ -237,7 +264,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   }
   function close(){$('jdplugPanel')?.classList.remove('open');}
   window.JDPlugins=Object.freeze({open,close,contextForChat(){
-    return {superpowers:{enabled:state.superpowers,phase:state.phase},github:{enabled:state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
+    return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
   }});
 
   // Complete the OAuth round trip without leaving stale query parameters in the chat URL.
