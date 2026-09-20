@@ -5,6 +5,7 @@ import vm from 'node:vm';
 // Lightweight DOM interaction harness: no extra npm dependencies on the Vercel project.
 const source=fs.readFileSync('plugins.js','utf8');
 const store=new Map(), elements=new Map();
+let oauthConnected=false,disconnected=false;
 class FakeElement {
   constructor(tag='div'){this.tagName=tag.toUpperCase();this.children=[];this.handlers={};
     this.className='';this.hidden=false;this.value='';this.checked=false;this.textContent='';
@@ -25,7 +26,7 @@ class FakeElement {
   addEventListener(name,handler){this.handlers[name]=handler;}
   setAttribute(name,value){this.attributes[name]=String(value);}
   focus(){}
-  click(){this.handlers.click?.({target:this});}
+  click(){return this.handlers.click?.({target:this});}
   get parentNode(){return null;}
 }
 const doc={
@@ -41,8 +42,12 @@ const sandbox={
   location:{search:'',pathname:'/',hash:''},
   URLSearchParams,URL,Event:class Event{constructor(type){this.type=type;}},
   setTimeout:()=>{throw new Error('Unexpected OAuth timer.');},
-  fetch:async url=>{
-    if(url==='/api/github-oauth-session')return {ok:true,json:async()=>({connected:false})};
+  fetch:async (url,options={})=>{
+    if(url==='/api/github-oauth-session'&&options.method==='DELETE'){
+      disconnected=true;oauthConnected=false;return {ok:true,json:async()=>({connected:false})};
+    }
+    if(url==='/api/github-oauth-session'&&(!options.method||options.method==='GET'))
+      return {ok:true,json:async()=>({connected:oauthConnected,user:{login:'test-user',avatar:''},scopes:['read:user']})};
     throw new Error('Unexpected network access during local install flow: '+url);
   },
   console
@@ -94,4 +99,19 @@ saved=JSON.parse(store.get('jepong_plugins_directory_v2'));
 assert.equal(saved.installed.superpowers,false);
 assert.equal(win.JDPlugins.contextForChat().superpowers.enabled,false,'uninstall must immediately revoke workflow from chat');
 assert.equal(saved.installed.github,true,'uninstalling one plugin must preserve the other');
-console.log('PASS: interactive install/cancel/installed-list/uninstall/chat gates');
+
+// A linked GitHub session must be disconnected when the plugin is uninstalled.
+oauthConnected=true;
+win.JDPlugins.open('plugins');
+await new Promise(resolve=>setTimeout(resolve,0));
+const githubRow=get('jdplugInstalled').children.find(x=>x.children[0]?.children[1]?.children[0]?.textContent==='GitHub');
+assert(githubRow,'installed GitHub should remain in the installed list');
+githubRow.children[0].click();
+assert.equal(get('jdplugTry').textContent,'Try in chat');
+get('jdplugUninstall').click();
+await get('jdplugConfirmInstall').click();
+saved=JSON.parse(store.get('jepong_plugins_directory_v2'));
+assert.equal(disconnected,true,'uninstall must call backend disconnect for a connected account');
+assert.equal(saved.installed.github,false,'uninstall must persist removal');
+assert.equal(win.JDPlugins.contextForChat().github.enabled,false,'GitHub must be disabled immediately');
+console.log('PASS: interactive install/cancel/installed-list/uninstall/OAuth-disconnect/chat gates');
