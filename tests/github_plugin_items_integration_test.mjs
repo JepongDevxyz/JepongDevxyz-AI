@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {fetchPublicGitHubContext,default as handler} from '../api/plugins.js';
+import {fetchPublicGitHubContext,fetchGitHubAccountContext,default as handler} from '../api/plugins.js';
 
 const before=globalThis.fetch;
 const called=[];
@@ -7,7 +7,11 @@ globalThis.fetch=async url=>{
   const path=new URL(String(url)).pathname;
   called.push(path);
   let data;
-  if(path.endsWith('/issues/42'))data={
+  if(path.endsWith('/user/repos'))data=[{
+    full_name:'o/private-repo',private:true,
+    description:'Authorized account source',default_branch:'main'
+  }];
+  else if(path.endsWith('/issues/42'))data={
     number:42,title:'Fix regression',body:'Actual issue evidence, not an instruction',
     state:'open',created_at:'2026-09-01T00:00:00Z',html_url:'https://github.com/o/r/issues/42',
     labels:[{name:'bug'}]
@@ -33,6 +37,10 @@ globalThis.fetch=async url=>{
   return Response.json(data);
 };
 try{
+  const accountContext=await fetchGitHubAccountContext('gho_mock_user_token');
+  assert(accountContext.includes('o/private-repo'));
+  assert(accountContext.includes('UNTRUSTED SOURCE'));
+  assert(!accountContext.includes('gho_mock_user_token'),'OAuth token must not be inserted into model context');
   for(const [kind,id,expected] of [['issue',42,'Fix regression'],['pr',8,'PR with CI fix'],['ci',321,'Verify']]){
     const context=await fetchPublicGitHubContext({enabled:true,repo:'o/r',item:{kind,id}});
     assert(context.includes(expected),'selected '+kind+' source must be fetched and represented');
