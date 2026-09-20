@@ -97,3 +97,15 @@ body.theme-light .jdplug-confirm-card{background:#fff}
 .detail-mode .jdplug-header,.manage-mode .jdplug-header{grid-template-columns:48px auto 1fr}
 .detail-mode .jdplug-header h2,.manage-mode .jdplug-header h2{text-align:left;font-size:1.08rem}
 .detail-mode .jdplug-scroll,.manage-mode .jdplug-scroll{padding-top:6px}
+
+
+/* Explicit user-approved Actions executor shared by GitHub and Superpowers. */
+.jdplug-execution-card{margin-top:20px}
+.jdplug-execution-card .jdplug-button:disabled{opacity:.44;cursor:not-allowed;transform:none}
+.jdplug-execution-card .jdplug-status{margin-top:12px;min-height:20px;overflow-wrap:anywhere}
+.jdplug-execution-card .jdplug-status.error{color:#f87171}
+.jdplug-execution-card .jdplug-file-list{max-height:220px;overflow:auto;margin-top:14px}
+.jdplug-execution-card .jdplug-file-list .jdplug-entry{display:block;min-height:40px;padding:9px 12px;border-bottom:1px solid var(--jdplug-border);font-size:.8rem;color:var(--jdplug-text);text-decoration:none;overflow-wrap:anywhere}
+.jdplug-execution-card .jdplug-file-list .jdplug-entry:last-child{border-bottom:0}
+#jdplugExecuteDescription{white-space:pre-line;overflow-wrap:anywhere}
+#jdplugExecuteConfirm[hidden]{display:none!important}
