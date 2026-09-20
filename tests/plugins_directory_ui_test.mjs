@@ -10,7 +10,8 @@ for(const id of ['jdplugTabPlugins','jdplugTabSkills','jdplugDirectory','jdplugS
   'jdplugInstalled','jdplugAvailable','jdplugDetail','jdplugTry','jdplugManage',
   'jdplugManageView','jdplugRepoInput','jdplugResults','jdplugSuperEnabled',
   'jdplugPhase','jdplugGitEnabled','jdplugConnectGithub','jdplugDisconnectGithub',
-  'jdplugGithubSignedIn','jdplugGithubSignedOut','jdplugAccountRepos','jdplugRefreshRepos']){
+  'jdplugGithubSignedIn','jdplugGithubSignedOut','jdplugAccountRepos','jdplugRefreshRepos',
+  'jdplugIconStrip','jdplugDemo','jdplugOverflow','jdplugManageUninstall']){
   assert(panel.includes('id="'+id+'"'),'missing directory component '+id);
 }
 for(const term of ['function renderDirectory(', 'function tryInChat(', 'function openRepo(',
@@ -27,8 +28,10 @@ assert(ui.includes('/api/github-oauth-start')&&ui.includes('/api/github-oauth-se
   'official GitHub OAuth start/session endpoints must be wired to the marketplace');
 assert(!/automatic push|unlimited apps/i.test(ui),
   'UI must not claim unsupported repository write automation or fictitious unlimited apps');
-assert(css.includes('@media(max-width:590px)')&&css.includes('94dvh'),
-  'mobile bottom-sheet responsive layout is required');
+assert(css.includes('@media(max-width:590px)')&&css.includes('100dvh'),
+  'full-screen mobile marketplace layout is required');
+assert(css.includes('.jdplug-top-tabs')&&css.includes('border-radius:999px')&&css.includes('.jdplug-demo'),
+  'reference segmented tabs and plugin demo surface must remain present');
 assert(page.includes('src="/plugins.js"')&&page.includes('href="/plugins.css"'),
   'directory assets must remain wired to the current app');
 assert(page.includes('window.JDPlugins?.open()')&&page.includes('window.JDPlugins?.contextForChat?.()'),
