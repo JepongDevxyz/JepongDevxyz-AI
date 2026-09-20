@@ -1,4 +1,4 @@
-const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"jdplugTitle\">\n  <header class=\"jdplug-header\">\n    <button type=\"button\" class=\"jdplug-icon-btn\" id=\"jdplugBack\" aria-label=\"Back\">‹</button>\n    <h2 id=\"jdplugTitle\">Plugins</h2>\n    <button type=\"button\" class=\"jdplug-icon-btn\" id=\"jdplugClose\" aria-label=\"Close\">×</button>\n  </header>\n\n  <div class=\"jdplug-top-tabs\" id=\"jdplugTabs\">\n    <button type=\"button\" class=\"jdplug-top-tab active\" id=\"jdplugTabPlugins\">Plugins</button>\n    <button type=\"button\" class=\"jdplug-top-tab\" id=\"jdplugTabSkills\">Skills</button>\n  </div>\n\n  <div class=\"jdplug-scroll\">\n    <section class=\"jdplug-view\" id=\"jdplugDirectory\">\n      <div class=\"jdplug-icon-strip\" id=\"jdplugIconStrip\" aria-label=\"Plugin shortcuts\"></div>\n      <h3 class=\"jdplug-heading\" id=\"jdplugDirectoryTitle\">Plugins</h3>\n      <p class=\"jdplug-subtitle\" id=\"jdplugDirectoryHint\">Work with JepongDevxyz AI across your favorite tools.</p>\n      <label class=\"jdplug-search\"><span aria-hidden=\"true\">⌕</span><input id=\"jdplugSearch\" type=\"search\" autocomplete=\"off\" placeholder=\"Search plugins\" aria-label=\"Search plugins and skills\"></label>\n\n      <p class=\"jdplug-group\" id=\"jdplugInstalledLabel\">Installed</p>\n      <div class=\"jdplug-list\" id=\"jdplugInstalled\"></div>\n\n      <p class=\"jdplug-group\" id=\"jdplugAvailableLabel\">Popular</p>\n      <div class=\"jdplug-list\" id=\"jdplugAvailable\"></div>\n    </section>\n\n    <section class=\"jdplug-view\" id=\"jdplugDetail\" hidden>\n      <div class=\"jdplug-detail-top\">\n        <div class=\"jdplug-hero\">\n          <div class=\"jdplug-entry-icon\" id=\"jdplugHeroIcon\" aria-hidden=\"true\"></div>\n          <h3 id=\"jdplugHeroTitle\"></h3>\n          <p id=\"jdplugHeroTagline\"></p>\n        </div>\n        <div class=\"jdplug-hero-actions\">\n          <button type=\"button\" class=\"jdplug-button\" id=\"jdplugOverflow\" aria-label=\"Plugin options\">•••</button>\n          <button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugTry\">Install</button>\n          <button type=\"button\" class=\"jdplug-button\" id=\"jdplugManage\" hidden>Manage</button>\n        </div>\n      </div>\n\n      <div class=\"jdplug-demo\" id=\"jdplugDemo\"></div>\n      <p class=\"jdplug-description\" id=\"jdplugDescription\"></p>\n\n      <div id=\"jdplugGithubSummary\">\n        <p class=\"jdplug-section-label\">Repository</p>\n        <div class=\"jdplug-card\"><strong id=\"jdplugCurrentRepo\">No repository selected</strong><p id=\"jdplugRepoSummary\">Install GitHub, then connect or open a repository in Manage.</p></div>\n      </div>\n\n      <div id=\"jdplugSkillSummary\" hidden>\n        <p class=\"jdplug-section-label\">Skills</p>\n        <div class=\"jdplug-skill-chips\" id=\"jdplugDetailSkillList\"></div>\n      </div>\n\n      <div class=\"jdplug-hint\" id=\"jdplugDetailNote\"></div>\n      <button type=\"button\" class=\"jdplug-button jdplug-uninstall\" id=\"jdplugUninstall\" hidden>Uninstall plugin</button>\n    </section>\n\n    <section class=\"jdplug-view\" id=\"jdplugManageView\" hidden>\n      <h3 class=\"jdplug-heading\" id=\"jdplugManageTitle\">Settings</h3>\n      <p class=\"jdplug-subtitle\" id=\"jdplugManageSubtitle\"></p>\n\n      <div id=\"jdplugGithubManage\">\n        <div class=\"jdplug-card jdplug-account-card\">\n          <div id=\"jdplugGithubSignedOut\">\n            <strong>GitHub account</strong>\n            <p>Connect your GitHub account through GitHub OAuth. Your access token stays server-side in an encrypted HttpOnly cookie.</p>\n            <button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugConnectGithub\">Connect GitHub</button>\n            <p id=\"jdplugConnectionReady\" class=\"jdplug-muted\" role=\"status\">Checking account connection availability…</p>\n          </div>\n          <div id=\"jdplugGithubSignedIn\" hidden>\n            <div class=\"jdplug-account-row\">\n              <img id=\"jdplugGithubAvatar\" class=\"jdplug-account-avatar\" alt=\"\" referrerpolicy=\"no-referrer\">\n              <div class=\"jdplug-account-copy\"><strong id=\"jdplugGithubLogin\">GitHub</strong><p id=\"jdplugGithubScopes\">Connected</p></div>\n            </div>\n            <div class=\"jdplug-row\"><button type=\"button\" class=\"jdplug-button\" id=\"jdplugRefreshRepos\">Refresh repositories</button><button type=\"button\" class=\"jdplug-button\" id=\"jdplugDisconnectGithub\">Disconnect</button></div>\n          </div>\n        </div>\n\n        <div class=\"jdplug-card\" id=\"jdplugAccountReposCard\" hidden>\n          <strong>Your repositories</strong>\n          <p>Select a repository available to the connected account.</p>\n          <select class=\"jdplug-select\" id=\"jdplugAccountRepos\" aria-label=\"Connected GitHub repositories\"></select>\n        </div>\n\n        <div class=\"jdplug-card\">\n          <strong>Repository</strong>\n          <p>Browse public repositories without signing in, or use a connected GitHub account for repositories it can access.</p>\n          <label class=\"jdplug-field\" for=\"jdplugRepoInput\">Repository URL or owner/repository</label>\n          <div class=\"jdplug-row\"><input class=\"jdplug-input\" id=\"jdplugRepoInput\" autocomplete=\"off\" spellcheck=\"false\" maxlength=\"210\" placeholder=\"owner/repository\"><button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugLoadRepo\">Open</button></div>\n          <p id=\"jdplugRepoDescription\" class=\"jdplug-muted\"></p>\n          <div class=\"jdplug-row\"><select class=\"jdplug-select\" id=\"jdplugBranch\" aria-label=\"GitHub branch\"></select><button type=\"button\" class=\"jdplug-button\" id=\"jdplugPRs\">Open PRs</button></div>\n          <p class=\"jdplug-muted\" id=\"jdplugLocation\"></p>\n          <div class=\"jdplug-file-list\" id=\"jdplugResults\" aria-label=\"Repository files\"></div>\n          <pre class=\"jdplug-preview\" id=\"jdplugPreview\" hidden></pre>\n          <div class=\"jdplug-row\"><label for=\"jdplugGitEnabled\">Use selected repository/file in chat</label><input type=\"checkbox\" id=\"jdplugGitEnabled\"></div>\n          <p class=\"jdplug-muted\" id=\"jdplugSelected\">Not included in chat.</p>\n        </div>\n      </div>\n\n      <div id=\"jdplugSuperManage\" hidden>\n        <div class=\"jdplug-card\">\n          <strong>Superpowers workflow</strong>\n          <p>Enable structured coding guidance and choose the active skill.</p>\n          <div class=\"jdplug-row\"><label for=\"jdplugSuperEnabled\">Enable coding workflow</label><input type=\"checkbox\" id=\"jdplugSuperEnabled\"></div>\n          <label class=\"jdplug-field\" for=\"jdplugPhase\">Active coding skill</label>\n          <select class=\"jdplug-select\" id=\"jdplugPhase\"></select>\n        </div>\n        <p class=\"jdplug-section-label\">Skills</p>\n        <div class=\"jdplug-skill-chips\" id=\"jdplugManageSkillList\"></div>\n      </div>\n\n      <p class=\"jdplug-status\" id=\"jdplugStatus\" role=\"status\" aria-live=\"polite\"></p>\n      <button type=\"button\" class=\"jdplug-button jdplug-uninstall\" id=\"jdplugManageUninstall\">Uninstall plugin</button>\n    </section>\n  </div>\n\n  <div class=\"jdplug-confirm\" id=\"jdplugConfirm\" hidden role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"jdplugConfirmTitle\">\n    <div class=\"jdplug-confirm-card\">\n      <div class=\"jdplug-entry-icon\" id=\"jdplugConfirmIcon\" aria-hidden=\"true\"></div>\n      <h3 id=\"jdplugConfirmTitle\">Install plugin?</h3>\n      <p id=\"jdplugConfirmDescription\"></p>\n      <div class=\"jdplug-confirm-actions\"><button type=\"button\" class=\"jdplug-button\" id=\"jdplugCancelInstall\">Cancel</button><button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugConfirmInstall\">Install</button></div>\n    </div>\n  </div>\n</section>";
+const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"jdplugTitle\">\n  <header class=\"jdplug-header\">\n    <button type=\"button\" class=\"jdplug-icon-btn\" id=\"jdplugBack\" aria-label=\"Back\">‹</button>\n    <h2 id=\"jdplugTitle\">Plugins</h2>\n    <button type=\"button\" class=\"jdplug-icon-btn\" id=\"jdplugClose\" aria-label=\"Close\">×</button>\n  </header>\n\n  <div class=\"jdplug-top-tabs\" id=\"jdplugTabs\">\n    <button type=\"button\" class=\"jdplug-top-tab active\" id=\"jdplugTabPlugins\">Plugins</button>\n    <button type=\"button\" class=\"jdplug-top-tab\" id=\"jdplugTabSkills\">Skills</button>\n  </div>\n\n  <div class=\"jdplug-scroll\">\n    <section class=\"jdplug-view\" id=\"jdplugDirectory\">\n      <div class=\"jdplug-icon-strip\" id=\"jdplugIconStrip\" aria-label=\"Plugin shortcuts\"></div>\n      <h3 class=\"jdplug-heading\" id=\"jdplugDirectoryTitle\">Plugins</h3>\n      <p class=\"jdplug-subtitle\" id=\"jdplugDirectoryHint\">Work with JepongDevxyz AI across your favorite tools.</p>\n      <label class=\"jdplug-search\"><span aria-hidden=\"true\">⌕</span><input id=\"jdplugSearch\" type=\"search\" autocomplete=\"off\" placeholder=\"Search plugins\" aria-label=\"Search plugins and skills\"></label>\n\n      <p class=\"jdplug-group\" id=\"jdplugInstalledLabel\">Installed</p>\n      <div class=\"jdplug-list\" id=\"jdplugInstalled\"></div>\n\n      <p class=\"jdplug-group\" id=\"jdplugAvailableLabel\">Popular</p>\n      <div class=\"jdplug-list\" id=\"jdplugAvailable\"></div>\n    </section>\n\n    <section class=\"jdplug-view\" id=\"jdplugDetail\" hidden>\n      <div class=\"jdplug-detail-top\">\n        <div class=\"jdplug-hero\">\n          <div class=\"jdplug-entry-icon\" id=\"jdplugHeroIcon\" aria-hidden=\"true\"></div>\n          <h3 id=\"jdplugHeroTitle\"></h3>\n          <p id=\"jdplugHeroTagline\"></p>\n        </div>\n        <div class=\"jdplug-hero-actions\">\n          <button type=\"button\" class=\"jdplug-button\" id=\"jdplugOverflow\" aria-label=\"Plugin options\">•••</button>\n          <button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugTry\">Install</button>\n          <button type=\"button\" class=\"jdplug-button\" id=\"jdplugManage\" hidden>Manage</button>\n        </div>\n      </div>\n\n      <div class=\"jdplug-demo\" id=\"jdplugDemo\"></div>\n      <p class=\"jdplug-description\" id=\"jdplugDescription\"></p>\n\n      <div id=\"jdplugGithubSummary\">\n        <p class=\"jdplug-section-label\">Repository</p>\n        <div class=\"jdplug-card\"><strong id=\"jdplugCurrentRepo\">No repository selected</strong><p id=\"jdplugRepoSummary\">Install GitHub, then connect or open a repository in Manage.</p></div>\n      </div>\n\n      <div id=\"jdplugSkillSummary\" hidden>\n        <p class=\"jdplug-section-label\">Skills</p>\n        <div class=\"jdplug-skill-chips\" id=\"jdplugDetailSkillList\"></div>\n      </div>\n\n      <div class=\"jdplug-hint\" id=\"jdplugDetailNote\"></div>\n      <button type=\"button\" class=\"jdplug-button jdplug-uninstall\" id=\"jdplugUninstall\" hidden>Uninstall plugin</button>\n    </section>\n\n    <section class=\"jdplug-view\" id=\"jdplugManageView\" hidden>\n      <h3 class=\"jdplug-heading\" id=\"jdplugManageTitle\">Settings</h3>\n      <p class=\"jdplug-subtitle\" id=\"jdplugManageSubtitle\"></p>\n\n      <div id=\"jdplugGithubManage\">\n        <div class=\"jdplug-card jdplug-account-card\">\n          <div id=\"jdplugGithubSignedOut\">\n            <strong>GitHub account</strong>\n            <p>Connect your GitHub account through GitHub OAuth. Your access token stays server-side in an encrypted HttpOnly cookie.</p>\n            <button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugConnectGithub\">Connect GitHub</button>\n            <p id=\"jdplugConnectionReady\" class=\"jdplug-muted\" role=\"status\">Checking account connection availability…</p>\n          </div>\n          <div id=\"jdplugGithubSignedIn\" hidden>\n            <div class=\"jdplug-account-row\">\n              <img id=\"jdplugGithubAvatar\" class=\"jdplug-account-avatar\" alt=\"\" referrerpolicy=\"no-referrer\">\n              <div class=\"jdplug-account-copy\"><strong id=\"jdplugGithubLogin\">GitHub</strong><p id=\"jdplugGithubScopes\">Connected</p></div>\n            </div>\n            <div class=\"jdplug-row\"><button type=\"button\" class=\"jdplug-button\" id=\"jdplugRefreshRepos\">Refresh repositories</button><button type=\"button\" class=\"jdplug-button\" id=\"jdplugDisconnectGithub\">Disconnect</button></div>\n          </div>\n        </div>\n\n        <div class=\"jdplug-card\" id=\"jdplugAccountReposCard\" hidden>\n          <strong>Your repositories</strong>\n          <p>Select a repository available to the connected account.</p>\n          <select class=\"jdplug-select\" id=\"jdplugAccountRepos\" aria-label=\"Connected GitHub repositories\"></select>\n        </div>\n\n        <div class=\"jdplug-card\">\n          <strong>Repository</strong>\n          <p>Browse public repositories without signing in, or use a connected GitHub account for repositories it can access.</p>\n          <label class=\"jdplug-field\" for=\"jdplugRepoInput\">Repository URL or owner/repository</label>\n          <div class=\"jdplug-row\"><input class=\"jdplug-input\" id=\"jdplugRepoInput\" autocomplete=\"off\" spellcheck=\"false\" maxlength=\"210\" placeholder=\"owner/repository\"><button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugLoadRepo\">Open</button></div>\n          <p id=\"jdplugRepoDescription\" class=\"jdplug-muted\"></p>\n          <div class=\"jdplug-row\"><select class=\"jdplug-select\" id=\"jdplugBranch\" aria-label=\"GitHub branch\"></select><button type=\"button\" class=\"jdplug-button\" id=\"jdplugPRs\">Open PRs</button></div>\n          <p class=\"jdplug-muted\" id=\"jdplugLocation\"></p>\n          <div class=\"jdplug-file-list\" id=\"jdplugResults\" aria-label=\"Repository files\"></div>\n          <pre class=\"jdplug-preview\" id=\"jdplugPreview\" hidden></pre>\n          <div class=\"jdplug-row\"><label for=\"jdplugGitEnabled\">Use selected repository/file in chat</label><input type=\"checkbox\" id=\"jdplugGitEnabled\"></div>\n          <p class=\"jdplug-muted\" id=\"jdplugSelected\">Not included in chat.</p>\n        </div>\n      </div>\n\n      <div id=\"jdplugSuperManage\" hidden>\n        <div class=\"jdplug-card\">\n          <strong>Superpowers workflow</strong>\n          <p>Enable structured coding guidance and choose the active skill.</p>\n          <div class=\"jdplug-row\"><label for=\"jdplugSuperEnabled\">Enable coding workflow</label><input type=\"checkbox\" id=\"jdplugSuperEnabled\"></div>\n          <label class=\"jdplug-field\" for=\"jdplugPhase\">Active coding skill</label>\n          <select class=\"jdplug-select\" id=\"jdplugPhase\"></select>\n        </div>\n        <p class=\"jdplug-section-label\">Skills</p>\n        <div class=\"jdplug-skill-chips\" id=\"jdplugManageSkillList\"></div>\n      </div>\n\n      <div class=\"jdplug-card jdplug-execution-card\" id=\"jdplugExecutionPanel\" hidden>\n        <strong>Run project tests</strong>\n        <p>Run an existing GitHub Actions test workflow with your connected GitHub account. The model does not run commands directly or change repository files.</p>\n        <p class=\"jdplug-muted\" id=\"jdplugExecutionRepo\">Select a GitHub repository first.</p>\n        <div class=\"jdplug-row\"><button type=\"button\" class=\"jdplug-button\" id=\"jdplugLoadWorkflows\">Find test workflows</button><button type=\"button\" class=\"jdplug-button\" id=\"jdplugCheckRuns\" hidden>Check runs</button></div>\n        <label for=\"jdplugWorkflowSelect\" class=\"jdplug-field\">Verification workflow</label>\n        <select class=\"jdplug-select\" id=\"jdplugWorkflowSelect\" aria-label=\"Test workflow\"><option value=\"\">Choose a workflow…</option></select>\n        <p class=\"jdplug-muted\" id=\"jdplugExecutionBranch\"></p>\n        <button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugDispatchWorkflow\" disabled>Run tests</button>\n        <p class=\"jdplug-status\" id=\"jdplugExecutionStatus\" role=\"status\" aria-live=\"polite\"></p>\n        <div class=\"jdplug-file-list\" id=\"jdplugRunList\" aria-label=\"Recent workflow executions\"></div>\n      </div>\n      <div class=\"jdplug-card\" id=\"jdplugProposalPanel\" hidden>\n        <strong>Propose a code change</strong>\n        <p>Stage AI-generated or manually edited source, preview the original versus proposed content, and explicitly approve a new GitHub pull request. No changes are made to main automatically.</p>\n        <label class=\"jdplug-field\" for=\"jdplugChangePath\">Repository file path</label>\n        <input class=\"jdplug-input\" id=\"jdplugChangePath\" placeholder=\"src/example.js\" autocomplete=\"off\" spellcheck=\"false\">\n        <label class=\"jdplug-field\" for=\"jdplugChangeSource\">Complete replacement file source (max 80 KB)</label>\n        <textarea class=\"jdplug-input jdplug-change-source\" id=\"jdplugChangeSource\" rows=\"7\" spellcheck=\"false\" placeholder=\"Paste a complete file from an AI response, or edit it here.\"></textarea>\n        <button type=\"button\" class=\"jdplug-button\" id=\"jdplugPreviewChange\">Preview proposed change</button>\n        <div id=\"jdplugChangePreview\" hidden>\n          <p class=\"jdplug-muted\" id=\"jdplugChangeSummary\"></p>\n          <p class=\"jdplug-field\">Original file (preview)</p>\n          <pre class=\"jdplug-preview\" id=\"jdplugBeforeSource\"></pre>\n          <p class=\"jdplug-field\">Proposed file (preview)</p>\n          <pre class=\"jdplug-preview\" id=\"jdplugAfterSource\"></pre>\n          <p class=\"jdplug-muted\">Review the complete code and GitHub pull-request diff before merging. Workflow files and secrets cannot be changed through this tool.</p>\n          <button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugSubmitChange\">Create proposal PR</button>\n        </div>\n        <p class=\"jdplug-status\" id=\"jdplugChangeStatus\" role=\"status\" aria-live=\"polite\"></p>\n        <div id=\"jdplugChangeResult\"></div>\n      </div>\n      <p class=\"jdplug-status\" id=\"jdplugStatus\" role=\"status\" aria-live=\"polite\"></p>\n      <button type=\"button\" class=\"jdplug-button jdplug-uninstall\" id=\"jdplugManageUninstall\">Uninstall plugin</button>\n    </section>\n  </div>\n\n  <div class=\"jdplug-confirm\" id=\"jdplugProposalConfirm\" hidden role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"jdplugProposalTitle\">\n    <div class=\"jdplug-confirm-card\">\n      <h3 id=\"jdplugProposalTitle\">Create GitHub pull request?</h3>\n      <p id=\"jdplugProposalDescription\"></p>\n      <div class=\"jdplug-confirm-actions\"><button type=\"button\" class=\"jdplug-button\" id=\"jdplugCancelProposal\">Cancel</button><button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugApproveProposal\">Create PR</button></div>\n    </div>\n  </div>\n  <div class=\"jdplug-confirm\" id=\"jdplugExecuteConfirm\" hidden role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"jdplugExecuteTitle\">\n    <div class=\"jdplug-confirm-card\">\n      <h3 id=\"jdplugExecuteTitle\">Run GitHub Actions?</h3>\n      <p id=\"jdplugExecuteDescription\"></p>\n      <div class=\"jdplug-confirm-actions\"><button type=\"button\" class=\"jdplug-button\" id=\"jdplugCancelExecution\">Cancel</button><button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugApproveExecution\">Run tests</button></div>\n    </div>\n  </div>\n  <div class=\"jdplug-confirm\" id=\"jdplugConfirm\" hidden role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"jdplugConfirmTitle\">\n    <div class=\"jdplug-confirm-card\">\n      <div class=\"jdplug-entry-icon\" id=\"jdplugConfirmIcon\" aria-hidden=\"true\"></div>\n      <h3 id=\"jdplugConfirmTitle\">Install plugin?</h3>\n      <p id=\"jdplugConfirmDescription\"></p>\n      <div class=\"jdplug-confirm-actions\"><button type=\"button\" class=\"jdplug-button\" id=\"jdplugCancelInstall\">Cancel</button><button type=\"button\" class=\"jdplug-button primary\" id=\"jdplugConfirmInstall\">Install</button></div>\n    </div>\n  </div>\n</section>";
 
 /* Mobile Plugins + Skills marketplace for JepongDevxyz AI. GitHub uses an official OAuth web flow; Superpowers remains a built-in conversational workflow. */
 (() => {
@@ -18,11 +18,33 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   const defaultState={repo:'',path:'',ref:'',directory:'',github:false,repoLoaded:false,superpowers:false,phase:'plan',installed:{github:false,superpowers:false},accountConnected:false,accountUser:null,accountScopes:[],accountRepos:[],githubConnectionReady:null};
   const state=Object.assign({},defaultState);
   let tab='plugins',view='directory',selected='github',busy=false,pendingPluginAction=null;
+  let availableTestWorkflows=[],selectedExecutionRef='',pendingExecution=null;
+  let stagedProposal=null,pendingProposal=null;
+  let savedGithubSelection=false,githubRestorePromise=Promise.resolve();
   const history=[];
   function text(id,value){const el=$(id);if(el)el.textContent=String(value||'');}
-  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,installed:{github:!!state.installed.github,superpowers:!!state.installed.superpowers},github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed={github:s.installed?.github===true,superpowers:s.installed?.superpowers===true};state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'plan';}}catch(_){}}
+  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,ref:state.ref,path:state.path,installed:{github:!!state.installed.github,superpowers:!!state.installed.superpowers},github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
+  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed={github:s.installed?.github===true,superpowers:s.installed?.superpowers===true};state.ref=typeof s.ref==='string'?s.ref:'';state.path=typeof s.path==='string'?s.path:'';state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'plan';savedGithubSelection=state.installed.github&&s.github===true&&!!state.repo;}}catch(_){}}
   restore();
+  githubRestorePromise=restoreGithubContext();
+
+  async function restoreGithubContext(){
+    if(!savedGithubSelection||!installed('github')||!state.repo)return;
+    const savedRepo=state.repo;
+    try{
+      const response=await fetch('/api/plugins',{
+        method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'repo',repo:savedRepo})
+      });
+      if(!response.ok)throw new Error('Saved repository is not accessible.');
+      const info=await response.json();
+      if(!info?.repo||info.repo.toLowerCase()!==savedRepo.toLowerCase())throw new Error('Saved repository changed.');
+      if(state.repo!==savedRepo||!installed('github'))return;
+      state.repoLoaded=true;state.github=true;
+      if(!state.ref)state.ref=info.defaultBranch||'';
+    }catch(_){state.repoLoaded=false;state.github=false;state.path='';}
+  }
+
   function notice(message,error=false){text('jdplugStatus',message);$('jdplugStatus')?.classList.toggle('error',!!error);}
   function setBusy(flag){busy=!!flag;document.querySelectorAll('#jdplugPanel .jdplug-button, #jdplugPanel .jdplug-entry').forEach(el=>{if(el.tagName==='BUTTON')el.disabled=busy;});}
   function makeButton(label,handler,className='jdplug-button'){const el=document.createElement('button');el.type='button';el.className=className;el.textContent=label;el.addEventListener('click',handler);return el;}
@@ -72,6 +94,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       }
       state.installed[id]=false;
       if(id==='github'){
+        savedGithubSelection=false;availableTestWorkflows=[];selectedExecutionRef='';
         state.github=false;state.repoLoaded=false;state.repo='';state.path='';state.ref='';state.directory='';
         state.accountConnected=false;state.accountUser=null;state.accountScopes=[];state.accountRepos=[];
         $('jdplugResults')?.replaceChildren();
@@ -198,6 +221,18 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       text('jdplugManageSubtitle',selected==='github'?'Manage account access and repository context.':'Manage the installed coding workflow and active skill.');
       $('jdplugGithubManage').hidden=selected!=='github';$('jdplugSuperManage').hidden=selected!=='superpowers';
       $('jdplugManageUninstall').hidden=!installed(selected);
+      const proposalPanel=$('jdplugProposalPanel');
+      if(proposalPanel){
+        proposalPanel.hidden=!(installed('github')&&installed(selected));
+        if(stagedProposal&&!$('jdplugChangeSource').value)$('jdplugChangeSource').value=stagedProposal;
+      }
+      const runner=$('jdplugExecutionPanel');
+      if(runner){
+        runner.hidden=!(installed('github')&&installed(selected));
+        text('jdplugExecutionRepo',state.repoLoaded?'Repository: '+state.repo:'Open a GitHub repository in the GitHub plugin first.');
+        text('jdplugExecutionBranch',state.repoLoaded?'Branch: '+(state.ref||'default'):'');
+        $('jdplugDispatchWorkflow').disabled=!(state.accountConnected&&state.repoLoaded&&availableTestWorkflows.length);
+      }
       if(selected==='github'){$('jdplugRepoInput').value=state.repo;selectedInfo();renderGithubAccount();}
       else{$('jdplugSuperEnabled').checked=state.superpowers;$('jdplugPhase').value=state.phase;renderSkillRows('jdplugManageSkillList',true);}
     }
@@ -329,7 +364,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     const input=$('jdplugRepoInput').value.trim();
     if(!/^(?:https:\/\/github\.com\/)?[\w.-]+\/[\w.-]+\/?$/.test(input)){notice('Enter a public repository URL or owner/repository.',true);return;}
     state.repo=input.replace(/^https:\/\/github\.com\//,'').replace(/\/$/,'');
-    state.repoLoaded=false;state.github=false;state.path='';state.ref='';state.directory='';
+    state.repoLoaded=false;state.github=false;state.path='';state.ref='';state.directory='';savedGithubSelection=false;
+    availableTestWorkflows=[];selectedExecutionRef='';
     $('jdplugGitEnabled').checked=false;$('jdplugPreview').hidden=true;statusForChat();
     const info=await call('repo');if(!info)return;state.repoLoaded=true;state.repo=info.repo;
     $('jdplugRepoInput').value=info.repo;persist();
@@ -338,6 +374,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     for(const item of branchData?.branches||[]){const option=document.createElement('option');option.value=item.name;option.textContent=item.name;select.append(option);}
     state.ref=info.defaultBranch;select.value=info.defaultBranch;
     await browse('');
+    if(view==='manage')render();
   }
   async function prs(){if(!state.repoLoaded){notice('Open a repository first.',true);return;}
     const data=await call('prs');if(!data)return;const area=$('jdplugResults');area.replaceChildren();
@@ -360,6 +397,160 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     const input=$('userInput');
     if(input){input.value=prompt;input.dispatchEvent(new Event('input',{bubbles:true}));if(typeof window.autoResizeTextarea==='function')window.autoResizeTextarea(input);input.focus();}
   }
+
+
+  function proposalNotice(message,error=false){
+    const el=$('jdplugChangeStatus');
+    if(el){el.textContent=String(message||'');el.classList.toggle('error',!!error);}
+  }
+  async function proposalApi(action,extra={}){
+    if(!installed('github')||!state.accountConnected||!state.repoLoaded)throw new Error('Install GitHub, connect your account and select a repository before proposing code.');
+    const response=await fetch('/api/plugin-proposals',{
+      method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action,repo:state.repo,...extra})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'GitHub proposal failed.');
+    return data;
+  }
+  async function previewProposedChange(){
+    pendingProposal=null;$('jdplugChangePreview').hidden=true;
+    const path=$('jdplugChangePath').value.trim();
+    const content=$('jdplugChangeSource').value;
+    if(!path||!content.trim()){proposalNotice('Enter a source file path and the complete proposed code.',true);return;}
+    const btn=$('jdplugPreviewChange');btn.disabled=true;
+    proposalNotice('Checking the current GitHub file and preparing a preview…');
+    try{
+      const data=await proposalApi('preview',{path,content});
+      pendingProposal={repo:state.repo,path,content,approval:data.approval,base:data.base,expiresAt:data.expiresAt};
+      text('jdplugChangeSummary',(data.exists?'Update existing file':'Create new file')+' · '+data.path+' · '+data.base+
+        ' · '+data.preview.originalLines+' → '+data.preview.proposedLines+' lines'+(data.preview.truncated?' · excerpt shown only':''));
+      text('jdplugBeforeSource',data.preview.before||'(New file)');
+      text('jdplugAfterSource',data.preview.after);
+      $('jdplugChangePreview').hidden=false;
+      proposalNotice('Preview ready. Confirm only after reviewing the entire proposed source.');
+    }catch(error){proposalNotice(error.message||'Could not preview the file.',true);}
+    finally{btn.disabled=false;}
+  }
+  function confirmProposedChange(){
+    if(!pendingProposal||pendingProposal.repo!==state.repo||pendingProposal.path!==$('jdplugChangePath').value.trim()||pendingProposal.content!==$('jdplugChangeSource').value){
+      proposalNotice('Preview the current proposed source before proceeding.',true);return;
+    }
+    text('jdplugProposalDescription','Repository: '+pendingProposal.repo+'\nFile: '+pendingProposal.path+
+      '\nBase branch: '+pendingProposal.base+
+      '\nA new proposal branch and pull request will be created. Nothing will be merged automatically.');
+    $('jdplugProposalConfirm').hidden=false;$('jdplugApproveProposal').disabled=false;
+    $('jdplugApproveProposal').focus();
+  }
+  async function submitProposedChange(){
+    const approved=pendingProposal;
+    if(!approved)return;
+    pendingProposal=null;$('jdplugProposalConfirm').hidden=true;
+    const btn=$('jdplugSubmitChange');btn.disabled=true;proposalNotice('Creating reviewed GitHub proposal…');
+    try{
+      if(approved.content!==$('jdplugChangeSource').value||approved.path!==$('jdplugChangePath').value.trim()||approved.repo!==state.repo)
+        throw new Error('Proposal changed since preview. Preview again.');
+      const result=await proposalApi('propose',{path:approved.path,content:approved.content,approval:approved.approval,confirm:true});
+      if(!result.created||!result.pullRequest?.url)throw new Error('No pull request was confirmed.');
+      const area=$('jdplugChangeResult');area.replaceChildren();
+      const a=document.createElement('a');a.className='jdplug-entry';a.href=result.pullRequest.url;a.target='_blank';a.rel='noopener noreferrer';
+      a.textContent='Open PR #'+result.pullRequest.number+' · '+result.pullRequest.title;area.append(a);
+      proposalNotice('GitHub PR created. Review the diff and run CI before merging.');
+      $('jdplugChangePreview').hidden=true;stagedProposal=null;
+    }catch(error){proposalNotice(error.message||'Could not create the pull request.',true);}
+    finally{btn.disabled=false;}
+  }
+  function executionNotice(message,error=false){
+    const el=$('jdplugExecutionStatus');
+    if(el){el.textContent=String(message||'');el.classList.toggle('error',!!error);}
+  }
+  async function executeApi(action,extra={}){
+    if(!installed('github')||!state.accountConnected||!state.repoLoaded){
+      executionNotice('Install and connect GitHub, then open a repository before running project tests.',true);
+      return null;
+    }
+    const response=await fetch('/api/plugin-execute',{
+      method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action,repo:state.repo,...extra})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'GitHub Actions request failed.');
+    return data;
+  }
+  async function loadTestWorkflows(){
+    if(!installed('github')){selected='github';showPluginConfirmation('github','install');return;}
+    if(!state.accountConnected){executionNotice('Connect GitHub before running a workflow.',true);return;}
+    if(!state.repoLoaded){executionNotice('Open your repository in GitHub → Manage first.',true);return;}
+    const control=$('jdplugLoadWorkflows');control.disabled=true;
+    executionNotice('Checking available test workflows…');
+    try{
+      const data=await executeApi('list');
+      if(!data)return;
+      availableTestWorkflows=Array.isArray(data.workflows)?data.workflows:[];
+      selectedExecutionRef=state.ref||data.defaultBranch;
+      const select=$('jdplugWorkflowSelect');select.replaceChildren();
+      const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choose a test workflow…';select.append(placeholder);
+      for(const workflow of availableTestWorkflows){
+        const option=document.createElement('option');option.value=String(workflow.id);option.textContent=workflow.name;select.append(option);
+      }
+      text('jdplugExecutionBranch','Branch: '+selectedExecutionRef);
+      $('jdplugDispatchWorkflow').disabled=!availableTestWorkflows.length;
+      if(availableTestWorkflows.length===1)select.value=String(availableTestWorkflows[0].id);
+      $('jdplugDispatchWorkflow').disabled=!select.value;
+      executionNotice(availableTestWorkflows.length?'Choose a workflow and confirm before running tests.':'No active test workflow found. Add workflow_dispatch to a test workflow in this repository.');
+    }catch(error){availableTestWorkflows=[];$('jdplugDispatchWorkflow').disabled=true;executionNotice(error.message||'Failed to load workflows.',true);}
+    finally{control.disabled=false;}
+  }
+  function confirmRunTests(){
+    const id=Number($('jdplugWorkflowSelect').value);
+    const workflow=availableTestWorkflows.find(x=>x.id===id);
+    if(!workflow||!installed('github')||!state.accountConnected||!state.repoLoaded){
+      executionNotice('Connect GitHub and select a valid test workflow first.',true);return;
+    }
+    const ref=selectedExecutionRef||state.ref;
+    if(!ref){executionNotice('Select a branch in GitHub → Manage first.',true);return;}
+    pendingExecution={repo:state.repo,ref,workflowId:id,workflowName:workflow.name};
+    text('jdplugExecuteDescription','Repository: '+pendingExecution.repo+'\nWorkflow: '+workflow.name+'\nBranch: '+ref+'\nThis runs existing GitHub Actions code in your repository. It will not write source files or merge branches.');
+    $('jdplugExecuteConfirm').hidden=false;
+    $('jdplugApproveExecution').disabled=false;
+    $('jdplugApproveExecution').focus();
+  }
+  async function dispatchTests(){
+    const approved=pendingExecution;
+    if(!approved)return;
+    pendingExecution=null;
+    $('jdplugExecuteConfirm').hidden=true;
+    const control=$('jdplugDispatchWorkflow');control.disabled=true;
+    executionNotice('Requesting GitHub Actions run…');
+    try{
+      // Explicit user click is required. Models cannot invoke workflow dispatch.
+      if(approved.repo!==state.repo||!installed('github')||!state.accountConnected)throw new Error('Repository or GitHub session changed. Reload workflows and retry.');
+      const data=await executeApi('dispatch',{workflowId:approved.workflowId,ref:approved.ref,confirm:true});
+      if(!data?.accepted)throw new Error('GitHub did not accept this run.');
+      executionNotice('GitHub accepted the run request. Check the actual workflow result below.');
+      $('jdplugCheckRuns').hidden=false;
+      await checkTestRuns();
+    }catch(error){executionNotice(error.message||'GitHub Actions failed.',true);}
+    finally{control.disabled=false;}
+  }
+  async function checkTestRuns(){
+    const id=Number($('jdplugWorkflowSelect').value);
+    if(!availableTestWorkflows.some(x=>x.id===id)){executionNotice('Choose a test workflow first.',true);return;}
+    try{
+      const result=await executeApi('runs',{workflowId:id});
+      if(!result)return;
+      const area=$('jdplugRunList');area.replaceChildren();
+      for(const run of result.runs||[]){
+        const a=document.createElement('a');
+        a.className='jdplug-entry';
+        a.href=run.url;a.target='_blank';a.rel='noopener noreferrer';
+        a.textContent=run.name+' · '+run.branch+' · '+(run.conclusion||run.status)+' · '+(run.createdAt||'');
+        area.append(a);
+      }
+      if(!area.children.length)area.textContent='No workflow runs reported yet. Refresh after a few seconds.';
+      else executionNotice('GitHub Actions run status refreshed. A completed successful run is required before claiming tests passed.');
+    }catch(error){executionNotice(error.message||'Could not read workflow results.',true);}
+  }
   function init(){
     if($('jdplugPanel'))return;
     const overlay=document.createElement('div');overlay.id='jdplugPanel';overlay.className='jdplug-overlay';overlay.innerHTML=PANEL_HTML;document.body.append(overlay);
@@ -373,6 +564,19 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     $('jdplugOverflow').addEventListener('click',()=>openManage());
     $('jdplugUninstall').addEventListener('click',()=>showPluginConfirmation(selected,'uninstall'));
     $('jdplugManageUninstall').addEventListener('click',()=>showPluginConfirmation(selected,'uninstall'));
+    $('jdplugLoadWorkflows').addEventListener('click',loadTestWorkflows);
+    $('jdplugWorkflowSelect').addEventListener('change',()=>{$('jdplugDispatchWorkflow').disabled=!($('jdplugWorkflowSelect').value&&state.accountConnected&&state.repoLoaded);});
+    $('jdplugDispatchWorkflow').addEventListener('click',confirmRunTests);
+    $('jdplugCancelExecution').addEventListener('click',()=>{pendingExecution=null;$('jdplugExecuteConfirm').hidden=true;});
+    $('jdplugApproveExecution').addEventListener('click',dispatchTests);
+    $('jdplugCheckRuns').addEventListener('click',checkTestRuns);
+    $('jdplugPreviewChange').addEventListener('click',previewProposedChange);
+    $('jdplugSubmitChange').addEventListener('click',confirmProposedChange);
+    $('jdplugCancelProposal').addEventListener('click',()=>{pendingProposal=null;$('jdplugProposalConfirm').hidden=true;});
+    $('jdplugApproveProposal').addEventListener('click',submitProposedChange);
+    for(const id of ['jdplugChangePath','jdplugChangeSource'])$(id).addEventListener('input',()=>{
+      pendingProposal=null;$('jdplugChangePreview').hidden=true;
+    });
     $('jdplugCancelInstall').addEventListener('click',hidePluginConfirmation);
     $('jdplugConfirmInstall').addEventListener('click',confirmPluginAction);
     $('jdplugConnectGithub').addEventListener('click',connectGithub);
@@ -397,8 +601,25 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     if(!state.repo)try{state.repo=localStorage.getItem('jepong_plugin_public_repo')||'';}catch(_){}
     $('jdplugRepoInput').value=state.repo;
   }
-  function close(){hidePluginConfirmation();$('jdplugPanel')?.classList.remove('open');}
-  window.JDPlugins=Object.freeze({open,close,contextForChat(){
+  function close(){hidePluginConfirmation();pendingExecution=null;pendingProposal=null;
+    if($('jdplugExecuteConfirm'))$('jdplugExecuteConfirm').hidden=true;
+    if($('jdplugProposalConfirm'))$('jdplugProposalConfirm').hidden=true;
+    $('jdplugPanel')?.classList.remove('open');}
+  window.JDPlugins=Object.freeze({open,close,ready(){return githubRestorePromise;},stageChange(code){
+    stagedProposal=String(code||'').slice(0,80000);
+    open('plugins');
+    if(!installed('github')){selected='github';showPluginConfirmation('github','install');return;}
+    selected='github';view='manage';render();
+    $('jdplugChangeSource').value=stagedProposal;
+    $('jdplugChangePreview').hidden=true;
+    $('jdplugChangeSource').focus();
+  },openRunner(){
+    open('plugins');
+    if(!installed('github')){selected='github';showPluginConfirmation('github','install');return;}
+    selected=installed('superpowers')?'superpowers':'github';
+    view='manage';render();
+    if(state.repoLoaded&&state.accountConnected)loadTestWorkflows();
+  },contextForChat(){
     return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
   }});
 
