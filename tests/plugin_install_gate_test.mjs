@@ -15,7 +15,7 @@ for(const marker of ['function showPluginConfirmation(', 'function confirmPlugin
   "if(!installed(selected)){showPluginConfirmation(selected,'install');return;}",
   "if(!installed('github')){notice('Install GitHub before using its tools.',true);return null;}",
   "enabled:installed('superpowers')&&state.superpowers",
-  "enabled:installed('github')&&state.github&&state.repoLoaded",
+  "enabled:installed('github')&&state.github&&(state.repoLoaded||state.accountConnected)",
   "state.installed[id]=false", "state.installed[id]=true",
   "method:'DELETE',credentials:'same-origin'"]){
   assert(source.includes(marker),'missing explicit install / uninstall enforcement: '+marker);

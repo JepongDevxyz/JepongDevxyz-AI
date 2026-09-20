@@ -14,15 +14,15 @@ for(const id of ['jdplugTabPlugins','jdplugTabSkills','jdplugDirectory','jdplugS
   assert(panel.includes('id="'+id+'"'),'missing directory component '+id);
 }
 for(const term of ['function renderDirectory(', 'function tryInChat(', 'function openRepo(',
-  "call('repo')", "call('read'", "call('prs')", "call('repos')", 'function renderSkillRows(', 'function persist()',
+  "call('repo')", "call('read'", "showGitHubItems('prs')", "call('repos')", 'function renderSkillRows(', 'function persist()',
   'function connectGithub(', 'function disconnectGithub(', 'function refreshGithubSession(',
   'window.JDPlugins=Object.freeze({open,close,contextForChat()']){
   assert(ui.includes(term),'missing functional plugin behavior: '+term);
 }
 assert(ui.includes('state.repoLoaded'),'GitHub chat access must be scoped to an inspected repo');
 assert(ui.includes('textContent=pr.title')===false,'PR names must be combined in safe textContent rather than HTML');
-assert(ui.includes('link.textContent=') && ui.includes("link.rel='noopener noreferrer'"),
-  'external PR links must be safe and use textContent');
+assert(ui.includes('labelLink.textContent=') && ui.includes("labelLink.rel='noopener noreferrer'"),
+  'external PR/issue/CI links must be safe and use textContent');
 assert(ui.includes('/api/github-oauth-start')&&ui.includes('/api/github-oauth-session'),
   'official GitHub OAuth start/session endpoints must be wired to the marketplace');
 assert(!/automatic push|unlimited apps/i.test(ui),

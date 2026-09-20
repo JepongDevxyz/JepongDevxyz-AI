@@ -53,3 +53,107 @@
 .jdplug-confirm-actions .jdplug-button{flex:1}
 .jdplug-uninstall{margin:15px 0 6px;width:100%;background:transparent}
 .jdplug-confirm[hidden],.jdplug-button[hidden],.jdplug-entry-menu[hidden]{display:none!important}
+
+
+/* Marketplace v2: ChatGPT-reference information architecture, typography and mobile navigation.
+   This is JepongDevxyz AI's own UI and uses its own connected integrations. */
+#jdplugPanel{padding:0;background:rgba(0,0,0,.78);color:var(--text-main,#fafafa)}
+#jdplugPanel .jdplug-dialog{
+  width:100%;height:100dvh;max-height:100dvh;max-width:740px;
+  border:0;border-radius:0;background:var(--bg-color,#111);box-shadow:none;
+}
+#jdplugPanel .jdplug-header{padding:12px 16px 5px;grid-template-columns:40px minmax(0,1fr) 40px;border-bottom:0;min-height:54px}
+#jdplugPanel .jdplug-header h2{font-size:.88rem;font-weight:720;letter-spacing:-.015em}
+#jdplugPanel .jdplug-icon-btn{font-size:1.25rem;width:36px;height:36px}
+#jdplugPanel .jdplug-top-tabs{margin:4px auto 0;padding:3px;gap:2px;border-radius:999px;background:color-mix(in srgb,var(--text-main,#fff) 11%,transparent);width:max-content}
+#jdplugPanel .jdplug-top-tab{min-height:31px;padding:7px 22px;line-height:1;font-size:.78rem}
+#jdplugPanel .jdplug-top-tab.active{background:color-mix(in srgb,var(--text-main,#fff) 14%,transparent);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+#jdplugPanel .jdplug-scroll{padding:20px 17px calc(26px + env(safe-area-inset-bottom));scrollbar-width:thin}
+#jdplugPanel .jdplug-heading{margin:5px 0 2px;font-size:1.51rem;line-height:1.3;font-weight:735;letter-spacing:-.045em}
+#jdplugPanel .jdplug-subtitle{font-size:.81rem;line-height:1.42;margin:0;color:var(--text-muted,#b7b7b7);max-width:31rem}
+#jdplugPanel .jdplug-search{height:42px;margin:15px 0 20px;border-radius:999px;padding:0 13px;background:color-mix(in srgb,var(--text-main,#fff) 10%,transparent)}
+#jdplugPanel .jdplug-search input{font-size:.78rem}
+#jdplugPanel .jdplug-group{font-weight:665;font-size:.79rem;margin:18px 3px 9px;color:var(--text-main,#fff)}
+#jdplugPanel .jdplug-installed-strip{display:flex;gap:12px;align-items:flex-start;overflow-x:auto;min-height:62px;padding:2px 2px 8px;scrollbar-width:none}
+#jdplugPanel .jdplug-installed-strip::-webkit-scrollbar{display:none}
+#jdplugPanel .jdplug-installed-chip{min-width:55px;width:66px;display:grid;justify-items:center;gap:5px;border:0;background:transparent;color:inherit;cursor:pointer;padding:1px 0 3px;font-size:.67rem;line-height:1.2}
+#jdplugPanel .jdplug-installed-chip .jdplug-entry-icon{width:37px;height:37px;border-radius:11px;box-shadow:0 0 0 1px rgba(128,128,128,.12)}
+#jdplugPanel .jdplug-installed-empty{display:flex;align-items:center;margin:4px 0 9px;color:var(--text-muted,#b0b0b0);font-size:.75rem}
+#jdplugPanel .jdplug-installed-fallback{display:none!important}
+#jdplugPanel .jdplug-list{border:0;border-radius:0;background:transparent}
+#jdplugPanel .jdplug-list-item{border-bottom:0;min-height:60px;gap:4px}
+#jdplugPanel .jdplug-entry{padding:11px 3px;min-height:57px;border-bottom:0;gap:12px}
+#jdplugPanel .jdplug-entry-icon{width:39px;height:39px;border-radius:11px;background:color-mix(in srgb,var(--text-main,#fff) 10%,transparent);font-size:1.3rem;flex-shrink:0}
+#jdplugPanel .jdplug-entry-icon.git{background:#f4f4f4;color:#171717}
+#jdplugPanel .jdplug-entry-icon.super{background:#262626;color:#e9e9e9}
+#jdplugPanel .jdplug-entry-icon svg{display:block;width:25px;height:25px}
+#jdplugPanel .jdplug-entry-copy strong{font-size:.84rem;font-weight:700}
+#jdplugPanel .jdplug-entry-copy small{font-size:.72rem;line-height:1.35}
+#jdplugPanel .jdplug-entry-trail{display:none}
+#jdplugPanel .jdplug-entry-trailing{font-size:1.25rem;flex-basis:40px;margin-right:0}
+#jdplugPanel .jdplug-entry-menu{min-width:176px;top:48px;right:0;border:1px solid var(--border-color,#363636);border-radius:13px;background:var(--bg-color,#202020);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+#jdplugPanel .jdplug-directory-footer{font-size:.69rem;line-height:1.5;color:var(--text-muted,#999);margin:25px 3px 4px}
+#jdplugPanel .jdplug-detail-header{
+ position:relative;display:grid;grid-template-columns:53px minmax(0,1fr) 34px auto;
+ grid-template-rows:auto;gap:0 10px;align-items:center;margin:8px 0 15px;
+}
+#jdplugPanel .jdplug-detail-icon{width:49px;height:49px;border-radius:13px;font-size:1.55rem}
+#jdplugPanel .jdplug-detail-title{min-width:0}
+#jdplugPanel .jdplug-detail-title h3{margin:0 0 3px;font-size:1.56rem;line-height:1.15;font-weight:760;letter-spacing:-.04em}
+#jdplugPanel .jdplug-detail-title p{font-size:.7rem;line-height:1.3;margin:0;color:var(--text-muted,#aaa);max-width:17rem}
+#jdplugPanel .jdplug-detail-more{border:0;margin:0}
+#jdplugPanel .jdplug-detail-try{padding:8px 14px;min-height:36px;min-width:85px;white-space:nowrap;font-size:.74rem;border:0;background:var(--text-main,#fff);color:var(--bg-color,#111)}
+#jdplugPanel .jdplug-detail-menu{top:44px;right:91px;z-index:17}
+#jdplugPanel .jdplug-preview-stage{
+ border:1px solid rgba(181,221,255,.24);border-radius:16px;background:linear-gradient(138deg,#b1ddff 0%,#c2edff 43%,#caffdc 100%);
+ display:flex;flex-direction:column;justify-content:center;gap:12px;padding:26px 22px;min-height:205px;margin:12px 0 18px;
+}
+#jdplugPanel .jdplug-preview-message{
+ width:100%;max-width:350px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+ background:#fefefe;color:#151515;border:1px solid rgba(40,60,80,.07);
+ padding:15px 14px;border-radius:15px;box-shadow:0 3px 10px rgba(25,85,115,.07);
+ text-align:left;font:inherit;font-size:.74rem;line-height:1.45;cursor:pointer;
+}
+#jdplugPanel .jdplug-preview-message span{color:#333;font-size:.94rem}
+#jdplugPanel .jdplug-description{font-size:.77rem;line-height:1.6;margin:0 2px 20px;color:var(--text-muted,#b7b7b7)}
+#jdplugPanel .jdplug-detail-secondary{display:none!important}
+#jdplugPanel .jdplug-detail-menu .jdplug-menu-action{min-height:42px}
+#jdplugPanel .jdplug-info{border-top:1px solid var(--border-color,#3c3c3c);margin-bottom:20px}
+#jdplugPanel .jdplug-info>div{display:grid;grid-template-columns:minmax(90px,40%) minmax(0,1fr);align-items:center;gap:12px;min-height:44px;border-bottom:1px solid var(--border-color,#363636);font-size:.76rem}
+#jdplugPanel .jdplug-info span{color:var(--text-muted,#a0a0a0)}
+#jdplugPanel .jdplug-info strong{font-weight:530;overflow-wrap:anywhere}
+#jdplugPanel .jdplug-settings-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+#jdplugPanel .jdplug-settings-top strong{font-size:.95rem}
+#jdplugPanel .jdplug-settings-search{height:40px;display:flex;gap:9px;align-items:center;border-radius:12px;background:color-mix(in srgb,var(--text-main,#fff) 10%,transparent);padding:0 11px;margin-bottom:14px}
+#jdplugPanel .jdplug-settings-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;font:inherit;color:inherit;font-size:.78rem}
+#jdplugPanel .jdplug-settings-tabs{display:flex;align-items:center;gap:13px;white-space:nowrap;overflow-x:auto;font-size:.69rem;color:var(--text-muted,#aaa);padding:0 0 13px;border-bottom:1px solid var(--border-color,#333)}
+#jdplugPanel .jdplug-settings-back{display:flex;align-items:center;gap:8px;margin:18px 0 10px;font-size:.83rem;font-weight:650}
+#jdplugPanel .jdplug-settings-back span:first-child{font-size:1.28rem}
+#jdplugPanel .jdplug-card{border-radius:14px;margin-bottom:11px;background:color-mix(in srgb,var(--text-main,#fff) 7%,var(--bg-color,#111))}
+#jdplugPanel .jdplug-card strong{font-size:.82rem}
+#jdplugPanel .jdplug-card p{font-size:.74rem}
+#jdplugPanel .jdplug-file-list .jdplug-entry{padding:9px;border-bottom:1px solid var(--border-color,#363636)}
+#jdplugPanel .jdplug-confirm-card{background:var(--bg-color,#161616)}
+#jdplugPanel .jdplug-hint{background:color-mix(in srgb,var(--text-main,#fff) 7%,transparent);font-size:.7rem}
+#jdplugPanel .jdplug-button:focus-visible,#jdplugPanel .jdplug-installed-chip:focus-visible,#jdplugPanel .jdplug-preview-message:focus-visible{outline:2px solid #6b98ff;outline-offset:2px}
+@media(min-width:741px){
+ #jdplugPanel{align-items:center;justify-content:center;padding:20px}
+ #jdplugPanel .jdplug-dialog{height:min(91dvh,890px);max-height:910px;border-radius:18px;border:1px solid var(--border-color,#333)}
+ #jdplugPanel .jdplug-scroll{padding-left:34px;padding-right:34px}
+}
+@media(max-width:480px){
+ #jdplugPanel .jdplug-dialog{height:100dvh;max-height:100dvh;border-radius:0;border:0}
+ #jdplugPanel .jdplug-scroll{padding:15px 16px calc(26px + env(safe-area-inset-bottom))}
+ #jdplugPanel .jdplug-detail-header{grid-template-columns:49px minmax(0,1fr) 31px auto;gap:0 7px}
+ #jdplugPanel .jdplug-detail-title h3{font-size:1.3rem}
+ #jdplugPanel .jdplug-detail-try{min-width:75px;padding:8px 10px}
+ #jdplugPanel .jdplug-preview-stage{min-height:197px;padding:20px 16px}
+}
+
+#jdplugPanel .jdplug-issue-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#jdplugPanel .jdplug-issue-actions .jdplug-button{flex:1;min-width:105px}
+#jdplugPanel .jdplug-item-row{display:flex;align-items:center;gap:9px;justify-content:space-between;padding:10px 8px;border-bottom:1px solid var(--border-color,#343434)}
+#jdplugPanel .jdplug-item-row:last-child{border-bottom:0}
+#jdplugPanel .jdplug-item-link{flex:1;min-width:0;color:var(--text-main,#fff);font-size:.75rem;line-height:1.45;overflow-wrap:anywhere;text-decoration:none}
+#jdplugPanel .jdplug-item-link:hover{text-decoration:underline}
+#jdplugPanel .jdplug-use-item{flex:0 0 auto;min-height:31px;padding:6px 9px;font-size:.67rem}
