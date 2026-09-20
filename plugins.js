@@ -12,8 +12,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     {id:'review',name:'Reviewing & finishing',description:'Review the changed code, identify remaining risks, and verify before release.'}
   ];
   const catalogue={
-    github:{name:'GitHub',tagline:'Connect your account and browse repositories',description:'Connect GitHub with the official OAuth web flow, browse repositories your account can access, inspect source files, branches and pull requests, and use selected source as chat context.',icon:'GH',className:'git'},
-    superpowers:{name:'Superpowers',tagline:'Make your coding workflow more structured',description:'Built-in conversational coding skills for planning, implementation, debugging and review. Enable a workflow and choose its active phase before asking your coding question.',icon:'⚡',className:'super'}
+    github:{name:'GitHub',tagline:'Triage PRs, issues, CI, and publish flows',description:'Use GitHub with JepongDevxyz AI to inspect repositories, understand source files, review branches and pull requests, and bring selected repository context into chat.',icon:'GH',className:'git'},
+    superpowers:{name:'Superpowers',tagline:'Make your agents better devs',description:'Use Superpowers to guide coding work through brainstorming, implementation planning, test-driven development, systematic debugging, code review, and finishing workflows.',icon:'⚡',className:'super'}
   };
   const defaultState={repo:'',path:'',ref:'',directory:'',github:false,repoLoaded:false,superpowers:false,phase:'plan',installed:{github:false,superpowers:false},accountConnected:false,accountUser:null,accountScopes:[],accountRepos:[]};
   const state=Object.assign({},defaultState);
@@ -107,10 +107,19 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     container.append(trailing,menu);
     return container;
   }
+  function renderIconStrip(){
+    const strip=$('jdplugIconStrip');if(!strip)return;strip.replaceChildren();
+    for(const id of ['github','superpowers']){
+      const c=catalogue[id],button=makeButton('',()=>openDetail(id),'jdplug-strip-item '+c.className);
+      button.textContent=c.icon;button.setAttribute('aria-label',c.name);strip.append(button);
+    }
+  }
   function renderDirectory(){
-    const skills=tab==='skills';text('jdplugDirectoryTitle',skills?'Skills':'Plugins');
-    text('jdplugDirectoryHint',skills?'Select a coding skill to guide this conversation.':'Work with developer tools in JepongDevxyz AI.');
+    const skills=tab==='skills';
+    text('jdplugDirectoryTitle',skills?'Skills':'Plugins');
+    text('jdplugDirectoryHint',skills?'Use coding skills with JepongDevxyz AI.':'Work with JepongDevxyz AI across your favorite tools.');
     $('jdplugSearch').placeholder=skills?'Search skills':'Search plugins';
+    renderIconStrip();
     const query=$('jdplugSearch').value.trim().toLowerCase();
     const installedList=$('jdplugInstalled'),available=$('jdplugAvailable');
     installedList.replaceChildren();available.replaceChildren();
@@ -125,21 +134,46 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       for(const id of ['github','superpowers']){
         const data=catalogue[id];
         if(!(data.name+' '+data.tagline+' '+data.description).toLowerCase().includes(query))continue;
-        (enabled(id)?installedList:available).append(catalogueItem(id));
+        (installed(id)?installedList:available).append(catalogueItem(id));
       }
     }
-    if(!installedList.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill matches.':'No plugins installed yet.';installedList.append(empty);}
+    if(!installedList.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill yet.':'No plugins installed yet.';installedList.append(empty);}
     if(!available.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent='Nothing else matches your search.';available.append(empty);}
-    text('jdplugInstalledLabel',skills?'Active skill':'Installed');
-    text('jdplugAvailableLabel',skills?'Included skills':'Available to install');
+    text('jdplugInstalledLabel',skills?'Active':'Installed');
+    text('jdplugAvailableLabel',skills?'Skills':'Popular');
     $('jdplugTabPlugins').classList.toggle('active',!skills);$('jdplugTabSkills').classList.toggle('active',skills);
   }
   function nav(next,id){if(view!==next||selected!==id)history.push({view,selected,tab});view=next;selected=id||selected;render();}
   function back(){if(pendingPluginAction){hidePluginConfirmation();return;}if(history.length){const p=history.pop();view=p.view;selected=p.selected;tab=p.tab;render();}else if(view!=='directory'){view='directory';render();}else close();}
+  function renderDemo(){
+    const demo=$('jdplugDemo');if(!demo)return;demo.replaceChildren();
+    const cards=selected==='github'
+      ? [
+          ['Explain how authentication works in','github.com/grafana/grafana'],
+          ['Worked for 12 seconds','Grafana uses a pluggable authentication pipeline. JepongDevxyz AI can inspect the selected repository source and explain the implementation.']
+        ]
+      : [
+          ['@Superpowers','I’ve got an idea for something I’d like to build.'],
+          ['@Superpowers','Let’s add a feature to this project.']
+        ];
+    for(const [lead,body] of cards){
+      const card=document.createElement('div');card.className='jdplug-demo-card';
+      const strong=document.createElement('strong');strong.textContent=lead;
+      const span=document.createElement('span');span.textContent=' '+body;
+      const arrow=document.createElement('span');arrow.className='jdplug-demo-arrow';arrow.textContent='→';
+      card.append(strong,span,arrow);demo.append(card);
+    }
+  }
   function render(){
+    const panel=$('jdplugPanel');
+    panel?.classList.toggle('directory-mode',view==='directory');
+    panel?.classList.toggle('detail-mode',view==='detail');
+    panel?.classList.toggle('manage-mode',view==='manage');
     $('jdplugDirectory').hidden=view!=='directory';$('jdplugDetail').hidden=view!=='detail';$('jdplugManageView').hidden=view!=='manage';
     $('jdplugTabs').hidden=view!=='directory';
-    text('jdplugTitle',view==='directory'?(tab==='skills'?'Skills':'Plugins'):view==='detail'?catalogue[selected].name:'Settings');
+    $('jdplugClose').hidden=true;
+    text('jdplugBack',view==='directory'?'☰':'‹');
+    text('jdplugTitle',view==='directory'?'':view==='detail'?'Plugins':'Plugins');
     if(view==='directory'){renderDirectory();return;}
     if(view==='detail'){
       const c=catalogue[selected];text('jdplugHeroIcon',c.icon);
@@ -149,25 +183,36 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       const isInstalled=installed(selected);
       $('jdplugTry').textContent=isInstalled?'Try in chat':'Install';
       $('jdplugManage').hidden=!isInstalled;
-      $('jdplugUninstall').hidden=!isInstalled;
-      if(selected==='github'){text('jdplugCurrentRepo',state.repoLoaded?state.repo:'No repository selected');
-        text('jdplugRepoSummary',state.repoLoaded?(state.path?'Selected file: '+state.path:'Default branch: '+state.ref):'Open a public repository in Manage to browse its files.');}
-      else renderSkillRows('jdplugDetailSkillList');
-      text('jdplugDetailNote',selected==='github'?(state.accountConnected?'GitHub account connected through OAuth. Repository browsing is read-only in JepongDevxyz AI.':'You can browse public repositories immediately or connect GitHub through OAuth for account-authorized repositories.'):'These are built-in conversational skills, not the official Superpowers agent installation or a parallel execution environment.');
+      $('jdplugOverflow').hidden=!isInstalled;
+      $('jdplugUninstall').hidden=true;
+      renderDemo();
+      if(selected==='github'){
+        text('jdplugCurrentRepo',state.repoLoaded?state.repo:'No repository selected');
+        text('jdplugRepoSummary',state.repoLoaded?(state.path?'Selected file: '+state.path:'Default branch: '+state.ref):(isInstalled?'Open or connect a repository in Manage.':'Install GitHub first, then connect or open a repository.'));
+      }else renderSkillRows('jdplugDetailSkillList',true);
+      text('jdplugDetailNote',selected==='github'
+        ? (state.accountConnected?'Connected to GitHub. Repository access in this plugin remains read-only.':'Install the plugin first. Connecting your GitHub account is a separate authorization step.')
+        : 'Superpowers is a built-in coding workflow. Installing enables its skills in this browser.');
     }else{
-      text('jdplugManageTitle',catalogue[selected].name+' settings');
-      text('jdplugManageSubtitle',selected==='github'?'Connect GitHub or choose a repository, branch and file.':'Turn the coding workflow on or off and choose a skill.');
+      text('jdplugManageTitle',catalogue[selected].name);
+      text('jdplugManageSubtitle',selected==='github'?'Manage account access and repository context.':'Manage the installed coding workflow and active skill.');
       $('jdplugGithubManage').hidden=selected!=='github';$('jdplugSuperManage').hidden=selected!=='superpowers';
-      $('jdplugUninstall').hidden=!installed(selected);
+      $('jdplugManageUninstall').hidden=!installed(selected);
       if(selected==='github'){$('jdplugRepoInput').value=state.repo;selectedInfo();renderGithubAccount();}
-      else{$('jdplugSuperEnabled').checked=state.superpowers;$('jdplugPhase').value=state.phase;renderSkillRows('jdplugManageSkillList');}
+      else{$('jdplugSuperEnabled').checked=state.superpowers;$('jdplugPhase').value=state.phase;renderSkillRows('jdplugManageSkillList',true);}
     }
   }
-  function renderSkillRows(id){const list=$(id);list.replaceChildren();
-    for(const phase of phases){const row=makeEntry({name:phase.name,tagline:phase.description,className:'super',icon:'⚡'},()=>{
-      if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}
-      state.phase=phase.id;state.superpowers=true;persist();$('jdplugPhase').value=phase.id;render();notice('Skill selected: '+phase.name);
-    },phase.description+(installed('superpowers')&&state.superpowers&&state.phase===phase.id?' · Active':''));list.append(row);}
+  function renderSkillRows(id,asChips=false){const list=$(id);list.replaceChildren();
+    for(const phase of phases){
+      const handler=()=>{if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}state.phase=phase.id;state.superpowers=true;persist();$('jdplugPhase').value=phase.id;render();notice('Skill selected: '+phase.name);};
+      if(asChips){
+        const chip=makeButton((phase.id==='plan'?'✏️ ':phase.id==='implement'?'🛠️ ':phase.id==='debug'?'🔍 ':'✅ ')+phase.name,handler,'jdplug-skill-chip');
+        if(installed('superpowers')&&state.superpowers&&state.phase===phase.id)chip.setAttribute('aria-current','true');
+        list.append(chip);
+      }else{
+        list.append(makeEntry({name:phase.name,tagline:phase.description,className:'super',icon:'⚡'},handler,phase.description+(installed('superpowers')&&state.superpowers&&state.phase===phase.id?' · Active':'')));
+      }
+    }
   }
   function openDetail(id){nav('detail',id);}
   function openManage(){if(!installed(selected)){showPluginConfirmation(selected,'install');return;}nav('manage',selected);}
@@ -302,7 +347,9 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     $('jdplugTabSkills').addEventListener('click',()=>{tab='skills';$('jdplugSearch').value='';render();});
     $('jdplugSearch').addEventListener('input',renderDirectory);
     $('jdplugManage').addEventListener('click',openManage);$('jdplugTry').addEventListener('click',tryInChat);
+    $('jdplugOverflow').addEventListener('click',()=>openManage());
     $('jdplugUninstall').addEventListener('click',()=>showPluginConfirmation(selected,'uninstall'));
+    $('jdplugManageUninstall').addEventListener('click',()=>showPluginConfirmation(selected,'uninstall'));
     $('jdplugCancelInstall').addEventListener('click',hidePluginConfirmation);
     $('jdplugConfirmInstall').addEventListener('click',confirmPluginAction);
     $('jdplugConnectGithub').addEventListener('click',connectGithub);
