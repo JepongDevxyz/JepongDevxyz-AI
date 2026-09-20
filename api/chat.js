@@ -1,4 +1,4 @@
-import { fetchPublicGitHubContext } from './plugins.js';
+import { fetchPublicGitHubContext, fetchGitHubAccountContext } from './plugins.js';
 import { getGitHubSession } from './_github_oauth.js';
 
 export const config = { runtime: 'edge' };
@@ -3022,8 +3022,14 @@ async function processChat(body, emit) {
   let pluginGithubContext='';
   if(body.plugins?.github?.enabled===true){
     try{
-      pluginGithubContext=await fetchPublicGitHubContext(body.plugins.github,undefined,body._githubAccessToken||'');
-      activity(emit,'plugin-github','Read selected GitHub source','completed','github');
+      const config=body.plugins.github;
+      if(config.repo){
+        pluginGithubContext=await fetchPublicGitHubContext(config,undefined,body._githubAccessToken||'');
+        activity(emit,'plugin-github','Read selected GitHub source','completed','github');
+      }else if(body._githubAccessToken){
+        pluginGithubContext=await fetchGitHubAccountContext(body._githubAccessToken);
+        activity(emit,'plugin-github','Read connected GitHub account repositories','completed','github');
+      }else throw new Error('GitHub account not connected');
     }catch(_){
       pluginGithubContext='\n[GITHUB PLUGIN] Selected source could not be retrieved; do not claim it was inspected.\n';
       activity(emit,'plugin-github','Selected GitHub source unavailable','warning','github');
