@@ -109,10 +109,16 @@ export default async function handler(request){
     // Reject non-existent refs: never let a model invent a branch or inject workflow inputs.
     await apiData('/repos/'+repo+'/branches/'+ref.split('/').map(encodeURIComponent).join('/'),token,signal);
     const workflow=await ensureWorkflow(repo,id,ref,token,signal);
-    await apiData('/repos/'+repo+'/actions/workflows/'+id+'/dispatches',token,signal,{
+    const dispatched=await apiData('/repos/'+repo+'/actions/workflows/'+id+'/dispatches',token,signal,{
       method:'POST',body:{ref}
     });
-    return json({accepted:true,repo,ref,workflow:{id:workflow.id,name:workflow.name},message:'GitHub accepted the workflow dispatch; check Actions for actual execution/results.',url:'https://github.com/'+repo+'/actions/workflows/'+encodeURIComponent(workflow.path.split('/').pop())});
+    const runId=Number(dispatched.data?.workflow_run_id)||null;
+    const runUrl=typeof dispatched.data?.html_url==='string'&&dispatched.data.html_url.startsWith('https://github.com/'+repo+'/actions/runs/')
+      ?dispatched.data.html_url:null;
+    return json({accepted:true,repo,ref,workflow:{id:workflow.id,name:workflow.name},
+      run:runId?{id:runId,url:runUrl,status:'requested'}:null,
+      message:'GitHub accepted the workflow dispatch; check Actions for actual execution/results.',
+      url:'https://github.com/'+repo+'/actions/workflows/'+encodeURIComponent(workflow.path.split('/').pop())});
   }catch(error){
     return json({error:error?.status?String(error.message):'Plugin execution is temporarily unavailable.'},error?.status||502);
   }
