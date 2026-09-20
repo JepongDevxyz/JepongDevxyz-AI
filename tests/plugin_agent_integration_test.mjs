@@ -80,7 +80,7 @@ agent.open('Fix the version in src/app.js');
 const get=id=>elements.get(id);
 assert.equal(get('jdAgentTask').value,'Fix the version in src/app.js');
 await get('jdAgentStart').click();
-assert.equal(chatCalls,2,'agent must inspect, plan and draft through the selected model');
+assert.equal(chatCalls,2,'agent must inspect, plan and draft through the selected model; status: '+get('jdAgentStatus').textContent+'; calls: '+JSON.stringify(calls.map(x=>x.url)));
 assert.equal(get('jdAgentReview').hidden,false);
 assert.match(get('jdAgentStatus').textContent,/Draft ready/);
 assert.equal(staged,null,'AI must not directly write to GitHub');
