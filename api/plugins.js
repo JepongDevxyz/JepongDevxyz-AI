@@ -140,6 +140,21 @@ export default async function handler(request){
       const entries=await githubGet(repo,'/pulls?state=open&per_page=50',request.signal,token);
       return json({repo,pullRequests:entries.map(x=>({number:x.number,title:x.title,url:x.html_url,head:x.head?.ref,base:x.base?.ref,draft:!!x.draft}))});
     }
+    if(action==='issues'){
+      const entries=await githubGet(repo,'/issues?state=open&per_page=35',request.signal,token);
+      return json({repo,issues:entries.filter(x=>!x.pull_request).slice(0,30).map(x=>({
+        number:x.number,title:String(x.title||'').slice(0,300),url:x.html_url,
+        state:x.state,createdAt:x.created_at,comments:x.comments||0
+      }))});
+    }
+    if(action==='ci'){
+      const data=await githubGet(repo,'/actions/runs?per_page=20',request.signal,token);
+      return json({repo,runs:(data.workflow_runs||[]).slice(0,20).map(x=>({
+        id:x.id,name:String(x.name||'').slice(0,200),url:x.html_url,
+        status:x.status,conclusion:x.conclusion,branch:x.head_branch,
+        createdAt:x.created_at
+      }))});
+    }
     fail('Unknown GitHub plugin action.',400);
   }catch(error){
     if(error instanceof SyntaxError)return json({error:'Invalid JSON.'},400);
