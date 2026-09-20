@@ -27,3 +27,29 @@
 .jdplug-empty{padding:20px;text-align:center;color:var(--text-muted,#aaa);font-size:.8rem}
 .jdplug-button:focus-visible,.jdplug-entry:focus-visible,.jdplug-icon-btn:focus-visible,.jdplug-top-tab:focus-visible,.jdplug-search input:focus-visible{outline:2px solid #8b9bff;outline-offset:2px}
 @media(max-width:590px){.jdplug-overlay{padding:0;align-items:flex-end}.jdplug-dialog{width:100%;height:94dvh;max-height:94dvh;border-radius:24px 24px 0 0;border-bottom:0}.jdplug-header{padding:13px 16px 8px}.jdplug-scroll{padding:16px 16px calc(24px + env(safe-area-inset-bottom))}.jdplug-top-tabs{padding-top:9px}}
+
+
+/* Installed / available marketplace controls and explicit permission confirmation. */
+.jdplug-dialog{position:relative}
+.jdplug-list-item{position:relative;display:flex;align-items:center;min-width:0;border-bottom:1px solid var(--border-color,#333)}
+.jdplug-list-item:last-child{border-bottom:0}
+.jdplug-list-item > .jdplug-entry{flex:1;min-width:0;border-bottom:0;padding-right:6px}
+.jdplug-entry-trailing{flex:0 0 42px;width:42px;height:42px;margin-right:7px;border:0;border-radius:50%;background:transparent;color:var(--text-main,#fff);font-size:1.32rem;line-height:1;display:grid;place-items:center;cursor:pointer}
+.jdplug-entry-trailing:focus-visible,.jdplug-menu-action:focus-visible{outline:2px solid #8b9bff;outline-offset:1px}
+.jdplug-entry-trailing:active{background:rgba(148,163,184,.16)}
+.jdplug-entry-menu{position:absolute;right:12px;top:47px;min-width:156px;padding:5px;border:1px solid var(--border-color,#333);border-radius:13px;background:var(--bg-color,#171717);box-shadow:0 10px 38px rgba(0,0,0,.43);z-index:11}
+.jdplug-menu-action{width:100%;min-height:38px;padding:8px 12px;text-align:left;border:0;border-radius:9px;background:transparent;color:var(--text-main,#fff);font-size:.8rem;cursor:pointer}
+.jdplug-menu-action:active{background:rgba(148,163,184,.13)}
+.jdplug-menu-action.danger,.jdplug-danger{color:#ef707b!important}
+.jdplug-list{overflow:visible}
+.jdplug-list-item:first-child{border-radius:18px 18px 0 0}
+.jdplug-list-item:last-child{border-radius:0 0 18px 18px}
+.jdplug-confirm{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}
+.jdplug-confirm-card{width:min(100%,380px);padding:23px 20px 18px;border:1px solid var(--border-color,#434343);border-radius:23px;background:var(--bg-color,#171717);box-shadow:0 20px 70px rgba(0,0,0,.45)}
+.jdplug-confirm-card .jdplug-entry-icon{margin:0 auto 14px;width:52px;height:52px;font-size:1.45rem}
+.jdplug-confirm-card h3{margin:0 0 10px;font-size:1.16rem;letter-spacing:-.02em;text-align:center}
+.jdplug-confirm-card p{margin:0;color:var(--text-muted,#aaa);font-size:.83rem;line-height:1.56;text-align:center}
+.jdplug-confirm-actions{display:flex;gap:9px;justify-content:center;margin-top:22px}
+.jdplug-confirm-actions .jdplug-button{flex:1}
+.jdplug-uninstall{margin:15px 0 6px;width:100%;background:transparent}
+.jdplug-confirm[hidden],.jdplug-button[hidden],.jdplug-entry-menu[hidden]{display:none!important}
