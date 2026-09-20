@@ -89,3 +89,11 @@ body.theme-light .jdplug-confirm-card{background:#fff}
   .jdplug-detail-top{grid-template-columns:1fr}
   .jdplug-hero-actions{justify-content:flex-start}
 }
+
+/* Reference-layout alignment: segmented control shares the top row on directory; detail title sits beside back. */
+.directory-mode .jdplug-header{min-height:82px}
+.directory-mode .jdplug-header h2{visibility:hidden}
+.directory-mode .jdplug-top-tabs{position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:5;margin:0}
+.detail-mode .jdplug-header,.manage-mode .jdplug-header{grid-template-columns:48px auto 1fr}
+.detail-mode .jdplug-header h2,.manage-mode .jdplug-header h2{text-align:left;font-size:1.08rem}
+.detail-mode .jdplug-scroll,.manage-mode .jdplug-scroll{padding-top:6px}
