@@ -4475,6 +4475,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         
         let currentSelectedProvider = localStorage.getItem('jepong_last_provider') || 'gemini';
         let currentSelectedModel = localStorage.getItem('jepong_last_model') || 'gemini-flash-latest';
+        window.getJDPluginActiveModel = () => ({provider:currentSelectedProvider,model:currentSelectedModel});
         let currentSelectedImageModel = localStorage.getItem('jepong_image_model') || 'auto';
         if (!['auto','flux'].includes(currentSelectedImageModel)) currentSelectedImageModel = 'auto';
 
@@ -9359,6 +9360,13 @@ ${m.text || ''}
 
             await waitForAttachmentJobs();
 
+            if (message.toLowerCase() === '/agent' || message.toLowerCase().startsWith('/agent ')) {
+                input.value = '';
+                autoResizeTextarea(input);
+                window.JDPlugins?.openAgent?.(message.slice(6).trim());
+                return;
+            }
+
             if (message.toLowerCase() === '/issues' || message.toLowerCase() === '/review-pr') {
                 input.value = '';
                 autoResizeTextarea(input);
@@ -10784,5 +10792,6 @@ ${m.text || ''}
         });
     </script>
     <script src="/plugins.js" defer></script>
+    <script src="/agent.js" defer></script>
 </body>
 </html>
