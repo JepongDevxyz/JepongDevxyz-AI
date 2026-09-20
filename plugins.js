@@ -217,7 +217,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
         text('jdplugRepoSummary',state.repoLoaded?(state.path?'Selected file: '+state.path:'Default branch: '+state.ref):(isInstalled?'Open or connect a repository in Manage.':'Install GitHub first, then connect or open a repository.'));
       }else renderSkillRows('jdplugDetailSkillList',true);
       text('jdplugDetailNote',selected==='github'
-        ? (state.accountConnected?'Connected to GitHub. Repository access in this plugin remains read-only.':'Install the plugin first. Connecting your GitHub account is a separate authorization step.')
+        ? (state.accountConnected?'Connected to GitHub. Chat source browsing is read-only; reviewed PR proposals and CI execution require separate confirmation.':'Install the plugin first. Connecting your GitHub account is a separate authorization step.')
         : 'Superpowers is a built-in coding workflow. Installing enables its skills in this browser.');
     }else{
       text('jdplugManageTitle',catalogue[selected].name);
