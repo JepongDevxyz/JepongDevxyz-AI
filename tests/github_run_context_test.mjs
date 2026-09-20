@@ -43,7 +43,7 @@ try{
 }finally{globalThis.fetch=original;}
 
 const chat=fs.readFileSync('api/chat.js','utf8');
-assert(chat.includes('fetchGitHubRunContext(body.plugins.github,body._githubAccessToken||\\x27\\x27,message)'));
+assert(chat.includes("fetchGitHubRunContext(body.plugins.github,body._githubAccessToken||'',message)"));
 assert(chat.includes("githubExecutionContext||''"),'status must reach every provider-neutral prompt');
 assert(chat.includes('The user can explicitly approve a GitHub Actions test workflow with /run-tests'));
 console.log('PASS: model-independent read-only GitHub CI/PR status with exact run conclusions');
