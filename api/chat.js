@@ -3022,7 +3022,7 @@ async function processChat(body, emit) {
   let pluginGithubContext='';
   if(body.plugins?.github?.enabled===true){
     try{
-      pluginGithubContext=await fetchPublicGitHubContext(body.plugins.github,undefined,body._githubAccessToken||'');
+      pluginGithubContext=await fetchPublicGitHubContext(body.plugins.github,undefined,body._githubAccessToken||'',taskMessage);
       activity(emit,'plugin-github','Read selected GitHub source','completed','github');
     }catch(_){
       pluginGithubContext='\n[GITHUB PLUGIN] Selected source could not be retrieved; do not claim it was inspected.\n';
