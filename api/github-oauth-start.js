@@ -8,6 +8,10 @@ export default async function handler(request){
     const state=randomState();
     const returnTo=sanitizeReturnPath(url.searchParams.get('return_to')||'/?github=connected');
     const callback=oauthCallbackUrl(request);
+    if(new URL(callback).origin!==new URL(request.url).origin)
+      throw new Error('Open the live website on its configured GitHub OAuth domain before connecting.');
+    if(String(process.env.GITHUB_SESSION_SECRET||'').length<32)
+      throw new Error('GitHub session encryption is not configured. The site owner must set GITHUB_SESSION_SECRET.');
     const scope=String(process.env.GITHUB_OAUTH_SCOPES||'read:user user:email').trim();
     const authorize=new URL('https://github.com/login/oauth/authorize');
     authorize.searchParams.set('client_id',clientId);
