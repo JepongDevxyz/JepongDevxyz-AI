@@ -19,11 +19,31 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   const state=Object.assign({},defaultState);
   let tab='plugins',view='directory',selected='github',busy=false,pendingPluginAction=null;
   let availableTestWorkflows=[],selectedExecutionRef='',pendingExecution=null;
+  let savedGithubSelection=false,githubRestorePromise=Promise.resolve();
   const history=[];
   function text(id,value){const el=$(id);if(el)el.textContent=String(value||'');}
-  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,installed:{github:!!state.installed.github,superpowers:!!state.installed.superpowers},github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed={github:s.installed?.github===true,superpowers:s.installed?.superpowers===true};state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'plan';}}catch(_){}}
+  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,ref:state.ref,path:state.path,installed:{github:!!state.installed.github,superpowers:!!state.installed.superpowers},github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
+  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed={github:s.installed?.github===true,superpowers:s.installed?.superpowers===true};state.ref=typeof s.ref==='string'?s.ref:'';state.path=typeof s.path==='string'?s.path:'';state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'plan';savedGithubSelection=state.installed.github&&s.github===true&&!!state.repo;}}catch(_){}}
   restore();
+  githubRestorePromise=restoreGithubContext();
+
+  async function restoreGithubContext(){
+    if(!savedGithubSelection||!installed('github')||!state.repo)return;
+    const savedRepo=state.repo;
+    try{
+      const response=await fetch('/api/plugins',{
+        method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'repo',repo:savedRepo})
+      });
+      if(!response.ok)throw new Error('Saved repository is not accessible.');
+      const info=await response.json();
+      if(!info?.repo||info.repo.toLowerCase()!==savedRepo.toLowerCase())throw new Error('Saved repository changed.');
+      if(state.repo!==savedRepo||!installed('github'))return;
+      state.repoLoaded=true;state.github=true;
+      if(!state.ref)state.ref=info.defaultBranch||'';
+    }catch(_){state.repoLoaded=false;state.github=false;state.path='';}
+  }
+
   function notice(message,error=false){text('jdplugStatus',message);$('jdplugStatus')?.classList.toggle('error',!!error);}
   function setBusy(flag){busy=!!flag;document.querySelectorAll('#jdplugPanel .jdplug-button, #jdplugPanel .jdplug-entry').forEach(el=>{if(el.tagName==='BUTTON')el.disabled=busy;});}
   function makeButton(label,handler,className='jdplug-button'){const el=document.createElement('button');el.type='button';el.className=className;el.textContent=label;el.addEventListener('click',handler);return el;}
@@ -73,6 +93,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       }
       state.installed[id]=false;
       if(id==='github'){
+        savedGithubSelection=false;availableTestWorkflows=[];selectedExecutionRef='';
         state.github=false;state.repoLoaded=false;state.repo='';state.path='';state.ref='';state.directory='';
         state.accountConnected=false;state.accountUser=null;state.accountScopes=[];state.accountRepos=[];
         $('jdplugResults')?.replaceChildren();
@@ -337,7 +358,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     const input=$('jdplugRepoInput').value.trim();
     if(!/^(?:https:\/\/github\.com\/)?[\w.-]+\/[\w.-]+\/?$/.test(input)){notice('Enter a public repository URL or owner/repository.',true);return;}
     state.repo=input.replace(/^https:\/\/github\.com\//,'').replace(/\/$/,'');
-    state.repoLoaded=false;state.github=false;state.path='';state.ref='';state.directory='';
+    state.repoLoaded=false;state.github=false;state.path='';state.ref='';state.directory='';savedGithubSelection=false;
+    availableTestWorkflows=[];selectedExecutionRef='';
     $('jdplugGitEnabled').checked=false;$('jdplugPreview').hidden=true;statusForChat();
     const info=await call('repo');if(!info)return;state.repoLoaded=true;state.repo=info.repo;
     $('jdplugRepoInput').value=info.repo;persist();
@@ -346,6 +368,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     for(const item of branchData?.branches||[]){const option=document.createElement('option');option.value=item.name;option.textContent=item.name;select.append(option);}
     state.ref=info.defaultBranch;select.value=info.defaultBranch;
     await browse('');
+    if(view==='manage')render();
   }
   async function prs(){if(!state.repoLoaded){notice('Open a repository first.',true);return;}
     const data=await call('prs');if(!data)return;const area=$('jdplugResults');area.replaceChildren();
@@ -504,7 +527,13 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     $('jdplugRepoInput').value=state.repo;
   }
   function close(){hidePluginConfirmation();pendingExecution=null;if($('jdplugExecuteConfirm'))$('jdplugExecuteConfirm').hidden=true;$('jdplugPanel')?.classList.remove('open');}
-  window.JDPlugins=Object.freeze({open,close,contextForChat(){
+  window.JDPlugins=Object.freeze({open,close,ready(){return githubRestorePromise;},openRunner(){
+    open('plugins');
+    if(!installed('github')){selected='github';showPluginConfirmation('github','install');return;}
+    selected=installed('superpowers')?'superpowers':'github';
+    view='manage';render();
+    if(state.repoLoaded&&state.accountConnected)loadTestWorkflows();
+  },contextForChat(){
     return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
   }});
 
