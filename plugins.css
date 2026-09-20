@@ -109,3 +109,27 @@ body.theme-light .jdplug-confirm-card{background:#fff}
 .jdplug-execution-card .jdplug-file-list .jdplug-entry:last-child{border-bottom:0}
 #jdplugExecuteDescription{white-space:pre-line;overflow-wrap:anywhere}
 #jdplugExecuteConfirm[hidden]{display:none!important}
+
+
+/* Coding-agent task view: explicit source inspection, full diff review, then PR staging. */
+#jdagentOverlay,#jdAgentOverlay{position:fixed;inset:0;z-index:100150;background:#0b0b0c;color:#f5f5f5;overflow-y:auto;overscroll-behavior:contain}
+#jdAgentOverlay[hidden]{display:none!important}
+.jd-agent-view{max-width:960px;margin:0 auto;padding:20px 22px calc(48px + env(safe-area-inset-bottom))}
+.jd-agent-view header{display:flex;align-items:center;gap:20px;margin-bottom:24px}
+.jd-agent-view h2{font-size:1.25rem;margin:0}
+.jd-agent-view button{border:1px solid #45454b;border-radius:15px;padding:12px 18px;background:#29292e;color:#fff;font:inherit;cursor:pointer}
+.jd-agent-view button:disabled{opacity:.45;cursor:not-allowed}
+.jd-agent-view header button{background:transparent;border:0;padding:12px 0}
+.jd-agent-view label{display:block;font-size:1rem;font-weight:600;margin:18px 0 10px}
+.jd-agent-view textarea{box-sizing:border-box;display:block;width:100%;background:#1d1d21;color:#f5f5f5;border:1px solid #56565a;border-radius:15px;padding:14px;font:inherit;resize:vertical}
+.jd-agent-buttons{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+#jdAgentStatus{color:#c8d8ff;line-height:1.45;overflow-wrap:anywhere}
+#jdAgentLog p{color:#b3b3bc;font-size:.89rem;border-left:2px solid #505368;padding-left:12px;margin:12px 0;overflow-wrap:anywhere}
+#jdAgentReview{padding:14px 0}
+#jdAgentFiles h4{margin:28px 0 8px;overflow-wrap:anywhere}
+#jdAgentFiles pre{max-height:390px;overflow:auto;white-space:pre;tab-size:2;border:1px solid #3e3e43;border-radius:12px;padding:12px;background:#17171b;font-size:.78rem}
+#jdAgentStage{margin-top:20px!important;background:#fff!important;color:#111!important}
+body.theme-light #jdAgentOverlay{background:#fff;color:#111}
+body.theme-light .jd-agent-view textarea,body.theme-light #jdAgentFiles pre{background:#f1f1f3;color:#111;border-color:#ccc}
+body.theme-light .jd-agent-view button{background:#f3f3f3;color:#111}
+body.theme-light #jdAgentStatus{color:#293c80}
