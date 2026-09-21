@@ -919,8 +919,8 @@
         .model-provider-tab { border: 1px solid var(--border-color); background: rgba(255,255,255,.04); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: .74rem; font-weight: 700; cursor: pointer; }
         .model-provider-tab.active { color: var(--text-main); border-color: rgba(139,92,246,.5); background: rgba(139,92,246,.14); }
         .model-pages-viewport { overflow: hidden; touch-action: pan-y; width: 100%; }
-        .model-pages-track { display: flex; width: 800%; transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
-        .model-provider-page { width: calc(100% / 8); flex: 0 0 calc(100% / 8); padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .model-pages-track { display: flex; width: 100%; transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
+        .model-provider-page { width: 100%; flex: 0 0 100%; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; }
         .provider-badge {
             display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
             padding: 5px 9px; border: 1px solid var(--border-color); border-radius: 999px;
@@ -10018,7 +10018,7 @@ ${m.text || ''}
         function selectModel(key,name){ selectProviderModel(currentSelectedProvider||'gemini',key,name); }
         function renderProviderPage(){
             const track=document.getElementById('modelPagesTrack'); const title=document.getElementById('modelProviderTitle');
-            if(track) track.style.transform=`translateX(-${currentProviderPage*(100/PROVIDER_ORDER.length)}%)`;
+            if(track) track.style.transform=`translateX(-${currentProviderPage*100}%)`;
             if(title) title.textContent=providerLabel(PROVIDER_ORDER[currentProviderPage]);
             document.querySelectorAll('.model-page-dot').forEach((dot,i)=>dot.classList.toggle('active',i===currentProviderPage));
             document.querySelectorAll('.model-provider-tab').forEach((tab,i)=>tab.classList.toggle('active',i===currentProviderPage));
