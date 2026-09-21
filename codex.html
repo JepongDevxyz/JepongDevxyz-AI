@@ -52,7 +52,7 @@ button.primary{background:var(--accent);border-color:var(--accent);font-weight:6
     <div><strong>Actual execution events</strong><div id="events" aria-live="polite"><div class="event">No task started.</div></div></div>
     <div><strong>Agent response</strong><p id="response" class="muted">The agent's result will appear here.</p></div>
     <div><strong>Changed files</strong><pre id="files">No changes to review.</pre></div>
-    <div><strong>Git diff (review before commit)</strong><pre id="diff">No diff available.</pre></div>
+    <div><strong>Git diff (review before commit)</strong><pre id="diff">No diff available.</pre><div class="actions"><button id="copy-patch" type="button" disabled>Copy patch</button><button id="save-patch" type="button" disabled>Save .patch</button></div></div>
   </div>
 </section>
 </main>
@@ -92,6 +92,8 @@ function display(job){
   $('response').textContent=job.finalResponse || (job.error ? 'Error: '+job.error : 'No final response yet.');
   $('files').textContent=job.files || 'No changed files recorded.';
   $('diff').textContent=job.diff || 'No diff available.';
+  $('copy-patch').disabled=!job.diff;
+  $('save-patch').disabled=!job.diff;
   notice(job.error || (state === 'done' ? 'Turn finished. Review the changed files before committing.' : 'Actual status: '+state));
   controls(state);
 }
@@ -122,6 +124,21 @@ async function refreshRepos(){
 }
 $('repository').addEventListener('change',()=>{const v=$('repository').value;if(v){$('repo-link').href='https://github.com/'+v;$('repo-link').classList.remove('hide');}else $('repo-link').classList.add('hide');controls($('state').textContent);});
 $('prompt').addEventListener('input',()=>controls($('state').textContent));
+$('copy-patch').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('diff').textContent);
+    notice('Patch copied for review.');
+  } catch (_) { notice('Clipboard unavailable. Select the diff to copy it manually.'); }
+});
+$('save-patch').addEventListener('click', () => {
+  const patch=$('diff').textContent;
+  if(!patch || patch==='No diff available.')return;
+  const blob=new Blob([patch],{type:'text/x-diff;charset=utf-8'});
+  const link=document.createElement('a');
+  const objectUrl=URL.createObjectURL(blob);
+  link.href=objectUrl;link.download='jepongdevxyz-codex.patch';link.click();
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
+});
 $('refresh').addEventListener('click',refreshRepos);
 $('start').addEventListener('click',async()=>{
   busy=true;controls();
