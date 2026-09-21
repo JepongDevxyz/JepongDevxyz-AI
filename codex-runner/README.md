@@ -24,7 +24,7 @@ On the **runner** set:
 
 - `CODEX_RUNNER_SHARED_SECRET`: the same strong shared secret.
 - `RUNNER_ALLOWED_GITHUB_LOGIN`: the exact personal GitHub login authorized for the single-owner instance.
-- `OPENAI_API_KEY`: a dedicated server-side API credential. **Do not place this in HTML, the GitHub repository, or a public Vercel variable.** This first implementation uses API billing, **not** the user's ChatGPT Plus subscription.
+- `RUNNER_CODEX_AUTH_HOME`: absolute private **persistent** directory belonging to this runner instance only. The official Codex App Server stores that one account's tokens here. Never share or mount this directory into another user's runtime.\n- Codex CLI and SDK are version-pinned together. Use `Connect ChatGPT` from the UI to complete the official device-code flow; the runner never asks users to type a password or paste an access token into JepongDevxyz AI.\n- Do **not** set `OPENAI_API_KEY` on this subscription runner; it uses the account authenticated in its private Codex home.
 - `PORT`: optional, default `8080`.
 - `RUNNER_SUPERPOWERS_SKILLS_DIR`: optional absolute **read-only** mount to the upstream `obra/superpowers/skills` directory. Do not expose this path to users and do not allow them to change it. See the official upstream documentation for installation and the MIT license.
 
@@ -32,8 +32,8 @@ Runner setup inside the isolated environment: `cd codex-runner && npm install &&
 
 ## Explicitly unfinished and not to be represented as complete
 
-1. Deploy and verify the isolated runner with the user's actual Vercel environment, an authorized GitHub App installation, and a valid OpenAI credential.
-2. Implement supported **per-user ChatGPT sign-in** using Codex App Server and per-user authentication/session isolation; this branch does not convert ChatGPT subscriptions into shared API credit.
+1. Deploy and verify the isolated runner with the user's actual Vercel environment, an authorized GitHub App installation, and the user's own completed ChatGPT login.
+2. The documented ChatGPT device-code login and backend account verification are now implemented for this **single-owner** runner. Automatic isolated runtime provisioning and independent credential storage **for every website user** remain unfinished. Do not expose a shared runner to multiple users or claim this is a complete multi-user service.
 3. Persistent storage and resume across runner restarts (jobs currently reside in memory and temporary workspaces).
 4. A reviewed multi-file commit/branch/PR write path after explicit confirmation; this branch intentionally does **not** automatically push repository changes.
 5. Full Superpowers plugin lifecycle/hook support, multiple concurrent user isolation, workspace browser/editor, browser/IDE integration, and production audit/limits.
