@@ -215,7 +215,9 @@ function getCloudflareAccounts() {
 }
 
 function getBailuAnthropicKeys(){
-  return rotateProviderKeys('bailucode-anthropic',parseKeys('BAILUCODE_ANTHROPIC_API_KEYS','BAILUCODE_ANTHROPIC_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  const dedicated=parseKeys('BAILUCODE_ANTHROPIC_API_KEYS','BAILUCODE_ANTHROPIC_API_KEY');
+  const keys=dedicated.length?dedicated:parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY');
+  return rotateProviderKeys('bailucode-anthropic',keys).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
 function credentialCount(provider) {
@@ -3365,7 +3367,11 @@ const DYNAMIC_MODEL_PROVIDERS = new Set(['unorouter','nvidia','codecraft','agent
 function providerModelsUrl(provider){
   const envName=provider.toUpperCase()+'_BASE_URL';
   const custom=String(process.env[envName]||'').trim().replace(/\/$/,'');
-  if(custom) return custom.endsWith('/v1') ? custom+'/models' : custom+'/v1/models';
+  if(custom){
+    if(custom.endsWith('/models'))return custom;
+    if(/\/(?:openapi\/)?v1$/i.test(custom))return custom+'/models';
+    return custom+'/v1/models';
+  }
   return ({
     unorouter:'https://api.unorouter.com/v1/models',
     nvidia:'https://integrate.api.nvidia.com/v1/models',
@@ -3397,7 +3403,7 @@ async function discoverProviderModels(provider){
   if(!DYNAMIC_MODEL_PROVIDERS.has(provider))return {provider,models:[],status:'unsupported'};
   const keys=getProviderKeys(provider);
   if(!keys.length)return {provider,models:[],status:'not-configured'};
-  if(provider==='seekai' && !process.env.SEEKAI_BASE_URL)return {provider,models:[],status:'endpoint-not-configured'};
+  if(provider==='seekai')return {provider,models:[{id:'agent',name:'SEEKAI Agent',type:'agent',capabilities:['agent']}],status:'ready',discovery:'agent-api'};
   const url=providerModelsUrl(provider);
   if(!url)return {provider,models:[],status:'endpoint-not-configured'};
   let lastStatus=502;
