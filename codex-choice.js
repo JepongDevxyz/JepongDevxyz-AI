@@ -5,7 +5,7 @@
 (() => {
   'use strict';
   let status={connected:false,available:false};
-  let buttons,option,accountMessage;
+  let buttons,option,accountMessage,connectButton;
   const lookup=id=>document.getElementById(id);
   const label=(message)=>{
     if(accountMessage) accountMessage.textContent=message;
@@ -15,6 +15,7 @@
       && status.codexEnabled===true && status.runnerReady===true;
     if(buttons?.work) buttons.work.hidden=!eligible;
     if(option) option.hidden=!eligible;
+    if(connectButton){connectButton.disabled=!status.available||eligible;connectButton.textContent=eligible?'ChatGPT connected':(status.available?'Connect ChatGPT':'Connect ChatGPT (setup required)');}
     for(const anchor of document.querySelectorAll('a[href="/codex.html"]')) {
       anchor.hidden=!eligible;
       if(!eligible) anchor.setAttribute('aria-hidden','true');
@@ -58,6 +59,7 @@
       const h=document.createElement('div');h.className='jd-codex-heading';h.textContent='ChatGPT account';
       const connect=document.createElement('button');connect.type='button';connect.className='jd-codex-connect';
       connect.textContent='Connect ChatGPT';
+      connectButton=connect;
       connect.addEventListener('click',async()=>{
         connect.disabled=true;
         try {
