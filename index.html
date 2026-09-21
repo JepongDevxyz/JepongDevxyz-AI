@@ -8918,7 +8918,14 @@ ${m.text || ''}
                     const page=document.querySelector(`#modelPagesTrack .model-provider-page[data-provider="${provider}"]`);
                     if(!page)continue;
                     const models=Array.isArray(result.models)?result.models:[];
-                    if(!models.length)continue;
+                    const badge=page.querySelector('.provider-badge');
+                    let status=page.querySelector('.provider-catalog-status');
+                    if(!status){status=document.createElement('div');status.className='provider-catalog-status option-desc';badge?.insertAdjacentElement('afterend',status);}
+                    if(!models.length){
+                        status.textContent=result.status==='not-configured'?'API key not configured':result.status==='no-access'?'Model catalog access denied':result.status==='limit-reached'?'Model catalog rate limit reached':result.status==='endpoint-not-configured'?'Model catalog endpoint not configured':'Could not load live model catalog';
+                        continue;
+                    }
+                    status.textContent=`${models.length} model${models.length===1?'':'s'} loaded from provider`;
                     page.querySelectorAll('.option-item[data-model]').forEach(x=>x.remove());
                     for(const model of models){
                         const id=String(model.id||''); if(!id)continue;
