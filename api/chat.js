@@ -19,28 +19,28 @@ const PROVIDERS = {
   },
   cloudflare: {
     label: 'Cloudflare',
-    models: ['@cf/zai-org/glm-4.7-flash','@cf/google/gemma-4-26b-a4b-it','@cf/nvidia/nemotron-3-120b-a12b','@cf/openai/gpt-oss-120b','@cf/openai/gpt-oss-20b','@cf/qwen/qwen3.8-27b'],
-    defaultModel: '@cf/zai-org/glm-4.7-flash'
+    models: ['@cf/zai-org/glm-4.7-flash','@cf/nvidia/nemotron-3-120b-a12b','@cf/openai/gpt-oss-120b','@cf/qwen/qwen3.8-27b'],
+    defaultModel: '@cf/openai/gpt-oss-120b'
   },
   groq: {
     label: 'Groq',
-    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.6-27b','qwen/qwen3.8-27b','groq/compound','groq/compound-mini'],
-    defaultModel: 'openai/gpt-oss-20b'
+    models: ['openai/gpt-oss-120b','qwen/qwen3.8-27b','groq/compound'],
+    defaultModel: 'openai/gpt-oss-120b'
   },
   openrouter: {
     label: 'OpenRouter',
-    models: ['openrouter/free','nvidia/nemotron-3-ultra-550b-a55b:free','poolside/laguna-s-2.1:free','nvidia/nemotron-3-super-120b-a12b:free','cohere/north-mini-code:free','poolside/laguna-xs-2.1:free','inclusionai/ling-3.0-tiny:free','nvidia/nemotron-3-nano-30b-a3b:free','google/gemma-4-26b-a4b-it:free','openai/gpt-oss-20b:free'],
-    defaultModel: 'openrouter/free'
+    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','poolside/laguna-s-2.1:free','nvidia/nemotron-3-super-120b-a12b:free'],
+    defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b:free'
   },
   mistral: {
     label: 'Mistral',
-    models: ['mistral-small-latest','ministral-14b-latest','ministral-8b-latest','ministral-3b-latest','codestral-latest'],
+    models: ['mistral-small-latest','codestral-latest'],
     defaultModel: 'mistral-small-latest'
   },
   cohere: {
     label: 'Cohere',
-    models: ['command-a-plus-05-2026','command-a-03-2025','command-a-reasoning-08-2025','command-r7b-12-2024','tiny-aya-global','tiny-aya-water','c4ai-aya-expanse-32b'],
-    defaultModel: 'command-a-03-2025'
+    models: ['command-a-plus-05-2026','command-a-reasoning-08-2025'],
+    defaultModel: 'command-a-plus-05-2026'
   },
   aihorde: {
     label: 'AI Horde',
