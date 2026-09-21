@@ -6,6 +6,6 @@
     "@vercel/sandbox": "3.3.0"
   },
   "scripts": {
-    "test:codex-tenants": "node --test tests/codex_sandbox_tenant.test.mjs tests/codex_account_identity.test.mjs"
+    "test:codex-tenants": "node --test tests/codex_sandbox_tenant.test.mjs tests/codex_account_identity.test.mjs tests/codex_node_bridge.test.mjs"
   }
 }

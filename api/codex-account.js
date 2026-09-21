@@ -1,3 +1,4 @@
+import { webCompatible } from './_node_web_bridge.js';
 import { json } from './_github_oauth.js';
 import { codexAccountActor } from './_codex_identity.js';
 import { sandboxRpc, sandboxAccountStatus, settings } from './_codex_sandbox.js';
@@ -5,7 +6,7 @@ export const config = { maxDuration: 60 };
 const empty=(extra={})=>({available:false,connected:false,codexEnabled:false,
   runnerReady:false,authMode:null,planType:null,...extra});
 
-export default async function handler(request){
+async function handleWeb(request){
   if(!['GET','POST'].includes(request.method))return json({error:'Method not allowed.'},405);
   if(request.headers.get('sec-fetch-site')==='cross-site')return json({error:'Cross-site request blocked.'},403);
   const origin=request.headers.get('origin');
@@ -44,4 +45,8 @@ export default async function handler(request){
   }catch(e){
     return json({error:e.status?e.message:'ChatGPT Codex service is unavailable.'},e.status||502);
   }
+}
+
+export default async function handler(request,response){
+  return webCompatible(request,response,handleWeb);
 }
