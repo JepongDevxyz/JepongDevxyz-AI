@@ -3290,6 +3290,76 @@ async function mediaCapabilitySnapshot(){
   return result;
 }
 
+
+const DYNAMIC_MODEL_PROVIDERS = new Set(['unorouter','nvidia','codecraft','agentrouter','hcnsec','bailucode','seekai']);
+
+function providerModelsUrl(provider){
+  const envName=provider.toUpperCase()+'_BASE_URL';
+  const custom=String(process.env[envName]||'').trim().replace(/\/$/,'');
+  if(custom) return custom.endsWith('/v1') ? custom+'/models' : custom+'/v1/models';
+  return ({
+    unorouter:'https://api.unorouter.com/v1/models',
+    nvidia:'https://integrate.api.nvidia.com/v1/models',
+    codecraft:'https://codecraftapi.com/v1/models',
+    agentrouter:'https://agentrouter.org/v1/models',
+    hcnsec:'https://api.hcnsec.cn/v1/models',
+    bailucode:'https://bailucode.com/openapi/v1/models'
+  })[provider] || '';
+}
+
+function normalizeModelCatalog(data){
+  const raw=Array.isArray(data)?data:(Array.isArray(data?.data)?data.data:(Array.isArray(data?.models)?data.models:[]));
+  const seen=new Set(),out=[];
+  for(const item of raw){
+    const id=String(typeof item==='string'?item:(item?.id||item?.model||item?.name||'')).trim();
+    if(!id||seen.has(id))continue;
+    seen.add(id);
+    out.push({
+      id,
+      name:String(item?.name||item?.display_name||item?.displayName||id),
+      type:String(item?.type||item?.object||''),
+      capabilities:Array.isArray(item?.capabilities)?item.capabilities.map(String):[]
+    });
+  }
+  return out.slice(0,500);
+}
+
+async function discoverProviderModels(provider){
+  if(!DYNAMIC_MODEL_PROVIDERS.has(provider))return {provider,models:[],status:'unsupported'};
+  const keys=getProviderKeys(provider);
+  if(!keys.length)return {provider,models:[],status:'not-configured'};
+  if(provider==='seekai' && !process.env.SEEKAI_BASE_URL)return {provider,models:[],status:'endpoint-not-configured'};
+  const url=providerModelsUrl(provider);
+  if(!url)return {provider,models:[],status:'endpoint-not-configured'};
+  let lastStatus=502;
+  for(const key of keys){
+    try{
+      const headers={Authorization:'Bearer '+key,Accept:'application/json'};
+      if(provider==='codecraft')headers['x-api-key']=key;
+      if(provider==='agentrouter'){
+        headers['Originator']='JepongDevxyz-AI';
+        headers['Version']='1.0';
+        headers['User-Agent']='JepongDevxyz-AI/1.0';
+      }
+      const res=await fetch(url,{headers,signal:AbortSignal.timeout(8000)});
+      lastStatus=res.status;
+      if(res.ok){
+        const data=await safeJsonResponse(res);
+        const models=normalizeModelCatalog(data);
+        return {provider,models,status:models.length?'ready':'empty'};
+      }
+      if(!isRetryableStatus(res.status))break;
+    }catch(_){lastStatus=502;}
+  }
+  return {provider,models:[],status:lastStatus===429?'limit-reached':([401,403].includes(lastStatus)?'no-access':'temporarily-unavailable'),httpStatus:lastStatus};
+}
+
+async function dynamicModelCatalog(){
+  const providers={};
+  await Promise.all([...DYNAMIC_MODEL_PROVIDERS].map(async p=>{providers[p]=await discoverProviderModels(p);}));
+  return providers;
+}
+
 async function providerUsageSnapshot(){
   const providers={};
   for(const p of Object.keys(PROVIDERS)) providers[p]={configured:configured(p),status:configured(p)?'ready':'not-configured',credentials:credentialCount(p)};
@@ -3965,6 +4035,7 @@ export default async function handler(req){
     if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return cloudflareTTS(body);
     if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
+    if(body.action==='provider-models') return json({providers:await dynamicModelCatalog()});
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
 
     const githubSession=await getGitHubSession(req);
