@@ -30,6 +30,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install pinned Codex SDK and CLI
+        run: |
+          cd codex-runner
+          npm install --no-audit --no-fund
+          ./node_modules/.bin/codex --version
+          node --input-type=module -e "import('@openai/codex-sdk').then(m=>{if(typeof m.Codex!=='function')process.exit(1)})"
       - name: Syntax verification
         run: |
           node --check api/codex.js
