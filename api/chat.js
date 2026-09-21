@@ -2651,7 +2651,9 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
     unorouter:{url:process.env.UNOROUTER_BASE_URL ? process.env.UNOROUTER_BASE_URL.replace(/\/$/,'')+'/chat/completions' : 'https://api.unorouter.com/v1/chat/completions'},
     nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
     codecraft:{url:'https://codecraftapi.com/v1/chat/completions'},
+    agentrouter:{url:(process.env.AGENTROUTER_BASE_URL||'https://agentrouter.org/v1').replace(/\/$/,'')+'/chat/completions'},
     hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
+    seekai:{url:(process.env.SEEKAI_BASE_URL||'https://seekai.cc/v1').replace(/\/$/,'')+'/chat/completions'},
     bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
@@ -3060,7 +3062,7 @@ async function runProvider(provider,args){
   if(provider==='cohere')return runCohere(args);
   if(provider==='aihorde')return runAIHorde(args);
   if(provider==='bailucode')return runBailucode(args);
-  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec'].includes(provider))return runOpenAICompatible(provider,args);
+  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','agentrouter','hcnsec','seekai'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
