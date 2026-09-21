@@ -38,13 +38,13 @@ async function actor(request) {
   if (!Number.isSafeInteger(user.id) || !user.login) error('GitHub identity could not be verified.', 401);
   return { id: user.id, login: String(user.login) };
 }
-async function rpc(payload, request) {
+async function rpc(payload, request, timeoutMs = 20_000) {
   const { url, secret } = runnerSettings();
   const body = JSON.stringify({ ...payload, issuedAt: Date.now(), nonce: crypto.randomUUID() });
   const response = await fetch(url + '/rpc', {
     method: 'POST', redirect: 'error',
     headers: { 'Content-Type': 'application/json', 'X-JD-Signature': await signature(secret, body) },
-    body, signal: AbortSignal.timeout(20_000)
+    body, signal: AbortSignal.timeout(timeoutMs)
   });
   const raw = await response.text();
   if (raw.length > 240_000) error('Runner response exceeded size limit.', 502);
@@ -57,7 +57,7 @@ export default async function handler(request) {
   if (request.method === 'GET') {
     try {
       runnerSettings();
-      const health = await rpc({ action: 'health' }, request);
+      const health = await rpc({ action: 'health' }, request, 4_000);
       return json({
         configured: true,
         runnerReady: health.ready === true,
