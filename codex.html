@@ -59,7 +59,7 @@ button.primary{background:var(--accent);border-color:var(--accent);font-weight:6
 <script type="module">
 const $ = id => document.getElementById(id);
 let jobId = sessionStorage.getItem('jd_codex_job') || '';
-let configured = false, polling = null, busy = false, currentRepo = '';
+let configured = false, runnerConfigured = false, polling = null, busy = false, currentRepo = '';
 function notice(value){ $('notice').textContent = value; }
 function errorMessage(e){ notice(e?.message || 'Request failed.'); }
 function controls(state=''){
@@ -167,14 +167,15 @@ $('cancel').addEventListener('click',async()=>{
   try{
     const [res, app] = await Promise.all([fetch('/api/codex'),fetch('/api/github-app-status')]);
     const health=await res.json();
+    runnerConfigured=health.configured===true;
     configured=health.runnerReady===true;
     if(health.configured && !configured)notice('The Codex runner is configured but is not reachable or is missing its server API credential. Coding is disabled.');
     if(app.ok){const status=await app.json();if(status.installUrl && !status.installed){$('install').href=status.installUrl;$('install').classList.remove('hide');}}
-    if(!configured)notice('Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
+    if(!configured)notice(runnerConfigured?'Codex runner is configured but unreachable or missing its API credential. The workspace is disabled.':'Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
     else notice('Codex runner configured. Connect GitHub and choose your repository.');
   }catch(e){errorMessage(e);}
   await refreshRepos();
-  if(!configured)notice('Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
+  if(!configured)notice(runnerConfigured?'Codex runner is configured but unreachable or missing its API credential. The workspace is disabled.':'Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
   if(jobId && configured){await refreshJob();if(['running','cloning','cancelling'].includes($('state').textContent))startPolling();}
   controls($('state').textContent);
 })();
