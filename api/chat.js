@@ -46,6 +46,41 @@ const PROVIDERS = {
     label: 'AI Horde',
     models: ['auto'],
     defaultModel: 'auto'
+  },
+  unorouter: {
+    label: 'UnoRouter',
+    models: ['auto'],
+    defaultModel: 'auto'
+  },
+  nvidia: {
+    label: 'NVIDIA',
+    models: ['nvidia/nemotron-3-ultra-550b-a55b','nvidia/nemotron-3-super-120b-a12b'],
+    defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b'
+  },
+  codecraft: {
+    label: 'CodeCraft API',
+    models: ['claude-opus-4.8','deepseek-v4-flash-0731','gpt-5.6-luna'],
+    defaultModel: 'claude-opus-4.8'
+  },
+  agentrouter: {
+    label: 'AgentRouter',
+    models: ['deepseek-v4-pro','deepseek-v4-flash'],
+    defaultModel: 'deepseek-v4-pro'
+  },
+  hcnsec: {
+    label: 'HCNSEC',
+    models: ['DeepSeek-V4-Pro'],
+    defaultModel: 'DeepSeek-V4-Pro'
+  },
+  bailucode: {
+    label: 'Bailucode',
+    models: ['bailu-apex'],
+    defaultModel: 'bailu-apex'
+  },
+  seekai: {
+    label: 'SEEKAI',
+    models: ['agent'],
+    defaultModel: 'agent'
   }
 };
 
@@ -64,7 +99,8 @@ const API_GUARD = {
   maxHeavyRequests: Math.max(1, Number(process.env.API_RATE_MAX_HEAVY_REQUESTS || 6)),
   maxBodyChars: Math.max(20_000, Number(process.env.API_MAX_BODY_CHARS || 1_200_000)),
   maxDailyEstimatedTokens: Math.max(10_000, Number(process.env.API_DAILY_ESTIMATED_TOKEN_BUDGET || 250_000)),
-  maxProviderCredentialsPerRequest: Math.max(1, Math.min(4, Number(process.env.API_MAX_CREDENTIAL_RETRIES || 2))),
+  // Comma/newline-separated provider keys are rotated on retry. Keep the cap configurable; default 8.
+  maxProviderCredentialsPerRequest: Math.max(1, Math.min(32, Number(process.env.API_MAX_CREDENTIAL_RETRIES || 8))),
   maxFallbackProviders: Math.max(0, Math.min(6, Number(process.env.API_MAX_FALLBACK_PROVIDERS || 2))),
   abnormalBurst: Math.max(2, Number(process.env.API_ABNORMAL_BURST || 12))
 };
@@ -134,13 +170,28 @@ function shuffle(input) {
   return arr;
 }
 
+const providerKeyCursor = new Map();
+function rotateProviderKeys(provider, keys) {
+  if (!Array.isArray(keys) || keys.length < 2) return keys || [];
+  const start = providerKeyCursor.get(provider) || 0;
+  providerKeyCursor.set(provider, (start + 1) % keys.length);
+  return keys.map((_, i) => keys[(start + i) % keys.length]);
+}
+
 function getProviderKeys(provider) {
-  if (provider === 'gemini') return parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'groq') return parseKeys('GROQ_API_KEYS','GROQ_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'openrouter') return parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'mistral') return parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'cohere') return parseKeys('COHERE_API_KEYS','COHERE_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'aihorde') return parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY').slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'gemini') return rotateProviderKeys('gemini', parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'groq') return rotateProviderKeys('groq', parseKeys('GROQ_API_KEYS','GROQ_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'openrouter') return rotateProviderKeys('openrouter', parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'mistral') return rotateProviderKeys('mistral', parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'cohere') return rotateProviderKeys('cohere', parseKeys('COHERE_API_KEYS','COHERE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'aihorde') return rotateProviderKeys('aihorde', parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'unorouter') return rotateProviderKeys('unorouter', parseKeys('UNOROUTER_API_KEYS','UNOROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'nvidia') return rotateProviderKeys('nvidia', parseKeys('NVIDIA_API_KEYS','NVIDIA_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'codecraft') return rotateProviderKeys('codecraft', parseKeys('CODECRAFT_API_KEYS','CODECRAFT_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'agentrouter') return rotateProviderKeys('agentrouter', parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'hcnsec') return rotateProviderKeys('hcnsec', parseKeys('HCNSEC_API_KEYS','HCNSEC_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'bailucode') return rotateProviderKeys('bailucode', parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'seekai') return rotateProviderKeys('seekai', parseKeys('SEEKAI_API_KEYS','SEEKAI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
   return [];
 }
 
@@ -2588,7 +2639,12 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
-    mistral:{url:'https://api.mistral.ai/v1/chat/completions'}
+    mistral:{url:'https://api.mistral.ai/v1/chat/completions'},
+    unorouter:{url:process.env.UNOROUTER_BASE_URL ? process.env.UNOROUTER_BASE_URL.replace(/\/$/,'')+'/chat/completions' : 'https://api.unorouter.com/v1/chat/completions'},
+    nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
+    codecraft:{url:'https://codecraftapi.com/v1/chat/completions'},
+    hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
+    bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
 
@@ -2933,7 +2989,7 @@ async function runProvider(provider,args){
   if(provider==='cloudflare')return runCloudflare(args);
   if(provider==='cohere')return runCohere(args);
   if(provider==='aihorde')return runAIHorde(args);
-  if(['groq','openrouter','mistral'].includes(provider))return runOpenAICompatible(provider,args);
+  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec','bailucode'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
@@ -3206,6 +3262,32 @@ async function processChat(body, emit) {
   }
 
   return {ok:false,status:first.status||500,error:first.error||'AI provider unavailable.',provider,startedAt};
+}
+
+async function mediaCapabilitySnapshot(){
+  const result={};
+  const add=(provider,image,video,detail='')=>{result[provider]={image,video,detail};};
+  add('codecraft','unsupported','unsupported','Public API documents vision input, not image/video generation.');
+  add('agentrouter',configured('agentrouter')?'available':'not-configured','gated','Image generation is documented; video generation remains gated upstream.');
+  for(const p of ['unorouter','hcnsec','bailucode','seekai']) add(p,'unverified','unverified','No verified media-generation contract is configured yet.');
+
+  if(!configured('nvidia')){
+    add('nvidia','not-configured','not-configured','NVIDIA_API_KEY is not configured.');
+  }else{
+    const key=getProviderKeys('nvidia')[0];
+    try{
+      const res=await fetch('https://integrate.api.nvidia.com/v1/models',{headers:{Authorization:`Bearer ${key}`,Accept:'application/json'},signal:AbortSignal.timeout(7000)});
+      if(res.ok){
+        const data=await safeJsonResponse(res);
+        const ids=(Array.isArray(data?.data)?data.data:[]).map(x=>String(x?.id||'').toLowerCase());
+        const cosmos=ids.some(x=>x.includes('cosmos3')||x.includes('cosmos-3'));
+        add('nvidia',cosmos?'available':'unverified',cosmos?'available':'unverified',cosmos?'Authenticated NVIDIA account exposes a Cosmos 3 model.':'NVIDIA key works, but Cosmos 3 was not exposed by /v1/models.');
+      }else if(res.status===401||res.status===403) add('nvidia','no-access','no-access',`NVIDIA credential rejected (HTTP ${res.status}).`);
+      else if(res.status===429) add('nvidia','limit-reached','limit-reached','NVIDIA rate limit reached.');
+      else add('nvidia','temporarily-unavailable','temporarily-unavailable',`NVIDIA model discovery returned HTTP ${res.status}.`);
+    }catch(_){ add('nvidia','temporarily-unavailable','temporarily-unavailable','NVIDIA model discovery could not be reached.'); }
+  }
+  return result;
 }
 
 async function providerUsageSnapshot(){
@@ -3882,6 +3964,7 @@ export default async function handler(req){
     if(body.action==='generate-image') return generateImage(body,req.signal);
     if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return cloudflareTTS(body);
+    if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
 
     const githubSession=await getGitHubSession(req);
