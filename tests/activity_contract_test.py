@@ -46,11 +46,10 @@ def main():
     require("MAX_VISIBLE_ACTIVITY_ROWS" in INDEX,
             "compact row policy constant missing")
 
-    # Explicitly keep OpenAI/Luna out of this version.
+    # Keep direct OpenAI credentials/provider routing out of this version.
+    # Third-party gateways may legitimately expose model names containing Luna.
     forbidden = (
         "OPENAI_API_KEY",
-        "gpt-5.6-luna",
-        "GPT-5.6 Luna",
         "provider:'openai'",
         'provider:"openai"',
     )
