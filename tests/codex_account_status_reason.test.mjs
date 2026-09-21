@@ -52,3 +52,14 @@ test('unauthenticated status never leaks app-account IDs',async()=>{
   assert.equal(data.reasonCode,'APP_SIGN_IN_REQUIRED');
   assert.equal('accountId' in data,false);
 });
+
+test('operator-enabled self-service admits any server-verified app account without a per-user Vercel allowlist',()=>{
+  const env={CODEX_MULTIUSER_SANDBOX_ENABLED:'true',
+    CODEX_RUNNER_SHARED_SECRET:secret,CODEX_PUBLIC_SIGNUP_ENABLED:'true'};
+  assert.deepEqual(accountAvailability(actor,env),{available:true,reasonCode:'READY'});
+  assert.deepEqual(accountAvailability({...actor,subject:other},env),{available:true,reasonCode:'READY'});
+  assert.equal(settings(env).publicSignup,true);
+  assert.equal(settings(env).allowlist.size,0);
+  assert.equal(accountAvailability(actor,{...env,CODEX_PUBLIC_SIGNUP_ENABLED:'false'}).reasonCode,'ACCOUNT_ALLOWLIST_EMPTY');
+  assert.equal(accountAvailability(actor,{...env,CODEX_RUNNER_SHARED_SECRET:'short'}).reasonCode,'SIGNING_SECRET_MISSING');
+});

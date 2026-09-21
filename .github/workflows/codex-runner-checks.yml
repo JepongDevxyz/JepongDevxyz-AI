@@ -1,7 +1,7 @@
 name: Codex runner checks
 on:
   push:
-    branches: [feature/codex-account-diagnostics]
+    branches: [feature/codex-account-diagnostics, feature/codex-self-service-login]
     paths:
       - 'codex-runner/**'
       - 'api/codex.js'

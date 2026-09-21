@@ -24,6 +24,7 @@
       &&state.codexEnabled===true&&state.runnerReady===true;
     const tabs=get('jdChatWorkTabs');if(tabs)tabs.hidden=!ready;
     if(workTab)workTab.hidden=!ready;
+    const openWork=get('jdCodexOpenWork');if(openWork)openWork.hidden=!ready;
     if(disconnect)disconnect.hidden=!state.connected;
     if(accountIdField){
       const showId=state.reasonCode==='ACCOUNT_NOT_ENROLLED' &&

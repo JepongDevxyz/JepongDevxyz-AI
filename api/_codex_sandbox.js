@@ -19,8 +19,11 @@ export function accountAvailability(actor,env=process.env) {
   const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'')
     .split(/[;,\s]+/).map(x=>x.trim().replace(/^["']|["']$/g,'').toLowerCase())
     .filter(x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(x)));
-  if(!allowlist.size)return {available:false,reasonCode:'ACCOUNT_ALLOWLIST_EMPTY'};
-  if(actor && !allowlist.has(String(actor.subject||'').toLowerCase()))
+  // A single operator-controlled rollout switch enables self-service for all
+  // server-verified app accounts. Existing allowlists still work for private pilots.
+  const publicSignup=env.CODEX_PUBLIC_SIGNUP_ENABLED==='true';
+  if(!publicSignup && !allowlist.size)return {available:false,reasonCode:'ACCOUNT_ALLOWLIST_EMPTY'};
+  if(actor && !publicSignup && !allowlist.has(String(actor.subject||'').toLowerCase()))
     return {available:false,reasonCode:'ACCOUNT_NOT_ENROLLED'};
   return {available:true,reasonCode:'READY'};
 }
@@ -31,7 +34,8 @@ export function settings(env=process.env) {
   const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'')
     .split(/[;,\s]+/).map(x=>x.trim().replace(/^["']|["']$/g,'').toLowerCase())
     .filter(x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(x)));
-  return {enabled:true,secret,allowlist,reasonCode:'READY'};
+  return {enabled:true,secret,allowlist,
+    publicSignup:env.CODEX_PUBLIC_SIGNUP_ENABLED==='true',reasonCode:'READY'};
 }
 export function tenantIdentity(actor, secret) {
   if(!Number.isSafeInteger(actor?.id) || actor.id < 1 ||
@@ -148,7 +152,8 @@ export async function sandboxRpc(payload,actor,timeoutMs=20000) {
   const cfg=settings();
   if(!cfg.enabled) throw gatewayError('Codex workspace configuration is unavailable.',503);
   const tenant=tenantIdentity(actor,cfg.secret);
-  if(!cfg.allowlist.has(String(actor.subject||'').toLowerCase())) throw gatewayError('Your account is not enrolled in the Codex workspace beta.',403);
+  if(!cfg.publicSignup && !cfg.allowlist.has(String(actor.subject||'').toLowerCase()))
+    throw gatewayError('Your account is not enrolled in the Codex workspace beta.',403);
   const create=payload.action==='account-connect';
   const sbx=await locateSandbox(tenant,create);
   if(!sbx){
@@ -162,7 +167,7 @@ export async function sandboxRpc(payload,actor,timeoutMs=20000) {
 }
 export async function sandboxAccountStatus(actor) {
   const cfg=settings();
-  if(!cfg.enabled || !cfg.allowlist.has(String(actor?.subject||'').toLowerCase()))
+  if(!cfg.enabled || (!cfg.publicSignup && !cfg.allowlist.has(String(actor?.subject||'').toLowerCase())))
     return {available:false,connected:false,codexEnabled:false,runnerReady:false};
   return sandboxRpc({action:'account-status',actor},actor,12000);
 }
