@@ -45,6 +45,7 @@ function authenticate(raw, header) {
   if (seenNonces.has(body.nonce)) fail('Replayed request.', 409);
   seenNonces.set(body.nonce, Date.now());
   for (const [nonce, at] of seenNonces) if (Date.now() - at > 120000) seenNonces.delete(nonce);
+  if (body.action === 'health') return body;
   if (!Number.isSafeInteger(body.actor?.id) ||
       String(body.actor?.login || '').toLowerCase() !== allowedOwner.toLowerCase()) fail('This runner is restricted to its owner.', 403);
   return body;
@@ -223,7 +224,9 @@ const server = http.createServer(async (req, res) => {
   if (req.url !== '/rpc' || req.method !== 'POST') return reply(res, 404, { error: 'Not found.' });
   try {
     const body = authenticate(await readBounded(req), req.headers['x-jd-signature']);
-    const result = body.action === 'start' ? await start(body) : await operation(body);
+    const result = body.action === 'health'
+      ? { status: 200, data: { ready: !!process.env.OPENAI_API_KEY, mode: 'single-owner-api-key' } }
+      : body.action === 'start' ? await start(body) : await operation(body);
     reply(res, result.status, result.data);
   } catch (e) {
     reply(res, e.status || 500, { error: e.status ? e.message : 'Runner request failed.' });
