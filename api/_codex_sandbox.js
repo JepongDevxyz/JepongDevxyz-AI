@@ -90,7 +90,10 @@ async function locateSandbox(tenant,create) {
   const { Sandbox } = await import('@vercel/sandbox');
   if(!create){
     try{
-      await Sandbox.get({name:tenant.name,resume:false});
+      // Status must be read-only: do not resume, create, or install a sandbox.
+      // Return the existing sandbox directly; the previous code discarded it
+      // and then called getOrCreate(), which could trigger provisioning on GET.
+      return await Sandbox.get({name:tenant.name,resume:false});
     }catch(error){
       if(isMissing(error)) return null;
       throw gatewayError('Unable to check your Codex workspace.',503);
@@ -158,5 +161,5 @@ export async function sandboxAccountStatus(actor) {
   const cfg=settings();
   if(!cfg.enabled)
     return {available:false,connected:false,codexEnabled:false,runnerReady:false};
-  return sandboxRpc({action:'account-status',actor},actor,12000);
+  return sandboxRpc({action:'account-status',actor},actor,8000);
 }

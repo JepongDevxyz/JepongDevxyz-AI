@@ -31,3 +31,17 @@ test('Node.js runtime also handles the Codex status endpoint',async()=>{
   assert.equal(response.status,200);
   assert.equal(response.body.configured,false);
 });
+
+test('Node bridge ignores misleading headers.get property on non-Fetch requests',async()=>{
+  const req=Readable.from([]);
+  req.url='/api/codex-account';req.method='GET';
+  req.headers={host:'test.local',cookie:'jdgh_session=irrelevant'};
+  // Simulate a misleading helper on the request object, not an invalid enumerable
+  // HTTP header value. The bridge must still normalize this as a Node request.
+  req.headers.get=undefined;
+  const output={status:null,data:''};
+  const res={writeHead(status){output.status=status;},end(data){output.data=String(data||'');}};
+  await account(req,res);
+  assert.equal(output.status,200);
+  assert.equal(JSON.parse(output.data).requiresAccount,true);
+});
