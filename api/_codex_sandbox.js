@@ -42,8 +42,17 @@ function gatewayError(message,status=502){
   return Object.assign(new Error(message),{status});
 }
 function isMissing(error){
-  return error?.status===404 || error?.statusCode===404 ||
-    error?.response?.status===404 || error?.code==='NOT_FOUND';
+  const status=Number(error?.status ?? error?.statusCode ?? error?.response?.status ?? error?.cause?.status ?? error?.cause?.statusCode);
+  const code=String(error?.code ?? error?.cause?.code ?? '').toUpperCase();
+  const message=String(error?.message ?? error?.cause?.message ?? '').toLowerCase();
+  return status===404 ||
+    ['NOT_FOUND','NOTFOUND','SANDBOX_NOT_FOUND','NAMED_SANDBOX_NOT_FOUND'].includes(code) ||
+    (message.includes('sandbox') && (
+      message.includes('not found') ||
+      message.includes('does not exist') ||
+      message.includes('no sandbox') ||
+      message.includes('404')
+    ));
 }
 async function installRuntime(sbx) {
   // Use fixed, repository-owned entrypoints. Never fetch arbitrary user code
@@ -96,6 +105,14 @@ async function locateSandbox(tenant,create) {
       return await Sandbox.get({name:tenant.name,resume:false});
     }catch(error){
       if(isMissing(error)) return null;
+      // Do not leak provider details to the browser, but leave enough structured
+      // diagnostics in Vercel logs to distinguish auth/project/provider failures.
+      console.error('[codex-sandbox] lookup failed',{
+        name:tenant.name,
+        status:error?.status ?? error?.statusCode ?? error?.response?.status ?? error?.cause?.status ?? null,
+        code:error?.code ?? error?.cause?.code ?? null,
+        message:String(error?.message ?? error?.cause?.message ?? 'unknown').slice(0,300)
+      });
       throw gatewayError('Unable to check your Codex workspace.',503);
     }
   }
