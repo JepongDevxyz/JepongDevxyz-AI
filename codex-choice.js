@@ -76,7 +76,7 @@
           if(data.connected===true){await checkAccount();return;}
           const url=new URL(String(data.verificationUrl||''));
           if(url.protocol!=='https:' || url.hostname!=='auth.openai.com' ||
-            !/^\\/codex\\/device\\/?$/.test(url.pathname) ||
+            !['/codex/device','/codex/device/'].includes(url.pathname) ||
             !/^[A-Z0-9-]{4,32}$/i.test(String(data.userCode||'')))
             throw Error('Unsupported device login response.');
           loginDetails.replaceChildren();
