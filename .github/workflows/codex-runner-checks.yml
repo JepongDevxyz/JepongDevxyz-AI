@@ -5,11 +5,19 @@ on:
     paths:
       - 'codex-runner/**'
       - 'api/codex.js'
+      - 'api/codex-account.js'
+      - 'codex-choice.js'
+      - 'codex-choice.css'
+      - 'index.html'
       - '.github/workflows/codex-runner-checks.yml'
   pull_request:
     paths:
       - 'codex-runner/**'
       - 'api/codex.js'
+      - 'api/codex-account.js'
+      - 'codex-choice.js'
+      - 'codex-choice.css'
+      - 'index.html'
       - '.github/workflows/codex-runner-checks.yml'
 permissions:
   contents: read
@@ -25,6 +33,8 @@ jobs:
       - name: Syntax verification
         run: |
           node --check api/codex.js
+          node --check api/codex-account.js
+          node --check codex-choice.js
           cd codex-runner
           npm run check
       - name: SDK event projection tests
