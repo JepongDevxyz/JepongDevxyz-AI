@@ -1,7 +1,7 @@
 import { webCompatible } from './_node_web_bridge.js';
 import { json } from './_github_oauth.js';
 import { codexAccountActor } from './_codex_identity.js';
-import { sandboxRpc, sandboxAccountStatus, settings } from './_codex_sandbox.js';
+import { sandboxRpc, sandboxAccountStatus, settings, accountAvailability } from './_codex_sandbox.js';
 export const config = { maxDuration: 60 };
 const empty=(extra={})=>({available:false,connected:false,codexEnabled:false,
   runnerReady:false,authMode:null,planType:null,...extra});
@@ -14,18 +14,36 @@ async function handleWeb(request){
   let actor;
   try{actor=await codexAccountActor(request);}
   catch(e){
-    if(e.status===401)return json(empty({requiresAccount:true,available:settings().enabled}),request.method==='GET'?200:401);
-    return json(empty({error:'Codex account service is unavailable.'}),e.status||503);
+    if(e.status===401)return json(empty({requiresAccount:true,reasonCode:'APP_SIGN_IN_REQUIRED',
+      available:settings().enabled}),request.method==='GET'?200:401);
+    if(e.status===503 && request.method==='GET')
+      return json(empty({reasonCode:'SIGNING_SECRET_MISSING'}));
+    return json(empty({reasonCode:'ACCOUNT_VERIFICATION_FAILED',
+      error:'Unable to verify your app account.'}),e.status||503);
   }
   try{
+    const access=accountAvailability(actor);
     if(request.method==='GET'){
-      const status=await sandboxAccountStatus(actor);
-      const verified=status.connected===true&&status.authMode==='chatgpt';
-      return json({available:status.available===true,connected:verified,
-        codexEnabled:verified&&status.codexEnabled===true,
-        runnerReady:status.runnerReady===true,authMode:verified?'chatgpt':null,
-        planType:verified?String(status.planType||'').slice(0,40):null});
+      // Only return the account UUID to the user whose Supabase session was
+      // verified above. Never echo a browser-supplied UID or server secret.
+      if(!access.available)return json(empty({
+        reasonCode:access.reasonCode,
+        ...(access.reasonCode==='ACCOUNT_NOT_ENROLLED'?{accountId:actor.subject}:{})
+      }));
+      try{
+        const status=await sandboxAccountStatus(actor);
+        const verified=status.connected===true&&status.authMode==='chatgpt';
+        return json({available:status.available===true,connected:verified,
+          reasonCode:verified?'CONNECTED':'READY_TO_CONNECT',
+          codexEnabled:verified&&status.codexEnabled===true,
+          runnerReady:status.runnerReady===true,authMode:verified?'chatgpt':null,
+          planType:verified?String(status.planType||'').slice(0,40):null});
+      }catch(_){
+        return json(empty({reasonCode:'WORKSPACE_SERVICE_UNAVAILABLE'}));
+      }
     }
+    if(!access.available)return json({error:'Codex is not enabled for this app account.',
+      reasonCode:access.reasonCode},403);
     if(!String(request.headers.get('content-type')||'').toLowerCase().startsWith('application/json'))
       return json({error:'Expected JSON.'},415);
     const raw=await request.text();

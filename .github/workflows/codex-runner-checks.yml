@@ -1,7 +1,7 @@
 name: Codex runner checks
 on:
   push:
-    branches: [feature/codex-node-runtime-fix]
+    branches: [feature/codex-account-diagnostics]
     paths:
       - 'codex-runner/**'
       - 'api/codex.js'
@@ -16,6 +16,7 @@ on:
       - 'tests/codex_sandbox_tenant.test.mjs'
       - 'tests/codex_account_identity.test.mjs'
       - 'tests/codex_node_bridge.test.mjs'
+      - 'tests/codex_account_status_reason.test.mjs'
       - '.github/workflows/codex-runner-checks.yml'
   pull_request:
     paths:
