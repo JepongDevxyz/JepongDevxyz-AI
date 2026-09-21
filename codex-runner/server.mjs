@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { spawn, fork, execFile } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile, chmod, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, chmod, rm, readdir, stat, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -55,10 +55,28 @@ function publicJob(job) {
     startedAt: job.startedAt, updatedAt: job.updatedAt, 
     events: job.events.slice(-70), finalResponse: job.finalResponse,
     diff: job.diff, files: job.files, error: job.error,
-    canContinue: !!job.threadId && ['done', 'failed'].includes(job.state)
+    canContinue: !!job.threadId && ['done', 'failed', 'cancelled'].includes(job.state)
   };
 }
 function update(job, state) { job.state = state; job.updatedAt = Date.now(); }
+async function provisionSkills(job) {
+  // The operator may mount the OFFICIAL Superpowers 'skills' directory here.
+  // Codex discovers these skills in HOME/.agents/skills; no imitation skill is generated.
+  const directory = String(process.env.RUNNER_SUPERPOWERS_SKILLS_DIR || '');
+  if (!directory) return;
+  const destination = join(job.home, '.agents', 'skills');
+  await mkdir(destination, { recursive: true });
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !/^[a-z0-9-]{2,80}$/i.test(entry.name)) continue;
+    const source = join(directory, entry.name);
+    try {
+      if (!(await stat(join(source, 'SKILL.md'))).isFile()) continue;
+      await symlink(source, join(destination, entry.name), 'dir');
+    } catch (e) {
+      if (e?.code !== 'EEXIST') throw e;
+    }
+  }
+}
 async function cloneRepository(job, token) {
   const script = join(job.root, 'git-askpass.sh');
   await writeFile(script, '#!/bin/sh\ncase "$1" in *Username*) printf "x-access-token" ;; *) printf "%s" "$JD_CLONE_TOKEN" ;; esac\n', { mode: 0o700 });
@@ -126,15 +144,16 @@ async function runAgent(job, prompt) {
     }
     if (message?.kind === 'failed') {
       job.error = String(message.error || 'Codex failed.').slice(0, 700);
-      update(job, 'failed');
+      update(job, job.state === 'cancelling' ? 'cancelled' : 'failed');
       await collectDiff(job);
-      worker.disconnect();
+      if (worker.connected) worker.disconnect();
     }
   });
   worker.on('exit', async () => {
-    if (job.state === 'running') {
-      job.error = 'The Codex worker exited before the turn completed.';
-      update(job, 'failed');
+    if (job.state === 'running' || job.state === 'cancelling') {
+      const cancelling = job.state === 'cancelling';
+      job.error = cancelling ? null : 'The Codex worker exited before the turn completed.';
+      update(job, cancelling ? 'cancelled' : 'failed');
       await collectDiff(job);
     }
     job.worker = null;
@@ -164,6 +183,7 @@ async function start(body) {
     worker: null, baseSha: null
   };
   await mkdir(job.home, { recursive: true });
+  await provisionSkills(job);
   jobs.set(job.id, job);
   // The clone token is captured only until cloning finishes, never stored in the job.
   void (async () => {
@@ -185,7 +205,7 @@ async function operation(body) {
     return { status: 200, data: publicJob(job) };
   }
   if (body.action === 'continue') {
-    if (!job.threadId || !['done', 'failed'].includes(job.state)) fail('This Codex thread is not ready for a follow-up.', 409);
+    if (!job.threadId || !['done', 'failed', 'cancelled'].includes(job.state)) fail('This Codex thread is not ready for a follow-up.', 409);
     if (!String(body.prompt || '').trim() || String(body.prompt).length > 12000) fail('Invalid follow-up prompt.', 400);
     await runAgent(job, String(body.prompt).trim());
     return { status: 202, data: publicJob(job) };
