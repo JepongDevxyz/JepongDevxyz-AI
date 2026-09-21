@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { tenantIdentity, settings, sandboxLifecycle } from '../api/_codex_sandbox.js';
+import { tenantIdentity, settings, sandboxLifecycle, isMissing } from '../api/_codex_sandbox.js';
 const master='test-only-32-plus-character-secret-for-tenant-isolation';
 test('central service requires operator enablement and secret but no per-user allowlist',()=>{
  assert.equal(settings({}).enabled,false);
@@ -37,4 +37,14 @@ test('first creation installs and launches the runner; resume only relaunches',a
  assert.deepEqual(calls,['install','launch']);
  await hooks.onResume({id:'sandbox'});
  assert.deepEqual(calls,['install','launch','launch']);
+});
+
+test('Vercel named-sandbox missing responses are treated as ready-to-connect',()=>{
+ assert.equal(isMissing({status:404}),true);
+ assert.equal(isMissing({statusCode:404}),true);
+ assert.equal(isMissing({response:{status:404}}),true);
+ assert.equal(isMissing({cause:{status:404}}),true);
+ assert.equal(isMissing({code:'SANDBOX_NOT_FOUND'}),true);
+ assert.equal(isMissing(new Error('Named sandbox does not exist')),true);
+ assert.equal(isMissing(new Error('Forbidden')),false);
 });
