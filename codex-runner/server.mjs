@@ -261,9 +261,11 @@ const server = http.createServer(async (req, res) => {
   try {
     const body = authenticate(await readBounded(req), req.headers['x-jd-signature']);
     const result = body.action === 'health'
-      ? { status: 200, data: { ready: await runtimeReady() && (await accountBridge.account()).connected, available: await runtimeReady(), mode: 'single-owner-chatgpt' } }
+      ? { status: 200, data: { ready: await runtimeReady(), mode: 'single-owner-chatgpt' } }
       : body.action === 'account-status'
-        ? { status:200, data:{ available:await runtimeReady(), runnerReady:await runtimeReady(),...await accountBridge.account() } }
+        ? { status:200, data: await runtimeReady()
+          ? {available:true, runnerReady:true,...await accountBridge.account()}
+          : {available:false, runnerReady:false, connected:false, codexEnabled:false, authMode:null, planType:null} }
       : body.action === 'account-connect'
         ? { status:200, data:await accountBridge.connect() }
       : body.action === 'account-disconnect'
