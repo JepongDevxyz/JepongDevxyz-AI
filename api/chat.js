@@ -214,8 +214,14 @@ function getCloudflareAccounts() {
   return accounts.slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
+function getBailuAnthropicKeys(){
+  return rotateProviderKeys('bailucode-anthropic',parseKeys('BAILUCODE_ANTHROPIC_API_KEYS','BAILUCODE_ANTHROPIC_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+}
+
 function credentialCount(provider) {
-  return provider === 'cloudflare' ? getCloudflareAccounts().length : getProviderKeys(provider).length;
+  if(provider==='cloudflare')return getCloudflareAccounts().length;
+  if(provider==='bailucode')return getProviderKeys(provider).length+getBailuAnthropicKeys().length;
+  return getProviderKeys(provider).length;
 }
 
 function configured(provider) {
@@ -2503,7 +2509,7 @@ function retryLabel(provider, status, hasNext) {
 }
 
 async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit}) {
-  const keys = shuffle(getProviderKeys('gemini'));
+  const keys = getProviderKeys('gemini');
   if (!keys.length) return {ok:false,status:500,error:'Gemini API key is not configured.'};
   const target = PROVIDERS.gemini.models.includes(model) ? model : PROVIDERS.gemini.defaultModel;
 
@@ -2648,7 +2654,7 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
 
-  const keys=shuffle(getProviderKeys(provider));
+  const keys=getProviderKeys(provider);
   if(!keys.length) return {ok:false,status:500,error:`${providerLabel(provider)} API key is not configured.`};
 
   const requested=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
@@ -2984,12 +2990,75 @@ async function runAnonymousAIHordeFallback(args){
   return runAIHorde({...args,routedReason:'fallback-public'},{anonymous:true});
 }
 
+
+function anthropicStreamToText(body,finishState={reason:''}){
+  const decoder=new TextDecoder(),encoder=new TextEncoder();
+  return body.pipeThrough(new TransformStream({
+    start(){this.buffer='';},
+    transform(chunk,controller){
+      this.buffer+=decoder.decode(chunk,{stream:true});
+      const lines=this.buffer.split('\n');this.buffer=lines.pop()||'';
+      for(const line of lines){
+        const t=line.trim();if(!t.startsWith('data:'))continue;
+        const raw=t.slice(5).trim();if(!raw||raw==='[DONE]')continue;
+        try{
+          const p=JSON.parse(raw);
+          const text=p?.delta?.text ?? p?.content_block?.text;
+          const reason=p?.delta?.stop_reason ?? p?.message?.stop_reason;
+          if(reason)finishState.reason=String(reason).toLowerCase();
+          if(p?.type==='message_stop'&&!finishState.reason)finishState.reason='stop';
+          if(typeof text==='string'&&text)controller.enqueue(encoder.encode(text));
+        }catch(_){}
+      }
+    },
+    flush(){if(!finishState.reason)finishState.reason='unknown';}
+  }));
+}
+
+async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit}){
+  const keys=getBailuAnthropicKeys();
+  if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
+  const target=model||PROVIDERS.bailucode.defaultModel;
+  const messages=[];
+  for(const h of history||[]){
+    const role=h.role==='bot'||h.role==='model'?'assistant':'user';
+    const text=String(h.text||'').trim();if(text)messages.push({role,content:text});
+  }
+  if(String(message||'').trim())messages.push({role:'user',content:String(message).trim()});
+  let last='',status=500;
+  for(let i=0;i<keys.length;i++){
+    try{
+      const res=await fetch('https://bailucode.com/openapi/v1/messages',{
+        method:'POST',
+        headers:{'x-api-key':keys[i],Authorization:'Bearer '+keys[i],'anthropic-version':'2023-06-01','content-type':'application/json','accept':'text/event-stream'},
+        body:JSON.stringify({model:target,max_tokens:outputBudgetFor(message),system:systemInstruction,messages,stream:true}),
+        signal:AbortSignal.timeout(120000)
+      });
+      if(res.ok){
+        const finishState={reason:''};
+        return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'bailucode',target,fallbackFrom,routedReason||'bailu-anthropic',i,keys.length)}),finishState};
+      }
+      status=res.status;last=cleanUpstreamError(await res.text().catch(()=>''),status,'bailucode',target);
+      if(!isRetryableStatus(status))break;
+    }catch(e){status=502;last=e?.message||String(e);}
+  }
+  return {ok:false,status,error:last||'Bailucode Anthropic route unavailable'};
+}
+
+async function runBailucode(args){
+  const openai=await runOpenAICompatible('bailucode',args);
+  if(openai.ok)return openai;
+  const anthropic=await runBailuAnthropic(args);
+  return anthropic.ok?anthropic:openai;
+}
+
 async function runProvider(provider,args){
   if(provider==='gemini')return runGemini(args);
   if(provider==='cloudflare')return runCloudflare(args);
   if(provider==='cohere')return runCohere(args);
   if(provider==='aihorde')return runAIHorde(args);
-  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec','bailucode'].includes(provider))return runOpenAICompatible(provider,args);
+  if(provider==='bailucode')return runBailucode(args);
+  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
@@ -3409,7 +3478,7 @@ function looksObviouslyTruncated(text=''){
 
 function continuationNeeded(finishState, generatedText=''){
   if(finishReasonNeedsContinuation(finishState?.reason)) return true;
-  if(String(finishState?.reason||'').toLowerCase()==='unknown' && looksObviouslyTruncated(generatedText)) return true;
+  if(String(finishState?.reason||'').toLowerCase()==='unknown' && String(generatedText||'').trim()) return true;
   return false;
 }
 
