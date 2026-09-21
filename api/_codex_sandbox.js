@@ -1,5 +1,5 @@
 // One sandbox per verified JepongDevxyz app account; GitHub is optional until repository checkout.
-// Opt-in only: creating persistent sandboxes has compute and snapshot charges.
+// Operator-provisioned opt-in service: each explicit Connect can incur compute and snapshot charges.
 import { createHmac, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
@@ -10,32 +10,23 @@ const ROOT='/vercel/sandbox/jd-codex';
 const AUTH_HOME='/vercel/sandbox/jd-auth';
 const PORT=8080;
 
-export function accountAvailability(actor,env=process.env) {
+// The app operator provisions the shared backend once. Individual verified users
+// are never required to supply Vercel variables, personal API keys, or allowlist IDs.
+// Each account receives its own named sandbox only on an explicit Connect action.
+export function accountAvailability(_actor,env=process.env) {
   if(env.CODEX_MULTIUSER_SANDBOX_ENABLED!=='true')
-    return {available:false,reasonCode:'SANDBOX_DISABLED'};
-  const secret=String(env.CODEX_RUNNER_SHARED_SECRET||'');
-  if(secret.length<32)
-    return {available:false,reasonCode:'SIGNING_SECRET_MISSING'};
-  const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'')
-    .split(/[;,\s]+/).map(x=>x.trim().replace(/^["']|["']$/g,'').toLowerCase())
-    .filter(x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(x)));
-  // A single operator-controlled rollout switch enables self-service for all
-  // server-verified app accounts. Existing allowlists still work for private pilots.
-  const publicSignup=env.CODEX_PUBLIC_SIGNUP_ENABLED==='true';
-  if(!publicSignup && !allowlist.size)return {available:false,reasonCode:'ACCOUNT_ALLOWLIST_EMPTY'};
-  if(actor && !publicSignup && !allowlist.has(String(actor.subject||'').toLowerCase()))
-    return {available:false,reasonCode:'ACCOUNT_NOT_ENROLLED'};
+    return {available:false,reasonCode:'SERVICE_NOT_CONFIGURED'};
+  if(String(env.CODEX_RUNNER_SHARED_SECRET||'').length<32)
+    return {available:false,reasonCode:'SERVICE_NOT_CONFIGURED'};
+  // Emergency operator kill switch; never expose operator configuration to users.
+  if(env.CODEX_SELF_SERVICE_ENABLED==='false')
+    return {available:false,reasonCode:'SERVICE_PAUSED'};
   return {available:true,reasonCode:'READY'};
 }
 export function settings(env=process.env) {
-  const state=accountAvailability(null,env);
-  if(!state.available)return {enabled:false,reasonCode:state.reasonCode};
-  const secret=String(env.CODEX_RUNNER_SHARED_SECRET||'');
-  const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'')
-    .split(/[;,\s]+/).map(x=>x.trim().replace(/^["']|["']$/g,'').toLowerCase())
-    .filter(x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(x)));
-  return {enabled:true,secret,allowlist,
-    publicSignup:env.CODEX_PUBLIC_SIGNUP_ENABLED==='true',reasonCode:'READY'};
+  const availability=accountAvailability(null,env);
+  if(!availability.available)return {enabled:false,reasonCode:availability.reasonCode};
+  return {enabled:true,secret:String(env.CODEX_RUNNER_SHARED_SECRET),reasonCode:'READY'};
 }
 export function tenantIdentity(actor, secret) {
   if(!Number.isSafeInteger(actor?.id) || actor.id < 1 ||
@@ -152,8 +143,6 @@ export async function sandboxRpc(payload,actor,timeoutMs=20000) {
   const cfg=settings();
   if(!cfg.enabled) throw gatewayError('Codex workspace configuration is unavailable.',503);
   const tenant=tenantIdentity(actor,cfg.secret);
-  if(!cfg.publicSignup && !cfg.allowlist.has(String(actor.subject||'').toLowerCase()))
-    throw gatewayError('Your account is not enrolled in the Codex workspace beta.',403);
   const create=payload.action==='account-connect';
   const sbx=await locateSandbox(tenant,create);
   if(!sbx){
@@ -167,7 +156,7 @@ export async function sandboxRpc(payload,actor,timeoutMs=20000) {
 }
 export async function sandboxAccountStatus(actor) {
   const cfg=settings();
-  if(!cfg.enabled || (!cfg.publicSignup && !cfg.allowlist.has(String(actor?.subject||'').toLowerCase())))
+  if(!cfg.enabled)
     return {available:false,connected:false,codexEnabled:false,runnerReady:false};
   return sandboxRpc({action:'account-status',actor},actor,12000);
 }

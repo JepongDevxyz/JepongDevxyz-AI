@@ -3,7 +3,7 @@
   'use strict';
   const get=id=>document.getElementById(id);
   let state={available:false,connected:false},pollTimer=null,waiting=false;
-  let sheet,message,connect,disconnect,codeBox,workTab,settingsRow,accountIdField,retryStatus,copyAccountId,lastCheck;
+  let sheet,message,connect,disconnect,codeBox,workTab,settingsRow,retryStatus,lastCheck;
   const token=async()=>typeof window.JDCloudAuthToken==='function'
     ? await window.JDCloudAuthToken().catch(()=>'') : '';
   const request=async(method='GET',action)=>{
@@ -26,18 +26,11 @@
     if(workTab)workTab.hidden=!ready;
     const openWork=get('jdCodexOpenWork');if(openWork)openWork.hidden=!ready;
     if(disconnect)disconnect.hidden=!state.connected;
-    if(accountIdField){
-      const showId=state.reasonCode==='ACCOUNT_NOT_ENROLLED' &&
-        /^[a-f0-9-]{36}$/i.test(String(state.accountId||''));
-      accountIdField.hidden=!showId;
-      if(showId)accountIdField.textContent=state.accountId;
-      if(copyAccountId)copyAccountId.hidden=!showId;
-    }
     if(connect){
       const needsAppLogin=state.requiresAccount===true;
       connect.disabled=ready||(!needsAppLogin&&!state.available);
       connect.textContent=ready?'ChatGPT connected':needsAppLogin?'Sign in to JepongDevxyz AI':
-        state.available?'Connect ChatGPT':'ChatGPT connection unavailable';
+        state.available?'Connect ChatGPT':'Connection temporarily unavailable';
     }
     for(const link of document.querySelectorAll('a[href="/codex.html"]')){
       link.hidden=!ready;
@@ -54,13 +47,11 @@
       state.requiresAccount?'Sign in to your JepongDevxyz AI account to keep your Codex session private. GitHub is not required.':
       state.available?'Connect ChatGPT to unlock Work. GitHub is optional until you open a repository.':
       ({
-        SANDBOX_DISABLED:'Codex sandbox is disabled in Production. Enable CODEX_MULTIUSER_SANDBOX_ENABLED in Production.',
-        SIGNING_SECRET_MISSING:'The Production Codex signing secret is missing or too short. Configure CODEX_RUNNER_SHARED_SECRET privately.',
-        ACCOUNT_ALLOWLIST_EMPTY:'CODEX_ALLOWED_ACCOUNT_IDS is missing or contains no valid app-account UUID in Production. GitHub numeric IDs do not work here.',
-        ACCOUNT_NOT_ENROLLED:'Your app account is signed in but is not in CODEX_ALLOWED_ACCOUNT_IDS. Copy your app account ID below and add it in Vercel Production. Do not share it in chat.',
-        WORKSPACE_SERVICE_UNAVAILABLE:'Your account is enrolled, but the Codex sandbox service could not be reached. This is a server-side problem, not a ChatGPT password problem.',
-        STATUS_REQUEST_FAILED:'The connection check failed. Retry the status check; do not change your credentials.',
-        ACCOUNT_VERIFICATION_FAILED:'Your app account could not be verified. Sign in again if your app session has expired.'
+        SERVICE_NOT_CONFIGURED:'ChatGPT Codex is not ready on this service yet. Please try again later.',
+        SERVICE_PAUSED:'New ChatGPT Codex connections are temporarily paused. Please try again later.',
+        WORKSPACE_SERVICE_UNAVAILABLE:'Your private Codex workspace could not be reached. Try again shortly.',
+        STATUS_REQUEST_FAILED:'Unable to check your connection right now. Tap Retry connection status.',
+        ACCOUNT_VERIFICATION_FAILED:'Your JepongDevxyz AI session could not be verified. Sign in again.'
       })[state.reasonCode]||'ChatGPT connection is not available yet. Tap Retry status to check the current server reason.');
   }
   async function refresh(){
@@ -72,8 +63,7 @@
       retryStatus.textContent='Retry connection status';
       if(lastCheck)lastCheck.textContent='Checked at '+new Date().toLocaleTimeString([],{
         hour:'2-digit',minute:'2-digit',second:'2-digit'
-      })+' · '+(state.reasonCode==='ACCOUNT_NOT_ENROLLED'
-        ?'This signed-in account is not in the Production allowlist.':state.reasonCode||'Status received');
+      })+' · '+(state.reasonCode==='READY_TO_CONNECT'?'Ready to connect':state.reasonCode||'Status received');
     }
   }
   function poll(){
@@ -155,21 +145,10 @@
     codeBox=create('div','jd-codex-device');codeBox.hidden=true;
     disconnect=create('button','jd-codex-connect','Disconnect ChatGPT');
     disconnect.type='button';disconnect.hidden=true;
-    accountIdField=create('code','jd-codex-account-id');accountIdField.hidden=true;
-    copyAccountId=create('button','jd-codex-retry','Copy this signed-in app account ID');
-    copyAccountId.type='button';copyAccountId.hidden=true;
-    copyAccountId.addEventListener('click',async()=>{
-      if(state.reasonCode!=='ACCOUNT_NOT_ENROLLED'||!state.accountId)return;
-      try{
-        await navigator.clipboard.writeText(state.accountId);
-        copyAccountId.textContent='Copied your current app account ID';
-      }catch(_){accountIdField.focus();copyAccountId.textContent='Select the ID above to copy it';}
-    });
     retryStatus=create('button','jd-codex-retry','Retry connection status');
     retryStatus.type='button';retryStatus.addEventListener('click',refresh);
     lastCheck=create('p','jd-codex-last-check');
-    accountIdField.tabIndex=0;
-    card.append(connect,message,accountIdField,copyAccountId,retryStatus,lastCheck,codeBox,disconnect);
+    card.append(connect,message,retryStatus,lastCheck,codeBox,disconnect);
     const work=create('div','jd-codex-account-card');
     work.append(create('h3','','Work · Codex'),
       create('p','','Codex settings are applied automatically after you connect. GitHub is only needed when working with a repository.'));

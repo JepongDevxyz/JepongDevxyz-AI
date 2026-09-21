@@ -24,12 +24,9 @@ async function handleWeb(request){
   try{
     const access=accountAvailability(actor);
     if(request.method==='GET'){
-      // Only return the account UUID to the user whose Supabase session was
-      // verified above. Never echo a browser-supplied UID or server secret.
-      if(!access.available)return json(empty({
-        reasonCode:access.reasonCode,
-        ...(access.reasonCode==='ACCOUNT_NOT_ENROLLED'?{accountId:actor.subject}:{})
-      }));
+      // A service-wide outage or operator pause is not an end-user enrollment
+      // problem. Never instruct users to configure Vercel or expose their IDs.
+      if(!access.available)return json(empty({reasonCode:access.reasonCode}));
       try{
         const status=await sandboxAccountStatus(actor);
         const verified=status.connected===true&&status.authMode==='chatgpt';
@@ -42,8 +39,8 @@ async function handleWeb(request){
         return json(empty({reasonCode:'WORKSPACE_SERVICE_UNAVAILABLE'}));
       }
     }
-    if(!access.available)return json({error:'Codex is not enabled for this app account.',
-      reasonCode:access.reasonCode},403);
+    if(!access.available)return json({error:'ChatGPT Codex connection is temporarily unavailable.',
+      reasonCode:access.reasonCode},503);
     if(!String(request.headers.get('content-type')||'').toLowerCase().startsWith('application/json'))
       return json({error:'Expected JSON.'},415);
     const raw=await request.text();
