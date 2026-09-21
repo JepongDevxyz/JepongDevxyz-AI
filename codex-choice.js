@@ -5,8 +5,11 @@
 (() => {
   'use strict';
   let status={connected:false,available:false};
-  let buttons,option,accountMessage,connectButton;
+  let buttons,option,accountMessage,connectButton,disconnectButton,loginDetails,pollTimer;
   const lookup=id=>document.getElementById(id);
+  const stopPoll=()=>{if(pollTimer){clearTimeout(pollTimer);pollTimer=null;}};
+  const poll=()=>{stopPoll();pollTimer=setTimeout(async()=>{await checkAccount();if(!status.connected && status.available)poll();},3500);};
+
   const label=(message)=>{
     if(accountMessage) accountMessage.textContent=message;
   };
@@ -15,6 +18,9 @@
       && status.codexEnabled===true && status.runnerReady===true;
     if(buttons?.work) buttons.work.hidden=!eligible;
     if(option) option.hidden=!eligible;
+    if(disconnectButton) disconnectButton.hidden=!status.connected;
+    if(status.connected){stopPoll();if(loginDetails)loginDetails.hidden=true;}
+
     if(connectButton){connectButton.disabled=!status.available||eligible;connectButton.textContent=eligible?'ChatGPT connected':(status.available?'Connect ChatGPT':'Connect ChatGPT (setup required)');}
     for(const anchor of document.querySelectorAll('a[href="/codex.html"]')) {
       anchor.hidden=!eligible;
@@ -62,24 +68,50 @@
       connectButton=connect;
       connect.addEventListener('click',async()=>{
         connect.disabled=true;
-        try {
+        try{
           const res=await fetch('/api/codex-account',{method:'POST',credentials:'same-origin',
             headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'connect'})});
           const data=await res.json().catch(()=>({}));
-          if(!res.ok || !data.authUrl) {label(data.error||'ChatGPT Codex connection is not available yet.');return;}
-          // Do not accept arbitrary redirect URLs returned by an untrusted service.
-          const url=new URL(data.authUrl);
-          if(url.protocol!=='https:' || !['chatgpt.com','auth.openai.com'].includes(url.hostname))
-            throw Error('Unexpected sign-in destination.');
-          window.location.assign(url.href);
+          if(!res.ok)throw Error(data.error||'ChatGPT Codex connection unavailable.');
+          if(data.connected===true){await checkAccount();return;}
+          const url=new URL(String(data.verificationUrl||''));
+          if(url.protocol!=='https:' || url.hostname!=='auth.openai.com' ||
+            !/^\\/codex\\/device\\/?$/.test(url.pathname) ||
+            !/^[A-Z0-9-]{4,32}$/i.test(String(data.userCode||'')))
+            throw Error('Unsupported device login response.');
+          loginDetails.replaceChildren();
+          const code=document.createElement('strong');code.textContent=String(data.userCode);
+          const link=document.createElement('a');link.href=url.href;link.target='_blank';
+          link.rel='noopener noreferrer';link.textContent='Open official ChatGPT device sign-in';
+          const instruction=document.createElement('p');
+          instruction.textContent='Sign in to your own ChatGPT account at the official page, then enter this code:';
+          loginDetails.append(instruction,code,document.createElement('br'),link);
+          loginDetails.hidden=false;
+          label('Waiting for your ChatGPT authorization. Never enter your password on this website.');
+          poll();
         }catch(e){label(e.message||'Unable to start ChatGPT sign-in.');}
-        finally{connect.disabled=false;}
+        finally{sync();}
       });
       accountMessage=document.createElement('p');accountMessage.id='jdCodexAccountMessage';accountMessage.setAttribute('role','status');
       option=document.createElement('a');option.id='jdCodexProviderOption';
       option.href='/codex.html';option.className='jd-codex-choice';
       option.textContent='ChatGPT Codex (subscription) — coding workspace';option.hidden=true;
-      section.append(h,connect,accountMessage,option);picker.append(section);
+      loginDetails=document.createElement('div');loginDetails.id='jdCodexLoginDetails';
+      loginDetails.hidden=true;loginDetails.setAttribute('role','status');
+      disconnectButton=document.createElement('button');disconnectButton.type='button';
+      disconnectButton.className='jd-codex-connect';disconnectButton.textContent='Disconnect ChatGPT';
+      disconnectButton.hidden=true;
+      disconnectButton.addEventListener('click',async()=>{
+        disconnectButton.disabled=true;
+        try{
+          const response=await fetch('/api/codex-account',{method:'POST',credentials:'same-origin',
+            headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'disconnect'})});
+          if(!response.ok)throw Error('Could not disconnect ChatGPT.');
+          await checkAccount();
+        }catch(e){label(e.message);}
+        finally{disconnectButton.disabled=false;}
+      });
+      section.append(h,connect,accountMessage,loginDetails,option,disconnectButton);picker.append(section);
     }
     sync();
     checkAccount();
