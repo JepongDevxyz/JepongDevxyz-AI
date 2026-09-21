@@ -138,14 +138,15 @@ async function runAgent(job, prompt) {
     if (message?.kind === 'done') {
       job.threadId = message.threadId || job.threadId;
       job.finalResponse = String(message.finalResponse || '').slice(0, 20000);
-      update(job, 'done');
       await collectDiff(job);
-      worker.disconnect();
+      update(job, 'done');
+      if (worker.connected) worker.disconnect();
     }
     if (message?.kind === 'failed') {
       job.error = String(message.error || 'Codex failed.').slice(0, 700);
-      update(job, job.state === 'cancelling' ? 'cancelled' : 'failed');
+      const cancelling = job.state === 'cancelling';
       await collectDiff(job);
+      update(job, cancelling ? 'cancelled' : 'failed');
       if (worker.connected) worker.disconnect();
     }
   });
@@ -153,8 +154,8 @@ async function runAgent(job, prompt) {
     if (job.state === 'running' || job.state === 'cancelling') {
       const cancelling = job.state === 'cancelling';
       job.error = cancelling ? null : 'The Codex worker exited before the turn completed.';
-      update(job, cancelling ? 'cancelled' : 'failed');
       await collectDiff(job);
+      update(job, cancelling ? 'cancelled' : 'failed');
     }
     job.worker = null;
   });
@@ -167,7 +168,7 @@ async function start(body) {
   if (!/^[a-z0-9_.-]{1,39}\/[-a-z0-9_.]{1,100}$/i.test(repo) || repo.split('/')[0].toLowerCase() !== owner ||
       !body.cloneToken || typeof body.cloneToken !== 'string') fail('Invalid repository or missing scoped clone token.', 403);
   if (body.prompt?.length > 12000 || !body.prompt?.trim()) fail('Invalid task prompt.', 400);
-  if ([...jobs.values()].filter(j => ['cloning', 'running'].includes(j.state)).length >= MAX_ACTIVE) fail('Runner is busy.', 429);
+  if ([...jobs.values()].filter(j => ['cloning', 'running', 'cancelling'].includes(j.state)).length >= MAX_ACTIVE) fail('Runner is busy.', 429);
   if (jobs.size >= MAX_JOBS) {
     const oldest = [...jobs.values()].find(j => !['cloning', 'running'].includes(j.state));
     if (!oldest) fail('Runner job capacity reached.', 429);
@@ -198,9 +199,12 @@ async function operation(body) {
   if (body.action === 'status') return { status: 200, data: publicJob(job) };
   if (body.action === 'cancel') {
     if (job.worker && job.state === 'running') {
-      job.worker.send({ action: 'cancel' });
-      setTimeout(() => { if (job.state === 'running') job.worker?.kill('SIGTERM'); }, 3000).unref();
+      const worker = job.worker;
       update(job, 'cancelling');
+      worker.send({ action: 'cancel' });
+      setTimeout(() => {
+        if (job.state === 'cancelling' && job.worker === worker) worker.kill('SIGKILL');
+      }, 3000).unref();
     } else if (job.state === 'cloning') fail('Checkout cannot be cancelled yet.', 409);
     return { status: 200, data: publicJob(job) };
   }
