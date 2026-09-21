@@ -91,6 +91,10 @@ async function provisionSkills(job) {
   }
 }
 async function cloneRepository(job, token) {
+  const controller = new AbortController();
+  job.cloneController = controller;
+  const cloneTimeout = setTimeout(() => controller.abort(), 60_000);
+  cloneTimeout.unref();
   const script = join(job.root, 'git-askpass.sh');
   await writeFile(script, '#!/bin/sh\ncase "$1" in *Username*) printf "x-access-token" ;; *) printf "%s" "$JD_CLONE_TOKEN" ;; esac\n', { mode: 0o700 });
   await chmod(script, 0o700);
@@ -100,7 +104,7 @@ async function cloneRepository(job, token) {
         env: {
           PATH: process.env.PATH || '/usr/bin:/bin',
           HOME: job.home, GIT_ASKPASS: script, GIT_TERMINAL_PROMPT: '0', JD_CLONE_TOKEN: token
-        }, stdio: ['ignore', 'ignore', 'pipe']
+        }, signal: controller.signal, stdio: ['ignore', 'ignore', 'pipe']
       });
       let stderr = '';
       git.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-1000); });
@@ -110,6 +114,8 @@ async function cloneRepository(job, token) {
     const { stdout } = await execFileAsync('git', ['-C', job.workspace, 'rev-parse', 'HEAD'], { timeout: 10000 });
     job.baseSha = stdout.trim();
   } finally {
+    clearTimeout(cloneTimeout);
+    job.cloneController = null;
     await rm(script, { force: true });
   }
 }
@@ -197,15 +203,22 @@ async function start(body) {
     home: join(root, 'home'), workspace: join(root, 'source'),
     state: 'cloning', startedAt: Date.now(), updatedAt: Date.now(),
     threadId: null, events: [], error: null, files: '', diff: '', finalResponse: '',
-    worker: null, baseSha: null
+    worker: null, cloneController: null, baseSha: null
   };
   await mkdir(job.home, { recursive: true });
   await provisionSkills(job);
   jobs.set(job.id, job);
   // The clone token is captured only until cloning finishes, never stored in the job.
   void (async () => {
-    try { await cloneRepository(job, body.cloneToken); await runAgent(job, body.prompt); }
-    catch (_) { job.error = 'Repository checkout failed. Verify GitHub App repository access.'; update(job, 'failed'); }
+    try {
+      await cloneRepository(job, body.cloneToken);
+      if (job.state === 'cancelling') { update(job, 'cancelled'); return; }
+      await runAgent(job, body.prompt);
+    } catch (_) {
+      if (job.state === 'cancelling') { update(job, 'cancelled'); return; }
+      job.error = 'Repository checkout failed or timed out. Verify GitHub App access.';
+      update(job, 'failed');
+    }
   })();
   return { status: 202, data: publicJob(job) };
 }
@@ -221,7 +234,10 @@ async function operation(body) {
       setTimeout(() => {
         if (job.state === 'cancelling' && job.worker === worker) worker.kill('SIGKILL');
       }, 3000).unref();
-    } else if (job.state === 'cloning') fail('Checkout cannot be cancelled yet.', 409);
+    } else if (job.state === 'cloning') {
+      update(job, 'cancelling');
+      job.cloneController?.abort();
+    }
     return { status: 200, data: publicJob(job) };
   }
   if (body.action === 'continue') {
