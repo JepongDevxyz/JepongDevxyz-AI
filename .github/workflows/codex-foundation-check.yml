@@ -7,6 +7,8 @@ on:
       - 'codex.html'
       - 'codex-runner/**'
       - '.github/workflows/codex-foundation-check.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
