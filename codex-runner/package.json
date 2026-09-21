@@ -4,5 +4,5 @@
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": { "start": "node server.mjs", "check": "node --check server.mjs && node --check worker.mjs" },
-  "dependencies": { "@openai/codex-sdk": "^0.87.0" }
+  "dependencies": { "@openai/codex-sdk": "0.155.1" }
 }
