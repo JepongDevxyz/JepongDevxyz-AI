@@ -31,7 +31,9 @@ let readinessPromise;
 function runtimeReady() {
   if (!readinessPromise) readinessPromise = Promise.allSettled([
     import('@openai/codex-sdk'),
-    execFileAsync('git', ['--version'], { timeout: 3000 })
+    execFileAsync('git', ['--version'], { timeout: 3000 }),
+    execFileAsync(process.env.CODEX_BIN || join(process.cwd(),'node_modules','.bin','codex'),
+      ['--version'], { timeout: 3000 })
   ]).then(results => results.every(result => result.status === 'fulfilled'));
   return readinessPromise;
 }
