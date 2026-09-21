@@ -28,7 +28,9 @@
     if(connect){connect.disabled=!state.available||ready;
       connect.textContent=ready?'ChatGPT connected':state.available?'Connect ChatGPT':'Connect ChatGPT (setup required)';}
     for(const link of document.querySelectorAll('a[href="/codex.html"]')){
-      if(link===workTab || link.id==='jdCodexOpenWork'){link.hidden=!ready;}
+      link.hidden=!ready;
+      if(!ready)link.setAttribute('aria-hidden','true');
+      else link.removeAttribute('aria-hidden');
     }
     if(settingsRow){
       const sub=settingsRow.querySelector('small');
