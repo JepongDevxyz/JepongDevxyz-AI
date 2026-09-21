@@ -1,14 +1,20 @@
 import http from 'node:http';
+import { CodexAccountBridge } from './account-bridge.mjs';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { spawn, fork, execFile } from 'node:child_process';
 import { mkdtemp, mkdir, writeFile, chmod, rm, readdir, stat, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, isAbsolute } from 'node:path';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 const secret = process.env.CODEX_RUNNER_SHARED_SECRET || '';
 const allowedOwner = process.env.RUNNER_ALLOWED_GITHUB_LOGIN || '';
+const authRoot=process.env.RUNNER_CODEX_AUTH_HOME||'';
+if (!isAbsolute(authRoot)) throw new Error('RUNNER_CODEX_AUTH_HOME must be an absolute private directory per runner instance.');
+await mkdir(authRoot,{recursive:true,mode:0o700});
+await chmod(authRoot,0o700);
+const accountBridge=new CodexAccountBridge({home:authRoot});
 if (secret.length < 32 || !/^[a-z0-9_.-]{1,39}$/i.test(allowedOwner)) {
   throw new Error('Set CODEX_RUNNER_SHARED_SECRET (32+ chars) and RUNNER_ALLOWED_GITHUB_LOGIN.');
 }
@@ -143,8 +149,7 @@ async function runAgent(job, prompt) {
     cwd: job.workspace,
     env: {
       PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
-      HOME: job.home, TMPDIR: tmpdir(),
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY || ''
+      HOME: job.home, CODEX_HOME:join(authRoot,'.codex'), TMPDIR: tmpdir()
     }, stdio: ['ignore', 'ignore', 'ignore', 'ipc']
   });
   job.worker = worker;
@@ -184,7 +189,8 @@ async function runAgent(job, prompt) {
   worker.send({ action: 'run', workspace: job.workspace, home: job.home, prompt, threadId: job.threadId });
 }
 async function start(body) {
-  if (!process.env.OPENAI_API_KEY) fail('Runner requires OPENAI_API_KEY.', 503);
+  if (!(await runtimeReady())) fail('Codex runner dependencies are unavailable.',503);
+  if (!(await accountBridge.account()).connected) fail('Sign in with your own ChatGPT Codex account first.',401);
   const repo = String(body.repo || '');
   const owner = allowedOwner.toLowerCase();
   if (!/^[a-z0-9_.-]{1,39}\/[-a-z0-9_.]{1,100}$/i.test(repo) || repo.split('/')[0].toLowerCase() !== owner ||
@@ -253,7 +259,13 @@ const server = http.createServer(async (req, res) => {
   try {
     const body = authenticate(await readBounded(req), req.headers['x-jd-signature']);
     const result = body.action === 'health'
-      ? { status: 200, data: { ready: !!process.env.OPENAI_API_KEY && await runtimeReady(), mode: 'single-owner-api-key' } }
+      ? { status: 200, data: { ready: await runtimeReady() && (await accountBridge.account()).connected, available: await runtimeReady(), mode: 'single-owner-chatgpt' } }
+      : body.action === 'account-status'
+        ? { status:200, data:{ available:await runtimeReady(), runnerReady:await runtimeReady(),...await accountBridge.account() } }
+      : body.action === 'account-connect'
+        ? { status:200, data:await accountBridge.connect() }
+      : body.action === 'account-disconnect'
+        ? { status:200, data:await accountBridge.disconnect() }
       : body.action === 'start' ? await start(body) : await operation(body);
     reply(res, result.status, result.data);
   } catch (e) {
