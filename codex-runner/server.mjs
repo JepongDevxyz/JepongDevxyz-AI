@@ -18,6 +18,18 @@ const MAX_ACTIVE = 2;
 const MAX_JOBS = 25;
 const TTL = 2 * 60 * 60 * 1000;
 
+// A responsive HTTP endpoint alone does not prove the runner has its local
+// dependencies. This probe is intentionally inexpensive and never makes a
+// billable model request; real turn verification is a separate release gate.
+let readinessPromise;
+function runtimeReady() {
+  if (!readinessPromise) readinessPromise = Promise.allSettled([
+    import('@openai/codex-sdk'),
+    execFileAsync('git', ['--version'], { timeout: 3000 })
+  ]).then(results => results.every(result => result.status === 'fulfilled'));
+  return readinessPromise;
+}
+
 function fail(message, status = 400) { const e = new Error(message); e.status = status; throw e; }
 function reply(res, status, data) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
@@ -225,7 +237,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const body = authenticate(await readBounded(req), req.headers['x-jd-signature']);
     const result = body.action === 'health'
-      ? { status: 200, data: { ready: !!process.env.OPENAI_API_KEY, mode: 'single-owner-api-key' } }
+      ? { status: 200, data: { ready: !!process.env.OPENAI_API_KEY && await runtimeReady(), mode: 'single-owner-api-key' } }
       : body.action === 'start' ? await start(body) : await operation(body);
     reply(res, result.status, result.data);
   } catch (e) {
