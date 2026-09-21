@@ -66,7 +66,7 @@ async function handleWeb(request) {
     if(process.env.CODEX_MULTIUSER_SANDBOX_ENABLED === 'true') {
       try {
         const user=await codexAccountActor(request);
-        const status=await sandboxRpc({action:'account-status',actor:user},user,12000);
+        const status=await sandboxRpc({action:'account-status',actor:user},user,8000);
         return json({configured:true,runnerReady:status.connected===true && status.runnerReady===true,
           mode:'per-user-sandbox',service:'codex-runner'});
       }catch(e){return json({configured:sandboxSettings().enabled,runnerReady:false,
