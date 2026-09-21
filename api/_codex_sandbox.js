@@ -1,6 +1,6 @@
 // A private Firecracker VM per GitHub account; no shared Codex home or runner process.
 // Opt-in only: creating persistent sandboxes has compute and snapshot charges.
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 const FILES = [
@@ -64,6 +64,17 @@ async function launchRuntime(sbx,tenant) {
     }
   });
 }
+// Shared lifecycle contract: brand-new sandboxes MUST launch their server too.
+// The hooks are independently testable without creating billable VMs.
+export function sandboxLifecycle(tenant, install=installRuntime, launch=launchRuntime) {
+  return {
+    onCreate:async sbx=>{
+      await install(sbx);
+      await launch(sbx,tenant);
+    },
+    onResume:sbx=>launch(sbx,tenant)
+  };
+}
 async function locateSandbox(tenant,create) {
   // Load billable sandbox SDK only when explicitly enabled for an enrolled user.
   const { Sandbox } = await import('@vercel/sandbox');
@@ -78,12 +89,12 @@ async function locateSandbox(tenant,create) {
   return Sandbox.getOrCreate({
     name:tenant.name,runtime:'node24',ports:[PORT],persistent:true,
     timeout:600000,
-    onCreate:installRuntime,
-    onResume:sbx=>launchRuntime(sbx,tenant)
+    // First creation does not trigger onResume; both lifecycles launch server.
+    ...sandboxLifecycle(tenant)
   });
 }
 function signedPayload(payload,tenant) {
-  const body=JSON.stringify({...payload,issuedAt:Date.now(),nonce:crypto.randomUUID()});
+  const body=JSON.stringify({...payload,issuedAt:Date.now(),nonce:randomUUID()});
   const mac=createHmac('sha256',tenant.secret).update(body).digest('hex');
   return {body,mac};
 }
@@ -92,13 +103,21 @@ async function requestRunner(sbx,tenant,payload,timeoutMs) {
   if(url.protocol!=='https:') throw gatewayError('Sandbox runner URL is not HTTPS.',503);
   const signed=signedPayload(payload,tenant);
   let response;
-  try {
-    response=await fetch(url.origin+'/rpc',{
-      method:'POST',redirect:'error',
-      headers:{'Content-Type':'application/json','X-JD-Signature':signed.mac},
-      body:signed.body,signal:AbortSignal.timeout(Math.min(120000,Math.max(2000,timeoutMs)))
-    });
-  }catch(_){throw gatewayError('Your Codex workspace is still starting or unavailable.',503);}
+  // A detached Node service needs a brief warm-up after a fresh create/resume.
+  // Replay-safe requests use the same nonce until one actual response arrives.
+  for(let attempt=0;attempt<5;attempt++){
+    try {
+      response=await fetch(url.origin+'/rpc',{
+        method:'POST',redirect:'error',
+        headers:{'Content-Type':'application/json','X-JD-Signature':signed.mac},
+        body:signed.body,signal:AbortSignal.timeout(Math.min(15000,Math.max(2000,timeoutMs)))
+      });
+      break;
+    }catch(_){
+      if(attempt===4)throw gatewayError('Your Codex workspace is still starting or unavailable.',503);
+      await new Promise(resolve=>setTimeout(resolve,350));
+    }
+  }
   const body=await response.text();
   if(body.length>240000) throw gatewayError('Codex output exceeded the response limit.');
   let data;
