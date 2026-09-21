@@ -2,7 +2,15 @@
   "name": "jepongdevxyz-codex-runner",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
-  "scripts": { "start": "node server.mjs", "check": "node --check server.mjs && node --check worker.mjs" },
-  "dependencies": { "@openai/codex-sdk": "0.155.1" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check worker.mjs && node --check events.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@openai/codex-sdk": "0.155.1"
+  }
 }
