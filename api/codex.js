@@ -1,3 +1,4 @@
+import { webCompatible } from './_node_web_bridge.js';
 import { getGitHubSession, githubApi, json } from './_github_oauth.js';
 import { resolveGitHubAccess } from './_github_app.js';
 import { parseGitHubTarget } from './plugins.js';
@@ -60,7 +61,7 @@ export async function rpc(payload, request, timeoutMs = 20_000) {
   if (!response.ok) error(data?.error || 'Codex runner request failed.', response.status >= 400 && response.status < 500 ? response.status : 502);
   return data;
 }
-export default async function handler(request) {
+async function handleWeb(request) {
   if (request.method === 'GET') {
     if(process.env.CODEX_MULTIUSER_SANDBOX_ENABLED === 'true') {
       try {
@@ -125,4 +126,8 @@ export default async function handler(request) {
     if (e instanceof SyntaxError) return json({ error: 'Invalid JSON.' }, 400);
     return json({ error: e.status ? e.message : 'Codex is temporarily unavailable.' }, e.status || 502);
   }
+}
+
+export default async function handler(request,response){
+  return webCompatible(request,response,handleWeb);
 }
