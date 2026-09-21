@@ -52,7 +52,8 @@ test('signed runner rejects spoofed identities, tampering and replay', { timeout
 
   const health = await rpc(port, body('health'));
   assert.equal(health.status, 200);
-  assert.equal(health.data.ready, false, 'absence of a credential must disable readiness');
+  assert.equal(health.data.ready, true, 'CLI and Git availability is separate from account authorization');
+  assert.equal(health.data.mode, 'single-owner-chatgpt');
 
   const badSignature = await rpc(port, body('health'), '0'.repeat(64));
   assert.equal(badSignature.status, 401);
