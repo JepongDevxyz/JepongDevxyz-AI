@@ -3,7 +3,7 @@
   'use strict';
   const get=id=>document.getElementById(id);
   let state={available:false,connected:false},pollTimer=null,waiting=false;
-  let sheet,message,connect,disconnect,codeBox,workTab,settingsRow,accountIdField,retryStatus;
+  let sheet,message,connect,disconnect,codeBox,workTab,settingsRow,accountIdField,retryStatus,copyAccountId,lastCheck;
   const token=async()=>typeof window.JDCloudAuthToken==='function'
     ? await window.JDCloudAuthToken().catch(()=>'') : '';
   const request=async(method='GET',action)=>{
@@ -30,6 +30,7 @@
         /^[a-f0-9-]{36}$/i.test(String(state.accountId||''));
       accountIdField.hidden=!showId;
       if(showId)accountIdField.textContent=state.accountId;
+      if(copyAccountId)copyAccountId.hidden=!showId;
     }
     if(connect){
       const needsAppLogin=state.requiresAccount===true;
@@ -62,8 +63,17 @@
       })[state.reasonCode]||'ChatGPT connection is not available yet. Tap Retry status to check the current server reason.');
   }
   async function refresh(){
+    if(retryStatus){retryStatus.disabled=true;retryStatus.textContent='Checking connection…';}
     try{state=await request();}catch(_){state={available:false,connected:false,reasonCode:'STATUS_REQUEST_FAILED'};}
     refreshUI();
+    if(retryStatus){
+      retryStatus.disabled=false;
+      retryStatus.textContent='Retry connection status';
+      if(lastCheck)lastCheck.textContent='Checked at '+new Date().toLocaleTimeString([],{
+        hour:'2-digit',minute:'2-digit',second:'2-digit'
+      })+' · '+(state.reasonCode==='ACCOUNT_NOT_ENROLLED'
+        ?'This signed-in account is not in the Production allowlist.':state.reasonCode||'Status received');
+    }
   }
   function poll(){
     stopPoll();
@@ -145,9 +155,20 @@
     disconnect=create('button','jd-codex-connect','Disconnect ChatGPT');
     disconnect.type='button';disconnect.hidden=true;
     accountIdField=create('code','jd-codex-account-id');accountIdField.hidden=true;
+    copyAccountId=create('button','jd-codex-retry','Copy this signed-in app account ID');
+    copyAccountId.type='button';copyAccountId.hidden=true;
+    copyAccountId.addEventListener('click',async()=>{
+      if(state.reasonCode!=='ACCOUNT_NOT_ENROLLED'||!state.accountId)return;
+      try{
+        await navigator.clipboard.writeText(state.accountId);
+        copyAccountId.textContent='Copied your current app account ID';
+      }catch(_){accountIdField.focus();copyAccountId.textContent='Select the ID above to copy it';}
+    });
     retryStatus=create('button','jd-codex-retry','Retry connection status');
     retryStatus.type='button';retryStatus.addEventListener('click',refresh);
-    card.append(connect,message,accountIdField,retryStatus,codeBox,disconnect);
+    lastCheck=create('p','jd-codex-last-check');
+    accountIdField.tabIndex=0;
+    card.append(connect,message,accountIdField,copyAccountId,retryStatus,lastCheck,codeBox,disconnect);
     const work=create('div','jd-codex-account-card');
     work.append(create('h3','','Work · Codex'),
       create('p','','Codex settings are applied automatically after you connect. GitHub is only needed when working with a repository.'));

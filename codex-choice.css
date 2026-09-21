@@ -24,3 +24,8 @@
   overflow-wrap:anywhere;user-select:all;-webkit-user-select:all}
 .jd-codex-retry{margin:8px 0 12px;min-height:36px;border:1px solid var(--border-color,rgba(128,128,128,.3));
   border-radius:10px;padding:8px 12px;background:transparent;color:inherit;cursor:pointer;font-size:13px}
+
+/* Ensure account troubleshooting controls remain tappable inside the Settings sheet. */
+#jdCodexSettingsSheet .jd-codex-retry{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation;cursor:pointer;max-width:100%;white-space:normal;text-align:center}
+#jdCodexSettingsSheet .jd-codex-retry[hidden]{display:none!important}
+#jdCodexSettingsSheet .jd-codex-last-check{font-size:12px;opacity:.8;margin:3px 0 10px;overflow-wrap:anywhere}
