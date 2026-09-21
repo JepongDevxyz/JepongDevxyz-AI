@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const secret = 'ci-only-runner-hmac-secret-at-least-32-characters';
 const signing = (body) => createHmac('sha256', secret).update(body).digest('hex');
@@ -28,10 +31,13 @@ async function rpc(port, raw, signature = signing(raw)) {
 
 test('signed runner rejects spoofed identities, tampering and replay', { timeout: 12000 }, async t => {
   const port = await availablePort();
+  const authHome=await mkdtemp(join(tmpdir(),'jd-codex-test-auth-'));
+  t.after(async()=>{await rm(authHome,{recursive:true,force:true});});
   const child = spawn(process.execPath, ['server.mjs'], {
     cwd: new URL('../', import.meta.url),
     env: { PATH: process.env.PATH, HOME: process.env.HOME, PORT: String(port),
       CODEX_RUNNER_SHARED_SECRET: secret, RUNNER_ALLOWED_GITHUB_LOGIN: 'owner',
+      RUNNER_CODEX_AUTH_HOME: authHome,
       OPENAI_API_KEY: '' },
     stdio: 'ignore'
   });
