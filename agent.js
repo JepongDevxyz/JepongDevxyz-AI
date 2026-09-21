@@ -11,7 +11,7 @@ function ui(){
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
  panel.innerHTML='<div class="jd-agent-view"><header><button id="jdAgentClose" type="button">Back</button><h2>Coding agent</h2></header>'+
  '<p id="jdAgentRepo"></p><label for="jdAgentTask">Coding task</label><textarea id="jdAgentTask" maxlength="1800" rows="3" placeholder="Describe the bug or feature and its relevant files."></textarea>'+
- '<div class="jd-agent-buttons"><button id="jdAgentStart" type="button">Inspect and draft changes</button><button id="jdAgentStop" type="button" hidden>Stop</button></div>'+
+ '<div class="jd-agent-buttons"><a href="/codex.html" id="jdCodexWorkspace">Open Codex workspace</a><button id="jdAgentStart" type="button">Inspect and draft changes</button><button id="jdAgentStop" type="button" hidden>Stop</button></div>'+
  '<div id="jdAgentLog" role="log" aria-live="polite"></div><p id="jdAgentStatus" role="status"></p>'+
  '<div id="jdAgentReview" hidden><h3 id="jdAgentSummary">Proposed changes</h3><p>Your selected AI provider receives the inspected source files. Review every full replacement before approving the GitHub PR. No code has been committed or tested yet.</p><div id="jdAgentFiles"></div><button id="jdAgentStage" type="button">Stage reviewed files for PR</button></div></div>';
  document.body.append(panel);
