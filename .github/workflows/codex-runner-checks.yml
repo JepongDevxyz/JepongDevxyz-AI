@@ -1,0 +1,33 @@
+name: Codex runner checks
+on:
+  push:
+    branches: [feature/codex-agent-workspace]
+    paths:
+      - 'codex-runner/**'
+      - 'api/codex.js'
+      - '.github/workflows/codex-runner-checks.yml'
+  pull_request:
+    paths:
+      - 'codex-runner/**'
+      - 'api/codex.js'
+      - '.github/workflows/codex-runner-checks.yml'
+permissions:
+  contents: read
+jobs:
+  runner-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax verification
+        run: |
+          node --check api/codex.js
+          cd codex-runner
+          npm run check
+      - name: SDK event projection tests
+        run: |
+          cd codex-runner
+          npm test
