@@ -9275,7 +9275,8 @@ ${m.text || ''}
                         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
                         clientUtcOffsetMinutes: -new Date().getTimezoneOffset(),
                         personalization: getPersonalizationPayload(),
-                        plugins: window.JDPlugins?.contextForChat?.() || {}
+                        plugins: window.JDPlugins?.contextForChat?.() || {},
+                        customApiKeys: getCustomApiKeys()
                     })
                 });
 
