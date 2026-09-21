@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { tenantIdentity, settings, sandboxLifecycle } from '../api/_codex_sandbox.js';
 const master='test-only-32-plus-character-secret-for-tenant-isolation';
-test('feature is disabled unless explicitly enabled and secret is present',()=>{
+test('central service requires operator enablement and secret but no per-user allowlist',()=>{
  assert.equal(settings({}).enabled,false);
  assert.equal(settings({CODEX_MULTIUSER_SANDBOX_ENABLED:'true',CODEX_RUNNER_SHARED_SECRET:'short'}).enabled,false);
- assert.equal(settings({CODEX_MULTIUSER_SANDBOX_ENABLED:'true',CODEX_RUNNER_SHARED_SECRET:master}).enabled,false);
+ assert.equal(settings({CODEX_MULTIUSER_SANDBOX_ENABLED:'true',CODEX_RUNNER_SHARED_SECRET:master}).enabled,true);
  assert.equal(settings({CODEX_MULTIUSER_SANDBOX_ENABLED:'true',CODEX_RUNNER_SHARED_SECRET:master,
- CODEX_ALLOWED_ACCOUNT_IDS:'11111111-1111-4111-8111-111111111111'}).enabled,true);
+ CODEX_SELF_SERVICE_ENABLED:'false'}).enabled,false);
 });
 test('distinct immutable account ids receive separate private VM names and per-tenant signing keys',()=>{
  const a=tenantIdentity({id:100,login:'jd-alice'},master);
