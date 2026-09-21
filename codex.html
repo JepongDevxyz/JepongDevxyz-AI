@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101522">
-<title>Codex Workspace — JepongDevxyz AI</title>
+<title>Work · Codex — JepongDevxyz AI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{font:15px/1.5 system-ui,sans-serif;color:#edf2ff;background:#0b1020;--border:#29344d;--panel:#151d30;--muted:#9ba9c4;--accent:#806bf7}
 *{box-sizing:border-box}body{margin:0}button,select,textarea{font:inherit}
@@ -25,14 +26,15 @@ button.primary{background:var(--accent);border-color:var(--accent);font-weight:6
 #response{white-space:pre-wrap;overflow-wrap:anywhere}#state{padding:4px 10px;border:1px solid #41547a;border-radius:100px;color:#c9d5eb;font-size:.8rem}
 #repo-link{overflow-wrap:anywhere}.hide{display:none}
 @media(max-width:760px){main{grid-template-columns:1fr;padding:12px}section{padding:14px}header{padding:14px}#events{height:270px}}
+header .jd-work-tabs{display:flex;gap:4px;padding:4px;border-radius:999px;background:#29344d}header .jd-work-tabs a,header .jd-work-tabs strong{color:#edf2ff;padding:6px 14px;border-radius:999px;font-size:13px;text-decoration:none}header .jd-work-tabs strong{background:#4a5672}
 </style>
 </head>
 <body>
-<header><h1>JepongDevxyz AI <span class="muted">/ Codex Workspace</span></h1><a href="/">← Back to chat</a></header>
+<header><h1>JepongDevxyz AI</h1><nav class="jd-work-tabs" aria-label="Conversation mode"><a href="/">Chat</a><strong aria-current="page">Work</strong></nav></header>
 <main>
 <section>
-  <h2>GitHub workspace</h2>
-  <p class="muted">Select a repository you own and describe the coding task. Codex uses a separate working copy; it will not directly push to main.</p>
+  <h2>Repository workspace</h2>
+  <p class="muted">Your ChatGPT account unlocks Work. Connect GitHub here only if you want Codex to read a repository and make a reviewable patch.</p>
   <div class="actions">
     <a class="action" href="/api/github-oauth-start?return_to=/codex.html">Connect GitHub</a>
     <a class="action hide" id="install" target="_blank" rel="noopener noreferrer">Install GitHub App</a>
@@ -43,7 +45,7 @@ button.primary{background:var(--accent);border-color:var(--accent);font-weight:6
   <label for="prompt">Task</label>
   <textarea id="prompt" maxlength="12000" placeholder="Investigate the test failures, implement a fix, run the relevant checks and report what changed."></textarea>
   <div class="actions"><button class="primary" id="start" disabled>Start Codex task</button><button id="continue" disabled>Send follow-up</button><button id="cancel" disabled>Stop</button></div>
-  <p><small>Connect your GitHub account, then authorize your own ChatGPT Codex account. Codex is available only when an isolated workspace is enabled for your account.</small></p>
+  <p><small>Codex uses your verified ChatGPT subscription and a private workspace. GitHub is optional until repository access is needed.</small></p>
 </section>
 <section>
   <div class="actions" style="justify-content:space-between;margin:0 0 14px"><h2 style="margin:0">Activity &amp; review</h2><span id="state">Not configured</span></div>
@@ -58,6 +60,8 @@ button.primary{background:var(--accent);border-color:var(--accent);font-weight:6
 </main>
 <script type="module">
 const $ = id => document.getElementById(id);
+const accountClient=window.supabase?.createClient('https://czjdygnhdojpqfdpfugo.supabase.co','sb_publishable_MJuzXQ_YRPV0yGPCTEpjMA_gPImrvin');
+async function appBearer(){const {data}=await accountClient?.auth.getSession()||{};return data?.session?.access_token||'';}
 let jobId = sessionStorage.getItem('jd_codex_job') || '';
 let configured = false, runnerConfigured = false, polling = null, busy = false, currentRepo = '';
 function notice(value){ $('notice').textContent = value; }
@@ -68,8 +72,9 @@ function controls(state=''){
   $('cancel').disabled = busy || !['running','cloning'].includes(state);
 }
 async function api(action, data={}){
+  const bearer=await appBearer();
   const response = await fetch('/api/codex', {
-    method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'},
+    method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json', ...(bearer?{Authorization:'Bearer '+bearer}:{})},
     body:JSON.stringify({action,...data})
   });
   const json=await response.json();
@@ -165,17 +170,18 @@ $('cancel').addEventListener('click',async()=>{
 });
 (async()=>{
   try{
-    const [res, app] = await Promise.all([fetch('/api/codex'),fetch('/api/github-app-status')]);
+    const bearer=await appBearer();
+    const [res, app] = await Promise.all([fetch('/api/codex',{headers:bearer?{Authorization:'Bearer '+bearer}:{} }),fetch('/api/github-app-status')]);
     const health=await res.json();
     runnerConfigured=health.configured===true;
     configured=health.runnerReady===true;
-    if(health.configured && !configured)notice('The Codex runner is configured but is not reachable or is missing its server API credential. Coding is disabled.');
+    if(health.configured && !configured)notice('Connect your ChatGPT account in Settings before starting Work.');
     if(app.ok){const status=await app.json();if(status.installUrl && !status.installed){$('install').href=status.installUrl;$('install').classList.remove('hide');}}
-    if(!configured)notice(runnerConfigured?'Codex runner is configured but unreachable or missing its API credential. The workspace is disabled.':'Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
-    else notice('Codex runner configured. Connect GitHub and choose your repository.');
+    if(!configured)notice(runnerConfigured?'Connect ChatGPT in Settings before using Work.':'Work is not enabled for your account on this deployment.');
+    else notice('ChatGPT Codex connected. Connect GitHub only when you want to work with a repository.');
   }catch(e){errorMessage(e);}
   await refreshRepos();
-  if(!configured)notice(runnerConfigured?'Codex runner is configured but unreachable or missing its API credential. The workspace is disabled.':'Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
+  if(!configured)notice(runnerConfigured?'Connect ChatGPT in Settings before using Work.':'Work is not enabled for your account on this deployment.');
   if(jobId && configured){await refreshJob();if(['running','cloning','cancelling'].includes($('state').textContent))startPolling();}
   controls($('state').textContent);
 })();

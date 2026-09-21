@@ -2,6 +2,7 @@ import { getGitHubSession, githubApi, json } from './_github_oauth.js';
 import { resolveGitHubAccess } from './_github_app.js';
 import { parseGitHubTarget } from './plugins.js';
 import { settings as sandboxSettings, sandboxRpc } from './_codex_sandbox.js';
+import { codexAccountActor } from './_codex_identity.js';
 
 export const config = { maxDuration: 60 };
 
@@ -63,12 +64,12 @@ export default async function handler(request) {
   if (request.method === 'GET') {
     if(process.env.CODEX_MULTIUSER_SANDBOX_ENABLED === 'true') {
       try {
-        const user=await actor(request);
+        const user=await codexAccountActor(request);
         const status=await sandboxRpc({action:'account-status',actor:user},user,12000);
         return json({configured:true,runnerReady:status.connected===true && status.runnerReady===true,
           mode:'per-user-sandbox',service:'codex-runner'});
       }catch(e){return json({configured:sandboxSettings().enabled,runnerReady:false,
-        service:'codex-runner',requiresGithub:e?.status===401});}
+        service:'codex-runner',requiresAccount:e?.status===401});}
     }
     try {
       runnerSettings();
@@ -95,11 +96,12 @@ export default async function handler(request) {
     if (raw.length > 14_000) error('Request too large.', 413);
     const body = JSON.parse(raw);
     if (!body || typeof body !== 'object' || Array.isArray(body)) error('Invalid request.', 400);
-    const user = await actor(request);
+    const user = await codexAccountActor(request);
     const action = String(body.action || '');
     if (action === 'start') {
       const repo = parseGitHubTarget(body.repo);
-      if (repo.split('/')[0].toLowerCase() !== user.login.toLowerCase()) {
+      const github = await actor(request);
+      if (repo.split('/')[0].toLowerCase() !== github.login.toLowerCase()) {
         error('The first Codex runner supports repositories owned by the connected GitHub user.', 403);
       }
       const prompt = String(body.prompt || '').trim();
@@ -108,7 +110,7 @@ export default async function handler(request) {
       // repository-scoped installation token for the initial clone.
       const access = await resolveGitHubAccess(request, { repository: repo, permissions: { contents: 'read' } });
       if (access.kind !== 'github-app') error('Install the JepongDevxyz GitHub App for this repository first.', 403);
-      return json(await rpc({ action, actor: user, repo, prompt, cloneToken: access.token }, request), 202);
+      return json(await rpc({ action, actor: user, repo, repoOwner:github.login, prompt, cloneToken: access.token }, request), 202);
     }
     if (!['status', 'continue', 'cancel'].includes(action) || !uid.test(String(body.jobId || ''))) {
       error('Unknown Codex operation or invalid job ID.', 400);

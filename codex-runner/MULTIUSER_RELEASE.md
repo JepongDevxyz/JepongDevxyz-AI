@@ -4,15 +4,15 @@ This branch now includes an **opt-in, fail-closed per-user sandbox router** usin
 
 ## Architecture
 
-Each enrolled GitHub account receives a distinct named persistent Firecracker microVM and its own Codex App Server home. A per-tenant HMAC signing key is derived on the server from a private master secret. Private GitHub installation tokens only pass through the authenticated gateway for a single repository clone; they must never be shown to the model or browser.
+Each enrolled authenticated JepongDevxyz AI cloud account receives a distinct named persistent Firecracker microVM and its own Codex App Server home. GitHub login is optional until the user opens a repository in Work. A per-tenant HMAC signing key is derived on the server from a private master secret. Private GitHub installation tokens only pass through the authenticated gateway for a single repository clone; they must never be shown to the model or browser.
 
-The sandbox is created only by an explicit "Connect ChatGPT" action. The backend verifies a signed GitHub session before choosing the tenant. Browser-provided user IDs, model labels and localStorage flags never grant access. A user's ChatGPT password and raw ChatGPT tokens are never sent to the website.
+The sandbox is created only by an explicit "Connect ChatGPT" action. The backend verifies the app account's Supabase access token against Supabase Auth before choosing the tenant. Browser-provided user IDs, model labels and localStorage flags never grant access. A user's ChatGPT password and raw ChatGPT tokens are never sent to the website.
 
 ## Required Vercel project configuration
 
 1. Confirm that Vercel Sandbox is available on the project and review its compute/snapshot billing. Each persistent sandbox has separate usage and storage costs.
 2. Set `CODEX_RUNNER_SHARED_SECRET` to a private random value of at least 32 characters, generated and saved **only** in the Vercel Environment Variables UI, not in GitHub or chat.
-3. Set `CODEX_ALLOWED_GITHUB_IDS` to an explicit comma-separated allowlist of enrolled GitHub numeric account IDs. Begin with the owner's own GitHub account and expand only after quotas, payments and production security review. This is a controlled beta, not an unrestricted public launch.
+3. Set `CODEX_ALLOWED_ACCOUNT_IDS` to an explicit comma-separated allowlist of authenticated JepongDevxyz AI account UUIDs (Supabase Auth IDs). The old GitHub numeric allowlist is not an app account identity and must not grant Codex access. Begin with the owner's app account and expand only after quotas, payments and production security review.
 4. Enable `CODEX_MULTIUSER_SANDBOX_ENABLED=true` **only after** a successful private end-to-end test. Until enabled, this branch preserves the existing owner-only runner fallback and does not create per-user sandboxes.
 5. Make sure Vercel Sandbox server-side authentication is enabled for the project. On Vercel production runtimes the SDK uses the project's OIDC identity; do not expose a Vercel access token to a tenant sandbox or to the browser.
 6. Use a private repository-scoped GitHub App installation for clone access. Enable device-code authorization in the user's own ChatGPT settings when required. Test official login, account isolation, coding turn, stop, diff and logout with **two different test accounts**, and confirm that cross-tenant access is rejected.
@@ -27,3 +27,7 @@ The sandbox is created only by an explicit "Connect ChatGPT" action. The backend
 - Official downstream subscription usage rights, individual account limits and plan access depend on OpenAI's Codex authorization and can change.
 
 **Do not merge PR #22 or claim production parity based on syntax/unit tests or a READY Vercel preview alone.** The owner must explicitly enable billable sandbox capacity and complete a successful authorized end-to-end test before public launch.
+
+## ChatGPT-first Settings flow
+
+Users sign in to their existing JepongDevxyz AI cloud account (email or Google is sufficient), then open Settings → ChatGPT & Codex → Connect ChatGPT. Only a backend-verified ChatGPT Codex account unlocks Chat / Work at the top of the app. The model picker remains dedicated to existing chat providers. GitHub OAuth and repository-scoped GitHub App tokens are requested only when the user enters Work and selects a GitHub repository. Superpowers skills remain a separate opt-in runtime integration and are not represented as already installed.

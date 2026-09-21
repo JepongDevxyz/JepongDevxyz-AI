@@ -1,4 +1,4 @@
-// A private Firecracker VM per GitHub account; no shared Codex home or runner process.
+// One sandbox per verified JepongDevxyz app account; GitHub is optional until repository checkout.
 // Opt-in only: creating persistent sandboxes has compute and snapshot charges.
 import { createHmac, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -15,7 +15,7 @@ export function settings(env=process.env) {
   const enabled=env.CODEX_MULTIUSER_SANDBOX_ENABLED==='true';
   if (!enabled || secret.length < 32)
     return {enabled:false,reason:'Codex isolated sandboxes are not configured.'};
-  const allowlist=new Set(String(env.CODEX_ALLOWED_GITHUB_IDS||'').split(',').map(x=>x.trim()).filter(x=>/^[1-9][0-9]{0,15}$/.test(x)));
+  const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'').split(',').map(x=>x.trim().toLowerCase()).filter(x=>/^[a-f0-9-]{36}$/.test(x)));
   return {enabled:allowlist.size>0,secret,allowlist,reason:'No authorized sandbox users configured.'};
 }
 export function tenantIdentity(actor, secret) {
@@ -133,7 +133,7 @@ export async function sandboxRpc(payload,actor,timeoutMs=20000) {
   const cfg=settings();
   if(!cfg.enabled) throw gatewayError(cfg.reason,503);
   const tenant=tenantIdentity(actor,cfg.secret);
-  if(!cfg.allowlist.has(String(actor.id))) throw gatewayError('Your account is not enrolled in the Codex workspace beta.',403);
+  if(!cfg.allowlist.has(String(actor.subject||'').toLowerCase())) throw gatewayError('Your account is not enrolled in the Codex workspace beta.',403);
   const create=payload.action==='account-connect';
   const sbx=await locateSandbox(tenant,create);
   if(!sbx){
@@ -147,7 +147,7 @@ export async function sandboxRpc(payload,actor,timeoutMs=20000) {
 }
 export async function sandboxAccountStatus(actor) {
   const cfg=settings();
-  if(!cfg.enabled || !cfg.allowlist.has(String(actor?.id)))
+  if(!cfg.enabled || !cfg.allowlist.has(String(actor?.subject||'').toLowerCase()))
     return {available:false,connected:false,codexEnabled:false,runnerReady:false};
   return sandboxRpc({action:'account-status',actor},actor,12000);
 }

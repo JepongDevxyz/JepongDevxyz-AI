@@ -8,12 +8,12 @@ test('feature is disabled unless explicitly enabled and secret is present',()=>{
  assert.equal(settings({CODEX_MULTIUSER_SANDBOX_ENABLED:'true',CODEX_RUNNER_SHARED_SECRET:'short'}).enabled,false);
  assert.equal(settings({CODEX_MULTIUSER_SANDBOX_ENABLED:'true',CODEX_RUNNER_SHARED_SECRET:master}).enabled,false);
  assert.equal(settings({CODEX_MULTIUSER_SANDBOX_ENABLED:'true',CODEX_RUNNER_SHARED_SECRET:master,
- CODEX_ALLOWED_GITHUB_IDS:'100,101'}).enabled,true);
+ CODEX_ALLOWED_ACCOUNT_IDS:'11111111-1111-4111-8111-111111111111'}).enabled,true);
 });
 test('distinct immutable account ids receive separate private VM names and per-tenant signing keys',()=>{
- const a=tenantIdentity({id:100,login:'alice'},master);
- const aAgain=tenantIdentity({id:100,login:'alice'},master);
- const b=tenantIdentity({id:101,login:'bob'},master);
+ const a=tenantIdentity({id:100,login:'jd-alice'},master);
+ const aAgain=tenantIdentity({id:100,login:'jd-alice'},master);
+ const b=tenantIdentity({id:101,login:'jd-bob'},master);
  assert.equal(a.name,aAgain.name);
  assert.equal(a.secret,aAgain.secret);
  assert.notEqual(a.name,b.name);

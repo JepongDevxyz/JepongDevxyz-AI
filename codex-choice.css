@@ -1,18 +1,20 @@
-/* Codex account-dependent navigation; base chat UI remains intact. */
-#jdChatWorkTabs{order:1;display:flex;flex:0 0 auto;align-items:center;justify-content:center;
-  gap:4px;padding:4px;border-radius:999px;background:rgba(146,155,172,.23);max-width:188px}
-#jdChatWorkTabs .jd-codex-tab{border:0;text-decoration:none;display:inline-flex;justify-content:center;
-  align-items:center;min-width:63px;padding:5px 12px;font:500 13px/1.4 inherit;white-space:nowrap;
-  border-radius:999px;background:transparent;color:var(--text-main);cursor:pointer}
-#jdChatWorkTabs .jd-codex-current{background:rgba(15,23,42,.55)}
-#jdChatWorkTabs [hidden],#jdCodexProviderOption[hidden]{display:none!important}
-.jd-codex-picker-section{padding:10px 14px 16px;border-top:1px solid var(--border-color);
-  background:var(--modal-bg);display:flex;flex-direction:column;gap:7px;flex-shrink:0}
-.jd-codex-heading{font-weight:700;font-size:13px}
-.jd-codex-connect,.jd-codex-choice{display:block;width:100%;padding:10px 12px;
-  border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);
-  color:var(--text-main);font:500 13px/1.4 inherit;text-align:left;text-decoration:none}
-.jd-codex-connect:disabled{opacity:.55}
-#jdCodexAccountMessage{font-size:12px;line-height:1.4;color:var(--text-muted);margin:0}
-@media(max-width:600px){.header-top{flex-wrap:wrap}#jdChatWorkTabs{order:3;width:max-content;margin:auto}
- .header-top .brand{flex:1 1 110px}.jd-codex-picker-section{padding:9px 12px}}
+/* ChatGPT-first: connection controls are part of Settings, never the model picker. */
+#jdChatWorkTabs{order:1;display:flex;flex:0 0 auto;align-items:center;justify-content:center;gap:4px;padding:4px;border-radius:999px;background:rgba(146,155,172,.18)}
+#jdChatWorkTabs[hidden],#jdChatWorkTabs [hidden],#jdCodexOpenWork[hidden],#jdCodexSettingsSheet[hidden],#jdCodexLoginDetails[hidden],#jdCodexAccountMessage[hidden],#jdCodexSettingsSheet [hidden]{display:none!important}
+#jdChatWorkTabs .jd-codex-tab{border:0;display:inline-flex;text-decoration:none;align-items:center;justify-content:center;padding:6px 14px;min-width:61px;border-radius:999px;color:var(--text-main);font-size:13px;font-weight:600}
+#jdChatWorkTabs .jd-codex-current{background:var(--input-bg,rgba(68,79,99,.55))}
+#settingsModal .settings-home{position:relative}
+#jdCodexSettingsSheet{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;min-height:0;background:var(--bg-main,var(--bg-color,#151515));color:var(--text-main);border-radius:inherit;overflow:hidden}
+.jd-codex-sheet-header{display:flex;align-items:center;gap:12px;min-height:67px;padding:12px 18px;border-bottom:1px solid var(--border-color,rgba(128,128,128,.23));font-size:18px}
+.jd-codex-back{width:38px;height:38px;border:0;border-radius:50%;font-size:30px;background:transparent;color:inherit;cursor:pointer}
+.jd-codex-sheet-body{flex:1;min-height:0;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:16px}
+.jd-codex-account-card{padding:18px;border:1px solid var(--border-color,rgba(128,128,128,.23));border-radius:20px;background:var(--input-bg,rgba(128,128,128,.08))}
+.jd-codex-account-card h3{font-size:17px;margin:0 0 8px}
+.jd-codex-account-card p{font-size:13px;line-height:1.6;color:var(--text-muted);margin:0 0 14px}
+.jd-codex-connect{width:100%;display:flex;justify-content:center;align-items:center;text-decoration:none;min-height:45px;padding:10px 14px;border:1px solid var(--border-color,rgba(128,128,128,.3));border-radius:13px;background:var(--text-main);color:var(--bg-main,#141414);font-weight:650;font-size:14px;cursor:pointer}
+.jd-codex-connect:disabled{opacity:.55;cursor:not-allowed}
+.jd-codex-message{margin:12px 0 4px!important;overflow-wrap:anywhere}
+.jd-codex-device{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.jd-codex-device-code{display:block;font-size:22px;letter-spacing:.15em;text-align:center;user-select:all}
+#jdCodexSettingsRow{cursor:pointer}
+@media(max-width:600px){.header-top{flex-wrap:wrap}#jdChatWorkTabs{order:3;margin:0 auto}.header-top .brand{flex:1 1 110px}}

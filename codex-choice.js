@@ -1,122 +1,147 @@
-// Codex subscription is a separate authenticated coding-agent mode, NOT a
-// regular provider/model ID. Never place it in the generic /api/chat route.
-// A browser flag, GitHub login, or ChatGPT identity-only sign-in is not proof
-// of an authorized Codex subscription.
+// ChatGPT subscription connection lives in Settings, not the model picker.
 (() => {
   'use strict';
-  let status={connected:false,available:false};
-  let buttons,option,accountMessage,connectButton,disconnectButton,loginDetails,pollTimer;
-  const lookup=id=>document.getElementById(id);
-  const stopPoll=()=>{if(pollTimer){clearTimeout(pollTimer);pollTimer=null;}};
-  const poll=()=>{stopPoll();pollTimer=setTimeout(async()=>{await checkAccount();if(!status.connected && status.available)poll();},3500);};
-
-  const label=(message)=>{
-    if(accountMessage) accountMessage.textContent=message;
+  const get=id=>document.getElementById(id);
+  let state={available:false,connected:false},pollTimer=null,waiting=false;
+  let sheet,message,connect,disconnect,codeBox,workTab,settingsRow;
+  const token=async()=>typeof window.JDCloudAuthToken==='function'
+    ? await window.JDCloudAuthToken().catch(()=>'') : '';
+  const request=async(method='GET',action)=>{
+    const bearer=await token();
+    const opts={method,credentials:'same-origin',cache:'no-store',
+      headers:{...(bearer?{Authorization:'Bearer '+bearer}:{}),
+        ...(action?{'Content-Type':'application/json'}:{})}};
+    if(action)opts.body=JSON.stringify({action});
+    const res=await fetch('/api/codex-account',opts);
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw Error(data.error||'ChatGPT account service is unavailable.');
+    return data;
   };
-  function sync(){
-    const eligible=status.connected===true && status.authMode==='chatgpt'
-      && status.codexEnabled===true && status.runnerReady===true;
-    if(buttons?.work) buttons.work.hidden=!eligible;
-    if(option) option.hidden=!eligible;
-    if(disconnectButton) disconnectButton.hidden=!status.connected;
-    if(status.connected){stopPoll();if(loginDetails)loginDetails.hidden=true;}
-
-    if(connectButton){connectButton.disabled=!status.available||eligible;connectButton.textContent=eligible?'ChatGPT connected':(status.available?'Connect ChatGPT':'Connect ChatGPT (setup required)');}
-    for(const anchor of document.querySelectorAll('a[href="/codex.html"]')) {
-      anchor.hidden=!eligible;
-      if(!eligible) anchor.setAttribute('aria-hidden','true');
-      else anchor.removeAttribute('aria-hidden');
+  const show=msg=>{if(message)message.textContent=msg;};
+  const stopPoll=()=>{if(pollTimer){clearTimeout(pollTimer);pollTimer=null;}};
+  function refreshUI(){
+    const ready=state.connected===true&&state.authMode==='chatgpt'
+      &&state.codexEnabled===true&&state.runnerReady===true;
+    const tabs=get('jdChatWorkTabs');if(tabs)tabs.hidden=!ready;
+    if(workTab)workTab.hidden=!ready;
+    if(disconnect)disconnect.hidden=!state.connected;
+    if(connect){connect.disabled=!state.available||ready;
+      connect.textContent=ready?'ChatGPT connected':state.available?'Connect ChatGPT':'Connect ChatGPT (setup required)';}
+    for(const link of document.querySelectorAll('a[href="/codex.html"]')){
+      link.hidden=!ready;
+      if(!ready)link.setAttribute('aria-hidden','true');
+      else link.removeAttribute('aria-hidden');
     }
-    label(eligible?'ChatGPT Codex subscription connected'+(status.planType?' · '+status.planType:'')
-      :(status.available?'Connect your own ChatGPT account to enable Codex.':
-        'ChatGPT Codex account connection is not configured. Other AI models remain available.'));
+    if(settingsRow){
+      const sub=settingsRow.querySelector('small');
+      if(sub)sub.textContent=ready?'Connected · Work is available':'Connect your ChatGPT account';
+    }
+    if(ready){waiting=false;stopPoll();if(codeBox)codeBox.hidden=true;}
+    show(ready?'ChatGPT connected'+(state.planType?' · '+state.planType:'')+'. Work is available.':
+      waiting?'Complete authorization on the official ChatGPT page. Checking connection…':
+      state.requiresAccount?'Sign in to your JepongDevxyz AI account to keep your Codex session private. GitHub is not required.':
+      state.available?'Connect ChatGPT to unlock Work. GitHub is optional until you open a repository.':
+      'ChatGPT Codex is not enabled for this account yet. Other models remain available.');
   }
-  async function checkAccount(){
+  async function refresh(){
+    try{state=await request();}catch(_){state={available:false,connected:false};}
+    refreshUI();
+  }
+  function poll(){
+    stopPoll();
+    pollTimer=setTimeout(async()=>{await refresh();if(waiting&&!state.connected&&state.available)poll();},3500);
+  }
+  function create(tag,cls,txt){
+    const node=document.createElement(tag);
+    if(cls)node.className=cls;
+    if(txt)node.textContent=txt;
+    return node;
+  }
+  async function connectAccount(){
+    const bearer=await token();
+    if(!bearer){
+      show('Sign in to your JepongDevxyz AI account first. You can use email or Google; GitHub is not required.');
+      sheet.hidden=true;
+      const home=get('settingsModal');home?.classList.remove('open');
+      if(typeof window.openAccountModal==='function')window.openAccountModal();
+      return;
+    }
+    connect.disabled=true;
     try{
-      const response=await fetch('/api/codex-account',{credentials:'same-origin',cache:'no-store'});
-      if(!response.ok) throw Error('Account status unavailable');
-      const account=await response.json();
-      // Only trust an authenticated backend response; never accept localStorage as authorization.
-      status={
-        connected:account.connected===true,available:account.available===true,
-        authMode:account.authMode, codexEnabled:account.codexEnabled===true,
-        runnerReady:account.runnerReady===true,
-        planType:String(account.planType||'').slice(0,40)
-      };
-    }catch(_){status={connected:false,available:false};}
-    sync();
+      const data=await request('POST','connect');
+      if(data.connected){await refresh();return;}
+      const url=new URL(String(data.verificationUrl||''));
+      if(url.protocol!=='https:'||url.hostname!=='auth.openai.com'||
+        !['/codex/device','/codex/device/'].includes(url.pathname)||
+        !/^[A-Z0-9-]{4,32}$/i.test(String(data.userCode||'')))
+        throw Error('Unsupported ChatGPT sign-in response.');
+      codeBox.replaceChildren();
+      codeBox.append(create('p','', 'Open the official ChatGPT sign-in page, then enter this code:'),
+        create('strong','jd-codex-device-code',data.userCode));
+      const link=create('a','jd-codex-connect','Open official ChatGPT sign-in');
+      link.href=url.href;link.rel='noopener noreferrer';link.target='_blank';
+      codeBox.append(link);codeBox.hidden=false;
+      waiting=true;refreshUI();poll();
+    }catch(e){waiting=false;show(e.message||'Unable to connect ChatGPT.');}
+    finally{connect.disabled=!state.available||state.connected;}
+  }
+  async function disconnectAccount(){
+    disconnect.disabled=true;
+    try{await request('POST','disconnect');waiting=false;stopPoll();await refresh();}
+    catch(e){show(e.message||'Unable to disconnect ChatGPT.');}
+    finally{disconnect.disabled=false;}
   }
   function init(){
     const header=document.querySelector('.header-top')||document.querySelector('.header');
-    if(header && !lookup('jdChatWorkTabs')){
-      const tabs=document.createElement('div');
-      tabs.id='jdChatWorkTabs';
-      tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Conversation mode');
-      const chat=document.createElement('button');chat.type='button';chat.className='jd-codex-tab jd-codex-current';
-      chat.textContent='Chat';chat.setAttribute('aria-current','page');
-      const work=document.createElement('a');work.className='jd-codex-tab';work.href='/codex.html';work.textContent='Work';work.hidden=true;
-      tabs.append(chat,work);
-      header.append(tabs);buttons={chat,work};
+    if(header&&!get('jdChatWorkTabs')){
+      const tabs=create('nav','jd-codex-tabs');tabs.id='jdChatWorkTabs';
+      tabs.setAttribute('aria-label','Conversation mode');tabs.hidden=true;
+      const chat=create('span','jd-codex-tab jd-codex-current','Chat');
+      chat.setAttribute('aria-current','page');
+      workTab=create('a','jd-codex-tab','Work');workTab.href='/codex.html';workTab.hidden=true;
+      tabs.append(chat,workTab);header.append(tabs);
     }
-    const picker=lookup('modelPickerModal');
-    if(picker && !lookup('jdCodexProviderOption')){
-      const section=document.createElement('section');section.id='jdCodexPickerSection';
-      section.className='jd-codex-picker-section';
-      const h=document.createElement('div');h.className='jd-codex-heading';h.textContent='ChatGPT account';
-      const connect=document.createElement('button');connect.type='button';connect.className='jd-codex-connect';
-      connect.textContent='Connect ChatGPT';
-      connectButton=connect;
-      connect.addEventListener('click',async()=>{
-        connect.disabled=true;
-        try{
-          const res=await fetch('/api/codex-account',{method:'POST',credentials:'same-origin',
-            headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'connect'})});
-          const data=await res.json().catch(()=>({}));
-          if(!res.ok)throw Error(data.error||'ChatGPT Codex connection unavailable.');
-          if(data.connected===true){await checkAccount();return;}
-          const url=new URL(String(data.verificationUrl||''));
-          if(url.protocol!=='https:' || url.hostname!=='auth.openai.com' ||
-            !['/codex/device','/codex/device/'].includes(url.pathname) ||
-            !/^[A-Z0-9-]{4,32}$/i.test(String(data.userCode||'')))
-            throw Error('Unsupported device login response.');
-          loginDetails.replaceChildren();
-          const code=document.createElement('strong');code.textContent=String(data.userCode);
-          const link=document.createElement('a');link.href=url.href;link.target='_blank';
-          link.rel='noopener noreferrer';link.textContent='Open official ChatGPT device sign-in';
-          const instruction=document.createElement('p');
-          instruction.textContent='Sign in to your own ChatGPT account at the official page, then enter this code:';
-          loginDetails.append(instruction,code,document.createElement('br'),link);
-          loginDetails.hidden=false;
-          label('Waiting for your ChatGPT authorization. Never enter your password on this website.');
-          poll();
-        }catch(e){label(e.message||'Unable to start ChatGPT sign-in.');}
-        finally{sync();}
-      });
-      accountMessage=document.createElement('p');accountMessage.id='jdCodexAccountMessage';accountMessage.setAttribute('role','status');
-      option=document.createElement('a');option.id='jdCodexProviderOption';
-      option.href='/codex.html';option.className='jd-codex-choice';
-      option.textContent='ChatGPT Codex (subscription) — coding workspace';option.hidden=true;
-      loginDetails=document.createElement('div');loginDetails.id='jdCodexLoginDetails';
-      loginDetails.hidden=true;loginDetails.setAttribute('role','status');
-      disconnectButton=document.createElement('button');disconnectButton.type='button';
-      disconnectButton.className='jd-codex-connect';disconnectButton.textContent='Disconnect ChatGPT';
-      disconnectButton.hidden=true;
-      disconnectButton.addEventListener('click',async()=>{
-        disconnectButton.disabled=true;
-        try{
-          const response=await fetch('/api/codex-account',{method:'POST',credentials:'same-origin',
-            headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'disconnect'})});
-          if(!response.ok)throw Error('Could not disconnect ChatGPT.');
-          await checkAccount();
-        }catch(e){label(e.message);}
-        finally{disconnectButton.disabled=false;}
-      });
-      section.append(h,connect,accountMessage,loginDetails,option,disconnectButton);picker.append(section);
-    }
-    sync();
-    checkAccount();
-    // Recheck on tab focus after an independent supported OAuth flow.
-    addEventListener('focus',checkAccount);
+    const home=get('settingsModal');
+    const group=home?.querySelector('.settings-home-scroll .settings-card-group');
+    const panel=home?.querySelector('.settings-home');
+    if(!group||!panel)return;
+    settingsRow=create('button','settings-nav-row');settingsRow.type='button';settingsRow.id='jdCodexSettingsRow';
+    const icon=create('i');icon.dataset.lucide='bot';
+    const middle=create('span');middle.append(create('strong','','ChatGPT & Codex'),
+      create('small','','Connect your ChatGPT account'));
+    const chevron=create('i');chevron.dataset.lucide='chevron-right';
+    settingsRow.append(icon,middle,chevron);group.append(settingsRow);
+    sheet=create('section','jd-codex-settings-sheet');sheet.id='jdCodexSettingsSheet';sheet.hidden=true;
+    sheet.setAttribute('role','dialog');sheet.setAttribute('aria-label','ChatGPT and Codex settings');
+    const head=create('div','jd-codex-sheet-header');
+    const back=create('button','jd-codex-back','‹');back.type='button';
+    back.setAttribute('aria-label','Back to Settings');
+    const title=create('strong','','ChatGPT & Codex');head.append(back,title);
+    const body=create('div','jd-codex-sheet-body');
+    const card=create('div','jd-codex-account-card');
+    card.append(create('h3','','ChatGPT account'),
+      create('p','','Connect your own account to access Codex Work. Your other chat models are unchanged.'));
+    connect=create('button','jd-codex-connect','Connect ChatGPT');connect.type='button';
+    message=create('p','jd-codex-message');message.setAttribute('role','status');
+    codeBox=create('div','jd-codex-device');codeBox.hidden=true;
+    disconnect=create('button','jd-codex-connect','Disconnect ChatGPT');
+    disconnect.type='button';disconnect.hidden=true;
+    card.append(connect,message,codeBox,disconnect);
+    const work=create('div','jd-codex-account-card');
+    work.append(create('h3','','Work · Codex'),
+      create('p','','Codex settings are applied automatically after you connect. GitHub is only needed when working with a repository.'));
+    const openWork=create('a','jd-codex-connect','Open Work');openWork.id='jdCodexOpenWork';
+    openWork.href='/codex.html';openWork.hidden=true;work.append(openWork);
+    body.append(card,work);sheet.append(head,body);panel.append(sheet);
+    const close=()=>{sheet.hidden=true;settingsRow.focus();};
+    back.addEventListener('click',close);
+    settingsRow.addEventListener('click',()=>{sheet.hidden=false;refresh();back.focus();});
+    connect.addEventListener('click',connectAccount);
+    disconnect.addEventListener('click',disconnectAccount);
+    if(typeof window.lucide?.createIcons==='function')window.lucide.createIcons();
+    refresh();
+    addEventListener('focus',refresh);
+    addEventListener('jd:account-changed',()=>{waiting=false;stopPoll();refresh();});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
   else init();
