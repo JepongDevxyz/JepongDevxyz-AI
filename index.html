@@ -918,9 +918,11 @@
         .model-provider-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 14px 0; }
         .model-provider-tab { border: 1px solid var(--border-color); background: rgba(255,255,255,.04); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: .74rem; font-weight: 700; cursor: pointer; }
         .model-provider-tab.active { color: var(--text-main); border-color: rgba(139,92,246,.5); background: rgba(139,92,246,.14); }
-        .model-pages-viewport { overflow: hidden; touch-action: pan-y; width: 100%; }
-        .model-pages-track { display: flex; width: 100%; transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
-        .model-provider-page { width: 100%; flex: 0 0 100%; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; }
+        .model-pages-viewport { overflow: hidden; touch-action: pan-y; width: 100%; perspective: 1100px; }
+        .model-pages-track { display: flex; width: 100%; transition: transform .42s cubic-bezier(.22,.75,.2,1); will-change: transform; transform-style: preserve-3d; }
+        .model-provider-page { width: 100%; flex: 0 0 100%; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; transform-origin: center center; backface-visibility: hidden; transition: transform .42s cubic-bezier(.22,.75,.2,1), opacity .3s ease; }
+        .model-provider-page.carousel-away { transform: rotateY(22deg) scale(.96); opacity: .55; }
+        .model-provider-page.carousel-active { transform: rotateY(0deg) scale(1); opacity: 1; }
         .provider-badge {
             display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
             padding: 5px 9px; border: 1px solid var(--border-color); border-radius: 999px;
@@ -8906,6 +8908,32 @@ ${m.text || ''}
                 applyModelAvailability();
             }catch(_){}
         }
+        async function syncDynamicProviderModels(){
+            try{
+                const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'provider-models'})});
+                if(!response.ok)return;
+                const data=await response.json();
+                for(const [provider,result] of Object.entries(data.providers||{})){
+                    if(!PROVIDER_ORDER.includes(provider))continue;
+                    const page=document.querySelector(`#modelPagesTrack .model-provider-page[data-provider="${provider}"]`);
+                    if(!page)continue;
+                    const models=Array.isArray(result.models)?result.models:[];
+                    if(!models.length)continue;
+                    page.querySelectorAll('.option-item[data-model]').forEach(x=>x.remove());
+                    for(const model of models){
+                        const id=String(model.id||''); if(!id)continue;
+                        const name=String(model.name||id); MODEL_DISPLAY_NAMES[id]=name;
+                        const btn=document.createElement('button'); btn.type='button'; btn.className='option-item'; btn.dataset.provider=provider; btn.dataset.model=id;
+                        const caps=Array.isArray(model.capabilities)&&model.capabilities.length?model.capabilities.join(' · '):'Available from provider API';
+                        btn.innerHTML=`<div class="option-info"><div><div class="option-name"></div><div class="option-desc"></div></div></div><div class="radio-icon"></div>`;
+                        btn.querySelector('.option-name').textContent=name; btn.querySelector('.option-desc').textContent=caps;
+                        btn.addEventListener('click',()=>selectProviderModel(provider,id,name)); page.appendChild(btn);
+                    }
+                    setProviderMeta(provider,{configured:true,serverStatus:result.status||'ready'});
+                }
+                updateSelectedModelUI(); applyModelAvailability();
+            }catch(_){}
+        }
         function modelUnavailable(provider){
             if(provider==='image') return false;
             const m=lastProviderMeta[provider];
@@ -10022,6 +10050,7 @@ ${m.text || ''}
             if(title) title.textContent=providerLabel(PROVIDER_ORDER[currentProviderPage]);
             document.querySelectorAll('.model-page-dot').forEach((dot,i)=>dot.classList.toggle('active',i===currentProviderPage));
             document.querySelectorAll('.model-provider-tab').forEach((tab,i)=>tab.classList.toggle('active',i===currentProviderPage));
+            document.querySelectorAll('#modelPagesTrack .model-provider-page').forEach((page,i)=>{page.classList.toggle('carousel-active',i===currentProviderPage);page.classList.toggle('carousel-away',i!==currentProviderPage);});
             requestAnimationFrame(()=>{
                 const active=document.querySelector(`#modelPagesTrack .model-provider-page[data-provider="${PROVIDER_ORDER[currentProviderPage]}"]`);
                 if(active && !active.matches(':active')) active.scrollTop=0;
@@ -10029,7 +10058,7 @@ ${m.text || ''}
         }
         function setProviderPage(index){ currentProviderPage=Math.max(0,Math.min(PROVIDER_ORDER.length-1,index)); renderProviderPage(); }
         function changeProviderPage(direction){ setProviderPage((currentProviderPage+direction+PROVIDER_ORDER.length)%PROVIDER_ORDER.length); }
-        function openModelPicker(){ currentProviderPage=currentSelectedMode==='imagen' ? PROVIDER_ORDER.indexOf('image') : Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); applyModelAvailability(); toggleModal('modelModalOverlay',true); syncProviderStatus(); }
+        function openModelPicker(){ currentProviderPage=currentSelectedMode==='imagen' ? PROVIDER_ORDER.indexOf('image') : Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); applyModelAvailability(); toggleModal('modelModalOverlay',true); syncProviderStatus(); syncDynamicProviderModels(); }
         let modelSwipeStartX=0,modelSwipeStartY=0,modelSwipeActive=false;
         document.addEventListener('touchstart',e=>{const viewport=e.target.closest&&e.target.closest('#modelPagesViewport');if(!viewport||!document.getElementById('modelModalOverlay')?.classList.contains('open'))return;const t=e.touches[0];modelSwipeStartX=t.clientX;modelSwipeStartY=t.clientY;modelSwipeActive=true;e.stopPropagation();},{passive:true,capture:true});
         document.addEventListener('touchend',e=>{if(!modelSwipeActive)return;modelSwipeActive=false;const t=e.changedTouches[0],dx=t.clientX-modelSwipeStartX,dy=t.clientY-modelSwipeStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){changeProviderPage(dx<0?1:-1);e.stopPropagation();}},{passive:true,capture:true});
