@@ -1,3 +1,4 @@
+import { projectCodexEvent } from './events.mjs';
 import { Codex } from '@openai/codex-sdk';
 
 const safeString = (value, max = 1200) => String(value ?? '').slice(0, max);
@@ -40,29 +41,12 @@ process.on('message', async request => {
     let finalResponse = '';
     let completed = false;
     for await (const event of events) {
-      if (event.type === 'thread.started') {
-        emit({ kind: 'thread', threadId: safeString(event.thread_id, 150) });
-      } else if (['item.started', 'item.updated', 'item.completed'].includes(event.type)) {
-        const item = event.item || {};
-        if (item.type === 'agent_message' && event.type === 'item.completed') {
-          finalResponse = safeString(item.text, 20_000);
-        }
-        if (['command_execution', 'file_change', 'agent_message', 'mcp_tool_call'].includes(item.type)) {
-          // Only expose the item type and status, plus the completed assistant response.
-          // Tool arguments and shell output can contain credentials.
-          emit({ kind: 'event', event: {
-            type: event.type,
-            itemType: item.type,
-            status: safeString(item.status, 40),
-            text: item.type === 'agent_message' && event.type === 'item.completed'
-              ? safeString(item.text, 1200) : undefined
-          } });
-        }
-      } else if (event.type === 'turn.failed' || event.type === 'error') {
-        throw new Error(safeString(event.error?.message || event.message || 'Codex turn failed.', 700));
-      } else if (event.type === 'turn.completed') {
-        completed = true;
-      }
+      const projected = projectCodexEvent(event);
+      if (projected.threadId) emit({ kind: 'thread', threadId: projected.threadId });
+      if (projected.activity) emit({ kind: 'event', event: projected.activity });
+      if (projected.response !== undefined) finalResponse = projected.response;
+      if (projected.error) throw new Error(projected.error);
+      if (projected.completed) completed = true;
     }
     if (!completed) throw new Error('Codex ended without a completed turn.');
     emit({ kind: 'done', threadId: safeString(thread.id, 150), finalResponse });
