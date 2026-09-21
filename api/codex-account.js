@@ -1,6 +1,6 @@
 import { json } from './_github_oauth.js';
 import { actor, rpc } from './codex.js';
-export const config = { runtime: 'edge' };
+export const config = { maxDuration: 60 };
 
 const empty = (extra={}) => ({ available:false, connected:false,
   codexEnabled:false, runnerReady:false, authMode:null, planType:null, ...extra });

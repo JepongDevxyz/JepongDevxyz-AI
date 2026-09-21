@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/codex.js": {
+      "includeFiles": "codex-runner/**",
+      "maxDuration": 60
+    },
+    "api/codex-account.js": {
+      "includeFiles": "codex-runner/**",
+      "maxDuration": 60
+    }
+  }
+}

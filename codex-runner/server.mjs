@@ -276,4 +276,4 @@ const server = http.createServer(async (req, res) => {
     reply(res, e.status || 500, { error: e.status ? e.message : 'Runner request failed.' });
   }
 });
-server.listen(Number(process.env.PORT || 8080), '127.0.0.1');
+server.listen(Number(process.env.PORT || 8080), process.env.RUNNER_LISTEN_HOST || '127.0.0.1');

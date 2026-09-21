@@ -9,6 +9,8 @@ on:
       - 'codex-choice.js'
       - 'codex-choice.css'
       - 'index.html'
+      - 'package.json'
+      - 'tests/codex_sandbox_tenant.test.mjs'
       - '.github/workflows/codex-runner-checks.yml'
   pull_request:
     paths:
@@ -36,6 +38,11 @@ jobs:
           npm install --no-audit --no-fund
           ./node_modules/.bin/codex --version
           node --input-type=module -e "import('@openai/codex-sdk').then(m=>{if(typeof m.Codex!=='function')process.exit(1)})"
+      - name: Install Sandbox router dependencies and check per-user isolation
+        run: |
+          npm install --no-audit --no-fund
+          node --check api/_codex_sandbox.js
+          npm run test:codex-tenants
       - name: Syntax verification
         run: |
           node --check api/codex.js

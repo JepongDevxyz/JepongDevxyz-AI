@@ -1,8 +1,9 @@
 import { getGitHubSession, githubApi, json } from './_github_oauth.js';
 import { resolveGitHubAccess } from './_github_app.js';
 import { parseGitHubTarget } from './plugins.js';
+import { settings as sandboxSettings, sandboxRpc } from './_codex_sandbox.js';
 
-export const config = { runtime: 'edge' };
+export const config = { maxDuration: 60 };
 
 const encoder = new TextEncoder();
 const uid = /^[a-f0-9-]{36}$/i;
@@ -39,6 +40,11 @@ export async function actor(request) {
   return { id: user.id, login: String(user.login) };
 }
 export async function rpc(payload, request, timeoutMs = 20_000) {
+  if (process.env.CODEX_MULTIUSER_SANDBOX_ENABLED === 'true') {
+    if (!sandboxSettings().enabled) error('Isolated Codex workspaces are not configured.', 503);
+    if (!payload?.actor) error('Connect your GitHub account first.', 401);
+    return sandboxRpc(payload,payload.actor,timeoutMs);
+  }
   const { url, secret } = runnerSettings();
   const body = JSON.stringify({ ...payload, issuedAt: Date.now(), nonce: crypto.randomUUID() });
   const response = await fetch(url + '/rpc', {
@@ -55,6 +61,15 @@ export async function rpc(payload, request, timeoutMs = 20_000) {
 }
 export default async function handler(request) {
   if (request.method === 'GET') {
+    if(process.env.CODEX_MULTIUSER_SANDBOX_ENABLED === 'true') {
+      try {
+        const user=await actor(request);
+        const status=await sandboxRpc({action:'account-status',actor:user},user,12000);
+        return json({configured:true,runnerReady:status.connected===true && status.runnerReady===true,
+          mode:'per-user-sandbox',service:'codex-runner'});
+      }catch(e){return json({configured:sandboxSettings().enabled,runnerReady:false,
+        service:'codex-runner',requiresGithub:e?.status===401});}
+    }
     try {
       runnerSettings();
       const health = await rpc({ action: 'health' }, request, 4_000);
