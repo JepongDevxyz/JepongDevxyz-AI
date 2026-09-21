@@ -194,7 +194,9 @@ async function start(body) {
   if (!(await runtimeReady())) fail('Codex runner dependencies are unavailable.',503);
   if (!(await accountBridge.account()).connected) fail('Sign in with your own ChatGPT Codex account first.',401);
   const repo = String(body.repo || '');
-  const owner = allowedOwner.toLowerCase();
+  // Repository authorization is checked against the separate GitHub login by
+  // the signed gateway; the runner owner identifies the ChatGPT app account.
+  const owner = String(body.repoOwner || allowedOwner).toLowerCase();
   if (!/^[a-z0-9_.-]{1,39}\/[-a-z0-9_.]{1,100}$/i.test(repo) || repo.split('/')[0].toLowerCase() !== owner ||
       !body.cloneToken || typeof body.cloneToken !== 'string') fail('Invalid repository or missing scoped clone token.', 403);
   if (body.prompt?.length > 12000 || !body.prompt?.trim()) fail('Invalid task prompt.', 400);

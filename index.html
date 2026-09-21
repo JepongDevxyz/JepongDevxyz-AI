@@ -4603,6 +4603,13 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         const SUPABASE_URL='https://czjdygnhdojpqfdpfugo.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY='sb_publishable_MJuzXQ_YRPV0yGPCTEpjMA_gPImrvin';
         const cloudClient=(window.supabase?.createClient)?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+        // Keep the cloud access token out of localStorage copies in Codex UI.
+        // The server verifies this token against Supabase on every request.
+        window.JDCloudAuthToken=async()=>{
+            if(!cloudClient)return '';
+            const {data}=await cloudClient.auth.getSession();
+            return data?.session?.access_token||'';
+        };
         let cloudUser=null, cloudSyncTimer=null;
         const cloudSafeName=name=>String(name||'file').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-120);
         function queueCloudSync(){ if(!cloudUser||!cloudClient)return; clearTimeout(cloudSyncTimer); cloudSyncTimer=setTimeout(()=>syncCloudNow(true),900); }
@@ -4610,7 +4617,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(!cloudClient)return;
             const {data}=await cloudClient.auth.getSession(); cloudUser=data?.session?.user||null; renderCloudAccount();
             if(cloudUser)await loadCloudState();
-            cloudClient.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;renderCloudAccount();if(cloudUser)await loadCloudState();});
+            cloudClient.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;renderCloudAccount();window.dispatchEvent(new Event('jd:account-changed'));if(cloudUser)await loadCloudState();});
         }
         function renderCloudAccount(){
             const signed=!!cloudUser; const out=document.getElementById('cloudSignedOut'), inside=document.getElementById('cloudSignedIn'), btn=document.getElementById('accountHeaderBtn');
