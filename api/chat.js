@@ -3401,7 +3401,7 @@ function normalizeModelCatalog(data){
 
 async function discoverProviderModels(provider){
   if(!DYNAMIC_MODEL_PROVIDERS.has(provider))return {provider,models:[],status:'unsupported'};
-  const keys=getProviderKeys(provider);
+  const keys=provider==='bailucode' ? [...new Set([...getProviderKeys(provider),...getBailuAnthropicKeys()])] : getProviderKeys(provider);
   if(!keys.length)return {provider,models:[],status:'not-configured'};
   if(provider==='seekai')return {provider,models:[{id:'agent',name:'SEEKAI Agent',type:'agent',capabilities:['agent']}],status:'ready',discovery:'agent-api'};
   const url=providerModelsUrl(provider);
@@ -3421,12 +3421,12 @@ async function discoverProviderModels(provider){
       if(res.ok){
         const data=await safeJsonResponse(res);
         const models=normalizeModelCatalog(data);
-        return {provider,models,status:models.length?'ready':'empty'};
+        return {provider,models,status:models.length?'ready':'empty',httpStatus:res.status,source:url};
       }
       if(!isRetryableStatus(res.status))break;
     }catch(_){lastStatus=502;}
   }
-  return {provider,models:[],status:lastStatus===429?'limit-reached':([401,403].includes(lastStatus)?'no-access':'temporarily-unavailable'),httpStatus:lastStatus};
+  return {provider,models:[],status:lastStatus===429?'limit-reached':([401,403].includes(lastStatus)?'no-access':'temporarily-unavailable'),httpStatus:lastStatus,source:url};
 }
 
 async function dynamicModelCatalog(){
