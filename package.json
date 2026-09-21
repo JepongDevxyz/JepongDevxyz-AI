@@ -1,5 +1,11 @@
 {
   "name": "jepong-devxyz-ai",
   "version": "1.0.0",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@vercel/sandbox": "3.3.0"
+  },
+  "scripts": {
+    "test:codex-tenants": "node --test tests/codex_sandbox_tenant.test.mjs"
+  }
 }

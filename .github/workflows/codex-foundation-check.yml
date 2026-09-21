@@ -1,0 +1,57 @@
+name: Codex foundation checks
+on:
+  push:
+    branches: [feature/codex-agent-workspace]
+    paths:
+      - 'api/codex.js'
+      - 'codex.html'
+      - 'codex-runner/**'
+      - '.github/workflows/codex-foundation-check.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check server and gateway syntax
+        run: |
+          node --check api/codex.js
+          node --check codex-runner/server.mjs
+          node --check codex-runner/worker.mjs
+      - name: Check workspace inline module syntax
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          const html = readFileSync('codex.html', 'utf8');
+          const script = html.match(/<script type="module">([\s\S]*?)<\/script>/);
+          if (!script) throw Error('Codex workspace module script missing');
+          const check = spawnSync(process.execPath, ['--input-type=module', '--check'], {
+            input: script[1], encoding: 'utf8'
+          });
+          if (check.status !== 0) throw Error(check.stderr || 'Invalid module syntax');
+          console.log('Codex workspace inline module syntax: PASS');
+          NODE
+      - name: Install and import official Codex SDK
+        working-directory: codex-runner
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          node --input-type=module -e "import('@openai/codex-sdk').then(m => { if(typeof m.Codex !== 'function') process.exit(1); console.log('Codex SDK import: PASS') })"
+      - name: Check unauthenticated gateway status
+        run: |
+          node --input-type=module <<'NODE'
+          import handler from './api/codex.js';
+          const r = await handler(new Request('https://test.local/api/codex', { method: 'GET' }));
+          const body = await r.json();
+          if(r.status !== 200 || body.configured !== false) throw Error('Gateway must stay disabled without runner settings');
+          console.log('Unconfigured gateway: correctly disabled');
+          NODE

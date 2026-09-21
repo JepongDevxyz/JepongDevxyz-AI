@@ -1,0 +1,18 @@
+/* Codex account-dependent navigation; base chat UI remains intact. */
+#jdChatWorkTabs{order:1;display:flex;flex:0 0 auto;align-items:center;justify-content:center;
+  gap:4px;padding:4px;border-radius:999px;background:rgba(146,155,172,.23);max-width:188px}
+#jdChatWorkTabs .jd-codex-tab{border:0;text-decoration:none;display:inline-flex;justify-content:center;
+  align-items:center;min-width:63px;padding:5px 12px;font:500 13px/1.4 inherit;white-space:nowrap;
+  border-radius:999px;background:transparent;color:var(--text-main);cursor:pointer}
+#jdChatWorkTabs .jd-codex-current{background:rgba(15,23,42,.55)}
+#jdChatWorkTabs [hidden],#jdCodexProviderOption[hidden]{display:none!important}
+.jd-codex-picker-section{padding:10px 14px 16px;border-top:1px solid var(--border-color);
+  background:var(--modal-bg);display:flex;flex-direction:column;gap:7px;flex-shrink:0}
+.jd-codex-heading{font-weight:700;font-size:13px}
+.jd-codex-connect,.jd-codex-choice{display:block;width:100%;padding:10px 12px;
+  border-radius:12px;border:1px solid var(--border-color);background:var(--input-bg);
+  color:var(--text-main);font:500 13px/1.4 inherit;text-align:left;text-decoration:none}
+.jd-codex-connect:disabled{opacity:.55}
+#jdCodexAccountMessage{font-size:12px;line-height:1.4;color:var(--text-muted);margin:0}
+@media(max-width:600px){.header-top{flex-wrap:wrap}#jdChatWorkTabs{order:3;width:max-content;margin:auto}
+ .header-top .brand{flex:1 1 110px}.jd-codex-picker-section{padding:9px 12px}}

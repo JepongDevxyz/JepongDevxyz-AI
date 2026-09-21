@@ -1,0 +1,56 @@
+name: Codex runner checks
+on:
+  push:
+    branches: [feature/codex-agent-workspace]
+    paths:
+      - 'codex-runner/**'
+      - 'api/codex.js'
+      - 'api/codex-account.js'
+      - 'codex-choice.js'
+      - 'codex-choice.css'
+      - 'index.html'
+      - 'package.json'
+      - 'tests/codex_sandbox_tenant.test.mjs'
+      - '.github/workflows/codex-runner-checks.yml'
+  pull_request:
+    paths:
+      - 'codex-runner/**'
+      - 'api/codex.js'
+      - 'api/codex-account.js'
+      - 'codex-choice.js'
+      - 'codex-choice.css'
+      - 'index.html'
+      - '.github/workflows/codex-runner-checks.yml'
+permissions:
+  contents: read
+jobs:
+  runner-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Codex SDK and CLI
+        run: |
+          cd codex-runner
+          npm install --no-audit --no-fund
+          ./node_modules/.bin/codex --version
+          node --input-type=module -e "import('@openai/codex-sdk').then(m=>{if(typeof m.Codex!=='function')process.exit(1)})"
+      - name: Install Sandbox router dependencies and check per-user isolation
+        run: |
+          npm install --no-audit --no-fund
+          node --check api/_codex_sandbox.js
+          npm run test:codex-tenants
+      - name: Syntax verification
+        run: |
+          node --check api/codex.js
+          node --check api/codex-account.js
+          node --check codex-choice.js
+          cd codex-runner
+          npm run check
+      - name: SDK event projection tests
+        run: |
+          cd codex-runner
+          npm test

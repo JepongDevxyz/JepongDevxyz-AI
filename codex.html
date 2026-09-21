@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101522">
+<title>Codex Workspace — JepongDevxyz AI</title>
+<style>
+:root{font:15px/1.5 system-ui,sans-serif;color:#edf2ff;background:#0b1020;--border:#29344d;--panel:#151d30;--muted:#9ba9c4;--accent:#806bf7}
+*{box-sizing:border-box}body{margin:0}button,select,textarea{font:inherit}
+a{color:#aaa0ff;text-decoration:none}a:hover{text-decoration:underline}
+header{padding:16px clamp(14px,3vw,30px);display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border)}
+h1{font-size:1.12rem;margin:0}h2{font-size:1rem;margin:0 0 14px}
+small,.muted{color:var(--muted)}main{width:min(1250px,100%);margin:0 auto;padding:20px;display:grid;grid-template-columns:minmax(250px,320px) 1fr;gap:18px}
+section{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:19px;min-width:0}
+label{display:block;font-weight:600;margin:14px 0 7px}
+textarea,select{background:#101729;border:1px solid #42516c;color:#fff;border-radius:9px;width:100%;padding:11px}
+textarea{resize:vertical;min-height:155px}button,.action{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:1px solid #4f6284;background:#263453;color:#fff;border-radius:9px;padding:9px 13px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);font-weight:650}button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.stack{display:flex;flex-direction:column;gap:9px}
+#notice{padding:10px 12px;background:#18243b;border-radius:10px;overflow-wrap:anywhere}
+#events{height:min(45vh,430px);min-height:190px;overflow:auto;background:#0e1626;border:1px solid var(--border);border-radius:10px;padding:10px}
+.event{border-bottom:1px solid #263248;padding:8px 2px;font-family:ui-monospace,monospace;font-size:.84rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.event:last-child{border-bottom:0}pre{font:12px/1.5 ui-monospace,monospace;overflow:auto;background:#0d1423;border:1px solid var(--border);border-radius:10px;padding:12px;max-height:460px;white-space:pre;tab-size:2}
+#response{white-space:pre-wrap;overflow-wrap:anywhere}#state{padding:4px 10px;border:1px solid #41547a;border-radius:100px;color:#c9d5eb;font-size:.8rem}
+#repo-link{overflow-wrap:anywhere}.hide{display:none}
+@media(max-width:760px){main{grid-template-columns:1fr;padding:12px}section{padding:14px}header{padding:14px}#events{height:270px}}
+</style>
+</head>
+<body>
+<header><h1>JepongDevxyz AI <span class="muted">/ Codex Workspace</span></h1><a href="/">← Back to chat</a></header>
+<main>
+<section>
+  <h2>GitHub workspace</h2>
+  <p class="muted">Select a repository you own and describe the coding task. Codex uses a separate working copy; it will not directly push to main.</p>
+  <div class="actions">
+    <a class="action" href="/api/github-oauth-start?return_to=/codex.html">Connect GitHub</a>
+    <a class="action hide" id="install" target="_blank" rel="noopener noreferrer">Install GitHub App</a>
+  </div>
+  <label for="repository">Repository</label>
+  <select id="repository"><option value="">Loading repositories…</option></select>
+  <div class="actions"><button id="refresh" type="button">Refresh repositories</button><a id="repo-link" class="action hide" target="_blank" rel="noopener noreferrer">Open on GitHub</a></div>
+  <label for="prompt">Task</label>
+  <textarea id="prompt" maxlength="12000" placeholder="Investigate the test failures, implement a fix, run the relevant checks and report what changed."></textarea>
+  <div class="actions"><button class="primary" id="start" disabled>Start Codex task</button><button id="continue" disabled>Send follow-up</button><button id="cancel" disabled>Stop</button></div>
+  <p><small>Connect your GitHub account, then authorize your own ChatGPT Codex account. Codex is available only when an isolated workspace is enabled for your account.</small></p>
+</section>
+<section>
+  <div class="actions" style="justify-content:space-between;margin:0 0 14px"><h2 style="margin:0">Activity &amp; review</h2><span id="state">Not configured</span></div>
+  <p id="notice" role="status" aria-live="polite">Checking Codex runner availability…</p>
+  <div class="stack">
+    <div><strong>Actual execution events</strong><div id="events" aria-live="polite"><div class="event">No task started.</div></div></div>
+    <div><strong>Agent response</strong><p id="response" class="muted">The agent's result will appear here.</p></div>
+    <div><strong>Changed files</strong><pre id="files">No changes to review.</pre></div>
+    <div><strong>Git diff (review before commit)</strong><pre id="diff">No diff available.</pre><div class="actions"><button id="copy-patch" type="button" disabled>Copy patch</button><button id="save-patch" type="button" disabled>Save .patch</button></div></div>
+  </div>
+</section>
+</main>
+<script type="module">
+const $ = id => document.getElementById(id);
+let jobId = sessionStorage.getItem('jd_codex_job') || '';
+let configured = false, runnerConfigured = false, polling = null, busy = false, currentRepo = '';
+function notice(value){ $('notice').textContent = value; }
+function errorMessage(e){ notice(e?.message || 'Request failed.'); }
+function controls(state=''){
+  $('start').disabled = !configured || busy || !($('repository').value && $('prompt').value.trim());
+  $('continue').disabled = busy || !['done','failed','cancelled'].includes(state) || !$('prompt').value.trim();
+  $('cancel').disabled = busy || !['running','cloning'].includes(state);
+}
+async function api(action, data={}){
+  const response = await fetch('/api/codex', {
+    method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action,...data})
+  });
+  const json=await response.json();
+  if(!response.ok) throw new Error(json?.error || 'Codex request failed (HTTP '+response.status+').');
+  return json;
+}
+function display(job){
+  const state = job.state || 'unknown';
+  $('state').textContent = state;
+  currentRepo = job.repo || currentRepo;
+  $('events').replaceChildren();
+  const events = Array.isArray(job.events) ? job.events : [];
+  if(!events.length){const item=document.createElement('div');item.className='event';item.textContent='No execution events yet.';$('events').append(item);}
+  for(const ev of events){
+    const item=document.createElement('div');item.className='event';
+    item.textContent = [ev.type,ev.itemType,ev.status,ev.command,ev.text].filter(Boolean).join(' · ');
+    $('events').append(item);
+  }
+  $('events').scrollTop=$('events').scrollHeight;
+  $('response').textContent=job.finalResponse || (job.error ? 'Error: '+job.error : 'No final response yet.');
+  $('files').textContent=job.files || 'No changed files recorded.';
+  $('diff').textContent=job.diff || 'No diff available.';
+  $('copy-patch').disabled=!job.diff;
+  $('save-patch').disabled=!job.diff;
+  notice(job.error || (state === 'done' ? 'Turn finished. Review the changed files before committing.' : 'Actual status: '+state));
+  controls(state);
+}
+function stopPolling(){if(polling){clearInterval(polling);polling=null;}}
+async function refreshJob(){
+  if(!jobId || busy)return;
+  busy=true;
+  try{
+    const job=await api('status',{jobId});display(job);
+    if(['done','failed','cancelled'].includes(job.state))stopPolling();
+  }catch(e){stopPolling();errorMessage(e);if(/not found/i.test(e.message)){jobId='';sessionStorage.removeItem('jd_codex_job');}}
+  finally{busy=false;controls($('state').textContent);}
+}
+function startPolling(){stopPolling();polling=setInterval(refreshJob,1700);}
+async function refreshRepos(){
+  $('repository').replaceChildren(new Option('Loading repositories…',''));
+  try{
+    const res=await fetch('/api/plugins',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'repos'})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error || 'GitHub repositories are unavailable.');
+    const repos=data.repositories || [];
+    $('repository').replaceChildren(new Option('Choose a repository',''));
+    for(const r of repos){$('repository').append(new Option(r.repo,r.repo));}
+    if(currentRepo && repos.some(r=>r.repo===currentRepo))$('repository').value=currentRepo;
+    notice(repos.length ? 'Select a repository and enter a coding task.' : 'No accessible GitHub repositories.');
+  }catch(e){ $('repository').replaceChildren(new Option('Connect GitHub to load repositories','')); errorMessage(e); }
+  controls($('state').textContent);
+}
+$('repository').addEventListener('change',()=>{const v=$('repository').value;if(v){$('repo-link').href='https://github.com/'+v;$('repo-link').classList.remove('hide');}else $('repo-link').classList.add('hide');controls($('state').textContent);});
+$('prompt').addEventListener('input',()=>controls($('state').textContent));
+$('copy-patch').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('diff').textContent);
+    notice('Patch copied for review.');
+  } catch (_) { notice('Clipboard unavailable. Select the diff to copy it manually.'); }
+});
+$('save-patch').addEventListener('click', () => {
+  const patch=$('diff').textContent;
+  if(!patch || patch==='No diff available.')return;
+  const blob=new Blob([patch],{type:'text/x-diff;charset=utf-8'});
+  const link=document.createElement('a');
+  const objectUrl=URL.createObjectURL(blob);
+  link.href=objectUrl;link.download='jepongdevxyz-codex.patch';link.click();
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
+});
+$('refresh').addEventListener('click',refreshRepos);
+$('start').addEventListener('click',async()=>{
+  busy=true;controls();
+  try{
+    const job=await api('start',{repo:$('repository').value,prompt:$('prompt').value.trim()});
+    jobId=job.jobId;sessionStorage.setItem('jd_codex_job',jobId);
+    $('prompt').value='';display(job);startPolling();
+  }catch(e){errorMessage(e);}
+  finally{busy=false;controls($('state').textContent);}
+});
+$('continue').addEventListener('click',async()=>{
+  busy=true;controls();
+  try{
+    const job=await api('continue',{jobId,prompt:$('prompt').value.trim()});
+    $('prompt').value='';display(job);startPolling();
+  }catch(e){errorMessage(e);}
+  finally{busy=false;controls($('state').textContent);}
+});
+$('cancel').addEventListener('click',async()=>{
+  busy=true;controls();
+  try{const job=await api('cancel',{jobId});display(job);startPolling();}
+  catch(e){errorMessage(e);}
+  finally{busy=false;controls($('state').textContent);}
+});
+(async()=>{
+  try{
+    const [res, app] = await Promise.all([fetch('/api/codex'),fetch('/api/github-app-status')]);
+    const health=await res.json();
+    runnerConfigured=health.configured===true;
+    configured=health.runnerReady===true;
+    if(health.configured && !configured)notice('The Codex runner is configured but is not reachable or is missing its server API credential. Coding is disabled.');
+    if(app.ok){const status=await app.json();if(status.installUrl && !status.installed){$('install').href=status.installUrl;$('install').classList.remove('hide');}}
+    if(!configured)notice(runnerConfigured?'Codex runner is configured but unreachable or missing its API credential. The workspace is disabled.':'Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
+    else notice('Codex runner configured. Connect GitHub and choose your repository.');
+  }catch(e){errorMessage(e);}
+  await refreshRepos();
+  if(!configured)notice(runnerConfigured?'Codex runner is configured but unreachable or missing its API credential. The workspace is disabled.':'Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
+  if(jobId && configured){await refreshJob();if(['running','cloning','cancelling'].includes($('state').textContent))startPolling();}
+  controls($('state').textContent);
+})();
+</script>
+</body>
+</html>
