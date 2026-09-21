@@ -29,7 +29,7 @@ async function signature(secret, body) {
   const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(body)));
   return [...mac].map(n => n.toString(16).padStart(2, '0')).join('');
 }
-async function actor(request) {
+export async function actor(request) {
   const session = await getGitHubSession(request);
   if (!session?.token) error('Connect GitHub first.', 401);
   const response = await githubApi('/user', session.token, { signal: request.signal });
@@ -38,7 +38,7 @@ async function actor(request) {
   if (!Number.isSafeInteger(user.id) || !user.login) error('GitHub identity could not be verified.', 401);
   return { id: user.id, login: String(user.login) };
 }
-async function rpc(payload, request, timeoutMs = 20_000) {
+export async function rpc(payload, request, timeoutMs = 20_000) {
   const { url, secret } = runnerSettings();
   const body = JSON.stringify({ ...payload, issuedAt: Date.now(), nonce: crypto.randomUUID() });
   const response = await fetch(url + '/rpc', {
