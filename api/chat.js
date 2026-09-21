@@ -178,6 +178,13 @@ function rotateProviderKeys(provider, keys) {
   return keys.map((_, i) => keys[(start + i) % keys.length]);
 }
 
+function sanitizeCustomProviderKeys(body,provider){
+  const raw=body?.customApiKeys?.[provider];
+  if(typeof raw!=='string'&& !Array.isArray(raw))return [];
+  const text=Array.isArray(raw)?raw.join(','):raw;
+  return String(text).split(/[\n,]+/).map(x=>x.trim()).filter(x=>x.length>=8).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+}
+
 function getProviderKeys(provider) {
   if (provider === 'gemini') return rotateProviderKeys('gemini', parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
   if (provider === 'groq') return rotateProviderKeys('groq', parseKeys('GROQ_API_KEYS','GROQ_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
@@ -2643,14 +2650,14 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
   return {ok:false,status,error:last||'Cloudflare unavailable'};
 }
 
-async function runOpenAICompatible(provider,{model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
+async function runOpenAICompatible(provider,{model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
     mistral:{url:'https://api.mistral.ai/v1/chat/completions'},
     unorouter:{url:process.env.UNOROUTER_BASE_URL ? process.env.UNOROUTER_BASE_URL.replace(/\/$/,'')+'/chat/completions' : 'https://api.unorouter.com/v1/chat/completions'},
     nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
-    codecraft:{url:'https://codecraftapi.com/v1/chat/completions'},
+    codecraft:{url:'https://www.codecraftapi.com/v1/chat/completions'},
     agentrouter:{url:(process.env.AGENTROUTER_BASE_URL||'https://agentrouter.org/v1').replace(/\/$/,'')+'/chat/completions'},
     hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
     seekai:{url:(process.env.SEEKAI_BASE_URL||'https://seekai.cc/v1').replace(/\/$/,'')+'/chat/completions'},
@@ -2658,7 +2665,8 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
 
-  const keys=getProviderKeys(provider);
+  const requestKeys=Array.isArray(customApiKeys)?customApiKeys:[];
+  const keys=requestKeys.length?requestKeys:getProviderKeys(provider);
   if(!keys.length) return {ok:false,status:500,error:`${providerLabel(provider)} API key is not configured.`};
 
   const requested=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
@@ -2711,6 +2719,8 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
         'Content-Type':'application/json',
         'Accept':'text/event-stream'
       };
+      if(provider==='codecraft') headers['x-api-key']=keys[i];
+      if(provider==='agentrouter'){headers['Originator']='JepongDevxyz-AI';headers['Version']='1.0';headers['User-Agent']='JepongDevxyz-AI/1.0';}
       if(provider==='openrouter'){
         headers['HTTP-Referer']=process.env.SITE_URL || 'https://jepongdevxyz.ai';
         headers['X-Title']='JepongDevxyz AI';
