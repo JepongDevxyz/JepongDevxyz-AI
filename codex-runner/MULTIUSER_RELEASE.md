@@ -31,3 +31,13 @@ The sandbox is created only by an explicit "Connect ChatGPT" action. The backend
 ## ChatGPT-first Settings flow
 
 Users sign in to their existing JepongDevxyz AI cloud account (email or Google is sufficient), then open Settings → ChatGPT & Codex → Connect ChatGPT. Only a backend-verified ChatGPT Codex account unlocks Chat / Work at the top of the app. The model picker remains dedicated to existing chat providers. GitHub OAuth and repository-scoped GitHub App tokens are requested only when the user enters Work and selects a GitHub repository. Superpowers skills remain a separate opt-in runtime integration and are not represented as already installed.
+
+## Self-service enrollment (operator configuration only)
+
+The new `CODEX_PUBLIC_SIGNUP_ENABLED=true` switch allows **all server-verified JepongDevxyz AI cloud accounts** to start their own Codex device-code login without a per-user UUID allowlist. It is an **operator** variable: ordinary users must never set Vercel variables or paste API keys. The user must still sign in to the app and explicitly complete authorization on the official OpenAI page. A ChatGPT login is verified by Codex App Server before Work unlocks; a local UI flag is insufficient.
+
+The operator must set `CODEX_MULTIUSER_SANDBOX_ENABLED=true` and a 32+ character `CODEX_RUNNER_SHARED_SECRET` privately in Production. The legacy `CODEX_ALLOWED_ACCOUNT_IDS` remains available for restricted pilot operation and is not required once self-service is explicitly enabled.
+
+**Safety gate: do not enable unrestricted public signup solely because this switch exists.** Before turning it on for production, configure provider-level spending limits/alerts, project-wide tenant admission and per-account rate limiting using an atomic shared store, abuse prevention, user-session expiry handling, and test the full login/turn/disconnect flow with at least two distinct accounts. The Vercel Sandboxes have independent compute/storage costs; this branch does not implement a globally atomic account-count or spending cap. CI and Vercel READY status cannot prove paid Codex execution or authorized subscription access. Do not claim public rollout complete without real login and running a bounded coding turn.
+
+Once provisioned, a user only needs the normal JepongDevxyz AI login and the official ChatGPT verification page. They do **not** need Vercel or a developer API key. A developer must still provision and pay for the central backend once; a third-party app cannot borrow general-purpose ChatGPT Plus API capacity.
