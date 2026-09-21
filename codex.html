@@ -166,7 +166,9 @@ $('cancel').addEventListener('click',async()=>{
 (async()=>{
   try{
     const [res, app] = await Promise.all([fetch('/api/codex'),fetch('/api/github-app-status')]);
-    configured=(await res.json()).configured===true;
+    const health=await res.json();
+    configured=health.runnerReady===true;
+    if(health.configured && !configured)notice('The Codex runner is configured but is not reachable or is missing its server API credential. Coding is disabled.');
     if(app.ok){const status=await app.json();if(status.installUrl && !status.installed){$('install').href=status.installUrl;$('install').classList.remove('hide');}}
     if(!configured)notice('Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
     else notice('Codex runner configured. Connect GitHub and choose your repository.');
