@@ -2650,17 +2650,25 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
   return {ok:false,status,error:last||'Cloudflare unavailable'};
 }
 
+function chatCompletionsUrl(base,fallback){
+  const raw=String(base||'').trim().replace(/\/$/,'');
+  if(!raw)return fallback;
+  if(/\/chat\/completions$/i.test(raw))return raw;
+  if(/\/(?:openapi\/)?v1$/i.test(raw))return raw+'/chat/completions';
+  return raw+'/v1/chat/completions';
+}
+
 async function runOpenAICompatible(provider,{model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
     mistral:{url:'https://api.mistral.ai/v1/chat/completions'},
-    unorouter:{url:process.env.UNOROUTER_BASE_URL ? process.env.UNOROUTER_BASE_URL.replace(/\/$/,'')+'/chat/completions' : 'https://api.unorouter.com/v1/chat/completions'},
+    unorouter:{url:chatCompletionsUrl(process.env.UNOROUTER_BASE_URL,'https://api.unorouter.com/v1/chat/completions')},
     nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
     codecraft:{url:'https://www.codecraftapi.com/v1/chat/completions'},
-    agentrouter:{url:(process.env.AGENTROUTER_BASE_URL||'https://agentrouter.org/v1').replace(/\/$/,'')+'/chat/completions'},
+    agentrouter:{url:chatCompletionsUrl(process.env.AGENTROUTER_BASE_URL,'https://agentrouter.org/v1/chat/completions')},
     hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
-    seekai:{url:(process.env.SEEKAI_BASE_URL||'https://seekai.cc/v1').replace(/\/$/,'')+'/chat/completions'},
+    seekai:{url:chatCompletionsUrl(process.env.SEEKAI_BASE_URL,'https://seekai.cc/v1/chat/completions')},
     bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
@@ -3029,8 +3037,8 @@ function anthropicStreamToText(body,finishState={reason:''}){
   }));
 }
 
-async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit}){
-  const keys=getBailuAnthropicKeys();
+async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
+  const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys();
   if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
   const target=model||PROVIDERS.bailucode.defaultModel;
   const messages=[];
@@ -3105,6 +3113,7 @@ async function processChat(body, emit) {
     personalization={...personalization,intelligence:responseEffort,fastAnswers};
   }
   const startedAt=Date.now();
+  const requestCustomKeys=sanitizeCustomProviderKeys(body,provider);
   const taskMessage=contextualTaskMessage(message,history);
   const contextPlan=emitContextActivityStart(taskMessage,files,emit);
 
@@ -3253,7 +3262,8 @@ async function processChat(body, emit) {
         systemInstruction:briefSystem,
         routedReason:routedReason||'quality-preflight',
         emit:null,
-        autoFallback:false
+        autoFallback:false,
+        customApiKeys:requestCustomKeys
       });
 
       if(preflight.ok){
@@ -3277,7 +3287,7 @@ async function processChat(body, emit) {
   // The model request starts here; a single Thinking row stays active
   // until the provider stream finishes or an actual tool event supersedes it.
   activity(emit,'thinking','Thinking','running','thinking');
-  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback});
+  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation','Generating response','running','generate');
