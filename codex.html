@@ -64,7 +64,7 @@ function notice(value){ $('notice').textContent = value; }
 function errorMessage(e){ notice(e?.message || 'Request failed.'); }
 function controls(state=''){
   $('start').disabled = !configured || busy || !($('repository').value && $('prompt').value.trim());
-  $('continue').disabled = busy || !['done','failed'].includes(state) || !$('prompt').value.trim();
+  $('continue').disabled = busy || !['done','failed','cancelled'].includes(state) || !$('prompt').value.trim();
   $('cancel').disabled = busy || !['running','cloning'].includes(state);
 }
 async function api(action, data={}){
@@ -101,7 +101,7 @@ async function refreshJob(){
   busy=true;
   try{
     const job=await api('status',{jobId});display(job);
-    if(['done','failed'].includes(job.state))stopPolling();
+    if(['done','failed','cancelled'].includes(job.state))stopPolling();
   }catch(e){stopPolling();errorMessage(e);if(/not found/i.test(e.message)){jobId='';sessionStorage.removeItem('jd_codex_job');}}
   finally{busy=false;controls($('state').textContent);}
 }
@@ -155,6 +155,7 @@ $('cancel').addEventListener('click',async()=>{
     else notice('Codex runner configured. Connect GitHub and choose your repository.');
   }catch(e){errorMessage(e);}
   await refreshRepos();
+  if(!configured)notice('Codex runner is not configured on this deployment. The workspace is disabled until the isolated runner is deployed.');
   if(jobId && configured){await refreshJob();if(['running','cloning','cancelling'].includes($('state').textContent))startPolling();}
   controls($('state').textContent);
 })();
