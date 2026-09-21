@@ -25,8 +25,12 @@
     const tabs=get('jdChatWorkTabs');if(tabs)tabs.hidden=!ready;
     if(workTab)workTab.hidden=!ready;
     if(disconnect)disconnect.hidden=!state.connected;
-    if(connect){connect.disabled=!state.available||ready;
-      connect.textContent=ready?'ChatGPT connected':state.available?'Connect ChatGPT':'Connect ChatGPT (setup required)';}
+    if(connect){
+      const needsAppLogin=state.requiresAccount===true;
+      connect.disabled=ready||(!needsAppLogin&&!state.available);
+      connect.textContent=ready?'ChatGPT connected':needsAppLogin?'Sign in to JepongDevxyz AI':
+        state.available?'Connect ChatGPT':'ChatGPT connection unavailable';
+    }
     for(const link of document.querySelectorAll('a[href="/codex.html"]')){
       link.hidden=!ready;
       if(!ready)link.setAttribute('aria-hidden','true');
@@ -41,7 +45,7 @@
       waiting?'Complete authorization on the official ChatGPT page. Checking connection…':
       state.requiresAccount?'Sign in to your JepongDevxyz AI account to keep your Codex session private. GitHub is not required.':
       state.available?'Connect ChatGPT to unlock Work. GitHub is optional until you open a repository.':
-      'ChatGPT Codex is not enabled for this account yet. Other models remain available.');
+      'ChatGPT sign-in is not active for your account on this production deployment. The site owner must enable the isolated Codex backend and enroll the app account before you can connect. Other AI models still work.');
   }
   async function refresh(){
     try{state=await request();}catch(_){state={available:false,connected:false};}
@@ -83,7 +87,7 @@
       codeBox.append(link);codeBox.hidden=false;
       waiting=true;refreshUI();poll();
     }catch(e){waiting=false;show(e.message||'Unable to connect ChatGPT.');}
-    finally{connect.disabled=!state.available||state.connected;}
+    finally{connect.disabled=state.connected||(!state.requiresAccount&&!state.available);}
   }
   async function disconnectAccount(){
     disconnect.disabled=true;
