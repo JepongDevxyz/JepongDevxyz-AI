@@ -17,14 +17,12 @@ process.on('message', async request => {
   const abort = new AbortController();
   activeAbort = abort;
   try {
-    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured on the runner.');
     const codex = new Codex({
-      apiKey: process.env.OPENAI_API_KEY,
       // Never forward GitHub access tokens or the gateway signing secret to the agent.
       env: {
         PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
         HOME: home,
-        CODEX_HOME: home + '/.codex',
+        CODEX_HOME: process.env.CODEX_HOME,
         TMPDIR: process.env.TMPDIR || '/tmp',
         LANG: 'C.UTF-8'
       }
