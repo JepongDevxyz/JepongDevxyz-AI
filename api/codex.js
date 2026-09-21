@@ -55,8 +55,20 @@ async function rpc(payload, request) {
 }
 export default async function handler(request) {
   if (request.method === 'GET') {
-    try { runnerSettings(); return json({ configured: true, service: 'codex-runner' }); }
-    catch (_) { return json({ configured: false, service: 'codex-runner' }); }
+    try {
+      runnerSettings();
+      const health = await rpc({ action: 'health' }, request);
+      return json({
+        configured: true,
+        runnerReady: health.ready === true,
+        mode: health.mode === 'single-owner-api-key' ? health.mode : 'unknown',
+        service: 'codex-runner'
+      });
+    } catch (_) {
+      let configured = false;
+      try { runnerSettings(); configured = true; } catch (_) {}
+      return json({ configured, runnerReady: false, service: 'codex-runner' });
+    }
   }
   if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
   const origin = request.headers.get('origin');
