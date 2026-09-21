@@ -7,10 +7,11 @@
   },
   "scripts": {
     "start": "node server.mjs",
-    "check": "node --check server.mjs && node --check worker.mjs && node --check events.mjs",
+    "check": "node --check server.mjs && node --check worker.mjs && node --check events.mjs && node --check account-bridge.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@openai/codex-sdk": "0.155.1"
+    "@openai/codex-sdk": "0.155.1",
+    "@openai/codex": "0.155.1"
   }
 }
