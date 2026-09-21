@@ -2,7 +2,6 @@
 // Opt-in only: creating persistent sandboxes has compute and snapshot charges.
 import { createHmac } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { Sandbox } from '@vercel/sandbox';
 
 const FILES = [
   'package.json', 'server.mjs', 'account-bridge.mjs', 'worker.mjs', 'events.mjs'
@@ -66,6 +65,8 @@ async function launchRuntime(sbx,tenant) {
   });
 }
 async function locateSandbox(tenant,create) {
+  // Load billable sandbox SDK only when explicitly enabled for an enrolled user.
+  const { Sandbox } = await import('@vercel/sandbox');
   if(!create){
     try{
       await Sandbox.get({name:tenant.name,resume:false});
