@@ -10,13 +10,28 @@ const ROOT='/vercel/sandbox/jd-codex';
 const AUTH_HOME='/vercel/sandbox/jd-auth';
 const PORT=8080;
 
-export function settings(env=process.env) {
+export function accountAvailability(actor,env=process.env) {
+  if(env.CODEX_MULTIUSER_SANDBOX_ENABLED!=='true')
+    return {available:false,reasonCode:'SANDBOX_DISABLED'};
   const secret=String(env.CODEX_RUNNER_SHARED_SECRET||'');
-  const enabled=env.CODEX_MULTIUSER_SANDBOX_ENABLED==='true';
-  if (!enabled || secret.length < 32)
-    return {enabled:false,reason:'Codex isolated sandboxes are not configured.'};
-  const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'').split(',').map(x=>x.trim().toLowerCase()).filter(x=>/^[a-f0-9-]{36}$/.test(x)));
-  return {enabled:allowlist.size>0,secret,allowlist,reason:'No authorized sandbox users configured.'};
+  if(secret.length<32)
+    return {available:false,reasonCode:'SIGNING_SECRET_MISSING'};
+  const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'')
+    .split(/[;,\s]+/).map(x=>x.trim().replace(/^["']|["']$/g,'').toLowerCase())
+    .filter(x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(x)));
+  if(!allowlist.size)return {available:false,reasonCode:'ACCOUNT_ALLOWLIST_EMPTY'};
+  if(actor && !allowlist.has(String(actor.subject||'').toLowerCase()))
+    return {available:false,reasonCode:'ACCOUNT_NOT_ENROLLED'};
+  return {available:true,reasonCode:'READY'};
+}
+export function settings(env=process.env) {
+  const state=accountAvailability(null,env);
+  if(!state.available)return {enabled:false,reasonCode:state.reasonCode};
+  const secret=String(env.CODEX_RUNNER_SHARED_SECRET||'');
+  const allowlist=new Set(String(env.CODEX_ALLOWED_ACCOUNT_IDS||'')
+    .split(/[;,\s]+/).map(x=>x.trim().replace(/^["']|["']$/g,'').toLowerCase())
+    .filter(x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(x)));
+  return {enabled:true,secret,allowlist,reasonCode:'READY'};
 }
 export function tenantIdentity(actor, secret) {
   if(!Number.isSafeInteger(actor?.id) || actor.id < 1 ||
@@ -131,7 +146,7 @@ async function requestRunner(sbx,tenant,payload,timeoutMs) {
 }
 export async function sandboxRpc(payload,actor,timeoutMs=20000) {
   const cfg=settings();
-  if(!cfg.enabled) throw gatewayError(cfg.reason,503);
+  if(!cfg.enabled) throw gatewayError('Codex workspace configuration is unavailable.',503);
   const tenant=tenantIdentity(actor,cfg.secret);
   if(!cfg.allowlist.has(String(actor.subject||'').toLowerCase())) throw gatewayError('Your account is not enrolled in the Codex workspace beta.',403);
   const create=payload.action==='account-connect';

@@ -18,3 +18,9 @@
 .jd-codex-device-code{display:block;font-size:22px;letter-spacing:.15em;text-align:center;user-select:all}
 #jdCodexSettingsRow{cursor:pointer}
 @media(max-width:600px){.header-top{flex-wrap:wrap}#jdChatWorkTabs{order:3;margin:0 auto}.header-top .brand{flex:1 1 110px}}
+
+.jd-codex-account-id{display:block;margin:8px 0 14px;padding:10px;border-radius:10px;
+  border:1px solid var(--border-color,rgba(128,128,128,.3));font-size:12px;line-height:1.7;
+  overflow-wrap:anywhere;user-select:all;-webkit-user-select:all}
+.jd-codex-retry{margin:8px 0 12px;min-height:36px;border:1px solid var(--border-color,rgba(128,128,128,.3));
+  border-radius:10px;padding:8px 12px;background:transparent;color:inherit;cursor:pointer;font-size:13px}

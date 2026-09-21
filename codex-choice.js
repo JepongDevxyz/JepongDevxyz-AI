@@ -3,7 +3,7 @@
   'use strict';
   const get=id=>document.getElementById(id);
   let state={available:false,connected:false},pollTimer=null,waiting=false;
-  let sheet,message,connect,disconnect,codeBox,workTab,settingsRow;
+  let sheet,message,connect,disconnect,codeBox,workTab,settingsRow,accountIdField,retryStatus;
   const token=async()=>typeof window.JDCloudAuthToken==='function'
     ? await window.JDCloudAuthToken().catch(()=>'') : '';
   const request=async(method='GET',action)=>{
@@ -25,6 +25,12 @@
     const tabs=get('jdChatWorkTabs');if(tabs)tabs.hidden=!ready;
     if(workTab)workTab.hidden=!ready;
     if(disconnect)disconnect.hidden=!state.connected;
+    if(accountIdField){
+      const showId=state.reasonCode==='ACCOUNT_NOT_ENROLLED' &&
+        /^[a-f0-9-]{36}$/i.test(String(state.accountId||''));
+      accountIdField.hidden=!showId;
+      if(showId)accountIdField.textContent=state.accountId;
+    }
     if(connect){
       const needsAppLogin=state.requiresAccount===true;
       connect.disabled=ready||(!needsAppLogin&&!state.available);
@@ -45,10 +51,18 @@
       waiting?'Complete authorization on the official ChatGPT page. Checking connection…':
       state.requiresAccount?'Sign in to your JepongDevxyz AI account to keep your Codex session private. GitHub is not required.':
       state.available?'Connect ChatGPT to unlock Work. GitHub is optional until you open a repository.':
-      'ChatGPT sign-in is not active for your account on this production deployment. The site owner must enable the isolated Codex backend and enroll the app account before you can connect. Other AI models still work.');
+      ({
+        SANDBOX_DISABLED:'Codex sandbox is disabled in Production. Enable CODEX_MULTIUSER_SANDBOX_ENABLED in Production.',
+        SIGNING_SECRET_MISSING:'The Production Codex signing secret is missing or too short. Configure CODEX_RUNNER_SHARED_SECRET privately.',
+        ACCOUNT_ALLOWLIST_EMPTY:'CODEX_ALLOWED_ACCOUNT_IDS is missing or contains no valid app-account UUID in Production. GitHub numeric IDs do not work here.',
+        ACCOUNT_NOT_ENROLLED:'Your app account is signed in but is not in CODEX_ALLOWED_ACCOUNT_IDS. Copy your app account ID below and add it in Vercel Production. Do not share it in chat.',
+        WORKSPACE_SERVICE_UNAVAILABLE:'Your account is enrolled, but the Codex sandbox service could not be reached. This is a server-side problem, not a ChatGPT password problem.',
+        STATUS_REQUEST_FAILED:'The connection check failed. Retry the status check; do not change your credentials.',
+        ACCOUNT_VERIFICATION_FAILED:'Your app account could not be verified. Sign in again if your app session has expired.'
+      })[state.reasonCode]||'ChatGPT connection is not available yet. Tap Retry status to check the current server reason.');
   }
   async function refresh(){
-    try{state=await request();}catch(_){state={available:false,connected:false};}
+    try{state=await request();}catch(_){state={available:false,connected:false,reasonCode:'STATUS_REQUEST_FAILED'};}
     refreshUI();
   }
   function poll(){
@@ -130,7 +144,10 @@
     codeBox=create('div','jd-codex-device');codeBox.hidden=true;
     disconnect=create('button','jd-codex-connect','Disconnect ChatGPT');
     disconnect.type='button';disconnect.hidden=true;
-    card.append(connect,message,codeBox,disconnect);
+    accountIdField=create('code','jd-codex-account-id');accountIdField.hidden=true;
+    retryStatus=create('button','jd-codex-retry','Retry connection status');
+    retryStatus.type='button';retryStatus.addEventListener('click',refresh);
+    card.append(connect,message,accountIdField,retryStatus,codeBox,disconnect);
     const work=create('div','jd-codex-account-card');
     work.append(create('h3','','Work · Codex'),
       create('p','','Codex settings are applied automatically after you connect. GitHub is only needed when working with a repository.'));
