@@ -4481,10 +4481,6 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         if (!['auto','flux'].includes(currentSelectedImageModel)) currentSelectedImageModel = 'auto';
 
         // Migrate model IDs that were retired or replaced.
-        if(currentSelectedProvider==='groq' && ['llama-3.3-70b-versatile','llama-3.1-8b-instant'].includes(currentSelectedModel)){
-            currentSelectedModel='qwen/qwen3.6-27b';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
-        }
         if(currentSelectedProvider==='mistral' && currentSelectedModel==='mistral-small-latest'){
             currentSelectedModel='mistral-small-2603';
             localStorage.setItem('jepong_last_model',currentSelectedModel);
@@ -4493,21 +4489,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             currentSelectedModel='mistral-large-2512';
             localStorage.setItem('jepong_last_model',currentSelectedModel);
         }
-        if(currentSelectedProvider==='openrouter' && currentSelectedModel==='google/gemini-3.1-pro-preview'){
-            currentSelectedModel='openrouter/free';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
-        }
         if(currentSelectedProvider==='mistral' && ['mistral-small-2603','mistral-small-latest'].includes(currentSelectedModel)){
             currentSelectedModel='mistral-small-latest';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
-        }
-        if(currentSelectedProvider==='mistral' && ['mistral-large-2512','mistral-large-latest'].includes(currentSelectedModel)){
-            currentSelectedModel='ministral-14b-latest';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
-        }
-
-        if(currentSelectedProvider==='openrouter' && ['openrouter/auto','openai/gpt-oss-120b','deepseek/deepseek-v3.2','google/gemini-3.1-pro-preview'].includes(currentSelectedModel)){
-            currentSelectedModel='openrouter/free';
             localStorage.setItem('jepong_last_model',currentSelectedModel);
         }
         const CURATED_MODEL_DEFAULTS = {
