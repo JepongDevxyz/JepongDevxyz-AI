@@ -41,7 +41,7 @@ export function tenantIdentity(actor, secret) {
 function gatewayError(message,status=502){
   return Object.assign(new Error(message),{status});
 }
-function isMissing(error){
+export function isMissing(error){
   const status=Number(error?.status ?? error?.statusCode ?? error?.response?.status ?? error?.cause?.status ?? error?.cause?.statusCode);
   const code=String(error?.code ?? error?.cause?.code ?? '').toUpperCase();
   const message=String(error?.message ?? error?.cause?.message ?? '').toLowerCase();
