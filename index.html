@@ -10051,6 +10051,16 @@ ${m.text || ''}
         }
         function selectImageProviderModel(key,name){ currentSelectedImageModel=key||'auto'; safeSetLocalStorage('jepong_image_model',currentSelectedImageModel,true); if(name)IMAGE_MODEL_DISPLAY_NAMES[currentSelectedImageModel]=name; currentProviderPage=PROVIDER_ORDER.indexOf('image'); selectMode('imagen','Image Generator'); updateSelectedModelUI(); toggleModal('modelModalOverlay',false); }
         function selectModel(key,name){ selectProviderModel(currentSelectedProvider||'gemini',key,name); }
+        function sortCuratedModelsByCost(){
+            document.querySelectorAll('#modelPagesTrack .model-provider-page').forEach(page=>{
+                if(!["unorouter","nvidia","codecraft","agentrouter","hcnsec","bailucode","seekai"].includes(page.dataset.provider))return;
+                const items=[...page.querySelectorAll(':scope > .option-item[data-model]')];
+                items.forEach((btn,i)=>{btn.dataset.costTier=String(({"auto":0,"nvidia/nemotron-3-super-120b-a12b":1,"nvidia/nemotron-3-ultra-550b-a55b":2,"deepseek-v4-flash":0,"DeepSeek-V4-Flash":0,"sensenova-6.8-flash-lite":0,"step-3.7-flash":1,"glm-5.3-flash":1,"DeepSeek-V4.1-Flash":2,"bailu-2.8-lite":0,"bailu-apex":2,"deepseek-ai/DeepSeek-V4-Flash-0731":0,"deepseek-v4-flash-0731":0,"gpt-5.6-luna":0,"muse-spark-1.1":0,"kimi-k3":1,"seed-2.1-pro":1,"grok-2.6":1,"claude-fable-5":1,"gpt-5.6-sol":2,"claude-sonnet-5":2})[btn.dataset.model]??1);btn.dataset.originalOrder=btn.dataset.originalOrder||String(i);});
+                items.sort((a,b)=>Number(a.dataset.costTier)-Number(b.dataset.costTier)||Number(a.dataset.originalOrder)-Number(b.dataset.originalOrder));
+                for(const btn of items)page.appendChild(btn);
+            });
+        }
+        sortCuratedModelsByCost();
         function renderProviderPage(){
             const track=document.getElementById('modelPagesTrack'); const title=document.getElementById('modelProviderTitle');
             if(track) track.style.transform=`translateX(-${currentProviderPage*100}%)`;
