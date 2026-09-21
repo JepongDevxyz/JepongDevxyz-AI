@@ -151,6 +151,9 @@ async function runAgent(job, prompt) {
     }
   });
   worker.on('exit', async () => {
+    // A completed turn can be followed immediately by another worker. The old
+    // child's exit must never overwrite or cancel the new turn's state.
+    if (job.worker !== worker) return;
     if (job.state === 'running' || job.state === 'cancelling') {
       const cancelling = job.state === 'cancelling';
       job.error = cancelling ? null : 'The Codex worker exited before the turn completed.';
