@@ -2934,7 +2934,7 @@ function scoreAIHordeModel(item,message='',sourceModel=''){
 function summarizeAIHordeError(status, data, raw=''){
   const combined=`${data?.error?.message||''} ${data?.message||''} ${raw||''}`.replace(/\s+/g,' ').trim();
   const lower=combined.toLowerCase();
-  if(/no user matching sent api key/.test(lower)) return 'AI Horde API key was rejected. Check AIHORDE_API_KEY or switch to another provider.';
+  if(/no user matching sent api key/.test(lower)) return 'AI Horde rejected this credential.';
   if(/api key is not configured/.test(lower)) return 'AI Horde is not configured on the server yet.';
   if(status===401||status===403) return 'AI Horde rejected the current credential.';
   if(status===429) return 'AI Horde rate limit reached.';
@@ -2988,6 +2988,10 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
       const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{
         method:'POST',
         headers:{
+          // AI Horde's native API authenticates with the "apikey" header. The
+          // OpenAI-compatible proxy accepts Horde credentials, so send both forms
+          // for compatibility instead of assuming Bearer-only authentication.
+          apikey:keys[i],
           Authorization:`Bearer ${keys[i]}`,
           'Content-Type':'application/json',
           'Client-Agent':AIHORDE_CLIENT_AGENT
