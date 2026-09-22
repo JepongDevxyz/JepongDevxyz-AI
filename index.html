@@ -6319,7 +6319,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
               ['ms-MY',/\b(hai|helo|terima kasih|saya|anda|dengan|untuk|tidak|ini|boleh)\b/i],
               ['vi-VN',/\b(xin chào|cảm ơn|tôi|bạn|không|với|cho|này|được)\b/i]
             ];
-            for(const [lang,rx] of rules)if(rx.test(t))return lang;
+            for(const [lang,rx] of rules){const matches=t.match(new RegExp(rx.source,rx.flags.includes('g')?rx.flags:rx.flags+'g'))||[];if((lang==='fil-PH'&&matches.length>=1)||matches.length>=2)return lang;}
+            const nav=String(navigator.language||'').toLowerCase();
+            if(/^fil(?:-|$)|^tl(?:-|$)/.test(nav))return'fil-PH';
             return'en-US';
         }
 
@@ -6361,8 +6363,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             systemVoices = window.speechSynthesis.getVoices();
             if (!systemVoices.length) return null;
 
-            const targetLang = languageOverride || profile?.language || detectSpeechLanguage(text);
-            const aliases=(profile?.languageAliases||[targetLang]).filter(Boolean);
+            const targetLang = languageOverride || detectSpeechLanguage(text) || profile?.language || 'en-US';
+            const targetBase=String(targetLang).toLowerCase().split('-')[0];
+            const aliases=((targetBase==='fil'||targetBase==='tl') ? ['fil-PH','tl-PH'] : [targetLang]).filter(Boolean);
             let pool=[...new Map(aliases.flatMap(lang=>strictLanguageVoicePool(lang)).map(v=>[v.voiceURI||v.name,v])).values()];
             if(!pool.length)return null;
 
@@ -6395,7 +6398,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             });
             // Stable persona -> voice mapping. Different names get different installed voices
             // whenever that language exposes multiple voices.
-            return sorted[voicePersonaSlot(profile)%sorted.length] || null;
+            const personaKey=String(profile?.name||'Default');
+            const hash=[...personaKey].reduce((n,ch)=>((n*33)+ch.charCodeAt(0))>>>0,5381);
+            return sorted[hash%sorted.length] || null;
         }
 
         function normalizeBrandForSpeech(text, langCode='en-US') {
