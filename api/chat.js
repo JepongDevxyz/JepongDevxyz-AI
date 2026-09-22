@@ -4337,6 +4337,40 @@ async function generateImage(body={},requestSignal=null){
   return json({error:'Image generation is temporarily unavailable.',detail:errors.slice(0,3).join(' | ').slice(0,700)},502);
 }
 
+async function removePetImageBackground(imageBytes,contentType,requestSignal=null){
+  const account=getCloudflareAccounts()[0];
+  if(!account||!imageBytes?.length)return null;
+  try{
+    const form=new FormData();
+    const blob=new Blob([imageBytes],{type:contentType||'image/jpeg'});
+    form.append('image',blob,'pet-input.jpg');
+    const url=`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account.accountId)}/images/v1/segment`;
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${account.apiToken}`,'Accept':'image/png'},
+      body:form,
+      signal:requestSignal || AbortSignal.timeout(30000)
+    });
+    if(!res.ok)return null;
+    const outType=(res.headers.get('content-type')||'').toLowerCase();
+    const bytes=new Uint8Array(await res.arrayBuffer());
+    if(!bytes.length)return null;
+    return {bytes,contentType:outType.startsWith('image/')?outType.split(';')[0]:'image/png'};
+  }catch(_){ return null; }
+}
+
+async function finalizePetImage(imageBytes,contentType,requestSignal=null){
+  const segmented=await removePetImageBackground(imageBytes,contentType,requestSignal);
+  if(segmented)return {
+    imageDataUrl:`data:${segmented.contentType};base64,${bytesToBase64(segmented.bytes)}`,
+    backgroundRemoved:true
+  };
+  return {
+    imageDataUrl:`data:${contentType||'image/jpeg'};base64,${bytesToBase64(imageBytes)}`,
+    backgroundRemoved:false
+  };
+}
+
 async function generatePetImage(body={},requestSignal=null){
   const name=String(body.name||'').trim().slice(0,60) || 'My Pet';
   const description=String(body.description||body.prompt||'').trim().slice(0,900);
@@ -4367,9 +4401,11 @@ async function generatePetImage(body={},requestSignal=null){
         if(contentType.startsWith('image/')){
           const bytes=new Uint8Array(await res.arrayBuffer());
           if(bytes.length){
+            const finalImage=await finalizePetImage(bytes,contentType.split(';')[0],requestSignal);
             return json({
               ok:true,name,description,
-              imageDataUrl:`data:${contentType.split(';')[0]};base64,${bytesToBase64(bytes)}`,
+              imageDataUrl:finalImage.imageDataUrl,
+              backgroundRemoved:finalImage.backgroundRemoved,
               provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL,referencePet,matchSiteStyle
             });
           }
@@ -4377,11 +4413,14 @@ async function generatePetImage(body={},requestSignal=null){
           const payload=await safeJsonResponse(res);
           const image=extractCloudflareImageBase64(payload);
           if(image){
+            const raw=Uint8Array.from(atob(image),ch=>ch.charCodeAt(0));
+            const finalImage=await finalizePetImage(raw,'image/jpeg',requestSignal);
             return json({
               ok:true,
               name,
               description,
-              imageDataUrl:`data:image/jpeg;base64,${image}`,
+              imageDataUrl:finalImage.imageDataUrl,
+              backgroundRemoved:finalImage.backgroundRemoved,
               provider:'Cloudflare Workers AI',
               model:PET_IMAGE_MODEL,
               referencePet,
@@ -4414,11 +4453,13 @@ async function generatePetImage(body={},requestSignal=null){
         const contentType=(res.headers.get('content-type')||'image/jpeg').split(';')[0];
         const bytes=new Uint8Array(await res.arrayBuffer());
         if(bytes.length){
+          const finalImage=await finalizePetImage(bytes,contentType,requestSignal);
           return json({
             ok:true,
             name,
             description,
-            imageDataUrl:`data:${contentType};base64,${bytesToBase64(bytes)}`,
+            imageDataUrl:finalImage.imageDataUrl,
+            backgroundRemoved:finalImage.backgroundRemoved,
             provider:'Pollinations',
             model:'flux',
             referencePet,
