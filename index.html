@@ -6516,8 +6516,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 return;
             }
 
-            await ensureSpeechVoicesReady(1800);
             const token=++speechChunkToken;
+            // Do not block playback on voiceschanged. Android often exposes voices late.
+            // Start immediately with the best voice currently available; later chunks can use newly loaded voices.
+            ensureSpeechVoicesReady(1800).catch(()=>{});
             window.speechSynthesis.cancel();
             try{window.speechSynthesis.resume();}catch(_){}
             let index=0;
@@ -7178,13 +7180,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
     if (psSlider) psSlider.value = speechRate;
 }
 
-        async function openVoiceModal() {
+        function openVoiceModal() {
             document.getElementById('voiceModalOverlay').classList.add('open');
-            populateVoiceListModal();
-            await ensureAudioPlaybackUnlocked();
-            await ensureSpeechVoicesReady(1800);
+            ensureAudioPlaybackUnlocked();
             loadVoices();
             populateVoiceListModal();
+            ensureSpeechVoicesReady(1800).then(()=>{loadVoices();populateVoiceListModal();}).catch(()=>{});
         }
 
         function closeVoiceModal() {
@@ -7193,18 +7194,32 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function previewSystemVoice(uri='') {
             ensureAudioPlaybackUnlocked();
-            ensureSpeechVoicesReady(1200).then(()=>{
+            if(!('speechSynthesis' in window)){showModernToast?.('Speech preview is unavailable in this browser.');return;}
+            const play=()=>{
+                systemVoices=window.speechSynthesis.getVoices();
                 const voice=uri ? systemVoices.find(v=>v.voiceURI===uri) : resolvePersonalizationSystemVoice(getVoiceProfile(),voiceSampleText());
-                const lang=voice?.lang || detectSpeechLanguage(voiceSampleText());
-                const sample=normalizeBrandForSpeech(voiceSampleText(),lang);
-                if(!('speechSynthesis' in window)){showModernToast?.('Speech preview is unavailable in this browser.');return;}
+                const sampleSource=voiceSampleText();
+                const lang=voice?.lang || detectSpeechLanguage(sampleSource);
+                const sample=normalizeBrandForSpeech(sampleSource,lang);
                 try{window.speechSynthesis.cancel();window.speechSynthesis.resume();}catch(_){}
                 const u=new SpeechSynthesisUtterance(sample);
                 if(voice)u.voice=voice;
-                u.lang=voice?.lang||lang||'en-US';u.rate=clearerSpeechRate(1,u.lang);u.pitch=clearerSpeechPitch(1);u.volume=1;
-                u.onerror=()=>showModernToast?.('This device voice could not play. Try installing/updating the voice package.');
-                window.speechSynthesis.speak(u);
-            });
+                u.lang=voice?.lang||lang||'en-US';
+                u.rate=clearerSpeechRate(1,u.lang);u.pitch=clearerSpeechPitch(1);u.volume=1;
+                let started=false;
+                u.onstart=()=>{started=true;};
+                u.onerror=()=>showModernToast?.('This voice could not play. Trying the device default voice.');
+                try{window.speechSynthesis.speak(u);window.speechSynthesis.resume();}catch(_){}
+                setTimeout(()=>{
+                    if(started||window.speechSynthesis.speaking)return;
+                    const fallback=new SpeechSynthesisUtterance(sample);
+                    fallback.lang=lang||'en-US';fallback.rate=clearerSpeechRate(1,fallback.lang);fallback.volume=1;
+                    try{window.speechSynthesis.cancel();window.speechSynthesis.speak(fallback);window.speechSynthesis.resume();}catch(_){}
+                },650);
+            };
+            play();
+            // Refresh the catalog without delaying this tap's audio.
+            ensureSpeechVoicesReady(1200).then(()=>{loadVoices();populateVoiceListModal();}).catch(()=>{});
         }
 
         function populateVoiceListModal() {
