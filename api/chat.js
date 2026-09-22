@@ -2959,9 +2959,13 @@ async function resolveAIHordeModel(requested='auto',message='',signal){
 }
 
 async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit},{anonymous=false}={}){
-  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:shuffle(getProviderKeys('aihorde'));
+  // AI Horde officially supports the anonymous key. For the explicitly selected
+  // AI Horde provider, try configured credentials first, then anonymous only when
+  // every configured credential is rejected. This is provider-internal credential
+  // recovery, not cross-provider Auto Fallback.
+  const configuredKeys=anonymous?[]:shuffle(getProviderKeys('aihorde'));
+  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:(configuredKeys.length?configuredKeys:[AIHORDE_ANONYMOUS_KEY]);
   const runtimeProvider=anonymous?'aihorde-public':'aihorde';
-  if(!keys.length) return {ok:false,status:500,error:'AI Horde API key is not configured.'};
 
   const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
   if(hasImage) return {ok:false,status:415,error:'AI Horde text fallback does not directly process image attachments.'};
@@ -3014,13 +3018,19 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
       }
       last=summarizeAIHordeError(status,data,raw);
       const credentialFailure=isAIHordeCredentialFailure(status,last);
-      const canRetry=(isRetryableStatus(status)||credentialFailure)&&i<keys.length-1;
+      let canRetry=(isRetryableStatus(status)||credentialFailure)&&i<keys.length-1;
+      // If all user/server AI Horde keys are invalid, append the official anonymous
+      // credential once so "AI Horde Auto" remains usable at lowest Horde priority.
+      if(credentialFailure&&!anonymous&&i===keys.length-1&&keys[i]!==AIHORDE_ANONYMOUS_KEY){
+        keys.push(AIHORDE_ANONYMOUS_KEY);
+        canRetry=true;
+      }
       providerLifecycleActivity(emit,{
         provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
         detail:credentialFailure
-          ? `${providerLabel(runtimeProvider)} credential was rejected${canRetry?' — trying another':''}`
+          ? `${providerLabel(runtimeProvider)} credential was rejected${canRetry?' — trying another AI Horde credential':''}`
           : retryLabel(runtimeProvider,status,canRetry),
-        attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+        attemptIndex:i,attemptCount:keys.length,attemptNoun:keys[i]===AIHORDE_ANONYMOUS_KEY?'anonymous route':'credential'
       });
       if(!canRetry) break;
     }catch(e){
