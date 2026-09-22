@@ -6818,30 +6818,68 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function voiceSampleText(name=personalizationSettings.voicePersona) {
             const n=String(name||getVoiceProfile()?.name||'Jepong');
-            const lang = personalizationSettings.language || 'Auto-detect';
-            const samples = {
+            const lang=personalizationSettings.language||'Auto-detect';
+            const samples={
                 Filipino:`Kumusta! Ako si ${n}. Ito ang boses ko sa Jepong Devxyz AI. Handa akong tumulong sa iyo.`,
-                Tagalog:`Kumusta! Ako si ${n}. Ito ang boses ko sa Jepong Devxyz AI. Handa akong tumulong sa iyo.`,
                 English:`Hello! My name is ${n}. This is my voice in Jepong Devxyz AI. I am ready to help you.`,
                 Spanish:`Hola. Me llamo ${n}. Esta es mi voz en Jepong Devxyz AI. Estoy listo para ayudarte.`,
                 Japanese:`こんにちは。${n}です。Jepong Devxyz AI の私の声です。よろしくお願いします。`,
                 Korean:`안녕하세요. 저는 ${n}입니다. Jepong Devxyz AI의 제 목소리입니다. 도와드릴게요.`,
+                Arabic:`مرحبًا. اسمي ${n}. هذا هو صوتي في Jepong Devxyz AI. أنا جاهز للمساعدة.`,
+                Bengali:`হ্যালো। আমার নাম ${n}। এটি Jepong Devxyz AI-তে আমার কণ্ঠস্বর। আমি আপনাকে সাহায্য করতে প্রস্তুত।`,
+                Cebuano:`Kumusta! Ako si ${n}. Kini ang akong tingog sa Jepong Devxyz AI. Andam akong motabang kanimo.`,
+                Chinese:`你好，我叫 ${n}。这是我在 Jepong Devxyz AI 中的声音。我很乐意帮助你。`,
+                Danish:`Hej! Jeg hedder ${n}. Dette er min stemme i Jepong Devxyz AI. Jeg er klar til at hjælpe dig.`,
+                Dutch:`Hallo! Ik heet ${n}. Dit is mijn stem in Jepong Devxyz AI. Ik help je graag.`,
+                Finnish:`Hei! Nimeni on ${n}. Tämä on ääneni Jepong Devxyz AI:ssa. Autan sinua mielelläni.`,
                 French:`Bonjour. Je m'appelle ${n}. Voici ma voix dans Jepong Devxyz AI. Je suis prêt à vous aider.`,
                 German:`Hallo. Ich heiße ${n}. Das ist meine Stimme in Jepong Devxyz AI. Ich helfe dir gerne.`,
-                Italian:`Ciao. Mi chiamo ${n}. Questa è la mia voce in Jepong Devxyz AI. Sono pronto ad aiutarti.`,
-                Portuguese:`Olá. Meu nome é ${n}. Esta é a minha voz no Jepong Devxyz AI. Estou pronto para ajudar.`,
-                Arabic:`مرحبًا. اسمي ${n}. هذا هو صوتي في Jepong Devxyz AI. أنا جاهز للمساعدة.`,
-                Chinese:`你好，我叫 ${n}。这是我在 Jepong Devxyz AI 中的声音。我很乐意帮助你。`,
-                'Mandarin Chinese':`你好，我叫 ${n}。这是我在 Jepong Devxyz AI 中的声音。我很乐意帮助你。`,
+                Greek:`Γεια σας! Με λένε ${n}. Αυτή είναι η φωνή μου στο Jepong Devxyz AI. Είμαι έτοιμος να βοηθήσω.`,
+                Gujarati:`નમસ્તે! મારું નામ ${n} છે. Jepong Devxyz AI માં આ મારો અવાજ છે. હું તમારી મદદ કરવા તૈયાર છું.`,
+                Hebrew:`שלום! קוראים לי ${n}. זה הקול שלי ב-Jepong Devxyz AI. אני מוכן לעזור.`,
                 Hindi:`नमस्ते। मेरा नाम ${n} है। यह Jepong Devxyz AI में मेरी आवाज़ है। मैं आपकी मदद के लिए तैयार हूँ।`,
+                Hungarian:`Szia! ${n} vagyok. Ez a hangom a Jepong Devxyz AI-ban. Készen állok segíteni.`,
                 Indonesian:`Halo. Nama saya ${n}. Ini suara saya di Jepong Devxyz AI. Saya siap membantu.`,
+                Italian:`Ciao. Mi chiamo ${n}. Questa è la mia voce in Jepong Devxyz AI. Sono pronto ad aiutarti.`,
+                Kannada:`ನಮಸ್ಕಾರ! ನನ್ನ ಹೆಸರು ${n}. ಇದು Jepong Devxyz AI ನಲ್ಲಿನ ನನ್ನ ಧ್ವನಿ. ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ಸಿದ್ಧನಿದ್ದೇನೆ.`,
+                Kazakh:`Сәлем! Менің атым ${n}. Бұл Jepong Devxyz AI жүйесіндегі менің дауысым. Көмектесуге дайынмын.`,
+                Latvian:`Sveiki! Mani sauc ${n}. Šī ir mana balss Jepong Devxyz AI. Esmu gatavs palīdzēt.`,
+                Lithuanian:`Sveiki! Mano vardas ${n}. Tai mano balsas Jepong Devxyz AI. Esu pasirengęs padėti.`,
+                Macedonian:`Здраво! Јас сум ${n}. Ова е мојот глас во Jepong Devxyz AI. Подготвен сум да помогнам.`,
                 Malay:`Helo. Nama saya ${n}. Ini suara saya dalam Jepong Devxyz AI. Saya sedia membantu.`,
+                Malayalam:`നമസ്കാരം! എന്റെ പേര് ${n}. Jepong Devxyz AI-യിലെ എന്റെ ശബ്ദമാണിത്. നിങ്ങളെ സഹായിക്കാൻ ഞാൻ തയ്യാറാണ്.`,
+                'Mandarin Chinese':`你好，我叫 ${n}。这是我在 Jepong Devxyz AI 中的声音。我很乐意帮助你。`,
+                Marathi:`नमस्कार! माझे नाव ${n} आहे. Jepong Devxyz AI मधील हा माझा आवाज आहे. मी मदतीसाठी तयार आहे.`,
+                Mongolian:`Сайн байна уу! Намайг ${n} гэдэг. Энэ бол Jepong Devxyz AI дахь миний дуу хоолой. Би туслахад бэлэн байна.`,
+                Nepali:`नमस्ते! मेरो नाम ${n} हो। यो Jepong Devxyz AI मा मेरो आवाज हो। म तपाईंलाई मद्दत गर्न तयार छु।`,
+                Norwegian:`Hei! Jeg heter ${n}. Dette er stemmen min i Jepong Devxyz AI. Jeg er klar til å hjelpe deg.`,
+                'Norwegian Bokmål':`Hei! Jeg heter ${n}. Dette er stemmen min i Jepong Devxyz AI. Jeg er klar til å hjelpe deg.`,
+                Persian:`سلام! نام من ${n} است. این صدای من در Jepong Devxyz AI است. آماده‌ام کمک کنم.`,
+                Polish:`Cześć! Mam na imię ${n}. To mój głos w Jepong Devxyz AI. Chętnie ci pomogę.`,
+                Portuguese:`Olá. Meu nome é ${n}. Esta é a minha voz no Jepong Devxyz AI. Estou pronto para ajudar.`,
+                Punjabi:`ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੇਰਾ ਨਾਮ ${n} ਹੈ। ਇਹ Jepong Devxyz AI ਵਿੱਚ ਮੇਰੀ ਆਵਾਜ਼ ਹੈ। ਮੈਂ ਮਦਦ ਲਈ ਤਿਆਰ ਹਾਂ।`,
+                Romanian:`Salut! Mă numesc ${n}. Aceasta este vocea mea în Jepong Devxyz AI. Sunt gata să te ajut.`,
                 Russian:`Здравствуйте. Меня зовут ${n}. Это мой голос в Jepong Devxyz AI. Я готов помочь.`,
+                Serbian:`Здраво! Ја сам ${n}. Ово је мој глас у Jepong Devxyz AI. Спреман сам да помогнем.`,
+                Slovak:`Ahoj! Volám sa ${n}. Toto je môj hlas v Jepong Devxyz AI. Som pripravený pomôcť.`,
+                Slovenian:`Živjo! Ime mi je ${n}. To je moj glas v Jepong Devxyz AI. Pripravljen sem pomagati.`,
+                Swahili:`Habari! Jina langu ni ${n}. Hii ni sauti yangu katika Jepong Devxyz AI. Niko tayari kusaidia.`,
+                Swedish:`Hej! Jag heter ${n}. Det här är min röst i Jepong Devxyz AI. Jag hjälper dig gärna.`,
+                Tamil:`வணக்கம்! என் பெயர் ${n}. இது Jepong Devxyz AI-ல் என் குரல். உங்களுக்கு உதவ நான் தயாராக இருக்கிறேன்.`,
+                Telugu:`నమస్కారం! నా పేరు ${n}. ఇది Jepong Devxyz AI లో నా స్వరం. మీకు సహాయం చేయడానికి సిద్ధంగా ఉన్నాను.`,
                 Thai:`สวัสดี ฉันชื่อ ${n} นี่คือเสียงของฉันใน Jepong Devxyz AI ฉันพร้อมช่วยคุณ`,
                 Turkish:`Merhaba. Benim adım ${n}. Bu Jepong Devxyz AI'daki sesim. Yardım etmeye hazırım.`,
+                Ukrainian:`Привіт! Мене звати ${n}. Це мій голос у Jepong Devxyz AI. Я готовий допомогти.`,
+                Urdu:`السلام علیکم! میرا نام ${n} ہے۔ یہ Jepong Devxyz AI میں میری آواز ہے۔ میں مدد کے لیے تیار ہوں۔`,
                 Vietnamese:`Xin chào. Tôi tên là ${n}. Đây là giọng của tôi trong Jepong Devxyz AI. Tôi sẵn sàng giúp bạn.`
             };
-            return samples[lang] || `Hello! My name is ${n}. This is my voice in Jepong Devxyz AI. I am ready to help you.`;
+            if(lang==='Auto-detect'){
+                const ui=(navigator.language||'en-US').toLowerCase();
+                const localeName=Object.entries(VOICE_LANGUAGE_MAP).find(([name,code])=>name!=='Tagalog'&&String(code).toLowerCase()===ui)?.[0]
+                    || Object.entries(VOICE_LANGUAGE_MAP).find(([name,code])=>name!=='Tagalog'&&String(code).toLowerCase().split('-')[0]===ui.split('-')[0])?.[0];
+                return samples[localeName]||samples.English;
+            }
+            return samples[lang]||samples.English;
         }
 
         function currentVoiceQualityLabel(text='') {
