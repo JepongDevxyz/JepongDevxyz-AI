@@ -3832,6 +3832,34 @@ function extractAudioBytesFromCloudflareJson(payload){
   return null;
 }
 
+const OPENAI_TTS_VOICES={Amihan:'nova',Bayani:'onyx',Breeze:'shimmer',Cove:'echo',Ember:'coral',Juniper:'sage',Maple:'marin',Sol:'cedar',Spruce:'ash',Vale:'verse',Arbor:'alloy'};
+function ttsLanguageInstruction(language='en-US',voiceName='Ember'){
+  const tag=String(language||'en-US').replace('_','-');
+  const base=tag.toLowerCase().split('-')[0];
+  const labels={fil:'Filipino (Philippines)',tl:'Tagalog (Philippines)',en:'English',es:'Spanish',fr:'French',de:'German',it:'Italian',pt:'Portuguese',ja:'Japanese',ko:'Korean',zh:'Mandarin Chinese',ar:'Arabic',hi:'Hindi',id:'Indonesian',ms:'Malay',vi:'Vietnamese',th:'Thai',ru:'Russian',uk:'Ukrainian',tr:'Turkish',nl:'Dutch',pl:'Polish',bn:'Bengali'};
+  const label=labels[base]||tag;
+  const gender=voiceName==='Bayani'?'masculine':voiceName==='Amihan'?'feminine':'natural';
+  return `Speak only in ${label}, using a native, natural ${label} accent. Do not introduce an accent from another language or country. Preserve the input language and wording. Use a ${gender} voice character. Clear conversational delivery, not robotic.`;
+}
+async function openAITTS(body={}){
+  const key=String(process.env.OPENAI_TTS_API_KEY||process.env.OPENAI_API_KEY||'').trim();
+  if(!key)return null;
+  const text=String(body.text||body.prompt||'').replace(/\s+/g,' ').trim().slice(0,4000);
+  if(!text)return json({error:'No text provided for speech.'},400);
+  const language=String(body.language||body.lang||'en-US');
+  const persona=String(body.voice||'Ember');
+  const voice=OPENAI_TTS_VOICES[persona]||'coral';
+  try{
+    const res=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({model:process.env.OPENAI_TTS_MODEL||'gpt-4o-mini-tts',input:text,voice,instructions:ttsLanguageInstruction(language,persona),response_format:'mp3'}),signal:AbortSignal.timeout(90000)});
+    if(!res.ok)return null;
+    return new Response(res.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-TTS-Engine':'openai-gpt-4o-mini-tts','X-TTS-Language':language,'X-TTS-Voice':voice,'X-TTS-Persona':persona}});
+  }catch(_){return null;}
+}
+async function serverTTS(body={}){
+  const openai=await openAITTS(body); if(openai)return openai;
+  return cloudflareTTS(body);
+}
+
 async function cloudflareTTS(body={}){
   const text=String(body.text||body.prompt||'').replace(/\s+/g,' ').trim().slice(0,1800);
   if(!text) return json({error:'No text provided for speech.'},400);
@@ -4163,7 +4191,7 @@ export default async function handler(req){
   try{
     if(body.action==='generate-image') return generateImage(body,req.signal);
     if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
-    if(body.action==='tts') return cloudflareTTS(body);
+    if(body.action==='tts') return serverTTS(body);
     if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
     if(body.action==='provider-models') return json({providers:await dynamicModelCatalog()});
     if(body.action==='custom-api-models'){
