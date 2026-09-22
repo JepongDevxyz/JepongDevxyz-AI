@@ -594,6 +594,15 @@
             color: var(--text-main); 
             border-bottom-right-radius: 4px; 
         }
+        .user-bubble-body > :first-child{margin-top:0!important}
+        .user-bubble-body > :last-child{margin-bottom:0!important}
+        .user-bubble-body p{margin:.15em 0 .65em}
+        .user-bubble-body ul,.user-bubble-body ol{margin:.35em 0 .65em;padding-left:1.35em}
+        .user-bubble-body blockquote{margin:.5em 0;padding-left:.8em;border-left:3px solid var(--border-color);color:var(--text-muted)}
+        .user-bubble-body code{padding:2px 5px;border-radius:6px;background:rgba(148,163,184,.12);font-size:.9em}
+        .user-bubble-body pre{max-width:100%;overflow-x:auto;padding:10px;border-radius:10px;background:rgba(148,163,184,.10)}
+        .user-bubble-body a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+
         .user-actions {
             display: flex;
             gap: 6px;
@@ -7523,7 +7532,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     (session.messages || []).forEach(m => {
                         const div = document.createElement('div');
                         div.className = `msg ${m.role === 'user' ? 'user' : 'bot'}`;
-                        if (m.role === 'user') div.innerHTML = `<div class="user-bubble-body">${escapeHTML(m.text || '')}</div>`;
+                        if (m.role === 'user') div.innerHTML = `<div class="user-bubble-body">${renderUserMessageContent(m.text || '')}</div>`;
                         else div.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>`;
                         chatBox.appendChild(div);
                     });
@@ -8359,7 +8368,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                         userDiv.className = 'msg user has-bubble';
                     userDiv.setAttribute('data-message-index', String(messageIndex));
                         userDiv.innerHTML = `
-                            <div class="user-bubble-body">${escapeHTML(msg.text)}</div>
+                            <div class="user-bubble-body">${renderUserMessageContent(msg.text)}</div>
                             <div class="user-actions">
                                 <button class="user-action-btn" onclick="editUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
                                 <button class="user-action-btn" onclick="copyUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button>
@@ -8459,7 +8468,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 const userDiv = document.createElement('div');
                 userDiv.className = 'msg user has-bubble';
                 userDiv.innerHTML = `
-                    <div class="user-bubble-body">${escapeHTML(userText)}</div>
+                    <div class="user-bubble-body">${renderUserMessageContent(userText)}</div>
                     <div class="user-actions">
                         <button class="user-action-btn" onclick="editUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
                         <button class="user-action-btn" onclick="copyUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button>
@@ -8643,7 +8652,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     const userDiv = document.createElement('div');
                     userDiv.className = 'msg user has-bubble';
                     userDiv.innerHTML = `
-                        <div class="user-bubble-body">${escapeHTML(m.text || '')}${fileHTML}</div>
+                        <div class="user-bubble-body">${renderUserMessageContent(m.text || '')}${fileHTML}</div>
                         <div class="user-actions">
                             <button class="user-action-btn" onclick="editUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
                             <button class="user-action-btn" onclick="copyUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button>
@@ -8898,6 +8907,18 @@ ${m.text || ''}
                 block.replaceWith(card);
             });
             return root;
+        }
+
+        function renderUserMessageContent(rawText) {
+            const source = String(rawText == null ? '' : rawText);
+            const temp = document.createElement('div');
+            temp.innerHTML = marked.parse(source, { breaks: true });
+            sanitizeRenderedMarkdown(temp);
+            temp.querySelectorAll('a[href]').forEach(a => {
+                a.setAttribute('target','_blank');
+                a.setAttribute('rel','noopener noreferrer');
+            });
+            return temp.innerHTML;
         }
 
         function renderCustomMarkdown(rawMarkdown) {
@@ -9723,7 +9744,7 @@ ${m.text || ''}
             userMsgDiv.className = 'msg user has-bubble';
             userMsgDiv.setAttribute('data-message-index', String(activeSession?.messages?.length || 0));
             userMsgDiv.innerHTML = `
-                <div class="user-bubble-body">${escapeHTML(message)}${fileHTML}</div>
+                <div class="user-bubble-body">${renderUserMessageContent(message)}${fileHTML}</div>
                 <div class="user-actions">
                     <button class="user-action-btn" onclick="editUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
                     <button class="user-action-btn" onclick="copyUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button>
