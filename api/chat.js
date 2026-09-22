@@ -2959,12 +2959,10 @@ async function resolveAIHordeModel(requested='auto',message='',signal){
 }
 
 async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit},{anonymous=false}={}){
-  // AI Horde officially supports the anonymous key. For the explicitly selected
-  // AI Horde provider, try configured credentials first, then anonymous only when
-  // every configured credential is rejected. This is provider-internal credential
-  // recovery, not cross-provider Auto Fallback.
-  const configuredKeys=anonymous?[]:shuffle(getProviderKeys('aihorde'));
-  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:(configuredKeys.length?configuredKeys:[AIHORDE_ANONYMOUS_KEY]);
+  // AI Horde supports 0000000000 for anonymous access. Treat it as an
+  // AI-Horde credential route, not as cross-provider Auto Fallback.
+  const configuredKeys=anonymous?[]:shuffle(getProviderKeys('aihorde')).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
+  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:[...configuredKeys,AIHORDE_ANONYMOUS_KEY];
   const runtimeProvider=anonymous?'aihorde-public':'aihorde';
 
   const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
@@ -2981,9 +2979,10 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   let last='';let status=503;
   for(let i=0;i<keys.length;i++){
+    const isAnonymousKey=keys[i]===AIHORDE_ANONYMOUS_KEY;
     providerLifecycleActivity(emit,{
       provider:runtimeProvider,model:resolved.name,state:'running',phase:'connecting',
-      attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+      attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
     });
     try{
       const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{
@@ -2997,11 +2996,11 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
           model:resolved.name,
           stream:false,
           messages,
-          max_tokens:Math.min(outputBudgetFor(message),anonymous?1024:4096),
+          max_tokens:Math.min(outputBudgetFor(message),isAnonymousKey?1024:4096),
           temperature:temperatureFor(message,files),
-          timeout:anonymous?45:55
+          timeout:isAnonymousKey?45:55
         }),
-        signal:AbortSignal.timeout(anonymous?55000:70000)
+        signal:AbortSignal.timeout(isAnonymousKey?55000:70000)
       });
       status=res.status;
       const raw=await res.text();
@@ -3011,26 +3010,24 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
       if(res.ok&&typeof text==='string'&&text.trim()){
         providerLifecycleActivity(emit,{
           provider:runtimeProvider,model:resolved.name,state:'completed',phase:'connected',
-          attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
         });
-        const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,routedReason,i,keys.length);
+        const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,
+          isAnonymousKey?(routedReason||'aihorde-anonymous'):routedReason,i,keys.length);
         return {ok:true,response:new Response(text.trim(),{headers}),finishState:{reason:'stop'}};
       }
+
       last=summarizeAIHordeError(status,data,raw);
       const credentialFailure=isAIHordeCredentialFailure(status,last);
-      let canRetry=(isRetryableStatus(status)||credentialFailure)&&i<keys.length-1;
-      // If all user/server AI Horde keys are invalid, append the official anonymous
-      // credential once so "AI Horde Auto" remains usable at lowest Horde priority.
-      if(credentialFailure&&!anonymous&&i===keys.length-1&&keys[i]!==AIHORDE_ANONYMOUS_KEY){
-        keys.push(AIHORDE_ANONYMOUS_KEY);
-        canRetry=true;
-      }
+      // A rejected registered key must not stop AI Horde Auto before its remaining
+      // Horde credentials (including the documented anonymous key) are attempted.
+      const canRetry=i<keys.length-1 && (credentialFailure || isRetryableStatus(status));
       providerLifecycleActivity(emit,{
         provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
         detail:credentialFailure
-          ? `${providerLabel(runtimeProvider)} credential was rejected${canRetry?' — trying another AI Horde credential':''}`
+          ? `${providerLabel(runtimeProvider)} credential was rejected${canRetry?' — trying the next AI Horde route':''}`
           : retryLabel(runtimeProvider,status,canRetry),
-        attemptIndex:i,attemptCount:keys.length,attemptNoun:keys[i]===AIHORDE_ANONYMOUS_KEY?'anonymous route':'credential'
+        attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
       });
       if(!canRetry) break;
     }catch(e){
@@ -3038,14 +3035,14 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
       const canRetry=i<keys.length-1;
       providerLifecycleActivity(emit,{
         provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:`${providerLabel(runtimeProvider)} connection failed${canRetry?' — trying another credential':''}`,
-        attemptIndex:i,attemptCount:keys.length,attemptNoun:anonymous?'public route':'credential'
+        detail:`${providerLabel(runtimeProvider)} connection failed${canRetry?' — trying the next AI Horde route':''}`,
+        attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
       });
+      if(!canRetry) break;
     }
   }
   return {ok:false,status,error:last||`${providerLabel(runtimeProvider)} unavailable`};
 }
-
 async function runAnonymousAIHordeFallback(args){
   return runAIHorde({...args,routedReason:'fallback-public'},{anonymous:true});
 }
