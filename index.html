@@ -9276,7 +9276,8 @@ ${m.text || ''}
                         clientUtcOffsetMinutes: -new Date().getTimezoneOffset(),
                         personalization: getPersonalizationPayload(),
                         plugins: window.JDPlugins?.contextForChat?.() || {},
-                        customApiKeys: getCustomApiKeys()
+                        customApiKeys: getCustomApiKeys(),
+                        customApiProfile: selectedCustomApiProfile()
                     })
                 });
 
@@ -10066,6 +10067,25 @@ ${m.text || ''}
                 btn.classList.toggle('active',active);
             });
         }
+        async function refreshCustomApiModelPages(){
+          const track=document.getElementById('modelPagesTrack');if(!track)return;
+          track.querySelectorAll('.model-provider-page[data-custom-api-id]').forEach(x=>x.remove());
+          const profiles=getCustomApiProfiles().filter(p=>p.apiKey&&p.baseUrl);
+          for(const p of profiles){
+            const page=document.createElement('section');page.className='model-provider-page';page.dataset.provider='custom-api';page.dataset.customApiId=p.id;
+            const badge=document.createElement('div');badge.className='provider-badge';badge.innerHTML='<span class="provider-badge-dot"></span> '+escapeHTML(p.name||'Custom API');page.append(badge);
+            let models=[];
+            if(p.autoLoadModels!==false){
+              const status=document.createElement('div');status.className='provider-catalog-status option-desc';status.textContent='Loading available models…';page.append(status);
+              try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'custom-api-models',customApiProfile:p})});const d=await r.json();if(r.ok&&Array.isArray(d.models))models=d.models;status.textContent=models.length?models.length+' models loaded':'No models returned';}catch(_){status.textContent='Could not load models';}
+            }
+            if(!models.length&&p.model&&p.model!=='auto')models=[{id:p.model,name:p.model}];
+            if(!models.length)models=[{id:'auto',name:'Auto'}];
+            for(const m of models){const id=String(m.id||m.name||'').trim();if(!id)continue;const b=document.createElement('button');b.className='option-item';b.dataset.provider='custom-api';b.dataset.model=id;b.dataset.customApiId=p.id;b.innerHTML='<div class="option-info"><div><div class="option-name">'+escapeHTML(m.name||id)+'</div><div class="option-desc">'+escapeHTML(p.name||'Custom API')+'</div></div></div><div class="radio-icon"></div>';b.onclick=()=>selectCustomApiModel(p.id,id,m.name||id);page.append(b);}track.append(page);
+          }
+        }
+        function selectCustomApiModel(profileId,model,name){const p=getCustomApiProfiles().find(x=>x.id===profileId);if(!p)return;currentSelectedProvider='custom-api';currentSelectedModel=model;localStorage.setItem('jepong_last_provider','custom-api');localStorage.setItem('jepong_last_model',model);localStorage.setItem('jd_selected_custom_api_profile',profileId);if(name)MODEL_DISPLAY_NAMES[model]=name;updateSelectedModelUI();toggleModal('modelModalOverlay',false);}
+        function selectedCustomApiProfile(){if(currentSelectedProvider!=='custom-api')return null;const id=localStorage.getItem('jd_selected_custom_api_profile');const p=getCustomApiProfiles().find(x=>x.id===id);return p?{...p,model:currentSelectedModel||p.model||'auto'}:null;}
         function selectProviderModel(provider,key,name){
             if(modelUnavailable(provider)){
                 if(typeof showModernToast==='function') showModernToast(`${providerLabel(provider)} is offline / not available.`);
@@ -10102,7 +10122,7 @@ ${m.text || ''}
         }
         function setProviderPage(index){ currentProviderPage=Math.max(0,Math.min(PROVIDER_ORDER.length-1,index)); renderProviderPage(); }
         function changeProviderPage(direction){ setProviderPage((currentProviderPage+direction+PROVIDER_ORDER.length)%PROVIDER_ORDER.length); }
-        function openModelPicker(){ currentProviderPage=currentSelectedMode==='imagen' ? PROVIDER_ORDER.indexOf('image') : Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); applyModelAvailability(); toggleModal('modelModalOverlay',true); syncProviderStatus(); }
+        function openModelPicker(){ currentProviderPage=currentSelectedMode==='imagen' ? PROVIDER_ORDER.indexOf('image') : Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); applyModelAvailability(); toggleModal('modelModalOverlay',true); syncProviderStatus(); refreshCustomApiModelPages(); }
         let modelSwipeStartX=0,modelSwipeStartY=0,modelSwipeActive=false;
         document.addEventListener('touchstart',e=>{const viewport=e.target.closest&&e.target.closest('#modelPagesViewport');if(!viewport||!document.getElementById('modelModalOverlay')?.classList.contains('open'))return;const t=e.touches[0];modelSwipeStartX=t.clientX;modelSwipeStartY=t.clientY;modelSwipeActive=true;e.stopPropagation();},{passive:true,capture:true});
         document.addEventListener('touchend',e=>{if(!modelSwipeActive)return;modelSwipeActive=false;const t=e.changedTouches[0],dx=t.clientX-modelSwipeStartX,dy=t.clientY-modelSwipeStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){changeProviderPage(dx<0?1:-1);e.stopPropagation();}},{passive:true,capture:true});
