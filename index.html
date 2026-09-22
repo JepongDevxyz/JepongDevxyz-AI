@@ -4266,7 +4266,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
               </div>
               <button type="button" class="ps-voice-preview" id="psVoicePreviewBtn" onclick="playPersonalizationVoiceSample()"><i data-lucide="play"></i><span>Preview voice</span></button>
               <div class="ps-voice-sample-status" id="psVoiceSampleStatus"></div>
-              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.45;margin-top:6px;text-align:center">Neural voice uses Cloudflare for supported languages. Other languages use an installed device voice; if that language voice is missing, the preview falls back to an audible device voice instead of staying silent.</div>
+              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.45;margin-top:6px;text-align:center">Neural voice uses Cloudflare for supported languages. Voices are locked to the selected or auto-detected language. If that language is not installed, JepongDevxyz AI uses a compatible neural/system fallback without borrowing an unrelated accent.</div>
             </div>
             <div class="ps-voice-settings">
               <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
@@ -6334,51 +6334,50 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return 0;
         }
 
+        function voicePersonaSlot(profile=getVoiceProfile()) {
+            return Math.max(0, PERSONALIZATION_VOICES.findIndex(v=>v.name===profile?.name));
+        }
+
+        function strictLanguageVoicePool(targetLang='') {
+            if (!('speechSynthesis' in window)) return [];
+            const voices=window.speechSynthesis.getVoices();
+            const exact=voices.filter(v=>voiceLanguageScore(v,targetLang)>=90);
+            if(exact.length)return exact;
+            // Same base language is allowed only when the requested locale is unavailable.
+            // This prevents English from accidentally selecting Hindi/Japanese/etc.
+            return voices.filter(v=>voiceLanguageScore(v,targetLang)>=80);
+        }
+
         function resolvePersonalizationSystemVoice(profile=getVoiceProfile(), text='', languageOverride='') {
             if (!('speechSynthesis' in window)) return null;
             systemVoices = window.speechSynthesis.getVoices();
             if (!systemVoices.length) return null;
 
             const targetLang = languageOverride || detectSpeechLanguage(text);
-            const targetBase=String(targetLang||'').toLowerCase().split('-')[0];
-            const explicitlySelected = selectedVoiceURI ? systemVoices.find(v => v.voiceURI === selectedVoiceURI) : null;
-            // Never let a manually selected voice leak a different language/accent into the current language.
-            if (explicitlySelected && voiceLanguageScore(explicitlySelected,targetLang)>0) return explicitlySelected;
+            let pool=strictLanguageVoicePool(targetLang);
+            if(!pool.length)return null;
 
-            const ranked = systemVoices
-                .map(v => ({voice:v, score:voiceLanguageScore(v,targetLang)}))
-                .filter(x => x.score > 0)
-                .sort((a,b) => b.score-a.score);
-            if(!ranked.length) return null;
+            // Never reuse a globally selected voice when its language does not match.
+            const explicitlySelected = selectedVoiceURI ? pool.find(v => v.voiceURI === selectedVoiceURI) : null;
+            if(explicitlySelected)return explicitlySelected;
 
-            const exactRanked=ranked.filter(x=>x.score>=90);
-            let pool=(exactRanked.length?exactRanked:ranked).map(x=>x.voice);
-            const profileLang=String(profile?.language||'').toLowerCase().split('-')[0];
-            const profileMatches=!!profileLang && (profileLang===targetBase || (targetBase==='fil'&&profileLang==='tl') || (targetBase==='tl'&&profileLang==='fil'));
-
-            const qualityPatterns=[/google/i,/microsoft/i,/samsung/i,/natural/i,/neural/i,/enhanced/i,/premium/i];
-            const quality=pool.filter(v=>qualityPatterns.some(rx=>rx.test(v.name||'')));
+            const qualityRx=/(google|microsoft|samsung|natural|neural|enhanced|premium)/i;
+            const quality=pool.filter(v=>qualityRx.test(v.name||''));
             if(quality.length)pool=quality;
 
-            if(profileMatches){
-                for(const key of profile.keywords||[]){
-                    const found=pool.find(v=>(v.name||'').toLowerCase().includes(String(key).toLowerCase()));
-                    if(found)return found;
-                }
-                const gender=String(profile.preferredGender||'').toLowerCase();
-                if(gender){
-                    const genderRx=gender==='female'?/(female|woman|zira|jenny|aria|samantha|karen|moira)/i:/(male|man|david|guy|daniel|ryan|alex)/i;
-                    const genderVoice=pool.find(v=>genderRx.test(v.name||''));
-                    if(genderVoice)return genderVoice;
-                }
+            // Persona keywords are honored only inside the already language-filtered pool.
+            for(const key of profile?.keywords||[]){
+                const found=pool.find(v=>(v.name||'').toLowerCase().includes(String(key).toLowerCase()));
+                if(found)return found;
             }
 
-            const locals=pool.filter(v=>v.localService);
-            const candidates=(locals.length?locals:pool).slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
-            const personaIndex=Math.max(0,PERSONALIZATION_VOICES.findIndex(v=>v.name===profile.name));
-            // Stable mapping: different persona names map to different installed voices whenever
-            // the selected language actually exposes more than one voice.
-            return candidates[personaIndex % candidates.length] || candidates[0] || null;
+            const sorted=pool.slice().sort((a,b)=>{
+                const al=a.localService?0:1, bl=b.localService?0:1;
+                return al-bl || String(a.name||'').localeCompare(String(b.name||''));
+            });
+            // Stable persona -> voice mapping. Different names get different installed voices
+            // whenever that language exposes multiple voices.
+            return sorted[voicePersonaSlot(profile)%sorted.length] || null;
         }
 
         function normalizeBrandForSpeech(text, langCode='en-US') {
@@ -6650,7 +6649,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 body:JSON.stringify({
                     action:'tts',
                     text,
-                    language
+                    language,
+                    voice: personalizationSettings.voicePersona || 'Ember'
                 }),
                 signal
             });
@@ -6842,7 +6842,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(!('speechSynthesis' in window)) return 'Speech synthesis unavailable';
             const lang=detectSpeechLanguage(text || voiceSampleText());
             const voice=resolvePersonalizationSystemVoice(getVoiceProfile(),text || voiceSampleText());
-            if(!voice) return `Using browser fallback • ${lang}`;
+            if(!voice) return `No installed ${lang} voice • neural/system fallback only`;
             return `${voice.name} • ${voice.lang || lang}`;
         }
 
