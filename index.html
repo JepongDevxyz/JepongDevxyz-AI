@@ -10147,7 +10147,7 @@ ${m.text || ''}
         }
 
         const CUSTOM_API_PROFILE_STORAGE='jd_custom_api_profiles_v2';
-        function getCustomApiProfiles(){try{const v=JSON.parse(localStorage.getItem(CUSTOM_API_PROFILE_STORAGE)||'[]');return Array.isArray(v)?v:[];}catch(_){return [];}}
+        function getCustomApiProfiles(){const v=readLocalJSON(CUSTOM_API_PROFILE_STORAGE,[]);return Array.isArray(v)?v:[];}
         function saveCustomApiProfiles(v){localStorage.setItem(CUSTOM_API_PROFILE_STORAGE,JSON.stringify(v));}
         function inferCustomProvider(name='',key=''){
           const t=(name+' '+key).toLowerCase();
