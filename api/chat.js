@@ -3841,6 +3841,19 @@ const ELEVEN_PERSONA_GENDERS={
   Amihan:'female',Bayani:'male',Breeze:'female',Cove:'male',Ember:'female',
   Juniper:'female',Maple:'female',Sol:'male',Spruce:'male',Vale:'female',Arbor:'male'
 };
+const ELEVEN_PERSONA_STYLE={
+  Amihan:['warm','gentle','calm','conversational'],
+  Bayani:['deep','confident','calm','narration'],
+  Breeze:['animated','energetic','bright','conversational'],
+  Cove:['composed','professional','calm','narration'],
+  Ember:['confident','warm','conversational','professional'],
+  Juniper:['upbeat','friendly','bright','conversational'],
+  Maple:['cheerful','friendly','warm','conversational'],
+  Sol:['relaxed','calm','confident','conversational'],
+  Spruce:['calm','deep','gentle','narration'],
+  Vale:['bright','young','energetic','conversational'],
+  Arbor:['versatile','friendly','natural','conversational']
+};
 let elevenVoiceCache={at:0,voices:[]};
 
 function elevenLanguageCode(language='en-US'){
@@ -3851,6 +3864,9 @@ function elevenVoiceGender(voice){
   const labels=voice?.labels||{};
   return String(labels.gender||labels.sex||'').toLowerCase();
 }
+function elevenVoiceSearchText(voice){
+  return [voice?.name,voice?.description,...Object.values(voice?.labels||{})].filter(Boolean).join(' ').toLowerCase();
+}
 function elevenVoiceLocaleScore(voice,language='en-US'){
   const requested=String(language||'').toLowerCase().replace('_','-');
   const base=elevenLanguageCode(requested);
@@ -3859,25 +3875,30 @@ function elevenVoiceLocaleScore(voice,language='en-US'){
   for(const item of verified){
     const lang=String(item?.language||'').toLowerCase();
     const locale=String(item?.locale||'').toLowerCase().replace('_','-');
-    if(locale&&locale===requested)score=Math.max(score,120);
-    else if(lang===base)score=Math.max(score,100);
-    else if((base==='fil'||base==='tl')&&(lang==='fil'||lang==='tl'))score=Math.max(score,105);
+    if(locale&&locale===requested)score=Math.max(score,160);
+    else if(lang===base)score=Math.max(score,130);
+    else if((base==='fil'||base==='tl')&&(lang==='fil'||lang==='tl'))score=Math.max(score,140);
   }
-  const labels=voice?.labels||{};
-  const labelText=Object.values(labels).join(' ').toLowerCase();
-  const localeToken=requested.replace('-',' ');
-  if(labelText.includes(requested)||labelText.includes(localeToken))score=Math.max(score,90);
+  const hay=elevenVoiceSearchText(voice);
+  if(hay.includes(requested)||hay.includes(requested.replace('-',' ')))score=Math.max(score,120);
+  const country=requested.split('-')[1]||'';
+  if(country&&new RegExp('(?:^|\\W)'+country+'(?:$|\\W)','i').test(hay))score+=20;
   return score;
 }
 async function getElevenVoices(key){
   if(elevenVoiceCache.voices.length&&Date.now()-elevenVoiceCache.at<10*60*1000)return elevenVoiceCache.voices;
-  const res=await fetch('https://api.elevenlabs.io/v2/voices?page_size=100',{
-    headers:{'xi-api-key':key,'Accept':'application/json'},
-    signal:AbortSignal.timeout(15000)
-  });
-  if(!res.ok)throw new Error('ElevenLabs voices HTTP '+res.status);
-  const data=await res.json();
-  const voices=Array.isArray(data?.voices)?data.voices:[];
+  const all=[];
+  let next='';
+  for(let page=0;page<10;page++){
+    const url='https://api.elevenlabs.io/v2/voices?page_size=100'+(next?'&next_page_token='+encodeURIComponent(next):'');
+    const res=await fetch(url,{headers:{'xi-api-key':key,'Accept':'application/json'},signal:AbortSignal.timeout(15000)});
+    if(!res.ok)throw new Error('ElevenLabs voices HTTP '+res.status);
+    const data=await res.json();
+    if(Array.isArray(data?.voices))all.push(...data.voices);
+    next=String(data?.next_page_token||'');
+    if(!next||data?.has_more===false)break;
+  }
+  const voices=[...new Map(all.map(v=>[v.voice_id,v])).values()];
   elevenVoiceCache={at:Date.now(),voices};
   return voices;
 }
@@ -3885,17 +3906,22 @@ function selectElevenVoice(voices,persona,language){
   if(!voices.length)return null;
   const desired=ELEVEN_PERSONA_GENDERS[persona]||'female';
   const exactName=voices.find(v=>String(v?.name||'').toLowerCase()===String(persona||'').toLowerCase());
-  if(exactName)return exactName;
+  if(exactName&&elevenVoiceLocaleScore(exactName,language)>0)return exactName;
 
-  const genderPool=voices.filter(v=>elevenVoiceGender(v)===desired);
-  let pool=genderPool.length?genderPool:voices;
-  const localeRanked=pool.map(v=>({v,score:elevenVoiceLocaleScore(v,language)})).sort((a,b)=>b.score-a.score);
-  if(localeRanked[0]?.score>0){
-    const best=localeRanked[0].score;
-    pool=localeRanked.filter(x=>x.score===best).map(x=>x.v);
-  }
-  const slot=Math.max(0,Object.keys(ELEVEN_PERSONA_GENDERS).indexOf(persona));
-  return pool[slot%pool.length]||pool[0]||null;
+  const genderMatches=voices.filter(v=>elevenVoiceGender(v)===desired);
+  const genderUnknown=voices.filter(v=>!elevenVoiceGender(v));
+  let pool=genderMatches.length?genderMatches:(genderUnknown.length?genderUnknown:voices);
+  const styleWords=ELEVEN_PERSONA_STYLE[persona]||[];
+  const personaIndex=Math.max(0,Object.keys(ELEVEN_PERSONA_GENDERS).indexOf(persona));
+  const ranked=pool.map((v,index)=>{
+    const locale=elevenVoiceLocaleScore(v,language);
+    const hay=elevenVoiceSearchText(v);
+    const style=styleWords.reduce((n,w)=>n+(hay.includes(w)?10:0),0);
+    // Persona-specific rotation is only a tie breaker after locale/gender/style.
+    const rotation=(index-personaIndex+pool.length)%Math.max(1,pool.length);
+    return {v,score:locale*100+style*10-rotation};
+  }).sort((a,b)=>b.score-a.score);
+  return ranked[0]?.v||null;
 }
 async function elevenLabsTTS(body={}){
   const key=String(process.env.ELEVENLABS_API_KEY||'').trim();
@@ -3910,14 +3936,11 @@ async function elevenLabsTTS(body={}){
     if(!selected?.voice_id)return null;
     const model=String(process.env.ELEVENLABS_TTS_MODEL||'eleven_multilingual_v2').trim();
     const payload={text,model_id:model,voice_settings:{stability:.5,similarity_boost:.75,style:.15,use_speaker_boost:true}};
-    // Multilingual v2 auto-detects language from the supplied text. Other
-    // compatible ElevenLabs models can use ISO-639-1 to disambiguate short text.
     if(model!=='eleven_multilingual_v2')payload.language_code=elevenLanguageCode(language);
     const res=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(selected.voice_id)+'?output_format=mp3_44100_128',{
       method:'POST',
       headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify(payload),
-      signal:AbortSignal.timeout(90000)
+      body:JSON.stringify(payload),signal:AbortSignal.timeout(90000)
     });
     if(!res.ok)return null;
     return new Response(res.body,{status:200,headers:{
