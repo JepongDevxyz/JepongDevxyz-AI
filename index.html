@@ -7529,7 +7529,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     (session.messages || []).forEach(m => {
                         const div = document.createElement('div');
                         div.className = `msg ${m.role === 'user' ? 'user' : 'bot'}`;
-                        if (m.role === 'user') div.innerHTML = `<div class="user-bubble-body">${escapeHTML(m.text || '')}</div>`;
+                        if (m.role === 'user') div.innerHTML = `<div class="user-bubble-body">${renderUserComposedText(m.text || '')}</div>`;
                         else div.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>`;
                         chatBox.appendChild(div);
                     });
@@ -8365,7 +8365,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                         userDiv.className = 'msg user has-bubble';
                     userDiv.setAttribute('data-message-index', String(messageIndex));
                         userDiv.innerHTML = `
-                            <div class="user-bubble-body">${escapeHTML(msg.text)}</div>
+                            <div class="user-bubble-body">${renderUserComposedText(msg.text)}</div>
                             <div class="user-actions">
                                 <button class="user-action-btn" onclick="editUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
                                 <button class="user-action-btn" onclick="copyUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button>
@@ -8649,7 +8649,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     const userDiv = document.createElement('div');
                     userDiv.className = 'msg user has-bubble';
                     userDiv.innerHTML = `
-                        <div class="user-bubble-body">${escapeHTML(m.text || '')}${fileHTML}</div>
+                        <div class="user-bubble-body">${renderUserComposedText(m.text || '')}${fileHTML}</div>
                         <div class="user-actions">
                             <button class="user-action-btn" onclick="editUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
                             <button class="user-action-btn" onclick="copyUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button>
@@ -9729,7 +9729,7 @@ ${m.text || ''}
             userMsgDiv.className = 'msg user has-bubble';
             userMsgDiv.setAttribute('data-message-index', String(activeSession?.messages?.length || 0));
             userMsgDiv.innerHTML = `
-                <div class="user-bubble-body">${escapeHTML(message)}${fileHTML}</div>
+                <div class="user-bubble-body">${renderUserComposedText(message)}${fileHTML}</div>
                 <div class="user-actions">
                     <button class="user-action-btn" onclick="editUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Edit</button>
                     <button class="user-action-btn" onclick="copyUserMessage(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button>
@@ -11029,6 +11029,13 @@ ${m.text || ''}
 
         function escapeHTML(s) {
             return (s || '').replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
+        }
+
+        // Render user-authored plain text exactly as composed. Escaping happens
+        // first, then line endings become explicit <br> nodes so sent messages
+        // do not depend on inherited white-space CSS.
+        function renderUserComposedText(value) {
+            return escapeHTML(String(value ?? '')).replace(/\r\n?/g, '\n').replace(/\n/g, '<br>');
         }
 
         function openLightbox(src) {
