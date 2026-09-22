@@ -4614,7 +4614,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             localStorage.setItem('jepong_smart_router','false');
             localStorage.setItem('jepong_routing_default_version',ROUTING_DEFAULT_VERSION);
         }
-        let autoProviderFallback = readLocalJSON('jepong_auto_fallback', false);
+        let autoProviderFallback = readLocalJSON('jepong_auto_fallback', false) === true;
         let smartModelRouter = readLocalJSON('jepong_smart_router', false);
         let pendingStudyTool = null;
         let lastProviderMeta = readLocalJSON('jepong_provider_meta', {});
@@ -9032,7 +9032,12 @@ ${m.text || ''}
         }
 
         /* 5. EXECUTE AI CALL */
-        function toggleAutoFallback(v){ autoProviderFallback=!!v; localStorage.setItem('jepong_auto_fallback',JSON.stringify(autoProviderFallback)); }
+        function toggleAutoFallback(v){
+            autoProviderFallback = (v === true);
+            localStorage.setItem('jepong_auto_fallback',JSON.stringify(autoProviderFallback));
+            const toggle=document.getElementById('autoFallbackToggle');
+            if(toggle)toggle.checked=autoProviderFallback;
+        }
         function toggleSmartRouter(v){ smartModelRouter=!!v; localStorage.setItem('jepong_smart_router',JSON.stringify(smartModelRouter)); }
         function closeCodeFullscreen(){ document.getElementById('fullscreenCodeOverlay')?.classList.remove('open'); }
         function setProviderMeta(provider,patch){ lastProviderMeta[provider]={...(lastProviderMeta[provider]||{}),...patch,updatedAt:Date.now()}; safeSetLocalStorage('jepong_provider_meta',JSON.stringify(lastProviderMeta),true); renderProviderStatus(); renderUsageSyncUI(); }
