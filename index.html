@@ -6334,6 +6334,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (!systemVoices.length) return null;
 
             const targetLang = languageOverride || detectSpeechLanguage(text);
+            const explicitlySelected = selectedVoiceURI ? systemVoices.find(v => v.voiceURI === selectedVoiceURI) : null;
+            if (explicitlySelected && (!targetLang || voiceLanguageScore(explicitlySelected,targetLang)>0)) return explicitlySelected;
             const ranked = systemVoices
                 .map(v => ({voice:v, score:voiceLanguageScore(v,targetLang)}))
                 .filter(x => x.score > 0)
@@ -7176,50 +7178,48 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
     if (psSlider) psSlider.value = speechRate;
 }
 
-        function openVoiceModal() {
-            if (!isResponseSpeechEnabled) return;
-            populateVoiceListModal();
+        async function openVoiceModal() {
             document.getElementById('voiceModalOverlay').classList.add('open');
+            populateVoiceListModal();
+            await ensureAudioPlaybackUnlocked();
+            await ensureSpeechVoicesReady(1800);
+            loadVoices();
+            populateVoiceListModal();
         }
 
         function closeVoiceModal() {
             document.getElementById('voiceModalOverlay').classList.remove('open');
         }
 
-        function populateVoiceListModal() {
-            const container = document.getElementById('voiceListContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const defaultItem = document.createElement('button');
-            defaultItem.className = 'option-item' + (!selectedVoiceURI ? ' active' : '');
-            defaultItem.onclick = () => selectVoiceOption('');
-            defaultItem.innerHTML = `
-                <div class="option-info">
-                    <div>
-                        <div class="option-name">Default Voice</div>
-                        <div class="option-desc">Auto-detect Tagalog/English</div>
-                    </div>
-                </div>
-                <div class="radio-icon"></div>
-            `;
-            container.appendChild(defaultItem);
-
-            systemVoices.forEach(v => {
-                const item = document.createElement('button');
-                item.className = 'option-item' + (selectedVoiceURI === v.voiceURI ? ' active' : '');
-                item.onclick = () => selectVoiceOption(v.voiceURI);
-                item.innerHTML = `
-                    <div class="option-info">
-                        <div>
-                            <div class="option-name">${escapeHTML(v.name)}</div>
-                            <div class="option-desc">${escapeHTML(v.lang)}</div>
-                        </div>
-                    </div>
-                    <div class="radio-icon"></div>
-                `;
-                container.appendChild(item);
+        function previewSystemVoice(uri='') {
+            ensureAudioPlaybackUnlocked();
+            ensureSpeechVoicesReady(1200).then(()=>{
+                const voice=uri ? systemVoices.find(v=>v.voiceURI===uri) : resolvePersonalizationSystemVoice(getVoiceProfile(),voiceSampleText());
+                const lang=voice?.lang || detectSpeechLanguage(voiceSampleText());
+                const sample=normalizeBrandForSpeech(voiceSampleText(),lang);
+                if(!('speechSynthesis' in window)){showModernToast?.('Speech preview is unavailable in this browser.');return;}
+                try{window.speechSynthesis.cancel();window.speechSynthesis.resume();}catch(_){}
+                const u=new SpeechSynthesisUtterance(sample);
+                if(voice)u.voice=voice;
+                u.lang=voice?.lang||lang||'en-US';u.rate=clearerSpeechRate(1,u.lang);u.pitch=clearerSpeechPitch(1);u.volume=1;
+                u.onerror=()=>showModernToast?.('This device voice could not play. Try installing/updating the voice package.');
+                window.speechSynthesis.speak(u);
             });
+        }
+
+        function populateVoiceListModal() {
+            const container=document.getElementById('voiceListContainer');
+            if(!container)return;
+            container.innerHTML='';
+            const make=(name,desc,uri,active)=>{
+                const row=document.createElement('div');row.className='option-item'+(active?' active':'');row.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px';
+                const pick=document.createElement('button');pick.type='button';pick.style.cssText='border:0;background:transparent;color:inherit;text-align:left;min-width:0;padding:0';pick.onclick=()=>selectVoiceOption(uri);pick.innerHTML='<div class="option-info"><div><div class="option-name">'+escapeHTML(name)+'</div><div class="option-desc">'+escapeHTML(desc)+'</div></div></div>';
+                const preview=document.createElement('button');preview.type='button';preview.className='mini-btn';preview.innerHTML='<i data-lucide="play" width="14"></i> Preview';preview.onclick=e=>{e.stopPropagation();previewSystemVoice(uri);};
+                row.append(pick,preview);return row;
+            };
+            container.appendChild(make('Default Voice','Auto-detect Tagalog/English','',!selectedVoiceURI));
+            systemVoices.forEach(v=>container.appendChild(make(v.name,v.lang,v.voiceURI,selectedVoiceURI===v.voiceURI)));
+            refreshLucideIcons(container);
         }
 
         function selectVoiceOption(uri) {
@@ -9141,11 +9141,22 @@ ${m.text || ''}
             return String(clone.innerText||clone.textContent||'').replace(/\n{3,}/g,'\n\n').trim();
         }
         async function toggleReadAloudForMessage(btn){
+            const text=assistantTextForReadAloud(btn);
+            if(!text){
+                if(typeof showModernToast==='function')showModernToast('No readable response text found.');
+                return;
+            }
+            // Show playback UI synchronously from the tap. Do not wait for neural TTS,
+            // browser voices, or network before giving visible feedback.
+            showSpeechMiniPlayer({title:'Read aloud',meta:'Preparing audio…',text});
+            activeReadAloudButton=btn;
+            setReadAloudButtonState(btn,true);
             await ensureAudioPlaybackUnlocked();
             const msgNode=btn?.closest?.('.msg.bot');
             const ctx=getActiveContext();
             const messageIndex=Number(msgNode?.dataset?.messageIndex);
             if(ctx.id && ctx.sessions?.[ctx.id] && Number.isInteger(messageIndex) && messageIndex>=ctx.sessions[ctx.id].messages.length){
+                hideSpeechMiniPlayer(); resetActiveReadAloudButton();
                 if(typeof showModernToast==='function')showModernToast('Wait for the response to finish before using Read aloud.');
                 return;
             }
@@ -9153,12 +9164,11 @@ ${m.text || ''}
                 stopAllSpeech();
                 return;
             }
-            const text=assistantTextForReadAloud(btn);
-            if(!text){
-                if(typeof showModernToast==='function')showModernToast('No readable response text found.');
-                return;
-            }
-            stopAllSpeech();
+            // Stop any previous engine without hiding the just-opened player.
+            smartSpeechRunId++;
+            if(activeNeuralAbort){try{activeNeuralAbort.abort();}catch(_){} activeNeuralAbort=null;}
+            if(activeNeuralAudio){try{activeNeuralAudio.pause();activeNeuralAudio.currentTime=0;}catch(_){} activeNeuralAudio=null;}
+            if('speechSynthesis' in window) try{window.speechSynthesis.cancel();}catch(_){}
             const target=btn;
             const task=speakSmartVoice(text,{
                 profile:getVoiceProfile(),
