@@ -3306,6 +3306,15 @@ async function processChat(body, emit) {
   };
   const pluginIntent=[String(message||''),...((Array.isArray(history)?history.slice(-2):[]).map(x=>String(x?.content||'')))].join('\n');
   const activeSkillPlugins=installedSkillPlugins.filter(id=>skillPluginTriggers[id]?.test(pluginIntent));
+  const skillPluginLabels={mattpocock:'Matt Pocock Skills',uiuxpro:'UI/UX Pro Max',caveman:'Caveman',humanizer:'Humanizer',findskills:'Find Skills',deployvercel:'Deploy to Vercel',brainstorming:'Brainstorming',tdd:'TDD',excalidraw:'Excalidraw',remotion:'Remotion',webquality:'Web Quality'};
+  if(activeSkillPlugins.length){
+    activity(emit,'plugins-active',
+      activeSkillPlugins.length===1
+        ? `Using ${skillPluginLabels[activeSkillPlugins[0]]||activeSkillPlugins[0]} for this request`
+        : `Using ${activeSkillPlugins.length} relevant installed plugins`,
+      'completed','plugin',
+      activeSkillPlugins.map(id=>skillPluginLabels[id]||id).join(' • '));
+  }
   if(installedSkillPlugins.length){
     systemInstruction+='\n\n[INSTALLED PLUGIN CAPABILITIES]\nInstalled: '+installedSkillPlugins.join(', ')+
       '. These plugins are available to this model automatically. Apply only plugins relevant to the current request; do not ask the user to manually select or @mention them.';
@@ -3646,8 +3655,10 @@ function activityStreamResponse(body, requestSignal=null) {
       };
       // Activity events are emitted only by real request/tool lifecycle operations.
       // No timed pseudo-steps: a model may spend several seconds on one operation.
-      // Flush immediately so Vercel/browser sees an active streaming response.
-      send('activity',{type:'activity',id:'stream-open',label:'Response stream opened',state:'completed',kind:'process',at:Date.now()});
+      // Flush an SSE comment instead of a user-visible pseudo activity. Detailed
+      // Activity rows must correspond to real context, tool, plugin, provider,
+      // generation, continuation, verification, or artifact work.
+      try{controller.enqueue(encoder.encode(': stream-open\n\n'));}catch(_){cancelled=true;}
       const keepAlive=setInterval(()=>{
         try{controller.enqueue(encoder.encode(`: keepalive ${Date.now()}\n\n`));}catch(_){}
       },10000);
@@ -3709,10 +3720,21 @@ function activityStreamResponse(body, requestSignal=null) {
             }
 
             continuationCount++;
+            const completedResponseNumber=continuationCount;
+            const nextResponseNumber=continuationCount+1;
+            send('activity',{
+              type:'activity',
+              id:`response-${completedResponseNumber}`,
+              label:`Response ${completedResponseNumber} reached the provider output limit`,
+              state:'completed',
+              kind:'generate',
+              detail:'Continuing automatically without repeating the answer.',
+              at:Date.now()
+            });
             send('activity',{
               type:'activity',
               id:`auto-continue-${continuationCount}`,
-              label:`Output limit reached — continuing automatically (${continuationCount}/${MAX_AUTO_CONTINUATIONS})`,
+              label:`Response ${nextResponseNumber} — continuing`,
               state:'running',
               kind:'generate',
               at:Date.now()
@@ -3750,8 +3772,9 @@ function activityStreamResponse(body, requestSignal=null) {
             send('activity',{
               type:'activity',
               id:`auto-continue-${continuationCount}`,
-              label:`Continuing with ${providerLabel(resolvedProvider)} • ${modelLabel(resolvedModel)}`,
+              label:`Response ${continuationCount+1} connected`,
               state:'completed',
+              detail:`${providerLabel(resolvedProvider)} • ${modelLabel(resolvedModel)}`,
               kind:'generate',
               at:Date.now()
             });
