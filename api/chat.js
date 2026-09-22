@@ -283,6 +283,9 @@ function providerLifecycleActivity(emit, {
   else if(phase==='failed') label='Provider connection failed';
 
   const attemptDetail=providerAttemptDetail({model,attemptIndex,attemptCount,attemptNoun,fallbackModel});
+  // Keep one lifecycle row per provider. Retries are transient diagnostics; once a
+  // later credential/model succeeds, the same activity id is overwritten by the
+  // final connected state instead of leaving a scary stale failure in the UI.
   activity(emit,id,label,state,'provider',detail || attemptDetail);
 }
 
@@ -3026,6 +3029,7 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
         if(res.ok&&typeof text==='string'&&text.trim()){
           providerLifecycleActivity(emit,{
             provider:runtimeProvider,model:resolved.name,state:'completed',phase:'connected',
+            detail:`${providerLabel(runtimeProvider)} connected with ${resolved.name}${isAnonymousKey?' via anonymous route':''}`,
             attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
           });
           const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,
@@ -3044,7 +3048,7 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
         if(credentialFailure && hasNextKey){
           providerLifecycleActivity(emit,{
             provider:runtimeProvider,model:resolved.name,state:'warning',phase:'retry',
-            detail:`${providerLabel(runtimeProvider)} credential was rejected — trying the next AI Horde route`,
+            detail:`AI Horde route unavailable — trying the next Horde route`,
             attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
           });
           continue;
