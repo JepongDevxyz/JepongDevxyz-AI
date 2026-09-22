@@ -5701,17 +5701,18 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             {name:'Ace',visual:'fox',emoji:'🦊',image:'assets/pets/ace.png',description:'Brave & confident'}
         ];
         const PERSONALIZATION_VOICES = [
-            {name:'Amihan',description:'Natural Filipino female',rate:.98,pitch:1.03,preferredGender:'female',language:'fil-PH',languageAliases:['fil-PH','tl-PH'],keywords:['Filipino Female','Tagalog Female','Google Filipino','Filipino','Tagalog']},
-            {name:'Bayani',description:'Natural Filipino male',rate:.94,pitch:.88,preferredGender:'male',language:'fil-PH',languageAliases:['fil-PH','tl-PH'],keywords:['Filipino Male','Tagalog Male','Filipino','Tagalog']},
-            {name:'Breeze',description:'Animated and earnest',rate:1.04,pitch:1.08,keywords:['Google US English','Samantha','English United States']},
-            {name:'Cove',description:'Composed and direct',rate:.94,pitch:.96,keywords:['Daniel','Microsoft David','English United Kingdom']},
-            {name:'Ember',description:'Confident and optimistic',rate:1.0,pitch:1.0,keywords:['Google UK English Female','Microsoft Zira','Samantha']},
-            {name:'Juniper',description:'Open and upbeat',rate:1.03,pitch:1.04,keywords:['Google US English','Microsoft Aria','Karen']},
-            {name:'Maple',description:'Cheerful and candid',rate:.98,pitch:1.06,keywords:['Microsoft Jenny','Google UK English Female','Moira']},
-            {name:'Sol',description:'Savvy and relaxed',rate:.96,pitch:.98,keywords:['Microsoft Guy','Alex','Daniel']},
-            {name:'Spruce',description:'Calm and affirming',rate:.91,pitch:.95,keywords:['Google UK English Male','Daniel','Microsoft Ryan']},
-            {name:'Vale',description:'Bright and inquisitive',rate:1.06,pitch:1.1,keywords:['Microsoft Aria','Samantha','Google US English']},
-            {name:'Arbor',description:'Easygoing and versatile',rate:.97,pitch:1.02,keywords:['Alex','Karen','Google US English']}
+            {name:'Jepong',description:'Warm and confident',rate:.97,pitch:.94,preferredGender:'male'},
+            {name:'Janna',description:'Natural and friendly',rate:1.0,pitch:1.04,preferredGender:'female'},
+            {name:'Calixie',description:'Bright and expressive',rate:1.04,pitch:1.08,preferredGender:'female'},
+            {name:'Sevich',description:'Composed and direct',rate:.94,pitch:.94,preferredGender:'male'},
+            {name:'Princess',description:'Warm and cheerful',rate:1.0,pitch:1.07,preferredGender:'female'},
+            {name:'Herald',description:'Clear and confident',rate:.95,pitch:.91,preferredGender:'male'},
+            {name:'Sol',description:'Savvy and relaxed',rate:.96,pitch:.98,preferredGender:'male'},
+            {name:'Fable',description:'Gentle and expressive',rate:.98,pitch:1.03,preferredGender:'female'},
+            {name:'Luna',description:'Calm and luminous',rate:.96,pitch:1.05,preferredGender:'female'},
+            {name:'Lancelot',description:'Refined and assured',rate:.95,pitch:.93,preferredGender:'male'},
+            {name:'Sydney',description:'Bright and conversational',rate:1.02,pitch:1.05,preferredGender:'female'},
+            {name:'Odette',description:'Elegant and gentle',rate:.98,pitch:1.06,preferredGender:'female'}
         ];
 
         function petMascotSvg(type='none') {
@@ -6196,6 +6197,12 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             renderPersonalizationSettings();
             renderPersonalizationPetOptions();
             renderPetCompanionAcrossApp();
+        }
+
+const LEGACY_VOICE_PERSONA_MAP={Amihan:'Jepong',Bayani:'Janna',Breeze:'Calixie',Cove:'Sevich',Ember:'Princess',Juniper:'Herald',Maple:'Sol',Spruce:'Fable',Vale:'Luna',Arbor:'Lancelot'};
+        if(LEGACY_VOICE_PERSONA_MAP[personalizationSettings.voicePersona]){
+            personalizationSettings.voicePersona=LEGACY_VOICE_PERSONA_MAP[personalizationSettings.voicePersona];
+            persistPersonalization();
         }
 
 function getVoiceProfile(name = personalizationSettings.voicePersona) {
@@ -6809,34 +6816,32 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
         }
 
-        function voiceSampleText() {
+        function voiceSampleText(name=personalizationSettings.voicePersona) {
+            const n=String(name||getVoiceProfile()?.name||'Jepong');
             const lang = personalizationSettings.language || 'Auto-detect';
             const samples = {
-                Filipino:'Kumusta! Ito ang napili mong boses para sa Jepong Devxyz AI. Handa akong tumulong sa iyo.',
-                English:'Hello! This is the selected voice for Jepong Devxyz AI. I am ready to help you.',
-                Spanish:'Hola. Esta es la voz seleccionada para Jepong Devxyz AI. Estoy listo para ayudarte.',
-                Japanese:'こんにちは。これは Jepong Devxyz AI の音声プレビューです。よろしくお願いします。',
-                Korean:'안녕하세요. Jepong Devxyz AI 음성 미리듣기입니다. 도와드릴게요.',
-                French:'Bonjour. Ceci est un aperçu de la voix de Jepong Devxyz AI. Je suis prêt à vous aider.',
-                German:'Hallo. Dies ist eine Sprachvorschau von Jepong Devxyz AI. Ich helfe dir gerne.',
-                Italian:'Ciao. Questa è un’anteprima della voce di Jepong Devxyz AI. Sono pronto ad aiutarti.',
-                Portuguese:'Olá. Esta é uma prévia da voz do Jepong Devxyz AI. Estou pronto para ajudar.',
-                Arabic:'مرحبًا. هذه معاينة لصوت Jepong Devxyz AI. أنا جاهز للمساعدة.',
-                Bengali:'হ্যালো। এটি Jepong Devxyz AI-এর ভয়েস প্রিভিউ। আমি সাহায্য করতে প্রস্তুত।',
-                Chinese:'你好。这是 Jepong Devxyz AI 的语音预览。我很乐意帮助你。',
-                'Mandarin Chinese':'你好。这是 Jepong Devxyz AI 的语音预览。我很乐意帮助你。',
-                Dutch:'Hallo. Dit is een stemvoorbeeld van Jepong Devxyz AI. Ik help je graag.',
-                Hindi:'नमस्ते। यह Jepong Devxyz AI की आवाज़ का पूर्वावलोकन है। मैं आपकी मदद के लिए तैयार हूँ।',
-                Indonesian:'Halo. Ini adalah pratinjau suara Jepong Devxyz AI. Saya siap membantu.',
-                Malay:'Helo. Ini ialah pratonton suara Jepong Devxyz AI. Saya sedia membantu.',
-                Polish:'Cześć. To jest podgląd głosu Jepong Devxyz AI. Jestem gotowy pomóc.',
-                Russian:'Здравствуйте. Это предварительный просмотр голоса Jepong Devxyz AI. Я готов помочь.',
-                Thai:'สวัสดี นี่คือตัวอย่างเสียงของ Jepong Devxyz AI ฉันพร้อมช่วยคุณ',
-                Turkish:'Merhaba. Bu, Jepong Devxyz AI için bir ses önizlemesidir. Yardım etmeye hazırım.',
-                Ukrainian:'Вітаю. Це попередній перегляд голосу Jepong Devxyz AI. Я готовий допомогти.',
-                Vietnamese:'Xin chào. Đây là bản xem trước giọng nói của Jepong Devxyz AI. Tôi sẵn sàng giúp bạn.'
+                Filipino:`Kumusta! Ako si ${n}. Ito ang boses ko sa Jepong Devxyz AI. Handa akong tumulong sa iyo.`,
+                Tagalog:`Kumusta! Ako si ${n}. Ito ang boses ko sa Jepong Devxyz AI. Handa akong tumulong sa iyo.`,
+                English:`Hello! My name is ${n}. This is my voice in Jepong Devxyz AI. I am ready to help you.`,
+                Spanish:`Hola. Me llamo ${n}. Esta es mi voz en Jepong Devxyz AI. Estoy listo para ayudarte.`,
+                Japanese:`こんにちは。${n}です。Jepong Devxyz AI の私の声です。よろしくお願いします。`,
+                Korean:`안녕하세요. 저는 ${n}입니다. Jepong Devxyz AI의 제 목소리입니다. 도와드릴게요.`,
+                French:`Bonjour. Je m'appelle ${n}. Voici ma voix dans Jepong Devxyz AI. Je suis prêt à vous aider.`,
+                German:`Hallo. Ich heiße ${n}. Das ist meine Stimme in Jepong Devxyz AI. Ich helfe dir gerne.`,
+                Italian:`Ciao. Mi chiamo ${n}. Questa è la mia voce in Jepong Devxyz AI. Sono pronto ad aiutarti.`,
+                Portuguese:`Olá. Meu nome é ${n}. Esta é a minha voz no Jepong Devxyz AI. Estou pronto para ajudar.`,
+                Arabic:`مرحبًا. اسمي ${n}. هذا هو صوتي في Jepong Devxyz AI. أنا جاهز للمساعدة.`,
+                Chinese:`你好，我叫 ${n}。这是我在 Jepong Devxyz AI 中的声音。我很乐意帮助你。`,
+                'Mandarin Chinese':`你好，我叫 ${n}。这是我在 Jepong Devxyz AI 中的声音。我很乐意帮助你。`,
+                Hindi:`नमस्ते। मेरा नाम ${n} है। यह Jepong Devxyz AI में मेरी आवाज़ है। मैं आपकी मदद के लिए तैयार हूँ।`,
+                Indonesian:`Halo. Nama saya ${n}. Ini suara saya di Jepong Devxyz AI. Saya siap membantu.`,
+                Malay:`Helo. Nama saya ${n}. Ini suara saya dalam Jepong Devxyz AI. Saya sedia membantu.`,
+                Russian:`Здравствуйте. Меня зовут ${n}. Это мой голос в Jepong Devxyz AI. Я готов помочь.`,
+                Thai:`สวัสดี ฉันชื่อ ${n} นี่คือเสียงของฉันใน Jepong Devxyz AI ฉันพร้อมช่วยคุณ`,
+                Turkish:`Merhaba. Benim adım ${n}. Bu Jepong Devxyz AI'daki sesim. Yardım etmeye hazırım.`,
+                Vietnamese:`Xin chào. Tôi tên là ${n}. Đây là giọng của tôi trong Jepong Devxyz AI. Tôi sẵn sàng giúp bạn.`
             };
-            return samples[lang] || 'Hello! This is a voice preview for Jepong Devxyz AI. I am ready to help you.';
+            return samples[lang] || `Hello! My name is ${n}. This is my voice in Jepong Devxyz AI. I am ready to help you.`;
         }
 
         function currentVoiceQualityLabel(text='') {
@@ -6857,7 +6862,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(status)status.textContent='Loading '+profile.name+'…';
             if(btn)btn.innerHTML='<i data-lucide="loader-circle"></i><span>Loading…</span>'; refreshLucideIcons();
             await ensureSpeechVoicesReady(1600);
-            const sample=voiceSampleText(), requestedLang=preferredLanguageCode()||detectSpeechLanguage(sample);
+            const sample=voiceSampleText(profile.name), requestedLang=preferredLanguageCode()||detectSpeechLanguage(sample);
             const selected=resolvePersonalizationSystemVoice(profile,sample,requestedLang);
             const handlers={
                 profile,
