@@ -6278,13 +6278,13 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 if(!res.ok||!data?.imageDataUrl){
                     throw new Error(data?.error||data?.detail||`Image generator returned ${res.status}`);
                 }
-                if(data.backgroundRemoved!==true){
+                if(data.backgroundRemoved!==true || data.transparentPng!==true){
                     throw new Error('Transparent pet generation failed. Please generate again.');
                 }
 
                 const imageDataUrl=String(data.imageDataUrl);
                 if(!/^data:image\/png;base64,/i.test(imageDataUrl)){
-                    throw new Error('Pet output is not a transparent PNG. Please generate again.');
+                    throw new Error('Pet output is not a verified transparent PNG. Please generate again.');
                 }
                 await new Promise((resolve,reject)=>{
                     const test=new Image();
