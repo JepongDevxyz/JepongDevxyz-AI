@@ -2948,101 +2948,140 @@ function isAIHordeCredentialFailure(status,error=''){
   return [401,403,406].includes(code) || /no user matching sent api key|invalid api key|credential was rejected|unauthorized|forbidden/.test(text);
 }
 
-async function resolveAIHordeModel(requested='auto',message='',signal){
+async function resolveAIHordeModels(requested='auto',message='',signal){
   const models=await getAIHordeActiveModels(signal);
-  if(!models.length) return null;
+  if(!models.length) return [];
   if(requested && requested!=='auto'){
     const exact=models.find(x=>x.name===requested);
-    if(exact) return exact;
+    return exact?[exact]:[];
   }
-  return [...models].sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested))[0]||null;
+  // Auto must not pin the whole request to one worker-backed model. Horde workers
+  // change continuously, so keep several currently active candidates and fail over
+  // inside AI Horde without crossing to another provider.
+  return [...models]
+    .filter(x=>(Number(x.workers)||0)>0)
+    .sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested))
+    .slice(0,5);
+}
+
+function isAIHordeGenerationFailure(status,error=''){
+  const code=Number(status)||0;
+  const text=String(error||'').toLowerCase();
+  return code===408 || code===429 || code>=500 ||
+    /not enough generations|no generations|no generation|worker|queue|timed? ?out|timeout|unavailable|busy|faulted|aborted/.test(text);
 }
 
 async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit},{anonymous=false}={}){
-  // AI Horde supports 0000000000 for anonymous access. Treat it as an
-  // AI-Horde credential route, not as cross-provider Auto Fallback.
   const configuredKeys=anonymous?[]:shuffle(getProviderKeys('aihorde')).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
   const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:[...configuredKeys,AIHORDE_ANONYMOUS_KEY];
   const runtimeProvider=anonymous?'aihorde-public':'aihorde';
 
   const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
-  if(hasImage) return {ok:false,status:415,error:'AI Horde text fallback does not directly process image attachments.'};
+  if(hasImage) return {ok:false,status:415,error:'AI Horde text route does not directly process image attachments.'};
 
-  let resolved;
+  let candidates;
   try{
-    resolved=await resolveAIHordeModel(model||'auto',message,AbortSignal.timeout(12000));
+    candidates=await resolveAIHordeModels(model||'auto',message,AbortSignal.timeout(12000));
   }catch(e){
     return {ok:false,status:503,error:e?.message||'AI Horde model list is unavailable.'};
   }
-  if(!resolved?.name) return {ok:false,status:503,error:'No suitable AI Horde text model is currently active.'};
+  if(!candidates.length) return {ok:false,status:503,error:'No suitable AI Horde text model is currently active.'};
 
   const messages=buildOpenAIMessages(history,message,systemInstruction);
-  let last='';let status=503;
-  for(let i=0;i<keys.length;i++){
-    const isAnonymousKey=keys[i]===AIHORDE_ANONYMOUS_KEY;
-    providerLifecycleActivity(emit,{
-      provider:runtimeProvider,model:resolved.name,state:'running',phase:'connecting',
-      attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
-    });
-    try{
-      const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{
-        method:'POST',
-        headers:{
-          // AI Horde's native API authenticates with the "apikey" header. The
-          // OpenAI-compatible proxy accepts Horde credentials, so send both forms
-          // for compatibility instead of assuming Bearer-only authentication.
-          apikey:keys[i],
-          Authorization:`Bearer ${keys[i]}`,
-          'Content-Type':'application/json',
-          'Client-Agent':AIHORDE_CLIENT_AGENT
-        },
-        body:JSON.stringify({
-          model:resolved.name,
-          stream:false,
-          messages,
-          max_tokens:Math.min(outputBudgetFor(message),isAnonymousKey?1024:4096),
-          temperature:temperatureFor(message,files),
-          timeout:isAnonymousKey?45:55
-        }),
-        signal:AbortSignal.timeout(isAnonymousKey?55000:70000)
+  let last='AI Horde could not complete a generation.'; let status=503;
+
+  for(let m=0;m<candidates.length;m++){
+    const resolved=candidates[m];
+    for(let i=0;i<keys.length;i++){
+      const isAnonymousKey=keys[i]===AIHORDE_ANONYMOUS_KEY;
+      providerLifecycleActivity(emit,{
+        provider:runtimeProvider,model:resolved.name,state:'running',phase:'connecting',
+        detail:m>0?`Trying another active AI Horde model: ${resolved.name}`:'',
+        attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
       });
-      status=res.status;
-      const raw=await res.text();
-      let data;
-      try{data=JSON.parse(raw);}catch(_){data={raw};}
-      const text=data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? '';
-      if(res.ok&&typeof text==='string'&&text.trim()){
+      try{
+        const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{
+          method:'POST',
+          headers:{
+            apikey:keys[i],
+            Authorization:`Bearer ${keys[i]}`,
+            'Content-Type':'application/json',
+            'Client-Agent':AIHORDE_CLIENT_AGENT
+          },
+          body:JSON.stringify({
+            model:resolved.name,
+            stream:false,
+            messages,
+            max_tokens:Math.min(outputBudgetFor(message),isAnonymousKey?768:2048),
+            temperature:temperatureFor(message,files),
+            timeout:isAnonymousKey?55:65
+          }),
+          signal:AbortSignal.timeout(isAnonymousKey?70000:80000)
+        });
+        status=res.status;
+        const raw=await res.text();
+        let data;
+        try{data=JSON.parse(raw);}catch(_){data={raw};}
+        const text=data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? '';
+        if(res.ok&&typeof text==='string'&&text.trim()){
+          providerLifecycleActivity(emit,{
+            provider:runtimeProvider,model:resolved.name,state:'completed',phase:'connected',
+            attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
+          });
+          const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,
+            isAnonymousKey?(routedReason||'aihorde-anonymous'):routedReason,i,keys.length);
+          return {ok:true,response:new Response(text.trim(),{headers}),finishState:{reason:'stop'}};
+        }
+
+        last=summarizeAIHordeError(status,data,raw);
+        const credentialFailure=isAIHordeCredentialFailure(status,last);
+        const generationFailure=isAIHordeGenerationFailure(status,last);
+        const hasNextKey=i<keys.length-1;
+        const hasNextModel=m<candidates.length-1;
+
+        // Credential errors rotate credentials. Generation/worker errors rotate
+        // models after credentials are exhausted. Both remain entirely in AI Horde.
+        if(credentialFailure && hasNextKey){
+          providerLifecycleActivity(emit,{
+            provider:runtimeProvider,model:resolved.name,state:'warning',phase:'retry',
+            detail:`${providerLabel(runtimeProvider)} credential was rejected — trying the next AI Horde route`,
+            attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
+          });
+          continue;
+        }
+        if(generationFailure && hasNextKey && !isAnonymousKey){
+          // A registered key can have different priority/kudos; try Horde's public
+          // route before abandoning a currently active model.
+          providerLifecycleActivity(emit,{
+            provider:runtimeProvider,model:resolved.name,state:'warning',phase:'retry',
+            detail:`AI Horde did not complete this generation — retrying within AI Horde`,
+            attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
+          });
+          continue;
+        }
+        if(generationFailure && hasNextModel){
+          providerLifecycleActivity(emit,{
+            provider:runtimeProvider,model:resolved.name,state:'warning',phase:'retry',
+            detail:`AI Horde model did not return a generation — trying another active model`,
+            attemptIndex:m,attemptCount:candidates.length,attemptNoun:'model'
+          });
+          break;
+        }
+
         providerLifecycleActivity(emit,{
-          provider:runtimeProvider,model:resolved.name,state:'completed',phase:'connected',
+          provider:runtimeProvider,model:resolved.name,state:'error',phase:'failed',
+          detail:generationFailure?'AI Horde could not complete a generation with the available active models.':last,
           attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
         });
-        const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,
-          isAnonymousKey?(routedReason||'aihorde-anonymous'):routedReason,i,keys.length);
-        return {ok:true,response:new Response(text.trim(),{headers}),finishState:{reason:'stop'}};
+        return {ok:false,status,error:generationFailure?'AI Horde is currently unable to complete this generation. Please retry shortly.':last};
+      }catch(e){
+        status=503;last=e?.message||String(e);
+        const hasNextKey=i<keys.length-1;
+        const hasNextModel=m<candidates.length-1;
+        if(hasNextKey) continue;
+        if(hasNextModel) break;
+        return {ok:false,status,error:'AI Horde timed out before a generation completed. Please retry shortly.'};
       }
-
-      last=summarizeAIHordeError(status,data,raw);
-      const credentialFailure=isAIHordeCredentialFailure(status,last);
-      // A rejected registered key must not stop AI Horde Auto before its remaining
-      // Horde credentials (including the documented anonymous key) are attempted.
-      const canRetry=i<keys.length-1 && (credentialFailure || isRetryableStatus(status));
-      providerLifecycleActivity(emit,{
-        provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:credentialFailure
-          ? `${providerLabel(runtimeProvider)} credential was rejected${canRetry?' — trying the next AI Horde route':''}`
-          : retryLabel(runtimeProvider,status,canRetry),
-        attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
-      });
-      if(!canRetry) break;
-    }catch(e){
-      status=503;last=e?.message||String(e);
-      const canRetry=i<keys.length-1;
-      providerLifecycleActivity(emit,{
-        provider:runtimeProvider,model:resolved.name,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:`${providerLabel(runtimeProvider)} connection failed${canRetry?' — trying the next AI Horde route':''}`,
-        attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
-      });
-      if(!canRetry) break;
     }
   }
   return {ok:false,status,error:last||`${providerLabel(runtimeProvider)} unavailable`};
