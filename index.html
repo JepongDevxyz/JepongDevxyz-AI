@@ -6639,9 +6639,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return String(detectSpeechLanguage(text)||'en-US').toLowerCase().split('-')[0];
         }
 
-        function neuralTTSIsSupported(text='') {
-            return ['en','es','fr','zh','ja','ko'].includes(neuralTTSBaseLanguage(text));
-        }
+        function neuralTTSIsSupported(text='') { return true; }
 
         function stopAllSpeech() {
             resetActiveReadAloudButton();
@@ -6734,28 +6732,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             ensureSpeechVoicesReady(1800).then(()=>loadVoices()).catch(()=>{});
             const targetLang=preferredLanguageCode() || detectSpeechLanguage(clean);
             const personaVoice=resolvePersonalizationSystemVoice(profile,clean,targetLang);
-            // A selected/named voice must actually affect Read Aloud. Use the matching installed
-            // voice immediately; cloud neural remains the fallback when the device has none.
-            if(personaVoice){
-                speakChunksSequentially(speechChunks(clean,150),{...options,profile,languageOverride:personaVoice.lang||targetLang,onstart:(u,v,i)=>options.onstart?.(u,v,i,profile.name+' • '+(v?.name||'Device voice'))});
-                return;
-            }
-
-            // MeloTTS currently covers EN/ES/FR/ZH/JA/KO.
-            // Filipino and every unsupported language intentionally use the
-            // phone/browser's native local voice so speech still works reliably.
-            if(!neuralTTSIsSupported(clean)){
-                const chunks=speechChunks(clean,150);
-                speakChunksSequentially(chunks,{
-                    ...options,
-                    profile,
-                    onstart:(utter,voice,index)=>{
-                        options.onstart?.(utter,voice,index,'Device voice fallback');
-                    }
-                });
-                return;
-            }
-
+            // Server/cloud is authoritative for every selected language so named personas
+            // remain distinct across devices. Device speech is fallback only.
             const chunks=speechChunks(clean,420);
             if(!chunks.length) return;
 
@@ -6786,7 +6764,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                         onstart:(utter,voice,index,engine)=>{
                             neuralStarted=true; options.onstart?.(utter,voice,i+1,engine);
                         }
-                    },'Cloudflare Neural • MeloTTS');
+                    },'Cloud TTS • '+profile.name);
 
                     if(runId!==smartSpeechRunId) return;
                     fallbackFrom=i+1;
@@ -6800,7 +6778,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                                 onstart:(utter,voice,index,engine)=>{
                                     neuralStarted=true; options.onstart?.(utter,voice,i+1,engine);
                                 }
-                            },'Cloudflare Neural • MeloTTS');
+                            },'Cloud TTS • '+profile.name);
                             fallbackFrom=i+1;
                         }
                     }
