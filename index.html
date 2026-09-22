@@ -3598,6 +3598,8 @@ body.theme-light .settings-home{background:#f6f6f6}
 .settings-section-label{font-size:.9rem;font-weight:500;color:#aaa;margin:14px 10px 10px}.settings-card-group{border-radius:26px;overflow:hidden;background:#333;border:1px solid rgba(255,255,255,.05);margin-bottom:26px}body.theme-light .settings-card-group{background:#fff;border-color:rgba(15,23,42,.08)}
 .settings-nav-row,.settings-toggle-row{width:100%;min-height:76px;padding:14px 18px;border:0;border-bottom:1px solid rgba(0,0,0,.7);background:transparent;color:inherit;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left}.settings-card-group>:last-child{border-bottom:0}.settings-nav-row{cursor:pointer}.settings-nav-row:active{background:rgba(255,255,255,.06)}body.theme-light .settings-nav-row:active{background:rgba(15,23,42,.04)}.settings-nav-row>i,.settings-toggle-row>i{width:24px;height:24px;color:#f8fafc}body.theme-light .settings-nav-row>i,body.theme-light .settings-toggle-row>i{color:#111827}.settings-nav-row>span,.settings-toggle-row>span{min-width:0}.settings-nav-row strong,.settings-toggle-row strong{display:block;font-size:1rem;font-weight:500;line-height:1.2}.settings-nav-row small,.settings-toggle-row small{display:block;color:#b5b5b5;font-size:.75rem;line-height:1.35;margin-top:4px;overflow-wrap:anywhere}body.theme-light .settings-nav-row small,body.theme-light .settings-toggle-row small{color:#64748b}.settings-nav-row>i:last-child{width:18px;height:18px;color:#9ca3af}.settings-static-row{cursor:default}.settings-home-foot{text-align:center;color:var(--text-muted);font-size:.72rem;padding:4px 0 12px}
 /* Settings switches — canonical implementation. One track and one thumb only. */
+#settingsModal .settings-toggle-row .ios-switch::after{content:none!important;display:none!important}
+#settingsModal .settings-toggle-row .ios-slider::after{content:none!important;display:none!important}
 #settingsModal .settings-toggle-row .ios-switch{width:48px;height:28px;min-width:48px;position:relative;display:block;flex:0 0 48px;background:transparent;border:0;box-shadow:none;padding:0;cursor:pointer}
 #settingsModal .settings-toggle-row .ios-switch input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
 #settingsModal .settings-toggle-row .ios-slider{position:absolute;inset:0;width:48px;height:28px;border-radius:999px;background:#475569;border:1px solid rgba(148,163,184,.18);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:.2s ease}
@@ -7720,7 +7722,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 if (typeof Notification === 'undefined') return;
                 if (Notification.permission !== 'granted') return;
                 if (localStorage.getItem('jepong_notify_enabled') !== 'true') return;
-                if (!document.hidden) return; // only notify when the user actually stepped away
                 const n = new Notification('JepongDevxyz AI', {
                     body: success ? 'Tapos na ang sagot. Bumalik ka para makita.' : 'May naganap na error sa huling request.',
                     tag: 'jepong-ai-response'
