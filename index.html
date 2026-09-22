@@ -6296,25 +6296,29 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function detectSpeechLanguage(text='') {
-            const forced = preferredLanguageCode();
-            if (forced) return forced;
-
-            const t = String(text);
-            if (/[\u3040-\u30ff]/.test(t)) return 'ja-JP';
-            if (/[\uac00-\ud7af]/.test(t)) return 'ko-KR';
-            if (/[\u4e00-\u9fff]/.test(t)) return 'zh-CN';
-            if (/[\u0600-\u06ff]/.test(t)) return 'ar-SA';
-            if (/[\u0400-\u04ff]/.test(t)) return 'ru-RU';
-            if (/[\u0900-\u097f]/.test(t)) return 'hi-IN';
-            if (/[\u0e00-\u0e7f]/.test(t)) return 'th-TH';
-
-            const filipinoWords = /\b(ang|mga|ako|ikaw|siya|kami|tayo|sila|ito|iyan|iyon|salamat|kumusta|kamusta|paano|bakit|saan|kailan|gawin|natin|naman|lang|po|opo|hindi|oo|para|dahil|pero|kung|kapag|pwede|maaari|sagot|tanong|tulong)\b/i;
-            if (filipinoWords.test(t)) return 'fil-PH';
-
-            const spanishWords = /\b(hola|gracias|por favor|cómo|qué|para|porque|puedo|ayuda)\b/i;
-            if (spanishWords.test(t)) return 'es-ES';
-
-            return 'en-US';
+            const forced=preferredLanguageCode();
+            if(forced) return forced;
+            const t=String(text||'').trim();
+            if(/[\u3040-\u30ff]/.test(t))return'ja-JP';
+            if(/[\uac00-\ud7af]/.test(t))return'ko-KR';
+            if(/[\u4e00-\u9fff]/.test(t))return'zh-CN';
+            if(/[\u0600-\u06ff]/.test(t))return'ar-SA';
+            if(/[\u0400-\u04ff]/.test(t))return'ru-RU';
+            if(/[\u0900-\u097f]/.test(t))return'hi-IN';
+            if(/[\u0e00-\u0e7f]/.test(t))return'th-TH';
+            const rules=[
+              ['fil-PH',/\b(ang|mga|ako|ikaw|siya|kami|tayo|sila|ito|iyan|iyon|salamat|kumusta|kamusta|paano|pano|bakit|saan|kailan|gawin|natin|naman|lang|po|opo|hindi|oo|para|dahil|pero|kung|kapag|pwede|puwede|sagot|tanong|tulong|ayos|ayusin)\b/i],
+              ['es-ES',/\b(hola|gracias|por favor|cómo|que|qué|para|porque|puedo|ayuda|quiero|también|está|esto)\b/i],
+              ['fr-FR',/\b(bonjour|merci|avec|pour|comment|vous|nous|je|une|des|est|pas)\b/i],
+              ['de-DE',/\b(hallo|danke|bitte|und|ich|nicht|mit|für|wie|das|ist)\b/i],
+              ['it-IT',/\b(ciao|grazie|per|come|sono|con|non|questo|una|che)\b/i],
+              ['pt-BR',/\b(olá|obrigado|obrigada|você|como|para|não|com|isso|uma)\b/i],
+              ['id-ID',/\b(hai|halo|terima kasih|saya|kamu|dengan|untuk|tidak|ini|bisa)\b/i],
+              ['ms-MY',/\b(hai|helo|terima kasih|saya|anda|dengan|untuk|tidak|ini|boleh)\b/i],
+              ['vi-VN',/\b(xin chào|cảm ơn|tôi|bạn|không|với|cho|này|được)\b/i]
+            ];
+            for(const [lang,rx] of rules)if(rx.test(t))return lang;
+            return'en-US';
         }
 
         function voiceLanguageScore(voice, targetLang) {
@@ -6341,7 +6345,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 .filter(x => x.score > 0)
                 .sort((a,b) => b.score-a.score);
 
-            let pool = ranked.length ? ranked.map(x=>x.voice) : systemVoices;
+            // Strict language/accent isolation: never substitute an unrelated locale.
+            // If the device has no matching voice, return null so the engine can use a same-language backend/fallback.
+            if(!ranked.length) return null;
+            let pool = ranked.map(x=>x.voice);
 
             // Prefer higher-quality local/Google/Microsoft/Samsung voices inside the CORRECT language.
             const qualityPatterns = [
@@ -9119,13 +9126,14 @@ ${m.text || ''}
             return String(clone.innerText||clone.textContent||'').replace(/\n{3,}/g,'\n\n').trim();
         }
         async function toggleReadAloudForMessage(btn){
+            const wasReading=btn?.dataset?.reading==='true' && activeReadAloudButton===btn;
+            if(wasReading){ stopAllSpeech(); return; }
             const text=assistantTextForReadAloud(btn);
             if(!text){
                 if(typeof showModernToast==='function')showModernToast('No readable response text found.');
                 return;
             }
-            // Show playback UI synchronously from the tap. Do not wait for neural TTS,
-            // browser voices, or network before giving visible feedback.
+            // First tap starts immediately. Playback UI appears synchronously while voices/audio initialize.
             showSpeechMiniPlayer({title:'Read aloud',meta:'Preparing audio…',text});
             activeReadAloudButton=btn;
             setReadAloudButtonState(btn,true);
@@ -9136,10 +9144,6 @@ ${m.text || ''}
             if(ctx.id && ctx.sessions?.[ctx.id] && Number.isInteger(messageIndex) && messageIndex>=ctx.sessions[ctx.id].messages.length){
                 hideSpeechMiniPlayer(); resetActiveReadAloudButton();
                 if(typeof showModernToast==='function')showModernToast('Wait for the response to finish before using Read aloud.');
-                return;
-            }
-            if(btn?.dataset?.reading==='true'){
-                stopAllSpeech();
                 return;
             }
             // Stop any previous engine without hiding the just-opened player.
