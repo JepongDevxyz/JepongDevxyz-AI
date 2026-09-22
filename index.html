@@ -6351,9 +6351,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 .sort((a,b) => b.score-a.score);
             if(!ranked.length) return null;
 
-            let pool=ranked.map(x=>x.voice);
+            const exactRanked=ranked.filter(x=>x.score>=90);
+            let pool=(exactRanked.length?exactRanked:ranked).map(x=>x.voice);
             const profileLang=String(profile?.language||'').toLowerCase().split('-')[0];
-            const profileMatches=!profileLang || profileLang===targetBase || (targetBase==='fil'&&profileLang==='tl') || (targetBase==='tl'&&profileLang==='fil');
+            const profileMatches=!!profileLang && (profileLang===targetBase || (targetBase==='fil'&&profileLang==='tl') || (targetBase==='tl'&&profileLang==='fil'));
 
             const qualityPatterns=[/google/i,/microsoft/i,/samsung/i,/natural/i,/neural/i,/enhanced/i,/premium/i];
             const quality=pool.filter(v=>qualityPatterns.some(rx=>rx.test(v.name||'')));
