@@ -2652,22 +2652,26 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
 
 function sanitizeCustomApiProfile(body){
   const p=body?.customApiProfile;if(!p||typeof p!=='object')return null;
-  const apiKey=String(p.apiKey||'').trim().slice(0,2048);
+  const rawKeys=[p.apiKey,...(Array.isArray(p.apiKeys)?p.apiKeys:String(p.apiKeys||'').split(/[\\n,]+/))];
+  const apiKeys=[...new Set(rawKeys.map(x=>String(x||'').trim().slice(0,2048)).filter(x=>x.length>=8))].slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  const apiKey=apiKeys[0]||'';
   let baseUrl=String(p.baseUrl||'').trim().slice(0,500);
   const name=String(p.name||'Custom API').trim().slice(0,80);
   const model=String(p.model||'auto').trim().slice(0,200)||'auto';
   if(!apiKey||!/^https:\/\//i.test(baseUrl))return null;
   baseUrl=baseUrl.replace(/\/$/,'');
-  return {name,apiKey,baseUrl,model,autoLoadModels:p.autoLoadModels!==false};
+  return {name,apiKey,apiKeys,baseUrl,model,autoLoadModels:p.autoLoadModels!==false};
 }
 async function runGenericCustomApi(profile,{history,message,systemInstruction,emit}){
   const url=chatCompletionsUrl(profile.baseUrl,profile.baseUrl);
   const model=profile.model==='auto'?'auto':profile.model;
-  try{
-    const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+profile.apiKey,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:outputBudgetFor(message)}),signal:AbortSignal.timeout(120000)});
-    if(!res.ok)return {ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};
-    const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',0,1,finishState),finishState};
-  }catch(e){return {ok:false,status:502,error:e?.message||'Custom API unavailable'};}
+  const keys=profile.apiKeys?.length?profile.apiKeys:[profile.apiKey];let last=null;
+  for(let i=0;i<keys.length;i++)try{
+    const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:outputBudgetFor(message)}),signal:AbortSignal.timeout(120000)});
+    if(!res.ok){last={ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};continue;}
+    const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',i,keys.length,finishState),finishState};
+  }catch(e){last={ok:false,status:502,error:e?.message||'Custom API unavailable'};}
+  return last||{ok:false,status:502,error:'All custom API keys failed.'};
 }
 
 function chatCompletionsUrl(base,fallback){
@@ -4164,8 +4168,7 @@ export default async function handler(req){
       const root=p.baseUrl.replace(/\/chat\/completions$/i,'').replace(/\/$/,'');
       const modelsUrl=/\/(?:openapi\/)?v1$/i.test(root)?root+'/models':root+'/v1/models';
       try{
-        const r=await fetch(modelsUrl,{headers:{Authorization:'Bearer '+p.apiKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
-        if(!r.ok)return json({error:cleanUpstreamError(await r.text().catch(()=>''),r.status,'custom','models'),status:r.status},r.status);
+        let r=null,lastError='';for(const key of (p.apiKeys?.length?p.apiKeys:[p.apiKey])){r=await fetch(modelsUrl,{headers:{Authorization:'Bearer '+key,Accept:'application/json'},signal:AbortSignal.timeout(12000)});if(r.ok)break;lastError=cleanUpstreamError(await r.text().catch(()=>''),r.status,'custom','models');}if(!r?.ok)return json({error:lastError||'All API keys failed.',status:r?.status||502},r?.status||502);
         const models=normalizeModelCatalog(await safeJsonResponse(r));
         return json({models,status:models.length?'ready':'empty',source:modelsUrl});
       }catch(e){return json({error:e?.message||'Could not load models.'},502);}
