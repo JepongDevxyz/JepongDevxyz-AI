@@ -1023,7 +1023,10 @@ function languageQualityInstruction(userMessage='', personalization=null) {
   } else if(/[A-Za-z]/.test(msg)) text += ' Use natural, grammatically correct English.';
 
   if(preferred && preferred!=='Auto-detect') {
-    text += ` The saved language preference is ${preferred}, but the language of the latest user message takes priority unless the user explicitly asks otherwise.`;
+    // A manually selected language is authoritative. This keeps both text output and TTS accent aligned.
+    text += ` LANGUAGE LOCK: The user explicitly selected ${preferred}. Reply entirely in ${preferred} unless the user explicitly asks for a translation or a different language in this message. Do not switch to another language because of detected script, locale, provider defaults, or conversation history. Keep proper nouns and unavoidable technical terms unchanged when necessary.`;
+  } else {
+    text += ' LANGUAGE AUTO-DETECT: Use the primary language of the latest user message. Do not infer an accent/language from provider, device locale, or older messages when the latest message clearly establishes one.';
   }
   return text;
 }
@@ -1118,9 +1121,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
     if (p.showPetInChat !== false && pet && pet !== 'None' && petDescription) text += ` Companion preference: ${petDescription}.`;
 
     const lang = safe(p.language);
-    if (lang === 'Filipino') text += ' Prefer Filipino/Tagalog unless technical English is clearer.';
-    else if (lang === 'English') text += ' Prefer English.';
-    else if (lang && lang !== 'Auto-detect') text += ` Prefer ${lang} when practical.`;
+    if (lang && lang !== 'Auto-detect') text += ` Selected response language: ${lang}. Treat this as a strict language lock unless the current user explicitly requests another language or translation.`;
 
 
     const voicePersona = safe(p.voicePersona);
