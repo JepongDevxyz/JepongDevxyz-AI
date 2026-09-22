@@ -2650,6 +2650,26 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
   return {ok:false,status,error:last||'Cloudflare unavailable'};
 }
 
+function sanitizeCustomApiProfile(body){
+  const p=body?.customApiProfile;if(!p||typeof p!=='object')return null;
+  const apiKey=String(p.apiKey||'').trim().slice(0,2048);
+  let baseUrl=String(p.baseUrl||'').trim().slice(0,500);
+  const name=String(p.name||'Custom API').trim().slice(0,80);
+  const model=String(p.model||'auto').trim().slice(0,200)||'auto';
+  if(!apiKey||!/^https:\/\//i.test(baseUrl))return null;
+  baseUrl=baseUrl.replace(/\/$/,'');
+  return {name,apiKey,baseUrl,model,autoLoadModels:p.autoLoadModels!==false};
+}
+async function runGenericCustomApi(profile,{history,message,systemInstruction,emit}){
+  const url=chatCompletionsUrl(profile.baseUrl,profile.baseUrl);
+  const model=profile.model==='auto'?'auto':profile.model;
+  try{
+    const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+profile.apiKey,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:outputBudgetFor(message)}),signal:AbortSignal.timeout(120000)});
+    if(!res.ok)return {ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};
+    const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',0,1,finishState),finishState};
+  }catch(e){return {ok:false,status:502,error:e?.message||'Custom API unavailable'};}
+}
+
 function chatCompletionsUrl(base,fallback){
   const raw=String(base||'').trim().replace(/\/$/,'');
   if(!raw)return fallback;
@@ -3132,8 +3152,13 @@ async function processChat(body, emit) {
     }
   }
 
-  if(!PROVIDERS[provider])provider='gemini';
-  model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
+  const customApiProfile=sanitizeCustomApiProfile(body);
+  if(customApiProfile){
+    provider='custom-api';model=customApiProfile.model;
+  }else{
+    if(!PROVIDERS[provider])provider='gemini';
+    model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
+  }
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   if(files.length){
     const grouped=new Map();
@@ -3287,7 +3312,7 @@ async function processChat(body, emit) {
   // The model request starts here; a single Thinking row stays active
   // until the provider stream finishes or an actual tool event supersedes it.
   activity(emit,'thinking','Thinking','running','thinking');
-  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys});
+  const first=customApiProfile?await runGenericCustomApi(customApiProfile,{history,message,systemInstruction,emit}):await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation','Generating response','running','generate');
