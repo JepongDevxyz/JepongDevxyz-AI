@@ -4469,8 +4469,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
               </div>
 
               <div class="ps-ai-pet-body">
-                <div class="ps-ai-pet-preview" id="psAiPetPreview">
-                  <div class="ps-ai-pet-preview-visual">
+                <div class="ps-ai-pet-preview" id="psAiPetPreview" style="height:auto;min-height:0">
+                  <div class="ps-ai-pet-preview-visual" style="margin-left:auto;margin-right:auto">
                     <div class="ps-ai-pet-preview-placeholder" id="psAiPetPreviewPlaceholder"><i data-lucide="sparkles"></i></div>
                     <img id="psAiPetPreviewImage" alt="Generated pet preview" hidden>
                   </div>
@@ -6402,6 +6402,16 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             const previewDescription=document.getElementById('psAiPetPreviewDescription');
             if(previewName)previewName.textContent=requestedName||'Creating your pet';
             if(previewDescription)previewDescription.textContent=idea||'A friendly companion';
+            if(previewImage){
+                previewImage.hidden=true;
+                previewImage.removeAttribute('src');
+                previewImage.onerror=()=>{
+                    previewImage.hidden=true;
+                    previewImage.removeAttribute('src');
+                    if(previewPlaceholder)previewPlaceholder.hidden=false;
+                };
+            }
+            if(previewPlaceholder)previewPlaceholder.hidden=false;
 
             try{
                 const res=await fetch('/api/chat',{
@@ -6439,7 +6449,10 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 renderPetCompanionAcrossApp();
                 wakeLivePet();
 
-                if(previewImage){previewImage.src=imageDataUrl;previewImage.hidden=false;}
+                if(previewImage){
+                    previewImage.src=imageDataUrl;
+                    previewImage.hidden=false;
+                }
                 if(previewPlaceholder)previewPlaceholder.hidden=true;
                 if(previewName)previewName.textContent=personalizationSettings.pet;
                 if(previewDescription)previewDescription.textContent=personalizationSettings.petDescription;
