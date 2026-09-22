@@ -4338,34 +4338,31 @@ async function generateImage(body={},requestSignal=null){
 }
 
 async function removePetImageBackground(imageBytes,contentType,requestSignal=null){
-  const account=getCloudflareAccounts()[0];
-  if(!account||!imageBytes?.length)return null;
-  try{
-    const form=new FormData();
-    const blob=new Blob([imageBytes],{type:contentType||'image/jpeg'});
-    form.append('image',blob,'pet-input.jpg');
-    const url=`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account.accountId)}/images/v1/segment`;
-    const res=await fetch(url,{
-      method:'POST',
-      headers:{'Authorization':`Bearer ${account.apiToken}`,'Accept':'image/png'},
-      body:form,
-      signal:requestSignal || AbortSignal.timeout(30000)
-    });
-    if(!res.ok)return null;
-    const outType=(res.headers.get('content-type')||'').toLowerCase();
-    const bytes=new Uint8Array(await res.arrayBuffer());
-    if(!bytes.length)return null;
-    // Segmentation output must be a real PNG. Do not label arbitrary bytes as PNG.
-    const isPng=bytes.length>=8 &&
-      bytes[0]===0x89 && bytes[1]===0x50 && bytes[2]===0x4e && bytes[3]===0x47 &&
-      bytes[4]===0x0d && bytes[5]===0x0a && bytes[6]===0x1a && bytes[7]===0x0a;
-    if(!isPng || (outType && !outType.includes('image/png')))return null;
-    // A successful /images/v1/segment response is the background-removal step.
-    // Require its real PNG bytes; do not reject valid segmented output based on
-    // PNG color-type metadata because optimized PNG encoders may represent the
-    // segmented result differently.
-    return {bytes,contentType:'image/png'};
-  }catch(_){ return null; }
+  if(!imageBytes?.length)return null;
+  // Background removal is an optional post-process. Try every configured
+  // Cloudflare account instead of assuming the first Workers AI token also
+  // has Cloudflare Images segmentation permission.
+  for(const account of shuffle(getCloudflareAccounts())){
+    try{
+      const form=new FormData();
+      const blob=new Blob([imageBytes],{type:contentType||'image/jpeg'});
+      form.append('image',blob,'pet-input.jpg');
+      const url=`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account.accountId)}/images/v1/segment`;
+      const res=await fetch(url,{
+        method:'POST',
+        headers:{'Authorization':`Bearer ${account.apiToken}`,'Accept':'image/png'},
+        body:form,
+        signal:requestSignal || AbortSignal.timeout(30000)
+      });
+      if(!res.ok)continue;
+      const bytes=new Uint8Array(await res.arrayBuffer());
+      const isPng=bytes.length>=8 &&
+        bytes[0]===0x89 && bytes[1]===0x50 && bytes[2]===0x4e && bytes[3]===0x47 &&
+        bytes[4]===0x0d && bytes[5]===0x0a && bytes[6]===0x1a && bytes[7]===0x0a;
+      if(isPng)return {bytes,contentType:'image/png'};
+    }catch(_){ }
+  }
+  return null;
 }
 
 async function finalizePetImage(imageBytes,contentType,requestSignal=null){
@@ -4375,11 +4372,15 @@ async function finalizePetImage(imageBytes,contentType,requestSignal=null){
     backgroundRemoved:true,
     transparentPng:true
   };
-  // Custom pets must behave like built-in pets. Never silently accept a JPEG/
-  // opaque generation when transparent subject extraction failed.
-  const err=new Error('Could not remove the generated pet background. Please generate again.');
-  err.code='pet_background_removal_failed';
-  throw err;
+  // Do not make the whole pet generator fail just because the optional Images
+  // segmentation product is unavailable for the current Cloudflare token/account.
+  // The generation prompt already requests an isolated no-background pet.
+  const normalizedType=String(contentType||'image/jpeg').split(';')[0].toLowerCase();
+  return {
+    imageDataUrl:`data:${normalizedType};base64,${bytesToBase64(imageBytes)}`,
+    backgroundRemoved:false,
+    transparentPng:normalizedType==='image/png'
+  };
 }
 
 async function generatePetImage(body={},requestSignal=null){
