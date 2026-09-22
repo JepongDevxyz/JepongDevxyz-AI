@@ -46,16 +46,15 @@ def main():
     require("MAX_VISIBLE_ACTIVITY_ROWS" in INDEX,
             "compact row policy constant missing")
 
-    # Keep direct OpenAI credentials/provider routing out of this version.
-    # Third-party gateways may legitimately expose model names containing Luna.
+    # Keep direct OpenAI chat-provider routing out of this version.
+    # OPENAI_API_KEY may legitimately be present for the optional server-side TTS fallback.
     forbidden = (
-        "OPENAI_API_KEY",
         "provider:'openai'",
         'provider:"openai"',
     )
     combined = CHAT + "\n" + INDEX
     for token in forbidden:
-        require(token not in combined, f"out-of-scope OpenAI/Luna token found: {token}")
+        require(token not in combined, f"out-of-scope direct OpenAI provider token found: {token}")
 
     visual_tokens = (
         "const MAX_VISIBLE_ACTIVITY_ROWS = 24",

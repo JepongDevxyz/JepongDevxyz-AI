@@ -3103,6 +3103,14 @@ async function runBailucode(args){
 }
 
 async function runProvider(provider,args){
+  if(provider==='custom-api' && args?.customApiProfile){
+    return runGenericCustomApi(args.customApiProfile,{
+      history:args.history,
+      message:args.message,
+      systemInstruction:args.systemInstruction,
+      emit:args.emit
+    });
+  }
   if(provider==='gemini')return runGemini(args);
   if(provider==='cloudflare')return runCloudflare(args);
   if(provider==='cohere')return runCohere(args);
@@ -3324,7 +3332,7 @@ async function processChat(body, emit) {
   // The model request starts here; a single Thinking row stays active
   // until the provider stream finishes or an actual tool event supersedes it.
   activity(emit,'thinking','Thinking','running','thinking');
-  const first=customApiProfile?await runGenericCustomApi(customApiProfile,{history,message,systemInstruction,emit}):await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys});
+  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation','Generating response','running','generate');
@@ -3836,7 +3844,7 @@ function extractAudioBytesFromCloudflareJson(payload){
   return null;
 }
 
-const OPENAI_TTS_VOICES={Amihan:'nova',Bayani:'onyx',Breeze:'shimmer',Cove:'echo',Ember:'coral',Juniper:'sage',Maple:'marin',Sol:'cedar',Spruce:'ash',Vale:'verse',Arbor:'alloy'};
+const OPENAI_TTS_VOICES={Jepong:'onyx',Janna:'nova',Calixie:'shimmer',Sevich:'echo',Princess:'coral',Herald:'ash',Sol:'cedar',Fable:'sage',Luna:'marin',Lancelot:'onyx',Sydney:'alloy',Odette:'verse'};
 
 /* ElevenLabs is the primary cloud TTS provider. Voice IDs are discovered from
    the account at runtime; no secret or account-specific voice ID is shipped to
@@ -3860,7 +3868,7 @@ const ELEVEN_PERSONA_STYLE={
   Sydney:['bright','inquisitive','friendly','conversational'],
   Odette:['elegant','warm','gentle','expressive']
 };
-let elevenVoiceCache={at:0,voices:[]};
+const elevenVoiceCache=new Map();
 
 function elevenLanguageCode(language='en-US'){
   const base=normalizeTTSLanguage(language);
@@ -3906,7 +3914,8 @@ function rotatedElevenLabsKeys(){
   return keys.slice(start).concat(keys.slice(0,start));
 }
 async function getElevenVoices(key){
-  if(elevenVoiceCache.voices.length&&Date.now()-elevenVoiceCache.at<10*60*1000)return elevenVoiceCache.voices;
+  const cached=elevenVoiceCache.get(key);
+  if(cached?.voices?.length&&Date.now()-cached.at<10*60*1000)return cached.voices;
   const all=[];
   let next='';
   for(let page=0;page<10;page++){
@@ -3919,7 +3928,7 @@ async function getElevenVoices(key){
     if(!next||data?.has_more===false)break;
   }
   const voices=[...new Map(all.map(v=>[v.voice_id,v])).values()];
-  elevenVoiceCache={at:Date.now(),voices};
+  elevenVoiceCache.set(key,{at:Date.now(),voices});
   return voices;
 }
 function selectElevenVoice(voices,persona,language){
@@ -3979,12 +3988,13 @@ async function elevenLabsTTS(body={}){
   return null;
 }
 
-function ttsLanguageInstruction(language='en-US',voiceName='Ember'){
+function ttsLanguageInstruction(language='en-US',voiceName='Jepong'){
   const tag=String(language||'en-US').replace('_','-');
   const base=tag.toLowerCase().split('-')[0];
   const labels={fil:'Filipino (Philippines)',tl:'Tagalog (Philippines)',en:'English',es:'Spanish',fr:'French',de:'German',it:'Italian',pt:'Portuguese',ja:'Japanese',ko:'Korean',zh:'Mandarin Chinese',ar:'Arabic',hi:'Hindi',id:'Indonesian',ms:'Malay',vi:'Vietnamese',th:'Thai',ru:'Russian',uk:'Ukrainian',tr:'Turkish',nl:'Dutch',pl:'Polish',bn:'Bengali'};
   const label=labels[base]||tag;
-  const gender=voiceName==='Bayani'?'masculine':voiceName==='Amihan'?'feminine':'natural';
+  const personaGender=ELEVEN_PERSONA_GENDERS[voiceName];
+  const gender=personaGender==='male'?'masculine':personaGender==='female'?'feminine':'natural';
   return `Speak only in ${label}, using a native, natural ${label} accent. Do not introduce an accent from another language or country. Preserve the input language and wording. Use a ${gender} voice character. Clear conversational delivery, not robotic.`;
 }
 async function openAITTS(body={}){
@@ -3993,7 +4003,7 @@ async function openAITTS(body={}){
   const text=String(body.text||body.prompt||'').replace(/\s+/g,' ').trim().slice(0,4000);
   if(!text)return json({error:'No text provided for speech.'},400);
   const language=String(body.language||body.lang||'en-US');
-  const persona=String(body.voice||'Ember');
+  const persona=String(body.voice||'Jepong');
   const voice=OPENAI_TTS_VOICES[persona]||'coral';
   try{
     const res=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({model:process.env.OPENAI_TTS_MODEL||'gpt-4o-mini-tts',input:text,voice,instructions:ttsLanguageInstruction(language,persona),response_format:'mp3'}),signal:AbortSignal.timeout(90000)});

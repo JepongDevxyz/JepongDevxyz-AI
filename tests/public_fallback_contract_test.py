@@ -45,9 +45,15 @@ def main():
     require('function puterConversation' not in INDEX, 'Puter conversation helper still present')
     require('function tryPuterPublicFallback' not in INDEX, 'Puter execution fallback still present')
 
-    # The 8-provider model picker must keep its swipe geometry in sync.
-    require('width: 800%' in INDEX, 'model picker track is not sized for 8 provider pages')
-    require('width: calc(100% / 8)' in INDEX, 'model picker page width is not sized for 8 providers')
+    # The model picker uses a viewport-width flex carousel. Each provider page is
+    # exactly one viewport wide and renderProviderPage advances by one page (100%).
+    # This remains correct as PROVIDER_ORDER grows; do not hard-code a provider count.
+    require('.model-pages-track { display: flex; width: 100%' in INDEX,
+            'model picker track is not using viewport-width flex geometry')
+    require('.model-provider-page { width: 100%; flex: 0 0 100%' in INDEX,
+            'model picker page is not exactly one viewport wide')
+    require('currentProviderPage*100' in INDEX,
+            'model picker transform is not synchronized to viewport-width pages')
 
     # Anonymous Horde should use the failed model name as a class/size hint.
     require("scoreAIHordeModel(item,message='',sourceModel='')" in CHAT,
