@@ -4448,10 +4448,6 @@ async function generatePetImage(body={},requestSignal=null){
       }
     }catch(e){
       if(requestSignal?.aborted)return json({error:'Pet generation cancelled.',code:'cancelled'},499);
-      if(e?.code==='pet_background_removal_failed'){
-        errors.push('Cloudflare generated a pet but transparent background extraction failed.');
-        continue;
-      }
       errors.push(`Cloudflare: ${String(e?.message||e).slice(0,220)}`);
     }
   }
@@ -4491,10 +4487,6 @@ async function generatePetImage(body={},requestSignal=null){
       }
     }catch(e){
       if(requestSignal?.aborted)return json({error:'Pet generation cancelled.',code:'cancelled'},499);
-      if(e?.code==='pet_background_removal_failed'){
-        errors.push('Pollinations generated a pet but transparent background extraction failed.');
-        continue;
-      }
       errors.push(`Pollinations: ${String(e?.message||e).slice(0,220)}`);
     }
   }
@@ -4506,13 +4498,10 @@ async function generatePetImage(body={},requestSignal=null){
     },503);
   }
 
-  const transparencyFailed=errors.some(x=>String(x).includes('transparent background extraction failed'));
   return json({
-    error:transparencyFailed
-      ? 'A transparent pet could not be produced. Please generate again.'
-      : 'Pet image generation is temporarily unavailable.',
-    code:transparencyFailed?'pet_background_removal_failed':'pet_generation_failed',
-    detail:errors.slice(0,3).join(' | ').slice(0,700)
+    error:'Pet image generation is temporarily unavailable. Please try again.',
+    code:'pet_generation_failed',
+    detail:errors.slice(0,4).join(' | ').slice(0,900)
   },502);
 }
 
