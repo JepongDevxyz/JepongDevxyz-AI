@@ -3887,6 +3887,20 @@ function elevenVoiceLocaleScore(voice,language='en-US'){
   if(country&&new RegExp('(?:^|\\W)'+country+'(?:$|\\W)','i').test(hay))score+=20;
   return score;
 }
+function getElevenLabsKeys(){
+  const raw=[
+    process.env.ELEVENLABS_API_KEYS,
+    process.env.ELEVENLABS_API_KEY,
+    ...Object.keys(process.env).filter(k=>/^ELEVENLABS_API_KEY_\d+$/.test(k)).sort((a,b)=>Number(a.match(/\d+/)?.[0]||0)-Number(b.match(/\d+/)?.[0]||0)).map(k=>process.env[k])
+  ].filter(Boolean).join(',');
+  return [...new Set(raw.split(/[\n,;]+/).map(x=>String(x||'').trim()).filter(Boolean))];
+}
+function rotatedElevenLabsKeys(){
+  const keys=getElevenLabsKeys();
+  if(keys.length<2)return keys;
+  const start=Math.floor(Date.now()/60000)%keys.length;
+  return keys.slice(start).concat(keys.slice(0,start));
+}
 async function getElevenVoices(key){
   if(elevenVoiceCache.voices.length&&Date.now()-elevenVoiceCache.at<10*60*1000)return elevenVoiceCache.voices;
   const all=[];
@@ -3926,33 +3940,41 @@ function selectElevenVoice(voices,persona,language){
   return ranked[0]?.v||null;
 }
 async function elevenLabsTTS(body={}){
-  const key=String(process.env.ELEVENLABS_API_KEY||'').trim();
-  if(!key)return null;
+  const keys=rotatedElevenLabsKeys();
+  if(!keys.length)return null;
   const text=String(body.text||body.prompt||'').replace(/\s+/g,' ').trim().slice(0,4000);
   if(!text)return json({error:'No text provided for speech.'},400);
   const language=String(body.language||body.lang||'en-US');
-  const persona=String(body.voice||'Ember');
-  try{
-    const voices=await getElevenVoices(key);
-    const selected=selectElevenVoice(voices,persona,language);
-    if(!selected?.voice_id)return null;
-    const model=String(process.env.ELEVENLABS_TTS_MODEL||'eleven_multilingual_v2').trim();
-    const payload={text,model_id:model,voice_settings:{stability:.5,similarity_boost:.75,style:.15,use_speaker_boost:true}};
-    if(model!=='eleven_multilingual_v2')payload.language_code=elevenLanguageCode(language);
-    const res=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(selected.voice_id)+'?output_format=mp3_44100_128',{
-      method:'POST',
-      headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify(payload),signal:AbortSignal.timeout(90000)
-    });
-    if(!res.ok)return null;
-    return new Response(res.body,{status:200,headers:{
-      'Content-Type':'audio/mpeg','Cache-Control':'no-store',
-      'X-TTS-Engine':'elevenlabs','X-TTS-Language':language,
-      'X-TTS-Voice':String(selected.name||selected.voice_id),
-      'X-TTS-Gender':ELEVEN_PERSONA_GENDERS[persona]||'female','X-TTS-Persona':persona
-    }});
-  }catch(_){return null;}
+  const persona=String(body.voice||'Jepong');
+  const model=String(process.env.ELEVENLABS_TTS_MODEL||'eleven_multilingual_v2').trim();
+  for(let ki=0;ki<keys.length;ki++){
+    const key=keys[ki];
+    try{
+      const voices=await getElevenVoices(key);
+      const selected=selectElevenVoice(voices,persona,language);
+      if(!selected?.voice_id)continue;
+      const payload={text,model_id:model,voice_settings:{stability:.5,similarity_boost:.75,style:.15,use_speaker_boost:true}};
+      if(model!=='eleven_multilingual_v2')payload.language_code=elevenLanguageCode(language);
+      const res=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(selected.voice_id)+'?output_format=mp3_44100_128',{
+        method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+        body:JSON.stringify(payload),signal:AbortSignal.timeout(90000)
+      });
+      if(!res.ok){
+        // Try the next configured key on auth, quota/rate-limit, or provider errors.
+        if([401,402,403,429].includes(res.status)||res.status>=500)continue;
+        continue;
+      }
+      return new Response(res.body,{status:200,headers:{
+        'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-TTS-Engine':'elevenlabs',
+        'X-TTS-Language':language,'X-TTS-Voice':String(selected.name||selected.voice_id),
+        'X-TTS-Gender':ELEVEN_PERSONA_GENDERS[persona]||'female','X-TTS-Persona':persona,
+        'X-TTS-Key-Slot':String(ki+1)
+      }});
+    }catch(_){continue;}
+  }
+  return null;
 }
+
 function ttsLanguageInstruction(language='en-US',voiceName='Ember'){
   const tag=String(language||'en-US').replace('_','-');
   const base=tag.toLowerCase().split('-')[0];
