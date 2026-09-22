@@ -4360,6 +4360,20 @@ async function removePetImageBackground(imageBytes,contentType,requestSignal=nul
       bytes[0]===0x89 && bytes[1]===0x50 && bytes[2]===0x4e && bytes[3]===0x47 &&
       bytes[4]===0x0d && bytes[5]===0x0a && bytes[6]===0x1a && bytes[7]===0x0a;
     if(!isPng || (outType && !outType.includes('image/png')))return null;
+    // PNG alone does not guarantee transparency. Require a PNG color type that
+    // can carry alpha (4=grayscale+alpha, 6=RGBA) or an indexed PNG with tRNS.
+    const colorType=bytes.length>25?bytes[25]:-1;
+    let hasTransparency=colorType===4 || colorType===6;
+    if(!hasTransparency && colorType===3){
+      for(let i=8;i+12<bytes.length;){
+        const len=((bytes[i]<<24)|(bytes[i+1]<<16)|(bytes[i+2]<<8)|bytes[i+3])>>>0;
+        const type=String.fromCharCode(bytes[i+4],bytes[i+5],bytes[i+6],bytes[i+7]);
+        if(type==='tRNS'){hasTransparency=true;break;}
+        if(type==='IEND')break;
+        i+=12+len;
+      }
+    }
+    if(!hasTransparency)return null;
     return {bytes,contentType:'image/png'};
   }catch(_){ return null; }
 }
