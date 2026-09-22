@@ -159,7 +159,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   function renderDirectory(){
     const skills=tab==='skills';
     text('jdplugDirectoryTitle',skills?'Skills':'Plugins');
-    text('jdplugDirectoryHint',skills?'Use coding skills with JepongDevxyz AI.':'Work with JepongDevxyz AI across your favorite tools.');
+    text('jdplugDirectoryHint',skills?'Installed skills are automatically available to every model when relevant.':'Connect tools and install capabilities. JepongDevxyz AI automatically uses installed plugins when a request needs them.');
     $('jdplugSearch').placeholder=skills?'Search skills':'Search plugins';
     renderIconStrip();
     const query=$('jdplugSearch').value.trim().toLowerCase();
@@ -182,13 +182,18 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     if(!installedList.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill yet.':'No plugins installed yet.';installedList.append(empty);}
     if(!available.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent='Nothing else matches your search.';available.append(empty);}
     text('jdplugInstalledLabel',skills?'Active':'Installed');
-    text('jdplugAvailableLabel',skills?'Skills':'Popular');
+    text('jdplugAvailableLabel',skills?'Available skills':'Discover');
     $('jdplugTabPlugins').classList.toggle('active',!skills);$('jdplugTabSkills').classList.toggle('active',skills);
   }
   function nav(next,id){if(view!==next||selected!==id)history.push({view,selected,tab});view=next;selected=id||selected;render();}
   function back(){if(pendingPluginAction){hidePluginConfirmation();return;}if(history.length){const p=history.pop();view=p.view;selected=p.selected;tab=p.tab;render();}else if(view!=='directory'){view='directory';render();}else close();}
   function renderDemo(){
     const demo=$('jdplugDemo');if(!demo)return;demo.replaceChildren();
+    if(selected!=='github'&&selected!=='superpowers'){
+      const plugin=catalogue[selected];
+      const cards=[['Automatic','Available to every model after installation.'],['When relevant','JepongDevxyz AI can apply '+plugin.name+' automatically without @mentions or manual selection.']];
+      for(const [lead,body] of cards){const card=document.createElement('div');card.className='jdplug-demo-card';const strong=document.createElement('strong');strong.textContent=lead;const span=document.createElement('span');span.textContent=' '+body;card.append(strong,span);demo.append(card);}return;
+    }
     const cards=selected==='github'
       ? [
           ['Explain how authentication works in','github.com/grafana/grafana'],
@@ -223,7 +228,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       text('jdplugHeroTitle',c.name);text('jdplugHeroTagline',c.tagline);text('jdplugDescription',c.description);
       $('jdplugGithubSummary').hidden=selected!=='github';$('jdplugSkillSummary').hidden=selected!=='superpowers';
       const isInstalled=installed(selected);
-      $('jdplugTry').textContent=isInstalled?'Try in chat':'Install';
+      $('jdplugTry').textContent=isInstalled?'Installed':'Install'; $('jdplugTry').disabled=isInstalled;
       $('jdplugManage').hidden=true;
       $('jdplugOverflow').hidden=!isInstalled;
       $('jdplugUninstall').hidden=true;
