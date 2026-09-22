@@ -6357,9 +6357,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 if (found) return found;
             }
 
-            // Prefer local service to reduce stutter/latency on mobile.
-            const local = pool.find(v => v.localService);
-            return local || pool[0] || null;
+            // Keep named personas audibly distinct. If no keyword-specific match exists,
+            // distribute personas across the voices available for the detected language.
+            const locals=pool.filter(v=>v.localService);
+            const candidates=locals.length?locals:pool;
+            const personaIndex=Math.max(0,PERSONALIZATION_VOICES.findIndex(v=>v.name===profile.name));
+            return candidates[personaIndex % candidates.length] || candidates[0] || null;
         }
 
         function normalizeBrandForSpeech(text, langCode='en-US') {
@@ -6694,6 +6697,15 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             stopAllSpeech();
             const runId=smartSpeechRunId;
             const profile=options.profile||getVoiceProfile();
+            await ensureSpeechVoicesReady(500);
+            const targetLang=detectSpeechLanguage(clean);
+            const personaVoice=resolvePersonalizationSystemVoice(profile,clean,targetLang);
+            // A selected/named voice must actually affect Read Aloud. Use the matching installed
+            // voice immediately; cloud neural remains the fallback when the device has none.
+            if(personaVoice){
+                speakChunksSequentially(speechChunks(clean,150),{...options,profile,languageOverride:personaVoice.lang||targetLang,onstart:(u,v,i)=>options.onstart?.(u,v,i,profile.name+' • '+(v?.name||'Device voice'))});
+                return;
+            }
 
             // MeloTTS currently covers EN/ES/FR/ZH/JA/KO.
             // Filipino and every unsupported language intentionally use the
@@ -6825,84 +6837,32 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         async function playPersonalizationVoiceSample(name=personalizationSettings.voicePersona) {
             await ensureAudioPlaybackUnlocked();
-            const status=document.getElementById('psVoiceSampleStatus');
-            const orb=document.getElementById('psVoiceOrb');
-            const btn=document.getElementById('psVoicePreviewBtn');
+            const status=document.getElementById('psVoiceSampleStatus'),orb=document.getElementById('psVoiceOrb'),btn=document.getElementById('psVoicePreviewBtn');
             const profile=getVoiceProfile(name);
-
-            if(activeNeuralAudio || ('speechSynthesis' in window && window.speechSynthesis.speaking)){
-                stopAllSpeech();
-                orb?.classList.remove('speaking');
-                if(status)status.textContent='';
-                if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
-                refreshLucideIcons();
-                return;
-            }
-
-            personalizationSettings.voicePersona=profile.name;
-            personalizationSettings.voiceEnabled=true;
-            persistPersonalization();
-            renderPersonalizationSettings();
-            renderVoiceSettingsPage();
-
-            if(status)status.textContent='Preparing voice preview…';
-            if(btn)btn.innerHTML='<i data-lucide="loader-circle"></i><span>Preparing…</span>';
-            refreshLucideIcons();
-
-            await ensureSpeechVoicesReady(1200);
-
-            const sample=voiceSampleText();
-            const requestedLang=preferredLanguageCode() || detectSpeechLanguage(sample);
-            const neuralSupported=neuralTTSIsSupported(sample);
-            const hasLocalTarget=hasDeviceVoiceForLanguage(requestedLang);
-
+            stopAllSpeech();
+            personalizationSettings.voicePersona=profile.name; personalizationSettings.voiceEnabled=true; persistPersonalization();
+            renderPersonalizationSettings(); renderVoiceSettingsPage();
+            if(status)status.textContent='Loading '+profile.name+'…';
+            if(btn)btn.innerHTML='<i data-lucide="loader-circle"></i><span>Loading…</span>'; refreshLucideIcons();
+            await ensureSpeechVoicesReady(1600);
+            const sample=voiceSampleText(), requestedLang=preferredLanguageCode()||detectSpeechLanguage(sample);
+            const selected=resolvePersonalizationSystemVoice(profile,sample,requestedLang);
             const handlers={
                 profile,
-                onstart:(utter,voice,index,engine)=>{
-                    orb?.classList.add('speaking');
-                    if(status)status.textContent=`Playing ${profile.name} • ${engine||'Voice'}${voice?` • ${voice.name}`:''}`;
-                    if(btn)btn.innerHTML='<i data-lucide="square"></i><span>Stop preview</span>';
-                    refreshLucideIcons();
-                },
-                onend:()=>{
-                    orb?.classList.remove('speaking');
-                    if(status)status.textContent='';
-                    if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
-                    refreshLucideIcons();
-                },
-                onerror:(err)=>{
-                    orb?.classList.remove('speaking');
-                    if(status)status.textContent='Voice preview could not play in this browser.';
-                    if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';
-                    refreshLucideIcons();
-                }
+                onstart:(utter,voice,index,engine)=>{orb?.classList.add('speaking');if(status)status.textContent='Playing '+profile.name+' • '+(voice?.name||engine||'Voice');if(btn)btn.innerHTML='<i data-lucide="square"></i><span>Stop preview</span>';refreshLucideIcons();},
+                onend:()=>{orb?.classList.remove('speaking');if(status)status.textContent='';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();},
+                onerror:()=>{orb?.classList.remove('speaking');if(status)status.textContent='Voice preview could not play. Check the phone TTS voice/language package.';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();}
             };
-
-            // Neural languages use Cloudflare first; failure automatically drops to device TTS.
-            if(neuralSupported){
-                speakSmartVoice(sample,handlers);
+            // Prefer a real device/browser voice for previews so Breeze/Cove/Ember/etc.
+            // map to different voices rather than all sounding like one neural speaker.
+            if(selected){
+                speakChunksSequentially(speechChunks(sample,150),{...handlers,profile,languageOverride:selected.lang||requestedLang,onstart:(u,v,i)=>handlers.onstart(u,v,i,'Device voice')});
                 return;
             }
-
-            // For languages not covered by neural TTS, use an installed device voice.
-            if(hasLocalTarget){
-                speakChunksSequentially(speechChunks(sample,150),{
-                    ...handlers,
-                    languageOverride:requestedLang,
-                    onstart:(utter,voice,index)=>handlers.onstart(utter,voice,index,'Device voice')
-                });
-                return;
-            }
-
-            // If the device has no voice package for the chosen language, still give the user
-            // an audible preview instead of silently failing.
-            const englishFallback='Hello! This is a voice preview for Jepong Devxyz AI.';
-            if(status)status.textContent=`No ${personalizationSettings.language||'selected'} device voice is installed • using audible fallback`;
-            speakChunksSequentially([englishFallback],{
-                ...handlers,
-                languageOverride:'en-US',
-                onstart:(utter,voice,index)=>handlers.onstart(utter,voice,index,'Device fallback')
-            });
+            // No installed voice: use neural TTS where supported so Preview is still audible.
+            if(neuralTTSIsSupported(sample)){ speakSmartVoice(sample,handlers); return; }
+            const fallback='Hello! This is the '+profile.name+' voice preview for Jepong Devxyz AI.';
+            speakChunksSequentially([fallback],{...handlers,profile,languageOverride:'en-US',onstart:(u,v,i)=>handlers.onstart(u,v,i,'Device fallback')});
         }
 
         function openPetHeaderCompanion() {
