@@ -14,7 +14,8 @@ for(const marker of ['function showPluginConfirmation(', 'function confirmPlugin
   'function hidePluginConfirmation(', 'const defaultInstalled=Object.fromEntries(Object.keys(catalogue).map(id=>[id,false]))',
   "if(!installed(selected)){showPluginConfirmation(selected,'install');return;}",
   "if(!installed('github')){notice('Install GitHub before using its tools.',true);return null;}",
-  "enabled:installed('superpowers')&&state.superpowers",
+  "superpowers:{enabled:installed('superpowers'),phase:state.phase}",
+  "autoUse:true",
   "enabled:installed('github')&&state.github&&state.repoLoaded",
   "state.installed[id]=false", "state.installed[id]=true",
   "method:'DELETE',credentials:'same-origin'"]){
