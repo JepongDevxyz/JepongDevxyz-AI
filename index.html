@@ -6309,7 +6309,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(/[\u0900-\u097f]/.test(t))return'hi-IN';
             if(/[\u0e00-\u0e7f]/.test(t))return'th-TH';
             const rules=[
-              ['fil-PH',/\b(ang|mga|ako|ikaw|siya|kami|tayo|sila|ito|iyan|iyon|salamat|kumusta|kamusta|paano|pano|bakit|saan|kailan|gawin|natin|naman|lang|po|opo|hindi|oo|para|dahil|pero|kung|kapag|pwede|puwede|sagot|tanong|tulong|ayos|ayusin)\b/i],
+              ['fil-PH',/\b(ang|mga|ako|ikaw|siya|kami|tayo|sila|ito|iyan|iyon|salamat|kumusta|kamusta|paano|pano|bakit|saan|kailan|gawin|natin|naman|lang|po|opo|hindi|oo|para|dahil|pero|kung|kapag|pwede|puwede|sagot|tanong|tulong|ayos|ayusin|yung|iyon|yan|dito|doon|meron|mayroon|gusto|kasi|talaga|sana|dapat|lahat|boses|pilipino|filipino|tagalog)\b/i],
               ['es-ES',/\b(hola|gracias|por favor|cómo|que|qué|para|porque|puedo|ayuda|quiero|también|está|esto)\b/i],
               ['fr-FR',/\b(bonjour|merci|avec|pour|comment|vous|nous|je|une|des|est|pas)\b/i],
               ['de-DE',/\b(hallo|danke|bitte|und|ich|nicht|mit|für|wie|das|ist)\b/i],
@@ -6373,8 +6373,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
 
             const locals=pool.filter(v=>v.localService);
-            const candidates=locals.length?locals:pool;
+            const candidates=(locals.length?locals:pool).slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
             const personaIndex=Math.max(0,PERSONALIZATION_VOICES.findIndex(v=>v.name===profile.name));
+            // Stable mapping: different persona names map to different installed voices whenever
+            // the selected language actually exposes more than one voice.
             return candidates[personaIndex % candidates.length] || candidates[0] || null;
         }
 
@@ -6458,7 +6460,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }[base] || .96;
 
             const personaIndex=Math.max(0,PERSONALIZATION_VOICES.findIndex(v=>v.name===getVoiceProfile().name));
-            const personaRate=[1.04,.91,1.0,1.07,.96,.93,.88,1.09,.98][personaIndex]||1;
+            const personaRate=[.98,.94,1.05,.92,1.00,1.04,.97,.95,.90,1.07,.99][personaIndex]||1;
             return Math.max(.68,Math.min(1.12,profileRate*userRate*langFactor*personaRate));
         }
 
