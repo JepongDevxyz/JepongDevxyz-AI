@@ -4397,7 +4397,7 @@ async function generatePetImage(body={},requestSignal=null){
   for(const account of accounts){
     try{
       const url=`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account.accountId)}/ai/run/${PET_IMAGE_MODEL}`;
-      const signal=requestSignal || AbortSignal.timeout(65000);
+      const signal=requestSignal || AbortSignal.timeout(35000);
       const res=await fetch(url,{
         method:'POST',
         headers:{
@@ -4413,12 +4413,14 @@ async function generatePetImage(body={},requestSignal=null){
         if(contentType.startsWith('image/')){
           const bytes=new Uint8Array(await res.arrayBuffer());
           if(bytes.length){
-            const finalImage=await finalizePetImage(bytes,contentType.split(';')[0],requestSignal);
+            // Return the generated pet immediately. Background removal is a best-effort
+            // enhancement and must never hold the serverless request open long enough
+            // to turn a successful generation into a Vercel 504.
             return json({
               ok:true,name,description,
-              imageDataUrl:finalImage.imageDataUrl,
-              backgroundRemoved:finalImage.backgroundRemoved,
-              transparentPng:finalImage.transparentPng===true,
+              imageDataUrl:`data:${contentType.split(';')[0]};base64,${bytesToBase64(bytes)}`,
+              backgroundRemoved:false,
+              transparentPng:false,
               provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL,referencePet,matchSiteStyle
             });
           }
@@ -4426,15 +4428,13 @@ async function generatePetImage(body={},requestSignal=null){
           const payload=await safeJsonResponse(res);
           const image=extractCloudflareImageBase64(payload);
           if(image){
-            const raw=Uint8Array.from(atob(image),ch=>ch.charCodeAt(0));
-            const finalImage=await finalizePetImage(raw,'image/jpeg',requestSignal);
             return json({
               ok:true,
               name,
               description,
-              imageDataUrl:finalImage.imageDataUrl,
-              backgroundRemoved:finalImage.backgroundRemoved,
-              transparentPng:finalImage.transparentPng===true,
+              imageDataUrl:`data:image/jpeg;base64,${image}`,
+              backgroundRemoved:false,
+              transparentPng:false,
               provider:'Cloudflare Workers AI',
               model:PET_IMAGE_MODEL,
               referencePet,
@@ -4461,20 +4461,19 @@ async function generatePetImage(body={},requestSignal=null){
       const url=`https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&seed=${seed}`;
       const res=await fetch(url,{
         headers:{'Authorization':`Bearer ${pollinationsKey}`,'Accept':'image/*'},
-        signal:requestSignal || AbortSignal.timeout(65000)
+        signal:requestSignal || AbortSignal.timeout(35000)
       });
       if(res.ok){
         const contentType=(res.headers.get('content-type')||'image/jpeg').split(';')[0];
         const bytes=new Uint8Array(await res.arrayBuffer());
         if(bytes.length){
-          const finalImage=await finalizePetImage(bytes,contentType,requestSignal);
           return json({
             ok:true,
             name,
             description,
-            imageDataUrl:finalImage.imageDataUrl,
-            backgroundRemoved:finalImage.backgroundRemoved,
-            transparentPng:finalImage.transparentPng===true,
+            imageDataUrl:`data:${contentType};base64,${bytesToBase64(bytes)}`,
+            backgroundRemoved:false,
+            transparentPng:false,
             provider:'Pollinations',
             model:'flux',
             referencePet,
