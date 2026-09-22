@@ -133,3 +133,31 @@ body.theme-light #jdAgentOverlay{background:#fff;color:#111}
 body.theme-light .jd-agent-view textarea,body.theme-light #jdAgentFiles pre{background:#f1f1f3;color:#111;border-color:#ccc}
 body.theme-light .jd-agent-view button{background:#f3f3f3;color:#111}
 body.theme-light #jdAgentStatus{color:#293c80}
+
+/* ChatGPT-style plugin directory: quiet surfaces, compact rows, clear installed state. */
+.jdplug-overlay{background:rgba(0,0,0,.72);backdrop-filter:blur(12px)}
+.jdplug-dialog{max-width:760px;margin:0 auto;background:#101010}
+.jdplug-scroll{padding-left:28px;padding-right:28px}
+.jdplug-heading{font-size:2rem;font-weight:650}
+.jdplug-subtitle{font-size:.98rem}
+.jdplug-search{height:50px;border-color:#343434;background:#1b1b1b;margin-bottom:22px}
+.jdplug-list-item{min-height:72px;border-bottom:1px solid #242424}
+.jdplug-entry{min-height:72px}
+.jdplug-entry-icon{width:48px;height:48px;border-radius:13px;font-size:1rem}
+.jdplug-entry-copy strong{font-size:1rem;font-weight:600}
+.jdplug-entry-copy small{font-size:.86rem}
+.jdplug-strip-item{width:50px;height:50px;border-radius:14px}
+.jdplug-group{color:var(--jdplug-muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.055em}
+.jdplug-detail-top{align-items:center}
+.jdplug-hero .jdplug-entry-icon{width:72px;height:72px;border-radius:20px;margin-bottom:18px;font-size:1.5rem}
+.jdplug-hero h3{font-size:2.25rem}
+.jdplug-demo{min-height:220px;padding:24px;border-radius:22px;background:#181818;border:1px solid #2d2d2f}
+.jdplug-demo-card{border:1px solid #303033;background:#222;color:#f5f5f5;box-shadow:none;border-radius:16px;padding:17px 18px}
+.jdplug-button.primary:disabled{background:#272727;color:#a7a7aa;border-color:#353535;cursor:default;transform:none}
+body.theme-light .jdplug-dialog{background:#fff}
+body.theme-light .jdplug-overlay{background:rgba(0,0,0,.28)}
+body.theme-light .jdplug-list-item{border-color:#ededed}
+body.theme-light .jdplug-demo{background:#f7f7f8;border-color:#e5e5e5}
+body.theme-light .jdplug-demo-card{background:#fff;color:#111;border-color:#e4e4e4}
+@media(min-width:760px){.jdplug-dialog{height:min(88dvh,820px);min-height:0;margin-top:6dvh;border:1px solid #2d2d2f;border-radius:24px}.jdplug-overlay{padding:0 20px}}
+@media(max-width:590px){.jdplug-dialog{max-width:none;margin:0;border-radius:0}.jdplug-scroll{padding-left:22px;padding-right:22px}.jdplug-heading{font-size:1.8rem}}

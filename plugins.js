@@ -12,11 +12,27 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     {id:'debug',name:'Diagnosing problems',description:'Reproduce and narrow down bugs using actual error messages and relevant source.'},
     {id:'review',name:'Reviewing & finishing',description:'Review the changed code, identify remaining risks, and verify before release.'}
   ];
+  const skillPlugins={
+    mattpocock:{name:'Matt Pocock Skills',tagline:'Engineering workflows for real projects',description:'Engineering-oriented workflows for diagnosis, TDD, code review, architecture, specs, tickets, research, implementation and handoff.',icon:'MP',className:'super',source:'mattpocock/skills'},
+    uiuxpro:{name:'UI/UX Pro Max',tagline:'Design systems, UX and interface guidance',description:'Applies UI/UX design intelligence for layouts, accessibility, typography, palettes, components, charts and implementation across common web stacks.',icon:'UX',className:'super',source:'nextlevelbuilder/ui-ux-pro-max-skill'},
+    caveman:{name:'Caveman',tagline:'Concise coding answers without filler',description:'Keeps coding responses terse and evidence-focused while preserving useful code, paths, errors and technical explanations.',icon:'CV',className:'super',source:'Shawnchee/caveman-skill'},
+    humanizer:{name:'Humanizer',tagline:'Make AI-written prose sound more natural',description:'Revises prose to reduce robotic or formulaic AI-writing patterns while preserving the original meaning and factual content.',icon:'HU',className:'super',source:'blader/humanizer'},
+    findskills:{name:'Find Skills',tagline:'Discover an appropriate agent skill',description:'Helps identify the most relevant installed skill for a task and explains when no installed skill is a good match.',icon:'FS',className:'super',source:'vercel-labs/skills/find-skills'},
+    deployvercel:{name:'Deploy to Vercel',tagline:'Plan and verify Vercel deployments',description:'Guides Vercel deployment workflows, preferring preview deployments and verified project state. It never claims a deployment occurred without real deployment evidence.',icon:'▲',className:'super',source:'vercel-labs/agent-skills/deploy-to-vercel'},
+    brainstorming:{name:'Brainstorming',tagline:'Turn ideas into checkable designs',description:'Clarifies intent, constraints and success criteria before implementation, then turns the result into a concrete design.',icon:'💡',className:'super',source:'obra/superpowers/brainstorming'},
+    tdd:{name:'TDD',tagline:'Test-driven implementation workflow',description:'Uses a red-green-refactor style workflow where practical and never claims tests passed without real execution evidence.',icon:'✓',className:'super',source:'obra/superpowers/test-driven-development'},
+    excalidraw:{name:'Excalidraw',tagline:'Design editable Excalidraw diagrams',description:'Plans clear diagrams and can generate editable Excalidraw-compatible source when the selected coding workflow has enough project context.',icon:'EX',className:'super',source:'coleam00/excalidraw-diagram-skill'},
+    remotion:{name:'Remotion',tagline:'Create and review Remotion video code',description:'Applies Remotion best practices for compositions, animation, timing, media, captions and rendering workflows without pretending a render ran when it did not.',icon:'▶',className:'super',source:'remotion-dev/skills'},
+    webquality:{name:'Web Quality',tagline:'Performance, accessibility and SEO review',description:'Reviews web projects using evidence-oriented performance, Core Web Vitals, accessibility, SEO and best-practice criteria.',icon:'WQ',className:'super',source:'addyosmani/web-quality-skills'}
+  };
   const catalogue={
     github:{name:'GitHub',tagline:'Triage PRs, issues, CI, and publish flows',description:'Use GitHub with JepongDevxyz AI to inspect repositories, understand source files, review branches and pull requests, and bring selected repository context into chat.',icon:'GH',className:'git'},
-    superpowers:{name:'Superpowers',tagline:'Make your agents better devs',description:'Use Superpowers to guide coding work through brainstorming, implementation planning, test-driven development, systematic debugging, code review, and finishing workflows.',icon:'⚡',className:'super'}
+    superpowers:{name:'Superpowers',tagline:'Make your agents better devs',description:'Use Superpowers to guide coding work through brainstorming, implementation planning, test-driven development, systematic debugging, code review, and finishing workflows.',icon:'⚡',className:'super',source:'obra/superpowers'},
+    ...skillPlugins
   };
-  const defaultState={repo:'',path:'',ref:'',directory:'',github:false,repoLoaded:false,superpowers:false,phase:'auto',installed:{github:false,superpowers:false},accountConnected:false,accountUser:null,accountScopes:[],accountRepos:[],githubConnectionReady:null,githubAppStatus:null};
+  const skillPluginIds=Object.keys(skillPlugins);
+  const defaultInstalled=Object.fromEntries(Object.keys(catalogue).map(id=>[id,false]));
+  const defaultState={repo:'',path:'',ref:'',directory:'',github:false,repoLoaded:false,superpowers:false,phase:'auto',installed:{...defaultInstalled},accountConnected:false,accountUser:null,accountScopes:[],accountRepos:[],githubConnectionReady:null,githubAppStatus:null};
   const state=Object.assign({},defaultState);
   let tab='plugins',view='directory',selected='github',busy=false,pendingPluginAction=null;
   let availableTestWorkflows=[],selectedExecutionRef='',pendingExecution=null;
@@ -26,8 +42,8 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   let savedGithubSelection=false,githubRestorePromise=Promise.resolve();
   const history=[];
   function text(id,value){const el=$(id);if(el)el.textContent=String(value||'');}
-  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,ref:state.ref,path:state.path,installed:{github:!!state.installed.github,superpowers:!!state.installed.superpowers},github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed={github:s.installed?.github===true,superpowers:s.installed?.superpowers===true};state.ref=typeof s.ref==='string'?s.ref:'';state.path=typeof s.path==='string'?s.path:'';state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'auto';savedGithubSelection=state.installed.github&&s.github===true&&!!state.repo;}}catch(_){}}
+  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,ref:state.ref,path:state.path,installed:Object.fromEntries(Object.keys(catalogue).map(id=>[id,state.installed?.[id]===true])),github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
+  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed=Object.fromEntries(Object.keys(catalogue).map(id=>[id,s.installed?.[id]===true]));state.ref=typeof s.ref==='string'?s.ref:'';state.path=typeof s.path==='string'?s.path:'';state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'auto';savedGithubSelection=state.installed.github&&s.github===true&&!!state.repo;}}catch(_){}}
   restore();
   githubRestorePromise=restoreGithubContext();
 
@@ -103,7 +119,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
         $('jdplugResults')?.replaceChildren();
         $('jdplugPreview').hidden=true;
         $('jdplugGitEnabled').checked=false;
-      }else{state.superpowers=false;}
+      }else if(id==='superpowers'){state.superpowers=false;}
       persist();hidePluginConfirmation();view='directory';history.length=0;render();
       notice(catalogue[id].name+' uninstalled.');
       if(typeof window.showModernToast==='function')window.showModernToast(catalogue[id].name+' uninstalled');
@@ -127,7 +143,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     trailing.setAttribute('aria-label',(installed(id)?'Manage ':'Install ')+catalogue[id].name);
     const menu=document.createElement('div');menu.className='jdplug-entry-menu';menu.hidden=true;
     if(installed(id)){
-      menu.append(makeButton('Manage',()=>{menu.hidden=true;selected=id;openManage();},'jdplug-menu-action'));
+      if(id==='github'||id==='superpowers')menu.append(makeButton('Manage',()=>{menu.hidden=true;selected=id;openManage();},'jdplug-menu-action'));
       menu.append(makeButton('Uninstall',()=>{menu.hidden=true;showPluginConfirmation(id,'uninstall');},'jdplug-menu-action danger'));
     }
     container.append(trailing,menu);
@@ -135,7 +151,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   }
   function renderIconStrip(){
     const strip=$('jdplugIconStrip');if(!strip)return;strip.replaceChildren();
-    for(const id of ['github','superpowers']){
+    for(const id of Object.keys(catalogue).slice(0,8)){
       const c=catalogue[id],button=makeButton('',()=>openDetail(id),'jdplug-strip-item '+c.className);
       button.textContent=c.icon;button.setAttribute('aria-label',c.name);strip.append(button);
     }
@@ -143,7 +159,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   function renderDirectory(){
     const skills=tab==='skills';
     text('jdplugDirectoryTitle',skills?'Skills':'Plugins');
-    text('jdplugDirectoryHint',skills?'Use coding skills with JepongDevxyz AI.':'Work with JepongDevxyz AI across your favorite tools.');
+    text('jdplugDirectoryHint',skills?'Installed skills are automatically available to every model when relevant.':'Connect tools and install capabilities. JepongDevxyz AI automatically uses installed plugins when a request needs them.');
     $('jdplugSearch').placeholder=skills?'Search skills':'Search plugins';
     renderIconStrip();
     const query=$('jdplugSearch').value.trim().toLowerCase();
@@ -157,7 +173,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
         list.append(makeEntry(data,()=>{if(!installed('superpowers')){selected='superpowers';showPluginConfirmation('superpowers','install');return;}state.phase=phase.id;state.superpowers=true;persist();openDetail('superpowers');},phase.description));
       }
     }else{
-      for(const id of ['github','superpowers']){
+      for(const id of Object.keys(catalogue)){
         const data=catalogue[id];
         if(!(data.name+' '+data.tagline+' '+data.description).toLowerCase().includes(query))continue;
         (installed(id)?installedList:available).append(catalogueItem(id));
@@ -166,13 +182,18 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     if(!installedList.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent=skills?'No active skill yet.':'No plugins installed yet.';installedList.append(empty);}
     if(!available.children.length){const empty=document.createElement('div');empty.className='jdplug-empty';empty.textContent='Nothing else matches your search.';available.append(empty);}
     text('jdplugInstalledLabel',skills?'Active':'Installed');
-    text('jdplugAvailableLabel',skills?'Skills':'Popular');
+    text('jdplugAvailableLabel',skills?'Available skills':'Discover');
     $('jdplugTabPlugins').classList.toggle('active',!skills);$('jdplugTabSkills').classList.toggle('active',skills);
   }
   function nav(next,id){if(view!==next||selected!==id)history.push({view,selected,tab});view=next;selected=id||selected;render();}
   function back(){if(pendingPluginAction){hidePluginConfirmation();return;}if(history.length){const p=history.pop();view=p.view;selected=p.selected;tab=p.tab;render();}else if(view!=='directory'){view='directory';render();}else close();}
   function renderDemo(){
     const demo=$('jdplugDemo');if(!demo)return;demo.replaceChildren();
+    if(selected!=='github'&&selected!=='superpowers'){
+      const plugin=catalogue[selected];
+      const cards=[['Automatic','Available to every model after installation.'],['When relevant','JepongDevxyz AI can apply '+plugin.name+' automatically without @mentions or manual selection.']];
+      for(const [lead,body] of cards){const card=document.createElement('div');card.className='jdplug-demo-card';const strong=document.createElement('strong');strong.textContent=lead;const span=document.createElement('span');span.textContent=' '+body;card.append(strong,span);demo.append(card);}return;
+    }
     const cards=selected==='github'
       ? [
           ['Explain how authentication works in','github.com/grafana/grafana'],
@@ -207,7 +228,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       text('jdplugHeroTitle',c.name);text('jdplugHeroTagline',c.tagline);text('jdplugDescription',c.description);
       $('jdplugGithubSummary').hidden=selected!=='github';$('jdplugSkillSummary').hidden=selected!=='superpowers';
       const isInstalled=installed(selected);
-      $('jdplugTry').textContent=isInstalled?'Try in chat':'Install';
+      $('jdplugTry').textContent=isInstalled?'Installed':'Install'; $('jdplugTry').disabled=isInstalled;
       $('jdplugManage').hidden=true;
       $('jdplugOverflow').hidden=!isInstalled;
       $('jdplugUninstall').hidden=true;
@@ -218,7 +239,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
       }else renderSkillRows('jdplugDetailSkillList',true);
       text('jdplugDetailNote',selected==='github'
         ? (state.accountConnected?'Connected to GitHub. Chat source browsing is read-only; reviewed PR proposals and CI execution require separate confirmation.':'Install the plugin first. Connecting your GitHub account is a separate authorization step.')
-        : 'Superpowers is a built-in coding workflow. Installing enables its skills in this browser.');
+        : selected==='superpowers' ? 'Superpowers is a built-in coding workflow. Installing enables its skills in this browser.' : 'Installed skill plugin source: '+(c.source||'built-in')+'. Its workflow is applied to chat while installed; external actions still require real connected tools and evidence.');
     }else{
       text('jdplugManageTitle',catalogue[selected].name);
       text('jdplugManageSubtitle',selected==='github'?'Manage account access and repository context.':'Manage the installed coding workflow and active skill.');
@@ -257,7 +278,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     }
   }
   function openDetail(id){nav('detail',id);}
-  function openManage(){if(!installed(selected)){showPluginConfirmation(selected,'install');return;}nav('manage',selected);}
+  function openManage(){if(!installed(selected)){showPluginConfirmation(selected,'install');return;}if(selected!=='github'&&selected!=='superpowers'){openDetail(selected);return;}nav('manage',selected);}
   function statusForChat(){text('jdplugSelected',installed('github')&&state.github&&state.repoLoaded?'In chat: '+state.repo+(state.path?' / '+state.path:'')+(state.ref?' @ '+state.ref:''):'Not included in chat.');}
   function selectedInfo(){statusForChat();$('jdplugGitEnabled').checked=installed('github')&&state.github&&state.repoLoaded;}
   function renderGithubAccount(){
@@ -452,10 +473,13 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     if(selected==='github'){
       if(!state.repoLoaded){openManage();notice('Open a GitHub repository before trying it in chat.',true);return;}
       state.github=true;prompt='Inspect the selected GitHub repository '+state.repo+(state.path?' and the file '+state.path:'')+'. Explain the source and suggest next steps based only on code you actually read.';
-    }else{
+    }else if(selected==='superpowers'){
       state.superpowers=true;
       const phase=phases.find(p=>p.id===state.phase)||phases[0];
       prompt='Use the Superpowers '+phase.name.toLowerCase()+' workflow for my coding task. First ask what project or bug I want help with if I have not provided it.';
+    }else{
+      const plugin=catalogue[selected];
+      prompt='Use the '+plugin.name+' plugin for this request. Apply its workflow accurately and do not claim external actions, tests, renders, audits, or deployments happened unless there is real tool evidence.';
     }
     persist();close();
     const input=$('userInput');
@@ -965,7 +989,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     view='manage';render();
     if(state.repoLoaded&&state.accountConnected)loadTestWorkflows();
   },contextForChat(){
-    return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
+    return {superpowers:{enabled:installed('superpowers'),phase:state.phase},skills:skillPluginIds.filter(id=>installed(id)),autoUse:true,github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
   }});
 
   // Complete the OAuth round trip without leaving stale query parameters in the chat URL.

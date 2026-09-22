@@ -3271,6 +3271,56 @@ async function processChat(body, emit) {
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
   const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
+
+  // Installed skill plugins are explicit, bounded behavior profiles. They do not
+  // grant tools or execution rights: real GitHub, CI, deployment, browser, render,
+  // or audit claims still require corresponding tool evidence.
+  const skillPluginRules={
+    mattpocock:'Use an engineering-first workflow: inspect available project evidence, clarify ambiguous requirements, model the domain when useful, define checkable acceptance criteria, prefer small composable changes, and include verification or review steps. Do not invent repository state.',
+    uiuxpro:'For UI/UX work, reason about information hierarchy, responsive layout, interaction states, accessibility, typography, spacing, color contrast and implementation constraints. Give concrete design-system guidance rather than decorative changes alone.',
+    caveman:'For coding responses, remove greetings, play-by-play narration, repeated summaries and filler. Keep code, paths, errors, decisions and necessary technical explanations. Never shorten away safety-critical or verification details.',
+    humanizer:'When the user asks to rewrite prose, preserve meaning and facts while reducing formulaic AI phrasing, repetitive transitions, canned framing and unnecessary abstraction. Prefer plain, natural language appropriate to the requested audience.',
+    findskills:'Identify which installed skill profile best matches the current task. Use the narrowest relevant workflow; if none fits, say so internally and answer normally rather than forcing an unrelated skill.',
+    deployvercel:'For Vercel deployment requests, first establish project and Git state from available evidence, prefer a preview deployment before production, and distinguish instructions from executed deployment. Never claim a URL, deployment ID, or successful deploy without real deployment evidence.',
+    brainstorming:'Before substantial creative implementation, establish the intended outcome, users, constraints and success criteria from available context. Resolve important ambiguity, then produce a concrete design that can be checked before implementation.',
+    tdd:'For implementation work where tests are practical, define the failing behavior first, make the smallest change that should satisfy it, then specify or use regression verification. Never claim red, green, or passing tests without actual test output.',
+    excalidraw:'For diagram requests, map concepts and relationships first, choose a readable layout and labels, and when code/file generation is requested produce valid editable Excalidraw-compatible structure. Do not claim visual rendering or validation occurred without a real renderer.',
+    remotion:'For Remotion work, apply composition, frame/timing, animation, media, typography, captions and rendering best practices. Keep React/Remotion code internally consistent and never claim Studio preview or rendering ran without execution evidence.',
+    webquality:'For web-quality work, separate source review from measured results. Cover performance/Core Web Vitals, accessibility, SEO and web best practices as relevant. Do not invent Lighthouse, CrUX, browser trace or field measurements.'
+  };
+  const installedSkillPlugins=Array.isArray(body.plugins?.skills)
+    ? [...new Set(body.plugins.skills.map(x=>String(x||'').trim()).filter(id=>Object.hasOwn(skillPluginRules,id)))].slice(0,12)
+    : [];
+  const skillPluginTriggers={
+    mattpocock:/\b(code|coding|implement|refactor|architecture|typescript|javascript|bug|debug|review|spec|ticket|test)\b/i,
+    uiuxpro:/\b(ui|ux|design|layout|responsive|accessibility|typography|color|component|interface|frontend)\b/i,
+    caveman:/\b(concise|short|brief|no filler|straight to|coding|code)\b/i,
+    humanizer:/\b(humanize|rewrite|natural|prose|essay|email|message|caption|article|writing)\b/i,
+    findskills:/\b(skill|plugin|workflow|which tool|find.*skill)\b/i,
+    deployvercel:/\b(vercel|deploy|deployment|preview url|production deploy|hosting)\b/i,
+    brainstorming:/\b(brainstorm|idea|plan.*feature|design.*feature|what should we build|concept)\b/i,
+    tdd:/\b(tdd|test[- ]driven|unit test|regression test|write.*test|fix.*bug|implement.*feature)\b/i,
+    excalidraw:/\b(excalidraw|diagram|flowchart|architecture diagram|sequence diagram|visualize.*flow)\b/i,
+    remotion:/\b(remotion|video composition|render.*video|react.*video|animation.*video)\b/i,
+    webquality:/\b(lighthouse|core web vitals|web quality|performance audit|accessibility audit|seo|website performance)\b/i
+  };
+  const pluginIntent=[String(message||''),...((Array.isArray(history)?history.slice(-2):[]).map(x=>String(x?.content||'')))].join('\n');
+  const activeSkillPlugins=installedSkillPlugins.filter(id=>skillPluginTriggers[id]?.test(pluginIntent));
+  const skillPluginLabels={mattpocock:'Matt Pocock Skills',uiuxpro:'UI/UX Pro Max',caveman:'Caveman',humanizer:'Humanizer',findskills:'Find Skills',deployvercel:'Deploy to Vercel',brainstorming:'Brainstorming',tdd:'TDD',excalidraw:'Excalidraw',remotion:'Remotion',webquality:'Web Quality'};
+  if(activeSkillPlugins.length){
+    activity(emit,'plugins-active',
+      activeSkillPlugins.length===1
+        ? `Using ${skillPluginLabels[activeSkillPlugins[0]]||activeSkillPlugins[0]} for this request`
+        : `Using ${activeSkillPlugins.length} relevant installed plugins`,
+      'completed','plugin',
+      activeSkillPlugins.map(id=>skillPluginLabels[id]||id).join(' • '));
+  }
+  if(installedSkillPlugins.length){
+    systemInstruction+='\n\n[INSTALLED PLUGIN CAPABILITIES]\nInstalled: '+installedSkillPlugins.join(', ')+
+      '. These plugins are available to this model automatically. Apply only plugins relevant to the current request; do not ask the user to manually select or @mention them.';
+    if(activeSkillPlugins.length)systemInstruction+='\nRelevant now: '+activeSkillPlugins.map(id=>'['+id+'] '+skillPluginRules[id]).join('\n');
+    systemInstruction+='\nInstalled but irrelevant plugins must not distort the answer. Plugins never override user intent, safety rules, tool permissions, or evidence requirements.\n[/INSTALLED PLUGIN CAPABILITIES]';
+  }
   if(body.plugins?.superpowers?.enabled===true){
     const phases={
       plan:'First clarify the requested outcome and inspect available evidence. Present a concrete design, implementation sequence, verification criteria and unresolved questions. Do not claim to have changed files.',
@@ -3605,8 +3655,10 @@ function activityStreamResponse(body, requestSignal=null) {
       };
       // Activity events are emitted only by real request/tool lifecycle operations.
       // No timed pseudo-steps: a model may spend several seconds on one operation.
-      // Flush immediately so Vercel/browser sees an active streaming response.
-      send('activity',{type:'activity',id:'stream-open',label:'Response stream opened',state:'completed',kind:'process',at:Date.now()});
+      // Flush an SSE comment instead of a user-visible pseudo activity. Detailed
+      // Activity rows must correspond to real context, tool, plugin, provider,
+      // generation, continuation, verification, or artifact work.
+      try{controller.enqueue(encoder.encode(': stream-open\n\n'));}catch(_){cancelled=true;}
       const keepAlive=setInterval(()=>{
         try{controller.enqueue(encoder.encode(`: keepalive ${Date.now()}\n\n`));}catch(_){}
       },10000);
@@ -3668,10 +3720,21 @@ function activityStreamResponse(body, requestSignal=null) {
             }
 
             continuationCount++;
+            const completedResponseNumber=continuationCount;
+            const nextResponseNumber=continuationCount+1;
+            send('activity',{
+              type:'activity',
+              id:`response-${completedResponseNumber}`,
+              label:`Response ${completedResponseNumber} reached the provider output limit`,
+              state:'completed',
+              kind:'generate',
+              detail:'Continuing automatically without repeating the answer.',
+              at:Date.now()
+            });
             send('activity',{
               type:'activity',
               id:`auto-continue-${continuationCount}`,
-              label:`Output limit reached — continuing automatically (${continuationCount}/${MAX_AUTO_CONTINUATIONS})`,
+              label:`Response ${nextResponseNumber} — continuing`,
               state:'running',
               kind:'generate',
               at:Date.now()
@@ -3709,8 +3772,9 @@ function activityStreamResponse(body, requestSignal=null) {
             send('activity',{
               type:'activity',
               id:`auto-continue-${continuationCount}`,
-              label:`Continuing with ${providerLabel(resolvedProvider)} • ${modelLabel(resolvedModel)}`,
+              label:`Response ${continuationCount+1} connected`,
               state:'completed',
+              detail:`${providerLabel(resolvedProvider)} • ${modelLabel(resolvedModel)}`,
               kind:'generate',
               at:Date.now()
             });

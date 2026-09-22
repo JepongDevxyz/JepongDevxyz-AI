@@ -11,10 +11,11 @@ for(const id of ['jdplugConfirm','jdplugConfirmTitle','jdplugConfirmDescription'
   assert(panel.includes('id="'+id+'"'),'missing installation UI '+id);
 }
 for(const marker of ['function showPluginConfirmation(', 'function confirmPluginAction(',
-  'function hidePluginConfirmation(', 'installed:{github:false,superpowers:false}',
+  'function hidePluginConfirmation(', 'const defaultInstalled=Object.fromEntries(Object.keys(catalogue).map(id=>[id,false]))',
   "if(!installed(selected)){showPluginConfirmation(selected,'install');return;}",
   "if(!installed('github')){notice('Install GitHub before using its tools.',true);return null;}",
-  "enabled:installed('superpowers')&&state.superpowers",
+  "superpowers:{enabled:installed('superpowers'),phase:state.phase}",
+  "autoUse:true",
   "enabled:installed('github')&&state.github&&state.repoLoaded",
   "state.installed[id]=false", "state.installed[id]=true",
   "method:'DELETE',credentials:'same-origin'"]){
@@ -47,4 +48,6 @@ const explicit=boot({installed:{github:false,superpowers:true},superpowers:true,
 assert.equal(explicit.superpowers.enabled,true,'installed Superpowers should be eligible for chat');
 assert.equal(explicit.superpowers.phase,'debug');
 assert.equal(explicit.github.enabled,false,'uninstalled GitHub cannot attach context');
+const skills=boot({installed:{humanizer:true,tdd:true},superpowers:false});
+assert.deepEqual(Array.from(skills.skills),['humanizer','tdd'],'installed skill plugins should be attached to chat context');
 console.log('PASS: plugin install-first gates, OAuth disconnect and legacy settings migration');

@@ -57,4 +57,9 @@ const textHandler=between(streamUI,'text: (payload) => {','\n                   
 assert(!textHandler.includes('renderLiveResponse('),'answer must stay hidden during Activity');
 assert(streamUI.includes('done: (payload) => revealFinalResponse(payload.elapsedMs)'),
   'collapse Activity then reveal final answer');
+assert(!sse.includes("id:'stream-open'"),'transport stream opening must not appear as user-visible work');
+assert(sse.includes('completedResponseNumber=continuationCount')&&sse.includes('nextResponseNumber=continuationCount+1')&&sse.includes('Response ${nextResponseNumber} — continuing'),
+  'real automatic continuations must expose numbered Response milestones');
+assert(process.includes("activity(emit,'plugins-active'")&&process.includes('activeSkillPlugins.length'),
+  'only matched installed plugins may emit an active-plugin milestone');
 console.log('PASS truthful chronological Activity + final response sequencing');

@@ -104,6 +104,7 @@ assert(plugins.includes('function confirmRunTests()')&&plugins.includes('async f
 assert(plugins.includes("await executeApi('dispatch',{workflowId:approved.workflowId,ref:approved.ref,confirm:true})"));
 assert(page.includes("message.toLowerCase() === '/run-tests'"));
 assert(page.includes('await window.JDPlugins?.ready?.()'));
-assert(plugins.includes("enabled:installed('superpowers')&&state.superpowers"));
+assert(plugins.includes("superpowers:{enabled:installed('superpowers'),phase:state.phase}"))
+assert(plugins.includes("autoUse:true"));
 assert(plugins.includes("enabled:installed('github')&&state.github&&state.repoLoaded"));
 console.log('PASS: OAuth-protected workflow listing, approval, execution and verified status across chat/model UI');
