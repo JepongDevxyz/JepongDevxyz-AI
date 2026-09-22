@@ -6454,15 +6454,27 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if(previewPlaceholder)previewPlaceholder.hidden=false;
 
             try{
-                const res=await fetch('/api/chat',{
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    signal:petGenerationController.signal,
-                    body:JSON.stringify(requestPayload)
-                });
-                const data=await res.json().catch(()=>({}));
-                if(!res.ok||!data?.imageDataUrl){
-                    throw new Error(data?.error||data?.detail||`Image generator returned ${res.status}`);
+                let res=null,data={};
+                // A Vercel 504 is a transient function/upstream timeout. Retry the
+                // pet request once with the same prompt instead of failing the UI.
+                for(let attempt=0;attempt<2;attempt++){
+                    res=await fetch('/api/chat',{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        signal:petGenerationController.signal,
+                        body:JSON.stringify(requestPayload)
+                    });
+                    data=await res.json().catch(()=>({}));
+                    if(res.ok&&data?.imageDataUrl)break;
+                    if(res.status!==504)break;
+                    setAIPetCreatorStatus('working','Image service timed out — retrying…');
+                    await new Promise(resolve=>setTimeout(resolve,650));
+                }
+                if(!res?.ok||!data?.imageDataUrl){
+                    const detail=String(data?.detail||'').trim();
+                    throw new Error(data?.error || detail || (res?.status===504
+                        ? 'Image service timed out. Please try again.'
+                        : `Image generator returned ${res?.status||'an error'}`));
                 }
                 const imageDataUrl=String(data.imageDataUrl);
                 if(!/^data:image\/(?:png|jpeg|jpg|webp);base64,/i.test(imageDataUrl)){
