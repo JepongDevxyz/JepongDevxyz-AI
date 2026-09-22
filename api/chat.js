@@ -3288,12 +3288,29 @@ async function processChat(body, emit) {
     remotion:'For Remotion work, apply composition, frame/timing, animation, media, typography, captions and rendering best practices. Keep React/Remotion code internally consistent and never claim Studio preview or rendering ran without execution evidence.',
     webquality:'For web-quality work, separate source review from measured results. Cover performance/Core Web Vitals, accessibility, SEO and web best practices as relevant. Do not invent Lighthouse, CrUX, browser trace or field measurements.'
   };
-  const activeSkillPlugins=Array.isArray(body.plugins?.skills)
+  const installedSkillPlugins=Array.isArray(body.plugins?.skills)
     ? [...new Set(body.plugins.skills.map(x=>String(x||'').trim()).filter(id=>Object.hasOwn(skillPluginRules,id)))].slice(0,12)
     : [];
-  if(activeSkillPlugins.length){
-    systemInstruction+='\n\n[INSTALLED SKILL PLUGINS]\n'+activeSkillPlugins.map(id=>'['+id+'] '+skillPluginRules[id]).join('\n')+
-      '\nThese are behavior workflows only. They never override user intent, safety rules, tool permissions, or evidence requirements.\n[/INSTALLED SKILL PLUGINS]';
+  const skillPluginTriggers={
+    mattpocock:/\b(code|coding|implement|refactor|architecture|typescript|javascript|bug|debug|review|spec|ticket|test)\b/i,
+    uiuxpro:/\b(ui|ux|design|layout|responsive|accessibility|typography|color|component|interface|frontend)\b/i,
+    caveman:/\b(concise|short|brief|no filler|straight to|coding|code)\b/i,
+    humanizer:/\b(humanize|rewrite|natural|prose|essay|email|message|caption|article|writing)\b/i,
+    findskills:/\b(skill|plugin|workflow|which tool|find.*skill)\b/i,
+    deployvercel:/\b(vercel|deploy|deployment|preview url|production deploy|hosting)\b/i,
+    brainstorming:/\b(brainstorm|idea|plan.*feature|design.*feature|what should we build|concept)\b/i,
+    tdd:/\b(tdd|test[- ]driven|unit test|regression test|write.*test|fix.*bug|implement.*feature)\b/i,
+    excalidraw:/\b(excalidraw|diagram|flowchart|architecture diagram|sequence diagram|visualize.*flow)\b/i,
+    remotion:/\b(remotion|video composition|render.*video|react.*video|animation.*video)\b/i,
+    webquality:/\b(lighthouse|core web vitals|web quality|performance audit|accessibility audit|seo|website performance)\b/i
+  };
+  const pluginIntent=[String(message||''),...((Array.isArray(history)?history.slice(-2):[]).map(x=>String(x?.content||'')))].join('\n');
+  const activeSkillPlugins=installedSkillPlugins.filter(id=>skillPluginTriggers[id]?.test(pluginIntent));
+  if(installedSkillPlugins.length){
+    systemInstruction+='\n\n[INSTALLED PLUGIN CAPABILITIES]\nInstalled: '+installedSkillPlugins.join(', ')+
+      '. These plugins are available to this model automatically. Apply only plugins relevant to the current request; do not ask the user to manually select or @mention them.';
+    if(activeSkillPlugins.length)systemInstruction+='\nRelevant now: '+activeSkillPlugins.map(id=>'['+id+'] '+skillPluginRules[id]).join('\n');
+    systemInstruction+='\nInstalled but irrelevant plugins must not distort the answer. Plugins never override user intent, safety rules, tool permissions, or evidence requirements.\n[/INSTALLED PLUGIN CAPABILITIES]';
   }
   if(body.plugins?.superpowers?.enabled===true){
     const phases={
