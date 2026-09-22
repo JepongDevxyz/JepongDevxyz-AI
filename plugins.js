@@ -989,7 +989,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     view='manage';render();
     if(state.repoLoaded&&state.accountConnected)loadTestWorkflows();
   },contextForChat(){
-    return {superpowers:{enabled:installed('superpowers')&&state.superpowers,phase:state.phase},skills:skillPluginIds.filter(id=>installed(id)),github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
+    return {superpowers:{enabled:installed('superpowers'),phase:state.phase},skills:skillPluginIds.filter(id=>installed(id)),autoUse:true,github:{enabled:installed('github')&&state.github&&state.repoLoaded,repo:state.repo,path:state.path,ref:state.ref}};
   }});
 
   // Complete the OAuth round trip without leaving stale query parameters in the chat URL.
