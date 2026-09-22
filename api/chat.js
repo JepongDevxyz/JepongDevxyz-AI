@@ -3838,22 +3838,23 @@ const OPENAI_TTS_VOICES={Amihan:'nova',Bayani:'onyx',Breeze:'shimmer',Cove:'echo
    the account at runtime; no secret or account-specific voice ID is shipped to
    the browser. This also lets a user replace/add voices without a code deploy. */
 const ELEVEN_PERSONA_GENDERS={
-  Jepong:'male',Janna:'female',Calixie:'female',Sevich:'male',Princess:'female',Herald:'male',
-  Sol:'male',Fable:'female',Luna:'female',Lancelot:'male',Sydney:'female',Odette:'female'
+  Jepong:'male',Janna:'female',Calixie:'female',Sevich:'male',Princess:'female',
+  Herald:'male',Sol:'male',Fable:'female',Luna:'female',Lancelot:'male',
+  Sydney:'female',Odette:'female'
 };
 const ELEVEN_PERSONA_STYLE={
-  Jepong:['warm','confident','natural','conversational'],
-  Janna:['friendly','warm','natural','conversational'],
-  Calixie:['bright','animated','energetic','conversational'],
-  Sevich:['composed','professional','calm','narration'],
-  Princess:['cheerful','warm','bright','conversational'],
+  Jepong:['confident','versatile','natural','conversational'],
+  Janna:['warm','friendly','natural','conversational'],
+  Calixie:['bright','expressive','energetic','conversational'],
+  Sevich:['composed','direct','calm','professional'],
+  Princess:['warm','cheerful','expressive','friendly'],
   Herald:['clear','confident','professional','narration'],
-  Sol:['relaxed','calm','confident','conversational'],
-  Fable:['gentle','expressive','warm','storytelling'],
-  Luna:['calm','gentle','bright','conversational'],
-  Lancelot:['refined','confident','calm','narration'],
-  Sydney:['bright','friendly','natural','conversational'],
-  Odette:['elegant','gentle','warm','conversational']
+  Sol:['relaxed','calm','savvy','conversational'],
+  Fable:['gentle','expressive','thoughtful','narration'],
+  Luna:['calm','warm','gentle','conversational'],
+  Lancelot:['refined','assured','calm','confident'],
+  Sydney:['bright','inquisitive','friendly','conversational'],
+  Odette:['elegant','warm','gentle','expressive']
 };
 let elevenVoiceCache={at:0,voices:[]};
 
