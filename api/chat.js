@@ -3833,6 +3833,101 @@ function extractAudioBytesFromCloudflareJson(payload){
 }
 
 const OPENAI_TTS_VOICES={Amihan:'nova',Bayani:'onyx',Breeze:'shimmer',Cove:'echo',Ember:'coral',Juniper:'sage',Maple:'marin',Sol:'cedar',Spruce:'ash',Vale:'verse',Arbor:'alloy'};
+
+/* ElevenLabs is the primary cloud TTS provider. Voice IDs are discovered from
+   the account at runtime; no secret or account-specific voice ID is shipped to
+   the browser. This also lets a user replace/add voices without a code deploy. */
+const ELEVEN_PERSONA_GENDERS={
+  Amihan:'female',Bayani:'male',Breeze:'female',Cove:'male',Ember:'female',
+  Juniper:'female',Maple:'female',Sol:'male',Spruce:'male',Vale:'female',Arbor:'male'
+};
+let elevenVoiceCache={at:0,voices:[]};
+
+function elevenLanguageCode(language='en-US'){
+  const base=normalizeTTSLanguage(language);
+  return base==='tl'?'fil':base;
+}
+function elevenVoiceGender(voice){
+  const labels=voice?.labels||{};
+  return String(labels.gender||labels.sex||'').toLowerCase();
+}
+function elevenVoiceLocaleScore(voice,language='en-US'){
+  const requested=String(language||'').toLowerCase().replace('_','-');
+  const base=elevenLanguageCode(requested);
+  let score=0;
+  const verified=Array.isArray(voice?.verified_languages)?voice.verified_languages:[];
+  for(const item of verified){
+    const lang=String(item?.language||'').toLowerCase();
+    const locale=String(item?.locale||'').toLowerCase().replace('_','-');
+    if(locale&&locale===requested)score=Math.max(score,120);
+    else if(lang===base)score=Math.max(score,100);
+    else if((base==='fil'||base==='tl')&&(lang==='fil'||lang==='tl'))score=Math.max(score,105);
+  }
+  const labels=voice?.labels||{};
+  const labelText=Object.values(labels).join(' ').toLowerCase();
+  const localeToken=requested.replace('-',' ');
+  if(labelText.includes(requested)||labelText.includes(localeToken))score=Math.max(score,90);
+  return score;
+}
+async function getElevenVoices(key){
+  if(elevenVoiceCache.voices.length&&Date.now()-elevenVoiceCache.at<10*60*1000)return elevenVoiceCache.voices;
+  const res=await fetch('https://api.elevenlabs.io/v2/voices?page_size=100',{
+    headers:{'xi-api-key':key,'Accept':'application/json'},
+    signal:AbortSignal.timeout(15000)
+  });
+  if(!res.ok)throw new Error('ElevenLabs voices HTTP '+res.status);
+  const data=await res.json();
+  const voices=Array.isArray(data?.voices)?data.voices:[];
+  elevenVoiceCache={at:Date.now(),voices};
+  return voices;
+}
+function selectElevenVoice(voices,persona,language){
+  if(!voices.length)return null;
+  const desired=ELEVEN_PERSONA_GENDERS[persona]||'female';
+  const exactName=voices.find(v=>String(v?.name||'').toLowerCase()===String(persona||'').toLowerCase());
+  if(exactName)return exactName;
+
+  const genderPool=voices.filter(v=>elevenVoiceGender(v)===desired);
+  let pool=genderPool.length?genderPool:voices;
+  const localeRanked=pool.map(v=>({v,score:elevenVoiceLocaleScore(v,language)})).sort((a,b)=>b.score-a.score);
+  if(localeRanked[0]?.score>0){
+    const best=localeRanked[0].score;
+    pool=localeRanked.filter(x=>x.score===best).map(x=>x.v);
+  }
+  const slot=Math.max(0,Object.keys(ELEVEN_PERSONA_GENDERS).indexOf(persona));
+  return pool[slot%pool.length]||pool[0]||null;
+}
+async function elevenLabsTTS(body={}){
+  const key=String(process.env.ELEVENLABS_API_KEY||'').trim();
+  if(!key)return null;
+  const text=String(body.text||body.prompt||'').replace(/\s+/g,' ').trim().slice(0,4000);
+  if(!text)return json({error:'No text provided for speech.'},400);
+  const language=String(body.language||body.lang||'en-US');
+  const persona=String(body.voice||'Ember');
+  try{
+    const voices=await getElevenVoices(key);
+    const selected=selectElevenVoice(voices,persona,language);
+    if(!selected?.voice_id)return null;
+    const model=String(process.env.ELEVENLABS_TTS_MODEL||'eleven_multilingual_v2').trim();
+    const payload={text,model_id:model,voice_settings:{stability:.5,similarity_boost:.75,style:.15,use_speaker_boost:true}};
+    // Multilingual v2 auto-detects language from the supplied text. Other
+    // compatible ElevenLabs models can use ISO-639-1 to disambiguate short text.
+    if(model!=='eleven_multilingual_v2')payload.language_code=elevenLanguageCode(language);
+    const res=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(selected.voice_id)+'?output_format=mp3_44100_128',{
+      method:'POST',
+      headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify(payload),
+      signal:AbortSignal.timeout(90000)
+    });
+    if(!res.ok)return null;
+    return new Response(res.body,{status:200,headers:{
+      'Content-Type':'audio/mpeg','Cache-Control':'no-store',
+      'X-TTS-Engine':'elevenlabs','X-TTS-Language':language,
+      'X-TTS-Voice':String(selected.name||selected.voice_id),
+      'X-TTS-Gender':ELEVEN_PERSONA_GENDERS[persona]||'female','X-TTS-Persona':persona
+    }});
+  }catch(_){return null;}
+}
 function ttsLanguageInstruction(language='en-US',voiceName='Ember'){
   const tag=String(language||'en-US').replace('_','-');
   const base=tag.toLowerCase().split('-')[0];
@@ -3856,6 +3951,7 @@ async function openAITTS(body={}){
   }catch(_){return null;}
 }
 async function serverTTS(body={}){
+  const eleven=await elevenLabsTTS(body); if(eleven)return eleven;
   const openai=await openAITTS(body); if(openai)return openai;
   return cloudflareTTS(body);
 }
