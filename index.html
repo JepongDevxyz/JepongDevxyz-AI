@@ -4276,6 +4276,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             <div class="ps-voice-sliders">
               <div class="ps-slider-row"><label for="psVoiceSpeedRange">Speed</label><input id="psVoiceSpeedRange" type="range" min="0.7" max="1.3" step="0.05" oninput="setVoiceTuning('voiceSpeed',this.value)"><output id="psVoiceSpeedValue">1.0x</output></div>
               <div class="ps-slider-row"><label for="psVoicePitchRange">Pitch</label><input id="psVoicePitchRange" type="range" min="0.7" max="1.3" step="0.05" oninput="setVoiceTuning('voicePitch',this.value)"><output id="psVoicePitchValue">1.0x</output></div>
+              <div class="ps-auto-preview-row"><strong>Speed & pitch</strong><button type="button" class="ps-action" id="psVoiceResetTuning" onclick="resetVoiceTuning()" title="Reset speed and pitch to default 1.0x"><i data-lucide="rotate-ccw"></i><span>Reset to default</span></button></div>
               <div class="ps-auto-preview-row"><strong>Auto-play preview when switching voices</strong><label class="mini-toggle"><input id="psVoiceAutoPreview" type="checkbox" onchange="setPersonalizationToggle('voiceAutoPreview',this.checked)"><span></span></label></div>
             </div>
             <div class="ps-voice-browser-note"><i data-lucide="info"></i> Voice previews use the speech engine available on your device/browser. If the current in-app preview browser does not expose speech synthesis, open the deployed site in Chrome or another browser with Web Speech support.</div>
@@ -6280,6 +6281,22 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 const label=document.getElementById('speedValueLabel');if(label)label.innerText=n.toFixed(1)+'x';
                 const slider=document.getElementById('speedSlider');if(slider)slider.value=n;
             }
+        }
+
+        function resetVoiceTuning() {
+            personalizationSettings.voiceSpeed=1.0;
+            personalizationSettings.voicePitch=1.0;
+            speechRate=1.0;
+            persistPersonalization();
+            safeSetLocalStorage('jepong_speech_rate','1',true);
+            const speed=document.getElementById('psVoiceSpeedRange'),pitch=document.getElementById('psVoicePitchRange');
+            const speedOut=document.getElementById('psVoiceSpeedValue'),pitchOut=document.getElementById('psVoicePitchValue');
+            if(speed)speed.value='1'; if(pitch)pitch.value='1';
+            if(speedOut)speedOut.textContent='1.0x'; if(pitchOut)pitchOut.textContent='1.0x';
+            const oldSlider=document.getElementById('speedSlider'),oldLabel=document.getElementById('speedValueLabel');
+            if(oldSlider)oldSlider.value='1'; if(oldLabel)oldLabel.innerText='1.0x';
+            if(typeof showModernToast==='function')showModernToast('Voice speed and pitch reset to default');
+            if(personalizationSettings.voiceAutoPreview!==false)playPersonalizationVoiceSample(personalizationSettings.voicePersona);
         }
 
         /* ===== LANGUAGE-AWARE VOICE / PRONUNCIATION ENGINE ===== */
