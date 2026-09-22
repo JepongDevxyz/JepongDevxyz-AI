@@ -4266,7 +4266,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
               </div>
               <button type="button" class="ps-voice-preview" id="psVoicePreviewBtn" onclick="playPersonalizationVoiceSample()"><i data-lucide="play"></i><span>Preview voice</span></button>
               <div class="ps-voice-sample-status" id="psVoiceSampleStatus"></div>
-              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.45;margin-top:6px;text-align:center">Neural voice uses Cloudflare for supported languages. Voices are locked to the selected or auto-detected language. If that language is not installed, JepongDevxyz AI uses a compatible neural/system fallback without borrowing an unrelated accent.</div>
+              <div style="font-size:.68rem;color:var(--text-muted);line-height:1.45;margin-top:6px;text-align:center">Each persona uses its own ElevenLabs cloud voice when available. Voice selection prioritizes the selected language/country locale, gender and persona style. If no compatible cloud voice is available, JepongDevxyz AI safely falls back to another supported speech engine.</div>
             </div>
             <div class="ps-voice-settings">
               <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
