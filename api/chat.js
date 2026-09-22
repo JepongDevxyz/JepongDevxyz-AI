@@ -4355,15 +4355,21 @@ async function removePetImageBackground(imageBytes,contentType,requestSignal=nul
     const outType=(res.headers.get('content-type')||'').toLowerCase();
     const bytes=new Uint8Array(await res.arrayBuffer());
     if(!bytes.length)return null;
-    return {bytes,contentType:outType.startsWith('image/')?outType.split(';')[0]:'image/png'};
+    // Segmentation output must be a real PNG. Do not label arbitrary bytes as PNG.
+    const isPng=bytes.length>=8 &&
+      bytes[0]===0x89 && bytes[1]===0x50 && bytes[2]===0x4e && bytes[3]===0x47 &&
+      bytes[4]===0x0d && bytes[5]===0x0a && bytes[6]===0x1a && bytes[7]===0x0a;
+    if(!isPng || (outType && !outType.includes('image/png')))return null;
+    return {bytes,contentType:'image/png'};
   }catch(_){ return null; }
 }
 
 async function finalizePetImage(imageBytes,contentType,requestSignal=null){
   const segmented=await removePetImageBackground(imageBytes,contentType,requestSignal);
   if(segmented)return {
-    imageDataUrl:`data:${segmented.contentType};base64,${bytesToBase64(segmented.bytes)}`,
-    backgroundRemoved:true
+    imageDataUrl:`data:image/png;base64,${bytesToBase64(segmented.bytes)}`,
+    backgroundRemoved:true,
+    transparentPng:true
   };
   // Custom pets must behave like built-in pets. Never silently accept a JPEG/
   // opaque generation when transparent subject extraction failed.
@@ -4407,6 +4413,7 @@ async function generatePetImage(body={},requestSignal=null){
               ok:true,name,description,
               imageDataUrl:finalImage.imageDataUrl,
               backgroundRemoved:finalImage.backgroundRemoved,
+              transparentPng:finalImage.transparentPng===true,
               provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL,referencePet,matchSiteStyle
             });
           }
@@ -4422,6 +4429,7 @@ async function generatePetImage(body={},requestSignal=null){
               description,
               imageDataUrl:finalImage.imageDataUrl,
               backgroundRemoved:finalImage.backgroundRemoved,
+              transparentPng:finalImage.transparentPng===true,
               provider:'Cloudflare Workers AI',
               model:PET_IMAGE_MODEL,
               referencePet,
@@ -4465,6 +4473,7 @@ async function generatePetImage(body={},requestSignal=null){
             description,
             imageDataUrl:finalImage.imageDataUrl,
             backgroundRemoved:finalImage.backgroundRemoved,
+            transparentPng:finalImage.transparentPng===true,
             provider:'Pollinations',
             model:'flux',
             referencePet,
