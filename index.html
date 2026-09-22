@@ -951,10 +951,10 @@
         .branch-badge{display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:#a78bfa;margin-left:4px}
         .code-container-wrap table,.msg table{width:100%;border-collapse:collapse;display:block;overflow-x:auto;margin:10px 0;font-size:.82rem}.msg th,.msg td{border:1px solid var(--border-color);padding:8px 10px;text-align:left;min-width:90px}.msg th{background:rgba(139,92,246,.09)}
         /* Verified-result cards: compact ChatGPT-style project/status summaries. */
-        .jd-result-card{width:100%;margin:16px 0 20px;padding:18px 18px 16px;border:1px solid rgba(148,163,184,.22);border-radius:24px;background:color-mix(in srgb,var(--bg-color) 88%,#111 12%);box-shadow:0 10px 34px rgba(0,0,0,.12);overflow:hidden}
-        body.theme-light .jd-result-card{background:#fff;border-color:rgba(15,23,42,.13);box-shadow:0 8px 28px rgba(15,23,42,.07)}
-        .jd-result-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-        .jd-result-card-title{margin:0!important;font-size:1.08rem!important;line-height:1.35!important;font-weight:760!important;color:var(--text-main)!important}
+        .jd-result-card{width:100%;margin:18px 0 22px;padding:20px 22px 18px;border:1px solid rgba(148,163,184,.22);border-radius:18px;background:transparent;box-shadow:none;overflow:hidden}
+        body.theme-light .jd-result-card{background:transparent;border-color:rgba(15,23,42,.15);box-shadow:none}
+        .jd-result-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}
+        .jd-result-card-title{margin:0!important;font-size:1.14rem!important;line-height:1.4!important;font-weight:760!important;color:var(--text-main)!important}
         .jd-result-badge{flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:5px 11px;border-radius:999px;font-size:.72rem;font-weight:760;line-height:1;background:rgba(148,163,184,.12);color:var(--text-main);white-space:nowrap}
         .jd-result-card-success .jd-result-badge{background:rgba(34,197,94,.13);color:#4ade80}
         .jd-result-card-info .jd-result-badge{background:rgba(59,130,246,.14);color:#60a5fa}
@@ -970,9 +970,9 @@
         .jd-result-card-error li::before{border-color:#ef4444;color:#f87171}
         .jd-result-card code{font-size:.84em;padding:2px 6px;border-radius:7px;background:rgba(148,163,184,.1)}
         .jd-result-action-wrap{margin:14px 0 0!important}
-        .jd-result-action{width:100%;min-height:50px;padding:11px 16px;border:1px solid rgba(148,163,184,.25);border-radius:999px;display:flex!important;align-items:center;justify-content:center;gap:8px;background:var(--text-main);color:var(--bg-color)!important;font-weight:760;text-decoration:none!important;text-align:center;transition:transform .16s ease,opacity .16s ease}
+        .jd-result-action{width:100%;min-height:50px;padding:11px 16px;border:1px solid rgba(148,163,184,.34);border-radius:999px;display:flex!important;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--text-main)!important;font-weight:760;text-decoration:none!important;text-align:center;transition:background .16s ease,transform .16s ease,opacity .16s ease}
         .jd-result-action::after{content:'↗';font-size:1rem;line-height:1}.jd-result-action:active{transform:scale(.985);opacity:.88}
-        body.theme-light .jd-result-action{background:#111827;color:#fff!important}
+        body.theme-light .jd-result-action{background:transparent;color:#111827!important}.jd-result-action:hover{background:rgba(148,163,184,.09)}
         @media(max-width:520px){.jd-result-card{padding:16px 15px 14px;border-radius:22px}.jd-result-card-head{gap:9px}.jd-result-card-title{font-size:1rem!important}.jd-result-badge{font-size:.66rem;min-height:28px;padding:5px 9px}.jd-result-card li{padding-left:28px!important}.jd-result-action{min-height:48px;font-size:.9rem}}
 
         .fullscreen-code-overlay{position:fixed;inset:0;z-index:5000;background:rgba(2,6,23,.97);display:none;flex-direction:column}.fullscreen-code-overlay.open{display:flex}.fullscreen-code-head{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.1);color:#fff}.fullscreen-code-body{flex:1;overflow:auto;padding:18px}.fullscreen-code-body pre{margin:0;min-height:100%;white-space:pre;overflow:auto}.fullscreen-code-close{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:white;border-radius:9px;padding:7px 11px;cursor:pointer}
