@@ -3134,6 +3134,10 @@ function responseMeta(response) {
 
 async function processChat(body, emit) {
   let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone} = body;
+  // Strict routing contract: fallback/router are opt-in only. Truthy strings,
+  // missing fields, or stale client values must never silently enable them.
+  autoFallback = body.autoFallback === true;
+  smartRouter = body.smartRouter === true;
   files=sanitizeIncomingAttachments(files);
   const responseEffort=normalizeResponseEffort(personalization?.intelligence,personalization?.fastAnswers);
   const fastAnswers=responseEffort==='Instant';
