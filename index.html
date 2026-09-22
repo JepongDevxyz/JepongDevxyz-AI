@@ -4472,7 +4472,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 <div class="ps-ai-pet-preview" id="psAiPetPreview" style="height:auto;min-height:0">
                   <div class="ps-ai-pet-preview-visual" style="margin-left:auto;margin-right:auto">
                     <div class="ps-ai-pet-preview-placeholder" id="psAiPetPreviewPlaceholder"><i data-lucide="sparkles"></i></div>
-                    <img id="psAiPetPreviewImage" alt="Generated pet preview" hidden>
+                    <img id="psAiPetPreviewImage" alt="" aria-hidden="true" hidden>
                   </div>
                   <div class="ps-ai-pet-preview-copy">
                     <strong id="psAiPetPreviewName">Your pet preview</strong>
@@ -6324,6 +6324,44 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             refreshLucideIcons();
         }
 
+        function enforceAIPetPreviewLayout() {
+            const preview=document.getElementById('psAiPetPreview');
+            const visual=preview?.querySelector('.ps-ai-pet-preview-visual');
+            const copy=preview?.querySelector('.ps-ai-pet-preview-copy');
+            const image=document.getElementById('psAiPetPreviewImage');
+            const placeholder=document.getElementById('psAiPetPreviewPlaceholder');
+            if(!preview||!visual||!copy)return;
+            Object.assign(preview.style,{
+                display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-start',
+                gridTemplateColumns:'none',gridTemplateRows:'none',height:'auto',minHeight:'0',
+                padding:'16px',gap:'12px',overflow:'hidden',boxSizing:'border-box'
+            });
+            Object.assign(visual.style,{
+                position:'relative',display:'flex',alignItems:'center',justifyContent:'center',
+                width:'136px',height:'136px',minWidth:'136px',minHeight:'136px',
+                maxWidth:'136px',maxHeight:'136px',aspectRatio:'1 / 1',
+                margin:'0 auto',padding:'0',overflow:'hidden',background:'transparent'
+            });
+            Object.assign(copy.style,{
+                position:'static',display:'flex',flexDirection:'column',alignItems:'center',
+                width:'100%',height:'auto',minHeight:'0',margin:'0',padding:'0',gap:'7px',
+                textAlign:'center',transform:'none'
+            });
+            if(image){
+                Object.assign(image.style,{
+                    position:'absolute',inset:'0',width:'136px',height:'136px',
+                    maxWidth:'136px',maxHeight:'136px',margin:'auto',objectFit:'contain',
+                    objectPosition:'center',transform:'none',background:'transparent'
+                });
+                if(image.hidden || !image.getAttribute('src')) image.style.display='none';
+                else image.style.display='block';
+            }
+            if(placeholder){
+                Object.assign(placeholder.style,{position:'absolute',inset:'0',margin:'auto'});
+                placeholder.style.display=placeholder.hidden?'none':'flex';
+            }
+        }
+
         function previewPersonalizationPetDraft() {
             const name=(document.getElementById('psCustomPetName')?.value||'').trim();
             const description=(document.getElementById('psCustomPetDescription')?.value||'').trim();
@@ -6332,6 +6370,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if(namePreview)namePreview.textContent=name||'Your pet preview';
             if(descPreview)descPreview.textContent=description||'Describe your pet below, then tap Create pet.';
             updatePetCreatorStyleSummary();
+            enforceAIPetPreviewLayout();
             if(!isGeneratingPersonalizationPet)setAIPetCreatorStatus('idle','Ready');
             refreshAIPetActionState();
         }
@@ -6409,6 +6448,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                     previewImage.hidden=true;
                     previewImage.removeAttribute('src');
                     if(previewPlaceholder)previewPlaceholder.hidden=false;
+                    enforceAIPetPreviewLayout();
                 };
             }
             if(previewPlaceholder)previewPlaceholder.hidden=false;
@@ -6454,6 +6494,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                     previewImage.hidden=false;
                 }
                 if(previewPlaceholder)previewPlaceholder.hidden=true;
+                enforceAIPetPreviewLayout();
                 if(previewName)previewName.textContent=personalizationSettings.pet;
                 if(previewDescription)previewDescription.textContent=personalizationSettings.petDescription;
                 document.getElementById('psCustomPetName').value = personalizationSettings.pet;
