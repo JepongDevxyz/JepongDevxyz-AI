@@ -6870,15 +6870,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 onend:()=>{orb?.classList.remove('speaking');if(status)status.textContent='';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();},
                 onerror:()=>{orb?.classList.remove('speaking');if(status)status.textContent='Voice preview could not play. Check the phone TTS voice/language package.';if(btn)btn.innerHTML='<i data-lucide="play"></i><span>Preview voice</span>';refreshLucideIcons();}
             };
-            // Prefer a real device/browser voice for previews so Breeze/Cove/Ember/etc.
-            // map to different voices rather than all sounding like one neural speaker.
-            if(selected){
-                speakChunksSequentially(speechChunks(sample,150),{...handlers,profile,languageOverride:selected.lang||requestedLang,onstart:(u,v,i)=>handlers.onstart(u,v,i,'Device voice')});
-                return;
-            }
-            // No installed voice: use neural TTS where supported so Preview is still audible.
+            // ChatGPT-style persona preview: selection immediately speaks the
+            // localized self-introduction through the same ElevenLabs-first cloud path
+            // as Read Aloud. Device/browser speech is fallback only.
             if(neuralTTSIsSupported(sample)){ speakSmartVoice(sample,handlers); return; }
-            speakChunksSequentially(speechChunks(sample,150),{...handlers,profile,languageOverride:requestedLang,onstart:(u,v,i)=>handlers.onstart(u,v,i,v?.name||('System '+requestedLang+' fallback'))});
+            speakChunksSequentially(speechChunks(sample,150),{...handlers,profile,languageOverride:selected?.lang||requestedLang,onstart:(u,v,i)=>handlers.onstart(u,v,i,v?.name||('System '+requestedLang+' fallback'))});
         }
 
         function openPetHeaderCompanion() {
