@@ -2997,6 +2997,62 @@
             }
         }
 
+        /* Final AI-pet preview override: one centered column on phones, no overlap. */
+        @media(max-width:980px){
+            #personalizationPetPage #psAiPetPreview.ps-ai-pet-preview{
+                display:grid!important;
+                grid-template-columns:minmax(0,1fr)!important;
+                grid-template-rows:auto auto!important;
+                justify-items:center!important;
+                align-items:start!important;
+                width:100%!important;
+                min-width:0!important;
+                min-height:0!important;
+                padding:14px!important;
+                gap:12px!important;
+                overflow:hidden!important;
+                position:relative!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-visual{
+                grid-column:1!important;
+                grid-row:1!important;
+                width:min(240px,72vw)!important;
+                height:min(240px,72vw)!important;
+                min-width:0!important;
+                max-width:100%!important;
+                margin:0 auto!important;
+                display:flex!important;
+                align-items:center!important;
+                justify-content:center!important;
+                overflow:hidden!important;
+                background:transparent!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-visual img{
+                position:static!important;
+                width:100%!important;
+                height:100%!important;
+                max-width:100%!important;
+                max-height:100%!important;
+                margin:auto!important;
+                display:block!important;
+                object-fit:contain!important;
+                object-position:50% 50%!important;
+                transform:none!important;
+                background:transparent!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-copy{
+                grid-column:1!important;
+                grid-row:2!important;
+                position:static!important;
+                width:100%!important;
+                min-width:0!important;
+                margin:0!important;
+                padding:0!important;
+                text-align:center!important;
+                transform:none!important;
+            }
+        }
+
         /* ===== PET SETTINGS REFERENCE UI v2 ===== */
         #personalizationPetPage{
             background:
@@ -6222,8 +6278,14 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 if(!res.ok||!data?.imageDataUrl){
                     throw new Error(data?.error||data?.detail||`Image generator returned ${res.status}`);
                 }
+                if(data.backgroundRemoved!==true){
+                    throw new Error('Transparent pet generation failed. Please generate again.');
+                }
 
                 const imageDataUrl=String(data.imageDataUrl);
+                if(!/^data:image\/png;base64,/i.test(imageDataUrl)){
+                    throw new Error('Pet output is not a transparent PNG. Please generate again.');
+                }
                 await new Promise((resolve,reject)=>{
                     const test=new Image();
                     const timer=setTimeout(()=>reject(new Error('Generated pet image timed out while loading.')),12000);
