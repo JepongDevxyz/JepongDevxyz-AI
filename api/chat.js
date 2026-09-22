@@ -4344,8 +4344,11 @@ async function generatePetImage(body={},requestSignal=null){
     }
   }
 
-  const pollinationsKey=String(process.env.POLLINATIONS_API_KEY||'').trim();
-  if(pollinationsKey){
+  // Pollinations supports key rotation too. Configure POLLINATIONS_API_KEYS as
+  // comma/newline-separated server-side keys; POLLINATIONS_API_KEY remains compatible.
+  const pollinationsKeys=rotateProviderKeys('pollinations',parseKeys('POLLINATIONS_API_KEYS','POLLINATIONS_API_KEY'))
+    .slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  for(const pollinationsKey of pollinationsKeys){
     try{
       const url=`https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&seed=${seed}`;
       const res=await fetch(url,{
@@ -4367,6 +4370,7 @@ async function generatePetImage(body={},requestSignal=null){
             matchSiteStyle
           });
         }
+        errors.push('Pollinations returned no usable image data.');
       }else{
         errors.push(`Pollinations HTTP ${res.status}: ${(await res.text().catch(()=>'' )).slice(0,220)}`);
       }
@@ -4376,10 +4380,10 @@ async function generatePetImage(body={},requestSignal=null){
     }
   }
 
-  if(!accounts.length&&!pollinationsKey){
+  if(!accounts.length&&!pollinationsKeys.length){
     return json({
       error:'No pet image generator is configured.',
-      detail:'Configure Cloudflare Workers AI credentials (CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN) or optional POLLINATIONS_API_KEY.'
+      detail:'Configure Cloudflare Workers AI credentials (CLOUDFLARE_ACCOUNTS or CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN) or POLLINATIONS_API_KEYS/POLLINATIONS_API_KEY in server environment variables.'
     },503);
   }
 
