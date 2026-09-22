@@ -3324,7 +3324,7 @@ async function processChat(body, emit) {
   // The model request starts here; a single Thinking row stays active
   // until the provider stream finishes or an actual tool event supersedes it.
   activity(emit,'thinking','Thinking','running','thinking');
-  const first=customApiProfile?await runGenericCustomApi(customApiProfile,{history,message,systemInstruction,emit}):await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys});
+  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation','Generating response','running','generate');
