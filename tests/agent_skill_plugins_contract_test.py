@@ -28,6 +28,6 @@ assert "skills:skillPluginIds.filter(id=>installed(id))" in frontend
 assert "Object.hasOwn(skillPluginRules,id)" in backend
 assert "They never override user intent, safety rules, tool permissions, or evidence requirements." in backend
 assert "Never claim a URL, deployment ID, or successful deploy without real deployment evidence." in backend
-assert "never claim red, green, or passing tests without actual test output." in backend
+assert "Never claim red, green, or passing tests without actual test output." in backend
 
 print('agent skill plugins contract: PASS')
