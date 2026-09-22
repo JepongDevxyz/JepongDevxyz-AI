@@ -1,7 +1,7 @@
 name: Codex foundation checks
 on:
   push:
-    branches: [feature/codex-agent-workspace]
+    branches: [main, feature/codex-agent-workspace]
     paths:
       - 'api/codex.js'
       - 'codex.html'
