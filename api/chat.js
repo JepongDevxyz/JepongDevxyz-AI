@@ -4365,10 +4365,11 @@ async function finalizePetImage(imageBytes,contentType,requestSignal=null){
     imageDataUrl:`data:${segmented.contentType};base64,${bytesToBase64(segmented.bytes)}`,
     backgroundRemoved:true
   };
-  return {
-    imageDataUrl:`data:${contentType||'image/jpeg'};base64,${bytesToBase64(imageBytes)}`,
-    backgroundRemoved:false
-  };
+  // Custom pets must behave like built-in pets. Never silently accept a JPEG/
+  // opaque generation when transparent subject extraction failed.
+  const err=new Error('Could not remove the generated pet background. Please generate again.');
+  err.code='pet_background_removal_failed';
+  throw err;
 }
 
 async function generatePetImage(body={},requestSignal=null){
@@ -4434,6 +4435,10 @@ async function generatePetImage(body={},requestSignal=null){
       }
     }catch(e){
       if(requestSignal?.aborted)return json({error:'Pet generation cancelled.',code:'cancelled'},499);
+      if(e?.code==='pet_background_removal_failed'){
+        errors.push('Cloudflare generated a pet but transparent background extraction failed.');
+        continue;
+      }
       errors.push(`Cloudflare: ${String(e?.message||e).slice(0,220)}`);
     }
   }
@@ -4472,6 +4477,10 @@ async function generatePetImage(body={},requestSignal=null){
       }
     }catch(e){
       if(requestSignal?.aborted)return json({error:'Pet generation cancelled.',code:'cancelled'},499);
+      if(e?.code==='pet_background_removal_failed'){
+        errors.push('Pollinations generated a pet but transparent background extraction failed.');
+        continue;
+      }
       errors.push(`Pollinations: ${String(e?.message||e).slice(0,220)}`);
     }
   }
@@ -4483,8 +4492,12 @@ async function generatePetImage(body={},requestSignal=null){
     },503);
   }
 
+  const transparencyFailed=errors.some(x=>String(x).includes('transparent background extraction failed'));
   return json({
-    error:'Pet image generation is temporarily unavailable.',
+    error:transparencyFailed
+      ? 'A transparent pet could not be produced. Please generate again.'
+      : 'Pet image generation is temporarily unavailable.',
+    code:transparencyFailed?'pet_background_removal_failed':'pet_generation_failed',
     detail:errors.slice(0,3).join(' | ').slice(0,700)
   },502);
 }
