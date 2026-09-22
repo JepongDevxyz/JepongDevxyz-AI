@@ -4748,8 +4748,22 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             // Memory is deliberately stored separately from settings/chat history and scoped by auth.uid() RLS.
             const mem=await cloudClient.from('memories').select('id,content,updated_at').eq('user_id',cloudUser.id).eq('source','memory_summary').order('updated_at',{ascending:false}).limit(1).maybeSingle();
             if(!mem.error && mem.data?.content){personalizationSettings.memorySummary=mem.data.content;localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));}
-            const prefs=data?.preferences||{}; if(prefs.chatSessions&&Object.keys(prefs.chatSessions).length){chatSessions={...chatSessions,...prefs.chatSessions};safeSetLocalStorage('jepong_ai_chats',JSON.stringify(chatSessions));if(typeof renderChatHistory==='function')renderChatHistory();}
-            if(localUpdated>remoteUpdated||!data)await syncCloudNow(true); renderCloudAccount();
+            const prefs=data?.preferences||{};
+            // Chat persistence rule: this browser's saved copy wins for sessions it
+            // already knows about. Cloud only fills sessions missing locally.
+            // This prevents a stale cloud snapshot from resurrecting a cleared chat
+            // or replacing a just-saved assistant response after refresh.
+            const remoteChatSessions=(prefs.chatSessions&&typeof prefs.chatSessions==='object')?prefs.chatSessions:{};
+            if(Object.keys(remoteChatSessions).length){
+                chatSessions={...remoteChatSessions,...chatSessions};
+                safeSetLocalStorage('jepong_ai_chats',JSON.stringify(chatSessions));
+                if(typeof renderChatHistory==='function')renderChatHistory();
+            }
+            // Reconcile the merged/local-authoritative chat state back to cloud.
+            // Do not use the personalization timestamp to decide chat freshness:
+            // chat saves have their own lifecycle and can happen milliseconds before refresh.
+            if(Object.keys(remoteChatSessions).length || localUpdated>remoteUpdated || !data)await syncCloudNow(true);
+            renderCloudAccount();
         }
         async function syncCloudNow(silent=false){
             if(!cloudUser||!cloudClient){if(!silent)openAccountModal();return;}
@@ -8676,7 +8690,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function saveSessions() {
             if (isIncognito || isBibleMode) return;
-            safeSetLocalStorage('jepong_ai_chats', JSON.stringify(chatSessions));
+            // Local persistence is synchronous and authoritative so both completed
+            // AI responses and Clear survive an immediate browser refresh.
+            const saved=safeSetLocalStorage('jepong_ai_chats', JSON.stringify(chatSessions));
+            if(saved) localStorage.setItem('jepong_chats_updated_at', String(Date.now()));
             queueCloudSync();
             renderSidebarHistory();
         }
