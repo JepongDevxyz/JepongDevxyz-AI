@@ -2665,13 +2665,16 @@ function sanitizeCustomApiProfile(body){
 async function runGenericCustomApi(profile,{history,message,systemInstruction,emit}){
   const url=chatCompletionsUrl(profile.baseUrl,profile.baseUrl);
   const model=profile.model==='auto'?'auto':profile.model;
-  const keys=profile.apiKeys?.length?profile.apiKeys:[profile.apiKey];let last=null;
-  for(let i=0;i<keys.length;i++)try{
-    const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:outputBudgetFor(message)}),signal:AbortSignal.timeout(120000)});
-    if(!res.ok){last={ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};continue;}
-    const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',i,keys.length,finishState),finishState};
-  }catch(e){last={ok:false,status:502,error:e?.message||'Custom API unavailable'};}
-  return last||{ok:false,status:502,error:'All custom API keys failed.'};
+  const keys=Array.isArray(profile.apiKeys)&&profile.apiKeys.length?profile.apiKeys:[profile.apiKey];
+  let last=null;
+  for(let i=0;i<keys.length;i++){
+    try{
+      const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:outputBudgetFor(message)}),signal:AbortSignal.timeout(120000)});
+      if(!res.ok){last={ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};if([401,402,403,408,409,429,500,502,503,504].includes(res.status)&&i<keys.length-1)continue;return last;}
+      const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',i,keys.length,finishState),finishState};
+    }catch(err){last={ok:false,status:502,error:err?.message||'Custom API unavailable'};if(i<keys.length-1)continue;}
+  }
+  return last||{ok:false,status:502,error:'Custom API unavailable'};
 }
 
 function chatCompletionsUrl(base,fallback){
