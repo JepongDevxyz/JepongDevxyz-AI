@@ -4158,6 +4158,18 @@ export default async function handler(req){
     if(body.action==='tts') return cloudflareTTS(body);
     if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
     if(body.action==='provider-models') return json({providers:await dynamicModelCatalog()});
+    if(body.action==='custom-api-models'){
+      const p=sanitizeCustomApiProfile(body);
+      if(!p)return json({error:'Valid API key and HTTPS Base URL are required.'},400);
+      const root=p.baseUrl.replace(/\/chat\/completions$/i,'').replace(/\/$/,'');
+      const modelsUrl=/\/(?:openapi\/)?v1$/i.test(root)?root+'/models':root+'/v1/models';
+      try{
+        const r=await fetch(modelsUrl,{headers:{Authorization:'Bearer '+p.apiKey,Accept:'application/json'},signal:AbortSignal.timeout(12000)});
+        if(!r.ok)return json({error:cleanUpstreamError(await r.text().catch(()=>''),r.status,'custom','models'),status:r.status},r.status);
+        const models=normalizeModelCatalog(await safeJsonResponse(r));
+        return json({models,status:models.length?'ready':'empty',source:modelsUrl});
+      }catch(e){return json({error:e?.message||'Could not load models.'},502);}
+    }
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
 
     const githubSession=await getGitHubSession(req);
