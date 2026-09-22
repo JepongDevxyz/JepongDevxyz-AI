@@ -3103,6 +3103,14 @@ async function runBailucode(args){
 }
 
 async function runProvider(provider,args){
+  if(provider==='custom-api' && args?.customApiProfile){
+    return runGenericCustomApi(args.customApiProfile,{
+      history:args.history,
+      message:args.message,
+      systemInstruction:args.systemInstruction,
+      emit:args.emit
+    });
+  }
   if(provider==='gemini')return runGemini(args);
   if(provider==='cloudflare')return runCloudflare(args);
   if(provider==='cohere')return runCohere(args);
