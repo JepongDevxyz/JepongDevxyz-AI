@@ -31,3 +31,10 @@ assert "Never claim a URL, deployment ID, or successful deploy without real depl
 assert "Never claim red, green, or passing tests without actual test output." in backend
 
 print('agent skill plugins contract: PASS')
+
+assert "autoUse:true" in frontend
+assert "skillPluginTriggers" in backend
+assert "Apply only plugins relevant to the current request" in backend
+assert "do not ask the user to manually select or @mention them" in backend
+assert "Installed but irrelevant plugins must not distort the answer" in backend
+print('automatic cross-model plugin routing contract: PASS')
