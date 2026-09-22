@@ -3053,6 +3053,106 @@
             }
         }
 
+        /* Mobile AI-pet preview repair: compact, centered, and never overlapping. */
+        @media(max-width:980px){
+            #personalizationPetPage #psAiPetPreview.ps-ai-pet-preview{
+                box-sizing:border-box!important;
+                display:flex!important;
+                flex-direction:column!important;
+                align-items:center!important;
+                justify-content:flex-start!important;
+                width:100%!important;
+                min-height:0!important;
+                height:auto!important;
+                padding:16px 14px!important;
+                gap:10px!important;
+                overflow:hidden!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-visual{
+                position:relative!important;
+                flex:0 0 auto!important;
+                width:144px!important;
+                height:144px!important;
+                min-width:144px!important;
+                min-height:144px!important;
+                max-width:144px!important;
+                max-height:144px!important;
+                margin:0 auto!important;
+                padding:0!important;
+                overflow:hidden!important;
+                display:flex!important;
+                align-items:center!important;
+                justify-content:center!important;
+                background:transparent!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-placeholder{
+                position:absolute!important;
+                inset:0!important;
+                margin:auto!important;
+                width:58px!important;
+                height:58px!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-visual img{
+                position:absolute!important;
+                inset:0!important;
+                width:100%!important;
+                height:100%!important;
+                max-width:100%!important;
+                max-height:100%!important;
+                margin:auto!important;
+                padding:0!important;
+                object-fit:contain!important;
+                object-position:center center!important;
+                transform:none!important;
+                border:0!important;
+                border-radius:0!important;
+                background:transparent!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-visual img[hidden],
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-placeholder[hidden]{
+                display:none!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-copy{
+                position:relative!important;
+                flex:0 0 auto!important;
+                width:100%!important;
+                min-width:0!important;
+                min-height:0!important;
+                margin:0!important;
+                padding:0!important;
+                display:flex!important;
+                flex-direction:column!important;
+                align-items:center!important;
+                justify-content:flex-start!important;
+                gap:6px!important;
+                text-align:center!important;
+                transform:none!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-copy strong,
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-copy small{
+                width:100%!important;
+                min-height:0!important;
+                margin:0!important;
+                text-align:center!important;
+            }
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-meta-row,
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-status{
+                margin-left:auto!important;
+                margin-right:auto!important;
+                justify-content:center!important;
+            }
+        }
+        @media(max-width:430px){
+            #personalizationPetPage #psAiPetPreview .ps-ai-pet-preview-visual{
+                width:128px!important;
+                height:128px!important;
+                min-width:128px!important;
+                min-height:128px!important;
+                max-width:128px!important;
+                max-height:128px!important;
+            }
+        }
+
         /* ===== PET SETTINGS REFERENCE UI v2 ===== */
         #personalizationPetPage{
             background:
