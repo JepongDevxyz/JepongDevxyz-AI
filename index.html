@@ -6449,26 +6449,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return out;
         }
 
-        function clearerSpeechRate(profileRate=1, langCode='') {
+        const PERSONA_TTS_SHAPES={Amihan:{rate:.98,pitch:1.08},Bayani:{rate:.94,pitch:.88},Breeze:{rate:1.07,pitch:1.12},Cove:{rate:.91,pitch:.90},Ember:{rate:1,pitch:1.02},Juniper:{rate:1.05,pitch:1.09},Maple:{rate:.97,pitch:1.14},Sol:{rate:.93,pitch:.92},Spruce:{rate:.88,pitch:.86},Vale:{rate:1.09,pitch:1.17},Arbor:{rate:.96,pitch:.98}};
+        function personaTTSShape(profile=getVoiceProfile()){return PERSONA_TTS_SHAPES[profile?.name]||{rate:1,pitch:1};}
+        function clearerSpeechRate(profileRate=1,langCode='',profile=getVoiceProfile()){
             const userRate=Number(personalizationSettings.voiceSpeed||1);
             const base=String(langCode||'').toLowerCase().split('-')[0];
-
-            // Slightly slower defaults for languages that become unclear at high WebSpeech rates.
-            const langFactor = {
-                fil:.88, tl:.88, ja:.90, ko:.90, zh:.90, ar:.88, hi:.90,
-                th:.90, vi:.90, es:.94, fr:.94, de:.94, it:.94, pt:.94
-            }[base] || .96;
-
-            const personaIndex=Math.max(0,PERSONALIZATION_VOICES.findIndex(v=>v.name===getVoiceProfile().name));
-            const personaRate=[.98,.94,1.05,.92,1.00,1.04,.97,.95,.90,1.07,.99][personaIndex]||1;
-            return Math.max(.68,Math.min(1.12,profileRate*userRate*langFactor*personaRate));
+            const factor={fil:.92,tl:.92,ja:.92,ko:.92,zh:.92,ar:.90,hi:.92,th:.92,vi:.93,es:.96,fr:.96,de:.96,it:.96,pt:.96}[base]||.98;
+            return Math.max(.68,Math.min(1.18,profileRate*userRate*factor*personaTTSShape(profile).rate));
         }
-
-        function clearerSpeechPitch(profilePitch=1) {
+        function clearerSpeechPitch(profilePitch=1,profile=getVoiceProfile()){
             const userPitch=Number(personalizationSettings.voicePitch||1);
-            const personaIndex=Math.max(0,PERSONALIZATION_VOICES.findIndex(v=>v.name===getVoiceProfile().name));
-            const personaPitch=[1.08,.91,1.0,1.07,1.1,.96,.9,1.12,1.03][personaIndex]||1;
-            return Math.max(.78,Math.min(1.22,profilePitch*userPitch*personaPitch));
+            return Math.max(.72,Math.min(1.28,profilePitch*userPitch*personaTTSShape(profile).pitch));
         }
 
         function ensureSpeechVoicesReady(timeoutMs=1400){
@@ -6562,8 +6553,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 const voice=resolvePersonalizationSystemVoice(profile,text,langCode);
                 if(voice){ utter.voice=voice; utter.lang=voice.lang||langCode; }
                 else utter.lang=langCode||'en-US';
-                utter.rate=clearerSpeechRate(profile.rate||1,utter.lang);
-                utter.pitch=clearerSpeechPitch(profile.pitch||1);
+                utter.rate=clearerSpeechRate(profile.rate||1,utter.lang,profile);
+                utter.pitch=clearerSpeechPitch(profile.pitch||1,profile);
                 utter.volume=1;
                 let started=false;
                 let watchdog=null;
