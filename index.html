@@ -3559,11 +3559,17 @@
         .chat-viewport-wrapper,
         .chat-box { overflow-x:hidden!important; overscroll-behavior-y:contain; }
 
-        .msg p,.msg li,.msg blockquote,.msg td,.msg th,
-        .user-bubble-body {
+        .msg p,.msg li,.msg blockquote,.msg td,.msg th {
             overflow-wrap:anywhere!important;
             word-break:break-word!important;
             white-space:normal!important;
+        }
+        /* Preserve the exact line layout typed in the composer after send/reload.
+           pre-wrap keeps user newlines and repeated spaces while still wrapping safely. */
+        .user-bubble-body {
+            overflow-wrap:anywhere!important;
+            word-break:break-word!important;
+            white-space:pre-wrap!important;
         }
         .msg pre { max-width:100%!important; overflow-x:auto!important; white-space:pre!important; }
         .msg pre code,.msg code { overflow-wrap:normal!important; word-break:normal!important; }
