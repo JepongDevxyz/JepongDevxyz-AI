@@ -4255,8 +4255,9 @@ function buildPetImagePrompt(options={}){
   const parts = [
     `Create one polished companion pet mascot. The pet name is ${petName}, but DO NOT render the name or any text in the image.`,
     `USER VISUAL REQUEST — follow this as the source of truth: "${userIdea}".`,
-    'Match the requested species/creature, body colors, markings, eyes, horns, wings, ears, tail, clothing, accessories, mood, and other visible traits as closely as possible.',
-    'Interpret an obvious minor spelling typo naturally when context is clear, but do not replace requested visual traits with unrelated ones.'
+    'Treat the USER VISUAL REQUEST as mandatory. Preserve every explicitly requested species/creature, primary and secondary color, marking, eye color, horn, wing, ear, tail, fin, crystal, clothing, accessory, pose, expression, and personality cue. Never silently substitute, omit, or invent a conflicting visible trait.',
+    'When the user gives multiple colors, apply all of them to visible pet features in a natural way rather than dropping one. When a trait is ambiguous, prefer the most literal interpretation that is compatible with the requested species.',
+    'Interpret only obvious minor spelling typos when context is clear; otherwise preserve the user wording instead of guessing.'
   ];
   if(matchSiteStyle){
     parts.push(WEBSITE_PET_STYLE_GUIDE);
@@ -4266,7 +4267,7 @@ function buildPetImagePrompt(options={}){
   } else {
     parts.push('If the user explicitly requests an art style, that style wins. Otherwise use a cute high-quality 3D animated app-mascot style that fits a friendly AI companion.');
   }
-  parts.push('Single full-body pet, centered, clearly visible, square composition, clean simple background, soft studio lighting, no extra characters, no UI, no letters, no logo, no watermark.');
+  parts.push('Single full-body pet, centered, clearly visible, square composition, isolated subject on a fully transparent background (alpha channel), no floor, no backdrop, no scenery, no frame, no extra characters, no UI, no letters, no logo, no watermark. Keep the complete body inside the canvas with comfortable transparent padding around it so it matches the built-in floating pets.');
   return parts.join(' ').slice(0,2600);
 }
 
