@@ -3271,6 +3271,30 @@ async function processChat(body, emit) {
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
   const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
+
+  // Installed skill plugins are explicit, bounded behavior profiles. They do not
+  // grant tools or execution rights: real GitHub, CI, deployment, browser, render,
+  // or audit claims still require corresponding tool evidence.
+  const skillPluginRules={
+    mattpocock:'Use an engineering-first workflow: inspect available project evidence, clarify ambiguous requirements, model the domain when useful, define checkable acceptance criteria, prefer small composable changes, and include verification or review steps. Do not invent repository state.',
+    uiuxpro:'For UI/UX work, reason about information hierarchy, responsive layout, interaction states, accessibility, typography, spacing, color contrast and implementation constraints. Give concrete design-system guidance rather than decorative changes alone.',
+    caveman:'For coding responses, remove greetings, play-by-play narration, repeated summaries and filler. Keep code, paths, errors, decisions and necessary technical explanations. Never shorten away safety-critical or verification details.',
+    humanizer:'When the user asks to rewrite prose, preserve meaning and facts while reducing formulaic AI phrasing, repetitive transitions, canned framing and unnecessary abstraction. Prefer plain, natural language appropriate to the requested audience.',
+    findskills:'Identify which installed skill profile best matches the current task. Use the narrowest relevant workflow; if none fits, say so internally and answer normally rather than forcing an unrelated skill.',
+    deployvercel:'For Vercel deployment requests, first establish project and Git state from available evidence, prefer a preview deployment before production, and distinguish instructions from executed deployment. Never claim a URL, deployment ID, or successful deploy without real deployment evidence.',
+    brainstorming:'Before substantial creative implementation, establish the intended outcome, users, constraints and success criteria from available context. Resolve important ambiguity, then produce a concrete design that can be checked before implementation.',
+    tdd:'For implementation work where tests are practical, define the failing behavior first, make the smallest change that should satisfy it, then specify or use regression verification. Never claim red, green, or passing tests without actual test output.',
+    excalidraw:'For diagram requests, map concepts and relationships first, choose a readable layout and labels, and when code/file generation is requested produce valid editable Excalidraw-compatible structure. Do not claim visual rendering or validation occurred without a real renderer.',
+    remotion:'For Remotion work, apply composition, frame/timing, animation, media, typography, captions and rendering best practices. Keep React/Remotion code internally consistent and never claim Studio preview or rendering ran without execution evidence.',
+    webquality:'For web-quality work, separate source review from measured results. Cover performance/Core Web Vitals, accessibility, SEO and web best practices as relevant. Do not invent Lighthouse, CrUX, browser trace or field measurements.'
+  };
+  const activeSkillPlugins=Array.isArray(body.plugins?.skills)
+    ? [...new Set(body.plugins.skills.map(x=>String(x||'').trim()).filter(id=>Object.hasOwn(skillPluginRules,id)))].slice(0,12)
+    : [];
+  if(activeSkillPlugins.length){
+    systemInstruction+='\n\n[INSTALLED SKILL PLUGINS]\n'+activeSkillPlugins.map(id=>'['+id+'] '+skillPluginRules[id]).join('\n')+
+      '\nThese are behavior workflows only. They never override user intent, safety rules, tool permissions, or evidence requirements.\n[/INSTALLED SKILL PLUGINS]';
+  }
   if(body.plugins?.superpowers?.enabled===true){
     const phases={
       plan:'First clarify the requested outcome and inspect available evidence. Present a concrete design, implementation sequence, verification criteria and unresolved questions. Do not claim to have changed files.',
