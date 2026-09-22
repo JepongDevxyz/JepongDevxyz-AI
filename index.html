@@ -6484,16 +6484,42 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 personalizationSettings.petDescription=String(data.description||idea||'A custom AI companion.').trim().slice(0,500);
                 personalizationSettings.customPetImage=imageDataUrl;
                 persistPersonalization();
+
+                // Paint the creator preview before any broader personalization render.
+                // Some render helpers rebuild pet option DOM; the creator preview itself
+                // must retain the successful generated image independently.
+                const livePreviewImage=document.getElementById('psAiPetPreviewImage');
+                const livePreviewPlaceholder=document.getElementById('psAiPetPreviewPlaceholder');
+                if(livePreviewImage){
+                    livePreviewImage.onerror=null;
+                    livePreviewImage.src=imageDataUrl;
+                    livePreviewImage.hidden=false;
+                    livePreviewImage.style.display='block';
+                }
+                if(livePreviewPlaceholder){
+                    livePreviewPlaceholder.hidden=true;
+                    livePreviewPlaceholder.style.display='none';
+                }
+                enforceAIPetPreviewLayout();
+
                 renderPersonalizationSettings();
                 renderPersonalizationPetOptions();
                 renderPetCompanionAcrossApp();
                 wakeLivePet();
 
-                if(previewImage){
-                    previewImage.src=imageDataUrl;
-                    previewImage.hidden=false;
+                // Re-assert after render helpers in case they touched pet UI.
+                const finalPreviewImage=document.getElementById('psAiPetPreviewImage');
+                const finalPreviewPlaceholder=document.getElementById('psAiPetPreviewPlaceholder');
+                if(finalPreviewImage){
+                    finalPreviewImage.onerror=null;
+                    finalPreviewImage.src=imageDataUrl;
+                    finalPreviewImage.hidden=false;
+                    finalPreviewImage.style.display='block';
                 }
-                if(previewPlaceholder)previewPlaceholder.hidden=true;
+                if(finalPreviewPlaceholder){
+                    finalPreviewPlaceholder.hidden=true;
+                    finalPreviewPlaceholder.style.display='none';
+                }
                 enforceAIPetPreviewLayout();
                 if(previewName)previewName.textContent=personalizationSettings.pet;
                 if(previewDescription)previewDescription.textContent=personalizationSettings.petDescription;
