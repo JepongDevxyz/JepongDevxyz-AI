@@ -3132,17 +3132,13 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
 
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  // Match the user's verified Claude Code setup exactly at the configuration layer:
-  // ANTHROPIC_BASE_URL=https://agentrouter.org/ and ANTHROPIC_AUTH_TOKEN=<key>.
-  // AgentRouter's Anthropic-compatible base URL is the domain root; unlike the OpenAI-compatible API, do not insert /v1 here.
+  // AgentRouter officially documents Claude Code with ANTHROPIC_BASE_URL at the
+  // domain root. Claude Code then calls the Anthropic Messages API at /v1/messages.
   const configuredBase=String(process.env.AGENTROUTER_BASE_URL||process.env.ANTHROPIC_BASE_URL||'').trim();
   let base=(configuredBase||'https://agentrouter.org/').replace(/\/+$/,'');
-  // Do NOT rewrite agentrouter.org to co.agentrouter.org. These can use different
-  // credential pools, and the user's key is verified against agentrouter.org.
   if(/\/v1\/messages$/i.test(base)) base=base.replace(/\/v1\/messages$/i,'');
-  else if(/\/messages$/i.test(base)) base=base.replace(/\/messages$/i,'');
-  if(/\/v1$/i.test(base)) base=base.replace(/\/v1$/i,'');
-  const url=base+'/messages';
+  else if(/\/v1$/i.test(base)) base=base.replace(/\/v1$/i,'');
+  const url=base+'/v1/messages';
 
   const messages=[];
   for(const h of history||[]){
@@ -3159,8 +3155,10 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
       const res=await fetch(url,{
         method:'POST',
         headers:{
-          // ANTHROPIC_AUTH_TOKEN is sent as Bearer auth by Claude Code.
+          // Mirror AgentRouter's documented Claude Code environment: both
+          // ANTHROPIC_AUTH_TOKEN and ANTHROPIC_API_KEY are set to the same token.
           'Authorization':'Bearer '+keys[i],
+          'x-api-key':keys[i],
           'anthropic-version':'2023-06-01',
           'Content-Type':'application/json',
           'Accept':'application/json'
@@ -3201,7 +3199,7 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
       }else{
         status=isHtml?502:res.status;
         last=isHtml
-          ? 'AgentRouter returned HTML instead of an Anthropic API response.'
+          ? 'AgentRouter rejected this direct web/API client. The same token may work only through an AgentRouter-supported Claude Code client.'
           : cleanUpstreamError(raw,res.status,'agentrouter',target);
       }
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
