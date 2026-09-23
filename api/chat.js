@@ -3155,7 +3155,8 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
       const res=await fetch(url,{
         method:'POST',
         headers:{
-          'x-api-key':keys[i],
+          // ANTHROPIC_AUTH_TOKEN is a Bearer token in the working Claude Code setup.
+          // Do not send it as x-api-key; that is a different Anthropic credential contract.
           'Authorization':'Bearer '+keys[i],
           'anthropic-version':'2023-06-01',
           'Content-Type':'application/json',
