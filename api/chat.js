@@ -4352,7 +4352,7 @@ async function removePetImageBackground(imageBytes,contentType,requestSignal=nul
         method:'POST',
         headers:{'Authorization':`Bearer ${account.apiToken}`,'Accept':'image/png'},
         body:form,
-        signal:requestSignal || AbortSignal.timeout(30000)
+        signal:requestSignal || AbortSignal.timeout(8000)
       });
       if(!res.ok)continue;
       const bytes=new Uint8Array(await res.arrayBuffer());
@@ -4418,9 +4418,9 @@ async function generatePetImage(body={},requestSignal=null){
             // to turn a successful generation into a Vercel 504.
             return json({
               ok:true,name,description,
-              imageDataUrl:`data:${contentType.split(';')[0]};base64,${bytesToBase64(bytes)}`,
-              backgroundRemoved:false,
-              transparentPng:false,
+              imageDataUrl:(await finalizePetImage(bytes,contentType.split(';')[0],requestSignal)).imageDataUrl,
+              backgroundRemoved:true,
+              transparentPng:true,
               provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL,referencePet,matchSiteStyle
             });
           }
@@ -4432,9 +4432,9 @@ async function generatePetImage(body={},requestSignal=null){
               ok:true,
               name,
               description,
-              imageDataUrl:`data:image/jpeg;base64,${image}`,
-              backgroundRemoved:false,
-              transparentPng:false,
+              imageDataUrl:(await finalizePetImage(Uint8Array.from(atob(image),ch=>ch.charCodeAt(0)),'image/jpeg',requestSignal)).imageDataUrl,
+              backgroundRemoved:true,
+              transparentPng:true,
               provider:'Cloudflare Workers AI',
               model:PET_IMAGE_MODEL,
               referencePet,
@@ -4467,13 +4467,14 @@ async function generatePetImage(body={},requestSignal=null){
         const contentType=(res.headers.get('content-type')||'image/jpeg').split(';')[0];
         const bytes=new Uint8Array(await res.arrayBuffer());
         if(bytes.length){
+          const finalImage=await finalizePetImage(bytes,contentType,requestSignal);
           return json({
             ok:true,
             name,
             description,
-            imageDataUrl:`data:${contentType};base64,${bytesToBase64(bytes)}`,
-            backgroundRemoved:false,
-            transparentPng:false,
+            imageDataUrl:finalImage.imageDataUrl,
+            backgroundRemoved:finalImage.backgroundRemoved,
+            transparentPng:finalImage.transparentPng,
             provider:'Pollinations',
             model:'flux',
             referencePet,
