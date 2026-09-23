@@ -3154,7 +3154,6 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
           'x-api-key':keys[i],
           'Authorization':'Bearer '+keys[i],
           'anthropic-version':'2023-06-01',
-          'anthropic-beta':'claude-code-20250219',
           'Content-Type':'application/json',
           'Accept':'text/event-stream'
         },
@@ -3190,7 +3189,21 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
           },
           flush(){if(finishState.reason==='unknown')finishState.reason='stop';}
         }));
-        return {ok:true,response:stream,finishState};
+        return {
+          ok:true,
+          response:new Response(stream,{
+            status:200,
+            headers:{
+              'Content-Type':'text/plain; charset=utf-8',
+              'X-AI-Provider':'agentrouter',
+              'X-AI-Model':target,
+              'X-AI-Route-Reason':routedReason||'agentrouter-anthropic',
+              'X-AI-Key-Index':String(i),
+              'X-AI-Key-Count':String(keys.length)
+            }
+          }),
+          finishState
+        };
       }
       status=res.status;
       last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
