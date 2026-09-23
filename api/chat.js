@@ -4416,11 +4416,12 @@ async function generatePetImage(body={},requestSignal=null){
             // Return the generated pet immediately. Background removal is a best-effort
             // enhancement and must never hold the serverless request open long enough
             // to turn a successful generation into a Vercel 504.
+            const finalImage=await finalizePetImage(bytes,contentType.split(';')[0],requestSignal);
             return json({
               ok:true,name,description,
-              imageDataUrl:(await finalizePetImage(bytes,contentType.split(';')[0],requestSignal)).imageDataUrl,
-              backgroundRemoved:true,
-              transparentPng:true,
+              imageDataUrl:finalImage.imageDataUrl,
+              backgroundRemoved:finalImage.backgroundRemoved,
+              transparentPng:finalImage.transparentPng,
               provider:'Cloudflare Workers AI',model:PET_IMAGE_MODEL,referencePet,matchSiteStyle
             });
           }
@@ -4428,13 +4429,14 @@ async function generatePetImage(body={},requestSignal=null){
           const payload=await safeJsonResponse(res);
           const image=extractCloudflareImageBase64(payload);
           if(image){
+            const finalImage=await finalizePetImage(Uint8Array.from(atob(image),ch=>ch.charCodeAt(0)),'image/jpeg',requestSignal);
             return json({
               ok:true,
               name,
               description,
-              imageDataUrl:(await finalizePetImage(Uint8Array.from(atob(image),ch=>ch.charCodeAt(0)),'image/jpeg',requestSignal)).imageDataUrl,
-              backgroundRemoved:true,
-              transparentPng:true,
+              imageDataUrl:finalImage.imageDataUrl,
+              backgroundRemoved:finalImage.backgroundRemoved,
+              transparentPng:finalImage.transparentPng,
               provider:'Cloudflare Workers AI',
               model:PET_IMAGE_MODEL,
               referencePet,
