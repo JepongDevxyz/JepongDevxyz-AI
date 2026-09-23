@@ -69,8 +69,8 @@ const PROVIDERS = {
   },
   hcnsec: {
     label: 'HCNSEC',
-    models: ['DeepSeek-V4.1-Flash','DeepSeek-V4-Flash','glm-5.3-flash','sensenova-6.8-flash-lite','step-3.7-flash'],
-    defaultModel: 'DeepSeek-V4.1-Flash'
+    models: ['DeepSeek-V4-Flash','glm-5.3-flash','MiMo-V2.6-Flash','Qwen3.8-Flash-Next','sensenova-6.8-flash-lite','spark-x2.5'],
+    defaultModel: 'DeepSeek-V4-Flash'
   },
   bailucode: {
     label: 'Bailucode',
