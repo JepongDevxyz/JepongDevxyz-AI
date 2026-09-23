@@ -3200,9 +3200,9 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
           }
           // Some gateways answer as SSE despite stream:false. Parse text
           // deltas instead of treating a valid 200 response as empty.
-          if(!out && /^\\s*(?:event:|data:)/m.test(raw)){
+          if(!out && /^\s*(?:event:|data:)/m.test(raw)){
             const pieces=[];
-            for(const line of raw.split(/\\r?\\n/)){
+            for(const line of raw.split(/\r?\n/)){
               const t=line.trim();
               if(!t.startsWith('data:'))continue;
               const s=t.slice(5).trim();
