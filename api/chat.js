@@ -3128,6 +3128,61 @@ function anthropicStreamToText(body,finishState={reason:''}){
   }));
 }
 
+async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
+  const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
+  if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
+  const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
+  const base=String(process.env.AGENTROUTER_ANTHROPIC_BASE_URL||process.env.AGENTROUTER_BASE_URL||'https://co.agentrouter.org').trim().replace(/\/$/,'').replace(/\/v1$/i,'');
+  const url=base+'/v1/messages';
+  const messages=[];
+  for(const h of history||[]){
+    const role=h.role==='bot'||h.role==='model'?'assistant':'user';
+    const text=String(h.text||'').trim();
+    if(text)messages.push({role,content:text});
+  }
+  if(String(message||'').trim())messages.push({role:'user',content:String(message).trim()});
+  if(!messages.length)return {ok:false,status:400,error:'No prompt provided.'};
+
+  let last='',status=500;
+  for(let i=0;i<keys.length;i++){
+    providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+    try{
+      const res=await fetch(url,{
+        method:'POST',
+        headers:{
+          'x-api-key':keys[i],
+          'Authorization':'Bearer '+keys[i],
+          'anthropic-version':'2023-06-01',
+          'content-type':'application/json',
+          'accept':'text/event-stream'
+        },
+        body:JSON.stringify({
+          model:target,
+          max_tokens:outputBudgetFor(message),
+          system:systemInstruction,
+          messages,
+          stream:true
+        }),
+        signal:AbortSignal.timeout(120000)
+      });
+      if(res.ok){
+        providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+        const finishState={reason:''};
+        return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'agentrouter',target,fallbackFrom,routedReason||'agentrouter-anthropic',i,keys.length)}),finishState};
+      }
+      status=res.status;
+      last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
+      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
+      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180)||retryLabel('agentrouter',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      if(!isRetryableStatus(status))break;
+    }catch(e){
+      status=502;last=e?.message||String(e);
+      if(i>=keys.length-1)break;
+    }
+  }
+  return {ok:false,status,error:last||'AgentRouter Anthropic route unavailable'};
+}
+
 async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys();
   if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
@@ -3179,7 +3234,8 @@ async function runProvider(provider,args){
   if(provider==='cohere')return runCohere(args);
   if(provider==='aihorde')return runAIHorde(args);
   if(provider==='bailucode')return runBailucode(args);
-  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','agentrouter','hcnsec','seekai'].includes(provider))return runOpenAICompatible(provider,args);
+  if(provider==='agentrouter')return runAgentRouter(args);
+  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec','seekai'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
@@ -3542,7 +3598,7 @@ async function mediaCapabilitySnapshot(){
 }
 
 
-const DYNAMIC_MODEL_PROVIDERS = new Set(['unorouter','nvidia','codecraft','agentrouter','hcnsec','bailucode','seekai']);
+const DYNAMIC_MODEL_PROVIDERS = new Set(['unorouter','nvidia','codecraft','hcnsec','bailucode','seekai']);
 
 function providerModelsUrl(provider){
   const envName=provider.toUpperCase()+'_BASE_URL';
