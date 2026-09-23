@@ -3130,16 +3130,23 @@ function anthropicStreamToText(body,finishState={reason:''}){
 async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
-  const target=String(model||process.env.ANTHROPIC_MODEL||'deepseek-v4-flash').trim()||'deepseek-v4-flash';
-  const base=String(process.env.ANTHROPIC_BASE_URL||process.env.AGENTROUTER_BASE_URL||'https://agentrouter.org/').trim().replace(/\/$/,'');
+  const target=String(model||'deepseek-v4-flash').trim()||'deepseek-v4-flash';
+
+  // Same upstream contract as the working ANTHROPIC_BASE_URL setup:
+  // ANTHROPIC_BASE_URL=https://agentrouter.org/ + /v1/messages.
+  // Never use the website root itself as an API response.
+  const base='https://agentrouter.org';
   const url=base+'/v1/messages';
-  const messages=[];
+
+  const anthropicMessages=[];
   for(const h of history||[]){
-    const t=String(h?.text||'').trim(); if(!t)continue;
-    messages.push({role:(h.role==='bot'||h.role==='model'||h.role==='assistant')?'assistant':'user',content:t});
+    const value=h?.text ?? h?.content;
+    const text=typeof value==='string'?value.trim():'';
+    if(!text)continue;
+    anthropicMessages.push({role:(h.role==='bot'||h.role==='model'||h.role==='assistant')?'assistant':'user',content:[{type:'text',text}]});
   }
-  if(message?.trim())messages.push({role:'user',content:String(message).trim()});
-  if(!messages.length)return {ok:false,status:400,error:'No prompt provided.'};
+  if(message?.trim())anthropicMessages.push({role:'user',content:[{type:'text',text:String(message).trim()}]});
+  if(!anthropicMessages.length)return {ok:false,status:400,error:'No prompt provided.'};
 
   let last='',status=500;
   for(let i=0;i<keys.length;i++){
@@ -3147,45 +3154,58 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
     try{
       const res=await fetch(url,{
         method:'POST',
-        headers:{'x-api-key':keys[i],'Authorization':'Bearer '+keys[i],'anthropic-version':'2023-06-01','Content-Type':'application/json','Accept':'text/event-stream'},
-        body:JSON.stringify({model:target,max_tokens:outputBudgetFor(message),system:String(systemInstruction||''),messages,stream:true}),
+        headers:{
+          'x-api-key':keys[i],
+          'Authorization':'Bearer '+keys[i],
+          'anthropic-version':'2023-06-01',
+          'Content-Type':'application/json',
+          'Accept':'application/json'
+        },
+        body:JSON.stringify({
+          model:target,
+          max_tokens:outputBudgetFor(message),
+          system:String(systemInstruction||''),
+          messages:anthropicMessages,
+          stream:false
+        }),
         signal:AbortSignal.timeout(120000)
       });
+      const raw=await res.text();
       if(res.ok){
-        if(!res.body)throw new Error('AgentRouter returned no response body.');
-        providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-        const decoder=new TextDecoder(),encoder=new TextEncoder(),finishState={reason:'unknown'};
-        const stream=res.body.pipeThrough(new TransformStream({
-          start(){this.buf='';},
-          transform(chunk,controller){
-            this.buf+=decoder.decode(chunk,{stream:true});
-            const lines=this.buf.split('\n'); this.buf=lines.pop()||'';
-            for(const line of lines){
-              const s=line.trim(); if(!s.startsWith('data:'))continue;
-              const raw=s.slice(5).trim(); if(!raw||raw==='[DONE]')continue;
-              try{
-                const p=JSON.parse(raw);
-                const txt=p?.delta?.text ?? p?.content_block?.text ?? p?.text ?? '';
-                const reason=p?.delta?.stop_reason ?? p?.stop_reason;
-                if(reason)finishState.reason=String(reason).toLowerCase();
-                if(typeof txt==='string'&&txt)controller.enqueue(encoder.encode(txt));
-              }catch(_){}
-            }
-          },
-          flush(controller){
-            const s=this.buf.trim();
-            if(s.startsWith('data:')){
-              try{const p=JSON.parse(s.slice(5).trim());const txt=p?.delta?.text??p?.content_block?.text??p?.text??'';if(txt)controller.enqueue(encoder.encode(txt));}catch(_){}
-            }
+        const ct=String(res.headers.get('content-type')||'').toLowerCase();
+        if(ct.includes('text/html')||/^\s*<!doctype html/i.test(raw)||/^\s*<html/i.test(raw)){
+          status=502;last='AgentRouter API returned its website instead of a model response.';
+        }else{
+          let payload=null;
+          try{payload=JSON.parse(raw);}catch(_){}
+          const blocks=Array.isArray(payload?.content)?payload.content:[];
+          const out=blocks.map(part=>{
+            if(typeof part==='string')return part;
+            if(part?.type==='text'&&typeof part.text==='string')return part.text;
+            if(typeof part?.text==='string')return part.text;
+            return '';
+          }).join('').trim();
+          if(out){
+            providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+            const finishState={reason:String(payload?.stop_reason||'stop').toLowerCase()};
+            const encoder=new TextEncoder();
+            const responseStream=new ReadableStream({start(controller){controller.enqueue(encoder.encode(out));controller.close();}});
+            return {ok:true,response:responseStream,finishState};
           }
-        }));
-        return {ok:true,response:new Response(stream,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','X-AI-Provider':'agentrouter','X-AI-Model':target}}),finishState};
+          status=502;
+          last=payload?.error?.message||payload?.message||'AgentRouter returned an empty model response.';
+        }
+      }else{
+        status=res.status;
+        last=cleanUpstreamError(raw,status,'agentrouter',target);
       }
-      status=res.status; last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
-      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180)||retryLabel('agentrouter',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:String(last).slice(0,180),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
       if(!isRetryableStatus(status))break;
-    }catch(e){status=502;last=e?.message||String(e);if(i>=keys.length-1)break;}
+    }catch(e){
+      status=502;last=e?.message||String(e);
+      if(i>=keys.length-1)break;
+    }
   }
   return {ok:false,status,error:last||'AgentRouter route unavailable'};
 }
