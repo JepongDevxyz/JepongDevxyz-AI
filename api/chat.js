@@ -3132,33 +3132,19 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
 
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  // AgentRouter's current integration guide uses co.agentrouter.org/v1 for
-  // OpenAI-compatible models. Canonicalize legacy/root values so an old
-  // AGENTROUTER_BASE_URL cannot silently send chat requests to the wrong host.
+  // AgentRouter's gateway page publishes agentrouter.org as the API host.
+  // Keep this provider on that host; do not rewrite it to co.agentrouter.org.
   const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim().replace(/\/$/,'');
-  let base=configuredBase||'https://co.agentrouter.org/v1';
-  if(/^https:\/\/(?:www\.)?agentrouter\.org(?:\/v1)?$/i.test(base)) base='https://co.agentrouter.org/v1';
-  if(/^https:\/\/co\.agentrouter\.org$/i.test(base)) base+='/v1';
+  let base=configuredBase||'https://agentrouter.org';
+  if(/^https:\/\/co\.agentrouter\.org(?:\/v1)?$/i.test(base)) base='https://agentrouter.org';
   const url=/\/chat\/completions$/i.test(base)?base:(/\/v1$/i.test(base)?base+'/chat/completions':base+'/v1/chat/completions');
-  const modelsUrl=(/\/v1$/i.test(base)?base:base.replace(/\/chat\/completions$/i,'').replace(/\/$/,'')+'/v1')+'/models';
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   let last='',status=500;
 
   for(let i=0;i<keys.length;i++){
     providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
     try{
-      // Validate the selected model against the resource pool when AgentRouter
-      // exposes /v1/models. A model-list failure must not block chat because
-      // some pools do not expose discovery to every credential.
-      let resolvedTarget=target;
-      try{
-        const mr=await fetch(modelsUrl,{headers:{'Authorization':'Bearer '+keys[i],'Accept':'application/json'},signal:AbortSignal.timeout(12000)});
-        if(mr.ok){
-          const available=normalizeModelCatalog(await safeJsonResponse(mr));
-          const exact=available.find(x=>String(x).toLowerCase()===target.toLowerCase());
-          if(exact) resolvedTarget=exact;
-        }
-      }catch(_){}
+      const resolvedTarget=target;
 
       const res=await fetch(url,{
         method:'POST',
