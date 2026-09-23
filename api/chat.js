@@ -3134,14 +3134,15 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
   // Match the user's verified Claude Code setup exactly at the configuration layer:
   // ANTHROPIC_BASE_URL=https://agentrouter.org/ and ANTHROPIC_AUTH_TOKEN=<key>.
-  // The Anthropic client appends /v1/messages to that base URL.
+  // AgentRouter's Anthropic-compatible base URL is the domain root; unlike the OpenAI-compatible API, do not insert /v1 here.
   const configuredBase=String(process.env.AGENTROUTER_BASE_URL||process.env.ANTHROPIC_BASE_URL||'').trim();
   let base=(configuredBase||'https://agentrouter.org/').replace(/\/+$/,'');
   // Do NOT rewrite agentrouter.org to co.agentrouter.org. These can use different
   // credential pools, and the user's key is verified against agentrouter.org.
   if(/\/v1\/messages$/i.test(base)) base=base.replace(/\/v1\/messages$/i,'');
+  else if(/\/messages$/i.test(base)) base=base.replace(/\/messages$/i,'');
   if(/\/v1$/i.test(base)) base=base.replace(/\/v1$/i,'');
-  const url=base+'/v1/messages';
+  const url=base+'/messages';
 
   const messages=[];
   for(const h of history||[]){
