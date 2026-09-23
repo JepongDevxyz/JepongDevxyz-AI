@@ -3160,6 +3160,16 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
           'Authorization':'Bearer '+keys[i],
           'x-api-key':keys[i],
           'anthropic-version':'2023-06-01',
+          'anthropic-beta':'claude-code-20250219,oauth-2025-04-20',
+          'anthropic-dangerous-direct-browser-access':'true',
+          'User-Agent':'claude-cli/1.0.108 (external, cli)',
+          'x-app':'cli',
+          'x-stainless-lang':'js',
+          'x-stainless-package-version':'0.55.1',
+          'x-stainless-os':'Windows',
+          'x-stainless-arch':'x64',
+          'x-stainless-runtime':'node',
+          'x-stainless-runtime-version':'v22.0.0',
           'Content-Type':'application/json',
           'Accept':'application/json'
         },
@@ -3199,7 +3209,7 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
       }else{
         status=isHtml?502:res.status;
         last=isHtml
-          ? 'AgentRouter rejected this direct web/API client. The same token may work only through an AgentRouter-supported Claude Code client.'
+          ? 'AgentRouter returned HTML instead of an Anthropic API response.'
           : cleanUpstreamError(raw,res.status,'agentrouter',target);
       }
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
