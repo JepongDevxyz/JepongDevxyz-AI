@@ -3130,31 +3130,56 @@ function anthropicStreamToText(body,finishState={reason:''}){
 async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
+
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  const base=String(process.env.AGENTROUTER_BASE_URL||'https://co.agentrouter.org/v1').trim().replace(/\/$/,'');
+  // AgentRouter's current integration guide uses co.agentrouter.org/v1 for
+  // OpenAI-compatible models. Canonicalize legacy/root values so an old
+  // AGENTROUTER_BASE_URL cannot silently send chat requests to the wrong host.
+  const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim().replace(/\/$/,'');
+  let base=configuredBase||'https://co.agentrouter.org/v1';
+  if(/^https:\/\/(?:www\.)?agentrouter\.org(?:\/v1)?$/i.test(base)) base='https://co.agentrouter.org/v1';
+  if(/^https:\/\/co\.agentrouter\.org$/i.test(base)) base+='/v1';
   const url=/\/chat\/completions$/i.test(base)?base:(/\/v1$/i.test(base)?base+'/chat/completions':base+'/v1/chat/completions');
+  const modelsUrl=(/\/v1$/i.test(base)?base:base.replace(/\/chat\/completions$/i,'').replace(/\/$/,'')+'/v1')+'/models';
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   let last='',status=500;
+
   for(let i=0;i<keys.length;i++){
     providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
     try{
+      // Validate the selected model against the resource pool when AgentRouter
+      // exposes /v1/models. A model-list failure must not block chat because
+      // some pools do not expose discovery to every credential.
+      let resolvedTarget=target;
+      try{
+        const mr=await fetch(modelsUrl,{headers:{'Authorization':'Bearer '+keys[i],'Accept':'application/json'},signal:AbortSignal.timeout(12000)});
+        if(mr.ok){
+          const available=normalizeModelCatalog(await safeJsonResponse(mr));
+          const exact=available.find(x=>String(x).toLowerCase()===target.toLowerCase());
+          if(exact) resolvedTarget=exact;
+        }
+      }catch(_){}
+
       const res=await fetch(url,{
         method:'POST',
-        headers:{'Authorization':'Bearer '+keys[i],'Content-Type':'application/json','Accept':'text/event-stream'},
-        body:JSON.stringify({model:target,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:temperatureFor(message,[])}),
+        headers:{'Authorization':'Bearer '+keys[i],'Content-Type':'application/json','Accept':'text/event-stream, application/json'},
+        body:JSON.stringify({model:resolvedTarget,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:temperatureFor(message,[])}),
         signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
-        providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+        providerLifecycleActivity(emit,{provider:'agentrouter',model:resolvedTarget,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
         const finishState={reason:'unknown'};
-        return {ok:true,response:openAIStreamToText(res,'AgentRouter',target,fallbackFrom,routedReason||'agentrouter-openai',i,keys.length,finishState),finishState};
+        return {ok:true,response:openAIStreamToText(res,'AgentRouter',resolvedTarget,fallbackFrom,routedReason||'agentrouter-openai',i,keys.length,finishState),finishState};
       }
       status=res.status;
       last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
       providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180)||retryLabel('agentrouter',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
       if(!isRetryableStatus(status))break;
-    }catch(e){status=502;last=e?.message||String(e);if(i>=keys.length-1)break;}
+    }catch(e){
+      status=502;last=e?.message||String(e);
+      if(i>=keys.length-1)break;
+    }
   }
   return {ok:false,status,error:last||'AgentRouter route unavailable'};
 }
