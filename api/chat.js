@@ -3132,7 +3132,7 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  const base=String(process.env.AGENTROUTER_ANTHROPIC_BASE_URL||process.env.AGENTROUTER_BASE_URL||'https://co.agentrouter.org').trim().replace(/\/$/,'').replace(/\/v1$/i,'');
+  const base=String(process.env.AGENTROUTER_ANTHROPIC_BASE_URL||'https://agentrouter.org/').trim().replace(/\/$/,'').replace(/\/v1$/i,'');
   const url=base+'/v1/messages';
   const messages=[];
   for(const h of history||[]){
