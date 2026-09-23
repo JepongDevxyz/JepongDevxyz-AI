@@ -3132,30 +3132,53 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
 
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  // AgentRouter's gateway page publishes agentrouter.org as the API host.
-  // Keep this provider on that host; do not rewrite it to co.agentrouter.org.
+  // Match the working AgentRouter/Anthropic configuration: base host
+  // https://agentrouter.org/ and the Anthropic Messages API.
   const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim().replace(/\/$/,'');
   let base=configuredBase||'https://agentrouter.org';
   if(/^https:\/\/co\.agentrouter\.org(?:\/v1)?$/i.test(base)) base='https://agentrouter.org';
-  const url=/\/chat\/completions$/i.test(base)?base:(/\/v1$/i.test(base)?base+'/chat/completions':base+'/v1/chat/completions');
-  const messages=buildOpenAIMessages(history,message,systemInstruction);
-  let last='',status=500;
+  const url=/\/v1\/messages$/i.test(base)?base:(/\/v1$/i.test(base)?base+'/messages':base+'/v1/messages');
 
+  const anthropicMessages=[];
+  for(const h of history||[]){
+    const text=String(h?.text||'').trim();
+    if(!text)continue;
+    anthropicMessages.push({role:(h.role==='bot'||h.role==='model'||h.role==='assistant')?'assistant':'user',content:text});
+  }
+  if(message?.trim())anthropicMessages.push({role:'user',content:String(message).trim()});
+  if(!anthropicMessages.length)return {ok:false,status:400,error:'No prompt provided.'};
+
+  let last='',status=500;
   for(let i=0;i<keys.length;i++){
     providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
     try{
-      const resolvedTarget=target;
-
       const res=await fetch(url,{
         method:'POST',
-        headers:{'Authorization':'Bearer '+keys[i],'Content-Type':'application/json','Accept':'text/event-stream, application/json'},
-        body:JSON.stringify({model:resolvedTarget,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:temperatureFor(message,[])}),
+        headers:{
+          'x-api-key':keys[i],
+          'Authorization':'Bearer '+keys[i],
+          'anthropic-version':'2023-06-01',
+          'Content-Type':'application/json',
+          'Accept':'application/json'
+        },
+        body:JSON.stringify({
+          model:target,
+          max_tokens:outputBudgetFor(message),
+          system:String(systemInstruction||''),
+          messages:anthropicMessages,
+          stream:false
+        }),
         signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
-        providerLifecycleActivity(emit,{provider:'agentrouter',model:resolvedTarget,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-        const finishState={reason:'unknown'};
-        return {ok:true,response:openAIStreamToText(res,'AgentRouter',resolvedTarget,fallbackFrom,routedReason||'agentrouter-openai',i,keys.length,finishState),finishState};
+        const payload=await safeJsonResponse(res);
+        const text=(Array.isArray(payload?.content)?payload.content:[])
+          .filter(part=>part?.type==='text'&&typeof part.text==='string')
+          .map(part=>part.text).join('');
+        if(!text)throw new Error('AgentRouter returned no text content.');
+        providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+        const finishState={reason:String(payload?.stop_reason||'stop').toLowerCase()};
+        return {ok:true,response:new Response(text,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','X-AI-Provider':'agentrouter','X-AI-Model':target}}),finishState};
       }
       status=res.status;
       last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
