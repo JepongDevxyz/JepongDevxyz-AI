@@ -2702,7 +2702,6 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
     unorouter:{url:chatCompletionsUrl(process.env.UNOROUTER_BASE_URL,'https://api.unorouter.com/v1/chat/completions')},
     nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
     codecraft:{url:'https://www.codecraftapi.com/v1/chat/completions'},
-    agentrouter:{url:chatCompletionsUrl(process.env.AGENTROUTER_BASE_URL,'https://co.agentrouter.org/v1/chat/completions')},
     hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
     seekai:{url:chatCompletionsUrl(process.env.SEEKAI_BASE_URL,'https://seekai.cc/v1/chat/completions')},
     bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
@@ -3128,59 +3127,36 @@ function anthropicStreamToText(body,finishState={reason:''}){
   }));
 }
 
-async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
+async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  const base=String(process.env.AGENTROUTER_ANTHROPIC_BASE_URL||'https://agentrouter.org/').trim().replace(/\/$/,'').replace(/\/v1$/i,'');
-  const url=base+'/v1/messages';
-  const messages=[];
-  for(const h of history||[]){
-    const role=h.role==='bot'||h.role==='model'?'assistant':'user';
-    const text=String(h.text||'').trim();
-    if(text)messages.push({role,content:text});
-  }
-  if(String(message||'').trim())messages.push({role:'user',content:String(message).trim()});
-  if(!messages.length)return {ok:false,status:400,error:'No prompt provided.'};
-
+  const base=String(process.env.AGENTROUTER_BASE_URL||'https://co.agentrouter.org/v1').trim().replace(/\/$/,'');
+  const url=/\/chat\/completions$/i.test(base)?base:(/\/v1$/i.test(base)?base+'/chat/completions':base+'/v1/chat/completions');
+  const messages=buildOpenAIMessages(history,message,systemInstruction);
   let last='',status=500;
   for(let i=0;i<keys.length;i++){
     providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
     try{
       const res=await fetch(url,{
         method:'POST',
-        headers:{
-          'x-api-key':keys[i],
-          'Authorization':'Bearer '+keys[i],
-          'anthropic-version':'2023-06-01',
-          'content-type':'application/json',
-          'accept':'text/event-stream'
-        },
-        body:JSON.stringify({
-          model:target,
-          max_tokens:outputBudgetFor(message),
-          system:systemInstruction,
-          messages,
-          stream:true
-        }),
+        headers:{'Authorization':'Bearer '+keys[i],'Content-Type':'application/json','Accept':'text/event-stream'},
+        body:JSON.stringify({model:target,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:temperatureFor(message,[])}),
         signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
         providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-        const finishState={reason:''};
-        return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'agentrouter',target,fallbackFrom,routedReason||'agentrouter-anthropic',i,keys.length)}),finishState};
+        const finishState={reason:'unknown'};
+        return {ok:true,response:openAIStreamToText(res,'AgentRouter',target,fallbackFrom,routedReason||'agentrouter-openai',i,keys.length,finishState),finishState};
       }
       status=res.status;
       last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
       providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180)||retryLabel('agentrouter',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
       if(!isRetryableStatus(status))break;
-    }catch(e){
-      status=502;last=e?.message||String(e);
-      if(i>=keys.length-1)break;
-    }
+    }catch(e){status=502;last=e?.message||String(e);if(i>=keys.length-1)break;}
   }
-  return {ok:false,status,error:last||'AgentRouter Anthropic route unavailable'};
+  return {ok:false,status,error:last||'AgentRouter route unavailable'};
 }
 
 async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
