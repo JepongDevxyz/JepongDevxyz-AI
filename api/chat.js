@@ -3130,23 +3130,17 @@ function anthropicStreamToText(body,finishState={reason:''}){
 async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
-  const target=String(model||'deepseek-v4-flash').trim()||'deepseek-v4-flash';
 
-  // Same upstream contract as the working ANTHROPIC_BASE_URL setup:
-  // ANTHROPIC_BASE_URL=https://agentrouter.org/ + /v1/messages.
-  // Never use the website root itself as an API response.
-  const base='https://agentrouter.org';
-  const url=base+'/v1/messages';
-
-  const anthropicMessages=[];
-  for(const h of history||[]){
-    const value=h?.text ?? h?.content;
-    const text=typeof value==='string'?value.trim():'';
-    if(!text)continue;
-    anthropicMessages.push({role:(h.role==='bot'||h.role==='model'||h.role==='assistant')?'assistant':'user',content:[{type:'text',text}]});
-  }
-  if(message?.trim())anthropicMessages.push({role:'user',content:[{type:'text',text:String(message).trim()}]});
-  if(!anthropicMessages.length)return {ok:false,status:400,error:'No prompt provided.'};
+  const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
+  // AgentRouter documents the OpenAI-compatible gateway at agentrouter.org/v1.
+  // Use a non-streaming response here so the web app receives one deterministic
+  // JSON payload and does not depend on provider-specific SSE framing.
+  const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim().replace(/\/$/,'');
+  let base=configuredBase||'https://agentrouter.org/v1';
+  if(/^https:\/\/co\.agentrouter\.org(?:\/v1)?$/i.test(base)) base='https://agentrouter.org/v1';
+  if(/^https:\/\/(?:www\.)?agentrouter\.org$/i.test(base)) base+='/v1';
+  const url=/\/chat\/completions$/i.test(base)?base:(/\/v1$/i.test(base)?base+'/chat/completions':base+'/v1/chat/completions');
+  const messages=buildOpenAIMessages(history,message,systemInstruction);
 
   let last='',status=500;
   for(let i=0;i<keys.length;i++){
@@ -3155,83 +3149,50 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
       const res=await fetch(url,{
         method:'POST',
         headers:{
-          // ANTHROPIC_AUTH_TOKEN is a Bearer token in the working Claude Code setup.
-          // Do not send it as x-api-key; that is a different Anthropic credential contract.
           'Authorization':'Bearer '+keys[i],
-          'anthropic-version':'2023-06-01',
           'Content-Type':'application/json',
           'Accept':'application/json'
         },
         body:JSON.stringify({
           model:target,
+          messages,
+          stream:false,
           max_tokens:outputBudgetFor(message),
-          system:String(systemInstruction||''),
-          messages:anthropicMessages,
-          stream:false
+          temperature:temperatureFor(message,[])
         }),
         signal:AbortSignal.timeout(120000)
       });
-      const raw=await res.text();
-      if(res.ok){
-        const ct=String(res.headers.get('content-type')||'').toLowerCase();
-        if(ct.includes('text/html')||/^\s*<!doctype html/i.test(raw)||/^\s*<html/i.test(raw)){
-          status=502;last='AgentRouter API returned its website instead of a model response.';
-        }else{
-          let payload=null;
-          try{payload=JSON.parse(raw);}catch(_){}
-          const blocks=Array.isArray(payload?.content)?payload.content:[];
-          let out=blocks.map(part=>{
-            if(typeof part==='string')return part;
-            if(part?.type==='text'&&typeof part.text==='string')return part.text;
-            if(typeof part?.text==='string')return part.text;
-            return '';
-          }).join('').trim();
 
-          // Be tolerant of AgentRouter gateways that normalize the upstream
-          // response into OpenAI/Responses-style JSON even on /v1/messages.
-          if(!out && typeof payload?.output_text==='string') out=payload.output_text.trim();
-          if(!out && typeof payload?.response==='string') out=payload.response.trim();
-          if(!out && typeof payload?.text==='string') out=payload.text.trim();
-          if(!out){
-            const choice=payload?.choices?.[0];
-            const value=choice?.message?.content ?? choice?.delta?.content ?? choice?.text;
-            if(typeof value==='string') out=value.trim();
-            else if(Array.isArray(value)) out=value.map(p=>typeof p==='string'?p:(p?.text||'')).join('').trim();
+      if(res.ok){
+        const raw=await res.text();
+        let payload=null;
+        try{payload=JSON.parse(raw);}catch(_){}
+        const content=payload?.choices?.[0]?.message?.content;
+        const text=typeof content==='string'
+          ? content
+          : Array.isArray(content)
+            ? content.map(part=>typeof part==='string'?part:(part?.text||part?.content||'')).join('')
+            : '';
+        if(!text.trim()){
+          const ct=String(res.headers.get('content-type')||'').toLowerCase();
+          if(ct.includes('text/html')||/^\s*<!doctype|^\s*<html/i.test(raw)){
+            return {ok:false,status:502,error:'AgentRouter gateway returned HTML instead of an API response.'};
           }
-          // Some gateways answer as SSE despite stream:false. Parse text
-          // deltas instead of treating a valid 200 response as empty.
-          if(!out && /^\s*(?:event:|data:)/m.test(raw)){
-            const pieces=[];
-            for(const line of raw.split(/\r?\n/)){
-              const t=line.trim();
-              if(!t.startsWith('data:'))continue;
-              const s=t.slice(5).trim();
-              if(!s||s==='[DONE]')continue;
-              try{
-                const ev=JSON.parse(s);
-                const v=ev?.delta?.text ?? ev?.content_block?.text ?? ev?.content_block_delta?.delta?.text ??
-                  ev?.choices?.[0]?.delta?.content ?? ev?.choices?.[0]?.message?.content ?? ev?.text;
-                if(typeof v==='string')pieces.push(v);
-              }catch(_){}
-            }
-            out=pieces.join('').trim();
-          }
-          if(out){
-            providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-            const finishState={reason:String(payload?.stop_reason||'stop').toLowerCase()};
-            const encoder=new TextEncoder();
-            const responseStream=new ReadableStream({start(controller){controller.enqueue(encoder.encode(out));controller.close();}});
-            return {ok:true,response:responseStream,finishState};
-          }
-          status=502;
-          last=payload?.error?.message||payload?.message||'AgentRouter returned an empty model response.';
+          return {ok:false,status:502,error:'AgentRouter returned an empty model response.'};
         }
-      }else{
-        status=res.status;
-        last=cleanUpstreamError(raw,status,'agentrouter',target);
+        providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+        const finishState={reason:String(payload?.choices?.[0]?.finish_reason||'stop').toLowerCase()};
+        return {
+          ok:true,
+          response:new Response(text,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','X-AI-Provider':'agentrouter','X-AI-Model':target}}),
+          finishState
+        };
       }
+
+      status=res.status;
+      last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
-      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:String(last).slice(0,180),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180)||retryLabel('agentrouter',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
       if(!isRetryableStatus(status))break;
     }catch(e){
       status=502;last=e?.message||String(e);
