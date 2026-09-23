@@ -2475,10 +2475,15 @@ function openAIStreamToText(body, finishState={reason:''}) {
         try {
           const p=JSON.parse(s);
           const choice=p.choices?.[0];
-          const text=choice?.delta?.content ?? choice?.message?.content;
+          const rawText=choice?.delta?.content ?? choice?.message?.content;
+          const text=typeof rawText==='string'
+            ? rawText
+            : (Array.isArray(rawText)
+                ? rawText.map(part=>typeof part==='string'?part:(part?.text||part?.content||'')).join('')
+                : '');
           const reason=choice?.finish_reason ?? choice?.finishReason ?? p?.finish_reason;
           if(reason) finishState.reason=String(reason).toLowerCase();
-          if (typeof text==='string' && text) controller.enqueue(encoder.encode(text));
+          if(text) controller.enqueue(encoder.encode(text));
         } catch(_){}
       }
     },
@@ -2735,6 +2740,10 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
 
     if(provider==='openrouter' && requested!=='openrouter/free'){
       modelCandidates=[requested,'openrouter/free'];
+    }
+
+    if(provider==='mistral' && requested==='mistral-small-latest'){
+      modelCandidates=['mistral-small-latest','mistral-small-3.2-24b-instruct-2506'];
     }
   }
 
