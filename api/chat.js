@@ -3132,13 +3132,16 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
 
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim().replace(/\/$/,'');
-  // AgentRouter's Claude Code-compatible gateway is Anthropic Messages compatible.
-  // Keep the base at the host root and append /v1/messages exactly once.
-  let base=configuredBase||'https://co.agentrouter.org';
-  if(/^https:\/\/(?:www\.)?agentrouter\.org$/i.test(base)) base='https://co.agentrouter.org';
+  // Match the user's verified Claude Code setup exactly at the configuration layer:
+  // ANTHROPIC_BASE_URL=https://agentrouter.org/ and ANTHROPIC_AUTH_TOKEN=<key>.
+  // The Anthropic client appends /v1/messages to that base URL.
+  const configuredBase=String(process.env.AGENTROUTER_BASE_URL||process.env.ANTHROPIC_BASE_URL||'').trim();
+  let base=(configuredBase||'https://agentrouter.org/').replace(/\/+$/,'');
+  // Do NOT rewrite agentrouter.org to co.agentrouter.org. These can use different
+  // credential pools, and the user's key is verified against agentrouter.org.
+  if(/\/v1\/messages$/i.test(base)) base=base.replace(/\/v1\/messages$/i,'');
   if(/\/v1$/i.test(base)) base=base.replace(/\/v1$/i,'');
-  const url=/\/v1\/messages$/i.test(base)?base:base+'/v1/messages';
+  const url=base+'/v1/messages';
 
   const messages=[];
   for(const h of history||[]){
@@ -3155,7 +3158,7 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
       const res=await fetch(url,{
         method:'POST',
         headers:{
-          'x-api-key':keys[i],
+          // ANTHROPIC_AUTH_TOKEN is sent as Bearer auth by Claude Code.
           'Authorization':'Bearer '+keys[i],
           'anthropic-version':'2023-06-01',
           'Content-Type':'application/json',
@@ -3181,7 +3184,6 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
         const text=blocks.map(part=>part?.type==='text'?String(part.text||''):'').join('');
         if(text.trim()){
           providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-          const finishState={reason:String(payload?.stop_reason||'end_turn').toLowerCase()};
           return {
             ok:true,
             response:new Response(text,{status:200,headers:{
@@ -3191,26 +3193,22 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
               'X-AI-Key-Index':String(i),
               'X-AI-Key-Count':String(keys.length)
             }}),
-            finishState
+            finishState:{reason:String(payload?.stop_reason||'end_turn').toLowerCase()}
           };
         }
-        status=502;
-        last='AgentRouter returned an empty Anthropic Messages response.';
+        status=502;last='AgentRouter returned an empty Anthropic response.';
       }else{
         status=isHtml?502:res.status;
         last=isHtml
-          ? 'AgentRouter returned an HTML gateway page. The Anthropic Messages endpoint may be unavailable or blocked upstream.'
+          ? 'AgentRouter returned HTML instead of an Anthropic API response.'
           : cleanUpstreamError(raw,res.status,'agentrouter',target);
       }
-
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
-      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180)||retryLabel('agentrouter',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
       if(!isRetryableStatus(status))break;
     }catch(e){
       status=502;last=e?.message||String(e);
-      const canRetry=i<keys.length-1;
-      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-      if(!canRetry)break;
+      if(i>=keys.length-1)break;
     }
   }
   return {ok:false,status,error:last||'AgentRouter Anthropic route unavailable'};
