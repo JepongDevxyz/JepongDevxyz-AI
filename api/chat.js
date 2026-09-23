@@ -3180,12 +3180,42 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
           let payload=null;
           try{payload=JSON.parse(raw);}catch(_){}
           const blocks=Array.isArray(payload?.content)?payload.content:[];
-          const out=blocks.map(part=>{
+          let out=blocks.map(part=>{
             if(typeof part==='string')return part;
             if(part?.type==='text'&&typeof part.text==='string')return part.text;
             if(typeof part?.text==='string')return part.text;
             return '';
           }).join('').trim();
+
+          // Be tolerant of AgentRouter gateways that normalize the upstream
+          // response into OpenAI/Responses-style JSON even on /v1/messages.
+          if(!out && typeof payload?.output_text==='string') out=payload.output_text.trim();
+          if(!out && typeof payload?.response==='string') out=payload.response.trim();
+          if(!out && typeof payload?.text==='string') out=payload.text.trim();
+          if(!out){
+            const choice=payload?.choices?.[0];
+            const value=choice?.message?.content ?? choice?.delta?.content ?? choice?.text;
+            if(typeof value==='string') out=value.trim();
+            else if(Array.isArray(value)) out=value.map(p=>typeof p==='string'?p:(p?.text||'')).join('').trim();
+          }
+          // Some gateways answer as SSE despite stream:false. Parse text
+          // deltas instead of treating a valid 200 response as empty.
+          if(!out && /^\\s*(?:event:|data:)/m.test(raw)){
+            const pieces=[];
+            for(const line of raw.split(/\\r?\\n/)){
+              const t=line.trim();
+              if(!t.startsWith('data:'))continue;
+              const s=t.slice(5).trim();
+              if(!s||s==='[DONE]')continue;
+              try{
+                const ev=JSON.parse(s);
+                const v=ev?.delta?.text ?? ev?.content_block?.text ?? ev?.content_block_delta?.delta?.text ??
+                  ev?.choices?.[0]?.delta?.content ?? ev?.choices?.[0]?.message?.content ?? ev?.text;
+                if(typeof v==='string')pieces.push(v);
+              }catch(_){}
+            }
+            out=pieces.join('').trim();
+          }
           if(out){
             providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
             const finishState={reason:String(payload?.stop_reason||'stop').toLowerCase()};
