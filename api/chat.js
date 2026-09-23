@@ -3130,18 +3130,15 @@ function anthropicStreamToText(body,finishState={reason:''}){
 async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
   if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
-
   const target=String(model||process.env.ANTHROPIC_MODEL||'deepseek-v4-flash').trim()||'deepseek-v4-flash';
   const base=String(process.env.ANTHROPIC_BASE_URL||process.env.AGENTROUTER_BASE_URL||'https://agentrouter.org/').trim().replace(/\/$/,'');
   const url=base+'/v1/messages';
-
   const messages=[];
   for(const h of history||[]){
-    const text=String(h?.text||'').trim();
-    if(!text)continue;
-    messages.push({role:(h.role==='bot'||h.role==='model'||h.role==='assistant')?'assistant':'user',content:[{type:'text',text}]});
+    const t=String(h?.text||'').trim(); if(!t)continue;
+    messages.push({role:(h.role==='bot'||h.role==='model'||h.role==='assistant')?'assistant':'user',content:t});
   }
-  if(message?.trim())messages.push({role:'user',content:[{type:'text',text:String(message).trim()}]});
+  if(message?.trim())messages.push({role:'user',content:String(message).trim()});
   if(!messages.length)return {ok:false,status:400,error:'No prompt provided.'};
 
   let last='',status=500;
@@ -3150,33 +3147,41 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
     try{
       const res=await fetch(url,{
         method:'POST',
-        headers:{
-          'x-api-key':keys[i],
-          'Authorization':'Bearer '+keys[i],
-          'anthropic-version':'2023-06-01',
-          'Content-Type':'application/json',
-          'Accept':'application/json'
-        },
-        body:JSON.stringify({
-          model:target,
-          max_tokens:outputBudgetFor(message),
-          system:String(systemInstruction||''),
-          messages,
-          stream:false
-        }),
+        headers:{'x-api-key':keys[i],'Authorization':'Bearer '+keys[i],'anthropic-version':'2023-06-01','Content-Type':'application/json','Accept':'text/event-stream'},
+        body:JSON.stringify({model:target,max_tokens:outputBudgetFor(message),system:String(systemInstruction||''),messages,stream:true}),
         signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
+        if(!res.body)throw new Error('AgentRouter returned no response body.');
         providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-        const payload=await safeJsonResponse(res);
-        const parts=Array.isArray(payload?.content)?payload.content:[];
-        const output=parts.map(part=>typeof part==='string'?part:(typeof part?.text==='string'?part.text:'')).join('');
-        if(!output.trim())throw new Error(String(payload?.error?.message||payload?.message||'AgentRouter returned an empty response.'));
-        const finishState={reason:String(payload?.stop_reason||'stop').toLowerCase()};
-        return {ok:true,response:new Response(output,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','X-AI-Provider':'agentrouter','X-AI-Model':target}}),finishState};
+        const decoder=new TextDecoder(),encoder=new TextEncoder(),finishState={reason:'unknown'};
+        const stream=res.body.pipeThrough(new TransformStream({
+          start(){this.buf='';},
+          transform(chunk,controller){
+            this.buf+=decoder.decode(chunk,{stream:true});
+            const lines=this.buf.split('\n'); this.buf=lines.pop()||'';
+            for(const line of lines){
+              const s=line.trim(); if(!s.startsWith('data:'))continue;
+              const raw=s.slice(5).trim(); if(!raw||raw==='[DONE]')continue;
+              try{
+                const p=JSON.parse(raw);
+                const txt=p?.delta?.text ?? p?.content_block?.text ?? p?.text ?? '';
+                const reason=p?.delta?.stop_reason ?? p?.stop_reason;
+                if(reason)finishState.reason=String(reason).toLowerCase();
+                if(typeof txt==='string'&&txt)controller.enqueue(encoder.encode(txt));
+              }catch(_){}
+            }
+          },
+          flush(controller){
+            const s=this.buf.trim();
+            if(s.startsWith('data:')){
+              try{const p=JSON.parse(s.slice(5).trim());const txt=p?.delta?.text??p?.content_block?.text??p?.text??'';if(txt)controller.enqueue(encoder.encode(txt));}catch(_){}
+            }
+          }
+        }));
+        return {ok:true,response:new Response(stream,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','X-AI-Provider':'agentrouter','X-AI-Model':target}}),finishState};
       }
-      status=res.status;
-      last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
+      status=res.status; last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
       const canRetry=isRetryableStatus(status)&&i<keys.length-1;
       providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180)||retryLabel('agentrouter',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
       if(!isRetryableStatus(status))break;
