@@ -24,7 +24,7 @@ const PROVIDERS = {
   },
   groq: {
     label: 'Groq',
-    models: ['openai/gpt-oss-120b','qwen/qwen3.8-27b','groq/compound'],
+    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.8-27b'],
     defaultModel: 'openai/gpt-oss-120b'
   },
   openrouter: {
@@ -2708,7 +2708,10 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
   const keys=requestKeys.length?requestKeys:getProviderKeys(provider);
   if(!keys.length) return {ok:false,status:500,error:`${providerLabel(provider)} API key is not configured.`};
 
-  const requested=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
+  const suppliedModel=String(model||'').trim();
+  const requested=(DYNAMIC_MODEL_PROVIDERS.has(provider) && suppliedModel)
+    ? suppliedModel
+    : (PROVIDERS[provider].models.includes(suppliedModel)?suppliedModel:PROVIDERS[provider].defaultModel);
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   let modelCandidates=[requested];
 
@@ -2720,8 +2723,6 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
       modelCandidates=['qwen/qwen3.6-27b','openai/gpt-oss-120b'];
     } else if(provider==='groq' && requested==='openai/gpt-oss-120b'){
       modelCandidates=['openai/gpt-oss-120b','qwen/qwen3.6-27b'];
-    } else if(provider==='groq' && requested==='groq/compound-mini'){
-      modelCandidates=['groq/compound-mini','groq/compound'];
     }
 
     if(provider==='mistral' && requested==='mistral-small-latest'){
@@ -3549,7 +3550,8 @@ function providerModelsUrl(provider){
     codecraft:'https://codecraftapi.com/v1/models',
     agentrouter:'https://agentrouter.org/v1/models',
     hcnsec:'https://api.hcnsec.cn/v1/models',
-    bailucode:'https://bailucode.com/openapi/v1/models'
+    bailucode:'https://bailucode.com/openapi/v1/models',
+    seekai:'https://seekai.cc/v1/models'
   })[provider] || '';
 }
 
@@ -3574,7 +3576,6 @@ async function discoverProviderModels(provider){
   if(!DYNAMIC_MODEL_PROVIDERS.has(provider))return {provider,models:[],status:'unsupported'};
   const keys=provider==='bailucode' ? [...new Set([...getProviderKeys(provider),...getBailuAnthropicKeys()])] : getProviderKeys(provider);
   if(!keys.length)return {provider,models:[],status:'not-configured'};
-  if(provider==='seekai')return {provider,models:[{id:'agent',name:'SEEKAI Agent',type:'agent',capabilities:['agent']}],status:'ready',discovery:'agent-api'};
   const url=providerModelsUrl(provider);
   if(!url)return {provider,models:[],status:'endpoint-not-configured'};
   let lastStatus=502;
