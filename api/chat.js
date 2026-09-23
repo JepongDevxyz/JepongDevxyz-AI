@@ -2702,7 +2702,7 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
     unorouter:{url:chatCompletionsUrl(process.env.UNOROUTER_BASE_URL,'https://api.unorouter.com/v1/chat/completions')},
     nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
     codecraft:{url:'https://www.codecraftapi.com/v1/chat/completions'},
-    agentrouter:{url:chatCompletionsUrl(process.env.AGENTROUTER_BASE_URL,'https://agentrouter.org/v1/chat/completions')},
+    agentrouter:{url:chatCompletionsUrl(process.env.AGENTROUTER_BASE_URL,'https://co.agentrouter.org/v1/chat/completions')},
     hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
     seekai:{url:chatCompletionsUrl(process.env.SEEKAI_BASE_URL,'https://seekai.cc/v1/chat/completions')},
     bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
@@ -2769,7 +2769,6 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
         'Accept':'text/event-stream'
       };
       if(provider==='codecraft') headers['x-api-key']=keys[i];
-      if(provider==='agentrouter'){headers['Originator']='JepongDevxyz-AI';headers['Version']='1.0';headers['User-Agent']='JepongDevxyz-AI/1.0';}
       if(provider==='openrouter'){
         headers['HTTP-Referer']=process.env.SITE_URL || 'https://jepongdevxyz.ai';
         headers['X-Title']='JepongDevxyz AI';
@@ -3557,7 +3556,7 @@ function providerModelsUrl(provider){
     unorouter:'https://api.unorouter.com/v1/models',
     nvidia:'https://integrate.api.nvidia.com/v1/models',
     codecraft:'https://codecraftapi.com/v1/models',
-    agentrouter:'https://agentrouter.org/v1/models',
+    agentrouter:'https://co.agentrouter.org/v1/models',
     hcnsec:'https://api.hcnsec.cn/v1/models',
     bailucode:'https://bailucode.com/openapi/v1/models',
     seekai:'https://seekai.cc/v1/models'
@@ -3592,11 +3591,6 @@ async function discoverProviderModels(provider){
     try{
       const headers={Authorization:'Bearer '+key,Accept:'application/json'};
       if(provider==='codecraft')headers['x-api-key']=key;
-      if(provider==='agentrouter'){
-        headers['Originator']='JepongDevxyz-AI';
-        headers['Version']='1.0';
-        headers['User-Agent']='JepongDevxyz-AI/1.0';
-      }
       const res=await fetch(url,{headers,signal:AbortSignal.timeout(8000)});
       lastStatus=res.status;
       if(res.ok){
