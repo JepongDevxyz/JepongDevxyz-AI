@@ -3155,55 +3155,25 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
           'Authorization':'Bearer '+keys[i],
           'anthropic-version':'2023-06-01',
           'Content-Type':'application/json',
-          'Accept':'text/event-stream'
+          'Accept':'application/json'
         },
         body:JSON.stringify({
           model:target,
           max_tokens:outputBudgetFor(message),
           system:String(systemInstruction||''),
           messages,
-          stream:true
+          stream:false
         }),
         signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
         providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-        const decoder=new TextDecoder(),encoder=new TextEncoder();
-        const finishState={reason:'unknown'};
-        const stream=res.body.pipeThrough(new TransformStream({
-          start(){this.buffer='';},
-          transform(chunk,controller){
-            this.buffer+=decoder.decode(chunk,{stream:true});
-            const lines=this.buffer.split('\n'); this.buffer=lines.pop()||'';
-            for(const line of lines){
-              const t=line.trim(); if(!t.startsWith('data:'))continue;
-              const raw=t.slice(5).trim(); if(!raw||raw==='[DONE]')continue;
-              try{
-                const p=JSON.parse(raw);
-                if(p?.type==='content_block_delta'&&p?.delta?.type==='text_delta'&&typeof p.delta.text==='string')controller.enqueue(encoder.encode(p.delta.text));
-                const reason=p?.delta?.stop_reason||p?.message?.stop_reason;
-                if(reason)finishState.reason=String(reason).toLowerCase();
-                if(p?.type==='message_stop'&&finishState.reason==='unknown')finishState.reason='stop';
-              }catch(_){}
-            }
-          },
-          flush(){if(finishState.reason==='unknown')finishState.reason='stop';}
-        }));
-        return {
-          ok:true,
-          response:new Response(stream,{
-            status:200,
-            headers:{
-              'Content-Type':'text/plain; charset=utf-8',
-              'X-AI-Provider':'agentrouter',
-              'X-AI-Model':target,
-              'X-AI-Route-Reason':routedReason||'agentrouter-anthropic',
-              'X-AI-Key-Index':String(i),
-              'X-AI-Key-Count':String(keys.length)
-            }
-          }),
-          finishState
-        };
+        const payload=await safeJsonResponse(res);
+        const parts=Array.isArray(payload?.content)?payload.content:[];
+        const output=parts.map(part=>typeof part==='string'?part:(typeof part?.text==='string'?part.text:'')).join('');
+        if(!output.trim())throw new Error(String(payload?.error?.message||payload?.message||'AgentRouter returned an empty response.'));
+        const finishState={reason:String(payload?.stop_reason||'stop').toLowerCase()};
+        return {ok:true,response:new Response(output,{status:200,headers:{'Content-Type':'text/plain; charset=utf-8','X-AI-Provider':'agentrouter','X-AI-Model':target}}),finishState};
       }
       status=res.status;
       last=cleanUpstreamError(await res.text().catch(()=>''),status,'agentrouter',target);
