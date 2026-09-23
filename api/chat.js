@@ -3135,7 +3135,8 @@ async function runAgentRouter({model,history,message,systemInstruction,fallbackF
   const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim().replace(/\/$/,'');
   // AgentRouter's Claude Code-compatible gateway is Anthropic Messages compatible.
   // Keep the base at the host root and append /v1/messages exactly once.
-  let base=configuredBase||'https://agentrouter.org';
+  let base=configuredBase||'https://co.agentrouter.org';
+  if(/^https:\/\/(?:www\.)?agentrouter\.org$/i.test(base)) base='https://co.agentrouter.org';
   if(/\/v1$/i.test(base)) base=base.replace(/\/v1$/i,'');
   const url=/\/v1\/messages$/i.test(base)?base:base+'/v1/messages';
 
