@@ -17,8 +17,10 @@ def main():
     # The new Horde handler rotates configured keys inside the provider and
     # keeps its public anonymous route as the final key. The legacy canRetry
     # assignment belonged to a previous implementation and must not be required.
-    req("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:[...configuredKeys,AIHORDE_ANONYMOUS_KEY];" in CHAT,
-        'AI Horde public route is not included after configured credentials')
+    req("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys;" in CHAT,
+        'AI Horde anonymous route must be added only when fallback is enabled')
+    req("if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};" in CHAT,
+        'AI Horde without configured keys must not silently use anonymous when fallback is OFF')
     req('const credentialFailure=isAIHordeCredentialFailure(status,last);' in CHAT
         and 'const hasNextKey=i<keys.length-1;' in CHAT
         and 'if(credentialFailure && hasNextKey){' in CHAT,
