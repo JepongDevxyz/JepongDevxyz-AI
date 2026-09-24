@@ -1,0 +1,92 @@
+/* Mobile reference: compact in-chat activity and an optional Thoughts detail sheet.
+   Content is supplied by actual received activity events, never a scripted task. */
+.ai-activity-card{
+  width:min(100%,760px)!important;margin:10px 0 22px!important;
+  padding:0!important;border:0!important;background:transparent!important;
+  box-shadow:none!important;color:var(--text-main)!important;
+}
+.ai-activity-summary-row{gap:8px!important;padding:5px 0 10px!important}
+.ai-activity-summary-icon{width:19px!important;height:19px!important;flex:0 0 19px!important}
+.ai-activity-summary-icon svg{width:18px!important;height:18px!important}
+.ai-activity-summary-text{
+  flex:0 1 auto!important;font-size:.83rem!important;line-height:1.45!important;
+  color:var(--text-muted)!important;font-weight:500!important;
+  overflow:visible!important;text-overflow:clip!important;white-space:normal!important;
+}
+.ai-activity-chevron{margin-left:0!important}
+.ai-activity-list{gap:0!important;max-height:none!important;overflow:visible!important}
+.ai-activity-row{
+  grid-template-columns:21px minmax(0,1fr)!important;align-items:start!important;
+  gap:6px!important;padding:6px 0!important;min-height:0!important;
+}
+.ai-activity-icon{width:19px!important;height:23px!important;align-self:start!important}
+.ai-activity-icon svg{width:15px!important;height:15px!important;stroke-width:1.8!important}
+.ai-activity-label{
+  font-size:.87rem!important;line-height:1.5!important;letter-spacing:0!important;
+  font-weight:400!important;color:var(--text-muted)!important;
+}
+.ai-activity-detail{font-size:.75rem!important;line-height:1.5!important}
+.ai-activity-row.running .ai-activity-label,
+.ai-activity-row.ai-activity-current .ai-activity-label{color:var(--text-main)!important}
+.ai-activity-lead{
+  margin:1px 0 7px 27px!important;
+  color:var(--text-main)!important;font-size:.88rem!important;
+  line-height:1.55!important;white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+}
+.ai-activity-lead:empty{display:none!important}
+.ai-activity-header-actions{
+  display:flex;align-items:center;gap:7px;min-width:0;
+}
+.ai-activity-details-btn{
+  display:flex;align-items:center;gap:4px;
+  min-height:28px;padding:4px 5px;margin-left:auto;
+  border:0;border-radius:9px;background:transparent;color:var(--text-muted);
+  font-size:.73rem;font-weight:500;cursor:pointer;
+}
+.ai-activity-details-btn:hover{background:var(--jd-surface);color:var(--text-main)}
+.ai-activity-details-btn svg{width:14px;height:14px}
+.ai-activity-card.collapsed .ai-activity-lead{display:none!important}
+.ai-activity-card.complete .ai-activity-summary-text{color:var(--text-muted)!important}
+.jd-thoughts-overlay{
+  display:none;position:fixed;inset:0;z-index:2500;
+  background:rgba(0,0,0,.58);
+  align-items:flex-end;justify-content:center;
+}
+.jd-thoughts-overlay.open{display:flex}
+.jd-thoughts-sheet{
+  display:flex;flex-direction:column;
+  width:min(100%,700px);height:min(84dvh,860px);min-height:180px;
+  background:var(--modal-bg);color:var(--text-main);
+  border-radius:25px 25px 0 0;border:1px solid var(--jd-edge);
+  border-bottom:0;overflow:hidden;box-shadow:0 -14px 60px rgba(0,0,0,.28);
+}
+.jd-thoughts-grab{flex:0 0 auto;width:35px;height:4px;margin:9px auto 8px;background:var(--text-muted);opacity:.5;border-radius:999px}
+.jd-thoughts-head{
+  display:grid;grid-template-columns:42px minmax(0,1fr) 42px;
+  align-items:center;flex:0 0 auto;min-height:49px;padding:3px 14px 11px;
+  border-bottom:1px solid var(--jd-edge);
+}
+.jd-thoughts-head strong{font-size:.86rem;text-align:center}
+.jd-thoughts-close{width:36px;height:36px;border:0;border-radius:50%;background:var(--jd-surface);color:var(--text-main);display:grid;place-items:center;cursor:pointer}
+.jd-thoughts-close svg{width:18px;height:18px}
+.jd-thoughts-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:13px 21px max(24px,env(safe-area-inset-bottom,0px));scrollbar-width:thin}
+.jd-thoughts-list .ai-activity-row{margin:0!important;padding:10px 0!important}
+.jd-thoughts-list .ai-activity-label{font-size:.9rem!important;line-height:1.55!important}
+.jd-thoughts-list .ai-activity-icon{width:19px!important}
+.jd-thoughts-empty{color:var(--text-muted);font-size:.82rem;line-height:1.55;margin:13px 0}
+.jd-thoughts-overlay .jd-thoughts-sheet:focus-visible,
+.jd-thoughts-close:focus-visible,.ai-activity-details-btn:focus-visible{outline:2px solid var(--jd-focus);outline-offset:2px}
+@media(max-width:520px){
+ .ai-activity-summary-text{font-size:.8rem!important}
+ .ai-activity-row{grid-template-columns:19px minmax(0,1fr)!important;gap:5px!important;padding:7px 0!important}
+ .ai-activity-icon{width:18px!important;height:20px!important}
+ .ai-activity-icon svg{width:15px!important;height:15px!important}
+ .ai-activity-label{font-size:.85rem!important}
+ .ai-activity-lead{margin-left:24px!important;font-size:.86rem!important}
+ .jd-thoughts-sheet{width:100%;height:min(87dvh,850px);border-radius:22px 22px 0 0}
+ .jd-thoughts-list{padding:14px 19px max(22px,env(safe-area-inset-bottom,0px))}
+}
+@media(prefers-reduced-motion:reduce){
+ .ai-activity-icon svg{animation:none!important}
+}
