@@ -10681,6 +10681,14 @@ ${m.text || ''}
         // Each picker visit loads at most four currently online, low-queue models.
         // No fixed model IDs, no anonymous/Auto entry, and no silent selection.
         const aihordePickerIds=new Set();
+        // Preserve the user's four live model choices across picker visits and
+        // page reloads, but let the server replace entries that go offline.
+        let aihordePinnedModels=[];
+        try{
+            const serializedPins=localStorage.getItem('jepong_aihorde_pinned_models')||'[]';
+            const saved=JSON.parse(serializedPins);
+            if(Array.isArray(saved))aihordePinnedModels=saved.filter(x=>typeof x==='string').slice(0,4);
+        }catch(_){localStorage.removeItem('jepong_aihorde_pinned_models');}
         let aihordePickerRequestId=0;
         async function refreshAIHordePickerModels(){
             const page=document.querySelector('#modelPagesTrack .model-provider-page[data-provider="aihorde"]');
@@ -10693,7 +10701,7 @@ ${m.text || ''}
             aihordePickerIds.clear();
             try{
                 const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({action:'aihorde-live-models'})});
+                    body:JSON.stringify({action:'aihorde-live-models',preferredModels:aihordePinnedModels})});
                 if(!res.ok)throw Error('Live worker status is unavailable (HTTP '+res.status+').');
                 const data=await res.json();
                 if(requestId!==aihordePickerRequestId)return;
@@ -10701,9 +10709,9 @@ ${m.text || ''}
                 // This status checks the first configured AI Horde key against the
                 // first-party /v2/find_user endpoint without exposing any credential.
                 const keyNote=data.keyStatus==='rejected'
-                    ?'First configured AI Horde key was rejected. Check AIHORDE_API_KEYS / AIHORDE_API_KEY in Vercel; changing models will not fix this.'
+                    ?'Your AI Horde API key was rejected. Replace AIHORDE_API_KEYS / AIHORDE_API_KEY in Vercel, or enable Auto Provider Fallback to try anonymous access (lower priority). Changing models cannot repair a rejected key.'
                     :data.keyStatus==='missing'
-                        ?'No registered AI Horde API key is configured in Vercel. Anonymous fallback remains OFF.'
+                        ?'No registered AI Horde key is configured. Add AIHORDE_API_KEYS / AIHORDE_API_KEY in Vercel, or enable Auto Provider Fallback for anonymous access (lower priority).'
                         :data.keyStatus==='unverified'
                             ?'Unable to verify the configured AI Horde key right now.'
                             :'';
@@ -10724,6 +10732,21 @@ ${m.text || ''}
                     btn.querySelector('.option-desc').textContent='Online · '+Number(model.workers||0)+' worker(s) · estimated queue '+Number(model.etaSeconds||0)+'s';
                     btn.addEventListener('click',()=>selectProviderModel('aihorde',id,MODEL_DISPLAY_NAMES[id]));
                     choices.append(btn);
+                }
+                if(aihordePickerIds.size){
+                    aihordePinnedModels=[...aihordePickerIds];
+                    localStorage.setItem('jepong_aihorde_pinned_models',JSON.stringify(aihordePinnedModels));
+                }
+                if((data.keyStatus==='rejected'||data.keyStatus==='missing')&&!autoProviderFallback){
+                    const recovery=document.createElement('button');
+                    recovery.type='button';recovery.className='option-item';
+                    recovery.textContent='Enable fallback (including slower anonymous AI Horde access)';
+                    recovery.addEventListener('click',()=>{
+                        toggleAutoFallback(true);
+                        recovery.remove();
+                        status.textContent='Auto Provider Fallback is now ON. Try sending your message again. A valid registered AI Horde key provides better queue priority.';
+                    });
+                    choices.append(recovery);
                 }
                 status.textContent=(keyNote?keyNote+' ':'')+aihordePickerIds.size+' of 4 fast-queue model slots available now. Select one; actual response time may vary.';
                 if(currentSelectedProvider==='aihorde'&&currentSelectedModel&&!aihordePickerIds.has(currentSelectedModel)){

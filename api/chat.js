@@ -3045,15 +3045,22 @@ function scoreAIHordeModel(item,message='',sourceModel=''){
 // Live four-slot AI Horde picker: no static model IDs or hidden Auto entry.
 // A current worker count and low published ETA are availability estimates,
 // NOT a guarantee that a particular generation will finish quickly.
-function fourResponsiveAIHordeModels(models){
+function fourResponsiveAIHordeModels(models,preferred=[]){
   const list=(Array.isArray(models)?models:[])
     .filter(m=>isAllowedAIHordeModelName(m?.name)&&Number(m?.workers)>0&&
       m?.eta!=null&&Number.isFinite(Number(m.eta))&&Number(m.eta)>=0&&Number(m.eta)<=60);
   const deduped=[...new Map(list.map(m=>[String(m.name),m])).values()];
-  return deduped.sort((a,b)=>
+  const ranked=deduped.sort((a,b)=>
     scoreAIHordeModel(b,'Hi')-scoreAIHordeModel(a,'Hi')||
     Number(a.eta)-Number(b.eta)||String(a.name).localeCompare(String(b.name))
-  ).slice(0,4);
+  );
+  // Keep the same four named slots between picker visits while each model
+  // still has a live worker and a short reported queue. Replace only offline
+  // or slow entries; never display a stale model just to fill four slots.
+  const pinned=[...new Set((Array.isArray(preferred)?preferred:[])
+    .slice(0,4).filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean))];
+  const retained=pinned.map(name=>ranked.find(m=>m.name===name)).filter(Boolean);
+  return [...retained,...ranked.filter(m=>!retained.some(old=>old.name===m.name))].slice(0,4);
 }
 
 async function checkAIHordeCredential(key){
@@ -3071,14 +3078,14 @@ async function checkAIHordeCredential(key){
   }catch(_){return 'unverified';}
 }
 
-async function liveAIHordePickerModels(){
+async function liveAIHordePickerModels(preferred=[]){
   const firstKey=getProviderKeys('aihorde',false).find(key=>key!==AIHORDE_ANONYMOUS_KEY)||'';
   const [keyStatus,modelsResult]=await Promise.all([
     checkAIHordeCredential(firstKey),
     getAIHordeActiveModels(AbortSignal.timeout(9000))
       .then(active=>({ok:true,active})).catch(()=>({ok:false,active:[]}))
   ]);
-  const models=fourResponsiveAIHordeModels(modelsResult.active).map(item=>({
+  const models=fourResponsiveAIHordeModels(modelsResult.active,preferred).map(item=>({
     id:item.name,name:item.name,workers:item.workers,etaSeconds:item.eta,
     queued:item.queued,online:true
   }));
@@ -4910,7 +4917,7 @@ export default async function handler(req){
     if(body.action==='tts') return serverTTS(body);
     if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
     if(body.action==='provider-models') return json({providers:await dynamicModelCatalog()});
-    if(body.action==='aihorde-live-models') return json(await liveAIHordePickerModels());
+    if(body.action==='aihorde-live-models') return json(await liveAIHordePickerModels(body.preferredModels));
     if(body.action==='custom-api-models'){
       const p=sanitizeCustomApiProfile(body);
       if(!p)return json({error:'Valid API key and HTTPS Base URL are required.'},400);
