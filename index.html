@@ -8673,7 +8673,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 // or proprietary model internals in the progress UI.
                 return {...e,label:safeLabel,detail:state==='warning'||state==='error'
                     ?sanitizeUiErrorMessage(e.detail||'')
-                    :String(e.detail||'').replace(/credential\\s+\\d+\\s*\\/\\s*\\d+/gi,'configured API key').slice(0,110)};
+                    :String(e.detail||'').replace(/credential\s+\d+\s*\/\s*\d+/gi,'configured API key').slice(0,110)};
             }
             if(id==='generation'){
                 return {...e,label:label||'Generating response',kind:'generate'};
