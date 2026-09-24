@@ -3012,7 +3012,7 @@ async function getAIHordeActiveModels(signal){
       workers:Number(item.count??item.workers??item.threads??0)||0,
       queued:Number(item.queued??0)||0,
       jobs:Number(item.jobs??0)||0,
-      eta:Number(item.eta??0)||0,
+      eta:item.eta!=null&&Number.isFinite(Number(item.eta))?Number(item.eta):null,
       performance:Number(item.performance??0)||0
     }));
 }
@@ -3048,7 +3048,7 @@ function scoreAIHordeModel(item,message='',sourceModel=''){
 function fourResponsiveAIHordeModels(models){
   const list=(Array.isArray(models)?models:[])
     .filter(m=>isAllowedAIHordeModelName(m?.name)&&Number(m?.workers)>0&&
-      Number.isFinite(Number(m?.eta))&&Number(m.eta)>=0&&Number(m.eta)<=60);
+      m?.eta!=null&&Number.isFinite(Number(m.eta))&&Number(m.eta)>=0&&Number(m.eta)<=60);
   const deduped=[...new Map(list.map(m=>[String(m.name),m])).values()];
   return deduped.sort((a,b)=>
     scoreAIHordeModel(b,'Hi')-scoreAIHordeModel(a,'Hi')||
