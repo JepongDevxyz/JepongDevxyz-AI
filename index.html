@@ -5594,18 +5594,36 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             syncJdAppearanceControls();
         }
         const JD_HAPTICS_KEY='jd_haptics_enabled';
+        const JD_HAPTICS_BUTTONS_KEY='jd_haptics_buttons';
+        const JD_HAPTICS_RESPONSE_KEY='jd_haptics_response';
         let jdHapticsEnabled=localStorage.getItem(JD_HAPTICS_KEY)==='true';
+        let jdHapticsButtonsEnabled=localStorage.getItem(JD_HAPTICS_BUTTONS_KEY)!=='false';
+        let jdHapticsResponseEnabled=localStorage.getItem(JD_HAPTICS_RESPONSE_KEY)!=='false';
         let jdLastHapticAt=0;
         function jdHapticsSupported(){
             return typeof navigator.vibrate==='function';
         }
         function syncJdHapticsUI(){
-            const toggle=document.getElementById('jdHapticsToggle');
-            if(toggle)toggle.checked=jdHapticsEnabled;
+            const master=document.getElementById('jdHapticsToggle');
+            const buttons=document.getElementById('jdHapticsButtonsToggle');
+            const response=document.getElementById('jdHapticsResponseToggle');
+            if(master)master.checked=jdHapticsEnabled;
+            if(buttons){
+                buttons.checked=jdHapticsButtonsEnabled;
+                buttons.disabled=!jdHapticsEnabled||!jdHapticsSupported();
+            }
+            if(response){
+                response.checked=jdHapticsResponseEnabled;
+                response.disabled=!jdHapticsEnabled||!jdHapticsSupported();
+            }
+            const status=document.getElementById('jdHapticsCapabilityNote');
+            if(status)status.textContent=jdHapticsSupported()
+                ?'Vibration feedback is available when your browser and device permit it.'
+                :'Vibration is not supported by this browser or device.';
             const description=document.getElementById('jdHapticsDescription');
             if(description)description.textContent=jdHapticsSupported()
-                ?'Gentle vibration when you interact with buttons'
-                :'Vibration is unavailable in this browser or device';
+                ?'Pressing buttons and when AI finishes responding'
+                :'Vibration unavailable on this browser or device';
         }
         function jdHapticPulse(duration=12){
             if(!jdHapticsEnabled||!jdHapticsSupported())return false;
@@ -5622,11 +5640,31 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if(jdHapticsEnabled)jdHapticPulse();
             else if(jdHapticsSupported()){try{navigator.vibrate(0);}catch(_){}}
         }
-        // A trusted click is a user gesture, so Android browsers that support
-        // the Vibration API can issue tactile button feedback. No sounds,
-        // repeated buzzing, or unprompted vibration while the setting is OFF.
+        function setJdHapticsEvent(eventName,enabled){
+            if(eventName==='buttons'){
+                jdHapticsButtonsEnabled=!!enabled;
+                safeSetLocalStorage(JD_HAPTICS_BUTTONS_KEY,String(jdHapticsButtonsEnabled),true);
+            }else if(eventName==='response'){
+                jdHapticsResponseEnabled=!!enabled;
+                safeSetLocalStorage(JD_HAPTICS_RESPONSE_KEY,String(jdHapticsResponseEnabled),true);
+            }else return;
+            syncJdHapticsUI();
+        }
+        function openJdHaptics(){
+            closeTransientSurfaces('jdHapticsModal');
+            document.getElementById('jdHapticsModal')?.classList.add('open');
+            syncJdHapticsUI();
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('jdHapticsModal')));
+        }
+        function closeJdHaptics(){
+            document.getElementById('jdHapticsModal')?.classList.remove('open');
+            openSettingsModal();
+        }
+        // The user must opt into Haptics. Only short, throttled vibrations
+        // are used for trusted button interactions; response feedback is
+        // controlled by an independent toggle and the same master switch.
         document.addEventListener('click',event=>{
-            if(!event.isTrusted||!jdHapticsEnabled)return;
+            if(!event.isTrusted||!jdHapticsEnabled||!jdHapticsButtonsEnabled)return;
             const control=event.target?.closest?.('button,[role="button"],input[type="checkbox"],input[type="radio"]');
             if(control&&!control.disabled&&!control.closest('[hidden]'))jdHapticPulse();
         },{passive:true});
@@ -11839,6 +11877,7 @@ ${m.text || ''}
             }
             setJdChatTextSize(localStorage.getItem(JD_TEXT_SIZE_KEY)||100,{persist:false});
             syncJdHapticsUI();
+            syncReplyNotificationSettings();
             const savedModeName = localStorage.getItem('jepong_last_mode_name');
             const modeName = savedModeName || MODE_DISPLAY_NAMES[currentSelectedMode] || 'General AI';
             selectMode(currentSelectedMode, modeName);
