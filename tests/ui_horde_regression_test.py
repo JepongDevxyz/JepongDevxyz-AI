@@ -14,11 +14,12 @@ def main():
 
     req('function isAIHordeCredentialFailure' in CHAT, 'AI Horde credential failure classifier missing')
     req('[401,403,406].includes(code)' in CHAT, 'AI Horde 406 credential rejection is not classified')
-    # The new Horde handler rotates configured keys inside the provider and
-    # keeps its public anonymous route as the final key. The legacy canRetry
-    # assignment belonged to a previous implementation and must not be required.
-    req("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys;" in CHAT,
-        'AI Horde anonymous route must be added only when fallback is enabled')
+    # Registered and anonymous Horde are distinct emergency attempts.
+    req("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:configuredKeys;" in CHAT,
+        'registered Horde must not mix anonymous into the credential list')
+    req("if(autoFallback&&fallbackable){" in CHAT
+        and CHAT.index("const registeredHorde=await runAIHorde(") < CHAT.index("const publicHorde=await runAnonymousAIHordeFallback("),
+        'both Horde routes must run after primary exhaustion and in priority order')
     req("if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};" in CHAT,
         'AI Horde without configured keys must not silently use anonymous when fallback is OFF')
     req('const credentialFailure=isAIHordeCredentialFailure(status,last);' in CHAT
@@ -30,8 +31,8 @@ def main():
         'AI Horde generation failure cannot retry another key/model')
     req('last=summarizeAIHordeError(status,data,raw);' in CHAT,
         'AI Horde raw upstream errors are not summarized')
-    req('No server fallback provider was available' in CHAT and 'browser may try Puter fallback' not in CHAT,
-        'server still tells the browser to use Puter')
+    req('Both emergency AI Horde routes are unavailable' in CHAT and 'browser may try Puter fallback' not in CHAT,
+        'server must report exhausted emergency fallback without browser Puter')
 
     req('function sanitizeUiErrorMessage' in INDEX, 'frontend provider error sanitizer missing')
     req('AI Horde API key was rejected. Check or replace AIHORDE_API_KEY' in INDEX,

@@ -35,10 +35,9 @@ assert.equal((await partial.liveAIHordePickerModels()).models.length,2,
 const failed=create(()=>true,m=>100-m.eta,async()=>{throw Error('Status API unavailable');},{timeout:()=>null},()=>['test-fixture-key'],'0000000000',async()=> 'valid');
 assert.deepEqual((await failed.liveAIHordePickerModels()).models,[],
  'No unverified hardcoded fallbacks for model choices');
-assert(!ui.includes('data-provider="aihorde" data-model="auto"'));
-assert(ui.includes("action:'aihorde-live-models'"));
-assert(ui.includes("if(currentSelectedProvider==='aihorde'&&!currentSelectedModel)"));
-assert(chat.includes("if(provider==='aihorde'&&(!selected||selected==='auto'))"));
-assert(chat.includes('if(!autoFallback)candidates=candidates.slice(0,1);'),
- 'OFF should keep a single selected model');
-console.log('AI Horde live four-model picker PASS: ranks verified online workers; no offline/slow entries; fewer than four stays fewer; network error stays empty; no Auto selectable; strict OFF preserved.');
+assert(!ui.includes('data-provider="aihorde"'));
+assert(!ui.includes("action:'aihorde-live-models'"));
+assert(chat.includes("if(provider==='aihorde')return {ok:false,status:400"));
+assert(chat.includes("const registeredHorde=await runAIHorde("));
+assert(chat.includes("const publicHorde=await runAnonymousAIHordeFallback("));
+console.log('PASS: internal AI Horde worker ranking verifies live models; both Horde routes are emergency-only and absent from carousel.');
