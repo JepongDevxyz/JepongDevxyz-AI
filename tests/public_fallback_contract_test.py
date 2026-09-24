@@ -34,7 +34,12 @@ def main():
     # Frontend must expose the user's AI Horde provider and keep routing toggle semantics.
     require("'aihorde'" in INDEX, 'AI Horde provider is missing from frontend provider order/config')
     require("AI Horde" in INDEX, 'AI Horde provider label/page missing')
-    require("AI Horde Auto" in INDEX, 'AI Horde auto model option missing')
+    require('id="aihordeFourModelChoices"' in INDEX and "action:'aihorde-live-models'" in INDEX,
+            'AI Horde live four-model picker is missing')
+    require('data-provider="aihorde" data-model="auto"' not in INDEX,
+            'AI Horde Auto must no longer be available to select')
+    require("if(provider==='aihorde'&&(!selected||selected==='auto'))" in CHAT,
+            'Legacy auto selection must not silently route a user request')
     require("autoFallback: autoProviderFallback" in INDEX, 'frontend no longer sends Auto Provider Fallback state')
 
     # Puter fallback was intentionally removed. It must not load or execute.
