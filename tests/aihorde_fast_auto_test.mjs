@@ -65,14 +65,14 @@ const fallback=mockRunner({keys:['fake-key'],generate:async(options)=>(
     ?{status:401,ok:false,text:async()=>JSON.stringify({error:'credential rejected'})}
     :{status:200,ok:true,text:async()=>JSON.stringify({choices:[{message:{content:'Public route works.'}}]})}
 )});
-const fallbackResult=await fallback.runner({model:'auto',history:[],message:'Hi',files:[]});
+const fallbackResult=await fallback.runner({model:'auto',history:[],message:'Hi',files:[],autoFallback:true});
 assert(fallbackResult.ok&&fallback.observed.length===2);
 assert.deepEqual(fallback.observed.map(x=>x.key),['fake-key','0000000000']);
 
 const time=mockRunner({keys:[],clock:{now:1000000},generate:async(_options,_body,clock)=>{
   clock.now+=27000;throw new Error('Simulated upstream timeout');
 }});
-const timeoutResult=await time.runner({model:'auto',history:[],message:'Hi',files:[]});
+const timeoutResult=await time.runner({model:'auto',history:[],message:'Hi',files:[],autoFallback:true});
 assert(!timeoutResult.ok&&timeoutResult.status===504);
 assert(time.observed.length<=2,'Auto must not exceed overall time budget');
 assert(time.observed.every(x=>x.timeout<=26000),'Per-attempt timeout exceeded');
@@ -80,7 +80,7 @@ assert(time.observed.every(x=>x.timeout<=26000),'Per-attempt timeout exceeded');
 const explicit=mockRunner({keys:[],generate:async()=>({
   status:200,ok:true,text:async()=>JSON.stringify({choices:[{message:{content:'OK'}}]})
 })});
-await explicit.runner({model:'slow-70b',history:[],message:'Hi',files:[]});
+await explicit.runner({model:'slow-70b',history:[],message:'Hi',files:[],autoFallback:true});
 assert.equal(explicit.observed[0].timeout,70000,'Manual AI Horde selection timeouts changed');
 
 console.log('AI Horde Auto tests passed: queue-aware ranking, manual model, fast reply, credential fallback, deadline, manual timeout');
