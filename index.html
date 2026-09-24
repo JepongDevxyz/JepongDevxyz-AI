@@ -5088,17 +5088,111 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const menuAvatar=document.getElementById('jdSidebarAvatar');
             if(menuName)menuName.textContent=userName;
             if(menuAvatar)menuAvatar.textContent=signed?String(userName).trim().charAt(0).toUpperCase()||'JD':'JD';
+            const avatar=document.getElementById('jdSignedInAvatar');
+            if(avatar)avatar.textContent=signed?String(userName).trim().charAt(0).toUpperCase()||'JD':'JD';
+            const profileName=document.getElementById('jdSettingsProfileName');
+            const profileEmail=document.getElementById('jdSettingsProfileEmail');
+            const profileAvatar=document.getElementById('jdSettingsProfileAvatar');
+            if(profileName)profileName.textContent=signed?userName:'JepongDevxyz AI';
+            if(profileEmail)profileEmail.textContent=signed?(cloudUser?.email||'Signed in'):'Log in to edit your profile';
+            if(profileAvatar)profileAvatar.textContent=signed?String(userName).trim().charAt(0).toUpperCase()||'JD':'JD';
+            const last=document.getElementById('jdAuthLastProvider');
+            if(signed){
+                const provider=cloudUser?.app_metadata?.provider;
+                if(['google','twitter','apple','github','facebook','email'].includes(provider))safeSetLocalStorage('jd_last_login_provider',provider,true);
+            }
+            if(last){
+                const providerName={google:'Google',twitter:'X',apple:'Apple',github:'GitHub',facebook:'Facebook',email:'email'}[localStorage.getItem('jd_last_login_provider')];
+                last.hidden=!providerName;
+                last.textContent=providerName?'You last logged in with '+providerName:'';
+            }
         }
-        function openAccountModal(){document.getElementById('cloudAccountModal')?.classList.add('open');renderCloudAccount();}
-        function resetCloudEmailFlow(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='block';if(form)form.style.display='none';if(otp)otp.style.display='none';document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');}
-        function showCloudEmailForm(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='none';if(form)form.style.display='grid';if(otp)otp.style.display='none';setTimeout(()=>document.getElementById('cloudEmail')?.focus(),0);}
+        function closeJdAccountModal(){
+            document.getElementById('cloudAccountModal')?.classList.remove('open');
+            resetCloudEmailFlow();
+        }
+        let jdAuthSignUpMode=false;
+        function switchJdAuthMode(){
+            jdAuthSignUpMode=!jdAuthSignUpMode;
+            const title=document.getElementById('jdAuthTitle');
+            const copy=document.getElementById('jdAuthSwitchLabel');
+            const button=document.getElementById('jdAuthSwitchBtn');
+            if(title)title.textContent=jdAuthSignUpMode?'Create your account':'Log into your account';
+            if(copy)copy.textContent=jdAuthSignUpMode?'Already have an account?':"Don't have an account?";
+            if(button)button.textContent=jdAuthSignUpMode?'Log in':'Sign up';
+        }
+        function openAccountModal(){
+            closeAllDrawers();
+            closeTransientSurfaces('cloudAccountModal');
+            resetCloudEmailFlow();
+            document.getElementById('cloudAccountModal')?.classList.add('open');
+            renderCloudAccount();
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('cloudAccountModal')));
+        }
+        function closeJdEditProfile(){
+            document.getElementById('jdEditProfileModal')?.classList.remove('open');
+        }
+        function syncJdProfileSaveButton(){
+            const save=document.getElementById('jdProfileSaveBtn');
+            const input=document.getElementById('jdProfileFullName');
+            if(save&&input)save.disabled=!input.value.trim()||!cloudUser;
+        }
+        function openJdEditProfile(){
+            if(!cloudUser){openAccountModal();return;}
+            closeTransientSurfaces('jdEditProfileModal');
+            const name=cloudUser.user_metadata?.full_name||cloudUser.user_metadata?.name||'';
+            const input=document.getElementById('jdProfileFullName');
+            const email=document.getElementById('jdProfileEmail');
+            const avatar=document.getElementById('jdProfileAvatar');
+            if(input)input.value=name;
+            if(email)email.textContent=cloudUser.email||'Email is not provided by this account';
+            if(avatar)avatar.textContent=String(name||cloudUser.email||'JD').trim().charAt(0).toUpperCase();
+            syncJdProfileSaveButton();
+            document.getElementById('jdEditProfileModal')?.classList.add('open');
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('jdEditProfileModal')));
+        }
+        async function saveJdProfile(){
+            if(!cloudUser||!cloudClient){openAccountModal();return;}
+            const input=document.getElementById('jdProfileFullName');
+            const save=document.getElementById('jdProfileSaveBtn');
+            const name=String(input?.value||'').trim().replace(/\\s+/g,' ');
+            if(name.length<1||name.length>70)return showModernAlert('Enter a name with up to 70 characters.','Edit profile');
+            if(save){save.disabled=true;save.textContent='Saving…';}
+            try{
+                const {data,error}=await cloudClient.auth.updateUser({data:{full_name:name}});
+                if(error)throw error;
+                if(data?.user)cloudUser=data.user;
+                renderCloudAccount();
+                closeJdEditProfile();
+                showModernToast('Profile updated.');
+            }catch(error){
+                showModernAlert(error?.message||'Could not save your profile.','Edit profile');
+            }finally{
+                if(save)save.textContent='Save';
+                syncJdProfileSaveButton();
+            }
+        }
+        function resetCloudEmailFlow(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='block';if(form)form.style.display='none';if(otp)otp.style.display='none';const list=document.getElementById('jdAuthProviderList');if(list)list.style.display='grid';document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');}
+        function showCloudEmailForm(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='none';if(form)form.style.display='grid';if(otp)otp.style.display='none';const list=document.getElementById('jdAuthProviderList');if(list)list.style.display='none';setTimeout(()=>document.getElementById('cloudEmail')?.focus(),0);}
         function backToCloudEmail(){const form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(otp)otp.style.display='none';if(form)form.style.display='grid';setTimeout(()=>document.getElementById('cloudEmail')?.focus(),0);}
-        async function cloudOAuth(provider){if(!cloudClient)return showModernAlert('Cloud authentication is unavailable.','Account');await cloudClient.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname}});}
+        async function cloudOAuth(provider){
+            // Use real Supabase OAuth. X (twitter) and Apple need to be enabled
+            // in the project's Supabase Auth providers before they can sign in.
+            if(!cloudClient)return showModernAlert('Cloud authentication is unavailable.','Account');
+            try{
+                const {error}=await cloudClient.auth.signInWithOAuth({
+                    provider,options:{redirectTo:location.origin+location.pathname}
+                });
+                if(error)showModernAlert(error.message,'Account sign-in');
+            }catch(error){
+                showModernAlert(error?.message||'The sign-in provider is unavailable.','Account sign-in');
+            }
+        }
         async function sendEmailOtp(isResend=false){const email=document.getElementById('cloudEmail')?.value?.trim();if(!email)return showModernAlert('Enter your email first.','Email sign in');const btn=document.getElementById(isResend?'cloudResendOtpBtn':'cloudSendOtpBtn');const label=btn?.textContent;if(btn){btn.disabled=true;btn.textContent=isResend?'Sending…':'Sending code…';}try{const {error}=await cloudClient.auth.signInWithOtp({email,options:{shouldCreateUser:true}});if(error)return showModernAlert(error.message,'Email sign in');const form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox'),copy=document.getElementById('cloudOtpCopy');if(form)form.style.display='none';if(otp)otp.style.display='grid';if(copy)copy.textContent='Enter the 6-digit code sent to '+email+'.';document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');setTimeout(()=>document.querySelector('#cloudOtpRow .otp-input')?.focus(),0);}finally{if(btn){btn.disabled=false;btn.textContent=label||'Send code';}}}
         function otpAdvance(el){const raw=el.value.replace(/\D/g,'');if(raw.length>1){const boxes=[...document.querySelectorAll('#cloudOtpRow .otp-input')];raw.slice(0,6).split('').forEach((d,i)=>{if(boxes[i])boxes[i].value=d;});boxes[Math.min(raw.length,6)-1]?.focus();return;}el.value=raw.slice(0,1);if(el.value)el.nextElementSibling?.focus();}
         function otpKeydown(e,el){if(e.key==='Backspace'&&!el.value){e.preventDefault();const prev=el.previousElementSibling;if(prev?.classList.contains('otp-input')){prev.value='';prev.focus();}}else if(e.key==='ArrowLeft')el.previousElementSibling?.focus();else if(e.key==='ArrowRight')el.nextElementSibling?.focus();}
         function otpPaste(e){const digits=(e.clipboardData?.getData('text')||'').replace(/\D/g,'').slice(0,6);if(!digits)return;e.preventDefault();const boxes=[...document.querySelectorAll('#cloudOtpRow .otp-input')];boxes.forEach((x,i)=>x.value=digits[i]||'');boxes[Math.min(digits.length,6)-1]?.focus();}
-        async function verifyEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();const token=[...document.querySelectorAll('#cloudOtpRow .otp-input')].map(x=>x.value).join('');if(token.length!==6)return showModernAlert('Enter the 6-digit code.','Verify');const btn=document.getElementById('cloudVerifyOtpBtn'),label=btn?.textContent;if(btn){btn.disabled=true;btn.textContent='Verifying…';}try{const {error}=await cloudClient.auth.verifyOtp({email,token,type:'email'});if(error)return showModernAlert(error.message,'Verify');document.getElementById('cloudAccountModal')?.classList.remove('open');resetCloudEmailFlow();}finally{if(btn){btn.disabled=false;btn.textContent=label||'Verify code';}}}
+        async function verifyEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();const token=[...document.querySelectorAll('#cloudOtpRow .otp-input')].map(x=>x.value).join('');if(token.length!==6)return showModernAlert('Enter the 6-digit code.','Verify');const btn=document.getElementById('cloudVerifyOtpBtn'),label=btn?.textContent;if(btn){btn.disabled=true;btn.textContent='Verifying…';}try{const {error}=await cloudClient.auth.verifyOtp({email,token,type:'email'});if(error)return showModernAlert(error.message,'Verify');closeJdAccountModal();}finally{if(btn){btn.disabled=false;btn.textContent=label||'Verify code';}}}
                 async function cloudSignOut(){await cloudClient?.auth.signOut();cloudUser=null;renderCloudAccount();}
         async function loadCloudState(){
             if(!cloudUser)return;
