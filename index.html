@@ -8425,6 +8425,16 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function jdCanNotify(){
             return typeof Notification!=='undefined' && window.isSecureContext!==false;
         }
+        function openJdReplyNotifications(){
+            closeTransientSurfaces('jdReplyNotificationsModal');
+            document.getElementById('jdReplyNotificationsModal')?.classList.add('open');
+            syncReplyNotificationSettings();
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('jdReplyNotificationsModal')));
+        }
+        function closeJdReplyNotifications(){
+            document.getElementById('jdReplyNotificationsModal')?.classList.remove('open');
+            openSettingsModal();
+        }
         function syncReplyNotificationSettings(message=''){
             const enabled=localStorage.getItem(JD_NOTIFY_KEY)==='true' &&
                 jdCanNotify() && Notification.permission==='granted';
@@ -8433,11 +8443,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const test=document.getElementById('jdNotifyTestButton');
             if(test)test.disabled=!enabled;
             const description=document.getElementById('jdReplyNotifyDescription');
-            if(description)description.textContent=message||(
+            if(description)description.textContent=(
+                !jdCanNotify()?'Unavailable on this browser':
+                Notification.permission==='denied'?'Blocked by browser settings':
+                enabled?'On · Notify when replies finish':'Off · Notify when replies finish'
+            );
+            const detail=document.getElementById('jdReplyNotifyDetailStatus');
+            if(detail)detail.textContent=message||(
                 !jdCanNotify()?'Notifications are unavailable on this browser or insecure page.':
-                Notification.permission==='denied'?'Notifications are blocked. Allow them in your browser’s site settings.':
-                enabled?'On — you will be notified when AI finishes responding.':
-                'Get a notification when an AI reply finishes.'
+                Notification.permission==='denied'?'Notifications are blocked. Allow them in your browser’s site settings, then try again.':
+                enabled?'Notifications are enabled. Send a test notification to check delivery.':
+                'Turn on notifications, then tap the test button.'
             );
         }
         function shouldOfferNotifyPrompt(){
@@ -8561,12 +8577,27 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return true;
         }
         async function testResponseNotification(){
-            const sent=await jdShowReplyNotification('JepongDevxyz AI','Test notification — alerts are enabled for AI replies.')
-                .catch(error=>{
-                    syncReplyNotificationSettings(error?.message||'The browser could not display a notification.');
+            const button=document.getElementById('jdNotifyTestButton');
+            if(button?.disabled)return false;
+            if(button)button.disabled=true;
+            const detail=document.getElementById('jdReplyNotifyDetailStatus');
+            if(detail)detail.textContent='Sending a test notification…';
+            let errorMessage='';
+            try{
+                const sent=await jdShowReplyNotification('JepongDevxyz AI','Test notification — alerts are enabled for AI replies.');
+                if(!sent){
+                    errorMessage='The test notification could not be displayed. Check browser notification permissions.';
                     return false;
-                });
-            if(!sent)syncReplyNotificationSettings('The test notification could not be displayed. Check browser notification permissions.');
+                }
+                if(detail)detail.textContent='Test notification sent. Check your device’s notification shade.';
+                return true;
+            }catch(error){
+                errorMessage=error?.message||'The browser could not display a notification.';
+                return false;
+            }finally{
+                syncReplyNotificationSettings(errorMessage);
+                if(!errorMessage&&detail)detail.textContent='Test notification sent. Check your device’s notification shade.';
+            }
         }
         function notifyResponseReady(success=true){
             notifyRequestInFlight=false;
