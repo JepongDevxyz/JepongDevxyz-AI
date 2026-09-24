@@ -25,7 +25,7 @@ for(const name of ['Haptics','When is haptic needed','Pressing buttons','AI is r
 assert(html.includes('onclick="openJdHaptics()"'),'Haptics must have its own real subpage');
 assert(html.includes('onchange="setJdHapticsEvent(\'buttons\',this.checked)"'));
 assert(html.includes('onchange="setJdHapticsEvent(\'response\',this.checked)"'));
-assert(css.includes('.jd-haptics-home')&&css.includes('.jd-haptics-events'));
+assert(css.includes('.jd-haptics-home')&&css.includes('.jd-haptics-row')&&html.includes('jd-haptics-events'));
 assert(worker.includes("self.addEventListener('notificationclick'"));
 assert(worker.includes('clients.openWindow(destination.href)'));
 assert(!worker.includes("addEventListener('fetch'"),'Dedicated notification worker must not intercept app requests');
