@@ -3475,11 +3475,12 @@ async function runAgentRouter({model,history,message,systemInstruction,emit,auto
           'X-AI-Key-Count':String(Number(data.keyCount)||keys.length)
         }}),finishState:{reason:'end_turn'}};
       }
-      status=502;
+      status=upstream.status||502;
       last=upstream.status===401
         ?'Railway bridge authentication failed: AGENTROUTER_API_KEYS must match between Vercel and Railway.'
         :typeof data?.error==='string'?data.error.slice(0,240):'AgentRouter CLI returned no model response.';
-      if(upstream.status===401&&i<keys.length-1)continue;
+      // Exhaust same-provider keys on access/quota errors before emergency fallback.
+      if(i<keys.length-1&&([401,402,403,429].includes(status)||isProviderQuotaFailure(status,last)))continue;
       break;
     }catch(error){
       status=502;
