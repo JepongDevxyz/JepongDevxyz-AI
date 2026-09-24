@@ -2436,14 +2436,16 @@ function smartRoute(mode, files, message) {
 
 function isRetryableStatus(status) { return RETRYABLE.has(Number(status)); }
 
-function isFallbackableProviderFailure(status,error=''){
+function isProviderQuotaFailure(status,error=''){
   const code=Number(status)||0;
   const text=String(error||'').toLowerCase();
-  // A provider's 429/402 or exhausted credentials are a fallback condition.
-  // Input validation, missing models and unrelated 5xx errors must not
-  // silently replace the user's selected model with an emergency provider.
-  if([401,402,403,429].includes(code))return true;
-  return /quota (?:exceeded|exhausted|reached)|(?:insufficient|exhausted) (?:credits?|balance)|rate limit (?:exceeded|reached)|no user matching sent api key|credential was rejected|invalid api key/.test(text);
+  return [402,429].includes(code) ||
+    /quota[ _-]?(?:exceeded|exhausted|reached)|(?:insufficient|exhausted|out of) (?:credits?|balance|quota)|rate[ _-]?limit[ _-]?(?:exceeded|reached)|resource_exhausted|insufficient_quota|(?:daily|monthly|usage|billing hard) limit (?:exceeded|reached)|credits? (?:exhausted|depleted)|credit balance (?:exhausted|insufficient)/.test(text);
+}
+function isFallbackableProviderFailure(status,error=''){
+  const code=Number(status)||0;
+  if([401,403].includes(code)||isProviderQuotaFailure(code,error))return true;
+  return /no user matching sent api key|credential was rejected|invalid api key/.test(String(error||'').toLowerCase());
 }
 
 
@@ -2603,7 +2605,7 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
         provider:'gemini',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
         detail:retryLabel('gemini',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
       });
-      if(!isRetryableStatus(status)) break;
+      if(!isRetryableStatus(status)&&!isProviderQuotaFailure(status,last)) break;
     } catch(e) {
       status=502; last=e?.message||String(e);
       const canRetry=i<keys.length-1;
@@ -2969,7 +2971,7 @@ async function runCohere({model,history,message,systemInstruction,fallbackFrom='
         provider:'cohere',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
         detail:retryLabel('cohere',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
       });
-      if(!isRetryableStatus(status))break;
+      if(!isRetryableStatus(status)&&!isProviderQuotaFailure(status,last))break;
     }catch(e){
       status=502;last=e?.message||String(e);
       const canRetry=i<keys.length-1;
@@ -3515,7 +3517,7 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
         return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'bailucode',target,fallbackFrom,routedReason||'bailu-anthropic',i,keys.length)}),finishState};
       }
       status=res.status;last=cleanUpstreamError(await res.text().catch(()=>''),status,'bailucode',target);
-      if(!isRetryableStatus(status))break;
+      if(!isRetryableStatus(status)&&!isProviderQuotaFailure(status,last))break;
     }catch(e){status=502;last=e?.message||String(e);}
   }
   return {ok:false,status,error:last||'Bailucode Anthropic route unavailable'};
