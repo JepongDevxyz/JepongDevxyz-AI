@@ -13,8 +13,8 @@ assert(native.includes("models:[model],nsfw:false,slow_workers:false"),'Must sub
 assert(native.includes("base+'status/'+encodeURIComponent(id)"),'Must poll native text status by job ID');
 assert(native.includes("method:'DELETE'"),'Must cancel unfinished requests');
 assert(source.includes("if(model&&model!=='auto')return runAIHordeNativeSelected"),'Explicit model must avoid compatibility proxy');
-assert(source.includes("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys;"),
- 'Internal auto fallback behavior must stay gated');
+assert(source.includes("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:configuredKeys;"),
+ 'Registered and anonymous Horde must remain independent emergency routes');
 const key='private-fixture-not-real';
 function authTest(status){
  const seen=[];
