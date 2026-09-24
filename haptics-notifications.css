@@ -102,3 +102,163 @@ body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track:before{backg
 @media(prefers-reduced-motion:reduce){
   .jd-haptics-switch .jd-haptics-track,.jd-haptics-switch .jd-haptics-track:before{transition:none}
 }
+
+/* Reply Notifications is now a navigable subpage, not a loose test row in
+   the AI & tools list. The single switch and its test button share one panel. */
+#settingsModal .jd-notify-settings-entry{
+  grid-template-columns:34px minmax(0,1fr) 18px;
+  cursor:pointer;
+}
+#settingsModal .jd-notify-settings-entry>svg:last-child{
+  color:var(--text-muted);width:18px;height:18px;
+}
+#settingsModal .settings-card-group{
+  border-radius:19px!important;
+  background:#292929!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  margin-bottom:21px!important;
+}
+#settingsModal .settings-card-group>.settings-nav-row,
+#settingsModal .settings-card-group>.settings-toggle-row{
+  min-height:64px!important;
+  padding:13px 15px!important;
+  grid-template-columns:25px minmax(0,1fr) auto!important;
+  gap:11px!important;
+  border-bottom:1px solid rgba(0,0,0,.27)!important;
+}
+#settingsModal .settings-card-group>:last-child{border-bottom:0!important}
+#settingsModal .settings-card-group>.settings-nav-row>svg:first-child,
+#settingsModal .settings-card-group>.settings-toggle-row>svg:first-child{
+  width:20px!important;height:20px!important;
+}
+#settingsModal .settings-card-group>.settings-nav-row strong,
+#settingsModal .settings-card-group>.settings-toggle-row strong{
+  font-size:clamp(.83rem,3.25vw,.96rem)!important;line-height:1.27!important;font-weight:600!important;
+}
+#settingsModal .settings-card-group>.settings-nav-row small,
+#settingsModal .settings-card-group>.settings-toggle-row small{
+  font-size:clamp(.71rem,2.85vw,.82rem)!important;line-height:1.38!important;
+  margin-top:3px!important;
+}
+#settingsModal .settings-card-group>.settings-nav-row:focus-visible,
+#jdReplyNotificationsModal button:focus-visible,
+#jdReplyNotificationsModal input:focus-visible+.jd-reply-notify-track{
+  outline:2px solid #a995ff!important;outline-offset:-3px;
+}
+.jd-reply-notify-overlay{z-index:1220!important}
+.jd-reply-notify-home{
+  width:100%!important;max-width:none!important;
+  height:100dvh!important;max-height:100dvh!important;min-height:0!important;
+  margin:0!important;padding:0!important;
+  display:flex!important;flex-direction:column!important;
+  border:0!important;border-radius:0!important;
+  background:#171717!important;color:#f6f6f6!important;overflow:hidden!important;
+}
+.jd-reply-notify-header{
+  display:flex;align-items:center;gap:12px;min-height:66px;flex:0 0 auto;
+  padding:max(12px,env(safe-area-inset-top)) 15px 11px!important;
+  background:inherit;
+}
+.jd-reply-notify-header h2{
+  margin:0!important;font-size:1.07rem!important;font-weight:680!important;
+  line-height:1.35!important;
+}
+.jd-reply-notify-back{
+  flex:0 0 39px;width:39px;height:39px;
+  display:grid;place-items:center;
+  background:transparent;color:inherit;
+  border:0;border-radius:50%;cursor:pointer;
+}
+.jd-reply-notify-back svg{width:23px;height:23px}
+.jd-reply-notify-scroll{
+  flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;
+  padding:16px clamp(15px,4vw,24px) max(28px,env(safe-area-inset-bottom,0px))!important;
+}
+.jd-reply-notify-group{
+  border-radius:18px;overflow:hidden;
+  background:#292929;border:1px solid rgba(255,255,255,.065);
+}
+.jd-reply-notify-row{
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:70px;padding:14px 15px;gap:12px;
+  cursor:pointer;color:inherit;
+}
+.jd-reply-notify-row-copy{min-width:0;display:flex;align-items:center;gap:12px;flex:1}
+.jd-reply-notify-row-copy>svg{width:22px;height:22px;flex:0 0 22px;color:#c4c4c9}
+.jd-reply-notify-row-copy>span{min-width:0}
+.jd-reply-notify-row-copy strong,.jd-reply-notify-test-copy strong{
+  display:block;font-size:.91rem;font-weight:640;line-height:1.3;
+}
+.jd-reply-notify-row-copy small,.jd-reply-notify-test-copy small{
+  display:block;font-size:.76rem;line-height:1.45;
+  margin-top:4px;color:#a4a4aa;
+}
+.jd-reply-notify-switch{
+  position:relative;display:block;flex:0 0 46px;
+  width:46px;height:28px;cursor:pointer;
+}
+.jd-reply-notify-switch input{
+  position:absolute;inset:0;width:100%;height:100%;
+  margin:0;opacity:0;cursor:pointer;z-index:2;
+}
+.jd-reply-notify-track{
+  position:absolute;inset:0;border-radius:999px;display:block;
+  background:#444650;border:1px solid rgba(255,255,255,.1);
+  transition:background .16s ease;
+}
+.jd-reply-notify-track:before{
+  content:"";position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;background:#f5f5f5;
+  box-shadow:0 1px 3px rgba(0,0,0,.23);
+  transition:transform .16s ease;
+}
+.jd-reply-notify-switch input:checked+.jd-reply-notify-track{background:#8b5cf6;border-color:#8b5cf6}
+.jd-reply-notify-switch input:checked+.jd-reply-notify-track:before{transform:translateX(18px)}
+.jd-reply-notify-section-label{
+  font-size:.77rem;font-weight:590;color:#a1a1a7;margin:22px 3px 11px;
+}
+.jd-reply-notify-test{
+  display:grid;width:100%;min-height:73px;grid-template-columns:39px minmax(0,1fr) 18px;
+  align-items:center;gap:11px;padding:13px 15px;border:0;
+  text-align:left;color:inherit;background:transparent;cursor:pointer;
+}
+.jd-reply-notify-test-icon{
+  display:grid;place-items:center;width:39px;height:39px;border-radius:13px;
+  color:#c0b0ff;background:rgba(139,92,246,.16);
+}
+.jd-reply-notify-test-icon svg{width:20px;height:20px}
+.jd-reply-notify-test-copy{min-width:0}
+.jd-reply-notify-test-chevron{width:17px;height:17px;color:#a4a4aa}
+.jd-reply-notify-test:disabled{cursor:not-allowed;opacity:.44}
+.jd-reply-notify-test:not(:disabled):hover{background:rgba(255,255,255,.06)}
+.jd-reply-notify-info{
+  font-size:.78rem;line-height:1.55;color:#aaaab1;
+  padding:2px 4px;margin:13px 0 0;overflow-wrap:anywhere;
+}
+.jd-reply-notify-footnote{
+  font-size:.72rem;line-height:1.55;color:#777781;
+  padding:0 4px;margin:19px 0;
+}
+body.theme-light #settingsModal .settings-card-group{
+  background:#fff!important;border-color:rgba(20,20,25,.08)!important;
+}
+body.theme-light .jd-reply-notify-home{background:#f6f6f6!important;color:#1b1b1f!important}
+body.theme-light .jd-reply-notify-group{
+  background:#fff;border-color:rgba(0,0,0,.08);
+}
+body.theme-light .jd-reply-notify-row-copy small,
+body.theme-light .jd-reply-notify-test-copy small,
+body.theme-light .jd-reply-notify-info{color:#62626c}
+body.theme-light .jd-reply-notify-section-label,
+body.theme-light .jd-reply-notify-footnote{color:#62626c}
+body.theme-light .jd-reply-notify-row-copy>svg{color:#45454e}
+@media(min-width:768px){
+ .jd-reply-notify-home{
+  width:min(100%,560px)!important;height:min(92dvh,900px)!important;
+  max-height:min(92dvh,900px)!important;
+  border:1px solid var(--jd-edge)!important;border-radius:24px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .jd-reply-notify-track,.jd-reply-notify-track:before{transition:none!important}
+}
