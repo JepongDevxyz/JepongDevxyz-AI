@@ -72,6 +72,7 @@ const doc={
  },
  documentElement:{style:{setProperty(key,value){store.set(key,value)}}},
  getElementById:elt,
+ addEventListener(_name,_listener){}, // optional Haptics UI delegates trusted clicks in the full application
  querySelectorAll(query){return query.includes('data-jd-appearance')?['system','foryou','dark','light'].map(mode=>({
   dataset:{jdAppearance:mode},classList:{toggle(){}},setAttribute(){}
  })):[]}
