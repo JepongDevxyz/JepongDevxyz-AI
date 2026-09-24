@@ -9,7 +9,8 @@ function between(source,start,end){
  assert(a>=0&&b>a,'Missing source boundary: '+start);
  return source.slice(a,b);
 }
-for(const id of ['activeAiIndicator','aiActivityList','aiActivitySummary','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
+assert(html.includes("indicator.id = 'activeAiIndicator'"),'Activity container should be created for every request');
+for(const id of ['aiActivityList','aiActivitySummary','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
  assert(html.includes('id="'+id+'"'),'Missing activity element: '+id);
 }
 assert(html.includes('<link rel="stylesheet" href="/activity-reference.css">'));
