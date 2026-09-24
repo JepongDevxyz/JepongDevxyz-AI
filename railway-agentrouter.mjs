@@ -1,6 +1,6 @@
 import http from 'node:http';
 import {spawn} from 'node:child_process';
-import {timingSafeEqual} from 'node:crypto';
+import {timingSafeEqual,createHmac} from 'node:crypto';
 
 const PORT=Number(process.env.PORT||3000);
 const MODEL='deepseek-v4-flash';
@@ -172,22 +172,68 @@ async function inspectClaude(){
     outputFormat:result.outputFormat,jsonType:result.jsonType,jsonSubtype:result.jsonSubtype,isError:result.isError}));
 }
 
+function safePrompt(body){
+  const system=typeof body.system==='string'?body.system.slice(0,18000):'';
+  const conversation=Array.isArray(body.messages)?body.messages.filter(item=>
+    ['user','assistant'].includes(item?.role)&&typeof item.content==='string'
+  ).slice(-16).map(item=>({role:item.role,text:item.content.slice(0,8000)})):[];
+  if(!conversation.length)return '';
+  return [
+    'You are replying in a text-only chat application. Do not use external tools.',
+    system?'SYSTEM INSTRUCTIONS:\n'+system:'',
+    'CONVERSATION:\n'+conversation.map(item=>
+      (item.role==='assistant'?'Assistant':'User')+': '+item.text).join('\n\n'),
+    'Assistant:'
+  ].filter(Boolean).join('\n\n').slice(0,42000);
+}
+function verifySignedRequest(raw,headers){
+  const stamp=String(headers['x-bridge-timestamp']||'');
+  const signature=String(headers['x-bridge-signature']||'');
+  if(!/^\d{13}$/.test(stamp)||!/^[a-f0-9]{64}$/.test(signature))return false;
+  if(Math.abs(Date.now()-Number(stamp))>90000)return false;
+  const given=Buffer.from(signature,'hex');
+  const signed=stamp+'.'+raw;
+  return keys().some(key=>{
+    const expected=createHmac('sha256',key).update(signed).digest();
+    return expected.length===given.length&&timingSafeEqual(expected,given);
+  });
+}
+async function answerViaCli(body){
+  const prompt=safePrompt(body);
+  if(!prompt)return {status:400,result:{error:'A text message is required.'}};
+  const chosenModel=MODEL;
+  let lastReason='unavailable';
+  const list=keys();
+  for(let i=0;i<list.length;i++){
+    const result=await runClaude({key:list[i],model:chosenModel,prompt,timeoutMs:52000});
+    if(result.ok&&result.text.trim()){
+      return {status:200,result:{response:result.text,model:chosenModel,keyIndex:i+1,keyCount:list.length}};
+    }
+    lastReason=result.reason||'unavailable';
+    // CLI errors about installation/arguments are independent of the credential.
+    if(['cli_installation','invalid_cli_arguments','spawn_error','cli_runtime_error','filesystem_permission'].includes(lastReason))break;
+  }
+  return {status:502,result:{error:'AgentRouter Claude Code CLI could not complete the chat request.',reason:lastReason}};
+}
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url||'/', 'http://localhost').pathname;
   if(req.method==='GET'&&pathname==='/health'){
     return json(res,200,{service:'agentrouter-isolated',status:'running',credentialsConfigured:keys().length>0,
-      bridgeAuthenticationConfigured:!!process.env.BRIDGE_SHARED_TOKEN,egress});
+      bridgeAuthenticationConfigured:keys().length>0,egress});
   }
   if(req.method!=='POST'||(pathname!=='/test'&&pathname!=='/chat'))
     return json(res,404,{error:'Not found.'});
-  if(!sameToken(String(req.headers['x-bridge-token']||''),String(process.env.BRIDGE_SHARED_TOKEN||'')))
-    return json(res,401,{error:'Bridge authentication required.'});
   let raw='';
   try{for await(const chunk of req){raw+=chunk;if(raw.length>120000)return json(res,413,{error:'Request too large.'});}}
   catch{return json(res,400,{error:'Invalid body.'});}
+  if(!verifySignedRequest(raw,req.headers))return json(res,401,{error:'Bridge signature is invalid or expired.'});
   let body;try{body=JSON.parse(raw);}catch{return json(res,400,{error:'Invalid JSON.'});}
-  if(pathname==='/test')body={messages:[{role:'user',content:'Reply exactly OK'}],max_tokens:32};
-  const result=await callProvider(body);
-  return json(res,result.status,result.result);
+  if(pathname==='/test')body={messages:[{role:'user',content:'Reply exactly OK'}]};
+  const response=await answerViaCli(body);
+  return json(res,response.status,response.result);
 });
-server.listen(PORT,'0.0.0.0',()=>{console.log('[bridge] listening on '+PORT);void inspectNetwork();void inspectClaude();});
+server.listen(PORT,'0.0.0.0',()=>{
+  console.log('[bridge] listening on '+PORT);
+  void inspectNetwork();
+  // Startup diagnostic was performed on the preceding isolated build.
+});
