@@ -80,7 +80,7 @@ const PROVIDERS = {
   },
   seekai: {
     label: 'SEEKAI',
-    models: ['deepseek-v4-flash','deepseek-ai/DeepSeek-V4-Flash-0731'],
+    models: ['deepseek-v4.1-flash','glm-5.3-flash','mimo-v2.6-flash','deepseek-ai/DeepSeek-V4-Flash-0731','qwen3.8-flash','deepseek-v4-flash'],
     defaultModel: 'deepseek-v4-flash'
   }
 };
@@ -2728,7 +2728,8 @@ async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='
   const keys=(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('seekai'));
   if(!keys.length)return {ok:false,status:503,error:'SEEKAI_API_KEYS is not configured in Vercel.'};
   const selected=String(model||'').trim();
-  const target=selected&&selected!=='agent'?selected:PROVIDERS.seekai.defaultModel;
+  const target=!selected||selected==='agent'?PROVIDERS.seekai.defaultModel:selected;
+  if(!PROVIDERS.seekai.models.includes(target))return {ok:false,status:400,error:'This SEEKAI model is not in the six models allowed for the configured key: '+target};
   const endpoint=chatCompletionsUrl(process.env.SEEKAI_BASE_URL,'https://seekai.cc/v1/chat/completions');
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   let status=502,last='SEEKAI did not return an assistant response.';
@@ -3744,7 +3745,8 @@ async function discoverProviderModels(provider){
       lastStatus=res.status;
       if(res.ok){
         const data=await safeJsonResponse(res);
-        const models=normalizeModelCatalog(data);
+        const allModels=normalizeModelCatalog(data);
+        const models=provider==='seekai' ? allModels.filter(item=>PROVIDERS.seekai.models.includes(item.id)) : allModels;
         return {provider,models,status:models.length?'ready':'empty',httpStatus:res.status,source:url};
       }
       if(!isRetryableStatus(res.status))break;
