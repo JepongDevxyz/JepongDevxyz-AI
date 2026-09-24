@@ -10418,7 +10418,7 @@ ${m.text || ''}
         }
 
         /* BI-DIRECTIONAL EDGE-SWIPE & CLICK DRAWER */
-        let activeDrawerMode = 'bottom';
+        let activeDrawerMode = 'left';
         let isDrawerOpen = false;
 
         function closeAllDrawers() {
@@ -10502,7 +10502,7 @@ ${m.text || ''}
                 if (!isDrawerOpen && diffX > 0) {
                     activeDrawerMode = 'left';
                     sidebar.className = 'sidebar drawer-left';
-                    const maxW = Math.min(window.innerWidth * 0.85, 300);
+                    const maxW = Math.min(window.innerWidth - 32, 410);
                     const translate = Math.min(0, -maxW + diffX);
                     sidebar.style.transition = 'none';
                     sidebar.style.transform = `translateX(${translate}px)`;
@@ -10512,7 +10512,7 @@ ${m.text || ''}
                 if (!isDrawerOpen && diffX < 0) {
                     activeDrawerMode = 'right';
                     sidebar.className = 'sidebar drawer-right';
-                    const maxW = Math.min(window.innerWidth * 0.85, 300);
+                    const maxW = Math.min(window.innerWidth - 32, 410);
                     const translate = Math.max(0, maxW + diffX);
                     sidebar.style.transition = 'none';
                     sidebar.style.transform = `translateX(${translate}px)`;
