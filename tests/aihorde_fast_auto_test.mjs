@@ -32,6 +32,7 @@ function mockRunner({keys=[],generate,clock={now:1000000}}){
   const deps={
     Date:{now:()=>clock.now},
     AIHORDE_ANONYMOUS_KEY:'0000000000',AIHORDE_CLIENT_AGENT:'JD-test',
+    providerCredentials:(keys,autoFallback)=>autoFallback?keys:keys.slice(0,1),
     getProviderKeys:()=>keys,shuffle:x=>x,resolveAIHordeModels:async()=>ranked,
     buildOpenAIMessages:(_h,message)=>[{role:'user',content:message}],
     providerLifecycleActivity:()=>{},providerLabel:x=>x,
