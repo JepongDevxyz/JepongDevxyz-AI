@@ -11,7 +11,7 @@ def require(condition, message):
 
 
 def main():
-    # AI Horde must be a first-class configured provider using the user's Vercel key(s).
+    # AI Horde remains a registered emergency provider, never a carousel choice.
     require("aihorde: {" in CHAT, 'AI Horde provider registry entry missing')
     require("AIHORDE_API_KEYS','AIHORDE_API_KEY" in CHAT, 'AI Horde env key rotation missing')
     require("https://oai.aihorde.net/v1/chat/completions" in CHAT, 'AI Horde OpenAI-compatible endpoint missing')
@@ -31,16 +31,14 @@ def main():
     require("AI Horde Anonymous" in CHAT, 'anonymous fallback provider label missing')
     require("fallback-public" in CHAT, 'public fallback route reason missing')
 
-    # Frontend must expose the user's AI Horde provider and keep routing toggle semantics.
-    require("'aihorde'" in INDEX, 'AI Horde provider is missing from frontend provider order/config')
-    require("AI Horde" in INDEX, 'AI Horde provider label/page missing')
-    require('id="aihordeFourModelChoices"' in INDEX and "action:'aihorde-live-models'" in INDEX,
-            'AI Horde live four-model picker is missing')
-    require('data-provider="aihorde" data-model="auto"' not in INDEX,
-            'AI Horde Auto must no longer be available to select')
-    require("if(provider==='aihorde'&&(!selected||selected==='auto'))" in CHAT,
-            'Legacy auto selection must not silently route a user request')
-    require("autoFallback: autoProviderFallback" in INDEX, 'frontend no longer sends Auto Provider Fallback state')
+    # Neither the registered nor anonymous emergency path is user-selectable.
+    require('data-provider="aihorde"' not in INDEX and 'aria-label="AI Horde"' not in INDEX,
+            'AI Horde still appears in the carousel')
+    require('aihordeFourModelChoices' not in INDEX and 'refreshAIHordePickerModels' not in INDEX,
+            'Legacy AI Horde model picker remains in frontend')
+    require("if(provider==='aihorde')return {ok:false,status:400" in CHAT,
+            'Direct AI Horde selection must not be routable')
+    require("autoFallback: autoProviderFallback" in INDEX, 'frontend no longer sends emergency fallback state')
 
     # Puter fallback was intentionally removed. It must not load or execute.
     require('https://js.puter.com/v2/' not in INDEX, 'Puter.js loader still present')
@@ -60,11 +58,13 @@ def main():
     require('currentProviderPage*100' in INDEX,
             'model picker transform is not synchronized to viewport-width pages')
 
-    # Anonymous Horde should use the failed model name as a class/size hint.
-    require("scoreAIHordeModel(item,message='',sourceModel='')" in CHAT,
-            'AI Horde fallback scoring does not consider the failed model')
-    require("model,history,files,message,systemInstruction" in CHAT[CHAT.index('runAnonymousAIHordeFallback'):],
-            'anonymous fallback is not given the failed model as a hint')
+    # Only after primary quota/key exhaustion, call registered Horde before anonymous.
+    gate = CHAT.index("if(autoFallback&&fallbackable)")
+    registered = CHAT.index("const registeredHorde=await runAIHorde(",gate)
+    anonymous = CHAT.index("const publicHorde=await runAnonymousAIHordeFallback(",registered)
+    require(gate < registered < anonymous, 'Two emergency routes have the wrong order')
+    require("model:'auto',history,files,message,systemInstruction" in CHAT[registered:anonymous],
+            'registered Horde fallback should choose a live model internally')
 
     # Invalid Horde credentials should be eligible for provider fallback when fallback is enabled.
     classifier = CHAT[CHAT.index('function isFallbackableProviderFailure'):CHAT.index('function passthroughHeaders')]
@@ -72,16 +72,13 @@ def main():
     require('no user matching sent api key' in classifier, 'AI Horde rejected-key text is not fallbackable')
     require('summarizeAIHordeError' in CHAT, 'AI Horde user-facing error sanitizer missing')
 
-    # Strict OFF locks the chosen provider/model/credential; ON alone permits
-    # model/provider/key/anonymous fallback. UI and backend must agree.
-    require('OFF = one selected provider/model/API key only; no anonymous route. ON = allow key/model/provider fallback.' in INDEX,
-            'Auto Provider Fallback UI must explain strict OFF behavior')
-    require('if(!autoFallback)candidates=candidates.slice(0,1);' in CHAT,
-            'AI Horde must not try another model when fallback is disabled')
-    require('autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys' in CHAT,
-            'AI Horde anonymous route must require enabled fallback')
+    # Every key is attempted within the selected provider even with emergency fallback OFF.
+    require('All your configured keys are tried first.' in INDEX,
+            'Fallback switch description does not explain same-provider key rotation')
+    require("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:configuredKeys;" in CHAT,
+            'Anonymous route must be a distinct emergency attempt')
     require('smartRouter = autoFallback && body.smartRouter === true;' in CHAT,
-            'Smart Router must not override the selected model when fallback is disabled')
+            'Smart Router must remain an independent opt-in')
 
     print('public fallback contract checks passed')
 
