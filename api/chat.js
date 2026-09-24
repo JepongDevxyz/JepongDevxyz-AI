@@ -1,3 +1,4 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { fetchPublicGitHubContext } from './plugins.js';
 import { getGitHubSession } from './_github_oauth.js';
 import { resolveGitHubAccess } from './_github_app.js';
@@ -3129,100 +3130,91 @@ function anthropicStreamToText(body,finishState={reason:''}){
 
 async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
   const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
-  if(!keys.length)return {ok:false,status:500,error:'AgentRouter API key is not configured.'};
-
+  if(!keys.length)return {ok:false,status:500,error:'AGENTROUTER_API_KEYS is not configured.'};
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  // AgentRouter officially documents Claude Code with ANTHROPIC_BASE_URL at the
-  // domain root. Claude Code then calls the Anthropic Messages API at /v1/messages.
-  const configuredBase=String(process.env.AGENTROUTER_BASE_URL||process.env.ANTHROPIC_BASE_URL||'').trim();
-  let base=(configuredBase||'https://agentrouter.org/').replace(/\/+$/,'');
-  if(/\/v1\/messages$/i.test(base)) base=base.replace(/\/v1\/messages$/i,'');
-  else if(/\/v1$/i.test(base)) base=base.replace(/\/v1$/i,'');
-  const url=base+'/v1/messages';
-
+  // Anthropic SDK appends /v1/messages to the configured root; don't
+  // impersonate another client or change the user's verified provider host.
+  const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim();
+  const base=(configuredBase||'https://agentrouter.org/').replace(/\/+$/,'')
+    .replace(/\/v1\/(?:messages|chat\/completions)$/i,'').replace(/\/v1$/i,'');
   const messages=[];
   for(const h of history||[]){
     const role=h.role==='bot'||h.role==='model'||h.role==='assistant'?'assistant':'user';
-    const text=String(h.text||h.content||'').trim();
-    if(text)messages.push({role,content:text});
+    const content=String(h.text||h.content||'').trim();
+    if(content)messages.push({role,content});
   }
   if(String(message||'').trim())messages.push({role:'user',content:String(message).trim()});
+  if(!messages.length)return {ok:false,status:400,error:'AgentRouter requires a text message.'};
 
-  let last='',status=500;
+  let last='',status=502;
   for(let i=0;i<keys.length;i++){
     providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
     try{
-      const res=await fetch(url,{
-        method:'POST',
-        headers:{
-          // Mirror AgentRouter's documented Claude Code environment: both
-          // ANTHROPIC_AUTH_TOKEN and ANTHROPIC_API_KEY are set to the same token.
-          'Authorization':'Bearer '+keys[i],
-          'x-api-key':keys[i],
-          'anthropic-version':'2023-06-01',
-          'anthropic-beta':'claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,effort-2025-11-24',
-          'anthropic-dangerous-direct-browser-access':'true',
-          'User-Agent':'claude-cli/2.1.114 (external, cli)',
-          'Originator':'claude-code',
-          'Version':'2.1.114',
-          'x-app':'cli',
-          'x-stainless-lang':'js',
-          'x-stainless-package-version':'0.81.0',
-          'x-stainless-os':'Linux',
-          'x-stainless-arch':'x64',
-          'x-stainless-runtime':'node',
-          'x-stainless-runtime-version':'v24.3.0',
-          'Content-Type':'application/json',
-          'Accept':'application/json'
-        },
-        body:JSON.stringify({
-          model:target,
-          max_tokens:outputBudgetFor(message),
-          system:String(systemInstruction||''),
-          messages,
-          stream:false
-        }),
-        signal:AbortSignal.timeout(120000)
-      });
-
-      const raw=await res.text();
-      const ct=String(res.headers.get('content-type')||'').toLowerCase();
-      const isHtml=ct.includes('text/html')||/^\s*<!doctype|^\s*<html/i.test(raw);
-      if(res.ok&&!isHtml){
-        let payload=null;
-        try{payload=JSON.parse(raw);}catch(_){}
-        const blocks=Array.isArray(payload?.content)?payload.content:[];
-        const text=blocks.map(part=>part?.type==='text'?String(part.text||''):'').join('');
-        if(text.trim()){
-          providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-          return {
-            ok:true,
-            response:new Response(text,{status:200,headers:{
-              'Content-Type':'text/plain; charset=utf-8',
-              'X-AI-Provider':'agentrouter',
-              'X-AI-Model':target,
-              'X-AI-Key-Index':String(i),
-              'X-AI-Key-Count':String(keys.length)
-            }}),
-            finishState:{reason:String(payload?.stop_reason||'end_turn').toLowerCase()}
-          };
+      const sdkFetch=async(input,init)=>{
+        const response=await fetch(input,init);
+        const ct=String(response.headers.get('content-type')||'').toLowerCase();
+        if(ct.includes('text/html')){
+          const hostname=new URL(base).hostname;
+          console.warn('[AgentRouter gateway HTML]',{status:response.status,host:hostname,contentType:ct.slice(0,60),redirected:response.redirected,finalHost:response.url?new URL(response.url).hostname:hostname});
+          const error=new Error('AgentRouter gateway returned HTML rather than an API response.');
+          error.status=502;error.isGatewayHtml=true;error.upstreamStatus=response.status;
+          throw error;
         }
-        status=502;last='AgentRouter returned an empty Anthropic response.';
-      }else{
-        status=isHtml?502:res.status;
-        last=isHtml
-          ? 'AgentRouter returned HTML instead of an Anthropic API response.'
-          : cleanUpstreamError(raw,res.status,'agentrouter',target);
-      }
-      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
-      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',detail:last.slice(0,180),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-      if(!isRetryableStatus(status))break;
-    }catch(e){
-      status=502;last=e?.message||String(e);
-      if(i>=keys.length-1)break;
+        return response;
+      };
+      const client=new Anthropic({baseURL:base,apiKey:null,authToken:keys[i],maxRetries:0,timeout:65000,fetch:sdkFetch});
+      const upstream=await client.messages.create({
+        model:target,
+        max_tokens:outputBudgetFor(message),
+        ...(String(systemInstruction||'').trim()?{system:String(systemInstruction)}:{}),
+        messages,
+        stream:true
+      });
+      const iterator=upstream[Symbol.asyncIterator](),encoder=new TextEncoder(),finishState={reason:''};
+      const output=new ReadableStream({
+        async pull(controller){
+          try{
+            while(true){
+              const item=await iterator.next();
+              if(item.done){if(!finishState.reason)finishState.reason='end_turn';controller.close();return;}
+              const event=item.value;
+              if(event?.type==='message_delta'&&event.delta?.stop_reason)finishState.reason=String(event.delta.stop_reason).toLowerCase();
+              const part=event?.type==='content_block_delta'&&event.delta?.type==='text_delta'
+                ?event.delta.text
+                :event?.type==='content_block_start'&&event.content_block?.type==='text'
+                  ?event.content_block.text:'';
+              if(part){controller.enqueue(encoder.encode(String(part)));return;}
+            }
+          }catch(error){
+            console.warn('[AgentRouter stream interrupted]',{status:Number(error?.status)||0});
+            controller.error(new Error('AgentRouter stream was interrupted upstream.'));
+          }
+        },
+        async cancel(){try{await iterator.return?.();}catch(_){}}
+      });
+      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      return {ok:true,response:new Response(output,{status:200,headers:{
+        'Content-Type':'text/plain; charset=utf-8',
+        'Cache-Control':'no-cache, no-transform',
+        'X-AI-Provider':'agentrouter',
+        'X-AI-Model':target,
+        'X-AI-Key-Index':String(i+1),
+        'X-AI-Key-Count':String(keys.length)
+      }}),finishState};
+    }catch(error){
+      status=Number(error?.status)||502;
+      const html=error?.isGatewayHtml===true;
+      last=html
+        ?'AgentRouter upstream returned HTML (HTTP '+(error.upstreamStatus||'unknown')+'). Check the gateway/network response; this does not establish whether the API key is valid.'
+        :status===401
+          ?'AgentRouter returned HTTP 401 for credential '+(i+1)+' of '+keys.length+'. Check AGENTROUTER_API_KEYS and the configured AgentRouter host.'
+          :'AgentRouter request failed (HTTP '+status+').';
+      const retry=!html&&isRetryableStatus(status)&&i<keys.length-1;
+      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:retry?'warning':'error',phase:retry?'retry':'failed',detail:last,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      if(!retry)break;
     }
   }
-  return {ok:false,status,error:last||'AgentRouter Anthropic route unavailable'};
+  return {ok:false,status,error:last||'AgentRouter unavailable'};
 }
 
 async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){

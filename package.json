@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "@vercel/sandbox": "3.3.0"
+    "@vercel/sandbox": "3.3.0",
+    "@anthropic-ai/sdk": "0.128.0"
   },
   "scripts": {
     "test:codex-tenants": "node --test tests/codex_sandbox_tenant.test.mjs tests/codex_account_identity.test.mjs tests/codex_node_bridge.test.mjs tests/codex_account_status_reason.test.mjs"
