@@ -9194,6 +9194,9 @@ ${m.text || ''}
                 `;
                 list.appendChild(item);
             });
+            // Conversation option icons are injected dynamically on every
+            // history update; hydrate them after the rows exist.
+            refreshLucideIcons(list);
         }
 
         function filterChatHistory() {
