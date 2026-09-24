@@ -8960,6 +8960,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • 🕵️‍♂️ Incognito';
             renderIncognitoWelcomeScreen();
             closeAllDrawers();
+            syncJdNavigation();
         }
 
         function exitIncognitoChat() {
@@ -8974,6 +8975,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             } else {
                 createNewChat();
             }
+            syncJdNavigation();
         }
 
         function renderIncognitoWelcomeScreen() {
