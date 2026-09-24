@@ -10685,7 +10685,8 @@ ${m.text || ''}
         // page reloads, but let the server replace entries that go offline.
         let aihordePinnedModels=[];
         try{
-            const saved=JSON.parse(localStorage.getItem('jepong_aihorde_pinned_models')||'[]');
+            const serializedPins=localStorage.getItem('jepong_aihorde_pinned_models')||'[]';
+            const saved=JSON.parse(serializedPins);
             if(Array.isArray(saved))aihordePinnedModels=saved.filter(x=>typeof x==='string').slice(0,4);
         }catch(_){localStorage.removeItem('jepong_aihorde_pinned_models');}
         let aihordePickerRequestId=0;
