@@ -83,7 +83,7 @@ const nDoc={getElementById:id=>({
 }[id]||null)};
 const NotificationMock=function(){throw new Error('Android does not support direct Notification constructor')};
 NotificationMock.permission='default';
-NotificationMock.requestPermission=()=>Promise.resolve('granted');
+NotificationMock.requestPermission=()=>{NotificationMock.permission='granted';return Promise.resolve('granted');};
 const reg={active:{},showNotification:async(title,options)=>{rendered.push({title,options});}};
 const navigatorMock={serviceWorker:{register:async(path,options)=>{
  assert.equal(path,'/jd-notification-sw.js');assert.equal(options.scope,'/');
