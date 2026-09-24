@@ -191,7 +191,8 @@ function sanitizeCustomProviderKeys(body,provider){
 // cross-provider/anonymous routing, not key rotation.
 function providerCredentials(keys,autoFallback=false){
   const list=Array.isArray(keys)?keys:[];
-  return [...new Set(list.filter(key=>typeof key==='string'&&key.trim()))]
+  // Cloudflare supplies account objects; preserve those alongside string keys.
+  return [...new Set(list.filter(item=>item&&(typeof item!=='string'||item.trim())))]
     .slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
