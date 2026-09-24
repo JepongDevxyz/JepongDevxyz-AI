@@ -19,15 +19,17 @@ def main():
             'in-chat search does not preserve unmatched text as text nodes')
 
     require('function isFallbackableProviderFailure' in CHAT,
-            'model-unavailable fallback classifier missing')
+            'quota/credential emergency-fallback classifier missing')
     helper_start = CHAT.index('function isFallbackableProviderFailure')
     helper_block = CHAT[helper_start:helper_start + 1400]
-    for status in ('400', '404', '410', '422'):
-        require(status in helper_block, f'model-unavailable status {status} is not considered')
-    for phrase in ('model', 'not found', 'unsupported'):
-        require(phrase in helper_block.lower(), f'model-unavailable classifier missing phrase: {phrase}')
+    for status in ('401', '402', '403', '429'):
+        require(status in helper_block, f'quota/credential status {status} is missing')
+    for phrase in ('quota', 'credits?', 'rate limit'):
+        require(phrase in helper_block.lower(), f'exhaustion classifier missing phrase: {phrase}')
     require('const fallbackable=isFallbackableProviderFailure(first.status,first.error);' in CHAT,
-            'cross-provider fallback does not use the model-unavailable classifier')
+            'emergency fallback does not use the quota/auth classifier')
+    require("if(autoFallback&&fallbackable){" in CHAT,
+            'Horde emergency fallback must be explicitly enabled')
 
     print('resilience regression checks passed')
 
