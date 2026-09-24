@@ -9,7 +9,7 @@ function extract(start,end){
  return chat.slice(a,b);
 }
 const pickSource=extract('function fourResponsiveAIHordeModels(','\nfunction summarizeAIHordeError(');
-const create=new Function('isAllowedAIHordeModelName','scoreAIHordeModel','getAIHordeActiveModels','AbortSignal',pickSource+
+const create=new Function('isAllowedAIHordeModelName','scoreAIHordeModel','getAIHordeActiveModels','AbortSignal','getProviderKeys','AIHORDE_ANONYMOUS_KEY','checkAIHordeCredential',pickSource+
  '\nreturn {fourResponsiveAIHordeModels,liveAIHordePickerModels};');
 const data=[
  {name:'fast-24b',workers:3,eta:8,queued:0,performance:90},
@@ -20,7 +20,7 @@ const data=[
  {name:'offline',workers:0,eta:1,queued:0,performance:100},
  {name:'slow-70b',workers:20,eta:240,queued:240,performance:100}
 ];
-const api=create(()=>true,(m)=>100-m.eta,async()=>data,{timeout:()=>null});
+const api=create(()=>true,(m)=>100-m.eta,async()=>data,{timeout:()=>null},()=>['test-fixture-key'],'0000000000',async()=> 'valid');
 const picks=api.fourResponsiveAIHordeModels(data);
 assert.equal(picks.length,4);
 assert.deepEqual(picks.map(x=>x.name),['fast-24b','fast-7b','fast-13b','fast-32b']);
@@ -29,10 +29,10 @@ const live=await api.liveAIHordePickerModels();
 assert.equal(live.status,'ready');
 assert.deepEqual(live.models.map(x=>x.id),picks.map(x=>x.name));
 assert(live.models.every(x=>x.online===true&&x.etaSeconds>=0));
-const partial=create(()=>true,m=>100-m.eta,async()=>data.slice(0,2),{timeout:()=>null});
+const partial=create(()=>true,m=>100-m.eta,async()=>data.slice(0,2),{timeout:()=>null},()=>['test-fixture-key'],'0000000000',async()=> 'valid');
 assert.equal((await partial.liveAIHordePickerModels()).models.length,2,
  'Never invent four active models when fewer are verified');
-const failed=create(()=>true,m=>100-m.eta,async()=>{throw Error('Status API unavailable');},{timeout:()=>null});
+const failed=create(()=>true,m=>100-m.eta,async()=>{throw Error('Status API unavailable');},{timeout:()=>null},()=>['test-fixture-key'],'0000000000',async()=> 'valid');
 assert.deepEqual((await failed.liveAIHordePickerModels()).models,[],
  'No unverified hardcoded fallbacks for model choices');
 assert(!ui.includes('data-provider="aihorde" data-model="auto"'));

@@ -33,6 +33,7 @@ function mockRunner({keys=[],generate,clock={now:1000000}}){
     Date:{now:()=>clock.now},
     AIHORDE_ANONYMOUS_KEY:'0000000000',AIHORDE_CLIENT_AGENT:'JD-test',
     providerCredentials:(keys,autoFallback)=>autoFallback?keys:keys.slice(0,1),
+    runAIHordeNativeSelected:async args=>{observed.push({native:true,model:args.model});return {ok:true};},
     getProviderKeys:()=>keys,shuffle:x=>x,resolveAIHordeModels:async()=>ranked,
     buildOpenAIMessages:(_h,message)=>[{role:'user',content:message}],
     providerLifecycleActivity:()=>{},providerLabel:x=>x,
@@ -81,6 +82,7 @@ const explicit=mockRunner({keys:[],generate:async()=>({
   status:200,ok:true,text:async()=>JSON.stringify({choices:[{message:{content:'OK'}}]})
 })});
 await explicit.runner({model:'slow-70b',history:[],message:'Hi',files:[],autoFallback:true});
-assert.equal(explicit.observed[0].timeout,70000,'Manual AI Horde selection timeouts changed');
+assert.deepEqual(explicit.observed,[{native:true,model:'slow-70b'}],
+ 'Explicitly selected models must use the native AI Horde route, not old Auto proxy.');
 
 console.log('AI Horde Auto tests passed: queue-aware ranking, manual model, fast reply, credential fallback, deadline, manual timeout');
