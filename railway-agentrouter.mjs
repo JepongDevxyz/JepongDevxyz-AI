@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {spawn} from 'node:child_process';
 import {timingSafeEqual} from 'node:crypto';
 
 const PORT=Number(process.env.PORT||3000);
@@ -113,6 +114,55 @@ async function inspectConfigured(){
     console.warn('[credential-probe]',JSON.stringify({status:0,kind:'internal',errorType:error?.name||'Error'}));
   }
 }
+
+// Reproduce the user's working Claude Code environment using the real CLI, not spoofed API headers.
+function runClaude({key,model=MODEL,prompt='Reply exactly OK',timeoutMs=60000}){
+  return new Promise(resolve=>{
+    const env={...process.env,ANTHROPIC_BASE_URL:'https://agentrouter.org/',
+      ANTHROPIC_AUTH_TOKEN:key,ANTHROPIC_MODEL:model,
+      ANTHROPIC_DEFAULT_OPUS_MODEL:model,ANTHROPIC_DEFAULT_SONNET_MODEL:model,
+      ANTHROPIC_DEFAULT_HAIKU_MODEL:model,CLAUDE_CODE_SUBAGENT_MODEL:model,
+      DISABLE_AUTOUPDATER:'1',DISABLE_TELEMETRY:'1',
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:'1',CI:'1'};
+    delete env.ANTHROPIC_API_KEY; // match Termux's AUTH_TOKEN-only environment
+    let stdout='',stderr='',finished=false,timedOut=false;
+    const binary=process.cwd()+'/node_modules/.bin/claude';
+    const child=spawn(binary,[
+      '--print',prompt,'--model',model,'--output-format','json',
+      '--max-turns','1','--tools',''
+    ],{env,cwd:'/tmp',stdio:['ignore','pipe','pipe'],shell:false});
+    const timer=setTimeout(()=>{timedOut=true;child.kill('SIGKILL');},timeoutMs);
+    child.stdout.on('data',chunk=>{if(stdout.length<150000)stdout+=String(chunk).slice(0,150000-stdout.length);});
+    child.stderr.on('data',chunk=>{if(stderr.length<4000)stderr+=String(chunk).slice(0,4000-stderr.length);});
+    const done=(code,errorName='')=>{
+      if(finished)return;finished=true;clearTimeout(timer);
+      let data;try{data=JSON.parse(stdout);}catch{}
+      const answer=typeof data?.result==='string'?data.result:'';
+      const diagnostic=(stderr+' '+String(data?.error?.type||'')).toLowerCase();
+      let reason='cli_error';
+      if(timedOut)reason='timeout';
+      else if(/not logged in|login required|please login/.test(diagnostic))reason='cli_login_required';
+      else if(/unauthorized client/.test(diagnostic))reason='client_not_authorized';
+      else if(/unauthorized|invalid api key|authentication|401/.test(diagnostic))reason='authentication';
+      else if(/rate limit|429/.test(diagnostic))reason='rate_limit';
+      else if(/binary not installed|module not found|enoent/.test(diagnostic))reason='cli_installation';
+      else if(errorName)reason=errorName;
+      else if(code===0&&answer.trim()&&data?.is_error!==true)reason='';
+      resolve({ok:!reason,exitCode:code,reason,text:!reason?answer:'',timedOut});
+    };
+    child.on('error',()=>done(-1,'spawn_error'));
+    child.on('close',code=>done(code));
+  });
+}
+async function inspectClaude(){
+  if(!keys().length)return;
+  // One cheap request; never log the key, prompt, generated text, or raw CLI output.
+  const result=await runClaude({key:keys()[0],timeoutMs:60000});
+  console.log('[claude-code-probe]',JSON.stringify({keyIndex:1,ok:result.ok,
+    reason:result.reason||'none',exitCode:result.exitCode,
+    timeout:result.timedOut,generatedText:!!result.text.trim()}));
+}
+
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url||'/', 'http://localhost').pathname;
   if(req.method==='GET'&&pathname==='/health'){
@@ -131,4 +181,4 @@ const server=http.createServer(async(req,res)=>{
   const result=await callProvider(body);
   return json(res,result.status,result.result);
 });
-server.listen(PORT,'0.0.0.0',()=>{console.log('[bridge] listening on '+PORT);void inspectNetwork();void inspectConfigured();});
+server.listen(PORT,'0.0.0.0',()=>{console.log('[bridge] listening on '+PORT);void inspectNetwork();void inspectClaude();});

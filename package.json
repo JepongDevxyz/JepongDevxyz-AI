@@ -8,5 +8,8 @@
   },
   "scripts": {
     "start": "node railway-agentrouter.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.112"
   }
 }
