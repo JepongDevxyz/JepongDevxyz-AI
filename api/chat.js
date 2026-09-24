@@ -3056,19 +3056,35 @@ function fourResponsiveAIHordeModels(models){
   ).slice(0,4);
 }
 
-async function liveAIHordePickerModels(){
+async function checkAIHordeCredential(key){
+  if(!key)return 'missing';
+  if(key===AIHORDE_ANONYMOUS_KEY)return 'anonymous';
   try{
-    const active=await getAIHordeActiveModels(AbortSignal.timeout(9000));
-    const models=fourResponsiveAIHordeModels(active).map(item=>({
-      id:item.name,name:item.name,workers:item.workers,etaSeconds:item.eta,
-      queued:item.queued,online:true
-    }));
-    return {status:models.length?'ready':'no-fast-workers',models,
-      checkedAt:new Date().toISOString(),source:'AI Horde live text-worker status'};
-  }catch(e){
-    return {status:'unavailable',models:[],
-      error:'Could not verify live AI Horde worker availability. Please retry.'};
-  }
+    // Native first-party credential lookup: do not return the account, key, or raw error.
+    const result=await fetch('https://aihorde.net/api/v2/find_user',{
+      method:'GET',headers:{apikey:key,Accept:'application/json','Client-Agent':AIHORDE_CLIENT_AGENT},
+      signal:AbortSignal.timeout(7500)
+    });
+    if(result.ok)return 'valid';
+    if([401,403,404].includes(result.status))return 'rejected';
+    return 'unverified';
+  }catch(_){return 'unverified';}
+}
+
+async function liveAIHordePickerModels(){
+  const firstKey=getProviderKeys('aihorde',false).find(key=>key!==AIHORDE_ANONYMOUS_KEY)||'';
+  const [keyStatus,modelsResult]=await Promise.all([
+    checkAIHordeCredential(firstKey),
+    getAIHordeActiveModels(AbortSignal.timeout(9000))
+      .then(active=>({ok:true,active})).catch(()=>({ok:false,active:[]}))
+  ]);
+  const models=fourResponsiveAIHordeModels(modelsResult.active).map(item=>({
+    id:item.name,name:item.name,workers:item.workers,etaSeconds:item.eta,
+    queued:item.queued,online:true
+  }));
+  return {status:modelsResult.ok?(models.length?'ready':'no-fast-workers'):'unavailable',
+    models,keyStatus,checkedAt:new Date().toISOString(),source:'AI Horde native text worker status',
+    error:modelsResult.ok?'':'Could not verify live AI Horde worker availability. Please retry.'};
 }
 
 function summarizeAIHordeError(status, data, raw=''){
@@ -3119,7 +3135,125 @@ function isAIHordeGenerationFailure(status,error=''){
     /not enough generations|no generations|no generation|worker|queue|timed? ?out|timeout|unavailable|busy|faulted|aborted/.test(text);
 }
 
+function aiHordeNativePrompt(messages){
+  const transcript=(Array.isArray(messages)?messages:[]).map(m=>{
+    const role=m?.role==='system'?'System':m?.role==='assistant'?'Assistant':'User';
+    return role+': '+(typeof m?.content==='string'?m.content:'');
+  }).join('\n\n');
+  return transcript.slice(-14000)+'\n\nAssistant:';
+}
+
+async function aiHordeNativeTextRequest({key,model,messages,maxTokens=256,timeoutMs=44000}){
+  const base='https://aihorde.net/api/v2/generate/text/';
+  const headers={apikey:key,Accept:'application/json','Content-Type':'application/json','Client-Agent':AIHORDE_CLIENT_AGENT};
+  const deadline=Date.now()+timeoutMs;
+  let id='',complete=false;
+  try{
+    const submit=await fetch(base+'async',{
+      method:'POST',headers,body:JSON.stringify({
+        prompt:aiHordeNativePrompt(messages),
+        models:[model],nsfw:false,slow_workers:false,
+        params:{max_context_length:2048,max_length:Math.max(32,Math.min(640,Number(maxTokens)||256)),n:1}
+      }),signal:AbortSignal.timeout(Math.min(12000,timeoutMs))
+    });
+    const data=await submit.json().catch(()=>({}));
+    if(!submit.ok)return {ok:false,status:submit.status,error:summarizeAIHordeError(submit.status,data,'')};
+    id=String(data?.id||'');
+    if(!/^[a-z0-9-]{8,80}$/i.test(id))return {ok:false,status:502,error:'AI Horde accepted the request without a valid job ID.'};
+    while(Date.now()<deadline-1500){
+      const remain=deadline-Date.now();
+      const statusResponse=await fetch(base+'status/'+encodeURIComponent(id),{
+        method:'GET',headers:{apikey:key,Accept:'application/json','Client-Agent':AIHORDE_CLIENT_AGENT},
+        signal:AbortSignal.timeout(Math.min(8000,Math.max(1000,remain-800)))
+      });
+      const result=await statusResponse.json().catch(()=>({}));
+      if(!statusResponse.ok)return {ok:false,status:statusResponse.status,
+        error:summarizeAIHordeError(statusResponse.status,result,'')};
+      if(result?.done===true){
+        complete=true;
+        const text=typeof result?.generations?.[0]?.text==='string'?result.generations[0].text.trim():'';
+        return text?{ok:true,status:200,text:text.replace(/^(?:Assistant\s*:\s*)/i,'').trim()}:
+          {ok:false,status:502,error:'AI Horde finished without assistant text.'};
+      }
+      if(result?.faulted===true||result?.is_possible===false)
+        return {ok:false,status:503,error:'The selected AI Horde model is unable to complete this request right now.'};
+      const ms=Math.min(1800,Math.max(0,deadline-Date.now()-1500));
+      if(ms>0)await new Promise(resolve=>setTimeout(resolve,ms));
+    }
+    return {ok:false,status:504,error:'AI Horde model did not finish within the response time limit.'};
+  }catch(error){
+    return {ok:false,status:504,error:error?.name==='TimeoutError'?'AI Horde model timed out.':'AI Horde native text API request failed.'};
+  }finally{
+    if(id&&!complete){
+      // Prevent slow queued jobs from consuming resources after the chat has timed out.
+      try{await fetch(base+'status/'+encodeURIComponent(id),{method:'DELETE',
+        headers:{apikey:key,'Client-Agent':AIHORDE_CLIENT_AGENT},signal:AbortSignal.timeout(1800)});}
+      catch(_){}
+    }
+  }
+}
+
+async function runAIHordeNativeSelected({model,history,files,message,systemInstruction,
+    fallbackFrom='',routedReason='',emit,autoFallback=false},{anonymous=false}={}){
+  const stored=anonymous?[]:getProviderKeys('aihorde',autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
+  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:
+    autoFallback?[...stored,AIHORDE_ANONYMOUS_KEY]:stored.slice(0,1);
+  if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
+  if(Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data))
+    return {ok:false,status:415,error:'AI Horde text models cannot directly process image attachments.'};
+  let initial;
+  try{initial=await resolveAIHordeModels(model,message,AbortSignal.timeout(9000));}
+  catch(_){return {ok:false,status:503,error:'Cannot verify the selected AI Horde model is online.'};}
+  if(!initial.length||Number(initial[0]?.workers)<=0)
+    return {ok:false,status:503,error:'The selected AI Horde model is not currently online. Reopen the model picker.'};
+  const models=[initial[0]];
+  if(autoFallback){
+    try{
+      const fallbackModels=await resolveAIHordeModels('auto',message,AbortSignal.timeout(7000));
+      for(const m of fallbackModels){
+        if(models.length>=3)break;
+        if(m.name!==model&&!models.some(x=>x.name===m.name))models.push(m);
+      }
+    }catch(_){}
+  }
+  const messages=buildOpenAIMessages(history,message,systemInstruction);
+  const runtimeProvider=anonymous?'aihorde-public':'aihorde';
+  let last={ok:false,status:503,error:'AI Horde did not complete this request.'};
+  for(let m=0;m<models.length;m++){
+    for(let i=0;i<keys.length;i++){
+      const key=keys[i],isAnonymous=key===AIHORDE_ANONYMOUS_KEY;
+      providerLifecycleActivity(emit,{provider:runtimeProvider,model:models[m].name,
+        state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,
+        attemptNoun:isAnonymous?'anonymous route':'credential'});
+      const auth=await checkAIHordeCredential(key);
+      if(auth==='rejected'||auth==='missing'){
+        last={ok:false,status:401,error:'AI Horde rejected the configured API key. Verify the first AIHORDE_API_KEYS entry in Vercel.'};
+      }else{
+        const ms=Math.max(18000,Math.min(47000,Number(models[m].eta||0)*1000+18000));
+        const outcome=await aiHordeNativeTextRequest({key,model:models[m].name,messages,
+          maxTokens:Math.min(outputBudgetFor(message),String(message||'').length<120?180:512),timeoutMs:ms});
+        if(outcome.ok&&outcome.text){
+          providerLifecycleActivity(emit,{provider:runtimeProvider,model:models[m].name,
+            state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,
+            attemptNoun:isAnonymous?'anonymous route':'credential'});
+          const headers=passthroughHeaders(null,runtimeProvider,models[m].name,fallbackFrom,
+            isAnonymous?(routedReason||'aihorde-anonymous'):routedReason,i,keys.length);
+          return {ok:true,response:new Response(outcome.text,{headers}),finishState:{reason:'stop'}};
+        }
+        last=outcome;
+      }
+      if(!autoFallback){
+        providerLifecycleActivity(emit,{provider:runtimeProvider,model:models[m].name,
+          state:'error',phase:'failed',detail:last.error,attemptIndex:i,attemptCount:keys.length});
+        return last;
+      }
+    }
+  }
+  return last;
+}
+
 async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false},{anonymous=false}={}){
+  if(model&&model!=='auto')return runAIHordeNativeSelected({model,history,files,message,systemInstruction,fallbackFrom,routedReason,emit,autoFallback},{anonymous});
   const configuredKeys=anonymous?[]:providerCredentials(autoFallback?shuffle(getProviderKeys('aihorde')):getProviderKeys('aihorde',false),autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
   const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys;
   if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
