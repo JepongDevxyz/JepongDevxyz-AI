@@ -1690,63 +1690,63 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
   const media=mediaAttachments(files);
   if(!media.length)return '';
 
-  // Gemini and Cloudflare already receive the prepared images/media directly.
-  if(['gemini','cloudflare'].includes(selectedProvider)){
-    activity(emit,'attachment-media',`Prepared ${media.length} visual/media part${media.length===1?'':'s'} for ${providerLabel(selectedProvider)}`,'completed','file');
+  // Attachment analysis is an optional vision TOOL, not a switch of the
+  // user-selected answer model or the emergency quota-fallback setting.
+  const direct=selectedProvider==='gemini'||selectedProvider==='cloudflare-vision';
+  if(direct){
+    activity(emit,'attachment-media',`Attached ${media.length} visual part${media.length===1?'':'s'} directly to ${providerLabel(selectedProvider.replace('-vision',''))}`,'completed','image');
     return '';
   }
+  const filenames=[...new Set(media.map(attachmentRootName))];
+  activity(emit,'attachment-media',`Reading visual reference: ${filenames.join(', ').slice(0,95)}`,'running','image',
+    `${media.length} image/video frame part${media.length===1?'':'s'} prepared`);
 
-  activity(emit,'attachment-media',`Analyzing ${media.length} visual/media part${media.length===1?'':'s'} for the selected text model`,'running','file');
-
-  const system =
-    'You are an attachment analysis tool. Be literal and evidence-grounded. ' +
-    'Do not invent text, people, events, audio, or details that are not present. ' +
-    'Your output will be given to another model as source context.';
-
-  try{
-    if(configured('gemini')){
-      const r=await runGemini({
-        model:'gemini-flash-latest',
-        history:[],
-        files:media,
-        message:mediaGroundingPrompt(message,media),
-        systemInstruction:system,
-        emit:null
+  const system='You are an image and video frame analyzer. Read what is visible in the actual attached images; preserve on-screen text, UI hierarchy, colors, layout, user-requested features, and relevant details. For videos, use only submitted timestamped frames, never invent unsampled actions, audio, or a transcript. Return a factual analysis for the user-selected assistant, not a final conversational reply.';
+  const prompt=mediaGroundingPrompt(message,media);
+  if(configured('gemini')){
+    try{
+      activity(emit,'attachment-vision',`Submitting ${media.length} visual part${media.length===1?'':'s'} to Gemini vision`,'running','image');
+      const result=await runGemini({
+        model:'gemini-flash-latest',history:[],files:media,
+        message:prompt,systemInstruction:system,emit:null
       });
-      if(r.ok){
-        const text=await readInternalProviderText(r.response,14000);
+      if(result.ok){
+        const text=(await readInternalProviderText(result.response,26000)).trim();
         if(text){
-          activity(emit,'attachment-media','Media analysis completed with Gemini','completed','file');
-          return `\n\n[MEDIA ATTACHMENT ANALYSIS — Gemini]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
+          activity(emit,'attachment-vision','Gemini vision returned an analysis of the uploaded reference','completed','image');
+          activity(emit,'attachment-media',`Read uploaded reference: ${filenames.join(', ').slice(0,95)}`,'completed','image');
+          return `\n\n[VISUAL REFERENCE ANALYSIS FROM ACTUAL UPLOADED MEDIA — Gemini]\n${text}\nUse the observations to fulfill the user request. Do not pretend you inspected any frame not provided.\n[/VISUAL REFERENCE ANALYSIS]`;
         }
       }
+      activity(emit,'attachment-vision','Gemini vision returned no usable image/video analysis','warning','image');
+    }catch(error){
+      activity(emit,'attachment-vision','Gemini vision could not analyze this attachment','warning','image',String(error?.message||'').slice(0,110));
     }
-
-    // Cloudflare can fall back for image/frame analysis (not native video files).
-    const imageOnly=media.filter(f=>String(f.mimeType||'').startsWith('image/'));
-    if(imageOnly.length && configured('cloudflare')){
-      const r=await runCloudflare({
-        model:'@cf/google/gemma-4-26b-a4b-it',
-        history:[],
-        files:imageOnly,
-        message:mediaGroundingPrompt(message,imageOnly),
-        systemInstruction:system,
-        emit:null
+  }
+  const imageFrames=media.filter(file=>String(file.mimeType||'').startsWith('image/'));
+  if(imageFrames.length&&configured('cloudflare')){
+    try{
+      activity(emit,'attachment-vision-cf',`Submitting ${imageFrames.length} image/frame part${imageFrames.length===1?'':'s'} to Cloudflare vision`,'running','image');
+      const result=await runCloudflare({
+        model:'@cf/google/gemma-4-26b-a4b-it',history:[],files:imageFrames,
+        message:mediaGroundingPrompt(message,imageFrames),systemInstruction:system,emit:null
       });
-      if(r.ok){
-        const text=await readInternalProviderText(r.response,14000);
+      if(result.ok){
+        const text=(await readInternalProviderText(result.response,26000)).trim();
         if(text){
-          activity(emit,'attachment-media','Media analysis completed with Cloudflare vision','completed','file');
-          return `\n\n[MEDIA ATTACHMENT ANALYSIS — Cloudflare]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
+          activity(emit,'attachment-vision-cf','Cloudflare vision returned an analysis of the uploaded reference','completed','image');
+          activity(emit,'attachment-media',`Read uploaded reference: ${filenames.join(', ').slice(0,95)}`,'completed','image');
+          return `\n\n[VISUAL REFERENCE ANALYSIS FROM ACTUAL UPLOADED MEDIA — Cloudflare]\n${text}\nUse the observations to fulfill the user request. Do not invent unseen frames or video audio.\n[/VISUAL REFERENCE ANALYSIS]`;
         }
       }
+      activity(emit,'attachment-vision-cf','Cloudflare vision returned no usable image/frame analysis','warning','image');
+    }catch(error){
+      activity(emit,'attachment-vision-cf','Cloudflare vision could not analyze this attachment','warning','image',String(error?.message||'').slice(0,110));
     }
-  }catch(_){}
-
-  activity(emit,'attachment-media','Media analyzer unavailable — using extracted text/metadata only','warning','file');
-  return '\n\n[MEDIA ATTACHMENT NOTE]\nSome attached media could not be visually analyzed by an available multimodal provider. Do not invent its contents; use only extracted text/metadata that is present.';
+  }
+  activity(emit,'attachment-media','Could not read the uploaded visual reference with an available vision tool','error','image');
+  return '';
 }
-
 
 function extractCodeBlocks(text=''){
   const out=[];
@@ -1907,6 +1907,11 @@ function taskProfile(message='', files=[]){
   else if(/\b(api|endpoint|backend|webhook|server|database)\b/i.test(t))kind='backend';
   else if(/\b(html|css|javascript|typescript|frontend|website|web app|ui|responsive)\b/i.test(t)||hasCodeFiles)kind='web';
   else if(/\b(pdf|document|report|reviewer|essay|worksheet|notes|docx|pptx|spreadsheet)\b/i.test(t))kind='document';
+  // "Build a meme generator using this image" is a development request,
+  // not a request to generate a new picture. The activity title should
+  // reflect the actual user goal rather than an incidental media keyword.
+  else if(/\b(build|create|make|gawan|gumawa|implement|develop|ayusin|fix)\b/i.test(t) &&
+          /\b(app|application|generator|editor|website|webpage|ui|interface|project|code)\b/i.test(t))kind='web';
   else if(/\b(video|clip|recording)\b/i.test(t)||hasVideos)kind='video';
   else if(/\b(image|photo|picture|logo|design|larawan)\b/i.test(t)||hasImages)kind='image';
   else if(/\b(research|latest|current|today|news|compare|comparison|hanapin|maghanap)\b/i.test(t))kind='research';
@@ -1941,10 +1946,11 @@ function contextActivityPlan(message='', files=[]){
     const hasVideo=list.some(f=>f?.mediaRole==='video-frame'||f?.kind==='video'||String(f?.mimeType||'').startsWith('video/'));
     const hasImage=list.some(f=>f?.mediaRole==='image'||String(f?.mimeType||'').startsWith('image/'));
     const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
-    if(hasVideo){ label=`Inspecting uploaded video${name?': '+name:''}`; kind='file'; }
-    else if(hasImage){ label=`Inspecting uploaded image${name?': '+name:''}`; kind='image'; }
-    else if(hasCode){ label=`Reviewing attached code${name?': '+name:''}`; kind='file'; }
-    else { label=`Reviewing attached file${name?': '+name:''}`; kind='file'; }
+    const task=subject&&subject!=='your request'?`: ${subject.slice(0,78)}`:'';
+    if(hasVideo){ label=`Reviewing video reference${name?' ('+name+')':''}${task}`; kind='file'; }
+    else if(hasImage){ label=`Reviewing image reference${name?' ('+name+')':''}${task}`; kind='image'; }
+    else if(hasCode){ label=`Reviewing attached source${name?' ('+name+')':''}${task}`; kind='file'; }
+    else { label=`Reviewing attached file${name?' ('+name+')':''}${task}`; kind='file'; }
   }else if(isWebsiteSecurityRequest(message)){
     label=host
       ? `Checking website security for ${host}`
@@ -3653,10 +3659,33 @@ async function processChat(body, emit) {
       }
     }
   }
-  // Analysis via another provider is itself model fallback: never do it when OFF.
-  const unsupportedMedia=!autoFallback&&!['gemini','cloudflare'].includes(provider)&&mediaAttachments(files).length>0;
-  if(unsupportedMedia)return {ok:false,status:415,error:'The selected model cannot analyze this media without another model. Fallback is OFF; select a compatible model or enable fallback.',provider,startedAt};
-  const mediaAnalysisContext=autoFallback?await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit):'';
+  // Visual preprocessing is a distinct tool. It never switches the selected
+  // answer model or activates emergency provider fallback.
+  const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(
+    files,taskMessage,
+    provider==='cloudflare'&&model==='@cf/google/gemma-4-26b-a4b-it'?'cloudflare-vision':provider,emit
+  );
+  const visualFiles=mediaAttachments(files);
+  const directlyVisionCapable=provider==='gemini'||
+    (provider==='cloudflare'&&model==='@cf/google/gemma-4-26b-a4b-it');
+  const missingMedia=files.some(f=>{
+    const isOriginalMedia=['image','video'].includes(String(f.kind||'')) &&
+      !['video-frame','pdf-page','video-native'].includes(String(f.mediaRole||''));
+    return isOriginalMedia && !files.some(part=>attachmentRootName(part)===attachmentRootName(f) &&
+      part.data&&/^(image|video)\//i.test(String(part.mimeType||'')));
+  });
+  if(missingMedia || (visualFiles.length&&!directlyVisionCapable&&!mediaAnalysisContext)){
+    activity(emit,'attachment-media',missingMedia?'Attachment has no readable visual samples':'No configured vision tool could analyze the attached reference','error','image');
+    return {ok:false,status:415,error:missingMedia
+      ?'This image/video has no readable visual data. Reattach it, wait until its thumbnail/frame preparation is complete, then send again.'
+      :'The selected text model needs a separate vision tool to read this attachment. Configure a working Gemini or Cloudflare vision key, or select a model that supports images. Your selected model and Auto Provider Fallback setting were not changed.',
+      provider,startedAt};
+  }
+  // Text providers must consume the evidence-based analysis rather than
+  // receiving raw vision bytes they cannot handle.
+  const answerFiles=mediaAnalysisContext&&!directlyVisionCapable
+    ?files.map(f=>f.data&&/^(image|video)\//i.test(String(f.mimeType||''))?{...f,data:''}:f)
+    :files;
   // Use the context-aware task text for tool routing too, not only for the first
   // Activity label. Short follow-ups such as "security?", "ganyan pa rin", or
   // "check it" must inherit the website/repository/topic from recent user context.
@@ -3828,11 +3857,14 @@ async function processChat(body, emit) {
   completeContextPlan(contextPlan,emit);
   // The model request starts here; a single Thinking row stays active
   // until the provider stream finishes or an actual tool event supersedes it.
-  activity(emit,'thinking','Thinking','running','thinking');
-  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile});
+  activity(emit,'thinking',contextPlan.profile.intent.create
+    ?'Preparing your requested implementation'
+    :contextPlan.profile.intent.edit?'Preparing the requested changes':'Thinking','running','thinking');
+  const first=await runProvider(provider,{model,history,files:answerFiles,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
-    activity(emit,'generation','Generating response','running','generate');
+    activity(emit,'thinking','Model preparation complete','completed','thinking');
+    activity(emit,'generation',contextPlan.profile.intent.create?'Generating requested implementation':'Generating response','running','generate');
     return {
       ok:true,
       response:first.response,
