@@ -8666,14 +8666,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
             if (['prepare','response-prep','response-generation','task-next'].includes(id)) return null;
             if (kind==='provider') {
-                const safeLabel=(state==='warning'||state==='error')
-                    ?sanitizeUiErrorMessage(label||'Provider issue')
-                    :String(label||'Connecting to the selected model');
-                // Do not display credential identifiers, provider raw errors,
-                // or proprietary model internals in the progress UI.
-                return {...e,label:safeLabel,detail:state==='warning'||state==='error'
-                    ?sanitizeUiErrorMessage(e.detail||'')
-                    :String(e.detail||'').replace(/credential\s+\d+\s*\/\s*\d+/gi,'configured API key').slice(0,110)};
+                let safeLabel=String(label||'Connecting to the selected model');
+                let safeDetail=String(e.detail||'');
+                if(state==='warning'||state==='error'){
+                    safeLabel=sanitizeUiErrorMessage(label||'Provider issue');
+                    safeDetail=sanitizeUiErrorMessage(e.detail||'');
+                }else{
+                    // A visible connection step is real, but credential
+                    // slot information is implementation detail.
+                    safeDetail=safeDetail.replace(/credential\s+\d+\s*\/\s*\d+/gi,'configured API key').slice(0,110);
+                }
+                return {...e,label:safeLabel,detail:safeDetail};
             }
             if(id==='generation'){
                 return {...e,label:label||'Generating response',kind:'generate'};
