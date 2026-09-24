@@ -91,3 +91,25 @@
 @media(prefers-reduced-motion:reduce){
  .ai-activity-icon svg{animation:none!important}
 }
+
+/* Keep the real per-request operation trail legible after completion.
+   Previous running rows are not fabricated as completed merely because
+   another operation started; only the current operation gets the pulse. */
+.ai-activity-row.running:not(.ai-activity-current) .ai-activity-icon{
+  animation:none!important;opacity:.75!important;color:var(--text-muted)!important;
+}
+.ai-activity-row.running:not(.ai-activity-current) .ai-activity-label{
+  color:var(--text-muted)!important;
+}
+.ai-activity-card.complete:not(.collapsed) .ai-activity-list,
+.ai-activity-card.complete:not(.collapsed) .ai-activity-lead{
+  display:flex!important;
+}
+.ai-activity-card.complete:not(.collapsed) .ai-activity-lead{
+  display:block!important;
+}
+.ai-activity-card:not(.collapsed) .ai-activity-header-actions{
+  margin-bottom:3px!important;
+}
+.ai-activity-card{scroll-margin-block:18px!important}
+.jd-thoughts-sheet .ai-activity-row.running .ai-activity-icon{animation:none!important}
