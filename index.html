@@ -9640,6 +9640,61 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             `;
         }
 
+        // Save a small, sanitized activity snapshot with the corresponding
+        // assistant turn. Without this, the entire task-specific status trail
+        // vanished when a user refreshed or reopened a saved conversation.
+        function captureJdActivitySnapshot(){
+            const card=document.getElementById('activeAiIndicator');
+            if(!card||card.dataset.finalized!=='true')return null;
+            const clean=(text,limit=170)=>String(text||'').trim().slice(0,limit);
+            const steps=[...card.querySelectorAll('.ai-activity-list .ai-activity-row')]
+                .slice(-12).map(row=>({
+                    id:clean(row.dataset.activityId,64),
+                    kind:clean(row.dataset.activityKind,22)||'process',
+                    label:clean(row.querySelector('.ai-activity-label')?.textContent),
+                    detail:clean(row.querySelector('.ai-activity-detail')?.textContent,120),
+                    state:row.classList.contains('error')?'error':
+                        row.classList.contains('warning')?'warning':'completed'
+                })).filter(row=>row.label);
+            const lead=clean(card.querySelector('.ai-activity-lead')?.textContent,220);
+            if(!lead&&!steps.length)return null;
+            return {
+                summary:clean(card.querySelector('.ai-activity-summary-text')?.textContent,75),
+                lead,steps
+            };
+        }
+        function renderJdStoredActivity(saved){
+            if(!saved||typeof saved!=='object'||!Array.isArray(saved.steps))return null;
+            const clean=(value,max=170)=>escapeHTML(String(value||'').slice(0,max));
+            const steps=saved.steps.slice(-12).filter(x=>x&&typeof x==='object'&&x.label)
+                .map(row=>{
+                    const kind=String(row.kind||'process').replace(/[^a-z0-9_-]/gi,'').slice(0,22);
+                    const state=['completed','warning','error'].includes(row.state)?row.state:'completed';
+                    return `<div class="ai-activity-row ${state}">
+                        <span class="ai-activity-icon">${activityIconMarkup(kind,state)}</span>
+                        <div class="ai-activity-copy"><span class="ai-activity-label">${clean(row.label)}</span>
+                            ${row.detail?`<span class="ai-activity-detail">${clean(row.detail,120)}</span>`:''}
+                        </div></div>`;
+                }).join('');
+            if(!steps&&!saved.lead)return null;
+            const card=document.createElement('div');
+            card.className='ai-activity-card complete ai-activity-archived';
+            card.dataset.finalized='true';
+            card.innerHTML=`
+                <div class="ai-activity-header-actions">
+                    <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
+                        <span class="ai-activity-summary-icon"><i data-lucide="check"></i></span>
+                        <span class="ai-activity-summary-text">${clean(saved.summary||'Worked on this response',75)}</span>
+                        <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
+                    </button>
+                    <button type="button" class="ai-activity-details-btn" onclick="openJdThoughts(this)" aria-label="View saved activity details"><span>Thoughts</span><i data-lucide="list"></i></button>
+                </div>
+                <p class="ai-activity-lead">${clean(saved.lead,220)}</p>
+                <div class="ai-activity-list">${steps}</div>
+            `;
+            return card;
+        }
+
         function loadChatSession(id) {
             removeAIIndicator();
             currentSessionId = id;
@@ -9673,6 +9728,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     botDiv.className = 'msg bot';
                     botDiv.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>
                         ${botActionsHTML()}`;
+                    const savedActivity=renderJdStoredActivity(m.activity);
+                    if(savedActivity)chatBox.appendChild(savedActivity);
                     chatBox.appendChild(botDiv);
                     refreshLucideIcons(botDiv);
                 }
@@ -10590,7 +10647,7 @@ ${m.text || ''}
 
                 if (ctx.id && ctx.sessions[ctx.id]) {
                     const savedBotIndex=ctx.sessions[ctx.id].messages.length;
-                    ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse });
+                    ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse, activity:captureJdActivitySnapshot() });
                     botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                     if (!isIncognito && !isBibleMode) { saveSessions(); maybeGenerateAITitle(ctx.sessions[ctx.id], promptText, fullResponse); }
                 }
