@@ -8,7 +8,7 @@ function segment(start,end){
   assert(a>=0&&b>a,'Missing source contract: '+start);
   return source.slice(a,b);
 }
-const classifier=new Function(segment('function isFallbackableProviderFailure(','\nfunction passthroughHeaders(')+
+const classifier=new Function(segment('function isProviderQuotaFailure(','\nfunction passthroughHeaders(')+
   '\nreturn isFallbackableProviderFailure;')();
 for(const status of [401,402,403,429]) assert.equal(classifier(status,''),true);
 for(const status of [400,404,415,422,500,502,503,504]) assert.equal(classifier(status,'model not found'),false);
