@@ -5155,7 +5155,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(!cloudUser||!cloudClient){openAccountModal();return;}
             const input=document.getElementById('jdProfileFullName');
             const save=document.getElementById('jdProfileSaveBtn');
-            const name=String(input?.value||'').trim().replace(/\\s+/g,' ');
+            const name=String(input?.value||'').trim().replace(/\s+/g,' ');
             if(name.length<1||name.length>70)return showModernAlert('Enter a name with up to 70 characters.','Edit profile');
             if(save){save.disabled=true;save.textContent='Saving…';}
             try{
@@ -5511,16 +5511,66 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             }
         }
 
+        const JD_APPEARANCE_KEY='jd_appearance_mode';
+        const JD_TEXT_SIZE_KEY='jd_chat_text_size';
+        let jdAppearanceMode=localStorage.getItem(JD_APPEARANCE_KEY)||'';
+        let jdChatTextSize=100;
+        function syncJdAppearanceControls(){
+            document.querySelectorAll('#jdAppearanceModal [data-jd-appearance]').forEach(button=>{
+                const selected=button.dataset.jdAppearance===jdAppearanceMode;
+                button.classList.toggle('selected',selected);
+                button.setAttribute('aria-pressed',String(selected));
+            });
+            const labels={system:'System',foryou:'For You',dark:'Dark',light:'Light'};
+            const summary=document.getElementById('jdAppearanceSettingsLabel');
+            if(summary)summary.textContent=(labels[jdAppearanceMode]||'Dark')+' · Text '+jdChatTextSize+'%';
+            const range=document.getElementById('jdTextSizeRange');
+            if(range)range.value=String(jdChatTextSize);
+            const reset=document.getElementById('jdTextSizeResetBtn');
+            if(reset)reset.disabled=jdChatTextSize===100;
+        }
         function toggleThemeMode(toggleElem) {
             setTheme(toggleElem.checked ? 'theme-light' : '');
         }
-
-        function setTheme(themeName) {
+        function setTheme(themeName,{preserveAppearance=false}={}) {
             document.body.className = themeName;
             localStorage.setItem('jepong_theme', themeName);
             const toggle = document.getElementById('themeIosToggle');
             if (toggle) toggle.checked = themeName === 'theme-light';
+            if(!preserveAppearance){
+                jdAppearanceMode=themeName==='theme-light'?'light':themeName==='theme-neon'||themeName==='theme-sunset'?'foryou':'dark';
+                safeSetLocalStorage(JD_APPEARANCE_KEY,jdAppearanceMode,true);
+            }
+            syncJdAppearanceControls();
         }
+        function applyJdAppearance(mode,{persist=true}={}){
+            if(!['system','foryou','dark','light'].includes(mode))return;
+            jdAppearanceMode=mode;
+            const useLight=mode==='light'||(mode==='system'&&Boolean(window.matchMedia?.('(prefers-color-scheme: light)')?.matches));
+            setTheme(useLight?'theme-light':'',{preserveAppearance:true});
+            if(mode==='foryou')document.body.classList.add('jd-appearance-foryou');
+            if(persist)safeSetLocalStorage(JD_APPEARANCE_KEY,mode,true);
+            syncJdAppearanceControls();
+        }
+        function setJdChatTextSize(value,{persist=true}={}){
+            const size=Math.max(85,Math.min(120,Math.round((Number(value)||100)/5)*5));
+            jdChatTextSize=size;
+            document.documentElement.style.setProperty('--jd-chat-scale',String(size/100));
+            const preview=document.getElementById('jdTextPreviewAnswer');
+            if(preview)preview.style.fontSize='calc(1rem * '+(size/100)+')';
+            if(persist)safeSetLocalStorage(JD_TEXT_SIZE_KEY,String(size),true);
+            syncJdAppearanceControls();
+        }
+        function openJdAppearance(){
+            closeTransientSurfaces('jdAppearanceModal');
+            document.getElementById('jdAppearanceModal')?.classList.add('open');
+            syncJdAppearanceControls();
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('jdAppearanceModal')));
+        }
+        function closeJdAppearance(){document.getElementById('jdAppearanceModal')?.classList.remove('open');}
+        window.matchMedia?.('(prefers-color-scheme: light)')?.addEventListener?.('change',()=>{
+            if(jdAppearanceMode==='system')applyJdAppearance('system',{persist:false});
+        });
 
         function setLiveWebSearchEnabled(enabled) {
             isWebSearchEnabled = !!enabled;
@@ -11710,7 +11760,15 @@ ${m.text || ''}
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(()=>refreshLucideIcons(),0); // global icon refresh
             const savedTheme = localStorage.getItem('jepong_theme') || '';
-            setTheme(savedTheme);
+            const savedAppearance=localStorage.getItem(JD_APPEARANCE_KEY);
+            if(['system','foryou','dark','light'].includes(savedAppearance)){
+                applyJdAppearance(savedAppearance,{persist:false});
+            }else if(savedTheme){
+                setTheme(savedTheme);
+            }else{
+                applyJdAppearance('system',{persist:true});
+            }
+            setJdChatTextSize(localStorage.getItem(JD_TEXT_SIZE_KEY)||100,{persist:false});
             const savedModeName = localStorage.getItem('jepong_last_mode_name');
             const modeName = savedModeName || MODE_DISPLAY_NAMES[currentSelectedMode] || 'General AI';
             selectMode(currentSelectedMode, modeName);
