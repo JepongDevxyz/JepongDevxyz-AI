@@ -79,7 +79,7 @@ assert(publicResult.ok);
 assert.deepEqual(publicOnly.observed.map(x=>x.key),['0000000000'],
   'Anonymous fallback is a separate invocation, not mixed into registered keys');
 
-const time=mockRunner({keys:[],clock:{now:1000000},generate:async(_options,_body,clock)=>{
+const time=mockRunner({keys:['registered-fixture-key'],clock:{now:1000000},generate:async(_options,_body,clock)=>{
   clock.now+=27000;throw new Error('Simulated upstream timeout');
 }});
 const timeoutResult=await time.runner({model:'auto',history:[],message:'Hi',files:[],autoFallback:true});
