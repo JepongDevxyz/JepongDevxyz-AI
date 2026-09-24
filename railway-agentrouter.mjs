@@ -51,8 +51,18 @@ function sseText(raw){
   }
   return {kind:'sse',text:output,stopped};
 }
-async function callProvider(body,{singleCredential=false}={}){
+function classifyAuthFailure(errorText,status){
+  const s=String(errorText||'').toLowerCase();
+  if(/unauthorized client|client not authorized|unsupported client/.test(s))return 'client_not_authorized';
+  if(/invalid api key|invalid token|expired token|key not found|no user matching|token revoked/.test(s))return 'credential_rejected';
+  if(/quota|insufficient balance|credit|billing/.test(s))return 'quota_or_balance';
+  if(/model.*(not found|unsupported|unavailable)|unknown model/.test(s))return 'model_unavailable';
+  if(status===401||status===403)return 'other_auth_failure';
+  return 'other_upstream_failure';
+}
+async function callProvider(body,{singleCredential=false,diagnostic=false}={}){
   const list=singleCredential?keys().slice(0,1):keys();
+  const attempts=[];
   if(!list.length)return {status:503,result:{error:'AGENTROUTER_API_KEYS is not configured on Railway.'}};
   const messages=Array.isArray(body.messages)?body.messages.filter(x=>['user','assistant'].includes(x?.role)&&typeof x.content==='string')
     .slice(-20).map(x=>({role:x.role,content:x.content.slice(0,12000)})):[];
@@ -65,34 +75,40 @@ async function callProvider(body,{singleCredential=false}={}){
       const upstream=await fetch(url,{method:'POST',
         headers:{authorization:'Bearer '+list[i],'x-api-key':list[i],'anthropic-version':'2023-06-01',
           'content-type':'application/json','accept':'text/event-stream'},
-        body:JSON.stringify(prompt),signal:AbortSignal.timeout(45000)});
+        body:JSON.stringify(prompt),signal:AbortSignal.timeout(diagnostic?12000:45000)});
       const ct=String(upstream.headers.get('content-type')||'').toLowerCase();
       const raw=(await upstream.text()).slice(0,2000000);
       const parsed=ct.includes('event-stream')?sseText(raw):responseText(raw,ct);
       if(parsed.kind==='html'){
         console.warn('[upstream-html]',JSON.stringify({status:upstream.status,contentType:ct.slice(0,80),host:new URL(url).hostname}));
-        return {status:502,result:{error:'AgentRouter returned HTML rather than an API response.',upstreamStatus:upstream.status,kind:'html'}};
+        attempts.push({keyIndex:i+1,status:upstream.status,kind:'html',category:'html_instead_of_api'});
+        last={status:502,result:{error:'AgentRouter returned HTML rather than an API response.',upstreamStatus:upstream.status,kind:'html'}};
+        if(diagnostic)continue;
+        return last;
       }
       if(upstream.ok&&parsed.text.trim()){
-        return {status:200,result:{model:MODEL,response:parsed.text,upstreamStatus:upstream.status,kind:parsed.kind}};
+        return {status:200,result:{model:MODEL,response:parsed.text,upstreamStatus:upstream.status,kind:parsed.kind},attempts:[...attempts,{keyIndex:i+1,status:200,kind:parsed.kind,category:'model_text_generated'}]};
       }
+      const category=classifyAuthFailure(parsed.upstreamError,upstream.status);
+      attempts.push({keyIndex:i+1,status:upstream.status,kind:parsed.kind,category});
       last={status:upstream.ok?502:upstream.status,result:{error:upstream.ok?'Empty model response.':'AgentRouter request failed.',
         upstreamStatus:upstream.status,kind:parsed.kind}};
-      if(upstream.status!==401&&upstream.status!==429&&upstream.status<500)break;
+      if(!diagnostic&&upstream.status!==401&&upstream.status!==429&&upstream.status<500)break;
     }catch(err){
+      attempts.push({keyIndex:i+1,status:0,kind:'network',category:err?.name==='TimeoutError'?'timeout':'network_error'});
       last={status:502,result:{error:'AgentRouter network request failed.',kind:'network',reason:err?.name||'network_error'}};
     }
   }
-  return last;
+  return {...last,attempts};
 }
 async function inspectConfigured(){
   if(!keys().length)return;
   try{
-    const response=await callProvider({messages:[{role:'user',content:'Reply exactly OK'}],max_tokens:32},{singleCredential:true});
-    // Log metadata only: never write API keys or response text.
+    const response=await callProvider({messages:[{role:'user',content:'Reply exactly OK'}],max_tokens:32},{diagnostic:true});
+    // Indices, status and fixed classifications only. Never log tokens, raw upstream errors or generated text.
     console.log('[credential-probe]',JSON.stringify({status:response.status,kind:response.result?.kind||'unknown',
       textGenerated:response.status===200&&typeof response.result?.response==='string'&&!!response.result.response.trim(),
-      upstreamStatus:Number(response.result?.upstreamStatus)||0}));
+      upstreamStatus:Number(response.result?.upstreamStatus)||0,attempts:response.attempts||[]}));
   }catch(error){
     console.warn('[credential-probe]',JSON.stringify({status:0,kind:'internal',errorType:error?.name||'Error'}));
   }
