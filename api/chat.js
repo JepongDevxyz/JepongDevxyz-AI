@@ -84,7 +84,7 @@ const PROVIDERS = {
   }
 };
 
-const FALLBACK_ORDER = ['cloudflare','groq','mistral','cohere','openrouter','gemini','aihorde'];
+// Registered AI Horde and then public AI Horde are emergency-only, never picker providers.
 const RETRYABLE = new Set([401,402,403,408,409,425,429,500,502,503,504]);
 
 
@@ -186,11 +186,13 @@ function sanitizeCustomProviderKeys(body,provider){
 }
 
 
-// Fallback OFF means one chosen credential per request. Do not rotate the
-// starting key between test requests or silently try another configured key.
+// Configured keys belong to the SAME selected provider. Exhaust each key
+// before switching models/providers; the emergency fallback switch controls
+// cross-provider/anonymous routing, not key rotation.
 function providerCredentials(keys,autoFallback=false){
   const list=Array.isArray(keys)?keys:[];
-  return autoFallback?list:list.slice(0,1);
+  return [...new Set(list.filter(key=>typeof key==='string'&&key.trim()))]
+    .slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
 function getProviderKeys(provider,rotate=true) {
@@ -2435,14 +2437,12 @@ function isRetryableStatus(status) { return RETRYABLE.has(Number(status)); }
 
 function isFallbackableProviderFailure(status,error=''){
   const code=Number(status)||0;
-  if(isRetryableStatus(code))return true;
   const text=String(error||'').toLowerCase();
-  if([401,402,403].includes(code))return true;
-  if(/no user matching sent api key|api key is not configured|credential was rejected|invalid api key|unauthorized|forbidden/.test(text))return true;
-  if(![400,404,410,422].includes(code))return false;
-  const modelHint=/(?:model|deployment|endpoint)/.test(text);
-  const unavailableHint=/(?:not found|unknown|unsupported|unavailable|does not exist|invalid model|retired|deprecated|no longer available)/.test(text);
-  return modelHint&&unavailableHint;
+  // A provider's 429/402 or exhausted credentials are a fallback condition.
+  // Input validation, missing models and unrelated 5xx errors must not
+  // silently replace the user's selected model with an emergency provider.
+  if([401,402,403,429].includes(code))return true;
+  return /quota (?:exceeded|exhausted|reached)|(?:insufficient|exhausted) (?:credits?|balance)|rate limit (?:exceeded|reached)|no user matching sent api key|credential was rejected|invalid api key/.test(text);
 }
 
 
@@ -3203,8 +3203,7 @@ async function aiHordeNativeTextRequest({key,model,messages,maxTokens=256,timeou
 async function runAIHordeNativeSelected({model,history,files,message,systemInstruction,
     fallbackFrom='',routedReason='',emit,autoFallback=false},{anonymous=false}={}){
   const stored=anonymous?[]:getProviderKeys('aihorde',autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
-  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:
-    autoFallback?[...stored,AIHORDE_ANONYMOUS_KEY]:stored.slice(0,1);
+  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:stored;
   if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
   if(Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data))
     return {ok:false,status:415,error:'AI Horde text models cannot directly process image attachments.'};
@@ -3262,7 +3261,9 @@ async function runAIHordeNativeSelected({model,history,files,message,systemInstr
 async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false},{anonymous=false}={}){
   if(model&&model!=='auto')return runAIHordeNativeSelected({model,history,files,message,systemInstruction,fallbackFrom,routedReason,emit,autoFallback},{anonymous});
   const configuredKeys=anonymous?[]:providerCredentials(autoFallback?shuffle(getProviderKeys('aihorde')):getProviderKeys('aihorde',false),autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
-  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys;
+  // Anonymous is an independent, last-resort attempt invoked only by the
+  // emergency fallback coordinator AFTER every registered Horde key fails.
+  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:configuredKeys;
   if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
   const runtimeProvider=anonymous?'aihorde-public':'aihorde';
   const autoMode=!model||model==='auto';
@@ -3610,7 +3611,7 @@ async function processChat(body, emit) {
     const selected=String(model||'').trim();
     // Auto remains an internal fallback route for other failed providers, but
     // must never be a user-selectable AI Horde chat model.
-    if(provider==='aihorde'&&(!selected||selected==='auto'))return {ok:false,status:400,error:'Choose one of the four active AI Horde models in the model picker before sending.',provider,startedAt};
+    if(provider==='aihorde')return {ok:false,status:400,error:'AI Horde is emergency fallback only. Select your normal provider and enable Auto Provider Fallback in settings.',provider,startedAt};
     const allowed=PROVIDERS[provider].models.includes(selected);
     const dynamic=selected&&(DYNAMIC_MODEL_PROVIDERS.has(provider)||provider==='aihorde');
     if(selected&&!allowed&&!dynamic&&!autoFallback){
@@ -3840,55 +3841,47 @@ async function processChat(body, emit) {
   }
 
   const fallbackable=isFallbackableProviderFailure(first.status,first.error);
+  // Do not switch away from a healthy selected model. The primary provider
+  // has already tried ALL of its configured keys (and any supported same-
+  // provider model alternatives) before returning a quota/auth failure here.
   if(autoFallback&&fallbackable){
-    activity(emit,'fallback',`${providerLabel(provider)} is unavailable — Auto Fallback is checking alternatives`,'warning','fallback');
-    let fallbackAttempts=0;
-    for(const p of FALLBACK_ORDER){
-      if(p===provider||!configured(p))continue;
-      if(fallbackAttempts>=API_GUARD.maxFallbackProviders)break;
-      fallbackAttempts++;
-      const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/'));
-      if(hasImage&&!['gemini','cloudflare'].includes(p))continue;
-      const fallbackModel=PROVIDERS[p].defaultModel;
-      activity(emit,'fallback',`Switching to ${providerLabel(p)} • ${modelLabel(fallbackModel)}`,'running','fallback');
-      const r=await runProvider(p,{model:fallbackModel,history,files,message,systemInstruction,fallbackFrom:provider,routedReason:routedReason||'fallback',emit,autoFallback});
-      if(r.ok){
-        activity(emit,'fallback',`Fallback connected to ${providerLabel(p)}`,'completed','fallback');
-        activity(emit,'generation','Generating response','running','generate');
-        return {
-          ok:true,
-          response:r.response,
-          finishState:r.finishState||{reason:'unknown'},
-          startedAt,
-          resolvedProvider:r.response.headers.get('x-ai-provider')||p,
-          resolvedModel:r.response.headers.get('x-ai-model')||fallbackModel,
-          systemInstruction
-        };
-      }
-    }
-
     const hasImageForPublicFallback=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
     if(!hasImageForPublicFallback){
-      activity(emit,'fallback','Configured providers exhausted — trying free public AI Horde','running','fallback');
-      const publicHorde=await runAnonymousAIHordeFallback({
-        model,history,files,message,systemInstruction,fallbackFrom:provider,
-        routedReason:'fallback-public',emit,autoFallback:false
+      activity(emit,'fallback','Selected provider exhausted — checking registered AI Horde','running','fallback');
+      const registeredHorde=await runAIHorde({
+        model:'auto',history,files,message,systemInstruction,fallbackFrom:provider,
+        routedReason:'fallback-aihorde-registered',emit,autoFallback:true
       });
-      if(publicHorde.ok){
-        activity(emit,'fallback','Free public fallback connected to AI Horde Anonymous','completed','fallback');
+      if(registeredHorde.ok){
+        activity(emit,'fallback','Registered AI Horde connected','completed','fallback');
         activity(emit,'generation','Generating response','running','generate');
         return {
-          ok:true,
-          response:publicHorde.response,
-          finishState:publicHorde.finishState||{reason:'stop'},
-          startedAt,
-          resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
-          resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',
-          systemInstruction
+          ok:true,response:registeredHorde.response,
+          finishState:registeredHorde.finishState||{reason:'stop'},startedAt,
+          resolvedProvider:registeredHorde.response.headers.get('x-ai-provider')||'aihorde',
+          resolvedModel:registeredHorde.response.headers.get('x-ai-model')||'auto',systemInstruction
         };
       }
+      activity(emit,'fallback','Registered AI Horde unavailable — trying anonymous AI Horde','running','fallback');
+      const publicHorde=await runAnonymousAIHordeFallback({
+        model:'auto',history,files,message,systemInstruction,fallbackFrom:provider,
+        routedReason:'fallback-public',emit,autoFallback:true
+      });
+      if(publicHorde.ok){
+        activity(emit,'fallback','Anonymous AI Horde connected','completed','fallback');
+        activity(emit,'generation','Generating response','running','generate');
+        return {
+          ok:true,response:publicHorde.response,
+          finishState:publicHorde.finishState||{reason:'stop'},startedAt,
+          resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
+          resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',systemInstruction
+        };
+      }
+      activity(emit,'fallback','Both emergency AI Horde routes are unavailable','error','fallback');
+      return {ok:false,status:publicHorde.status||503,
+        error:'All configured keys for the selected provider failed, and both AI Horde fallback routes are unavailable. '+String(publicHorde.error||'').slice(0,170),
+        provider,startedAt};
     }
-    activity(emit,'fallback','No server fallback provider was available','error','fallback');
   }
 
   return {ok:false,status:first.status||500,error:first.error||'AI provider unavailable.',provider,startedAt};
