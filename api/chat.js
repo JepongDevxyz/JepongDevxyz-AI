@@ -1533,7 +1533,7 @@ function buildLiveSourceContext(results=[]){
 function textFromAttachment(file){
   try{
     if(typeof file?.extractedText==='string' && file.extractedText.trim()){
-      return file.extractedText.slice(0,180000);
+      return file.extractedText.slice(0,650000);
     }
     if(!file?.data)return '';
     const mime=String(file.mimeType||'').toLowerCase();
@@ -1571,9 +1571,9 @@ function sanitizeIncomingAttachments(files=[]){
       extractionWarning:String(raw.extractionWarning||'').slice(0,500)
     };
 
-    if(typeof raw.extractedText==='string' && totalText<720000){
-      const remain=720000-totalText;
-      f.extractedText=raw.extractedText.slice(0,Math.min(180000,remain));
+    if(typeof raw.extractedText==='string' && totalText<950000){
+      const remain=950000-totalText;
+      f.extractedText=raw.extractedText.slice(0,Math.min(650000,remain));
       totalText+=f.extractedText.length;
     }else f.extractedText='';
 
@@ -1690,13 +1690,19 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
   const media=mediaAttachments(files);
   if(!media.length)return '';
 
-  // Gemini and Cloudflare already receive the prepared images/media directly.
-  if(['gemini','cloudflare'].includes(selectedProvider)){
+  // Only models that receive the actual visual parts directly skip the
+  // vision bridge. Cloudflare's non-vision selections still require analysis.
+  // Input analysis is independent of the response-provider quota fallback.
+  if(selectedProvider==='gemini'||selectedProvider==='cloudflare-vision'){
     activity(emit,'attachment-media',`Prepared ${media.length} visual/media part${media.length===1?'':'s'} for ${providerLabel(selectedProvider)}`,'completed','file');
     return '';
   }
 
-  activity(emit,'attachment-media',`Analyzing ${media.length} visual/media part${media.length===1?'':'s'} for the selected text model`,'running','file');
+  const videoFrames=media.filter(f=>f.mediaRole==='video-frame').length;
+  activity(emit,'attachment-media',videoFrames
+    ?`Analyzing ${videoFrames} extracted video frame${videoFrames===1?'':'s'} for your request`
+    :`Analyzing ${media.length} attached image${media.length===1?'':'s'} for your request`,
+    'running',videoFrames?'file':'image');
 
   const system =
     'You are an attachment analysis tool. Be literal and evidence-grounded. ' +
@@ -1743,8 +1749,8 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
     }
   }catch(_){}
 
-  activity(emit,'attachment-media','Media analyzer unavailable — using extracted text/metadata only','warning','file');
-  return '\n\n[MEDIA ATTACHMENT NOTE]\nSome attached media could not be visually analyzed by an available multimodal provider. Do not invent its contents; use only extracted text/metadata that is present.';
+  activity(emit,'attachment-media','Could not visually analyze the attached media with configured vision providers','warning','file');
+  return null;
 }
 
 
@@ -1901,7 +1907,12 @@ function taskProfile(message='', files=[]){
   const hasVideos=(Array.isArray(files)?files:[]).some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
 
   let kind='general';
-  if(/\b(apk|android|web\s*to\s*apk|webview|gradle|manifest)\b/i.test(t))kind='android';
+  // An app or meme-generator request may mention uploaded images. Classify
+  // what the user wants to BUILD before treating incidental "image" as an
+  // image-generation or screenshot-analysis task.
+  if(/\b(?:build|create|make|gawan|gumawa|implement|develop)\b/i.test(t) &&
+     /\b(?:app|website|web app|generator|editor|game|application|tool)\b/i.test(t))kind='web';
+  else if(/\b(apk|android|web\s*to\s*apk|webview|gradle|manifest)\b/i.test(t))kind='android';
   else if(/\b(vercel|deployment|deploy|serverless|edge function)\b/i.test(t))kind='deployment';
   else if(/\b(github|repository|repo|pull request|workflow|actions)\b/i.test(t))kind='github';
   else if(/\b(api|endpoint|backend|webhook|server|database)\b/i.test(t))kind='backend';
@@ -1941,10 +1952,10 @@ function contextActivityPlan(message='', files=[]){
     const hasVideo=list.some(f=>f?.mediaRole==='video-frame'||f?.kind==='video'||String(f?.mimeType||'').startsWith('video/'));
     const hasImage=list.some(f=>f?.mediaRole==='image'||String(f?.mimeType||'').startsWith('image/'));
     const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
-    if(hasVideo){ label=`Inspecting uploaded video${name?': '+name:''}`; kind='file'; }
-    else if(hasImage){ label=`Inspecting uploaded image${name?': '+name:''}`; kind='image'; }
-    else if(hasCode){ label=`Reviewing attached code${name?': '+name:''}`; kind='file'; }
-    else { label=`Reviewing attached file${name?': '+name:''}`; kind='file'; }
+    if(hasVideo){ label=`Preparing uploaded video${name?': '+name:''} for: ${subject}`; kind='file'; }
+    else if(hasImage){ label=`Preparing uploaded image${name?': '+name:''} for: ${subject}`; kind='image'; }
+    else if(hasCode){ label=`Reviewing attached code${name?': '+name:''} for: ${subject}`; kind='file'; }
+    else { label=`Reviewing attached file${name?': '+name:''} for: ${subject}`; kind='file'; }
   }else if(isWebsiteSecurityRequest(message)){
     label=host
       ? `Checking website security for ${host}`
@@ -1979,11 +1990,13 @@ function contextActivityPlan(message='', files=[]){
         : `Analyzing API/backend task: ${subject}`;
     kind='api';
   }else if(profile.kind==='web'){
-    label=profile.intent.edit
-      ? `Analyzing requested website/UI fix: ${subject}`
-      : profile.intent.test
-        ? `Checking website behavior: ${subject}`
-        : `Analyzing website task: ${subject}`;
+    label=profile.intent.create
+      ? `Reviewing requested app or website build: ${subject}`
+      : profile.intent.edit
+        ? `Reviewing requested website/UI fix: ${subject}`
+        : profile.intent.test
+          ? `Checking requested website behavior: ${subject}`
+          : `Reviewing website task: ${subject}`;
     kind='process';
   }else if(profile.kind==='research'){
     label=`Researching: ${subject}`;
@@ -3649,14 +3662,37 @@ async function processChat(body, emit) {
       }else if(imageParts){
         activity(emit,id,`Prepared uploaded image: ${printableName}`,'completed','image');
       }else{
-        activity(emit,id,`Could not read attached file: ${printableName}`,errors?'warning':'completed','file');
+        activity(emit,id,`No readable attachment content: ${printableName}`,'warning','file');
       }
     }
   }
   // Analysis via another provider is itself model fallback: never do it when OFF.
-  const unsupportedMedia=!autoFallback&&!['gemini','cloudflare'].includes(provider)&&mediaAttachments(files).length>0;
-  if(unsupportedMedia)return {ok:false,status:415,error:'The selected model cannot analyze this media without another model. Fallback is OFF; select a compatible model or enable fallback.',provider,startedAt};
-  const mediaAnalysisContext=autoFallback?await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit):'';
+  const visualParts=mediaAttachments(files);
+  // A selected photo/video must not disappear silently because the browser
+  // could not extract frames or the request exceeded its media budget.
+  const missingMedia=files.find(f=>{
+    if(!f||!['image','video','video-native'].includes(String(f.kind||'')))return false;
+    const name=attachmentRootName(f);
+    const grouped=files.filter(part=>attachmentRootName(part)===name);
+    return !grouped.some(part=>part?.data&&(/^(image|video)\//i.test(String(part.mimeType||''))));
+  });
+  if(missingMedia && !visualParts.length){
+    activity(emit,'attachment-media','Uploaded media has no readable image/video data','warning','file');
+    return {ok:false,status:422,error:`The uploaded media "${attachmentRootName(missingMedia).slice(0,80)}" could not be prepared for visual analysis. Try a supported image or a video format the browser can decode.`,provider,startedAt};
+  }
+  const directVision=provider==='gemini' ||
+    (provider==='cloudflare'&&model==='@cf/google/gemma-4-26b-a4b-it');
+  const mediaAnalysisContext=visualParts.length
+    ? await analyzeMediaForNonVisionProvider(files,taskMessage,directVision
+        ?(provider==='gemini'?'gemini':'cloudflare-vision'):provider,emit)
+    : '';
+  if(visualParts.length&&!directVision&&mediaAnalysisContext===null){
+    return {ok:false,status:415,error:'The attached image/video frames could not be visually read by the configured vision analyzers. Your selected response model was not changed. Check the Gemini or Cloudflare vision configuration, or choose a vision-capable model.',provider,startedAt};
+  }
+  // Every non-vision response model receives the evidence-bearing analysis
+  // as text in its system context, never unsupported raw media parts.
+  // The selected response model and the Auto Provider Fallback switch are
+  // preserved exactly as configured by the user.
   // Use the context-aware task text for tool routing too, not only for the first
   // Activity label. Short follow-ups such as "security?", "ganyan pa rin", or
   // "check it" must inherit the website/repository/topic from recent user context.

@@ -64,7 +64,7 @@ def main():
         "Worked for ${",
         "Searching the web",
         "Checking generated code",
-        "Trying fallback provider",
+        "Checking configured fallback",
     )
     for token in visual_tokens:
         require(token in INDEX, f"frontend activity token missing: {token}")
