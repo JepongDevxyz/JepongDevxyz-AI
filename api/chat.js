@@ -3041,6 +3041,36 @@ function scoreAIHordeModel(item,message='',sourceModel=''){
   else if(size>0)score+=4;
   return score;
 }
+
+// Live four-slot AI Horde picker: no static model IDs or hidden Auto entry.
+// A current worker count and low published ETA are availability estimates,
+// NOT a guarantee that a particular generation will finish quickly.
+function fourResponsiveAIHordeModels(models){
+  const list=(Array.isArray(models)?models:[])
+    .filter(m=>isAllowedAIHordeModelName(m?.name)&&Number(m?.workers)>0&&
+      Number.isFinite(Number(m?.eta))&&Number(m.eta)>=0&&Number(m.eta)<=60);
+  const deduped=[...new Map(list.map(m=>[String(m.name),m])).values()];
+  return deduped.sort((a,b)=>
+    scoreAIHordeModel(b,'Hi')-scoreAIHordeModel(a,'Hi')||
+    Number(a.eta)-Number(b.eta)||String(a.name).localeCompare(String(b.name))
+  ).slice(0,4);
+}
+
+async function liveAIHordePickerModels(){
+  try{
+    const active=await getAIHordeActiveModels(AbortSignal.timeout(9000));
+    const models=fourResponsiveAIHordeModels(active).map(item=>({
+      id:item.name,name:item.name,workers:item.workers,etaSeconds:item.eta,
+      queued:item.queued,online:true
+    }));
+    return {status:models.length?'ready':'no-fast-workers',models,
+      checkedAt:new Date().toISOString(),source:'AI Horde live text-worker status'};
+  }catch(e){
+    return {status:'unavailable',models:[],
+      error:'Could not verify live AI Horde worker availability. Please retry.'};
+  }
+}
+
 function summarizeAIHordeError(status, data, raw=''){
   const combined=`${data?.error?.message||''} ${data?.message||''} ${raw||''}`.replace(/\s+/g,' ').trim();
   const lower=combined.toLowerCase();
@@ -3437,6 +3467,9 @@ async function processChat(body, emit) {
       provider='gemini';
     }
     const selected=String(model||'').trim();
+    // Auto remains an internal fallback route for other failed providers, but
+    // must never be a user-selectable AI Horde chat model.
+    if(provider==='aihorde'&&(!selected||selected==='auto'))return {ok:false,status:400,error:'Choose one of the four active AI Horde models in the model picker before sending.',provider,startedAt};
     const allowed=PROVIDERS[provider].models.includes(selected);
     const dynamic=selected&&(DYNAMIC_MODEL_PROVIDERS.has(provider)||provider==='aihorde');
     if(selected&&!allowed&&!dynamic&&!autoFallback){
@@ -4743,6 +4776,7 @@ export default async function handler(req){
     if(body.action==='tts') return serverTTS(body);
     if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
     if(body.action==='provider-models') return json({providers:await dynamicModelCatalog()});
+    if(body.action==='aihorde-live-models') return json(await liveAIHordePickerModels());
     if(body.action==='custom-api-models'){
       const p=sanitizeCustomApiProfile(body);
       if(!p)return json({error:'Valid API key and HTTPS Base URL are required.'},400);
