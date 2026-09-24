@@ -65,20 +65,6 @@
   padding:3px 2px;color:#88888d;font-size:.73rem;line-height:1.5;
   margin:15px 0;
 }
-#settingsModal .jd-notify-test-row{
-  display:flex;justify-content:flex-end;
-  padding:0 16px 13px;background:transparent;
-  border-bottom:1px solid rgba(0,0,0,.7);
-}
-#settingsModal .jd-notify-test-row button{
-  border:1px solid var(--jd-edge);
-  border-radius:999px;min-height:33px;padding:5px 12px;
-  display:flex;align-items:center;gap:6px;
-  color:var(--text-main);background:var(--jd-surface);
-  font-size:.72rem;cursor:pointer;
-}
-#settingsModal .jd-notify-test-row button svg{width:14px;height:14px}
-#settingsModal .jd-notify-test-row button:disabled{opacity:.42;cursor:default}
 body.theme-light .jd-haptics-home{background:#f6f6f6!important;color:#17171b!important}
 body.theme-light .jd-haptics-header{background:#f6f6f6}
 body.theme-light .jd-haptics-group{
