@@ -31,7 +31,8 @@ assert(!functions.includes("appendActivityEvent({"),'Elapsed timers must not fab
 assert(functions.includes('target.replaceChildren(...content)'),'Thoughts must display existing DOM activity rows');
 assert(functions.includes("list?.querySelectorAll('.ai-activity-row').forEach(row=>"));
 assert(functions.includes('row.cloneNode(true)'),'The sheet must copy real SSE-derived rows, not script fake work');
-const format=new Function(functions+'\nreturn formatJdActivityElapsed;')();
+const formatterSource=between(functions,'function formatJdActivityElapsed(ms){','function stopJdActivityClock(){');
+const format=new Function(formatterSource+'\nreturn formatJdActivityElapsed;')();
 for(const [ms,label] of [[0,'0s'],[950,'0s'],[1000,'1s'],[59999,'59s'],[60000,'1m 0s'],[277000,'4m 37s']]){
  assert.equal(format(ms),label,'Elapsed clock formatting '+ms);
 }
@@ -39,7 +40,7 @@ const label={textContent:''};
 const card={dataset:{startedAt:'100000',finalized:'false'},querySelector(selector){
  return selector==='.ai-activity-summary-text'?label:null;
 }};
-const tick=new Function('Date',functions+'\nreturn tickJdActivityClock;')({now:()=>377000});
+const tick=new Function('Date',formatterSource+'\nreturn tickJdActivityClock;')({now:()=>377000});
 tick(card);
 assert.equal(label.textContent,'Thinking for 4m 37s');
 card.dataset.finalized='true';tick(card);
