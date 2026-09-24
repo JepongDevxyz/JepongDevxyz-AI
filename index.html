@@ -4347,8 +4347,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <div class="settings-card-group">
             <div class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="ios-switch" aria-label="Live Web Search"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="ios-slider"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="ios-switch" aria-label="Response Speech"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="ios-slider"></span></label></div>
-            <div class="settings-toggle-row"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small id="jdReplyNotifyDescription" aria-live="polite">Notify when an AI reply finishes</small></span><label class="ios-switch" aria-label="Reply Notifications"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)"><span class="ios-slider"></span></label></div>
-            <div class="jd-notify-test-row"><button type="button" id="jdNotifyTestButton" onclick="testResponseNotification()" disabled><i data-lucide="bell-ring"></i> Send a test notification</button></div>
+            <button class="settings-nav-row jd-notify-settings-entry" type="button" onclick="openJdReplyNotifications()" aria-label="Reply Notifications settings"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small id="jdReplyNotifyDescription" aria-live="polite">Notify when an AI reply finishes</small></span><i data-lucide="chevron-right"></i></button>
             <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>All your configured keys are tried first. ON = after selected provider quota/credentials are exhausted, try registered AI Horde, then anonymous AI Horde. OFF = no emergency fallback.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
             <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Available only when Auto Provider Fallback is ON</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
             <button class="settings-nav-row" type="button" onclick="openProviderKeysSettings()"><i data-lucide="key-round"></i><span><strong>Custom API Keys</strong><small>Add multiple APIs with automatic or manual setup</small></span><i data-lucide="chevron-right"></i></button>
@@ -4414,6 +4413,34 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             </div>
             <button class="jd-text-size-reset" type="button" id="jdTextSizeResetBtn" onclick="setJdChatTextSize(100)">Reset</button>
           </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Reply Notifications: compact dedicated settings page with test action. -->
+    <div class="modal-overlay settings-home-overlay jd-reply-notify-overlay" id="jdReplyNotificationsModal" onclick="if(event.target===this)closeJdReplyNotifications()">
+      <section class="settings-home jd-reply-notify-home" role="dialog" aria-modal="true" aria-labelledby="jdReplyNotifyTitle">
+        <header class="jd-reply-notify-header">
+          <button class="jd-reply-notify-back" type="button" onclick="closeJdReplyNotifications()" aria-label="Back to Settings"><i data-lucide="arrow-left"></i></button>
+          <h2 id="jdReplyNotifyTitle">Reply Notifications</h2>
+        </header>
+        <div class="jd-reply-notify-scroll">
+          <div class="jd-reply-notify-group">
+            <label class="jd-reply-notify-row">
+              <span class="jd-reply-notify-row-copy"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small>Get notified when an AI reply finishes</small></span></span>
+              <span class="jd-reply-notify-switch"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)" aria-label="Enable Reply Notifications"><span class="jd-reply-notify-track"></span></span>
+            </label>
+          </div>
+          <p class="jd-reply-notify-section-label">Test notifications</p>
+          <div class="jd-reply-notify-group">
+            <button class="jd-reply-notify-test" type="button" id="jdNotifyTestButton" onclick="testResponseNotification()" disabled>
+              <span class="jd-reply-notify-test-icon"><i data-lucide="bell-ring"></i></span>
+              <span class="jd-reply-notify-test-copy"><strong>Send a test notification</strong><small>Check that notifications appear on your device</small></span>
+              <i data-lucide="chevron-right" class="jd-reply-notify-test-chevron"></i>
+            </button>
+          </div>
+          <p id="jdReplyNotifyDetailStatus" class="jd-reply-notify-info" role="status" aria-live="polite">Turn on notifications, then tap the test button.</p>
+          <p class="jd-reply-notify-footnote">Your browser controls delivery and permissions. Keep this page open while an AI reply is being generated.</p>
         </div>
       </section>
     </div>
