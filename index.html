@@ -8627,7 +8627,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function activityIconMarkup(kind, state) {
             const icons={
-                web:'search',search:'search',research:'search',test:'badge-check',file:'paperclip',route:'route',
+                web:'search',search:'search',research:'search',test:'badge-check',file:'paperclip',image:'image',video:'film',route:'route',
                 fallback:'refresh-cw',provider:'sparkles',generate:'sparkles',process:'terminal-square',
                 analyze:'scan-search',image:'image',build:'hammer',deploy:'cloud-upload',api:'braces'
             };
@@ -8664,7 +8664,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // or completed high-effort preflight. Their absence left the
             // activity view with only "Thinking", despite real server work.
             if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
-            if (['prepare','response-prep','response-generation','task-next'].includes(id)) return null;
+            // Only transport-only events are hidden. Source reading, vision,
+            // generation, and verified artifact stages remain visible.
             if (kind==='provider') {
                 let safeLabel=String(label||'Connecting to the selected model');
                 let safeDetail=String(e.detail||'');
@@ -12066,27 +12067,18 @@ ${m.text || ''}
                     requestFiles.push(base);
                 }
 
-                // Tiny videos can be understood natively by Gemini when available.
-                if(f.kind==='video' && f.nativeData && base64Chars+f.nativeData.length<=MAX_REQUEST_BASE64_CHARS){
-                    requestFiles.push({
-                        name:f.name,
-                        parentName:f.name,
-                        mimeType:f.originalMimeType||'video/mp4',
-                        originalMimeType:f.originalMimeType||'video/mp4',
-                        size:f.size||0,
-                        kind:'video-native',
-                        mediaRole:'video-native',
-                        data:f.nativeData
-                    });
-                    base64Chars+=f.nativeData.length;
-                }
-
-                // Video frames and visual PDF pages.
+                // Prioritize actual timestamped visual frames. Previously a
+                // small native video used the byte budget first; a selected
+                // text model then received only opaque video metadata.
+                // Frame samples are the common readable input to a vision
+                // analyzer regardless of the eventual answer model.
+                let preparedFrames=0;
                 for(const frame of (f.frames||[])){
                     if(!frame?.data)continue;
                     if(base64Chars+frame.data.length>MAX_REQUEST_BASE64_CHARS){
-                        base.extractedText += '\nSome visual samples were omitted to keep the request within the server upload limit.';
-                        break;
+                        base.extractionWarning=[base.extractionWarning,
+                            'Some visual samples were omitted due to the request size limit.'].filter(Boolean).join(' ');
+                        continue;
                     }
                     requestFiles.push({
                         name:frame.name,
@@ -12101,6 +12093,28 @@ ${m.text || ''}
                         data:frame.data
                     });
                     base64Chars+=frame.data.length;
+                    preparedFrames++;
+                }
+
+                // Send native video only when short enough AND it fits after
+                // the sampled frames. The server can pass it to Gemini, but
+                // no model is allowed to claim unseen frames or audio.
+                if(f.kind==='video' && f.nativeData && preparedFrames===0 &&
+                   base64Chars+f.nativeData.length<=MAX_REQUEST_BASE64_CHARS){
+                    requestFiles.push({
+                        name:f.name,parentName:f.name,
+                        mimeType:f.originalMimeType||'video/mp4',
+                        originalMimeType:f.originalMimeType||'video/mp4',
+                        size:f.size||0,kind:'video-native',
+                        mediaRole:'video-native',data:f.nativeData
+                    });
+                    base64Chars+=f.nativeData.length;
+                }
+                if((f.kind==='image'&&!f.data) ||
+                   (f.kind==='video'&&!preparedFrames&&!f.nativeData)){
+                    base.extractionError=[base.extractionError,
+                        'No readable visual data was prepared. Reattach the file and wait until its preview is ready.']
+                        .filter(Boolean).join(' ');
                 }
             }
 
