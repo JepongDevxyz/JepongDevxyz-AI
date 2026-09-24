@@ -4022,6 +4022,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/plugins.css">
     <link rel="stylesheet" href="/reference-shell.css">
     <link rel="stylesheet" href="/account-appearance.css">
+    <link rel="stylesheet" href="/haptics-notifications.css">
 </head>
 <body>
 
@@ -4346,7 +4347,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <div class="settings-card-group">
             <div class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="ios-switch" aria-label="Live Web Search"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="ios-slider"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="ios-switch" aria-label="Response Speech"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="ios-slider"></span></label></div>
-            <div class="settings-toggle-row"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small>Notify when an AI reply finishes</small></span><label class="ios-switch" aria-label="Reply Notifications"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)"><span class="ios-slider"></span></label></div>
+            <div class="settings-toggle-row"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small id="jdReplyNotifyDescription" aria-live="polite">Notify when an AI reply finishes</small></span><label class="ios-switch" aria-label="Reply Notifications"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)"><span class="ios-slider"></span></label></div>
+            <div class="jd-notify-test-row"><button type="button" id="jdNotifyTestButton" onclick="testResponseNotification()" disabled><i data-lucide="bell-ring"></i> Send a test notification</button></div>
             <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>All your configured keys are tried first. ON = after selected provider quota/credentials are exhausted, try registered AI Horde, then anonymous AI Horde. OFF = no emergency fallback.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
             <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Available only when Auto Provider Fallback is ON</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
             <button class="settings-nav-row" type="button" onclick="openProviderKeysSettings()"><i data-lucide="key-round"></i><span><strong>Custom API Keys</strong><small>Add multiple APIs with automatic or manual setup</small></span><i data-lucide="chevron-right"></i></button>
@@ -4357,7 +4359,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <h3 class="settings-section-label">App</h3>
           <div class="settings-card-group">
             <button class="settings-nav-row" type="button" onclick="openJdAppearance()" aria-label="Appearance and text size"><i data-lucide="palette"></i><span><strong>Appearance</strong><small id="jdAppearanceSettingsLabel">Theme and text size</small></span><i data-lucide="chevron-right"></i></button>
-            <div class="settings-toggle-row"><i data-lucide="vibrate"></i><span><strong>Haptics</strong><small id="jdHapticsDescription">Vibration feedback for supported devices and browsers</small></span><label class="ios-switch" aria-label="Haptics"><input type="checkbox" id="jdHapticsToggle" onchange="setJdHaptics(this.checked)"><span class="ios-slider"></span></label></div>
+            <button class="settings-nav-row" type="button" onclick="openJdHaptics()" aria-label="Haptics settings"><i data-lucide="vibrate"></i><span><strong>Haptics</strong><small id="jdHapticsDescription">Pressing buttons and when AI responds</small></span><i data-lucide="chevron-right"></i></button>
             <label hidden><input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)"></label>
             <span id="settingsAccentLabel" hidden>Default</span>
             <div class="settings-nav-row settings-static-row"><i data-lucide="chart-no-axes-column"></i><span><strong>Usage & Limits</strong><small><b id="geminiWordCount">0</b> words · <b id="geminiTokenCount">0</b> tokens · <b id="geminiQueryCount">0</b> queries</small></span></div>
@@ -4412,6 +4414,36 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             </div>
             <button class="jd-text-size-reset" type="button" id="jdTextSizeResetBtn" onclick="setJdChatTextSize(100)">Reset</button>
           </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Reference-video Haptics screen: real master + per-event controls. -->
+    <div class="modal-overlay settings-home-overlay jd-haptics-overlay" id="jdHapticsModal" onclick="if(event.target===this)closeJdHaptics()">
+      <section class="settings-home jd-haptics-home" role="dialog" aria-modal="true" aria-labelledby="jdHapticsTitle">
+        <header class="jd-haptics-header">
+          <button class="jd-haptics-back" type="button" onclick="closeJdHaptics()" aria-label="Back to Settings"><i data-lucide="arrow-left"></i></button>
+          <h2 id="jdHapticsTitle">Haptics</h2>
+        </header>
+        <div class="jd-haptics-scroll">
+          <div class="jd-haptics-group">
+            <label class="jd-haptics-row">
+              <span class="jd-haptics-copy"><i data-lucide="vibrate"></i><strong>Haptics</strong></span>
+              <span class="jd-haptics-switch"><input type="checkbox" id="jdHapticsToggle" onchange="setJdHaptics(this.checked)" aria-label="Enable Haptics"><span class="jd-haptics-track"></span></span>
+            </label>
+          </div>
+          <p class="jd-haptics-section-label">When is haptic needed</p>
+          <div class="jd-haptics-group jd-haptics-events">
+            <label class="jd-haptics-row">
+              <span class="jd-haptics-copy"><strong>Pressing buttons</strong></span>
+              <span class="jd-haptics-switch"><input type="checkbox" id="jdHapticsButtonsToggle" onchange="setJdHapticsEvent('buttons',this.checked)" aria-label="Haptics when pressing buttons"><span class="jd-haptics-track"></span></span>
+            </label>
+            <label class="jd-haptics-row">
+              <span class="jd-haptics-copy"><strong>AI is responding</strong></span>
+              <span class="jd-haptics-switch"><input type="checkbox" id="jdHapticsResponseToggle" onchange="setJdHapticsEvent('response',this.checked)" aria-label="Haptics when AI finishes responding"><span class="jd-haptics-track"></span></span>
+            </label>
+          </div>
+          <p id="jdHapticsCapabilityNote" class="jd-haptics-capability-note" aria-live="polite">Vibration requires browser and device support.</p>
         </div>
       </section>
     </div>
@@ -5564,18 +5596,36 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             syncJdAppearanceControls();
         }
         const JD_HAPTICS_KEY='jd_haptics_enabled';
+        const JD_HAPTICS_BUTTONS_KEY='jd_haptics_buttons';
+        const JD_HAPTICS_RESPONSE_KEY='jd_haptics_response';
         let jdHapticsEnabled=localStorage.getItem(JD_HAPTICS_KEY)==='true';
+        let jdHapticsButtonsEnabled=localStorage.getItem(JD_HAPTICS_BUTTONS_KEY)!=='false';
+        let jdHapticsResponseEnabled=localStorage.getItem(JD_HAPTICS_RESPONSE_KEY)!=='false';
         let jdLastHapticAt=0;
         function jdHapticsSupported(){
             return typeof navigator.vibrate==='function';
         }
         function syncJdHapticsUI(){
-            const toggle=document.getElementById('jdHapticsToggle');
-            if(toggle)toggle.checked=jdHapticsEnabled;
+            const master=document.getElementById('jdHapticsToggle');
+            const buttons=document.getElementById('jdHapticsButtonsToggle');
+            const response=document.getElementById('jdHapticsResponseToggle');
+            if(master)master.checked=jdHapticsEnabled;
+            if(buttons){
+                buttons.checked=jdHapticsButtonsEnabled;
+                buttons.disabled=!jdHapticsEnabled||!jdHapticsSupported();
+            }
+            if(response){
+                response.checked=jdHapticsResponseEnabled;
+                response.disabled=!jdHapticsEnabled||!jdHapticsSupported();
+            }
+            const status=document.getElementById('jdHapticsCapabilityNote');
+            if(status)status.textContent=jdHapticsSupported()
+                ?'Vibration feedback is available when your browser and device permit it.'
+                :'Vibration is not supported by this browser or device.';
             const description=document.getElementById('jdHapticsDescription');
             if(description)description.textContent=jdHapticsSupported()
-                ?'Gentle vibration when you interact with buttons'
-                :'Vibration is unavailable in this browser or device';
+                ?'Pressing buttons and when AI finishes responding'
+                :'Vibration unavailable on this browser or device';
         }
         function jdHapticPulse(duration=12){
             if(!jdHapticsEnabled||!jdHapticsSupported())return false;
@@ -5592,11 +5642,31 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if(jdHapticsEnabled)jdHapticPulse();
             else if(jdHapticsSupported()){try{navigator.vibrate(0);}catch(_){}}
         }
-        // A trusted click is a user gesture, so Android browsers that support
-        // the Vibration API can issue tactile button feedback. No sounds,
-        // repeated buzzing, or unprompted vibration while the setting is OFF.
+        function setJdHapticsEvent(eventName,enabled){
+            if(eventName==='buttons'){
+                jdHapticsButtonsEnabled=!!enabled;
+                safeSetLocalStorage(JD_HAPTICS_BUTTONS_KEY,String(jdHapticsButtonsEnabled),true);
+            }else if(eventName==='response'){
+                jdHapticsResponseEnabled=!!enabled;
+                safeSetLocalStorage(JD_HAPTICS_RESPONSE_KEY,String(jdHapticsResponseEnabled),true);
+            }else return;
+            syncJdHapticsUI();
+        }
+        function openJdHaptics(){
+            closeTransientSurfaces('jdHapticsModal');
+            document.getElementById('jdHapticsModal')?.classList.add('open');
+            syncJdHapticsUI();
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('jdHapticsModal')));
+        }
+        function closeJdHaptics(){
+            document.getElementById('jdHapticsModal')?.classList.remove('open');
+            openSettingsModal();
+        }
+        // The user must opt into Haptics. Only short, throttled vibrations
+        // are used for trusted button interactions; response feedback is
+        // controlled by an independent toggle and the same master switch.
         document.addEventListener('click',event=>{
-            if(!event.isTrusted||!jdHapticsEnabled)return;
+            if(!event.isTrusted||!jdHapticsEnabled||!jdHapticsButtonsEnabled)return;
             const control=event.target?.closest?.('button,[role="button"],input[type="checkbox"],input[type="radio"]');
             if(control&&!control.disabled&&!control.closest('[hidden]'))jdHapticPulse();
         },{passive:true});
@@ -7831,8 +7901,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (speechToggle) speechToggle.checked = isResponseSpeechEnabled;
             const webToggle = document.getElementById('settingsWebSearchToggle');
             if (webToggle) webToggle.checked = !!isWebSearchEnabled;
-            const notifyToggle = document.getElementById('settingsNotifyToggle');
-            if (notifyToggle) notifyToggle.checked = (typeof Notification !== 'undefined' && Notification.permission === 'granted' && localStorage.getItem('jepong_notify_enabled') === 'true');
+            syncReplyNotificationSettings();
             if (group) group.classList.toggle('disabled', !isResponseSpeechEnabled);
             speechRate = Math.max(0.7, Math.min(1.3, Number(personalizationSettings.voiceSpeed) || speechRate || 1.0));
             if (speedSlider) speedSlider.value = speechRate;
@@ -8321,78 +8390,169 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         let notifyPromptTimer = null;
         let notifyRequestInFlight = false;
-
-        function shouldOfferNotifyPrompt() {
-            return typeof Notification !== 'undefined' &&
-                Notification.permission === 'default' &&
-                localStorage.getItem('jepong_notify_dismissed') !== 'true';
+        let jdNotificationWorkerPromise = null;
+        let jdNotificationRequestSequence = 0;
+        let jdResponseFeedbackSent = false;
+        const JD_NOTIFY_KEY='jepong_notify_enabled';
+        const JD_NOTIFY_WORKER='/jd-notification-sw.js';
+        function jdCanNotify(){
+            return typeof Notification!=='undefined' && window.isSecureContext!==false;
         }
-
-        function maybeOfferNotifyPermission() {
-            notifyRequestInFlight = true;
-            if (!shouldOfferNotifyPrompt()) return;
+        function syncReplyNotificationSettings(message=''){
+            const enabled=localStorage.getItem(JD_NOTIFY_KEY)==='true' &&
+                jdCanNotify() && Notification.permission==='granted';
+            const toggle=document.getElementById('settingsNotifyToggle');
+            if(toggle)toggle.checked=enabled;
+            const test=document.getElementById('jdNotifyTestButton');
+            if(test)test.disabled=!enabled;
+            const description=document.getElementById('jdReplyNotifyDescription');
+            if(description)description.textContent=message||(
+                !jdCanNotify()?'Notifications are unavailable on this browser or insecure page.':
+                Notification.permission==='denied'?'Notifications are blocked. Allow them in your browser’s site settings.':
+                enabled?'On — you will be notified when AI finishes responding.':
+                'Get a notification when an AI reply finishes.'
+            );
+        }
+        function shouldOfferNotifyPrompt(){
+            return jdCanNotify() && Notification.permission==='default' &&
+                localStorage.getItem(JD_NOTIFY_KEY)!=='true' &&
+                localStorage.getItem('jepong_notify_dismissed')!=='true';
+        }
+        function maybeOfferNotifyPermission(){
+            notifyRequestInFlight=true;
+            if(!shouldOfferNotifyPrompt())return;
             clearTimeout(notifyPromptTimer);
-            notifyPromptTimer = setTimeout(() => {
-                if (!notifyRequestInFlight) return; // request already finished
-                const card = document.getElementById('notifyPermissionCard');
-                if (card) { card.classList.add('visible'); refreshLucideIcons(card); }
-            }, 4000);
+            notifyPromptTimer=setTimeout(()=>{
+                if(!notifyRequestInFlight||!shouldOfferNotifyPrompt())return;
+                const card=document.getElementById('notifyPermissionCard');
+                if(card){card.classList.add('visible');refreshLucideIcons(card);}
+            },4000);
         }
-
-        function hideNotifyPermissionCard() {
+        function hideNotifyPermissionCard(){
             clearTimeout(notifyPromptTimer);
             document.getElementById('notifyPermissionCard')?.classList.remove('visible');
         }
-
-        function dismissNotifyPermissionCard() {
-            localStorage.setItem('jepong_notify_dismissed', 'true');
+        function dismissNotifyPermissionCard(){
+            safeSetLocalStorage('jepong_notify_dismissed','true',true);
             hideNotifyPermissionCard();
         }
-
-        function toggleResponseNotifications(checked) {
-            const toggle = document.getElementById('settingsNotifyToggle');
-            if (!checked) {
-                localStorage.setItem('jepong_notify_enabled', 'false');
+        async function ensureReplyNotificationWorker(){
+            if(!('serviceWorker' in navigator))return null;
+            if(!jdNotificationWorkerPromise){
+                jdNotificationWorkerPromise=navigator.serviceWorker.register(JD_NOTIFY_WORKER,{scope:'/'})
+                    .then(async reg=>{
+                        if(reg.active)return reg;
+                        return navigator.serviceWorker.ready;
+                    }).catch(error=>{
+                        jdNotificationWorkerPromise=null;
+                        throw error;
+                    });
+            }
+            return jdNotificationWorkerPromise;
+        }
+        async function activateResponseNotifications(permission){
+            if(permission!=='granted')throw new Error(
+                permission==='denied'
+                ?'Notifications are blocked. Enable them in your browser’s site settings.'
+                :'Notification permission was not granted.'
+            );
+            // On Android Chrome, new Notification(...) is not a reliable
+            // delivery route. An active service worker can show the notification.
+            if('serviceWorker' in navigator)await ensureReplyNotificationWorker();
+            safeSetLocalStorage(JD_NOTIFY_KEY,'true',true);
+            safeSetLocalStorage('jepong_notify_dismissed','true',true);
+            hideNotifyPermissionCard();
+            syncReplyNotificationSettings();
+        }
+        function toggleResponseNotifications(checked){
+            const requestId=++jdNotificationRequestSequence;
+            if(!checked){
+                safeSetLocalStorage(JD_NOTIFY_KEY,'false',true);
+                syncReplyNotificationSettings();
                 return;
             }
-            if (typeof Notification === 'undefined') {
-                if (toggle) toggle.checked = false;
-                localStorage.setItem('jepong_notify_enabled', 'false');
+            // requestPermission must be invoked synchronously from this
+            // user-triggered toggle, before any service-worker await.
+            if(!jdCanNotify()){
+                safeSetLocalStorage(JD_NOTIFY_KEY,'false',true);
+                syncReplyNotificationSettings('Notifications are not supported in this browser or page.');
                 return;
             }
-            Notification.requestPermission().then(perm => {
-                const granted = perm === 'granted';
-                localStorage.setItem('jepong_notify_enabled', granted ? 'true' : 'false');
-                localStorage.setItem('jepong_notify_dismissed', 'true');
-                if (toggle) toggle.checked = granted;
-                hideNotifyPermissionCard();
-            }).catch(() => { if (toggle) toggle.checked = false; });
+            if(Notification.permission==='denied'){
+                safeSetLocalStorage(JD_NOTIFY_KEY,'false',true);
+                syncReplyNotificationSettings('Notifications are blocked. Allow them in browser site settings, then try again.');
+                return;
+            }
+            let permissionRequest;
+            try{
+                permissionRequest=Notification.permission==='granted'
+                    ?Promise.resolve('granted'):Notification.requestPermission();
+            }catch(error){
+                safeSetLocalStorage(JD_NOTIFY_KEY,'false',true);
+                syncReplyNotificationSettings('The browser could not request notification permission.');
+                return;
+            }
+            Promise.resolve(permissionRequest).then(async permission=>{
+                if(requestId!==jdNotificationRequestSequence)return;
+                await activateResponseNotifications(permission);
+                if(requestId!==jdNotificationRequestSequence){
+                    safeSetLocalStorage(JD_NOTIFY_KEY,'false',true);
+                    syncReplyNotificationSettings();
+                }
+            }).catch(error=>{
+                if(requestId!==jdNotificationRequestSequence)return;
+                safeSetLocalStorage(JD_NOTIFY_KEY,'false',true);
+                syncReplyNotificationSettings(error?.message||'Could not enable notifications on this browser.');
+            });
         }
-
-        function turnOnResponseNotifications() {
-            if (typeof Notification === 'undefined') { dismissNotifyPermissionCard(); return; }
-            Notification.requestPermission().then(perm => {
-                if (perm === 'granted') localStorage.setItem('jepong_notify_enabled', 'true');
-                localStorage.setItem('jepong_notify_dismissed', 'true');
-                const toggle = document.getElementById('settingsNotifyToggle');
-                if (toggle) toggle.checked = (perm === 'granted');
-                hideNotifyPermissionCard();
-            }).catch(() => hideNotifyPermissionCard());
+        function turnOnResponseNotifications(){
+            hideNotifyPermissionCard();
+            toggleResponseNotifications(true);
         }
-
-        function notifyResponseReady(success = true) {
-            notifyRequestInFlight = false;
-            try {
-                hideNotifyPermissionCard();
-                if (typeof Notification === 'undefined') return;
-                if (Notification.permission !== 'granted') return;
-                if (localStorage.getItem('jepong_notify_enabled') !== 'true') return;
-                const n = new Notification('JepongDevxyz AI', {
-                    body: success ? 'Tapos na ang sagot. Bumalik ka para makita.' : 'May naganap na error sa huling request.',
-                    tag: 'jepong-ai-response'
+        async function jdShowReplyNotification(title,body){
+            if(!jdCanNotify()||Notification.permission!=='granted'||
+               localStorage.getItem(JD_NOTIFY_KEY)!=='true')return false;
+            const options={
+                body,tag:'jepong-ai-response',
+                icon:'/favicon.ico',badge:'/favicon.ico',
+                data:{url:location.origin+location.pathname}
+            };
+            if('serviceWorker' in navigator){
+                const worker=await ensureReplyNotificationWorker();
+                if(worker?.showNotification){
+                    await worker.showNotification(title,options);
+                    return true;
+                }
+            }
+            // Desktop fallback only: mobile Chrome generally requires
+            // ServiceWorkerRegistration.showNotification instead.
+            const notification=new Notification(title,options);
+            notification.onclick=()=>{
+                try{window.focus();}catch(_){}
+                notification.close();
+            };
+            return true;
+        }
+        async function testResponseNotification(){
+            const sent=await jdShowReplyNotification('JepongDevxyz AI','Test notification — alerts are enabled for AI replies.')
+                .catch(error=>{
+                    syncReplyNotificationSettings(error?.message||'The browser could not display a notification.');
+                    return false;
                 });
-                n.onclick = () => { try { window.focus(); } catch (_) {} n.close(); };
-            } catch (_) {}
+            if(!sent)syncReplyNotificationSettings('The test notification could not be displayed. Check browser notification permissions.');
+        }
+        function notifyResponseReady(success=true){
+            notifyRequestInFlight=false;
+            hideNotifyPermissionCard();
+            if(jdResponseFeedbackSent)return;
+            jdResponseFeedbackSent=true;
+            if(!success||activeAIAbortController?.signal?.aborted)return;
+            if(jdHapticsEnabled&&jdHapticsResponseEnabled)jdHapticPulse(20);
+            if(localStorage.getItem(JD_NOTIFY_KEY)!=='true')return;
+            void jdShowReplyNotification('JepongDevxyz AI','Tapos na ang sagot. Bumalik ka para makita.')
+                .catch(error=>{
+                    syncReplyNotificationSettings(error?.message||'The browser could not display a notification.');
+                });
         }
 
         function activityIconMarkup(kind, state) {
@@ -8583,6 +8743,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function showAIIndicator(promptText, files = []) {
             removeAIIndicator();
+            jdResponseFeedbackSent=false;
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
             indicator.className = 'ai-activity-card';
@@ -11809,6 +11970,7 @@ ${m.text || ''}
             }
             setJdChatTextSize(localStorage.getItem(JD_TEXT_SIZE_KEY)||100,{persist:false});
             syncJdHapticsUI();
+            syncReplyNotificationSettings();
             const savedModeName = localStorage.getItem('jepong_last_mode_name');
             const modeName = savedModeName || MODE_DISPLAY_NAMES[currentSelectedMode] || 'General AI';
             selectMode(currentSelectedMode, modeName);

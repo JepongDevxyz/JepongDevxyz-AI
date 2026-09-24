@@ -1,0 +1,104 @@
+/* Reference-video Haptics: separate full-screen settings page, three real switches. */
+.jd-haptics-overlay{z-index:1220!important}
+.jd-haptics-home{
+  width:100%!important;height:100dvh!important;max-height:100dvh!important;
+  max-width:none!important;margin:0!important;min-height:0!important;
+  background:#171717!important;color:#f7f7f7!important;
+  border:0!important;border-radius:0!important;
+  display:flex!important;flex-direction:column!important;overflow:hidden!important;
+}
+.jd-haptics-header{
+  display:flex;align-items:center;gap:17px;flex:0 0 auto;
+  width:100%;min-height:67px;padding:14px 15px 12px!important;
+  background:#171717;
+}
+.jd-haptics-header h2{margin:0!important;font-size:1rem!important;font-weight:650!important;line-height:1.3!important}
+.jd-haptics-back{
+  display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;
+  border:0;border-radius:50%;color:inherit;background:transparent;cursor:pointer;
+}
+.jd-haptics-back svg{width:23px;height:23px}
+.jd-haptics-scroll{
+  flex:1 1 auto;min-height:0;overflow:auto;width:100%;scrollbar-width:none;
+  overscroll-behavior:contain;
+  padding:15px clamp(14px,3vw,24px) max(30px,env(safe-area-inset-bottom,0px))!important;
+}
+.jd-haptics-group{
+  display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid rgba(255,255,255,.035);
+  background:#292929;border-radius:19px;
+}
+.jd-haptics-row{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  min-width:0;min-height:60px;padding:14px 14px!important;
+  color:#f4f4f4;cursor:pointer;
+}
+.jd-haptics-row+.jd-haptics-row{border-top:1px solid rgba(0,0,0,.35)}
+.jd-haptics-copy{display:flex;align-items:center;gap:10px;min-width:0;font-size:.9rem}
+.jd-haptics-copy strong{font-weight:550;line-height:1.35}
+.jd-haptics-copy svg{width:20px;height:20px;flex:0 0 auto;color:#bdbdbd}
+.jd-haptics-section-label{
+  color:#a0a0a4;font-size:.76rem;font-weight:520;
+  padding:0 1px;margin:19px 0 12px;
+}
+.jd-haptics-switch{position:relative;display:block;flex:0 0 43px;width:43px;height:27px;cursor:pointer}
+.jd-haptics-switch input{
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;
+  cursor:pointer;z-index:2;margin:0;
+}
+.jd-haptics-switch .jd-haptics-track{
+  display:block;position:absolute;inset:0;
+  background:#464851;border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;transition:background .16s ease;
+}
+.jd-haptics-switch .jd-haptics-track:before{
+  content:"";position:absolute;left:3px;top:3px;width:19px;height:19px;
+  border-radius:50%;background:#f5f5f5;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+  transition:transform .16s ease;
+}
+.jd-haptics-switch input:checked+.jd-haptics-track{background:#f1f1f1;border-color:#f1f1f1}
+.jd-haptics-switch input:checked+.jd-haptics-track:before{transform:translateX(16px);background:#252525}
+.jd-haptics-switch input:disabled+.jd-haptics-track{opacity:.45}
+.jd-haptics-switch input:focus-visible+.jd-haptics-track{outline:2px solid #a99bff;outline-offset:3px}
+.jd-haptics-capability-note{
+  padding:3px 2px;color:#88888d;font-size:.73rem;line-height:1.5;
+  margin:15px 0;
+}
+#settingsModal .jd-notify-test-row{
+  display:flex;justify-content:flex-end;
+  padding:0 16px 13px;background:transparent;
+  border-bottom:1px solid rgba(0,0,0,.7);
+}
+#settingsModal .jd-notify-test-row button{
+  border:1px solid var(--jd-edge);
+  border-radius:999px;min-height:33px;padding:5px 12px;
+  display:flex;align-items:center;gap:6px;
+  color:var(--text-main);background:var(--jd-surface);
+  font-size:.72rem;cursor:pointer;
+}
+#settingsModal .jd-notify-test-row button svg{width:14px;height:14px}
+#settingsModal .jd-notify-test-row button:disabled{opacity:.42;cursor:default}
+body.theme-light .jd-haptics-home{background:#f6f6f6!important;color:#17171b!important}
+body.theme-light .jd-haptics-header{background:#f6f6f6}
+body.theme-light .jd-haptics-group{
+  background:#fff;border-color:rgba(0,0,0,.09);
+}
+body.theme-light .jd-haptics-row{color:#17171b}
+body.theme-light .jd-haptics-row+.jd-haptics-row{border-top-color:rgba(0,0,0,.08)}
+body.theme-light .jd-haptics-copy svg{color:#555}
+body.theme-light .jd-haptics-section-label,
+body.theme-light .jd-haptics-capability-note{color:#65656f}
+body.theme-light .jd-haptics-switch .jd-haptics-track{background:#d2d2d6}
+body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track{background:#1d1d23;border-color:#1d1d23}
+body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track:before{background:#fff}
+@media(min-width:768px){
+  .jd-haptics-home{
+    width:min(100%,560px)!important;height:min(92dvh,900px)!important;
+    max-height:min(92dvh,900px)!important;border-radius:25px!important;
+    border:1px solid var(--jd-edge)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .jd-haptics-switch .jd-haptics-track,.jd-haptics-switch .jd-haptics-track:before{transition:none}
+}
