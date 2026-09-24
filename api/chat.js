@@ -80,8 +80,8 @@ const PROVIDERS = {
   },
   seekai: {
     label: 'SEEKAI',
-    models: ['agent'],
-    defaultModel: 'agent'
+    models: ['deepseek-v4-flash','deepseek-ai/DeepSeek-V4-Flash-0731'],
+    defaultModel: 'deepseek-v4-flash'
   }
 };
 
@@ -2695,6 +2695,88 @@ function chatCompletionsUrl(base,fallback){
   return raw+'/v1/chat/completions';
 }
 
+
+// SEEKAI may return either a buffered OpenAI JSON response or SSE. Only mark a
+// request successful after validating actual assistant text, not HTTP 200 alone.
+function seekaiExtractReply(raw,contentType=''){
+  const input=String(raw||'');
+  if(/text\/html/i.test(contentType)||/^\s*(?:<!doctype|<html\b)/i.test(input))return {kind:'html',text:'',reason:''};
+  const asText=entry=>typeof entry==='string'?entry:
+    Array.isArray(entry)?entry.map(part=>typeof part==='string'?part:(typeof part?.text==='string'?part.text:typeof part?.content==='string'?part.content:'')).join(''):
+    '';
+  if(/^\s*data:/m.test(input)||/text\/event-stream/i.test(contentType)){
+    let output='',finishReason='',errored=false;
+    for(const line of input.split(/\r?\n/)){
+      const part=line.trim();
+      if(!part.startsWith('data:'))continue;
+      const data=part.slice(5).trim();if(!data||data==='[DONE]')continue;
+      let event;try{event=JSON.parse(data);}catch{continue;}
+      if(event?.error){errored=true;break;}
+      const choice=event?.choices?.[0];
+      output+=asText(choice?.delta?.content??choice?.message?.content??event?.delta?.text);
+      if(choice?.finish_reason)finishReason=String(choice.finish_reason);
+    }
+    return {kind:'sse',text:errored?'':output.trim(),reason:finishReason,errored};
+  }
+  let parsed;try{parsed=JSON.parse(input);}catch{return {kind:'invalid-json',text:'',reason:''};}
+  const choice=parsed?.choices?.[0];
+  return {kind:'json',text:asText(choice?.message?.content??choice?.text??parsed?.output_text).trim(),
+    reason:String(choice?.finish_reason||''),errored:!!parsed?.error};
+}
+
+async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
+  const keys=(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('seekai'));
+  if(!keys.length)return {ok:false,status:503,error:'SEEKAI_API_KEYS is not configured in Vercel.'};
+  const selected=String(model||'').trim();
+  const target=selected&&selected!=='agent'?selected:PROVIDERS.seekai.defaultModel;
+  const endpoint=chatCompletionsUrl(process.env.SEEKAI_BASE_URL,'https://seekai.cc/v1/chat/completions');
+  const messages=buildOpenAIMessages(history,message,systemInstruction);
+  let status=502,last='SEEKAI did not return an assistant response.';
+  for(let i=0;i<keys.length;i++){
+    providerLifecycleActivity(emit,{provider:'seekai',model:target,state:'running',
+      phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+    try{
+      // Buffered JSON avoids treating a 200 HTML page or an empty SSE stream as a reply.
+      const upstream=await fetch(endpoint,{method:'POST',headers:{
+        Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'application/json'
+      },body:JSON.stringify({model:target,messages,stream:false,max_tokens:Math.min(outputBudgetFor(message),4096)}),
+      signal:AbortSignal.timeout(85000)});
+      status=upstream.status;
+      const raw=await upstream.text();
+      const parsed=seekaiExtractReply(raw,upstream.headers.get('content-type')||'');
+      if(upstream.ok&&parsed.text){
+        providerLifecycleActivity(emit,{provider:'seekai',model:target,state:'completed',phase:'connected',
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+        return {ok:true,response:new Response(parsed.text,{headers:passthroughHeaders(
+          upstream,'seekai',target,fallbackFrom,routedReason,i,keys.length
+        )}),finishState:{reason:parsed.reason||'stop'}};
+      }
+      if(parsed.kind==='html')last='SEEKAI returned an HTML page instead of an API response (HTTP '+status+').';
+      else if(status===401||status===403)last='SEEKAI rejected the API credential (HTTP '+status+').';
+      else if(status===402)last='SEEKAI account or model access is unavailable (HTTP 402).';
+      else if(status===429)last='SEEKAI rate limit reached (HTTP 429).';
+      else if(status===400||status===404||status===422)last='SEEKAI rejected model '+target+' or the request (HTTP '+status+'). Verify the model is in your live SEEKAI catalog.';
+      else if(parsed.errored)last='SEEKAI returned an API error (HTTP '+status+').';
+      else if(upstream.ok)last='SEEKAI returned HTTP 200 but no assistant text for '+target+'.';
+      else last='SEEKAI API returned HTTP '+status+'.';
+      // Retry only credential-specific or transient errors, never invent another model.
+      const retry=i<keys.length-1 && ([401,403,408,429,500,502,503,504].includes(status));
+      providerLifecycleActivity(emit,{provider:'seekai',model:target,state:retry?'warning':'error',
+        phase:retry?'retry':'failed',detail:last,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      if(!retry)break;
+    }catch(error){
+      status=502;last=error?.name==='TimeoutError'
+        ?'SEEKAI request timed out before returning assistant text.'
+        :'SEEKAI request failed due to a network or response error.';
+      const retry=i<keys.length-1;
+      providerLifecycleActivity(emit,{provider:'seekai',model:target,state:retry?'warning':'error',
+        phase:retry?'retry':'failed',detail:last,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+      if(!retry)break;
+    }
+  }
+  return {ok:false,status,error:last};
+}
+
 async function runOpenAICompatible(provider,{model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
@@ -3245,6 +3327,7 @@ async function runProvider(provider,args){
   if(provider==='aihorde')return runAIHorde(args);
   if(provider==='bailucode')return runBailucode(args);
   if(provider==='agentrouter')return runAgentRouter(args);
+  if(provider==='seekai')return runSeekAI(args);
   if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec','seekai'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
