@@ -2620,7 +2620,10 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
   if(!accounts.length) return {ok:false,status:500,error:'Cloudflare credentials are not configured.'};
   let target=PROVIDERS.cloudflare.models.includes(model)?model:PROVIDERS.cloudflare.defaultModel;
   const hasImage=Array.isArray(files)&&files.some(f=>f?.data&&f?.mimeType?.startsWith('image/'));
-  if(hasImage) target='@cf/google/gemma-4-26b-a4b-it';
+  if(hasImage&&target!=='@cf/google/gemma-4-26b-a4b-it'){
+    if(!autoFallback)return {ok:false,status:415,error:'The selected Cloudflare model does not support this image request. Fallback is OFF; choose a vision-capable model manually.'};
+    target='@cf/google/gemma-4-26b-a4b-it';
+  }
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   if(hasImage){
     const last=messages.pop();
@@ -3429,8 +3432,17 @@ async function processChat(body, emit) {
   if(customApiProfile){
     provider='custom-api';model=customApiProfile.model;
   }else{
-    if(!PROVIDERS[provider])provider='gemini';
-    model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
+    if(!PROVIDERS[provider]){
+      if(!autoFallback)return {ok:false,status:400,error:'The selected provider is not available; fallback is OFF.',provider,startedAt};
+      provider='gemini';
+    }
+    const selected=String(model||'').trim();
+    const allowed=PROVIDERS[provider].models.includes(selected);
+    const dynamic=selected&&(DYNAMIC_MODEL_PROVIDERS.has(provider)||provider==='aihorde');
+    if(selected&&!allowed&&!dynamic&&!autoFallback){
+      return {ok:false,status:400,error:'The selected model '+selected+' is not configured for '+providerLabel(provider)+'. Fallback is OFF; select a supported model manually.',provider,startedAt};
+    }
+    model=selected&&(allowed||dynamic)?selected:PROVIDERS[provider].defaultModel;
   }
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   if(files.length){
@@ -3462,7 +3474,10 @@ async function processChat(body, emit) {
       }
     }
   }
-  const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit);
+  // Analysis via another provider is itself model fallback: never do it when OFF.
+  const unsupportedMedia=!autoFallback&&!['gemini','cloudflare'].includes(provider)&&mediaAttachments(files).length>0;
+  if(unsupportedMedia)return {ok:false,status:415,error:'The selected model cannot analyze this media without another model. Fallback is OFF; select a compatible model or enable fallback.',provider,startedAt};
+  const mediaAnalysisContext=autoFallback?await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit):'';
   // Use the context-aware task text for tool routing too, not only for the first
   // Activity label. Short follow-ups such as "security?", "ganyan pa rin", or
   // "check it" must inherit the website/repository/topic from recent user context.
