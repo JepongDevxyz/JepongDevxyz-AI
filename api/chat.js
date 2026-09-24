@@ -3128,93 +3128,69 @@ function anthropicStreamToText(body,finishState={reason:''}){
   }));
 }
 
-async function runAgentRouter({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
-  const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('agentrouter');
+async function runAgentRouter({model,history,message,systemInstruction,emit,customApiKeys=null}){
+  const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:
+    parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY');
   if(!keys.length)return {ok:false,status:500,error:'AGENTROUTER_API_KEYS is not configured.'};
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  // Anthropic SDK appends /v1/messages to the configured root; don't
-  // impersonate another client or change the user's verified provider host.
-  const configuredBase=String(process.env.AGENTROUTER_BASE_URL||'').trim();
-  const base=(configuredBase||'https://agentrouter.org/').replace(/\/+$/,'')
-    .replace(/\/v1\/(?:messages|chat\/completions)$/i,'').replace(/\/v1$/i,'');
+  const base=String(process.env.AGENTROUTER_BRIDGE_URL||'https://agentrouter-isolated-production.up.railway.app').trim().replace(/\/+$/,'');
+  let endpoint;
+  try{
+    const u=new URL(base);
+    if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Invalid URL');
+    endpoint=u.origin+u.pathname.replace(/\/+$/,'')+'/chat';
+  }catch{return {ok:false,status:500,error:'AGENTROUTER_BRIDGE_URL must be an HTTPS URL.'};}
   const messages=[];
-  for(const h of history||[]){
-    const role=h.role==='bot'||h.role==='model'||h.role==='assistant'?'assistant':'user';
-    const content=String(h.text||h.content||'').trim();
-    if(content)messages.push({role,content});
+  for(const h of (Array.isArray(history)?history:[]).slice(-15)){
+    const role=['bot','model','assistant'].includes(h?.role)?'assistant':'user';
+    const content=String(h?.text||h?.content||'').trim();
+    if(content)messages.push({role,content:content.slice(0,8000)});
   }
-  if(String(message||'').trim())messages.push({role:'user',content:String(message).trim()});
+  if(String(message||'').trim())messages.push({role:'user',content:String(message).trim().slice(0,8000)});
   if(!messages.length)return {ok:false,status:400,error:'AgentRouter requires a text message.'};
-
-  let last='',status=502;
+  const body=JSON.stringify({model:target,messages,system:String(systemInstruction||'').slice(0,18000)});
+  const timestamp=String(Date.now()),encoder=new TextEncoder();
+  let last='Railway AgentRouter bridge did not return a model response.',status=502;
   for(let i=0;i<keys.length;i++){
-    providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+    providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',
+      attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
     try{
-      const sdkFetch=async(input,init)=>{
-        const response=await fetch(input,init);
-        const ct=String(response.headers.get('content-type')||'').toLowerCase();
-        if(ct.includes('text/html')){
-          const hostname=new URL(base).hostname;
-          console.warn('[AgentRouter gateway HTML]',{status:response.status,host:hostname,contentType:ct.slice(0,60),redirected:response.redirected,finalHost:response.url?new URL(response.url).hostname:hostname});
-          const error=new Error('AgentRouter gateway returned HTML rather than an API response.');
-          error.status=502;error.isGatewayHtml=true;error.upstreamStatus=response.status;
-          throw error;
-        }
-        return response;
-      };
-      const client=new Anthropic({baseURL:base,apiKey:null,authToken:keys[i],maxRetries:0,timeout:65000,fetch:sdkFetch});
-      const upstream=await client.messages.create({
-        model:target,
-        max_tokens:outputBudgetFor(message),
-        ...(String(systemInstruction||'').trim()?{system:String(systemInstruction)}:{}),
-        messages,
-        stream:true
-      });
-      const iterator=upstream[Symbol.asyncIterator](),encoder=new TextEncoder(),finishState={reason:''};
-      const output=new ReadableStream({
-        async pull(controller){
-          try{
-            while(true){
-              const item=await iterator.next();
-              if(item.done){if(!finishState.reason)finishState.reason='end_turn';controller.close();return;}
-              const event=item.value;
-              if(event?.type==='message_delta'&&event.delta?.stop_reason)finishState.reason=String(event.delta.stop_reason).toLowerCase();
-              const part=event?.type==='content_block_delta'&&event.delta?.type==='text_delta'
-                ?event.delta.text
-                :event?.type==='content_block_start'&&event.content_block?.type==='text'
-                  ?event.content_block.text:'';
-              if(part){controller.enqueue(encoder.encode(String(part)));return;}
-            }
-          }catch(error){
-            console.warn('[AgentRouter stream interrupted]',{status:Number(error?.status)||0});
-            controller.error(new Error('AgentRouter stream was interrupted upstream.'));
-          }
-        },
-        async cancel(){try{await iterator.return?.();}catch(_){}}
-      });
-      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-      return {ok:true,response:new Response(output,{status:200,headers:{
-        'Content-Type':'text/plain; charset=utf-8',
-        'Cache-Control':'no-cache, no-transform',
-        'X-AI-Provider':'agentrouter',
-        'X-AI-Model':target,
-        'X-AI-Key-Index':String(i+1),
-        'X-AI-Key-Count':String(keys.length)
-      }}),finishState};
+      const secret=await crypto.subtle.importKey('raw',encoder.encode(keys[i]),
+        {name:'HMAC',hash:'SHA-256'},false,['sign']);
+      const digest=new Uint8Array(await crypto.subtle.sign('HMAC',secret,encoder.encode(timestamp+'.'+body)));
+      const signature=Array.from(digest,byte=>byte.toString(16).padStart(2,'0')).join('');
+      const upstream=await fetch(endpoint,{method:'POST',headers:{
+        'content-type':'application/json','x-bridge-timestamp':timestamp,'x-bridge-signature':signature
+      },body,signal:AbortSignal.timeout(62000)});
+      let data={};
+      try{data=await upstream.json();}catch{}
+      const answer=typeof data?.response==='string'?data.response.trim():'';
+      if(upstream.ok&&answer){
+        providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',
+          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
+        return {ok:true,response:new Response(answer,{status:200,headers:{
+          'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-cache, no-transform',
+          'X-AI-Provider':'agentrouter','X-AI-Model':target,
+          'X-AI-Key-Index':String(Number(data.keyIndex)||1),
+          'X-AI-Key-Count':String(Number(data.keyCount)||keys.length)
+        }}),finishState:{reason:'end_turn'}};
+      }
+      status=502;
+      last=upstream.status===401
+        ?'Railway bridge authentication failed: AGENTROUTER_API_KEYS must match between Vercel and Railway.'
+        :typeof data?.error==='string'?data.error.slice(0,240):'AgentRouter CLI returned no model response.';
+      if(upstream.status===401&&i<keys.length-1)continue;
+      break;
     }catch(error){
-      status=Number(error?.status)||502;
-      const html=error?.isGatewayHtml===true;
-      last=html
-        ?'AgentRouter upstream returned HTML (HTTP '+(error.upstreamStatus||'unknown')+'). Check the gateway/network response; this does not establish whether the API key is valid.'
-        :status===401
-          ?'AgentRouter returned HTTP 401 for credential '+(i+1)+' of '+keys.length+'. Check AGENTROUTER_API_KEYS and the configured AgentRouter host.'
-          :'AgentRouter request failed (HTTP '+status+').';
-      const retry=!html&&isRetryableStatus(status)&&i<keys.length-1;
-      providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:retry?'warning':'error',phase:retry?'retry':'failed',detail:last,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-      if(!retry)break;
+      status=502;
+      last=error?.name==='TimeoutError'
+        ?'AgentRouter CLI timed out generating a response.'
+        :'Railway AgentRouter bridge is unreachable or returned an invalid response.';
+      break;
     }
   }
-  return {ok:false,status,error:last||'AgentRouter unavailable'};
+  providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'error',phase:'failed',detail:last});
+  return {ok:false,status,error:last};
 }
 
 async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
