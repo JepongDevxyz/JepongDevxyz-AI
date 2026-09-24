@@ -24,7 +24,7 @@ def main():
     helper_block = CHAT[helper_start:helper_start + 1400]
     for status in ('401', '402', '403', '429'):
         require(status in helper_block, f'quota/credential status {status} is missing')
-    for phrase in ('quota', 'credits?', 'rate limit'):
+    for phrase in ('quota', 'credits?', 'rate[ _-]?limit'):
         require(phrase in helper_block.lower(), f'exhaustion classifier missing phrase: {phrase}')
     require('const fallbackable=isFallbackableProviderFailure(first.status,first.error);' in CHAT,
             'emergency fallback does not use the quota/auth classifier')
