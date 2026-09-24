@@ -4021,6 +4021,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 </style>
     <link rel="stylesheet" href="/plugins.css">
     <link rel="stylesheet" href="/reference-shell.css">
+    <link rel="stylesheet" href="/account-appearance.css">
 </head>
 <body>
 
@@ -4328,6 +4329,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           </div>
         </header>
         <div class="settings-home-scroll">
+          <button type="button" class="jd-settings-profile-card" onclick="openJdEditProfile()" aria-label="Edit your profile">
+            <span class="jd-settings-profile-avatar" id="jdSettingsProfileAvatar">JD</span>
+            <span class="jd-settings-profile-copy"><strong id="jdSettingsProfileName">JepongDevxyz AI</strong><small id="jdSettingsProfileEmail">Manage your account and profile</small></span>
+            <i data-lucide="chevron-right"></i>
+          </button>
           <h3 class="settings-section-label">My AI</h3>
           <div class="settings-card-group">
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal(); setTimeout(openAccountModal,0)"><i data-lucide="user-round"></i><span><strong>Account</strong><small>Sign in and sync your data across devices</small></span><i data-lucide="chevron-right"></i></button>
@@ -4352,8 +4358,9 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
           <h3 class="settings-section-label">App</h3>
           <div class="settings-card-group">
-            <label class="settings-toggle-row"><i data-lucide="sun-moon"></i><span><strong>Light Mode</strong><small>Switch between dark and light appearance</small></span><label class="ios-switch"><input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)"><span class="ios-slider"></span></label></label>
-            <button class="settings-nav-row" type="button" onclick="cycleSettingsAccent()"><i data-lucide="palette"></i><span><strong>Accent</strong><small id="settingsAccentLabel">Default</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="openJdAppearance()" aria-label="Appearance and text size"><i data-lucide="palette"></i><span><strong>Appearance</strong><small id="jdAppearanceSettingsLabel">Theme and text size</small></span><i data-lucide="chevron-right"></i></button>
+            <label hidden><input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)"></label>
+            <span id="settingsAccentLabel" hidden>Default</span>
             <div class="settings-nav-row settings-static-row"><i data-lucide="chart-no-axes-column"></i><span><strong>Usage & Limits</strong><small><b id="geminiWordCount">0</b> words · <b id="geminiTokenCount">0</b> tokens · <b id="geminiQueryCount">0</b> queries</small></span></div>
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openMenuFromBrandIcon()"><i data-lucide="history"></i><span><strong>Chat History</strong><small>Return to saved conversations and exports</small></span><i data-lucide="chevron-right"></i></button>
           </div>
@@ -4361,6 +4368,52 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         </div>
         <div id="speechSettingsGroup" class="speech-settings-group disabled" hidden><button id="voiceSelectBtn" type="button"><span id="voiceSelectLabel">Default Voice</span></button><input id="speedSlider" type="range" min="0.7" max="1.3" step="0.05" value="1"><span id="speedValueLabel">1.0x</span></div>
         <span id="currentUsageTitle" hidden></span><span id="currentUsagePercent" hidden></span><span id="currentUsageResetText" hidden></span><span id="weeklyUsagePercent" hidden></span><span id="currentUsageBar" hidden></span><span id="weeklyUsageBar" hidden></span>
+      </section>
+    </div>
+
+    <!-- Video-reference profile editor; updates only the signed-in user's Supabase profile. -->
+    <div class="modal-overlay settings-home-overlay jd-profile-overlay" id="jdEditProfileModal" onclick="if(event.target===this)closeJdEditProfile()">
+      <section class="settings-home jd-profile-home" role="dialog" aria-modal="true" aria-labelledby="jdProfileTitle">
+        <header class="jd-panel-header">
+          <button class="jd-panel-back" type="button" onclick="closeJdEditProfile()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+          <h2 id="jdProfileTitle">Edit Profile</h2>
+          <button class="jd-panel-save" type="button" id="jdProfileSaveBtn" onclick="saveJdProfile()">Save</button>
+        </header>
+        <div class="jd-panel-scroll">
+          <div class="jd-profile-avatar-large" id="jdProfileAvatar" aria-hidden="true">JD</div>
+          <label class="jd-panel-label" for="jdProfileFullName">Name</label>
+          <input type="text" id="jdProfileFullName" class="jd-panel-input" maxlength="70" autocomplete="name" placeholder="Your name" oninput="syncJdProfileSaveButton()">
+          <h3 class="jd-panel-section">Account</h3>
+          <div class="jd-panel-info"><i data-lucide="mail"></i><span><strong>Email</strong><small id="jdProfileEmail">Signed-in email</small></span></div>
+          <p class="jd-panel-note">Your display name is synced to your own account. Your email address and login provider are managed by the identity provider.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Video-reference appearance: System, For You, Dark and Light, plus live text sizing. -->
+    <div class="modal-overlay settings-home-overlay jd-appearance-overlay" id="jdAppearanceModal" onclick="if(event.target===this)closeJdAppearance()">
+      <section class="settings-home jd-appearance-home" role="dialog" aria-modal="true" aria-labelledby="jdAppearanceTitle">
+        <header class="jd-panel-header">
+          <button class="jd-panel-back" type="button" onclick="closeJdAppearance()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+          <h2 id="jdAppearanceTitle">Appearance</h2><span></span>
+        </header>
+        <div class="jd-panel-scroll">
+          <div class="jd-appearance-choice-grid" role="group" aria-label="Color theme">
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="system" onclick="applyJdAppearance('system')"><i data-lucide="settings-2"></i><span>System</span></button>
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="foryou" onclick="applyJdAppearance('foryou')"><i data-lucide="heart"></i><span>For You</span></button>
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="dark" onclick="applyJdAppearance('dark')"><i data-lucide="moon"></i><span>Dark</span></button>
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="light" onclick="applyJdAppearance('light')"><i data-lucide="sun"></i><span>Light</span></button>
+          </div>
+          <h3 class="jd-panel-section">Text size</h3>
+          <div class="jd-text-preview">
+            <input type="range" id="jdTextSizeRange" min="85" max="120" value="100" step="5" aria-label="Chat text size" oninput="setJdChatTextSize(this.value)">
+            <div class="jd-text-preview-chat">
+              <div class="jd-text-preview-question">What can I build today?</div>
+              <p id="jdTextPreviewAnswer">You can create an app, explore ideas, or continue a conversation.</p>
+            </div>
+            <button class="jd-text-size-reset" type="button" id="jdTextSizeResetBtn" onclick="setJdChatTextSize(100)">Reset</button>
+          </div>
+        </div>
       </section>
     </div>
 
