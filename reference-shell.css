@@ -36,7 +36,7 @@ html,body{background:var(--bg-color)!important}
   background:var(--bg-color)!important;
   color:var(--text-main);
 }
-.app-container button,.app-container textarea,.app-container input{font:inherit}
+.jd-navigation button,.jd-welcome-quick-actions button{font-family:inherit}
 .app-container button{touch-action:manipulation}
 .app-container button:focus-visible,
 .modal-overlay button:focus-visible,
