@@ -51,8 +51,8 @@ function sseText(raw){
   }
   return {kind:'sse',text:output,stopped};
 }
-async function callProvider(body){
-  const list=keys();
+async function callProvider(body,{singleCredential=false}={}){
+  const list=singleCredential?keys().slice(0,1):keys();
   if(!list.length)return {status:503,result:{error:'AGENTROUTER_API_KEYS is not configured on Railway.'}};
   const messages=Array.isArray(body.messages)?body.messages.filter(x=>['user','assistant'].includes(x?.role)&&typeof x.content==='string')
     .slice(-20).map(x=>({role:x.role,content:x.content.slice(0,12000)})):[];
@@ -85,6 +85,18 @@ async function callProvider(body){
   }
   return last;
 }
+async function inspectConfigured(){
+  if(!keys().length)return;
+  try{
+    const response=await callProvider({messages:[{role:'user',content:'Reply exactly OK'}],max_tokens:32},{singleCredential:true});
+    // Log metadata only: never write API keys or response text.
+    console.log('[credential-probe]',JSON.stringify({status:response.status,kind:response.result?.kind||'unknown',
+      textGenerated:response.status===200&&typeof response.result?.response==='string'&&!!response.result.response.trim(),
+      upstreamStatus:Number(response.result?.upstreamStatus)||0}));
+  }catch(error){
+    console.warn('[credential-probe]',JSON.stringify({status:0,kind:'internal',errorType:error?.name||'Error'}));
+  }
+}
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url||'/', 'http://localhost').pathname;
   if(req.method==='GET'&&pathname==='/health'){
@@ -103,4 +115,4 @@ const server=http.createServer(async(req,res)=>{
   const result=await callProvider(body);
   return json(res,result.status,result.result);
 });
-server.listen(PORT,'0.0.0.0',()=>{console.log('[bridge] listening on '+PORT);void inspectNetwork();});
+server.listen(PORT,'0.0.0.0',()=>{console.log('[bridge] listening on '+PORT);void inspectNetwork();void inspectConfigured();});
