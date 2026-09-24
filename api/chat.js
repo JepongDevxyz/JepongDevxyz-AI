@@ -1690,13 +1690,19 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
   const media=mediaAttachments(files);
   if(!media.length)return '';
 
-  // Gemini and Cloudflare already receive the prepared images/media directly.
-  if(['gemini','cloudflare'].includes(selectedProvider)){
+  // Only models that receive the actual visual parts directly skip the
+  // vision bridge. Cloudflare's non-vision selections still require analysis.
+  // Input analysis is independent of the response-provider quota fallback.
+  if(selectedProvider==='gemini'||selectedProvider==='cloudflare-vision'){
     activity(emit,'attachment-media',`Prepared ${media.length} visual/media part${media.length===1?'':'s'} for ${providerLabel(selectedProvider)}`,'completed','file');
     return '';
   }
 
-  activity(emit,'attachment-media',`Analyzing ${media.length} visual/media part${media.length===1?'':'s'} for the selected text model`,'running','file');
+  const videoFrames=media.filter(f=>f.mediaRole==='video-frame').length;
+  activity(emit,'attachment-media',videoFrames
+    ?`Analyzing ${videoFrames} extracted video frame${videoFrames===1?'':'s'} for your request`
+    :`Analyzing ${media.length} attached image${media.length===1?'':'s'} for your request`,
+    'running',videoFrames?'file':'image');
 
   const system =
     'You are an attachment analysis tool. Be literal and evidence-grounded. ' +
@@ -1743,8 +1749,8 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
     }
   }catch(_){}
 
-  activity(emit,'attachment-media','Media analyzer unavailable — using extracted text/metadata only','warning','file');
-  return '\n\n[MEDIA ATTACHMENT NOTE]\nSome attached media could not be visually analyzed by an available multimodal provider. Do not invent its contents; use only extracted text/metadata that is present.';
+  activity(emit,'attachment-media','Could not visually analyze the attached media with configured vision providers','warning','file');
+  return null;
 }
 
 
@@ -1979,11 +1985,13 @@ function contextActivityPlan(message='', files=[]){
         : `Analyzing API/backend task: ${subject}`;
     kind='api';
   }else if(profile.kind==='web'){
-    label=profile.intent.edit
-      ? `Analyzing requested website/UI fix: ${subject}`
-      : profile.intent.test
-        ? `Checking website behavior: ${subject}`
-        : `Analyzing website task: ${subject}`;
+    label=profile.intent.create
+      ? `Reviewing requested app or website build: ${subject}`
+      : profile.intent.edit
+        ? `Reviewing requested website/UI fix: ${subject}`
+        : profile.intent.test
+          ? `Checking requested website behavior: ${subject}`
+          : `Reviewing website task: ${subject}`;
     kind='process';
   }else if(profile.kind==='research'){
     label=`Researching: ${subject}`;
@@ -3649,14 +3657,25 @@ async function processChat(body, emit) {
       }else if(imageParts){
         activity(emit,id,`Prepared uploaded image: ${printableName}`,'completed','image');
       }else{
-        activity(emit,id,`Could not read attached file: ${printableName}`,errors?'warning':'completed','file');
+        activity(emit,id,`No readable attachment content: ${printableName}`,'warning','file');
       }
     }
   }
   // Analysis via another provider is itself model fallback: never do it when OFF.
-  const unsupportedMedia=!autoFallback&&!['gemini','cloudflare'].includes(provider)&&mediaAttachments(files).length>0;
-  if(unsupportedMedia)return {ok:false,status:415,error:'The selected model cannot analyze this media without another model. Fallback is OFF; select a compatible model or enable fallback.',provider,startedAt};
-  const mediaAnalysisContext=autoFallback?await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit):'';
+  const visualParts=mediaAttachments(files);
+  const directVision=provider==='gemini' ||
+    (provider==='cloudflare'&&model==='@cf/google/gemma-4-26b-a4b-it');
+  const mediaAnalysisContext=visualParts.length
+    ? await analyzeMediaForNonVisionProvider(files,taskMessage,directVision
+        ?(provider==='gemini'?'gemini':'cloudflare-vision'):provider,emit)
+    : '';
+  if(visualParts.length&&!directVision&&mediaAnalysisContext===null){
+    return {ok:false,status:415,error:'The attached image/video frames could not be visually read by the configured vision analyzers. Your selected response model was not changed. Check the Gemini or Cloudflare vision configuration, or choose a vision-capable model.',provider,startedAt};
+  }
+  // Every non-vision response model receives the evidence-bearing analysis
+  // as text in its system context, never unsupported raw media parts.
+  // The selected response model and the Auto Provider Fallback switch are
+  // preserved exactly as configured by the user.
   // Use the context-aware task text for tool routing too, not only for the first
   // Activity label. Short follow-ups such as "security?", "ganyan pa rin", or
   // "check it" must inherit the website/repository/topic from recent user context.
