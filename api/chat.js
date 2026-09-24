@@ -1907,6 +1907,11 @@ function taskProfile(message='', files=[]){
   else if(/\b(api|endpoint|backend|webhook|server|database)\b/i.test(t))kind='backend';
   else if(/\b(html|css|javascript|typescript|frontend|website|web app|ui|responsive)\b/i.test(t)||hasCodeFiles)kind='web';
   else if(/\b(pdf|document|report|reviewer|essay|worksheet|notes|docx|pptx|spreadsheet)\b/i.test(t))kind='document';
+  // "Build a meme generator using this image" is a development request,
+  // not a request to generate a new picture. The activity title should
+  // reflect the actual user goal rather than an incidental media keyword.
+  else if(/\b(build|create|make|gawan|gumawa|implement|develop|ayusin|fix)\b/i.test(t) &&
+          /\b(app|application|generator|editor|website|webpage|ui|interface|project|code)\b/i.test(t))kind='web';
   else if(/\b(video|clip|recording)\b/i.test(t)||hasVideos)kind='video';
   else if(/\b(image|photo|picture|logo|design|larawan)\b/i.test(t)||hasImages)kind='image';
   else if(/\b(research|latest|current|today|news|compare|comparison|hanapin|maghanap)\b/i.test(t))kind='research';
