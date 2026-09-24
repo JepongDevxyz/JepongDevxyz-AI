@@ -8635,18 +8635,22 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function initialActivityForRequest(promptText='',files=[]){
+            // This first event is factual: the browser has received a task and
+            // already processed uploads. Actual analysis/build steps come only
+            // from real backend activity, not canned or timer-generated steps.
             const list=Array.isArray(files)?files:[];
-            const first=list.find(f=>f?.mediaRole!=='video-frame'&&f?.mediaRole!=='pdf-page')||list[0];
-            const name=String(first?.parentName||first?.name||first?.filename||'').slice(0,64);
+            const names=[...new Set(list.map(f=>f?.parentName||f?.name||f?.filename).filter(Boolean))];
+            const prompt=String(promptText||'').replace(/\s+/g,' ').trim();
+            const subject=prompt.length>95?prompt.slice(0,92).replace(/\s+\S*$/,'')+'…':prompt;
             const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame'||f?.kind==='video');
             const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/')&&f?.mediaRole!=='video-frame');
-            const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
-            if(hasVideo)return {label:`Reviewing request with uploaded video${name?`: ${name}`:''}`,kind:'file'};
-            if(hasImage)return {label:`Reviewing request with uploaded image${name?`: ${name}`:''}`,kind:'image'};
-            if(hasCode)return {label:`Reviewing request with attached code${name?`: ${name}`:''}`,kind:'file'};
-            if(list.length)return {label:`Reviewing request with ${new Set(list.map(f=>f.parentName||f.name||f.filename)).size} attached file(s)`,kind:'file'};
-            const subject=String(promptText||'').replace(/https?:\/\/\S+/gi,' ').replace(/\s+/g,' ').trim();
-            return {label:subject?`Reviewing your request: ${subject.slice(0,72)}`:'Reviewing your request',kind:'process'};
+            const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
+            if(names.length){
+                const type=hasVideo?'video':hasImage?'image':hasCode?'source file':'attachment';
+                return {label:`Prepared ${names.length} ${type}${names.length>1?'s':''} for your request`,
+                    kind:hasImage&&!hasVideo?'image':'file',detail:names.slice(0,2).join(', ').slice(0,120)};
+            }
+            return {label:subject?'Request received: '+subject:'Request received',kind:'process',detail:''};
         }
 
         function normalizeActivityEventForUI(evt = {}) {
@@ -8692,7 +8696,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 return {...e,label:label || 'Checking generated code',kind:'test'};
             }
             if(id==='fallback' && state==='running'){
-                return {...e,label:'Trying fallback provider',detail:sanitizeUiErrorMessage(e.detail||''),kind:'fallback'};
+                return {...e,label:label||'Checking configured fallback',
+                    detail:sanitizeUiErrorMessage(e.detail||''),kind:'fallback'};
             }
             return e;
         }
@@ -8943,6 +8948,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             },1000);
             chatBox.appendChild(indicator);
             const list=indicator.querySelector('#aiActivityList');
+            // Show the actual submitted task immediately, even before a slow
+            // API has sent its first SSE chunk. Once streaming starts the
+            // server updates the lead and adds only verified execution steps.
+            appendActivityEvent({id:'request-submitted',...initialActivityForRequest(promptText,files),state:'completed'});
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
             // The header itself says "Thinking". Do not insert a fake startup row:
