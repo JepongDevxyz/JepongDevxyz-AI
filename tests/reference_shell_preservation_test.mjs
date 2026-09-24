@@ -36,8 +36,23 @@ assert(html.includes("onclick=\"selectMode('imagen','Image Generator')\""));
 assert(html.includes("onclick=\"selectMode('coder','Expert Coder')\""));
 assert(html.includes('onclick="openMenuFromBrandIcon()"'));
 assert(html.includes('onclick="toggleJdPrivateMode()"'));
-assert(html.includes("onclick=\"jdQuickAction('imagen','Image Generator')\""));
-assert(html.includes("onclick=\"jdQuickAction('coder','Expert Coder')\""));
+assert(!html.includes('id="jdWelcomeActions"'),'Reference quick-action pills should be removed');
+assert(!html.includes('class="header-top"'),'Redundant visible brand header should be removed');
+assert(html.includes('<span id="brandTitleText" hidden>JepongDevxyz AI</span>'),
+ 'Retain hidden brand ID for legacy incognito title updates');
+assert(html.includes('class="sidebar drawer-left" id="sidebar"'),
+ 'Navigation drawer must open from left rather than a bottom sheet');
+assert(html.includes('id="jdSidebarAccountName"')&&html.includes('id="jdSidebarAvatar"'));
+assert(html.includes("onclick=\"closeAllDrawers();openLibrary()\""));
+assert(html.includes("onclick=\"closeAllDrawers();openPluginsFromComposer()\""));
+assert(html.includes("onclick=\"closeAllDrawers();openSettingsModal()\""));
+assert(html.includes("onclick=\"closeAllDrawers();clearCurrentChat()\""));
+assert(html.includes('function toggleJdSidebarConversations()'));
+assert(html.includes('function toggleJdHistoryActions(event,trigger)'));
+assert(html.includes('id="jdSidebarConversationsToggle"'));
+assert(html.includes('class="jd-history-actions-trigger"'));
+assert(html.includes('id="networkStatus"')&&html.includes('id="word-count"'));
+assert(html.includes('id="searchChatInput"')&&html.includes('id="chatHistoryList"'));
 assert(html.includes('aria-label="Toggle incognito chat"'));
 assert(html.includes('syncJdNavigation();'));
 assert(html.includes('id="userInput"')&&html.includes('id="mainActionBtn"'));
@@ -47,10 +62,10 @@ assert(backend.includes("if(autoFallback&&fallbackable){"),
  'Do not drop quota fallback while restyling the frontend');
 
 for(const marker of [
- '.jd-navigation','.jd-nav-tab.active','.jd-welcome-quick-actions',
+ '.jd-navigation','.jd-nav-tab.active','.jd-sidebar-account-row',
  '.chat-input-pill .pill-input','.chat-input-pill .pill-action-btn',
  '.welcome-screen .welcome-title','.sidebar','.msg.user.has-bubble',
- 'body.theme-light','@media(max-width:520px)','html.keyboard-open .jd-welcome-quick-actions'
+ 'body.theme-light','@media(max-width:520px)','#sidebar .jd-sidebar-footer-actions'
 ]){
  assert(css.includes(marker),'Responsive stylesheet missing: '+marker);
 }
@@ -83,4 +98,4 @@ for(const [selectedMode,expectedTab,privateMode] of [
  assert.deepEqual(tabs.filter(x=>x.active).map(x=>x.dataset.jdTab),[expectedTab]);
  assert.equal(priv.attrs['aria-pressed'],String(privateMode));
 }
-console.log('PASS: original six Lottie elements, title, chat/voice/pet/provider handlers, navigation switching, responsive dark/light shell, and emergency fallback preserved.');
+console.log('PASS: six original Lottie elements, title, chat/voice/pet/provider handlers, responsive sidebar layout, original shortcut actions, navigation, and emergency fallback preserved.');

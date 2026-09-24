@@ -4052,38 +4052,50 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeAllDrawers()"></div>
         
         <!-- BI-DIRECTIONAL SIDE & BOTTOM DRAWER -->
-        <div class="sidebar drawer-bottom" id="sidebar">
-            <div class="bottom-sheet-drag-handle" id="bottomSheetDragHandle"></div>
-            <div class="sidebar-header">
-                <h3>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-                    Chat History & Navigation
-                </h3>
-                <button class="close-sidebar-btn" onclick="closeAllDrawers()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        <div class="sidebar drawer-left" id="sidebar" aria-label="JepongDevxyz AI menu">
+            <div class="jd-sidebar-account-row">
+                <button class="jd-sidebar-account" type="button" onclick="closeAllDrawers();openAccountModal()" aria-label="Open account">
+                    <span class="jd-sidebar-avatar" id="jdSidebarAvatar" aria-hidden="true">JD</span>
+                    <span class="jd-sidebar-account-name" id="jdSidebarAccountName">JepongDevxyz AI</span>
                 </button>
+                <button class="jd-sidebar-dismiss" type="button" onclick="closeAllDrawers()" aria-label="Close menu"><i data-lucide="chevrons-right"></i></button>
             </div>
-            <button class="new-chat-btn" onclick="createNewChat()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                New Conversation
-            </button>
-            
 
-            <div class="search-bar-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" class="search-chat-input" id="searchChatInput" placeholder="Search saved conversations..." oninput="filterChatHistory()">
+            <div class="jd-sidebar-menu-actions" aria-label="Quick navigation">
+                <button class="jd-sidebar-menu-item" type="button" onclick="createNewChat()"><i data-lucide="square-pen"></i><span>New conversation</span></button>
+                <button class="jd-sidebar-menu-item" type="button" onclick="closeAllDrawers();openLibrary()"><i data-lucide="archive"></i><span>Library</span></button>
+                <button class="jd-sidebar-menu-item" type="button" onclick="closeAllDrawers();openPluginsFromComposer()"><i data-lucide="blocks"></i><span>Plugins</span></button>
+                <button class="jd-sidebar-menu-item" type="button" onclick="closeAllDrawers();clearCurrentChat()"><i data-lucide="eraser"></i><span>Clear current chat</span></button>
             </div>
-            
-            <div class="chat-history-list" id="chatHistoryList"></div>
+
+            <section class="jd-sidebar-conversation-section" aria-label="Saved conversations">
+                <button class="jd-sidebar-section-heading" id="jdSidebarConversationsToggle" type="button" onclick="toggleJdSidebarConversations()" aria-expanded="true" aria-controls="chatHistoryList">
+                    <span>Conversations</span><i data-lucide="chevron-up"></i>
+                </button>
+                <div class="chat-history-list" id="chatHistoryList"></div>
+            </section>
 
             <div id="sidebar-footer-settings">
-              <span class="sidebar-word-pill" title="Saved conversation words"><span>Words</span><b id="word-count">0</b></span>
-              <button onclick="openSettingsModal()" title="Settings" style="background: none; border: none; cursor: pointer; padding: 6px; display: flex; align-items: center; border-radius: 999px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-main);">
-                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.72l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
+                <div class="jd-sidebar-status-row">
+                    <div class="network-status" id="networkStatus" onclick="measureNetworkPing()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();measureNetworkPing()}" title="Refresh ping">
+                        <div class="signal-bars">
+                            <div class="bar bar-1 active" id="bar1"></div>
+                            <div class="bar bar-2 active" id="bar2"></div>
+                            <div class="bar bar-3 active" id="bar3"></div>
+                            <div class="bar bar-4 active" id="bar4"></div>
+                        </div>
+                        <span id="pingText">Checking...</span>
+                    </div>
+                    <span class="sidebar-word-pill" title="Saved conversation words"><span>Words</span><b id="word-count">0</b></span>
+                </div>
+                <div class="jd-sidebar-footer-actions">
+                    <div class="search-bar-wrap">
+                        <i data-lucide="search" aria-hidden="true"></i>
+                        <input type="search" class="search-chat-input" id="searchChatInput" placeholder="Search" aria-label="Search saved conversations" oninput="filterChatHistory()">
+                    </div>
+                    <button class="jd-sidebar-footer-btn" type="button" onclick="closeAllDrawers();openSettingsModal()" aria-label="Settings" title="Settings"><i data-lucide="settings"></i></button>
+                    <button class="jd-sidebar-footer-btn" type="button" onclick="createNewChat()" aria-label="New conversation" title="New conversation"><i data-lucide="square-pen"></i></button>
+                </div>
             </div>
         </div>
 
@@ -4110,24 +4122,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                     <i data-lucide="hat-glasses"></i>
                 </button>
             </nav>
-            <div class="header-top">
-                <div class="brand">
-                    <button class="brand-icon" onclick="openMenuFromBrandIcon()">✦</button>
-                    <div class="brand-title" id="brandTitleText">JepongDevxyz AI</div>
-                </div>
-                <div class="header-tools-group">
-                    <div class="network-status" id="networkStatus" onclick="measureNetworkPing()" title="Click to refresh ping">
-                        <div class="signal-bars">
-                            <div class="bar bar-1 active" id="bar1"></div>
-                            <div class="bar bar-2 active" id="bar2"></div>
-                            <div class="bar bar-3 active" id="bar3"></div>
-                            <div class="bar bar-4 active" id="bar4"></div>
-                        </div>
-                        <span id="pingText">Checking...</span>
-                    </div>
-<button class="header-btn clear-btn" onclick="clearCurrentChat()">Clear</button>
-                </div>
-            </div>
+            <span id="brandTitleText" hidden>JepongDevxyz AI</span>
 
             <div class="chat-search-bar" id="chatSearchBar">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -4176,10 +4171,6 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         </div>
 
         <div class="input-container" id="inputContainer">
-            <div class="jd-welcome-quick-actions" id="jdWelcomeActions" aria-label="Quick actions">
-                <button class="jd-quick-action primary" type="button" onclick="jdQuickAction('imagen','Image Generator')"><i data-lucide="sparkles"></i><span>Create an image</span></button>
-                <button class="jd-quick-action" type="button" onclick="jdQuickAction('coder','Expert Coder')"><i data-lucide="hammer"></i><span>Build apps &amp; sites</span></button>
-            </div>
             <div class="prompt-suggestions" id="promptSuggestions"></div>
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
@@ -5010,6 +5001,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const label=document.getElementById('cloudUserLabel'); if(label)label.textContent=cloudUser?.email||cloudUser?.user_metadata?.full_name||'';
             const status=document.getElementById('cloudAccountStatus'); if(status)status.textContent=signed?'Cloud sync is active for this account.':'Sign in to sync Memory, Library, settings and chats across devices.';
             const badge=document.getElementById('psMemoryBadge'); if(badge)badge.textContent=signed?(personalizationSettings.memoryEnabled?'Cloud memory on':'Cloud synced'):(personalizationSettings.memoryEnabled?'Memory on':'Local only');
+            const userName=cloudUser?.user_metadata?.full_name||cloudUser?.user_metadata?.name||cloudUser?.email||'JepongDevxyz AI';
+            const menuName=document.getElementById('jdSidebarAccountName');
+            const menuAvatar=document.getElementById('jdSidebarAvatar');
+            if(menuName)menuName.textContent=userName;
+            if(menuAvatar)menuAvatar.textContent=signed?String(userName).trim().charAt(0).toUpperCase()||'JD':'JD';
         }
         function openAccountModal(){document.getElementById('cloudAccountModal')?.classList.add('open');renderCloudAccount();}
         function resetCloudEmailFlow(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='block';if(form)form.style.display='none';if(otp)otp.style.display='none';document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');}
@@ -9127,6 +9123,25 @@ ${m.text || ''}
             document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
+        function toggleJdSidebarConversations(){
+            const section=document.querySelector('.jd-sidebar-conversation-section');
+            const toggle=document.getElementById('jdSidebarConversationsToggle');
+            if(!section||!toggle)return;
+            const collapsed=section.classList.toggle('collapsed');
+            toggle.setAttribute('aria-expanded',String(!collapsed));
+        }
+        function toggleJdHistoryActions(event,trigger){
+            event?.stopPropagation?.();
+            const deck=trigger?.nextElementSibling;
+            if(!deck)return;
+            const opening=!deck.classList.contains('open');
+            document.querySelectorAll('#chatHistoryList .history-actions-deck.open').forEach(item=>{
+                item.classList.remove('open');
+                item.previousElementSibling?.setAttribute('aria-expanded','false');
+            });
+            deck.classList.toggle('open',opening);
+            trigger.setAttribute('aria-expanded',String(opening));
+        }
         function renderSidebarHistory(filter = '') {
             if (isIncognito) return;
             const list = document.getElementById('chatHistoryList');
@@ -9156,6 +9171,7 @@ ${m.text || ''}
 
                 item.innerHTML = `
                     <span class="history-item-text" title="${escapeHTML(session.title)}">${escapeHTML(session.title)}</span>
+                    <button class="jd-history-actions-trigger" type="button" onclick="toggleJdHistoryActions(event,this)" aria-label="Conversation options" aria-expanded="false"><i data-lucide="ellipsis-vertical"></i></button>
                     <div class="history-actions-deck">
                         <button class="hist-action-btn pin-btn ${isPinned ? 'pinned' : ''}" onclick="togglePinSession('${session.id}', event)" title="${isPinned ? 'Unpin' : 'Pin'} Chat">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
@@ -9178,6 +9194,9 @@ ${m.text || ''}
                 `;
                 list.appendChild(item);
             });
+            // Conversation option icons are injected dynamically on every
+            // history update; hydrate them after the rows exist.
+            refreshLucideIcons(list);
         }
 
         function filterChatHistory() {
@@ -10399,7 +10418,7 @@ ${m.text || ''}
         }
 
         /* BI-DIRECTIONAL EDGE-SWIPE & CLICK DRAWER */
-        let activeDrawerMode = 'bottom';
+        let activeDrawerMode = 'left';
         let isDrawerOpen = false;
 
         function closeAllDrawers() {
@@ -10412,8 +10431,8 @@ ${m.text || ''}
 
         function openMenuFromBrandIcon() {
             closeTransientSurfaces('sidebar');
-            activeDrawerMode = 'bottom';
-            sidebar.className = 'sidebar drawer-bottom open';
+            activeDrawerMode = 'left';
+            sidebar.className = 'sidebar drawer-left open';
             sidebarOverlay.classList.add('open');
             isDrawerOpen = true;
             renderSidebarHistory();
@@ -10483,7 +10502,7 @@ ${m.text || ''}
                 if (!isDrawerOpen && diffX > 0) {
                     activeDrawerMode = 'left';
                     sidebar.className = 'sidebar drawer-left';
-                    const maxW = Math.min(window.innerWidth * 0.85, 300);
+                    const maxW = Math.min(window.innerWidth - 32, 410);
                     const translate = Math.min(0, -maxW + diffX);
                     sidebar.style.transition = 'none';
                     sidebar.style.transform = `translateX(${translate}px)`;
@@ -10493,7 +10512,7 @@ ${m.text || ''}
                 if (!isDrawerOpen && diffX < 0) {
                     activeDrawerMode = 'right';
                     sidebar.className = 'sidebar drawer-right';
-                    const maxW = Math.min(window.innerWidth * 0.85, 300);
+                    const maxW = Math.min(window.innerWidth - 32, 410);
                     const translate = Math.max(0, maxW + diffX);
                     sidebar.style.transition = 'none';
                     sidebar.style.transform = `translateX(${translate}px)`;
