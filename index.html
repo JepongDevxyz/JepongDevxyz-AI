@@ -8804,15 +8804,15 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             else hideSpeechMiniPlayer();
         }
 
-        function completeRunningActivityRows(exceptId='') {
+        function completeRunningActivityRows(exceptId='',finalState='completed') {
             const list=document.getElementById('aiActivityList');
             if(!list)return;
             [...list.querySelectorAll('.ai-activity-row.running')].forEach(row=>{
                 if(exceptId && row.dataset.activityId===exceptId)return;
                 row.classList.remove('running','ai-activity-current');
-                row.classList.add('completed');
+                row.classList.add(finalState);
                 const icon=row.querySelector('.ai-activity-icon');
-                if(icon)icon.innerHTML=activityIconMarkup('process','completed');
+                if(icon)icon.innerHTML=activityIconMarkup(finalState==='completed'?'process':'provider',finalState);
             });
             refreshLucideIcons(list);
         }
@@ -8996,10 +8996,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             if(normalized.state==='running'&&row!==list.lastElementChild) list.appendChild(row);
             row.dataset.activityId=id;
+            row.dataset.activityKind=String(normalized.kind||'process');
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
-            if(state==='running') completeRunningActivityRows(id);
+            // A new operation does NOT prove the previous one completed.
+            // Only a matching backend completion event may mark it completed.
+            if(state==='running'){
+                list.querySelectorAll('.ai-activity-row.ai-activity-current').forEach(previous=>{
+                    if(previous!==row)previous.classList.remove('ai-activity-current');
+                });
+            }
             row.className = `ai-activity-row ${state}`;
             row.style.setProperty('display','grid','important');
             row.style.setProperty('visibility','visible','important');
@@ -9062,7 +9069,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const icon = card.querySelector('#aiActivitySummaryIcon');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
             const worked=`Worked for ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s`;
-            completeRunningActivityRows();
+            completeRunningActivityRows('',success?'completed':'warning');
             const responseRow=list?.querySelector('[data-activity-id="response"]');
             if(responseRow && success){
                 responseRow.className='ai-activity-row completed';
