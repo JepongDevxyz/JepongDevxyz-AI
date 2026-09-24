@@ -7554,6 +7554,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             renderPersonalizationSettings();
             renderPetCreatorReferenceOptions();
             syncPersonalizationFeatureToggles();
+            syncStrictRoutingControls();
 
             updateUsageUI();
             const accentLabel=document.getElementById('settingsAccentLabel');
