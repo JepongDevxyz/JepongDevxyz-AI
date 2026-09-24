@@ -67,9 +67,16 @@ def main():
     require('no user matching sent api key' in classifier, 'AI Horde rejected-key text is not fallbackable')
     require('summarizeAIHordeError' in CHAT, 'AI Horde user-facing error sanitizer missing')
 
-    # Routing UI contract from the user's screenshot must remain unchanged.
-    require('OFF = test only the selected model. ON = allow model/provider fallback.' in INDEX,
-            'Auto Provider Fallback UI semantics changed')
+    # Strict OFF locks the chosen provider/model/credential; ON alone permits
+    # model/provider/key/anonymous fallback. UI and backend must agree.
+    require('OFF = one selected provider/model/API key only; no anonymous route. ON = allow key/model/provider fallback.' in INDEX,
+            'Auto Provider Fallback UI must explain strict OFF behavior')
+    require('if(!autoFallback)candidates=candidates.slice(0,1);' in CHAT,
+            'AI Horde must not try another model when fallback is disabled')
+    require('autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys' in CHAT,
+            'AI Horde anonymous route must require enabled fallback')
+    require('smartRouter = autoFallback && body.smartRouter === true;' in CHAT,
+            'Smart Router must not override the selected model when fallback is disabled')
 
     print('public fallback contract checks passed')
 
