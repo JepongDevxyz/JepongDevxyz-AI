@@ -4305,8 +4305,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             <div class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="ios-switch" aria-label="Live Web Search"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="ios-slider"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="ios-switch" aria-label="Response Speech"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="ios-slider"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small>Notify when an AI reply finishes</small></span><label class="ios-switch" aria-label="Reply Notifications"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)"><span class="ios-slider"></span></label></div>
-            <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>OFF = test only the selected model. ON = allow model/provider fallback.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
-            <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Allow automatic model selection</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>OFF = one selected provider/model/API key only; no anonymous route. ON = allow key/model/provider fallback.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Available only when Auto Provider Fallback is ON</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
             <button class="settings-nav-row" type="button" onclick="openProviderKeysSettings()"><i data-lucide="key-round"></i><span><strong>Custom API Keys</strong><small>Add multiple APIs with automatic or manual setup</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="window.JDPlugins?.open()"><i data-lucide="blocks"></i><span><strong>Plugins</strong><small>GitHub repositories and Superpowers coding workflow</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openPresetsModal()"><i data-lucide="notebook-pen"></i><span><strong>Prompt Presets</strong><small>Manage reusable prompts</small></span><i data-lucide="chevron-right"></i></button>
@@ -4879,6 +4879,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         }
         let autoProviderFallback = readLocalJSON('jepong_auto_fallback', false) === true;
         let smartModelRouter = readLocalJSON('jepong_smart_router', false);
+        if(!autoProviderFallback){smartModelRouter=false;localStorage.setItem('jepong_smart_router','false');}
         let pendingStudyTool = null;
         let lastProviderMeta = readLocalJSON('jepong_provider_meta', {});
         let currentSelectedMode = localStorage.getItem('jepong_last_mode') || 'general';
@@ -9407,13 +9408,30 @@ ${m.text || ''}
         }
 
         /* 5. EXECUTE AI CALL */
+        function syncStrictRoutingControls(){
+            const fallback=document.getElementById('autoFallbackToggle');
+            const router=document.getElementById('smartRouterToggle');
+            if(fallback)fallback.checked=autoProviderFallback;
+            if(router){
+                router.disabled=!autoProviderFallback;
+                router.checked=autoProviderFallback&&smartModelRouter===true;
+                router.title=autoProviderFallback?'Optional automatic model routing':'Enable Auto Provider Fallback to use Smart Model Router';
+            }
+        }
         function toggleAutoFallback(v){
             autoProviderFallback = (v === true);
             localStorage.setItem('jepong_auto_fallback',JSON.stringify(autoProviderFallback));
-            const toggle=document.getElementById('autoFallbackToggle');
-            if(toggle)toggle.checked=autoProviderFallback;
+            if(!autoProviderFallback){
+                smartModelRouter=false;
+                localStorage.setItem('jepong_smart_router','false');
+            }
+            syncStrictRoutingControls();
         }
-        function toggleSmartRouter(v){ smartModelRouter=!!v; localStorage.setItem('jepong_smart_router',JSON.stringify(smartModelRouter)); }
+        function toggleSmartRouter(v){
+            smartModelRouter=autoProviderFallback&&v===true;
+            localStorage.setItem('jepong_smart_router',JSON.stringify(smartModelRouter));
+            syncStrictRoutingControls();
+        }
         function closeCodeFullscreen(){ document.getElementById('fullscreenCodeOverlay')?.classList.remove('open'); }
         function setProviderMeta(provider,patch){ lastProviderMeta[provider]={...(lastProviderMeta[provider]||{}),...patch,updatedAt:Date.now()}; safeSetLocalStorage('jepong_provider_meta',JSON.stringify(lastProviderMeta),true); renderProviderStatus(); renderUsageSyncUI(); }
         function renderProviderStatus(){ const grid=document.getElementById('providerStatusGrid'); if(!grid)return; grid.innerHTML=PROVIDER_ORDER.filter(p=>p!=='image').map(p=>{const m=lastProviderMeta[p]||{};let state=m.rateLimited?'limited':(m.busy?'busy':(m.configured===false?'not-configured':'ready'));let text=state==='limited'?'Rate limit reached':state==='busy'?'Busy / retrying':state==='not-configured'?'Key not configured':(m.remainingRequests!=null?`${m.remainingRequests} requests left`:'Ready');return `<div class="provider-status-card ${state}"><div class="provider-status-name">${providerLabel(p)}</div><div class="provider-status-state">${text}</div></div>`}).join(''); }
