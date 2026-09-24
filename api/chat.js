@@ -3013,18 +3013,23 @@ function scoreAIHordeModel(item,message='',sourceModel=''){
   const coding=/\b(code|coding|debug|javascript|html|css|python|node|api|typescript|php|java|react|sql|github|vercel|backend|frontend)\b/i.test(prompt);
   const reasoning=/\b(reason|reasoning|logic|strategy|plan|complex|architecture|analysis|research|compare|math)\b/i.test(prompt);
   const size=numericModelSizeHint(name);
-  let score=(Number(item?.workers)||0)*25 + Math.min(Number(item?.performance)||0,250)*0.4;
-  score-=Math.min(Number(item?.eta)||0,1800)*0.05;
-  score-=Math.min(Number(item?.queued)||0,500000)/25000;
-  if(coding && /(qwen|coder|code|deepseek|nemotron|llama)/i.test(lower)) score+=80;
-  if(reasoning && /(qwen|gemma|nemotron|llama|anubis|behemoth)/i.test(lower)) score+=55;
-  if(size>=70) score+=reasoning?75:30;
-  else if(size>=24) score+=45;
-  else if(size>=7) score+=20;
-  else if(size>0) score+=4;
+  const workers=Math.max(0,Number(item?.workers)||0);
+  const eta=Math.max(0,Number(item?.eta)||0); // AI Horde publishes queue-clear ETA in seconds.
+  const queued=Math.max(0,Number(item?.queued)||0);
+  const throughput=Math.max(0,Number(item?.performance)||0);
+  // Prior formula rewarded worker count 25x more than ETA; it selected huge queues.
+  // Prefer workers already available, lower queue ETA, and adequate model capability.
+  let score=Math.log2(workers+1)*38 + Math.min(throughput,250)*0.34;
+  score-=Math.min(eta,240)*4.2;
+  score-=Math.min(queued/Math.max(1,workers),150)*1.6;
+  if(coding && /(qwen|coder|code|deepseek|nemotron|llama)/i.test(lower))score+=48;
+  if(reasoning && /(qwen|gemma|nemotron|llama|anubis|behemoth)/i.test(lower))score+=40;
+  if(size>=70)score+=coding||reasoning?40:12;
+  else if(size>=24)score+=28;
+  else if(size>=7)score+=18;
+  else if(size>0)score+=4;
   return score;
 }
-
 function summarizeAIHordeError(status, data, raw=''){
   const combined=`${data?.error?.message||''} ${data?.message||''} ${raw||''}`.replace(/\s+/g,' ').trim();
   const lower=combined.toLowerCase();
@@ -3049,13 +3054,21 @@ async function resolveAIHordeModels(requested='auto',message='',signal){
     const exact=models.find(x=>x.name===requested);
     return exact?[exact]:[];
   }
-  // Auto must not pin the whole request to one worker-backed model. Horde workers
-  // change continuously, so keep several currently active candidates and fail over
-  // inside AI Horde without crossing to another provider.
-  return [...models]
-    .filter(x=>(Number(x.workers)||0)>0)
-    .sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested))
-    .slice(0,5);
+  // Auto selects active models using real queue ETA/worker data, not hard-coded IDs.
+  // Avoid long queues when at least one model has a short published ETA; retain
+  // a small fallback shortlist inside AI Horde for transient worker failures.
+  const active=models.filter(x=>(Number(x.workers)||0)>0);
+  const shortQueue=active.filter(x=>(Number(x.eta)||0)<=35);
+  const ranked=[...(shortQueue.length?shortQueue:active)]
+    .sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested));
+  // Keep a slower candidate only if there are fewer than three low-queue models.
+  if(shortQueue.length){
+    for(const item of active.sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested))){
+      if(ranked.length>=3)break;
+      if(!ranked.some(x=>x.name===item.name))ranked.push(item);
+    }
+  }
+  return ranked.slice(0,3);
 }
 
 function isAIHordeGenerationFailure(status,error=''){
@@ -3069,13 +3082,17 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
   const configuredKeys=anonymous?[]:shuffle(getProviderKeys('aihorde')).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
   const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:[...configuredKeys,AIHORDE_ANONYMOUS_KEY];
   const runtimeProvider=anonymous?'aihorde-public':'aihorde';
+  const autoMode=!model||model==='auto';
+  // A bounded overall budget avoids 70-80 second waits per anonymous/key attempt.
+  // Explicitly chosen models keep the existing timeouts.
+  const autoDeadline=autoMode?Date.now()+56000:Infinity;
 
   const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
   if(hasImage) return {ok:false,status:415,error:'AI Horde text route does not directly process image attachments.'};
 
   let candidates;
   try{
-    candidates=await resolveAIHordeModels(model||'auto',message,AbortSignal.timeout(12000));
+    candidates=await resolveAIHordeModels(model||'auto',message,AbortSignal.timeout(autoMode?7000:12000));
   }catch(e){
     return {ok:false,status:503,error:e?.message||'AI Horde model list is unavailable.'};
   }
@@ -3087,6 +3104,13 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
   for(let m=0;m<candidates.length;m++){
     const resolved=candidates[m];
     for(let i=0;i<keys.length;i++){
+      const remaining=autoDeadline-Date.now();
+      if(autoMode&&remaining<3000){
+        return {ok:false,status:504,error:'AI Horde Auto reached its quick-response time budget. No worker finished in time; retry shortly.'};
+      }
+      const attemptMs=autoMode
+        ?Math.max(3000,Math.min(26000,remaining-1500))
+        :null;
       const isAnonymousKey=keys[i]===AIHORDE_ANONYMOUS_KEY;
       providerLifecycleActivity(emit,{
         provider:runtimeProvider,model:resolved.name,state:'running',phase:'connecting',
@@ -3106,11 +3130,14 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
             model:resolved.name,
             stream:false,
             messages,
-            max_tokens:Math.min(outputBudgetFor(message),isAnonymousKey?768:2048),
+            max_tokens:autoMode
+              ?Math.min(outputBudgetFor(message),isAnonymousKey?640:1024,
+                String(message||'').length<=150&&!/\b(code|program|source|implementation|essay|explain in detail|detalyado|mahaba)\b/i.test(String(message||''))?320:1024)
+              :Math.min(outputBudgetFor(message),isAnonymousKey?768:2048),
             temperature:temperatureFor(message,files),
-            timeout:isAnonymousKey?55:65
+            timeout:autoMode?Math.max(3,Math.floor(attemptMs/1000)-1):isAnonymousKey?55:65
           }),
-          signal:AbortSignal.timeout(isAnonymousKey?70000:80000)
+          signal:AbortSignal.timeout(autoMode?attemptMs:isAnonymousKey?70000:80000)
         });
         status=res.status;
         const raw=await res.text();
@@ -3130,7 +3157,7 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
 
         last=summarizeAIHordeError(status,data,raw);
         const credentialFailure=isAIHordeCredentialFailure(status,last);
-        const generationFailure=isAIHordeGenerationFailure(status,last);
+        const generationFailure=(res.ok&&!String(text||'').trim())||isAIHordeGenerationFailure(status,last);
         const hasNextKey=i<keys.length-1;
         const hasNextModel=m<candidates.length-1;
 
@@ -3173,6 +3200,9 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
         status=503;last=e?.message||String(e);
         const hasNextKey=i<keys.length-1;
         const hasNextModel=m<candidates.length-1;
+        if(autoMode&&autoDeadline-Date.now()<3000){
+          return {ok:false,status:504,error:'AI Horde Auto reached its quick-response time budget. No worker finished in time; retry shortly.'};
+        }
         if(hasNextKey) continue;
         if(hasNextModel) break;
         return {ok:false,status,error:'AI Horde timed out before a generation completed. Please retry shortly.'};
