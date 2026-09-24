@@ -11,14 +11,25 @@ function getPart(start,end){
 }
 assert(html.includes('<link rel="stylesheet" href="/account-appearance.css">'));
 for(const [provider,logo] of [
- ['google','jd-brand-mark'],['twitter','jd-brand-mark'],['apple','jd-brand-mark'],
- ['github','data-lucide="github"'],['facebook','data-lucide="facebook"']
+ ['google','jd-brand-mark'],['facebook','data-lucide="facebook"'],
+ ['github','data-lucide="github"']
 ]){
  assert(html.includes("onclick=\"cloudOAuth('"+provider+"')\""),
   'Brand provider must connect to real existing auth: '+provider);
  assert(html.includes(logo),'Missing provider icon: '+provider);
 }
 assert(html.includes('onclick="showCloudEmailForm()"'));
+const options=html.slice(html.indexOf('<div id="jdAuthProviderList"'),html.indexOf('<p class="jd-auth-last"'));
+const ordered=["cloudOAuth('google')","cloudOAuth('facebook')","cloudOAuth('github')",'showCloudEmailForm()'];
+let previous=-1;
+for(const item of ordered){
+ const position=options.indexOf(item);
+ assert(position>previous,'Login providers must appear in order: Google, Facebook, GitHub, Email');
+ previous=position;
+}
+assert(!options.includes("cloudOAuth('twitter')"));
+assert(!options.includes("cloudOAuth('apple')"));
+assert(!options.includes('jd-auth-secondary-provider'),'Facebook is a primary login, not hidden under a secondary option');
 for(const id of ['cloudAccountModal','cloudSignedOut','cloudSignedIn','cloudAccountStatus','cloudEmailForm',
  'cloudEmail','cloudOtpRow','cloudOtpBox','cloudVerifyOtpBtn','cloudResendOtpBtn','cloudUserLabel',
  'jdAuthTitle','jdAuthLastProvider','jdEditProfileModal','jdProfileFullName','jdAppearanceModal',
