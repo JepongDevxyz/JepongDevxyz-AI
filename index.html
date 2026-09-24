@@ -8659,18 +8659,24 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Transport plumbing is intentionally hidden from the user-facing activity list.
             if(id==='stream-open'||id==='client-start')return null;
 
-            // Never show timed pseudo-work, internal transport, provider internals,
-            // or generic response plumbing as Activity rows.
+            // Hide transport-only messages, but NEVER discard an actual
+            // provider connection, model generation, selected Smart Router,
+            // or completed high-effort preflight. Their absence left the
+            // activity view with only "Thinking", despite real server work.
             if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
-            if (['prepare','response-prep','response-generation','task-next','quality-orchestrator','router'].includes(id)) return null;
-            if (id==='generation') return {...e,id:'thinking',label:'Thinking',kind:'thinking'};
+            if (['prepare','response-prep','response-generation','task-next'].includes(id)) return null;
             if (kind==='provider') {
-                // Only surface provider failures/fallback problems; normal connect/ready
-                // states are implementation details and make the timeline noisy.
-                if(state==='warning'||state==='error'){
-                    return {...e,label:sanitizeUiErrorMessage(label||'Provider issue'),detail:sanitizeUiErrorMessage(e.detail||''),kind:'provider'};
-                }
-                return null;
+                const safeLabel=(state==='warning'||state==='error')
+                    ?sanitizeUiErrorMessage(label||'Provider issue')
+                    :String(label||'Connecting to the selected model');
+                // Do not display credential identifiers, provider raw errors,
+                // or proprietary model internals in the progress UI.
+                return {...e,label:safeLabel,detail:state==='warning'||state==='error'
+                    ?sanitizeUiErrorMessage(e.detail||'')
+                    :String(e.detail||'').replace(/credential\\s+\\d+\\s*\\/\\s*\\d+/gi,'configured API key').slice(0,110)};
+            }
+            if(id==='generation'){
+                return {...e,label:label||'Generating response',kind:'generate'};
             }
 
             // Only real tool/context operations receive ChatGPT-style wording.
@@ -8940,16 +8946,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // detailed rows must come only from real backend/tool activity.
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
-            // Keep the newly-created Activity status in the visible conversation viewport.
-            // The previous no-scroll behavior left it below large image/video attachments,
-            // which made Activity look missing on mobile even though it existed in the DOM.
+            // Bring the LIVE activity header into view once. Do not keep
+            // jumping the screen as later tool events arrive or the user scrolls
+            // upward to review their own prompt.
             requestAnimationFrame(() => {
-                if (!indicator.isConnected) return;
-                try {
-                    indicator.scrollIntoView({behavior:'smooth', block:'nearest'});
-                } catch (_) {
-                    scrollToBottom(true);
-                }
+                if(!indicator.isConnected||userIsScrollingUp)return;
+                try{indicator.scrollIntoView({behavior:'auto',block:'nearest'});}
+                catch(_){scrollToBottom(false);}
             });
         }
 
@@ -9072,11 +9075,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             refreshLucideIcons(card);
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
 
-            // Keep the completed activity history expanded, matching ChatGPT's visible
-            // per-step status trail. The user can still collapse it manually with the header.
-            card.classList.add('collapsed');
+            // Respect the user's explicit collapse choice. Auto-collapsing
+            // every finished run hid ALL per-task statuses just as the
+            // response appeared; completed evidence now remains visible.
             const toggle = card.querySelector('.ai-activity-summary-row');
-            toggle?.setAttribute('aria-expanded','false');
+            toggle?.setAttribute('aria-expanded',String(!card.classList.contains('collapsed')));
             setTimeout(() => {
                 if (!card.isConnected || card.dataset.finalized !== 'true') return;
                 card.removeAttribute('id');
