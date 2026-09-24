@@ -10698,8 +10698,17 @@ ${m.text || ''}
                 const data=await res.json();
                 if(requestId!==aihordePickerRequestId)return;
                 const models=Array.isArray(data.models)?data.models.slice(0,4):[];
+                // This status checks the first configured AI Horde key against the
+                // first-party /v2/find_user endpoint without exposing any credential.
+                const keyNote=data.keyStatus==='rejected'
+                    ?'First configured AI Horde key was rejected. Check AIHORDE_API_KEYS / AIHORDE_API_KEY in Vercel; changing models will not fix this.'
+                    :data.keyStatus==='missing'
+                        ?'No registered AI Horde API key is configured in Vercel. Anonymous fallback remains OFF.'
+                        :data.keyStatus==='unverified'
+                            ?'Unable to verify the configured AI Horde key right now.'
+                            :'';
                 if(!models.length){
-                    status.textContent='No active model with a short queue is confirmed right now. Try opening this page again shortly.';
+                    status.textContent=(keyNote?keyNote+' ':'')+'No active model with a short queue is confirmed right now. Try opening this page again shortly.';
                     return;
                 }
                 for(const model of models){
@@ -10716,7 +10725,7 @@ ${m.text || ''}
                     btn.addEventListener('click',()=>selectProviderModel('aihorde',id,MODEL_DISPLAY_NAMES[id]));
                     choices.append(btn);
                 }
-                status.textContent=aihordePickerIds.size+' of 4 fast-queue model slots available now. Select one; actual response time may vary.';
+                status.textContent=(keyNote?keyNote+' ':'')+aihordePickerIds.size+' of 4 fast-queue model slots available now. Select one; actual response time may vary.';
                 if(currentSelectedProvider==='aihorde'&&currentSelectedModel&&!aihordePickerIds.has(currentSelectedModel)){
                     currentSelectedModel='';
                     localStorage.setItem('jepong_last_model','');
