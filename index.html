@@ -4020,6 +4020,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 @media(max-width:520px){.ai-activity-card{width:100%!important;margin:6px 0 32px!important}.ai-activity-summary-row{padding:2px 0 5px!important}.ai-activity-row{grid-template-columns:28px minmax(0,1fr)!important;gap:5px!important;padding:7px 0!important}.ai-activity-icon{width:24px!important;height:24px!important}.ai-activity-icon svg{width:18px!important;height:18px!important}.ai-activity-label{font-size:.98rem!important;line-height:1.45!important}}
 </style>
     <link rel="stylesheet" href="/plugins.css">
+    <link rel="stylesheet" href="/reference-shell.css">
 </head>
 <body>
 
@@ -4096,6 +4097,19 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         </div>
 
         <div class="header">
+            <nav class="jd-navigation" id="jdNavigation" aria-label="Main navigation">
+                <button class="jd-menu-btn" type="button" onclick="openMenuFromBrandIcon()" aria-label="Open chat history and navigation" title="Menu">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div class="jd-nav-tabs" role="group" aria-label="Chat modes">
+                    <button class="jd-nav-tab active" type="button" data-jd-tab="ask" aria-pressed="true" onclick="selectMode('general','General AI')">Ask</button>
+                    <button class="jd-nav-tab" type="button" data-jd-tab="imagine" aria-pressed="false" onclick="selectMode('imagen','Image Generator')">Imagine</button>
+                    <button class="jd-nav-tab" type="button" data-jd-tab="build" aria-pressed="false" onclick="selectMode('coder','Expert Coder')">Build</button>
+                </div>
+                <button class="jd-private-btn" id="jdPrivateBtn" type="button" aria-pressed="false" onclick="toggleJdPrivateMode()" aria-label="Toggle incognito chat" title="Start incognito">
+                    <i data-lucide="hat-glasses"></i>
+                </button>
+            </nav>
             <div class="header-top">
                 <div class="brand">
                     <button class="brand-icon" onclick="openMenuFromBrandIcon()">✦</button>
@@ -4162,6 +4176,10 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         </div>
 
         <div class="input-container" id="inputContainer">
+            <div class="jd-welcome-quick-actions" id="jdWelcomeActions" aria-label="Quick actions">
+                <button class="jd-quick-action primary" type="button" onclick="jdQuickAction('imagen','Image Generator')"><i data-lucide="sparkles"></i><span>Create an image</span></button>
+                <button class="jd-quick-action" type="button" onclick="jdQuickAction('coder','Expert Coder')"><i data-lucide="hammer"></i><span>Build apps &amp; sites</span></button>
+            </div>
             <div class="prompt-suggestions" id="promptSuggestions"></div>
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
@@ -8942,6 +8960,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             document.getElementById('brandTitleText').innerText = 'JepongDevxyz AI • 🕵️‍♂️ Incognito';
             renderIncognitoWelcomeScreen();
             closeAllDrawers();
+            syncJdNavigation();
         }
 
         function exitIncognitoChat() {
@@ -8956,6 +8975,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             } else {
                 createNewChat();
             }
+            syncJdNavigation();
         }
 
         function renderIncognitoWelcomeScreen() {
@@ -10547,6 +10567,31 @@ ${m.text || ''}
             else surface.classList.remove('open');
         }
 
+        // Thin UI navigation layer: all actions delegate to existing chat/mode
+        // functions. Original providers, animations, message handlers and
+        // Lottie player elements are left intact.
+        function syncJdNavigation(){
+            const active=currentSelectedMode==='imagen'?'imagine':currentSelectedMode==='coder'?'build':'ask';
+            document.querySelectorAll('#jdNavigation .jd-nav-tab').forEach(btn=>{
+                const selected=btn.dataset.jdTab===active;
+                btn.classList.toggle('active',selected);
+                btn.setAttribute('aria-pressed',String(selected));
+            });
+            const privateButton=document.getElementById('jdPrivateBtn');
+            if(privateButton){
+                privateButton.setAttribute('aria-pressed',String(isIncognito===true));
+                privateButton.title=isIncognito?'Exit incognito':'Start incognito';
+            }
+        }
+        function toggleJdPrivateMode(){
+            if(isIncognito)exitIncognitoChat();
+            else startIncognitoChat();
+            syncJdNavigation();
+        }
+        function jdQuickAction(key,name){
+            selectMode(key,name);
+            document.getElementById('userInput')?.focus();
+        }
         function selectMode(key, name) {
             currentSelectedMode = key;
             const displayName = name || MODE_DISPLAY_NAMES[key] || 'General AI';
@@ -10564,7 +10609,9 @@ ${m.text || ''}
             document.getElementById('customPromptInput').style.display = key === 'custom' ? 'block' : 'none';
             renderPromptSuggestions();
             toggleModal('modeModalOverlay', false);
+            syncJdNavigation();
         }
+        syncJdNavigation();
 
         const CUSTOM_API_PROFILE_STORAGE='jd_custom_api_profiles_v2';
         function getCustomApiProfiles(){const v=readLocalJSON(CUSTOM_API_PROFILE_STORAGE,[]);return Array.isArray(v)?v:[];}
