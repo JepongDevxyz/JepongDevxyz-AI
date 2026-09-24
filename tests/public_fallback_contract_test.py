@@ -66,9 +66,11 @@ def main():
     require("model:'auto',history,files,message,systemInstruction" in CHAT[registered:anonymous],
             'registered Horde fallback should choose a live model internally')
 
-    # Invalid Horde credentials should be eligible for provider fallback when fallback is enabled.
-    classifier = CHAT[CHAT.index('function isFallbackableProviderFailure'):CHAT.index('function passthroughHeaders')]
-    require('401,402,403' in classifier, 'credential HTTP statuses are not fallbackable')
+    # Exhausted quota or rejected credentials can reach emergency fallback, but
+    # unrelated HTTP 500 and malformed requests cannot switch the model.
+    classifier = CHAT[CHAT.index('function isProviderQuotaFailure'):CHAT.index('function passthroughHeaders')]
+    require('401,403' in classifier and '402,429' in classifier,
+            'quota and credential HTTP statuses are not covered')
     require('no user matching sent api key' in classifier, 'AI Horde rejected-key text is not fallbackable')
     require('summarizeAIHordeError' in CHAT, 'AI Horde user-facing error sanitizer missing')
 
