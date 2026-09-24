@@ -1,4 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { fetchPublicGitHubContext } from './plugins.js';
 import { getGitHubSession } from './_github_oauth.js';
 import { resolveGitHubAccess } from './_github_app.js';
