@@ -4023,6 +4023,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/reference-shell.css">
     <link rel="stylesheet" href="/account-appearance.css">
     <link rel="stylesheet" href="/haptics-notifications.css">
+    <link rel="stylesheet" href="/activity-reference.css">
 </head>
 <body>
 
@@ -4052,6 +4053,17 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
     <div class="app-container" id="appContainer">
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeAllDrawers()"></div>
+        <!-- Real event history sheet; duplicates NO activities, only views existing DOM rows. -->
+        <div class="jd-thoughts-overlay" id="jdThoughtsOverlay" onclick="if(event.target===this)closeJdThoughts()">
+            <section class="jd-thoughts-sheet" id="jdThoughtsSheet" role="dialog" aria-modal="true" aria-labelledby="jdThoughtsTitle" tabindex="-1">
+                <div class="jd-thoughts-grab" aria-hidden="true"></div>
+                <header class="jd-thoughts-head">
+                    <span></span><strong id="jdThoughtsTitle">Thoughts</strong>
+                    <button class="jd-thoughts-close" type="button" onclick="closeJdThoughts()" aria-label="Close Thoughts"><i data-lucide="x"></i></button>
+                </header>
+                <div class="jd-thoughts-list" id="jdThoughtsList" aria-live="polite"></div>
+            </section>
+        </div>
         
         <!-- BI-DIRECTIONAL SIDE & BOTTOM DRAWER -->
         <div class="sidebar drawer-left" id="sidebar" aria-label="JepongDevxyz AI menu">
@@ -8799,8 +8811,95 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             refreshLucideIcons(list);
         }
 
+        // The reference shows a live elapsed header and a bottom Thoughts
+        // sheet. All displayed steps still come ONLY from actual backend/tool
+        // activity events. This timer updates elapsed text, never fabricates work.
+        let jdActivityClock=null;
+        let jdThoughtsSource=null;
+        let jdThoughtsRestoreFocus=null;
+        function formatJdActivityElapsed(ms){
+            const seconds=Math.max(0,Math.floor(Number(ms||0)/1000));
+            if(seconds<60)return seconds+'s';
+            const minutes=Math.floor(seconds/60);
+            const remainder=seconds%60;
+            if(minutes<60)return minutes+'m '+remainder+'s';
+            return Math.floor(minutes/60)+'h '+(minutes%60)+'m';
+        }
+        function tickJdActivityClock(card){
+            if(!card||card.dataset.finalized==='true')return;
+            const label=card.querySelector('.ai-activity-summary-text');
+            if(!label)return;
+            const elapsed=Math.max(0,Date.now()-Number(card.dataset.startedAt||Date.now()));
+            label.textContent='Thinking for '+formatJdActivityElapsed(elapsed);
+        }
+        function stopJdActivityClock(){
+            if(jdActivityClock!==null){clearInterval(jdActivityClock);jdActivityClock=null;}
+        }
+        function syncJdThoughts(){
+            const overlay=document.getElementById('jdThoughtsOverlay');
+            const target=document.getElementById('jdThoughtsList');
+            const source=jdThoughtsSource;
+            if(!overlay?.classList.contains('open')||!target||!source)return;
+            const lead=source.querySelector('.ai-activity-lead');
+            const list=source.querySelector('.ai-activity-list');
+            const content=[];
+            if(lead?.textContent?.trim()){
+                const intro=document.createElement('p');
+                intro.className='jd-thoughts-intro';
+                intro.textContent=lead.textContent;
+                content.push(intro);
+            }
+            list?.querySelectorAll('.ai-activity-row').forEach(row=>{
+                const clone=row.cloneNode(true);
+                clone.removeAttribute('id');
+                content.push(clone);
+            });
+            if(!content.length){
+                const empty=document.createElement('p');
+                empty.className='jd-thoughts-empty';
+                empty.textContent='No activity steps received yet.';
+                content.push(empty);
+            }
+            const pinnedToBottom=target.scrollTop+target.clientHeight>=target.scrollHeight-80;
+            target.replaceChildren(...content);
+            if(pinnedToBottom)target.scrollTop=target.scrollHeight;
+        }
+        function openJdThoughts(button){
+            const card=button?.closest?.('.ai-activity-card');
+            if(!card)return;
+            jdThoughtsSource=card;
+            jdThoughtsRestoreFocus=button;
+            const overlay=document.getElementById('jdThoughtsOverlay');
+            overlay?.classList.add('open');
+            syncJdThoughts();
+            document.getElementById('jdThoughtsSheet')?.focus();
+            refreshLucideIcons(document.getElementById('jdThoughtsSheet'));
+        }
+        function closeJdThoughts(){
+            document.getElementById('jdThoughtsOverlay')?.classList.remove('open');
+            jdThoughtsSource=null;
+            jdThoughtsRestoreFocus?.focus?.();
+            jdThoughtsRestoreFocus=null;
+        }
+        document.addEventListener('keydown',event=>{
+            if(event.key==='Escape'&&document.getElementById('jdThoughtsOverlay')?.classList.contains('open')){
+                event.stopPropagation();
+                closeJdThoughts();
+            }
+        });
+        let jdThoughtsDragStart=null;
+        document.getElementById('jdThoughtsSheet')?.addEventListener('touchstart',event=>{
+            if(event.target.closest('.jd-thoughts-head,.jd-thoughts-grab'))jdThoughtsDragStart=event.touches[0]?.clientY??null;
+        },{passive:true});
+        document.getElementById('jdThoughtsSheet')?.addEventListener('touchend',event=>{
+            if(jdThoughtsDragStart!==null && (event.changedTouches[0]?.clientY??0)-jdThoughtsDragStart>90)closeJdThoughts();
+            jdThoughtsDragStart=null;
+        },{passive:true});
+
         function showAIIndicator(promptText, files = []) {
             removeAIIndicator();
+            closeJdThoughts();
+            stopJdActivityClock();
             jdResponseFeedbackSent=false;
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
@@ -8817,13 +8916,22 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             indicator.style.setProperty('position','relative','important');
             indicator.style.setProperty('z-index','2','important');
             indicator.innerHTML = `
-                <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
-                    <span class="ai-activity-summary-icon" id="aiActivitySummaryIcon"><i data-lucide="clock"></i></span>
-                    <span class="ai-activity-summary-text" id="aiActivitySummary">Thinking</span>
-                    <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
-                </button>
+                <div class="ai-activity-header-actions">
+                    <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
+                        <span class="ai-activity-summary-icon" id="aiActivitySummaryIcon"><i data-lucide="grip"></i></span>
+                        <span class="ai-activity-summary-text" id="aiActivitySummary">Thinking for 0s</span>
+                        <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
+                    </button>
+                    <button type="button" class="ai-activity-details-btn" onclick="openJdThoughts(this)" aria-label="View real activity details"><span>Thoughts</span><i data-lucide="list"></i></button>
+                </div>
+                <p class="ai-activity-lead" aria-live="polite"></p>
                 <div class="ai-activity-list" id="aiActivityList"></div>
             `;
+            tickJdActivityClock(indicator);
+            jdActivityClock=setInterval(()=>{
+                if(!indicator.isConnected||indicator.dataset.finalized==='true'){stopJdActivityClock();return;}
+                tickJdActivityClock(indicator);
+            },1000);
             chatBox.appendChild(indicator);
             const list=indicator.querySelector('#aiActivityList');
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
@@ -8859,6 +8967,15 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
             const id = String(normalized.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
+            // The reference's short task lead is the real context-classification
+            // milestone emitted by the server, never a client-invented plan.
+            // Keep it out of the step list to avoid repeating the same sentence.
+            if(id==='task-context'){
+                const lead=card.querySelector('.ai-activity-lead');
+                if(lead)lead.textContent=String(normalized.label||'').slice(0,220);
+                syncJdThoughts();
+                return;
+            }
             const normalizedLabelKey=[
                 String(normalized.kind||'process'),
                 String(normalized.label||'').toLowerCase().replace(/\s+/g,' ').trim(),
@@ -8911,7 +9028,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             rows.forEach(x=>x.classList.toggle('ai-activity-current',x===current && x.classList.contains('running')));
             // Keep the header stable like ChatGPT: "Thinking" while work is active.
             // Detailed operation names belong only in the timeline rows below.
-            if(summary && card.dataset.finalized!=='true') summary.textContent='Thinking';
+            if(summary && card.dataset.finalized!=='true') tickJdActivityClock(card);
 
             // Keep a generous bounded history for unusually long tool runs without deleting
             // ordinary completed steps from normal conversations.
@@ -8925,10 +9042,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 try{list.scrollTo({top:list.scrollHeight,behavior:'smooth'});}catch(_){list.scrollTop=list.scrollHeight;}
                 refreshLucideIcons(list);
             });
+            syncJdThoughts();
             // No card.scrollIntoView here: attachments should remain visible after sending.
         }
 
         function finishAIIndicator(success = true, elapsedMs = null) {
+            stopJdActivityClock();
             notifyResponseReady(success);
             const card = document.getElementById('activeAiIndicator');
             if (!card) return;
@@ -8948,6 +9067,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 if(responseIcon)responseIcon.innerHTML=activityIconMarkup('process','completed');
             }
             if (summary) summary.textContent = success ? worked : 'Stopped because of an error';
+            syncJdThoughts();
             if (icon) icon.innerHTML = success ? '<i data-lucide="check"></i>' : '<i data-lucide="alert-triangle"></i>';
             refreshLucideIcons(card);
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
@@ -8968,6 +9088,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function removeAIIndicator() {
+            stopJdActivityClock();
+            if(jdThoughtsSource?.id==='activeAiIndicator')closeJdThoughts();
             notifyRequestInFlight = false;
             hideNotifyPermissionCard();
             const el = document.getElementById('activeAiIndicator');
