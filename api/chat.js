@@ -185,20 +185,28 @@ function sanitizeCustomProviderKeys(body,provider){
   return String(text).split(/[\n,]+/).map(x=>x.trim()).filter(x=>x.length>=8).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
-function getProviderKeys(provider) {
-  if (provider === 'gemini') return rotateProviderKeys('gemini', parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'groq') return rotateProviderKeys('groq', parseKeys('GROQ_API_KEYS','GROQ_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'openrouter') return rotateProviderKeys('openrouter', parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'mistral') return rotateProviderKeys('mistral', parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'cohere') return rotateProviderKeys('cohere', parseKeys('COHERE_API_KEYS','COHERE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'aihorde') return rotateProviderKeys('aihorde', parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'unorouter') return rotateProviderKeys('unorouter', parseKeys('UNOROUTER_API_KEYS','UNOROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'nvidia') return rotateProviderKeys('nvidia', parseKeys('NVIDIA_API_KEYS','NVIDIA_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'codecraft') return rotateProviderKeys('codecraft', parseKeys('CODECRAFT_API_KEYS','CODECRAFT_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'agentrouter') return rotateProviderKeys('agentrouter', parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'hcnsec') return rotateProviderKeys('hcnsec', parseKeys('HCNSEC_API_KEYS','HCNSEC_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'bailucode') return rotateProviderKeys('bailucode', parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'seekai') return rotateProviderKeys('seekai', parseKeys('SEEKAI_API_KEYS','SEEKAI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+
+// Fallback OFF means one chosen credential per request. Do not rotate the
+// starting key between test requests or silently try another configured key.
+function providerCredentials(keys,autoFallback=false){
+  const list=Array.isArray(keys)?keys:[];
+  return autoFallback?list:list.slice(0,1);
+}
+
+function getProviderKeys(provider,rotate=true) {
+  if (provider === 'gemini') return (rotate?rotateProviderKeys('gemini', parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY')):parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'groq') return (rotate?rotateProviderKeys('groq', parseKeys('GROQ_API_KEYS','GROQ_API_KEY')):parseKeys('GROQ_API_KEYS','GROQ_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'openrouter') return (rotate?rotateProviderKeys('openrouter', parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY')):parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'mistral') return (rotate?rotateProviderKeys('mistral', parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY')):parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'cohere') return (rotate?rotateProviderKeys('cohere', parseKeys('COHERE_API_KEYS','COHERE_API_KEY')):parseKeys('COHERE_API_KEYS','COHERE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'aihorde') return (rotate?rotateProviderKeys('aihorde', parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY')):parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'unorouter') return (rotate?rotateProviderKeys('unorouter', parseKeys('UNOROUTER_API_KEYS','UNOROUTER_API_KEY')):parseKeys('UNOROUTER_API_KEYS','UNOROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'nvidia') return (rotate?rotateProviderKeys('nvidia', parseKeys('NVIDIA_API_KEYS','NVIDIA_API_KEY')):parseKeys('NVIDIA_API_KEYS','NVIDIA_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'codecraft') return (rotate?rotateProviderKeys('codecraft', parseKeys('CODECRAFT_API_KEYS','CODECRAFT_API_KEY')):parseKeys('CODECRAFT_API_KEYS','CODECRAFT_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'agentrouter') return (rotate?rotateProviderKeys('agentrouter', parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY')):parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'hcnsec') return (rotate?rotateProviderKeys('hcnsec', parseKeys('HCNSEC_API_KEYS','HCNSEC_API_KEY')):parseKeys('HCNSEC_API_KEYS','HCNSEC_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'bailucode') return (rotate?rotateProviderKeys('bailucode', parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY')):parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  if (provider === 'seekai') return (rotate?rotateProviderKeys('seekai', parseKeys('SEEKAI_API_KEYS','SEEKAI_API_KEY')):parseKeys('SEEKAI_API_KEYS','SEEKAI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
   return [];
 }
 
@@ -221,10 +229,10 @@ function getCloudflareAccounts() {
   return accounts.slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
-function getBailuAnthropicKeys(){
+function getBailuAnthropicKeys(rotate=true){
   const dedicated=parseKeys('BAILUCODE_ANTHROPIC_API_KEYS','BAILUCODE_ANTHROPIC_API_KEY');
   const keys=dedicated.length?dedicated:parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY');
-  return rotateProviderKeys('bailucode-anthropic',keys).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+  return (rotate?rotateProviderKeys('bailucode-anthropic',keys):keys).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
 function credentialCount(provider) {
@@ -2526,8 +2534,8 @@ function retryLabel(provider, status, hasNext) {
   return `${providerLabel(provider)} request failed${hasNext ? ' — retrying' : ''}`;
 }
 
-async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit}) {
-  const keys = getProviderKeys('gemini');
+async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
+  const keys = providerCredentials(getProviderKeys('gemini',autoFallback),autoFallback);
   if (!keys.length) return {ok:false,status:500,error:'Gemini API key is not configured.'};
   const target = PROVIDERS.gemini.models.includes(model) ? model : PROVIDERS.gemini.defaultModel;
 
@@ -2607,12 +2615,15 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
   return {ok:false,status,error:last||'Gemini unavailable'};
 }
 
-async function runCloudflare({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit}) {
-  const accounts = shuffle(getCloudflareAccounts());
+async function runCloudflare({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
+  const accounts = providerCredentials(autoFallback?shuffle(getCloudflareAccounts()):getCloudflareAccounts(),autoFallback);
   if(!accounts.length) return {ok:false,status:500,error:'Cloudflare credentials are not configured.'};
   let target=PROVIDERS.cloudflare.models.includes(model)?model:PROVIDERS.cloudflare.defaultModel;
   const hasImage=Array.isArray(files)&&files.some(f=>f?.data&&f?.mimeType?.startsWith('image/'));
-  if(hasImage) target='@cf/google/gemma-4-26b-a4b-it';
+  if(hasImage&&target!=='@cf/google/gemma-4-26b-a4b-it'){
+    if(!autoFallback)return {ok:false,status:415,error:'The selected Cloudflare model does not support this image request. Fallback is OFF; choose a vision-capable model manually.'};
+    target='@cf/google/gemma-4-26b-a4b-it';
+  }
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   if(hasImage){
     const last=messages.pop();
@@ -2671,10 +2682,10 @@ function sanitizeCustomApiProfile(body){
   baseUrl=baseUrl.replace(/\/$/,'');
   return {name,apiKey,apiKeys,baseUrl,model,autoLoadModels:p.autoLoadModels!==false};
 }
-async function runGenericCustomApi(profile,{history,message,systemInstruction,emit}){
+async function runGenericCustomApi(profile,{history,message,systemInstruction,emit,autoFallback=false}){
   const url=chatCompletionsUrl(profile.baseUrl,profile.baseUrl);
   const model=profile.model==='auto'?'auto':profile.model;
-  const keys=Array.isArray(profile.apiKeys)&&profile.apiKeys.length?profile.apiKeys:[profile.apiKey];
+  const keys=providerCredentials(Array.isArray(profile.apiKeys)&&profile.apiKeys.length?profile.apiKeys:[profile.apiKey],autoFallback);
   let last=null;
   for(let i=0;i<keys.length;i++){
     try{
@@ -2723,8 +2734,8 @@ function seekaiExtractReply(raw,contentType=''){
     reason:String(choice?.finish_reason||''),errored:!!parsed?.error};
 }
 
-async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
-  const keys=(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('seekai'));
+async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
+  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('seekai',autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:503,error:'SEEKAI_API_KEYS is not configured in Vercel.'};
   const selected=String(model||'').trim();
   const target=!selected||selected==='agent'?PROVIDERS.seekai.defaultModel:selected;
@@ -2792,7 +2803,7 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
 
   const requestKeys=Array.isArray(customApiKeys)?customApiKeys:[];
-  const keys=requestKeys.length?requestKeys:getProviderKeys(provider);
+  const keys=providerCredentials(requestKeys.length?requestKeys:getProviderKeys(provider,autoFallback),autoFallback);
   if(!keys.length) return {ok:false,status:500,error:`${providerLabel(provider)} API key is not configured.`};
 
   const suppliedModel=String(model||'').trim();
@@ -2930,8 +2941,8 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
   return {ok:false,status,error:last||`${providerLabel(provider)} unavailable for ${modelLabel(lastTarget)}`};
 }
 
-async function runCohere({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit}) {
-  const keys=shuffle(getProviderKeys('cohere'));
+async function runCohere({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
+  const keys=providerCredentials(autoFallback?shuffle(getProviderKeys('cohere')):getProviderKeys('cohere',false),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'Cohere API key is not configured.'};
   const target=PROVIDERS.cohere.models.includes(model)?model:PROVIDERS.cohere.defaultModel;
   const messages=buildOpenAIMessages(history,message,systemInstruction);
@@ -3078,9 +3089,10 @@ function isAIHordeGenerationFailure(status,error=''){
     /not enough generations|no generations|no generation|worker|queue|timed? ?out|timeout|unavailable|busy|faulted|aborted/.test(text);
 }
 
-async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit},{anonymous=false}={}){
-  const configuredKeys=anonymous?[]:shuffle(getProviderKeys('aihorde')).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
-  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:[...configuredKeys,AIHORDE_ANONYMOUS_KEY];
+async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false},{anonymous=false}={}){
+  const configuredKeys=anonymous?[]:providerCredentials(autoFallback?shuffle(getProviderKeys('aihorde')):getProviderKeys('aihorde',false),autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
+  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:autoFallback?[...configuredKeys,AIHORDE_ANONYMOUS_KEY]:configuredKeys;
+  if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
   const runtimeProvider=anonymous?'aihorde-public':'aihorde';
   const autoMode=!model||model==='auto';
   // A bounded overall budget avoids 70-80 second waits per anonymous/key attempt.
@@ -3097,6 +3109,7 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
     return {ok:false,status:503,error:e?.message||'AI Horde model list is unavailable.'};
   }
   if(!candidates.length) return {ok:false,status:503,error:'No suitable AI Horde text model is currently active.'};
+  if(!autoFallback)candidates=candidates.slice(0,1); // Auto chooses ONE active model; never switches on failure.
 
   const messages=buildOpenAIMessages(history,message,systemInstruction);
   let last='AI Horde could not complete a generation.'; let status=503;
@@ -3240,9 +3253,9 @@ function anthropicStreamToText(body,finishState={reason:''}){
   }));
 }
 
-async function runAgentRouter({model,history,message,systemInstruction,emit,customApiKeys=null}){
-  const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:
-    parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY');
+async function runAgentRouter({model,history,message,systemInstruction,emit,autoFallback=false,customApiKeys=null}){
+  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:
+    getProviderKeys('agentrouter',autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'AGENTROUTER_API_KEYS is not configured.'};
   const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
   const base=String(process.env.AGENTROUTER_BRIDGE_URL||'https://agentrouter-isolated-production.up.railway.app').trim().replace(/\/+$/,'');
@@ -3305,8 +3318,8 @@ async function runAgentRouter({model,history,message,systemInstruction,emit,cust
   return {ok:false,status,error:last};
 }
 
-async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,customApiKeys=null}){
-  const keys=Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys();
+async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
+  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys(autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
   const target=model||PROVIDERS.bailucode.defaultModel;
   const messages=[];
@@ -3337,7 +3350,7 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
 
 async function runBailucode(args){
   const openai=await runOpenAICompatible('bailucode',args);
-  if(openai.ok)return openai;
+  if(openai.ok||args.autoFallback!==true)return openai;
   const anthropic=await runBailuAnthropic(args);
   return anthropic.ok?anthropic:openai;
 }
@@ -3348,7 +3361,8 @@ async function runProvider(provider,args){
       history:args.history,
       message:args.message,
       systemInstruction:args.systemInstruction,
-      emit:args.emit
+      emit:args.emit,
+      autoFallback:args.autoFallback===true
     });
   }
   if(provider==='gemini')return runGemini(args);
@@ -3387,7 +3401,7 @@ async function processChat(body, emit) {
   // Strict routing contract: fallback/router are opt-in only. Truthy strings,
   // missing fields, or stale client values must never silently enable them.
   autoFallback = body.autoFallback === true;
-  smartRouter = body.smartRouter === true;
+  smartRouter = autoFallback && body.smartRouter === true; // Fallback OFF locks the selected provider and model.
   files=sanitizeIncomingAttachments(files);
   const responseEffort=normalizeResponseEffort(personalization?.intelligence,personalization?.fastAnswers);
   const fastAnswers=responseEffort==='Instant';
@@ -3418,8 +3432,17 @@ async function processChat(body, emit) {
   if(customApiProfile){
     provider='custom-api';model=customApiProfile.model;
   }else{
-    if(!PROVIDERS[provider])provider='gemini';
-    model=PROVIDERS[provider].models.includes(model)?model:PROVIDERS[provider].defaultModel;
+    if(!PROVIDERS[provider]){
+      if(!autoFallback)return {ok:false,status:400,error:'The selected provider is not available; fallback is OFF.',provider,startedAt};
+      provider='gemini';
+    }
+    const selected=String(model||'').trim();
+    const allowed=PROVIDERS[provider].models.includes(selected);
+    const dynamic=selected&&(DYNAMIC_MODEL_PROVIDERS.has(provider)||provider==='aihorde');
+    if(selected&&!allowed&&!dynamic&&!autoFallback){
+      return {ok:false,status:400,error:'The selected model '+selected+' is not configured for '+providerLabel(provider)+'. Fallback is OFF; select a supported model manually.',provider,startedAt};
+    }
+    model=selected&&(allowed||dynamic)?selected:PROVIDERS[provider].defaultModel;
   }
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   if(files.length){
@@ -3451,7 +3474,10 @@ async function processChat(body, emit) {
       }
     }
   }
-  const mediaAnalysisContext=await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit);
+  // Analysis via another provider is itself model fallback: never do it when OFF.
+  const unsupportedMedia=!autoFallback&&!['gemini','cloudflare'].includes(provider)&&mediaAttachments(files).length>0;
+  if(unsupportedMedia)return {ok:false,status:415,error:'The selected model cannot analyze this media without another model. Fallback is OFF; select a compatible model or enable fallback.',provider,startedAt};
+  const mediaAnalysisContext=autoFallback?await analyzeMediaForNonVisionProvider(files,taskMessage,provider,emit):'';
   // Use the context-aware task text for tool routing too, not only for the first
   // Activity label. Short follow-ups such as "security?", "ganyan pa rin", or
   // "check it" must inherit the website/repository/topic from recent user context.
@@ -3582,7 +3608,7 @@ async function processChat(body, emit) {
   }
 
   // Cost guard: an extra preflight model call is reserved for explicit High/Think-harder requests.
-  const useQualityOrchestrator = responseEffort==='High' && shouldUseQualityOrchestrator(message,files,mode);
+  const useQualityOrchestrator = autoFallback && responseEffort==='High' && shouldUseQualityOrchestrator(message,files,mode);
 
   if(useQualityOrchestrator){
     activity(emit,'quality-orchestrator',responseEffort==='High'?'Checking response quality at High effort':'Checking response quality','running','process');
