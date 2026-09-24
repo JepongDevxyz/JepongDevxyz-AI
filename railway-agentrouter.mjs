@@ -138,17 +138,25 @@ function runClaude({key,model=MODEL,prompt='Reply exactly OK',timeoutMs=60000}){
       if(finished)return;finished=true;clearTimeout(timer);
       let data;try{data=JSON.parse(stdout);}catch{}
       const answer=typeof data?.result==='string'?data.result:'';
-      const diagnostic=(stderr+' '+String(data?.error?.type||'')).toLowerCase();
+      // Classify errors from stderr AND JSON result, but never log raw text.
+      const diagnostic=(stderr+' '+String(data?.error?.type||'')+' '+(data?.is_error===true?answer:'')).toLowerCase();
+      const outputFormat=stdout.trimStart().startsWith('{')?'json':stdout.trim()?'other':'empty';
       let reason='cli_error';
       if(timedOut)reason='timeout';
-      else if(/not logged in|login required|please login/.test(diagnostic))reason='cli_login_required';
+      else if(/not logged in|login required|please login|\/login|oauth/.test(diagnostic))reason='cli_login_required';
+      else if(/unknown option|unknown argument|invalid option|missing required argument|too many arguments/.test(diagnostic))reason='invalid_cli_arguments';
+      else if(/terms of service|accept the terms|onboarding/.test(diagnostic))reason='cli_onboarding';
       else if(/unauthorized client/.test(diagnostic))reason='client_not_authorized';
       else if(/unauthorized|invalid api key|authentication|401/.test(diagnostic))reason='authentication';
       else if(/rate limit|429/.test(diagnostic))reason='rate_limit';
+      else if(/permission denied|eacces/.test(diagnostic))reason='filesystem_permission';
+      else if(/cannot find module|syntaxerror|typeerror/.test(diagnostic))reason='cli_runtime_error';
       else if(/binary not installed|module not found|enoent/.test(diagnostic))reason='cli_installation';
       else if(errorName)reason=errorName;
       else if(code===0&&answer.trim()&&data?.is_error!==true)reason='';
-      resolve({ok:!reason,exitCode:code,reason,text:!reason?answer:'',timedOut});
+      resolve({ok:!reason,exitCode:code,reason,text:!reason?answer:'',timedOut,outputFormat,
+        jsonType:typeof data?.type==='string'?data.type.slice(0,36):'',
+        jsonSubtype:typeof data?.subtype==='string'?data.subtype.slice(0,36):'',isError:data?.is_error===true});
     };
     child.on('error',()=>done(-1,'spawn_error'));
     child.on('close',code=>done(code));
@@ -160,7 +168,8 @@ async function inspectClaude(){
   const result=await runClaude({key:keys()[0],timeoutMs:60000});
   console.log('[claude-code-probe]',JSON.stringify({keyIndex:1,ok:result.ok,
     reason:result.reason||'none',exitCode:result.exitCode,
-    timeout:result.timedOut,generatedText:!!result.text.trim()}));
+    timeout:result.timedOut,generatedText:!!result.text.trim(),
+    outputFormat:result.outputFormat,jsonType:result.jsonType,jsonSubtype:result.jsonSubtype,isError:result.isError}));
 }
 
 const server=http.createServer(async(req,res)=>{
