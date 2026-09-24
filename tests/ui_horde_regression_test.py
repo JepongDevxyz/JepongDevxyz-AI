@@ -14,8 +14,18 @@ def main():
 
     req('function isAIHordeCredentialFailure' in CHAT, 'AI Horde credential failure classifier missing')
     req('[401,403,406].includes(code)' in CHAT, 'AI Horde 406 credential rejection is not classified')
-    req('canRetry=(isRetryableStatus(status)||credentialFailure)' in CHAT,
-        'AI Horde invalid credential does not rotate to another configured key')
+    # The new Horde handler rotates configured keys inside the provider and
+    # keeps its public anonymous route as the final key. The legacy canRetry
+    # assignment belonged to a previous implementation and must not be required.
+    req("const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:[...configuredKeys,AIHORDE_ANONYMOUS_KEY];" in CHAT,
+        'AI Horde public route is not included after configured credentials')
+    req('const credentialFailure=isAIHordeCredentialFailure(status,last);' in CHAT
+        and 'const hasNextKey=i<keys.length-1;' in CHAT
+        and 'if(credentialFailure && hasNextKey){' in CHAT,
+        'AI Horde credential rejection does not rotate to the next Horde route')
+    req('if(generationFailure && hasNextKey && !isAnonymousKey){' in CHAT
+        and 'if(generationFailure && hasNextModel){' in CHAT,
+        'AI Horde generation failure cannot retry another key/model')
     req('last=summarizeAIHordeError(status,data,raw);' in CHAT,
         'AI Horde raw upstream errors are not summarized')
     req('No server fallback provider was available' in CHAT and 'browser may try Puter fallback' not in CHAT,
