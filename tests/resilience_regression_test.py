@@ -20,7 +20,7 @@ def main():
 
     require('function isFallbackableProviderFailure' in CHAT,
             'quota/credential emergency-fallback classifier missing')
-    helper_start = CHAT.index('function isFallbackableProviderFailure')
+    helper_start = CHAT.index('function isProviderQuotaFailure')
     helper_block = CHAT[helper_start:helper_start + 1400]
     for status in ('401', '402', '403', '429'):
         require(status in helper_block, f'quota/credential status {status} is missing')
