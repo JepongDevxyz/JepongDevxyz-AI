@@ -1,0 +1,286 @@
+/* Branded account sign-in and video-reference profile / appearance panels.
+   Scope to new DOM to preserve original chat, pets, providers and Lottie. */
+#cloudAccountModal{z-index:1200!important;background:#121212!important;backdrop-filter:none!important}
+#cloudAccountModal .jd-account-screen{
+  position:relative!important;
+  display:flex!important;flex-direction:column!important;
+  width:100%!important;max-width:none!important;height:100dvh!important;
+  min-height:0!important;max-height:100dvh!important;
+  margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;
+  box-shadow:none!important;background:#121212!important;color:#f7f7f7!important;
+  overflow:hidden!important;
+}
+#cloudAccountModal .jd-account-close{
+  position:absolute;top:calc(env(safe-area-inset-top,0px) + 13px);left:clamp(15px,3vw,29px);
+  display:grid;place-items:center;width:42px;height:42px;border:0;
+  border-radius:50%;background:transparent;color:#e6e6e6;z-index:3;cursor:pointer;
+}
+#cloudAccountModal .jd-account-close svg{width:24px;height:24px}
+#cloudAccountModal .jd-auth-scroll{
+  display:flex;flex-direction:column;align-items:center;
+  width:100%;height:100%;min-height:0;
+  overflow:auto;overscroll-behavior:contain;scrollbar-width:none;
+  padding:clamp(78px,9dvh,125px) clamp(22px,5vw,40px) max(35px,env(safe-area-inset-bottom,0px))!important;
+}
+#cloudAccountModal .jd-auth-scroll::-webkit-scrollbar{display:none}
+#cloudAccountModal .jd-auth-brand{
+  display:grid;place-items:center;width:49px;height:49px;margin:0 auto 25px;
+  background:linear-gradient(135deg,#8066ef,#ab58e9);
+  border-radius:16px;font-size:30px;line-height:1;color:#fff;
+}
+#cloudAccountModal #jdAuthTitle{
+  color:#fafafa!important;font-size:clamp(1.8rem,5.7vw,2.35rem)!important;
+  font-weight:550!important;letter-spacing:-.055em!important;
+  line-height:1.2!important;margin:0 0 22px!important;text-align:center;
+}
+#cloudAccountModal .cloud-status{
+  display:block;max-width:450px;margin:0 auto 27px!important;padding:0!important;
+  background:transparent!important;border:0!important;color:#96969a!important;
+  text-align:center;font-size:.84rem;line-height:1.5;
+}
+#cloudAccountModal #cloudSignedOut{
+  width:min(100%,470px);flex:0 0 auto;gap:0!important;
+}
+#cloudAccountModal .jd-auth-provider-list{
+  display:grid;gap:13px;width:100%;
+}
+#cloudAccountModal .auth-provider.jd-auth-choice{
+  display:grid!important;grid-template-columns:43px minmax(0,1fr) 43px;
+  align-items:center;justify-items:center;gap:7px;
+  width:100%;min-height:58px!important;margin:0!important;
+  padding:12px 14px!important;
+  background:transparent!important;color:#f5f5f5!important;
+  border:1.3px solid #3c3c3d!important;border-radius:999px!important;
+  box-shadow:none!important;font-size:1rem!important;font-weight:520!important;
+  text-align:center;cursor:pointer;transition:border-color .16s ease,background .16s ease;
+}
+#cloudAccountModal .auth-provider.jd-auth-choice:hover,
+#cloudAccountModal .auth-provider.jd-auth-choice:focus-visible{
+  border-color:#a6a6ac!important;background:rgba(255,255,255,.035)!important;
+}
+#cloudAccountModal .jd-auth-choice>span{grid-column:2;min-width:0}
+#cloudAccountModal .jd-auth-choice>svg{grid-column:1;width:26px;height:26px}
+#cloudAccountModal .jd-auth-choice .jd-brand-mark{width:27px;height:27px;display:block}
+#cloudAccountModal #cloudEmailStage .auth-provider.jd-auth-choice{
+  background:transparent!important;color:#f5f5f5!important;
+  border:1.3px solid #3c3c3d!important;box-shadow:none!important;
+}
+#cloudAccountModal .jd-auth-secondary-provider{
+  border:0;background:transparent;color:#c4c4c7;
+  font-size:.78rem;min-height:37px;display:flex;align-items:center;
+  justify-content:center;gap:8px;cursor:pointer;
+}
+#cloudAccountModal .jd-auth-secondary-provider svg{width:18px;height:18px}
+#cloudAccountModal .jd-auth-last{
+  text-align:center;font-size:.78rem!important;
+  color:#89898e!important;margin:19px 0 0!important;
+}
+#cloudAccountModal .jd-auth-last[hidden]{display:none!important}
+#cloudAccountModal .jd-auth-last:not([hidden])::before{
+  content:"";display:inline-block;width:8px;height:8px;
+  margin-right:10px;border:1px solid #eb864b;border-radius:50%;
+  vertical-align:middle;
+}
+#cloudAccountModal .jd-auth-switch{
+  margin:20px 0 7px!important;text-align:center;
+  color:#8f8f94!important;font-size:.86rem;line-height:1.55;
+}
+#cloudAccountModal .jd-auth-switch button{
+  padding:4px 2px;border:0;background:transparent;
+  color:#f8f8f8;font-weight:660;font-size:inherit;cursor:pointer;
+}
+#cloudAccountModal .jd-auth-privacy{
+  max-width:390px;margin:22px auto 0!important;
+  padding:0 10px;color:#85858a!important;
+  font-size:.71rem;text-align:center;line-height:1.65;
+}
+#cloudAccountModal .jd-auth-step{width:100%;gap:15px!important}
+#cloudAccountModal .jd-auth-step h3{font-size:1.5rem!important;font-weight:620;margin:3px 0;text-align:center}
+#cloudAccountModal .jd-auth-step .cloud-auth-back{
+  justify-self:start;color:#eee!important;display:flex;align-items:center;gap:7px;
+}
+#cloudAccountModal .jd-auth-step .cloud-auth-back svg{width:19px;height:19px}
+#cloudAccountModal .jd-auth-step .auth-email input,
+#cloudAccountModal .jd-auth-step .otp-input{
+  background:#222!important;border:1px solid #454545!important;color:#fff!important;
+}
+#cloudAccountModal .jd-auth-step .auth-email input:focus-visible,
+#cloudAccountModal .jd-auth-step .otp-input:focus-visible{outline:2px solid #ac8cff!important;outline-offset:2px}
+#cloudAccountModal .jd-auth-step .auth-provider.jd-auth-submit{
+  background:#f7f7f7!important;color:#111!important;
+  border:0!important;border-radius:999px!important;min-height:51px!important;
+  font-size:.94rem!important;
+}
+#cloudAccountModal .jd-auth-resend{
+  padding:10px;border:0;background:transparent;color:#d4d4d4;font-size:.82rem;cursor:pointer;
+}
+#cloudAccountModal .jd-auth-signed-in{
+  width:min(100%,470px);margin:0 auto;text-align:center;
+}
+#cloudAccountModal .jd-auth-signed-avatar,
+.jd-profile-home .jd-profile-avatar-large{
+  display:grid;place-items:center;
+  width:88px;height:88px;border-radius:50%;
+  background:linear-gradient(135deg,#9156e6,#ec633b);color:#fff;
+  font-size:2.5rem;font-weight:600;margin:8px auto 20px;
+}
+#cloudAccountModal .jd-auth-signed-in h3{font-size:1.24rem;overflow-wrap:anywhere}
+#cloudAccountModal .jd-auth-signed-in p{color:#a5a5a9;font-size:.86rem;margin:5px auto 27px;line-height:1.55}
+#cloudAccountModal .jd-auth-signed-in .auth-provider{margin-bottom:12px!important}
+#cloudAccountModal .jd-auth-signout{margin:22px 0 0;padding:9px 15px;border:0;background:transparent;color:#f7a3a3;cursor:pointer}
+#cloudAccountModal button:focus-visible,
+#jdEditProfileModal button:focus-visible,
+#jdAppearanceModal button:focus-visible{outline:2px solid #bdacff!important;outline-offset:3px}
+@media(min-width:800px){
+  #cloudAccountModal .jd-account-screen{width:100%!important;border:0!important}
+  #cloudAccountModal .jd-auth-scroll{padding-top:clamp(92px,13dvh,145px)!important}
+  #cloudAccountModal .jd-auth-provider-list{gap:14px}
+  #cloudAccountModal .auth-provider.jd-auth-choice{min-height:63px!important}
+}
+@media(max-width:390px){
+  #cloudAccountModal .jd-auth-scroll{padding:75px 21px 18px!important}
+  #cloudAccountModal #jdAuthTitle{font-size:1.65rem!important}
+  #cloudAccountModal .jd-auth-provider-list{gap:10px}
+  #cloudAccountModal .auth-provider.jd-auth-choice{min-height:52px!important;font-size:.91rem!important}
+  #cloudAccountModal .cloud-status{margin-bottom:18px!important}
+}
+/* Profile & appearance use the established full-height Settings architecture. */
+.jd-profile-overlay,.jd-appearance-overlay{z-index:1210!important}
+.jd-profile-home,.jd-appearance-home{
+  background:#171717!important;color:#f5f5f5!important;
+  width:100%!important;height:100dvh!important;max-height:100dvh!important;
+  display:flex!important;flex-direction:column!important;
+  border:0!important;border-radius:0!important;overflow:hidden!important;
+}
+.jd-panel-header{
+  display:grid;grid-template-columns:50px minmax(0,1fr) 50px;align-items:center;
+  width:100%;padding:max(16px,env(safe-area-inset-top)) 18px 12px;
+  gap:8px;background:inherit;border:0;
+}
+.jd-panel-header h2{margin:0;text-align:center;font-size:1.05rem;font-weight:650;color:inherit}
+.jd-panel-back{
+  width:42px;height:42px;border:0;background:transparent;color:inherit;
+  display:grid;place-items:center;border-radius:50%;cursor:pointer;
+}
+.jd-panel-back svg{width:23px;height:23px}
+.jd-panel-save{background:transparent;border:0;color:inherit;font-size:.85rem;cursor:pointer}
+.jd-panel-save:disabled{opacity:.4;cursor:default}
+.jd-panel-scroll{
+  flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;
+  width:100%;padding:18px 20px max(35px,env(safe-area-inset-bottom,0px));
+  scrollbar-width:none;
+}
+.jd-panel-label,.jd-panel-section{display:block;margin:26px 8px 13px;color:#98989d;font-size:.83rem;font-weight:570}
+.jd-panel-input{
+  display:block;width:100%;min-height:53px;
+  background:#262626!important;color:#f5f5f5!important;
+  border:1px solid #313131!important;border-radius:17px!important;
+  padding:11px 15px!important;font-size:1rem!important;
+}
+.jd-panel-input:focus{outline:2px solid #a494f2;outline-offset:2px}
+.jd-panel-info{
+  display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;
+  align-items:center;padding:17px;background:#262626;border-radius:17px;
+}
+.jd-panel-info svg{width:21px;height:21px;color:#d1d1d1}
+.jd-panel-info strong,.jd-panel-info small{display:block;overflow-wrap:anywhere}
+.jd-panel-info strong{font-size:.84rem}
+.jd-panel-info small{font-size:.78rem;color:#a6a6aa;margin-top:4px}
+.jd-panel-note{font-size:.78rem;color:#94949a;line-height:1.55;margin:20px 5px}
+#settingsModal .jd-settings-profile-card{
+  display:flex;align-items:center;gap:12px;width:100%;min-height:82px;
+  border:1px solid rgba(255,255,255,.055);border-radius:21px;
+  background:#292929;color:#f6f6f6;padding:13px 15px;cursor:pointer;text-align:left;
+}
+#settingsModal .jd-settings-profile-avatar{
+  width:51px;height:51px;flex:0 0 51px;display:grid;place-items:center;
+  border-radius:50%;background:linear-gradient(135deg,#9156e6,#ec633b);
+  font-size:1.13rem;font-weight:650;color:#fff;
+}
+#settingsModal .jd-settings-profile-copy{min-width:0;flex:1 1 auto}
+#settingsModal .jd-settings-profile-copy strong,
+#settingsModal .jd-settings-profile-copy small{
+  display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+#settingsModal .jd-settings-profile-copy strong{font-size:.94rem}
+#settingsModal .jd-settings-profile-copy small{font-size:.73rem;color:#aaa;margin-top:5px}
+#settingsModal .jd-settings-profile-card>svg{width:18px;height:18px;color:#a7a7ac}
+.jd-appearance-choice-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 auto 28px;max-width:540px}
+.jd-appearance-choice{
+  min-width:0;min-height:67px;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;gap:9px;
+  border:1px solid rgba(255,255,255,.055);border-radius:17px;
+  background:#252525;color:#b8b8be;
+  font-size:.73rem;font-weight:570;cursor:pointer;
+}
+.jd-appearance-choice svg{width:20px;height:20px}
+.jd-appearance-choice.selected{background:#f5f5f5;color:#1c1c1c;border-color:#f5f5f5}
+.jd-appearance-choice[aria-pressed="true"]{font-weight:670}
+.jd-appearance-home .jd-panel-section{margin:10px 7px 17px}
+.jd-text-preview{
+  width:100%;max-width:540px;margin:auto;
+  border:1px solid rgba(255,255,255,.055);border-radius:20px;
+  padding:24px 17px 16px;background:#272727;
+}
+.jd-text-preview input[type=range]{
+  display:block;width:100%;accent-color:#f9f9f9;margin:0 0 28px;
+}
+.jd-text-preview-chat{min-height:100px}
+.jd-text-preview-question{
+  width:max-content;max-width:100%;margin:0 0 20px auto;
+  border-radius:14px;padding:11px 12px;background:#393939;
+  color:#f6f6f6;font-size:.78rem;
+}
+.jd-text-preview-chat p{font-size:1rem;line-height:1.55;color:#f4f4f4;margin:0}
+.jd-text-size-reset{
+  display:block;border:0;background:transparent;color:#ddd;
+  cursor:pointer;margin:21px auto 0;padding:7px;font-size:.76rem;
+}
+.jd-text-size-reset:disabled{opacity:.4;cursor:default}
+/* Persisted chat-only type scale: controls, icons and pet overlays stay fixed. */
+.chat-box .msg,
+.chat-box .bot-content,
+.chat-box .message-content,
+.chat-box .user-bubble-body{
+  font-size:calc(.965rem * var(--jd-chat-scale,1))!important;
+}
+body.jd-appearance-foryou{
+  --jd-surface:#282332;
+  --jd-surface-hover:#342d40;
+  --jd-focus:#c6a9ff;
+  --input-bg:#272331;
+  --user-msg:#342e43;
+  --modal-bg:#211d29;
+}
+body.theme-light .jd-profile-home,
+body.theme-light .jd-appearance-home{background:#f7f7f7!important;color:#161616!important}
+body.theme-light .jd-panel-input,
+body.theme-light .jd-panel-info,
+body.theme-light .jd-appearance-choice,
+body.theme-light .jd-text-preview,
+body.theme-light #settingsModal .jd-settings-profile-card{
+  background:#fff!important;color:#17171b!important;border-color:rgba(0,0,0,.1)!important;
+}
+body.theme-light .jd-appearance-choice.selected{background:#17171b!important;color:#fff!important}
+body.theme-light .jd-panel-label,body.theme-light .jd-panel-section{color:#5d5d68}
+body.theme-light .jd-panel-info small,body.theme-light .jd-panel-note{color:#686874}
+body.theme-light #settingsModal .jd-settings-profile-copy small{color:#696970}
+body.theme-light .jd-text-preview-question{background:#ededf1;color:#17171b}
+body.theme-light .jd-text-preview-chat p{color:#17171b}
+body.theme-light .jd-text-size-reset{color:#17171b}
+@media(min-width:768px){
+  .jd-profile-home,.jd-appearance-home{
+    width:min(100%,560px)!important;height:min(92dvh,900px)!important;
+    max-height:min(92dvh,900px)!important;border-radius:24px!important;
+    border:1px solid var(--jd-edge)!important
+  }
+}
+@media(max-width:365px){
+  .jd-appearance-choice-grid{gap:4px}
+  .jd-appearance-choice{font-size:.67rem;padding:3px}
+  .jd-panel-scroll{padding-inline:14px}
+}
+@media(prefers-reduced-motion:reduce){
+  #cloudAccountModal .auth-provider.jd-auth-choice{transition:none}
+}

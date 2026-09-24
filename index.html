@@ -4021,6 +4021,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 </style>
     <link rel="stylesheet" href="/plugins.css">
     <link rel="stylesheet" href="/reference-shell.css">
+    <link rel="stylesheet" href="/account-appearance.css">
 </head>
 <body>
 
@@ -4232,22 +4233,51 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         </div>
     </div>
 
-    <!-- Cloud Account / Authentication -->
-    <div class="modal-overlay" id="cloudAccountModal" onclick="if(event.target===this)this.classList.remove('open')">
-      <div class="modal-content" style="max-width:390px;padding:18px">
-        <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">JepongDevxyz Account</h3><button class="personalization-close" onclick="document.getElementById('cloudAccountModal').classList.remove('open')">✕</button></div>
-        <div class="cloud-status" id="cloudAccountStatus">Sign in to sync Memory, Library, settings and chats across devices.</div>
-        <div id="cloudSignedOut" class="auth-stack">
-          <button class="auth-provider" onclick="cloudOAuth('google')">Continue with Google</button>
-          <button class="auth-provider" onclick="cloudOAuth('facebook')">Continue with Facebook</button>
-          <button class="auth-provider" onclick="cloudOAuth('github')">Continue with GitHub</button>
-          <div style="text-align:center;color:var(--text-muted);font-size:11px">or</div>
-          <div id="cloudEmailStage"><button class="auth-provider" onclick="showCloudEmailForm()">Continue with Email</button></div>
-          <div id="cloudEmailForm" class="auth-stack" style="display:none"><button class="cloud-auth-back" onclick="resetCloudEmailFlow()" type="button">← Back</button><div class="cloud-auth-copy">Enter your email address and we'll send you a 6-digit verification code.</div><div class="auth-email"><input id="cloudEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email address"><button class="auth-provider" id="cloudSendOtpBtn" onclick="sendEmailOtp()">Send code</button></div></div>
-          <div id="cloudOtpBox" class="auth-stack" style="display:none"><button class="cloud-auth-back" onclick="backToCloudEmail()" type="button">← Back</button><div class="cloud-auth-copy" id="cloudOtpCopy">Enter the 6-digit code sent to your email.</div><div class="otp-row" id="cloudOtpRow"><input class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="1" data-otp="0" aria-label="OTP digit 1" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="1" aria-label="OTP digit 2" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="2" aria-label="OTP digit 3" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="3" aria-label="OTP digit 4" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="4" aria-label="OTP digit 5" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="5" aria-label="OTP digit 6" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"></div><button class="auth-provider" id="cloudVerifyOtpBtn" onclick="verifyEmailOtp()">Verify code</button><button class="auth-provider" id="cloudResendOtpBtn" onclick="sendEmailOtp(true)">Resend code</button></div></div>
+    <!-- Account login: video-reference full-screen surface; Supabase auth handlers are reused. -->
+    <div class="modal-overlay" id="cloudAccountModal" onclick="if(event.target===this)closeJdAccountModal()">
+      <section class="modal-content jd-account-screen" role="dialog" aria-modal="true" aria-labelledby="jdAuthTitle">
+        <button class="jd-account-close" type="button" aria-label="Close login" onclick="closeJdAccountModal()"><i data-lucide="x"></i></button>
+        <div class="jd-auth-scroll">
+          <div class="jd-auth-brand" aria-hidden="true"><span>✦</span></div>
+          <h2 id="jdAuthTitle">Log into your account</h2>
+          <div class="cloud-status" id="cloudAccountStatus" role="status" aria-live="polite">Sign in to securely sync chats and settings across devices.</div>
+          <div id="cloudSignedOut" class="auth-stack jd-auth-signed-out">
+            <div id="jdAuthProviderList" class="jd-auth-provider-list">
+              <button class="auth-provider jd-auth-choice" type="button" onclick="cloudOAuth('google')"><svg class="jd-brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.22c0-.71-.06-1.42-.18-2.11H12v3.99h5.24a4.49 4.49 0 0 1-1.95 2.95v2.46h3.16c1.85-1.7 2.9-4.2 2.9-7.29z"/><path fill="#34A853" d="M12 21.75c2.62 0 4.82-.87 6.43-2.24l-3.16-2.46c-.88.59-2.01.94-3.27.94-2.52 0-4.66-1.7-5.43-3.99H3.31v2.53A9.75 9.75 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.57 14a5.87 5.87 0 0 1 0-3.75V7.72H3.31a9.75 9.75 0 0 0 0 8.81z"/><path fill="#EA4335" d="M12 6.26c1.43 0 2.72.49 3.73 1.47l2.79-2.79A9.38 9.38 0 0 0 12 2.25a9.75 9.75 0 0 0-8.69 5.47l3.26 2.53C7.34 7.96 9.48 6.26 12 6.26z"/></svg><span>Login with Google</span></button>
+              <button class="auth-provider jd-auth-choice" type="button" onclick="cloudOAuth('twitter')"><svg class="jd-brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.78 7.75L23.2 22h-6.25l-4.9-7.43L5.54 22H2.4l7.28-8.32L1.8 2h6.42l4.43 6.76L18.9 2zm-1.1 18h1.73L7.22 3.9H5.36z"/></svg><span>Login with X</span></button>
+              <button class="auth-provider jd-auth-choice" type="button" onclick="cloudOAuth('apple')"><svg class="jd-brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.15 6.35c-.78 0-1.98-.9-3.26-.87-1.71.03-3.28 1-4.16 2.54-1.78 3.1-.45 7.66 1.28 10.18.85 1.24 1.87 2.64 3.2 2.59 1.28-.05 1.76-.83 3.31-.83 1.54 0 1.97.83 3.32.8 1.37-.02 2.24-1.25 3.08-2.5.98-1.44 1.38-2.84 1.4-2.92-.03-.01-2.69-1.03-2.72-4.11-.03-2.57 2.1-3.81 2.2-3.87-1.2-1.76-3.07-2-3.73-2.05-1.7-.13-3.13.94-3.92.94zM15.16 3.73c.7-.85 1.17-2.04 1.04-3.23-1 .04-2.2.67-2.92 1.52-.64.73-1.21 1.94-1.05 3.09 1.11.08 2.24-.56 2.93-1.38z"/></svg><span>Login with Apple</span></button>
+              <div id="cloudEmailStage"><button class="auth-provider jd-auth-choice" type="button" onclick="showCloudEmailForm()"><i data-lucide="mail"></i><span>Login with email</span></button></div>
+              <button class="auth-provider jd-auth-choice" type="button" onclick="cloudOAuth('github')"><i data-lucide="github"></i><span>Login with GitHub</span></button>
+              <button class="jd-auth-secondary-provider" type="button" onclick="cloudOAuth('facebook')"><i data-lucide="facebook"></i><span>Continue with Facebook</span></button>
+              <p class="jd-auth-last" id="jdAuthLastProvider" hidden></p>
+              <p class="jd-auth-switch"><span id="jdAuthSwitchLabel">Don't have an account?</span> <button type="button" id="jdAuthSwitchBtn" onclick="switchJdAuthMode()">Sign up</button></p>
+              <p class="jd-auth-privacy">Your account is authenticated by your chosen provider. JepongDevxyz AI does not ask you to enter your provider password here.</p>
+            </div>
+            <div id="cloudEmailForm" class="auth-stack jd-auth-step" style="display:none">
+              <button class="cloud-auth-back" type="button" onclick="resetCloudEmailFlow()"><i data-lucide="arrow-left"></i> Back</button>
+              <h3>Email address</h3>
+              <div class="cloud-auth-copy">We'll send a six-digit verification code to your email.</div>
+              <div class="auth-email"><input id="cloudEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address" maxlength="254"><button class="auth-provider jd-auth-submit" type="button" id="cloudSendOtpBtn" onclick="sendEmailOtp()">Send code</button></div>
+            </div>
+            <div id="cloudOtpBox" class="auth-stack jd-auth-step" style="display:none">
+              <button class="cloud-auth-back" type="button" onclick="backToCloudEmail()"><i data-lucide="arrow-left"></i> Back</button>
+              <h3>Verify your email</h3>
+              <div class="cloud-auth-copy" id="cloudOtpCopy">Enter the six-digit code sent to your email.</div>
+              <div class="otp-row" id="cloudOtpRow"><input class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" data-otp="0" aria-label="OTP digit 1" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" type="text" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="1" aria-label="OTP digit 2" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" type="text" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="2" aria-label="OTP digit 3" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" type="text" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="3" aria-label="OTP digit 4" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" type="text" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="4" aria-label="OTP digit 5" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"><input class="otp-input" type="text" inputmode="numeric" autocomplete="off" maxlength="1" data-otp="5" aria-label="OTP digit 6" oninput="otpAdvance(this)" onkeydown="otpKeydown(event,this)" onpaste="otpPaste(event)"></div>
+              <button class="auth-provider jd-auth-submit" type="button" id="cloudVerifyOtpBtn" onclick="verifyEmailOtp()">Verify code</button>
+              <button class="jd-auth-resend" type="button" id="cloudResendOtpBtn" onclick="sendEmailOtp(true)">Resend code</button>
+            </div>
+          </div>
+          <div id="cloudSignedIn" class="jd-auth-signed-in" style="display:none">
+            <div class="jd-auth-signed-avatar" id="jdSignedInAvatar">JD</div>
+            <h3 id="cloudUserLabel">Your account</h3>
+            <p>Signed in to JepongDevxyz AI. Your private account and sync controls remain available here.</p>
+            <button class="auth-provider jd-auth-choice" type="button" onclick="closeJdAccountModal();openJdEditProfile()"><i data-lucide="user-round-pen"></i><span>Edit profile</span></button>
+            <button class="auth-provider jd-auth-choice" type="button" onclick="syncCloudNow()"><i data-lucide="refresh-cw"></i><span>Sync now</span></button>
+            <button class="jd-auth-signout" type="button" onclick="cloudSignOut()">Sign out</button>
+          </div>
         </div>
-        <div id="cloudSignedIn" style="display:none"><div id="cloudUserLabel" style="font-weight:700;margin:12px 0"></div><button class="auth-provider" onclick="syncCloudNow()">Sync now</button><button class="auth-provider" style="margin-top:8px" onclick="cloudSignOut()">Sign out</button></div>
-      </div>
+      </section>
     </div>
     <!-- Per-user Library -->
     <div class="modal-overlay" id="libraryModal" onclick="if(event.target===this)this.classList.remove('open')">
@@ -4299,6 +4329,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           </div>
         </header>
         <div class="settings-home-scroll">
+          <button type="button" class="jd-settings-profile-card" onclick="openJdEditProfile()" aria-label="Edit your profile">
+            <span class="jd-settings-profile-avatar" id="jdSettingsProfileAvatar">JD</span>
+            <span class="jd-settings-profile-copy"><strong id="jdSettingsProfileName">JepongDevxyz AI</strong><small id="jdSettingsProfileEmail">Manage your account and profile</small></span>
+            <i data-lucide="chevron-right"></i>
+          </button>
           <h3 class="settings-section-label">My AI</h3>
           <div class="settings-card-group">
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal(); setTimeout(openAccountModal,0)"><i data-lucide="user-round"></i><span><strong>Account</strong><small>Sign in and sync your data across devices</small></span><i data-lucide="chevron-right"></i></button>
@@ -4323,8 +4358,9 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
           <h3 class="settings-section-label">App</h3>
           <div class="settings-card-group">
-            <label class="settings-toggle-row"><i data-lucide="sun-moon"></i><span><strong>Light Mode</strong><small>Switch between dark and light appearance</small></span><label class="ios-switch"><input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)"><span class="ios-slider"></span></label></label>
-            <button class="settings-nav-row" type="button" onclick="cycleSettingsAccent()"><i data-lucide="palette"></i><span><strong>Accent</strong><small id="settingsAccentLabel">Default</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="openJdAppearance()" aria-label="Appearance and text size"><i data-lucide="palette"></i><span><strong>Appearance</strong><small id="jdAppearanceSettingsLabel">Theme and text size</small></span><i data-lucide="chevron-right"></i></button>
+            <label hidden><input type="checkbox" id="themeIosToggle" onchange="toggleThemeMode(this)"></label>
+            <span id="settingsAccentLabel" hidden>Default</span>
             <div class="settings-nav-row settings-static-row"><i data-lucide="chart-no-axes-column"></i><span><strong>Usage & Limits</strong><small><b id="geminiWordCount">0</b> words · <b id="geminiTokenCount">0</b> tokens · <b id="geminiQueryCount">0</b> queries</small></span></div>
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openMenuFromBrandIcon()"><i data-lucide="history"></i><span><strong>Chat History</strong><small>Return to saved conversations and exports</small></span><i data-lucide="chevron-right"></i></button>
           </div>
@@ -4332,6 +4368,52 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         </div>
         <div id="speechSettingsGroup" class="speech-settings-group disabled" hidden><button id="voiceSelectBtn" type="button"><span id="voiceSelectLabel">Default Voice</span></button><input id="speedSlider" type="range" min="0.7" max="1.3" step="0.05" value="1"><span id="speedValueLabel">1.0x</span></div>
         <span id="currentUsageTitle" hidden></span><span id="currentUsagePercent" hidden></span><span id="currentUsageResetText" hidden></span><span id="weeklyUsagePercent" hidden></span><span id="currentUsageBar" hidden></span><span id="weeklyUsageBar" hidden></span>
+      </section>
+    </div>
+
+    <!-- Video-reference profile editor; updates only the signed-in user's Supabase profile. -->
+    <div class="modal-overlay settings-home-overlay jd-profile-overlay" id="jdEditProfileModal" onclick="if(event.target===this)closeJdEditProfile()">
+      <section class="settings-home jd-profile-home" role="dialog" aria-modal="true" aria-labelledby="jdProfileTitle">
+        <header class="jd-panel-header">
+          <button class="jd-panel-back" type="button" onclick="closeJdEditProfile()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+          <h2 id="jdProfileTitle">Edit Profile</h2>
+          <button class="jd-panel-save" type="button" id="jdProfileSaveBtn" onclick="saveJdProfile()">Save</button>
+        </header>
+        <div class="jd-panel-scroll">
+          <div class="jd-profile-avatar-large" id="jdProfileAvatar" aria-hidden="true">JD</div>
+          <label class="jd-panel-label" for="jdProfileFullName">Name</label>
+          <input type="text" id="jdProfileFullName" class="jd-panel-input" maxlength="70" autocomplete="name" placeholder="Your name" oninput="syncJdProfileSaveButton()">
+          <h3 class="jd-panel-section">Account</h3>
+          <div class="jd-panel-info"><i data-lucide="mail"></i><span><strong>Email</strong><small id="jdProfileEmail">Signed-in email</small></span></div>
+          <p class="jd-panel-note">Your display name is synced to your own account. Your email address and login provider are managed by the identity provider.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Video-reference appearance: System, For You, Dark and Light, plus live text sizing. -->
+    <div class="modal-overlay settings-home-overlay jd-appearance-overlay" id="jdAppearanceModal" onclick="if(event.target===this)closeJdAppearance()">
+      <section class="settings-home jd-appearance-home" role="dialog" aria-modal="true" aria-labelledby="jdAppearanceTitle">
+        <header class="jd-panel-header">
+          <button class="jd-panel-back" type="button" onclick="closeJdAppearance()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+          <h2 id="jdAppearanceTitle">Appearance</h2><span></span>
+        </header>
+        <div class="jd-panel-scroll">
+          <div class="jd-appearance-choice-grid" role="group" aria-label="Color theme">
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="system" onclick="applyJdAppearance('system')"><i data-lucide="settings-2"></i><span>System</span></button>
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="foryou" onclick="applyJdAppearance('foryou')"><i data-lucide="heart"></i><span>For You</span></button>
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="dark" onclick="applyJdAppearance('dark')"><i data-lucide="moon"></i><span>Dark</span></button>
+            <button class="jd-appearance-choice" type="button" data-jd-appearance="light" onclick="applyJdAppearance('light')"><i data-lucide="sun"></i><span>Light</span></button>
+          </div>
+          <h3 class="jd-panel-section">Text size</h3>
+          <div class="jd-text-preview">
+            <input type="range" id="jdTextSizeRange" min="85" max="120" value="100" step="5" aria-label="Chat text size" oninput="setJdChatTextSize(this.value)">
+            <div class="jd-text-preview-chat">
+              <div class="jd-text-preview-question">What can I build today?</div>
+              <p id="jdTextPreviewAnswer">You can create an app, explore ideas, or continue a conversation.</p>
+            </div>
+            <button class="jd-text-size-reset" type="button" id="jdTextSizeResetBtn" onclick="setJdChatTextSize(100)">Reset</button>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -4998,6 +5080,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const signed=!!cloudUser; const out=document.getElementById('cloudSignedOut'), inside=document.getElementById('cloudSignedIn'), btn=document.getElementById('accountHeaderBtn');
             if(out)out.style.display=signed?'none':'grid'; if(inside)inside.style.display=signed?'block':'none';
             if(btn)btn.textContent=signed?'Account':'Sign in';
+            const authTitle=document.getElementById('jdAuthTitle');
+            if(authTitle)authTitle.textContent=signed?'Your account':(jdAuthSignUpMode?'Create your account':'Log into your account');
             const label=document.getElementById('cloudUserLabel'); if(label)label.textContent=cloudUser?.email||cloudUser?.user_metadata?.full_name||'';
             const status=document.getElementById('cloudAccountStatus'); if(status)status.textContent=signed?'Cloud sync is active for this account.':'Sign in to sync Memory, Library, settings and chats across devices.';
             const badge=document.getElementById('psMemoryBadge'); if(badge)badge.textContent=signed?(personalizationSettings.memoryEnabled?'Cloud memory on':'Cloud synced'):(personalizationSettings.memoryEnabled?'Memory on':'Local only');
@@ -5006,17 +5090,111 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const menuAvatar=document.getElementById('jdSidebarAvatar');
             if(menuName)menuName.textContent=userName;
             if(menuAvatar)menuAvatar.textContent=signed?String(userName).trim().charAt(0).toUpperCase()||'JD':'JD';
+            const avatar=document.getElementById('jdSignedInAvatar');
+            if(avatar)avatar.textContent=signed?String(userName).trim().charAt(0).toUpperCase()||'JD':'JD';
+            const profileName=document.getElementById('jdSettingsProfileName');
+            const profileEmail=document.getElementById('jdSettingsProfileEmail');
+            const profileAvatar=document.getElementById('jdSettingsProfileAvatar');
+            if(profileName)profileName.textContent=signed?userName:'JepongDevxyz AI';
+            if(profileEmail)profileEmail.textContent=signed?(cloudUser?.email||'Signed in'):'Log in to edit your profile';
+            if(profileAvatar)profileAvatar.textContent=signed?String(userName).trim().charAt(0).toUpperCase()||'JD':'JD';
+            const last=document.getElementById('jdAuthLastProvider');
+            if(signed){
+                const provider=cloudUser?.app_metadata?.provider;
+                if(['google','twitter','apple','github','facebook','email'].includes(provider))safeSetLocalStorage('jd_last_login_provider',provider,true);
+            }
+            if(last){
+                const providerName={google:'Google',twitter:'X',apple:'Apple',github:'GitHub',facebook:'Facebook',email:'email'}[localStorage.getItem('jd_last_login_provider')];
+                last.hidden=!providerName;
+                last.textContent=providerName?'You last logged in with '+providerName:'';
+            }
         }
-        function openAccountModal(){document.getElementById('cloudAccountModal')?.classList.add('open');renderCloudAccount();}
-        function resetCloudEmailFlow(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='block';if(form)form.style.display='none';if(otp)otp.style.display='none';document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');}
-        function showCloudEmailForm(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='none';if(form)form.style.display='grid';if(otp)otp.style.display='none';setTimeout(()=>document.getElementById('cloudEmail')?.focus(),0);}
+        function closeJdAccountModal(){
+            document.getElementById('cloudAccountModal')?.classList.remove('open');
+            resetCloudEmailFlow();
+        }
+        let jdAuthSignUpMode=false;
+        function switchJdAuthMode(){
+            jdAuthSignUpMode=!jdAuthSignUpMode;
+            const title=document.getElementById('jdAuthTitle');
+            const copy=document.getElementById('jdAuthSwitchLabel');
+            const button=document.getElementById('jdAuthSwitchBtn');
+            if(title)title.textContent=jdAuthSignUpMode?'Create your account':'Log into your account';
+            if(copy)copy.textContent=jdAuthSignUpMode?'Already have an account?':"Don't have an account?";
+            if(button)button.textContent=jdAuthSignUpMode?'Log in':'Sign up';
+        }
+        function openAccountModal(){
+            closeAllDrawers();
+            closeTransientSurfaces('cloudAccountModal');
+            resetCloudEmailFlow();
+            document.getElementById('cloudAccountModal')?.classList.add('open');
+            renderCloudAccount();
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('cloudAccountModal')));
+        }
+        function closeJdEditProfile(){
+            document.getElementById('jdEditProfileModal')?.classList.remove('open');
+        }
+        function syncJdProfileSaveButton(){
+            const save=document.getElementById('jdProfileSaveBtn');
+            const input=document.getElementById('jdProfileFullName');
+            if(save&&input)save.disabled=!input.value.trim()||!cloudUser;
+        }
+        function openJdEditProfile(){
+            if(!cloudUser){openAccountModal();return;}
+            closeTransientSurfaces('jdEditProfileModal');
+            const name=cloudUser.user_metadata?.full_name||cloudUser.user_metadata?.name||'';
+            const input=document.getElementById('jdProfileFullName');
+            const email=document.getElementById('jdProfileEmail');
+            const avatar=document.getElementById('jdProfileAvatar');
+            if(input)input.value=name;
+            if(email)email.textContent=cloudUser.email||'Email is not provided by this account';
+            if(avatar)avatar.textContent=String(name||cloudUser.email||'JD').trim().charAt(0).toUpperCase();
+            syncJdProfileSaveButton();
+            document.getElementById('jdEditProfileModal')?.classList.add('open');
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('jdEditProfileModal')));
+        }
+        async function saveJdProfile(){
+            if(!cloudUser||!cloudClient){openAccountModal();return;}
+            const input=document.getElementById('jdProfileFullName');
+            const save=document.getElementById('jdProfileSaveBtn');
+            const name=String(input?.value||'').trim().replace(/\s+/g,' ');
+            if(name.length<1||name.length>70)return showModernAlert('Enter a name with up to 70 characters.','Edit profile');
+            if(save){save.disabled=true;save.textContent='Saving…';}
+            try{
+                const {data,error}=await cloudClient.auth.updateUser({data:{full_name:name}});
+                if(error)throw error;
+                if(data?.user)cloudUser=data.user;
+                renderCloudAccount();
+                closeJdEditProfile();
+                showModernToast('Profile updated.');
+            }catch(error){
+                showModernAlert(error?.message||'Could not save your profile.','Edit profile');
+            }finally{
+                if(save)save.textContent='Save';
+                syncJdProfileSaveButton();
+            }
+        }
+        function resetCloudEmailFlow(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='block';if(form)form.style.display='none';if(otp)otp.style.display='none';const list=document.getElementById('jdAuthProviderList');if(list)list.style.display='grid';document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');}
+        function showCloudEmailForm(){const stage=document.getElementById('cloudEmailStage'),form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(stage)stage.style.display='none';if(form)form.style.display='grid';if(otp)otp.style.display='none';const list=document.getElementById('jdAuthProviderList');if(list)list.style.display='none';setTimeout(()=>document.getElementById('cloudEmail')?.focus(),0);}
         function backToCloudEmail(){const form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox');if(otp)otp.style.display='none';if(form)form.style.display='grid';setTimeout(()=>document.getElementById('cloudEmail')?.focus(),0);}
-        async function cloudOAuth(provider){if(!cloudClient)return showModernAlert('Cloud authentication is unavailable.','Account');await cloudClient.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname}});}
+        async function cloudOAuth(provider){
+            // Use real Supabase OAuth. X (twitter) and Apple need to be enabled
+            // in the project's Supabase Auth providers before they can sign in.
+            if(!cloudClient)return showModernAlert('Cloud authentication is unavailable.','Account');
+            try{
+                const {error}=await cloudClient.auth.signInWithOAuth({
+                    provider,options:{redirectTo:location.origin+location.pathname}
+                });
+                if(error)showModernAlert(error.message,'Account sign-in');
+            }catch(error){
+                showModernAlert(error?.message||'The sign-in provider is unavailable.','Account sign-in');
+            }
+        }
         async function sendEmailOtp(isResend=false){const email=document.getElementById('cloudEmail')?.value?.trim();if(!email)return showModernAlert('Enter your email first.','Email sign in');const btn=document.getElementById(isResend?'cloudResendOtpBtn':'cloudSendOtpBtn');const label=btn?.textContent;if(btn){btn.disabled=true;btn.textContent=isResend?'Sending…':'Sending code…';}try{const {error}=await cloudClient.auth.signInWithOtp({email,options:{shouldCreateUser:true}});if(error)return showModernAlert(error.message,'Email sign in');const form=document.getElementById('cloudEmailForm'),otp=document.getElementById('cloudOtpBox'),copy=document.getElementById('cloudOtpCopy');if(form)form.style.display='none';if(otp)otp.style.display='grid';if(copy)copy.textContent='Enter the 6-digit code sent to '+email+'.';document.querySelectorAll('#cloudOtpRow .otp-input').forEach(x=>x.value='');setTimeout(()=>document.querySelector('#cloudOtpRow .otp-input')?.focus(),0);}finally{if(btn){btn.disabled=false;btn.textContent=label||'Send code';}}}
         function otpAdvance(el){const raw=el.value.replace(/\D/g,'');if(raw.length>1){const boxes=[...document.querySelectorAll('#cloudOtpRow .otp-input')];raw.slice(0,6).split('').forEach((d,i)=>{if(boxes[i])boxes[i].value=d;});boxes[Math.min(raw.length,6)-1]?.focus();return;}el.value=raw.slice(0,1);if(el.value)el.nextElementSibling?.focus();}
         function otpKeydown(e,el){if(e.key==='Backspace'&&!el.value){e.preventDefault();const prev=el.previousElementSibling;if(prev?.classList.contains('otp-input')){prev.value='';prev.focus();}}else if(e.key==='ArrowLeft')el.previousElementSibling?.focus();else if(e.key==='ArrowRight')el.nextElementSibling?.focus();}
         function otpPaste(e){const digits=(e.clipboardData?.getData('text')||'').replace(/\D/g,'').slice(0,6);if(!digits)return;e.preventDefault();const boxes=[...document.querySelectorAll('#cloudOtpRow .otp-input')];boxes.forEach((x,i)=>x.value=digits[i]||'');boxes[Math.min(digits.length,6)-1]?.focus();}
-        async function verifyEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();const token=[...document.querySelectorAll('#cloudOtpRow .otp-input')].map(x=>x.value).join('');if(token.length!==6)return showModernAlert('Enter the 6-digit code.','Verify');const btn=document.getElementById('cloudVerifyOtpBtn'),label=btn?.textContent;if(btn){btn.disabled=true;btn.textContent='Verifying…';}try{const {error}=await cloudClient.auth.verifyOtp({email,token,type:'email'});if(error)return showModernAlert(error.message,'Verify');document.getElementById('cloudAccountModal')?.classList.remove('open');resetCloudEmailFlow();}finally{if(btn){btn.disabled=false;btn.textContent=label||'Verify code';}}}
+        async function verifyEmailOtp(){const email=document.getElementById('cloudEmail')?.value?.trim();const token=[...document.querySelectorAll('#cloudOtpRow .otp-input')].map(x=>x.value).join('');if(token.length!==6)return showModernAlert('Enter the 6-digit code.','Verify');const btn=document.getElementById('cloudVerifyOtpBtn'),label=btn?.textContent;if(btn){btn.disabled=true;btn.textContent='Verifying…';}try{const {error}=await cloudClient.auth.verifyOtp({email,token,type:'email'});if(error)return showModernAlert(error.message,'Verify');closeJdAccountModal();}finally{if(btn){btn.disabled=false;btn.textContent=label||'Verify code';}}}
                 async function cloudSignOut(){await cloudClient?.auth.signOut();cloudUser=null;renderCloudAccount();}
         async function loadCloudState(){
             if(!cloudUser)return;
@@ -5335,16 +5513,66 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             }
         }
 
+        const JD_APPEARANCE_KEY='jd_appearance_mode';
+        const JD_TEXT_SIZE_KEY='jd_chat_text_size';
+        let jdAppearanceMode=localStorage.getItem(JD_APPEARANCE_KEY)||'';
+        let jdChatTextSize=100;
+        function syncJdAppearanceControls(){
+            document.querySelectorAll('#jdAppearanceModal [data-jd-appearance]').forEach(button=>{
+                const selected=button.dataset.jdAppearance===jdAppearanceMode;
+                button.classList.toggle('selected',selected);
+                button.setAttribute('aria-pressed',String(selected));
+            });
+            const labels={system:'System',foryou:'For You',dark:'Dark',light:'Light'};
+            const summary=document.getElementById('jdAppearanceSettingsLabel');
+            if(summary)summary.textContent=(labels[jdAppearanceMode]||'Dark')+' · Text '+jdChatTextSize+'%';
+            const range=document.getElementById('jdTextSizeRange');
+            if(range)range.value=String(jdChatTextSize);
+            const reset=document.getElementById('jdTextSizeResetBtn');
+            if(reset)reset.disabled=jdChatTextSize===100;
+        }
         function toggleThemeMode(toggleElem) {
             setTheme(toggleElem.checked ? 'theme-light' : '');
         }
-
-        function setTheme(themeName) {
+        function setTheme(themeName,{preserveAppearance=false}={}) {
             document.body.className = themeName;
             localStorage.setItem('jepong_theme', themeName);
             const toggle = document.getElementById('themeIosToggle');
             if (toggle) toggle.checked = themeName === 'theme-light';
+            if(!preserveAppearance){
+                jdAppearanceMode=themeName==='theme-light'?'light':themeName==='theme-neon'||themeName==='theme-sunset'?'foryou':'dark';
+                safeSetLocalStorage(JD_APPEARANCE_KEY,jdAppearanceMode,true);
+            }
+            syncJdAppearanceControls();
         }
+        function applyJdAppearance(mode,{persist=true}={}){
+            if(!['system','foryou','dark','light'].includes(mode))return;
+            jdAppearanceMode=mode;
+            const useLight=mode==='light'||(mode==='system'&&Boolean(window.matchMedia?.('(prefers-color-scheme: light)')?.matches));
+            setTheme(useLight?'theme-light':'',{preserveAppearance:true});
+            if(mode==='foryou')document.body.classList.add('jd-appearance-foryou');
+            if(persist)safeSetLocalStorage(JD_APPEARANCE_KEY,mode,true);
+            syncJdAppearanceControls();
+        }
+        function setJdChatTextSize(value,{persist=true}={}){
+            const size=Math.max(85,Math.min(120,Math.round((Number(value)||100)/5)*5));
+            jdChatTextSize=size;
+            document.documentElement.style.setProperty('--jd-chat-scale',String(size/100));
+            const preview=document.getElementById('jdTextPreviewAnswer');
+            if(preview)preview.style.fontSize='calc(1rem * '+(size/100)+')';
+            if(persist)safeSetLocalStorage(JD_TEXT_SIZE_KEY,String(size),true);
+            syncJdAppearanceControls();
+        }
+        function openJdAppearance(){
+            closeTransientSurfaces('jdAppearanceModal');
+            document.getElementById('jdAppearanceModal')?.classList.add('open');
+            syncJdAppearanceControls();
+            requestAnimationFrame(()=>refreshLucideIcons(document.getElementById('jdAppearanceModal')));
+        }
+        function closeJdAppearance(){document.getElementById('jdAppearanceModal')?.classList.remove('open');}
+        window.matchMedia?.('(prefers-color-scheme: light)')?.addEventListener?.('change',()=>{
+            if(jdAppearanceMode==='system')applyJdAppearance('system',{persist:false});
+        });
 
         function setLiveWebSearchEnabled(enabled) {
             isWebSearchEnabled = !!enabled;
@@ -11534,7 +11762,15 @@ ${m.text || ''}
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(()=>refreshLucideIcons(),0); // global icon refresh
             const savedTheme = localStorage.getItem('jepong_theme') || '';
-            setTheme(savedTheme);
+            const savedAppearance=localStorage.getItem(JD_APPEARANCE_KEY);
+            if(['system','foryou','dark','light'].includes(savedAppearance)){
+                applyJdAppearance(savedAppearance,{persist:false});
+            }else if(savedTheme){
+                setTheme(savedTheme);
+            }else{
+                applyJdAppearance('system',{persist:true});
+            }
+            setJdChatTextSize(localStorage.getItem(JD_TEXT_SIZE_KEY)||100,{persist:false});
             const savedModeName = localStorage.getItem('jepong_last_mode_name');
             const modeName = savedModeName || MODE_DISPLAY_NAMES[currentSelectedMode] || 'General AI';
             selectMode(currentSelectedMode, modeName);
