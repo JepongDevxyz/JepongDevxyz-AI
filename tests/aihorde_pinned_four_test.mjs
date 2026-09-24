@@ -23,8 +23,9 @@ assert.deepEqual(choose(changed,['d-70b','a-24b','c-7b','b-32b']).map(x=>x.name)
 assert(!choose(live.filter(x=>x.name==='a-24b'),['offline-model']).some(x=>x.name==='offline-model'),
  'Never resurrect offline pinned models');
 assert(backend.includes('liveAIHordePickerModels(body.preferredModels)'));
-assert(frontend.includes("localStorage.setItem('jepong_aihorde_pinned_models'"));
-assert(frontend.includes('preferredModels:aihordePinnedModels'));
-assert(frontend.includes('toggleAutoFallback(true)'));
-assert(frontend.includes('Your AI Horde API key was rejected.'));
-console.log('PASS: four stable live model slots; offline replacement; credential recovery requires explicit user action.');
+assert(!frontend.includes('aihordePinnedModels'));
+assert(!frontend.includes('aihordeFourModelChoices'));
+assert(!frontend.includes('refreshAIHordePickerModels'));
+assert(frontend.includes("currentSelectedProvider='gemini'"));
+assert(frontend.includes('All your configured keys are tried first.'));
+console.log('PASS: live-worker shortlist remains internal; no pinned user-facing Horde picker; legacy selection migrated to Gemini.');
