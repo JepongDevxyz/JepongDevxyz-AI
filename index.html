@@ -5080,6 +5080,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const signed=!!cloudUser; const out=document.getElementById('cloudSignedOut'), inside=document.getElementById('cloudSignedIn'), btn=document.getElementById('accountHeaderBtn');
             if(out)out.style.display=signed?'none':'grid'; if(inside)inside.style.display=signed?'block':'none';
             if(btn)btn.textContent=signed?'Account':'Sign in';
+            const authTitle=document.getElementById('jdAuthTitle');
+            if(authTitle)authTitle.textContent=signed?'Your account':(jdAuthSignUpMode?'Create your account':'Log into your account');
             const label=document.getElementById('cloudUserLabel'); if(label)label.textContent=cloudUser?.email||cloudUser?.user_metadata?.full_name||'';
             const status=document.getElementById('cloudAccountStatus'); if(status)status.textContent=signed?'Cloud sync is active for this account.':'Sign in to sync Memory, Library, settings and chats across devices.';
             const badge=document.getElementById('psMemoryBadge'); if(badge)badge.textContent=signed?(personalizationSettings.memoryEnabled?'Cloud memory on':'Cloud synced'):(personalizationSettings.memoryEnabled?'Memory on':'Local only');
