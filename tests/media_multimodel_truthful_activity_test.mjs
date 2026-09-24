@@ -60,8 +60,8 @@ assert.equal(none,'','Failed vision must not invent fabricated descriptions');
 assert(events.some(e=>e.state==='error'&&/Could not read/.test(e.label)));
 
 const classifierSource=segment(backend,'function taskProfile(message=', '\nfunction contextActivityPlan(');
-const classify=new Function('extractPublicUrl','shouldAutoResearch','detectArtifactRequest',
- classifierSource+'\nreturn taskProfile;')(()=>[],()=>false,()=>null);
+const classify=new Function('extractPublicUrl','shouldAutoResearch','detectArtifactRequest','shortTaskSubject',
+ classifierSource+'\nreturn taskProfile;')(()=>[],()=>false,()=>null,message=>message);
 assert.equal(classify('Build a meme generator where users upload images',[]).kind,'web');
 assert.equal(classify('Describe this image',[]).kind,'image');
 assert(backend.includes('const mediaAnalysisContext=await analyzeMediaForNonVisionProvider('),
