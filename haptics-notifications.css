@@ -41,26 +41,6 @@
   color:#a0a0a4;font-size:.76rem;font-weight:520;
   padding:0 1px;margin:19px 0 12px;
 }
-.jd-haptics-switch{position:relative;display:block;flex:0 0 43px;width:43px;height:27px;cursor:pointer}
-.jd-haptics-switch input{
-  position:absolute;inset:0;width:100%;height:100%;opacity:0;
-  cursor:pointer;z-index:2;margin:0;
-}
-.jd-haptics-switch .jd-haptics-track{
-  display:block;position:absolute;inset:0;
-  background:#464851;border:1px solid rgba(255,255,255,.1);
-  border-radius:999px;transition:background .16s ease;
-}
-.jd-haptics-switch .jd-haptics-track:before{
-  content:"";position:absolute;left:3px;top:3px;width:19px;height:19px;
-  border-radius:50%;background:#f5f5f5;
-  box-shadow:0 1px 3px rgba(0,0,0,.3);
-  transition:transform .16s ease;
-}
-.jd-haptics-switch input:checked+.jd-haptics-track{background:#f1f1f1;border-color:#f1f1f1}
-.jd-haptics-switch input:checked+.jd-haptics-track:before{transform:translateX(16px);background:#252525}
-.jd-haptics-switch input:disabled+.jd-haptics-track{opacity:.45}
-.jd-haptics-switch input:focus-visible+.jd-haptics-track{outline:2px solid #a99bff;outline-offset:3px}
 .jd-haptics-capability-note{
   padding:3px 2px;color:#88888d;font-size:.73rem;line-height:1.5;
   margin:15px 0;
@@ -75,9 +55,6 @@ body.theme-light .jd-haptics-row+.jd-haptics-row{border-top-color:rgba(0,0,0,.08
 body.theme-light .jd-haptics-copy svg{color:#555}
 body.theme-light .jd-haptics-section-label,
 body.theme-light .jd-haptics-capability-note{color:#65656f}
-body.theme-light .jd-haptics-switch .jd-haptics-track{background:#d2d2d6}
-body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track{background:#1d1d23;border-color:#1d1d23}
-body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track:before{background:#fff}
 @media(min-width:768px){
   .jd-haptics-home{
     width:min(100%,560px)!important;height:min(92dvh,900px)!important;
@@ -86,7 +63,6 @@ body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track:before{backg
   }
 }
 @media(prefers-reduced-motion:reduce){
-  .jd-haptics-switch .jd-haptics-track,.jd-haptics-switch .jd-haptics-track:before{transition:none}
 }
 
 /* Reply Notifications is now a navigable subpage, not a loose test row in
@@ -125,11 +101,6 @@ body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track:before{backg
 #settingsModal .settings-card-group>.settings-toggle-row small{
   font-size:clamp(.71rem,2.85vw,.82rem)!important;line-height:1.38!important;
   margin-top:3px!important;
-}
-#settingsModal .settings-card-group>.settings-nav-row:focus-visible,
-#jdReplyNotificationsModal button:focus-visible,
-#jdReplyNotificationsModal input:focus-visible+.jd-reply-notify-track{
-  outline:2px solid #a995ff!important;outline-offset:-3px;
 }
 .jd-reply-notify-overlay{z-index:1220!important}
 .jd-reply-notify-home{
@@ -179,27 +150,6 @@ body.theme-light .jd-haptics-switch input:checked+.jd-haptics-track:before{backg
   display:block;font-size:.76rem;line-height:1.45;
   margin-top:4px;color:#a4a4aa;
 }
-.jd-reply-notify-switch{
-  position:relative;display:block;flex:0 0 46px;
-  width:46px;height:28px;cursor:pointer;
-}
-.jd-reply-notify-switch input{
-  position:absolute;inset:0;width:100%;height:100%;
-  margin:0;opacity:0;cursor:pointer;z-index:2;
-}
-.jd-reply-notify-track{
-  position:absolute;inset:0;border-radius:999px;display:block;
-  background:#444650;border:1px solid rgba(255,255,255,.1);
-  transition:background .16s ease;
-}
-.jd-reply-notify-track:before{
-  content:"";position:absolute;top:3px;left:3px;
-  width:20px;height:20px;border-radius:50%;background:#f5f5f5;
-  box-shadow:0 1px 3px rgba(0,0,0,.23);
-  transition:transform .16s ease;
-}
-.jd-reply-notify-switch input:checked+.jd-reply-notify-track{background:#8b5cf6;border-color:#8b5cf6}
-.jd-reply-notify-switch input:checked+.jd-reply-notify-track:before{transform:translateX(18px)}
 .jd-reply-notify-section-label{
   font-size:.77rem;font-weight:590;color:#a1a1a7;margin:22px 3px 11px;
 }
@@ -246,5 +196,4 @@ body.theme-light .jd-reply-notify-row-copy>svg{color:#45454e}
  }
 }
 @media(prefers-reduced-motion:reduce){
- .jd-reply-notify-track,.jd-reply-notify-track:before{transition:none!important}
 }
