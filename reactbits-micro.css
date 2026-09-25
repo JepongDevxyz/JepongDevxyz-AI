@@ -205,7 +205,6 @@
 .prompt-bar[data-busy="true"] .prompt-bar__send{background:var(--pb-ink)}
 .prompt-bar[data-busy="true"] .prompt-bar__glyph{transform:rotate(8deg) scale(.9)}
 .prompt-bar .response-effort-wrap{align-self:center}
-.prompt-bar .wave-container{align-self:center}
 .attachment-drop-active .prompt-bar{border-color:var(--rb-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--rb-accent) 16%,transparent)}
 @media(max-width:430px){.prompt-bar{padding:6px;gap:4px}.prompt-bar__tool,.prompt-bar__vision,.prompt-bar__send{width:32px;height:32px;flex-basis:32px}}
 
