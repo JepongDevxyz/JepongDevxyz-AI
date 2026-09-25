@@ -74,6 +74,44 @@ html,body{background:var(--bg-color)!important}
 .jd-menu-btn:active,.jd-private-btn:active{transform:scale(.95)}
 .jd-menu-btn svg,.jd-private-btn svg{width:23px;height:23px;stroke-width:1.9}
 .jd-private-btn[aria-pressed="true"]{color:#b8a5ff;background:rgba(139,92,246,.14);border-color:rgba(139,92,246,.35)}
+.jd-private-btn{
+  box-shadow:none!important;
+  filter:none!important;
+  -webkit-filter:none!important;
+  text-shadow:none!important;
+}
+.jd-private-btn .jd-incognito-icon{
+  width:24px!important;
+  height:24px!important;
+  display:block;
+  overflow:visible;
+  pointer-events:none;
+}
+.chat-viewport-wrapper,
+.chat-box,
+.input-container,
+.welcome-screen,
+.welcome-screen .welcome-lottie-top,
+.welcome-screen .welcome-lottie-bottom,
+.welcome-screen lottie-player{
+  box-shadow:none!important;
+  text-shadow:none!important;
+  filter:none!important;
+  -webkit-filter:none!important;
+  background:transparent!important;
+}
+.welcome-screen::before,
+.welcome-screen::after,
+.welcome-screen .welcome-lottie-top::before,
+.welcome-screen .welcome-lottie-top::after,
+.welcome-screen .welcome-lottie-bottom::before,
+.welcome-screen .welcome-lottie-bottom::after{
+  content:none!important;
+  box-shadow:none!important;
+  filter:none!important;
+  -webkit-filter:none!important;
+}
+
 .jd-nav-tabs{
   min-width:0;display:flex;
   align-items:center;justify-content:center;
