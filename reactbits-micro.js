@@ -1,10 +1,25 @@
 /* JepongDevxyz AI — ReactBits-inspired micro interaction bridge.
-   No React runtime is added. Existing handlers remain the single source of truth. */
+   No React runtime is added. Existing handlers remain the single source of truth.
+   Startup-safe revision: DOM upgrades are batched after paint to avoid mutation storms. */
 (function(){
   'use strict';
 
   var doc=document;
   var timers=new WeakMap();
+  var activityObservers=new WeakMap();
+  var pendingScopes=new Set();
+  var flushScheduled=false;
+
+  function safe(fn){
+    try{return fn();}
+    catch(err){console.error('[JepongDevxyz micro]',err);}
+  }
+
+  function setData(node,key,value){
+    if(!node)return;
+    var next=String(value);
+    if(node.dataset[key]!==next)node.dataset[key]=next;
+  }
 
   function el(tag,className,html){
     var node=doc.createElement(tag);
@@ -24,33 +39,42 @@
   function syncActivity(card){
     if(!card)return;
     var grid=card.querySelector('.rb-lattice');
-    if(!grid)return;
     var status=card.classList.contains('error')?'error':
       (card.classList.contains('complete')||card.dataset.finalized==='true')?'done':'working';
-    grid.dataset.status=status;
+
+    if(grid&&grid.dataset.status!==status)grid.dataset.status=status;
+
     var head=card.querySelector('.ai-activity-summary-row');
     if(head){
-      head.classList.add('rb-thought-line');
-      head.dataset.working=status==='working'?'true':'false';
+      if(!head.classList.contains('rb-thought-line'))head.classList.add('rb-thought-line');
+      setData(head,'working',status==='working');
     }
+
     var list=card.querySelector('.ai-activity-list');
-    if(list)list.classList.add('rb-thought-steps');
+    if(list&&!list.classList.contains('rb-thought-steps'))list.classList.add('rb-thought-steps');
   }
 
   function upgradeActivity(card){
-    if(!card||card.dataset.rbActivity==='1')return;
-    card.dataset.rbActivity='1';
-    card.classList.add('rb-activity');
-    var head=card.querySelector('.ai-activity-summary-row');
-    if(head&&!head.querySelector('.rb-lattice')){
-      var grid=lattice();
-      var icon=head.querySelector('.ai-activity-summary-icon');
-      if(icon)head.insertBefore(grid,icon);
-      else head.insertBefore(grid,head.firstChild);
+    if(!card)return;
+    if(card.dataset.rbActivity!=='1'){
+      card.dataset.rbActivity='1';
+      if(!card.classList.contains('rb-activity'))card.classList.add('rb-activity');
+
+      var head=card.querySelector('.ai-activity-summary-row');
+      if(head&&!head.querySelector('.rb-lattice')){
+        var grid=lattice();
+        var icon=head.querySelector('.ai-activity-summary-icon');
+        if(icon)head.insertBefore(grid,icon);
+        else head.insertBefore(grid,head.firstChild);
+      }
+
+      if(!activityObservers.has(card)){
+        var mo=new MutationObserver(function(){safe(function(){syncActivity(card);});});
+        mo.observe(card,{attributes:true,attributeFilter:['class','data-finalized']});
+        activityObservers.set(card,mo);
+      }
     }
     syncActivity(card);
-    var mo=new MutationObserver(function(){syncActivity(card);});
-    mo.observe(card,{attributes:true,attributeFilter:['class','data-finalized'],childList:true,subtree:true});
   }
 
   function bellSvg(){
@@ -62,11 +86,12 @@
 
   function syncBell(input,button){
     var on=!!input.checked;
-    button.dataset.on=String(on);
+    setData(button,'on',on);
     button.setAttribute('aria-pressed',String(on));
     button.disabled=!!input.disabled;
     var label=button.querySelector('.rb-bell-label');
-    if(label)label.textContent=on?"You'll be notified":'Notify me';
+    var next=on?"You'll be notified":'Notify me';
+    if(label&&label.textContent!==next)label.textContent=next;
   }
 
   function upgradeBell(){
@@ -74,9 +99,11 @@
     if(!input||input.dataset.rbBell==='1')return;
     var host=input.closest('.jd-reply-notify-switch')||input.parentElement;
     if(!host)return;
+
     input.dataset.rbBell='1';
     host.classList.add('rb-bell-host');
     host.classList.remove('rb-squish-host');
+
     var button=el('button','rb-bell-toggle',bellSvg()+'<span class="rb-bell-label"></span>');
     button.type='button';
     button.setAttribute('aria-label','Reply notifications');
@@ -101,19 +128,26 @@
     var input=doc.getElementById('userInput');
     var action=doc.getElementById('mainActionBtn');
     if(!bar||!input||!action)return;
+
     bar.classList.add('rb-prompt-bar');
-    bar.dataset.rbModels='false';
+    setData(bar,'rbModels','false');
 
     function sync(){
       var busy=action.classList.contains('generating')||/stop/i.test(action.title||'');
-      bar.dataset.busy=String(busy);
-      bar.dataset.hasText=String(!!input.value.trim());
+      setData(bar,'busy',busy);
+      setData(bar,'hasText',!!input.value.trim());
     }
+
     if(bar.dataset.rbPrompt!=='1'){
       bar.dataset.rbPrompt='1';
       input.addEventListener('input',sync);
       var mo=new MutationObserver(sync);
-      mo.observe(action,{attributes:true,childList:true,subtree:true,attributeFilter:['class','title','aria-label']});
+      mo.observe(action,{
+        attributes:true,
+        childList:true,
+        subtree:true,
+        attributeFilter:['class','title','aria-label']
+      });
     }
     sync();
   }
@@ -150,6 +184,7 @@
     if(!button||button.dataset.rbVoice==='1')return;
     button.dataset.rbVoice='1';
     button.classList.add('rb-voice-pill');
+
     var wave=el('span','rb-vp-wave','<i></i><i></i><i></i><i></i><i></i>');
     var time=el('span','rb-vp-time','0:00');
     var stop=el('span','rb-vp-stop');
@@ -159,6 +194,7 @@
     button.appendChild(wave);
     button.appendChild(time);
     button.appendChild(stop);
+
     var mo=new MutationObserver(function(){syncMic(button);});
     mo.observe(button,{attributes:true,attributeFilter:['class','aria-pressed']});
     syncMic(button);
@@ -166,75 +202,124 @@
 
   function upgradeReadAloud(){
     var player=doc.getElementById('speechMiniPlayer');
-    if(!player)return;
-    player.classList.add('rb-read-voice-pill');
+    if(player&&!player.classList.contains('rb-read-voice-pill'))player.classList.add('rb-read-voice-pill');
   }
 
-  function upgradeSquish(){
-    var selectors=['label.ios-switch','label.mini-toggle','.jd-haptics-switch','.jd-reply-notify-switch','.ps-pet-behavior-toggle'];
-    doc.querySelectorAll(selectors.join(',')).forEach(function(host){
-      var input=host.querySelector(':scope > input[type="checkbox"]');
-      if(!input||input.id==='settingsNotifyToggle')return;
-      host.classList.add('rb-squish-host');
-      var visual=input.nextElementSibling;
-      if(!visual||visual.tagName==='INPUT'){
-        visual=el('span','rb-squish-track');
-        input.insertAdjacentElement('afterend',visual);
-      }
-    });
+  function directCheckbox(host){
+    if(!host||!host.children)return null;
+    for(var i=0;i<host.children.length;i++){
+      var child=host.children[i];
+      if(child&&child.tagName==='INPUT'&&child.type==='checkbox')return child;
+    }
+    return null;
+  }
+
+  function upgradeSquishHost(host){
+    if(!host)return;
+    var input=directCheckbox(host);
+    if(!input||input.id==='settingsNotifyToggle')return;
+    host.classList.add('rb-squish-host');
+
+    var visual=input.nextElementSibling;
+    if(!visual||visual.tagName==='INPUT'){
+      visual=el('span','rb-squish-track');
+      input.insertAdjacentElement('afterend',visual);
+    }
+  }
+
+  function upgradeSquish(scope){
+    var selector='label.ios-switch,label.mini-toggle,.jd-haptics-switch,.jd-reply-notify-switch,.ps-pet-behavior-toggle';
+    if(scope&&scope.nodeType===1&&scope.matches&&scope.matches(selector))upgradeSquishHost(scope);
+    var root=scope&&scope.querySelectorAll?scope:doc;
+    root.querySelectorAll(selector).forEach(upgradeSquishHost);
   }
 
   function refineImage(img){
     if(!img||img.dataset.rbRefined==='1'||img.closest('.rb-refine-frame'))return;
     if(img.getAttribute('alt')!=='Generated artwork')return;
+
     img.dataset.rbRefined='1';
     var frame=el('div','rb-refine-frame rb-enter');
     frame.dataset.status='complete';
     frame.setAttribute('role','img');
     frame.setAttribute('aria-label','Generated image ready');
+    if(!img.parentNode)return;
     img.parentNode.insertBefore(frame,img);
     frame.appendChild(img);
+
     var chip=el('span','rb-refine-chip',
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg><span>Ready</span>');
     frame.appendChild(chip);
     setTimeout(function(){frame.classList.remove('rb-enter');},850);
   }
 
-  function upgradeImages(root){
-    var scope=root&&root.querySelectorAll?root:doc;
-    if(scope.matches&&scope.matches('img[alt="Generated artwork"]'))refineImage(scope);
-    scope.querySelectorAll&&scope.querySelectorAll('img[alt="Generated artwork"]').forEach(refineImage);
+  function upgradeImages(scope){
+    if(scope&&scope.nodeType===1&&scope.matches&&scope.matches('img[alt="Generated artwork"]'))refineImage(scope);
+    var root=scope&&scope.querySelectorAll?scope:doc;
+    root.querySelectorAll('img[alt="Generated artwork"]').forEach(refineImage);
   }
 
-  function upgradeAll(root){
-    var scope=root&&root.querySelectorAll?root:doc;
-    if(scope.matches&&scope.matches('.ai-activity-card'))upgradeActivity(scope);
-    scope.querySelectorAll&&scope.querySelectorAll('.ai-activity-card').forEach(upgradeActivity);
-    upgradeBell();
-    upgradePromptBar();
-    upgradeMic();
-    upgradeReadAloud();
-    upgradeSquish();
+  function upgradeActivities(scope){
+    if(scope&&scope.nodeType===1&&scope.matches&&scope.matches('.ai-activity-card'))upgradeActivity(scope);
+    var root=scope&&scope.querySelectorAll?scope:doc;
+    root.querySelectorAll('.ai-activity-card').forEach(upgradeActivity);
+  }
+
+  function upgradeAll(scope){
+    upgradeActivities(scope);
     upgradeImages(scope);
+    upgradeSquish(scope);
+
+    if(scope===doc||!scope||scope.nodeType===9||
+       (scope.querySelector&&(
+         scope.querySelector('#settingsNotifyToggle')||
+         scope.querySelector('.chat-input-pill')||
+         scope.querySelector('#micBtn')||
+         scope.querySelector('#speechMiniPlayer')
+       ))){
+      upgradeBell();
+      upgradePromptBar();
+      upgradeMic();
+      upgradeReadAloud();
+    }
+  }
+
+  function flushPending(){
+    flushScheduled=false;
+    var batch=Array.from(pendingScopes);
+    pendingScopes.clear();
+    batch.forEach(function(scope){safe(function(){upgradeAll(scope);});});
+  }
+
+  function schedule(scope){
+    if(scope)pendingScopes.add(scope);
+    if(flushScheduled)return;
+    flushScheduled=true;
+    if(typeof requestAnimationFrame==='function')requestAnimationFrame(flushPending);
+    else setTimeout(flushPending,16);
   }
 
   function start(){
-    upgradeAll(doc);
     var root=doc.body||doc.documentElement;
     if(!root)return;
+
+    schedule(doc);
+
     var observer=new MutationObserver(function(records){
       records.forEach(function(record){
         record.addedNodes.forEach(function(node){
-          if(node.nodeType===1)upgradeAll(node);
+          if(node&&node.nodeType===1)schedule(node);
         });
       });
-      upgradeBell();
-      upgradePromptBar();
-      upgradeSquish();
     });
     observer.observe(root,{childList:true,subtree:true});
+    window.__JD_REACTBITS_MICRO_READY__=true;
   }
 
-  if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',start,{once:true});
-  else start();
+  function queueStart(){
+    setTimeout(function(){safe(start);},0);
+  }
+
+  if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',queueStart,{once:true});
+  else queueStart();
 })();
