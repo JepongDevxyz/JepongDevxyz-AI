@@ -483,7 +483,9 @@ body.theme-light .chat-input-pill .pill-action-btn{background:#17171b!important;
   gap:17px!important;border-radius:0!important;
   border:0!important;border-right:1px solid var(--jd-edge)!important;
   background:#1b1b1b!important;
-  box-shadow:14px 0 55px rgba(0,0,0,.31)!important;
+  box-shadow:none!important;
+  filter:none!important;
+  -webkit-filter:none!important;
   overflow:hidden!important;
 }
 .app-container .sidebar.drawer-right{
