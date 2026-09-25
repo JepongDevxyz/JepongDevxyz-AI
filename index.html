@@ -8340,6 +8340,102 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }, 170);
         }
 
+        const jdRenameTitleAnimations = new Map();
+
+        function persistJdRenamedSession(sessionType) {
+            if (sessionType === 'bible') {
+                safeSetLocalStorage('jepong_bible_chats', JSON.stringify(bibleChatSessions));
+                return;
+            }
+            const saved = safeSetLocalStorage('jepong_ai_chats', JSON.stringify(chatSessions));
+            if (saved) localStorage.setItem('jepong_chats_updated_at', String(Date.now()));
+            queueCloudSync();
+        }
+
+        function findJdHistoryRow(sessionId) {
+            return [...document.querySelectorAll('#chatHistoryList .history-item')]
+                .find(item => item.dataset.sessionId === sessionId) || null;
+        }
+
+        function setJdRenameAnimationCursor(textEl, valueEl, cursorEl) {
+            if (!textEl || !valueEl || !cursorEl) return;
+            const maxLeft = Math.max(0, textEl.clientWidth - 11);
+            const textWidth = Math.ceil(valueEl.scrollWidth || valueEl.getBoundingClientRect().width || 0);
+            cursorEl.style.left = Math.min(textWidth + 2, maxLeft) + 'px';
+        }
+
+        function waitJdRenameFrame(ms) {
+            return new Promise(resolve => window.setTimeout(resolve, ms));
+        }
+
+        async function animateJdRenamedSidebarTitle(sessionId, oldTitle, newTitle) {
+            const row = findJdHistoryRow(sessionId);
+            const textEl = row?.querySelector('.history-item-text');
+            if (!row || !textEl) {
+                renderSidebarHistory();
+                return;
+            }
+
+            const animationToken = Symbol('jd-rename-title');
+            jdRenameTitleAnimations.set(sessionId, animationToken);
+
+            row.classList.add('jd-title-renaming');
+            textEl.classList.add('jd-rename-animating');
+            textEl.textContent = '';
+
+            const valueEl = document.createElement('span');
+            valueEl.className = 'jd-rename-title-value';
+            const cursorEl = document.createElement('span');
+            cursorEl.className = 'jd-rename-title-cursor';
+            cursorEl.setAttribute('aria-hidden', 'true');
+            textEl.append(valueEl, cursorEl);
+
+            const alive = () =>
+                jdRenameTitleAnimations.get(sessionId) === animationToken &&
+                row.isConnected &&
+                textEl.isConnected;
+
+            const paint = value => {
+                if (!alive()) return false;
+                valueEl.textContent = value;
+                textEl.setAttribute('aria-label', value || newTitle);
+                setJdRenameAnimationCursor(textEl, valueEl, cursorEl);
+                return true;
+            };
+
+            // Reference video timing: show the old title with the round cursor,
+            // erase it right-to-left, then type the new name left-to-right.
+            paint(oldTitle);
+            await waitJdRenameFrame(70);
+
+            const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+            if (!reduceMotion) {
+                for (let end = oldTitle.length - 1; end >= 0; end--) {
+                    if (!paint(oldTitle.slice(0, end))) return;
+                    await waitJdRenameFrame(30);
+                }
+
+                await waitJdRenameFrame(24);
+
+                for (let end = 1; end <= newTitle.length; end++) {
+                    if (!paint(newTitle.slice(0, end))) return;
+                    await waitJdRenameFrame(24);
+                }
+
+                await waitJdRenameFrame(72);
+            } else {
+                paint(newTitle);
+            }
+
+            if (!alive()) return;
+            textEl.classList.remove('jd-rename-animating');
+            textEl.textContent = newTitle;
+            textEl.title = newTitle;
+            textEl.removeAttribute('aria-label');
+            row.classList.remove('jd-title-renaming');
+            jdRenameTitleAnimations.delete(sessionId);
+        }
+
         function submitJdRenameDialog() {
             const overlay = document.getElementById('jdRenameDialogOverlay');
             const input = document.getElementById('jdRenameDialogInput');
@@ -8357,11 +8453,21 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 return;
             }
 
-            session.title = nextTitle;
-            if (sessionType === 'bible') saveBibleSessions();
-            else saveSessions();
+            const oldTitle = String(session.title || '');
+            if (oldTitle === nextTitle) {
+                closeJdRenameDialog();
+                return;
+            }
 
+            // Persist immediately without re-rendering the sidebar. Re-rendering here
+            // would destroy the exact erase/type animation visible in the reference.
+            session.title = nextTitle;
+            persistJdRenamedSession(sessionType);
             closeJdRenameDialog();
+
+            window.setTimeout(() => {
+                animateJdRenamedSidebarTitle(id, oldTitle, nextTitle);
+            }, 170);
         }
 
         function ensureJdRenameDialog() {
@@ -9978,6 +10084,7 @@ ${m.text || ''}
                 const activeCurrentId = isBibleMode ? currentBibleSessionId : currentSessionId;
                 const item = document.createElement('div');
                 item.className = 'history-item' + (session.id === activeCurrentId ? ' active' : '');
+                item.dataset.sessionId = session.id;
                 item.onclick = () => {
                     if (isBibleMode) loadBibleSession(session.id);
                     else loadChatSession(session.id);
