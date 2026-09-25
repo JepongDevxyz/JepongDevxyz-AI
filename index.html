@@ -8635,22 +8635,26 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function initialActivityForRequest(promptText='',files=[]){
-            // This first event is factual: the browser has received a task and
-            // already processed uploads. Actual analysis/build steps come only
-            // from real backend activity, not canned or timer-generated steps.
+            // Temporary lead only. Real timeline rows are streamed from the
+            // backend. Keep this text tied to the user's literal task so a
+            // build request that mentions an image is never mislabeled as an
+            // "image task".
             const list=Array.isArray(files)?files:[];
             const names=[...new Set(list.map(f=>f?.parentName||f?.name||f?.filename).filter(Boolean))];
             const prompt=String(promptText||'').replace(/\s+/g,' ').trim();
-            const subject=prompt.length>95?prompt.slice(0,92).replace(/\s+\S*$/,'')+'…':prompt;
+            const subject=prompt.length>115?prompt.slice(0,112).replace(/\s+\S*$/,'')+'…':prompt;
             const hasVideo=list.some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame'||f?.kind==='video');
             const hasImage=list.some(f=>String(f?.mimeType||'').startsWith('image/')&&f?.mediaRole!=='video-frame');
             const hasCode=list.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|cs|sql|ya?ml|sh)$/i.test(String(f?.name||f?.filename||'')));
             if(names.length){
                 const type=hasVideo?'video':hasImage?'image':hasCode?'source file':'attachment';
-                return {label:`Prepared ${names.length} ${type}${names.length>1?'s':''} for your request`,
-                    kind:hasImage&&!hasVideo?'image':'file',detail:names.slice(0,2).join(', ').slice(0,120)};
+                return {
+                    label:`Reviewing uploaded ${type}${names.length>1?'s':''} for: ${subject||'your request'}`,
+                    kind:hasImage&&!hasVideo?'image':'file',
+                    detail:names.slice(0,2).join(', ').slice(0,120)
+                };
             }
-            return {label:subject?'Request received: '+subject:'Request received',kind:'process',detail:''};
+            return {label:subject?`Working on: ${subject}`:'Working on your request',kind:'process',detail:''};
         }
 
         function normalizeActivityEventForUI(evt = {}) {
@@ -8948,10 +8952,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             },1000);
             chatBox.appendChild(indicator);
             const list=indicator.querySelector('#aiActivityList');
-            // Show the actual submitted task immediately, even before a slow
-            // API has sent its first SSE chunk. Once streaming starts the
-            // server updates the lead and adds only verified execution steps.
-            appendActivityEvent({id:'request-submitted',...initialActivityForRequest(promptText,files),state:'completed'});
+            // Show the user's actual task as the temporary lead while waiting
+            // for the first server activity event. Do not add a fake timeline
+            // row: real rows come only from backend/tool/provider milestones.
+            const initialTask=initialActivityForRequest(promptText,files);
+            const lead=indicator.querySelector('.ai-activity-lead');
+            if(lead)lead.textContent=String(initialTask.label||'').slice(0,220);
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
             // The header itself says "Thinking". Do not insert a fake startup row:
@@ -10722,6 +10728,28 @@ ${m.text || ''}
             if (!message && selectedFilesData.length === 0) return;
 
             await waitForAttachmentJobs();
+
+            // Never send a still-processing or unreadable upload to a model.
+            // Previously a fast tap on Send could serialize an empty placeholder,
+            // which made every downstream model appear unable to read the file.
+            const failedAttachments=selectedFilesData.filter(file=>{
+                if(file?.status==='error')return true;
+                if(file?.kind==='image')return !file?.data;
+                if(file?.kind==='video'){
+                    const sampled=Array.isArray(file.frames)&&file.frames.some(frame=>!!frame?.data);
+                    return !sampled&&!file?.nativeData;
+                }
+                return false;
+            });
+            if(failedAttachments.length){
+                renderFilePreviews();
+                const names=failedAttachments.map(file=>file.name).filter(Boolean).slice(0,3).join(', ');
+                showModernAlert(
+                    `Hindi pa mabasa ang ${names||'attachment'}. Hintaying matapos ang preparation o alisin at i-upload ulit ang file bago i-send.`,
+                    'Attachment not ready'
+                );
+                return;
+            }
 
             if (message.toLowerCase() === '/agent' || message.toLowerCase().startsWith('/agent ')) {
                 input.value = '';

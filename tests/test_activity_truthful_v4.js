@@ -43,14 +43,17 @@ assert(sse.includes("if(!data || data.type!=='activity')return;")&&sse.includes(
   'real tool events must be validated and streamed');
 assert(sse.includes("send('done'"),'completion event must stream');
 const process=between(api,'async function processChat(','\nasync function providerUsageSnapshot');
-assert(process.includes("activity(emit,'thinking','Thinking','running','thinking');\n  const first=await runProvider"),
-  'Thinking must start at real model invocation after context/tool operations');
+assert(process.includes("const taskWork=taskWorkingActivity(contextPlan);") &&
+  process.includes("activity(emit,'thinking',taskWork.label,'running',taskWork.kind);") &&
+  process.includes("const first=await runProvider"),
+  'task-specific model work must start at the real provider invocation after context/tool operations');
 assert(process.includes('const grouped=new Map();')&&process.includes('else if(textParts){')&&process.includes('activity(emit,id,`Read attached '),
   'actual extracted attachment content must generate a file-specific event');
 const show=between(ui,'function showAIIndicator(','function toggleActivityDetails(');
-assert(show.includes('detailed rows must come only from real backend/tool activity.') &&
-  !show.includes("appendActivityEvent({id:'task-context'"),
-  'do not synthesize client activity before backend events');
+assert(show.includes('real rows come only from backend/tool/provider milestones.') &&
+  !show.includes("appendActivityEvent({id:'task-context'") &&
+  !show.includes("appendActivityEvent({id:'request-submitted'"),
+  'client may show a temporary literal task lead but must not synthesize timeline rows before backend events');
 assert(!show.includes("appendActivityEvent({id:'thinking'"),'do not put Thinking ahead of tool work');
 const streamUI=between(ui,"if (contentType.includes('text/event-stream')) {","\n                fullResponse = safeAssistantText(fullResponse);");
 const textHandler=between(streamUI,'text: (payload) => {','\n                        artifact:');

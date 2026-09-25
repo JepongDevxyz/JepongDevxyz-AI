@@ -35,8 +35,11 @@ const activities=[],called=[];
 let geminiReady=true;
 const deps={
  providerLabel:name=>name,
+ modelLabel:name=>name,
+ attachmentRootName:file=>String(file?.parentName||file?.name||'Attachment'),
  activity:(_emit,id,label,state,kind)=>activities.push({id,label,state,kind}),
  configured:name=>name==='gemini'?geminiReady:false,
+ runOpenAICompatible:async args=>{called.push({provider:'selected',args});return {ok:false,status:415};},
  runGemini:async args=>{called.push({provider:'gemini',args});return {ok:true,response:{body:'mock'}};},
  runCloudflare:async args=>{called.push({provider:'cloudflare',args});return {ok:false,status:503};},
  readInternalProviderText:async()=> 'At 1.5 seconds, a blue button appears.',
@@ -50,18 +53,18 @@ const analysis=new Function(...Object.keys(deps),mediaSrc+
 const video=[{name:'clip.mp4 — frame 1',parentName:'clip.mp4',mimeType:'image/jpeg',
  mediaRole:'video-frame',frameTimeSeconds:1.5,data:'abc'}];
 const text=await analysis.analyzeMediaForNonVisionProvider(video,
- 'Read the clip for button placement','codecraft',()=>{});
+ 'Read the clip for button placement','codecraft','gpt-5.6-luna',()=>{},null);
 assert.match(text,/MEDIA ATTACHMENT ANALYSIS — Gemini/);
 assert.match(text,/blue button/);
 assert.equal(called[0].provider,'gemini');
 assert.equal(called[0].args.message.includes('button placement'),true);
 assert(activities.some(x=>x.id==='attachment-media'&&/video frame/.test(x.label)&&x.state==='running'));
 assert(activities.some(x=>x.id==='attachment-media'&&x.state==='completed'));
-assert.equal(await analysis.analyzeMediaForNonVisionProvider(video,'Review','gemini',()=>{}),'');
+assert.equal(await analysis.analyzeMediaForNonVisionProvider(video,'Review','gemini','gemini-flash-latest',()=>{},null),'');
 geminiReady=false;
-assert.equal(await analysis.analyzeMediaForNonVisionProvider(video,'Review','codecraft',()=>{}),null,
+assert.equal(await analysis.analyzeMediaForNonVisionProvider(video,'Review','codecraft','gpt-5.6-luna',()=>{},null),null,
  'No configured vision analyzer must fail clearly, not fabricate description');
-assert(activities.some(x=>x.state==='warning'&&/could not visually analyze/i.test(x.label)));
+assert(activities.some(x=>x.state==='warning'&&/No configured vision route could read/i.test(x.label)));
 
 const process=between(api,'async function processChat(body, emit) {','\nasync function providerUsageSnapshot(');
 assert(process.includes('const mediaAnalysisContext=visualParts.length'));
@@ -74,13 +77,14 @@ assert(process.includes("activity(emit,id,`Prepared ${videoFrames}"),'Video fram
 const startup=between(html,"function initialActivityForRequest(promptText='',files=[]){",
  '        function normalizeActivityEventForUI(');
 const initial=new Function(startup+'\nreturn initialActivityForRequest;')();
-assert.match(initial(meme,[]).label,/Request received: Build a meme generator/);
+assert.match(initial(meme,[]).label,/Working on: Build a meme generator/);
 const local=initial('Read video and screenshot',[{name:'clip.mp4',kind:'video',mimeType:'video/mp4'},
  {name:'frame.jpg',parentName:'clip.mp4',mediaRole:'video-frame',mimeType:'image/jpeg'}]);
-assert.match(local.label,/Prepared 1 video/);
+assert.match(local.label,/Reviewing uploaded video/);
 assert.equal(local.detail,'clip.mp4');
 const renderer=between(html,'function showAIIndicator(','function toggleActivityDetails(');
-assert(renderer.includes("appendActivityEvent({id:'request-submitted'"));
+assert(!renderer.includes("appendActivityEvent({id:'request-submitted'"));
+assert(renderer.includes("const initialTask=initialActivityForRequest(promptText,files)"));
 assert(html.includes("if(id==='task-context')"),'Actual backend task status remains visible');
 assert(html.includes("label:label||'Checking configured fallback'"));
 assert.equal((html.match(/<lottie-player\b/g)||[]).length,6);
