@@ -90,7 +90,8 @@ assert(!html.includes('id="waveContainer"'),'legacy duplicate mic waveform must 
 // Startup safety: only targeted observers, no page-wide upgradeAll mutation loop.
 assert(!js.includes('upgradeAll'),'old broad ReactBits mutation upgrader must be gone');
 assert(!js.includes("observer.observe(root,{childList:true,subtree:true})"),'old page-wide mutation observer pattern must be gone');
-assert(js.includes('watchDynamicSwitches'),'dynamic switch hydration must remain targeted');
+assert(js.includes('hydrateSquish(node)'),'dynamic switch hydration must remain targeted');
+assert((js.match(/new MutationObserver/g)||[]).length <= 4,'ReactBits runtime must keep observers narrowly bounded');
 assert(js.includes('window.__JD_REACTBITS_MICRO_READY__=true'),'runtime readiness marker missing');
 
 // No React/Motion runtime dependencies added to this vanilla application.
