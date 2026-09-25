@@ -8948,10 +8948,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             },1000);
             chatBox.appendChild(indicator);
             const list=indicator.querySelector('#aiActivityList');
-            // Show the actual submitted task immediately, even before a slow
-            // API has sent its first SSE chunk. Once streaming starts the
-            // server updates the lead and adds only verified execution steps.
-            appendActivityEvent({id:'request-submitted',...initialActivityForRequest(promptText,files),state:'completed'});
+            // Show the user's actual task as the temporary lead while waiting
+            // for the first server activity event. Do not add a fake timeline
+            // row: real rows come only from backend/tool/provider milestones.
+            const initialTask=initialActivityForRequest(promptText,files);
+            const lead=indicator.querySelector('.ai-activity-lead');
+            if(lead)lead.textContent=String(initialTask.label||'').slice(0,220);
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
             // The header itself says "Thinking". Do not insert a fake startup row:
@@ -10722,6 +10724,28 @@ ${m.text || ''}
             if (!message && selectedFilesData.length === 0) return;
 
             await waitForAttachmentJobs();
+
+            // Never send a still-processing or unreadable upload to a model.
+            // Previously a fast tap on Send could serialize an empty placeholder,
+            // which made every downstream model appear unable to read the file.
+            const failedAttachments=selectedFilesData.filter(file=>{
+                if(file?.status==='error')return true;
+                if(file?.kind==='image')return !file?.data;
+                if(file?.kind==='video'){
+                    const sampled=Array.isArray(file.frames)&&file.frames.some(frame=>!!frame?.data);
+                    return !sampled&&!file?.nativeData;
+                }
+                return false;
+            });
+            if(failedAttachments.length){
+                renderFilePreviews();
+                const names=failedAttachments.map(file=>file.name).filter(Boolean).slice(0,3).join(', ');
+                showModernAlert(
+                    `Hindi pa mabasa ang ${names||'attachment'}. Hintaying matapos ang preparation o alisin at i-upload ulit ang file bago i-send.`,
+                    'Attachment not ready'
+                );
+                return;
+            }
 
             if (message.toLowerCase() === '/agent' || message.toLowerCase().startsWith('/agent ')) {
                 input.value = '';
