@@ -12,10 +12,11 @@ assert(html.includes('/reactbits-micro.css'),'ReactBits stylesheet must load');
 assert(html.includes('/reactbits-micro.js'),'ReactBits runtime must load');
 
 // 1/6 LatticeLoader + ThoughtLine: direct real Activity rendering, not overlay injection.
-for (const token of ['lattice-loader','thought-line','thought-line__trace','aiActivityLattice']) {
+for (const token of ['lattice-loader','thought-line','thought-line__trace']) {
   assert(html.includes(token), 'Activity direct markup missing: '+token);
   assert(css.includes(token), 'Activity style missing: '+token);
 }
+assert(html.includes('id="aiActivityLattice"'),'Activity LatticeLoader live status hook missing');
 assert(html.includes('function appendActivityEvent'),'real backend Activity event bridge must remain');
 assert(html.includes("if(id==='task-context')"),'real task-context Activity lead must remain');
 assert(html.includes('initialActivityForRequest'),'request-specific temporary lead must remain');
