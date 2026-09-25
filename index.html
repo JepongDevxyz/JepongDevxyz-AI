@@ -4133,7 +4133,15 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                     <button class="jd-nav-tab" type="button" data-jd-tab="build" aria-pressed="false" onclick="selectMode('coder','Expert Coder')">Build</button>
                 </div>
                 <button class="jd-private-btn" id="jdPrivateBtn" type="button" aria-pressed="false" onclick="toggleJdPrivateMode()" aria-label="Toggle incognito chat" title="Start incognito">
-                    <i data-lucide="hat-glasses"></i>
+                    <svg class="jd-incognito-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <path d="M4 10h16"></path>
+                        <path d="M7 10 8.6 5.5h6.8L17 10"></path>
+                        <circle cx="7.5" cy="15.5" r="2.5"></circle>
+                        <circle cx="16.5" cy="15.5" r="2.5"></circle>
+                        <path d="M10 15.5h4"></path>
+                        <path d="m5.1 14.4-2.1-.9"></path>
+                        <path d="m18.9 14.4 2.1-.9"></path>
+                    </svg>
                 </button>
             </nav>
             <span id="brandTitleText" hidden>JepongDevxyz AI</span>
@@ -11312,6 +11320,7 @@ ${m.text || ''}
             const privateButton=document.getElementById('jdPrivateBtn');
             if(privateButton){
                 privateButton.setAttribute('aria-pressed',String(isIncognito===true));
+                privateButton.setAttribute('aria-label',isIncognito?'Exit incognito chat':'Start incognito chat');
                 privateButton.title=isIncognito?'Exit incognito':'Start incognito';
             }
         }
