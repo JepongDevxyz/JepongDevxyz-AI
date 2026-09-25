@@ -87,6 +87,9 @@ html,body{background:var(--bg-color)!important}
   overflow:visible;
   pointer-events:none;
 }
+.chat-viewport-wrapper,
+.chat-box,
+.input-container,
 .welcome-screen,
 .welcome-screen .welcome-lottie-top,
 .welcome-screen .welcome-lottie-bottom,
