@@ -1686,70 +1686,132 @@ function mediaGroundingPrompt(message='', files=[]){
   );
 }
 
-async function analyzeMediaForNonVisionProvider(files=[], message='', selectedProvider='', emit){
+function usableMediaAnalysis(text=''){
+  const t=String(text||'').replace(/\s+/g,' ').trim();
+  if(t.length<24)return false;
+  const refusal=/(?:can(?:not|'t)|unable to|don't have|do not have)\s+(?:see|view|access|open|inspect|analy[sz]e|process)\b.{0,80}\b(?:image|photo|picture|video|attachment|file)/i.test(t) ||
+    /(?:no|without)\s+(?:image|photo|video|attachment)\s+(?:was\s+)?(?:provided|attached|available|visible)/i.test(t);
+  return !refusal;
+}
+
+async function analyzeMediaForNonVisionProvider(files=[], message='', selectedProvider='', selectedModel='', emit, customApiKeys=null){
   const media=mediaAttachments(files);
   if(!media.length)return '';
 
-  // Only models that receive the actual visual parts directly skip the
-  // vision bridge. Cloudflare's non-vision selections still require analysis.
-  // Input analysis is independent of the response-provider quota fallback.
+  // Gemini and the dedicated Cloudflare vision selection receive the original
+  // media directly in the final request, so a bridge analysis would only
+  // duplicate cost and context.
   if(selectedProvider==='gemini'||selectedProvider==='cloudflare-vision'){
     activity(emit,'attachment-media',`Prepared ${media.length} visual/media part${media.length===1?'':'s'} for ${providerLabel(selectedProvider)}`,'completed','file');
     return '';
   }
 
+  const imageOnly=media.filter(f=>String(f.mimeType||'').startsWith('image/'));
   const videoFrames=media.filter(f=>f.mediaRole==='video-frame').length;
+  const rootNames=[...new Set(media.map(f=>attachmentRootName(f)).filter(Boolean))];
+  const attachmentLabel=rootNames.slice(0,2).join(', ').slice(0,110);
   activity(emit,'attachment-media',videoFrames
-    ?`Analyzing ${videoFrames} extracted video frame${videoFrames===1?'':'s'} for your request`
-    :`Analyzing ${media.length} attached image${media.length===1?'':'s'} for your request`,
+    ?`Reading ${videoFrames} sampled video frame${videoFrames===1?'':'s'}${attachmentLabel?' from '+attachmentLabel:''} for your request`
+    :`Reading ${imageOnly.length||media.length} attached image${(imageOnly.length||media.length)===1?'':'s'}${attachmentLabel?' from '+attachmentLabel:''} for your request`,
     'running',videoFrames?'file':'image');
 
   const system =
     'You are an attachment analysis tool. Be literal and evidence-grounded. ' +
-    'Do not invent text, people, events, audio, or details that are not present. ' +
-    'Your output will be given to another model as source context.';
+    'Read visible text when legible. Do not invent people, objects, events, audio, or details that are not present. ' +
+    'Your output will be given to another response model as source context.';
+  const prompt=mediaGroundingPrompt(message,media);
 
-  try{
-    if(configured('gemini')){
+  // First try the user's selected OpenAI-compatible model with image/frame
+  // parts. If that exact model supports vision, no provider switch is needed.
+  // A refusal or unsupported multimodal response is not accepted as evidence.
+  const openAICompatibleVision=new Set(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec','seekai','bailucode']);
+  if(imageOnly.length && openAICompatibleVision.has(selectedProvider) &&
+     ((Array.isArray(customApiKeys)&&customApiKeys.length)||configured(selectedProvider))){
+    activity(emit,'attachment-media-selected',`Checking attached media with ${providerLabel(selectedProvider)} • ${modelLabel(selectedModel||'selected model')}`,'running','image');
+    try{
+      const r=await runOpenAICompatible(selectedProvider,{
+        model:selectedModel,
+        history:[],
+        files:imageOnly,
+        message:mediaGroundingPrompt(message,imageOnly),
+        systemInstruction:system,
+        emit:null,
+        autoFallback:false,
+        customApiKeys,
+        visionPayload:true
+      });
+      if(r.ok){
+        const text=await readInternalProviderText(r.response,16000);
+        if(usableMediaAnalysis(text)){
+          activity(emit,'attachment-media-selected',`Read attached media with ${providerLabel(selectedProvider)} • ${modelLabel(selectedModel||'selected model')}`,'completed','image');
+          activity(emit,'attachment-media','Attachment evidence is ready for the selected response model','completed','file');
+          return `\n\n[MEDIA ATTACHMENT ANALYSIS — ${providerLabel(selectedProvider)}]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
+        }
+      }
+      activity(emit,'attachment-media-selected','Selected model did not return grounded visual evidence — trying a configured vision analyzer','warning','image');
+    }catch(_){
+      activity(emit,'attachment-media-selected','Selected model could not read the visual payload directly — trying a configured vision analyzer','warning','image');
+    }
+  }
+
+  // Gemini is the strongest general bridge here because it can receive both
+  // image frames and a small native video payload. This does not change the
+  // model/provider that writes the final answer.
+  if(configured('gemini')){
+    activity(emit,'attachment-media-bridge','Using Gemini to read attachment evidence for the selected model','running','image');
+    try{
       const r=await runGemini({
         model:'gemini-flash-latest',
         history:[],
         files:media,
-        message:mediaGroundingPrompt(message,media),
+        message:prompt,
         systemInstruction:system,
-        emit:null
+        emit:null,
+        autoFallback:false
       });
       if(r.ok){
-        const text=await readInternalProviderText(r.response,14000);
-        if(text){
-          activity(emit,'attachment-media','Media analysis completed with Gemini','completed','file');
+        const text=await readInternalProviderText(r.response,16000);
+        if(usableMediaAnalysis(text)){
+          activity(emit,'attachment-media-bridge','Gemini finished reading the attachment evidence','completed','image');
+          activity(emit,'attachment-media','Attachment evidence is ready for the selected response model','completed','file');
           return `\n\n[MEDIA ATTACHMENT ANALYSIS — Gemini]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
         }
       }
+      activity(emit,'attachment-media-bridge','Gemini did not return grounded attachment evidence','warning','image');
+    }catch(_){
+      activity(emit,'attachment-media-bridge','Gemini attachment analysis was unavailable','warning','image');
     }
+  }
 
-    // Cloudflare can fall back for image/frame analysis (not native video files).
-    const imageOnly=media.filter(f=>String(f.mimeType||'').startsWith('image/'));
-    if(imageOnly.length && configured('cloudflare')){
+  // Cloudflare is a second vision bridge for photos, screenshots, PDF page
+  // renders, and sampled video frames.
+  if(imageOnly.length && configured('cloudflare')){
+    activity(emit,'attachment-media-cloudflare','Trying Cloudflare vision for the attachment evidence','running','image');
+    try{
       const r=await runCloudflare({
         model:'@cf/google/gemma-4-26b-a4b-it',
         history:[],
         files:imageOnly,
         message:mediaGroundingPrompt(message,imageOnly),
         systemInstruction:system,
-        emit:null
+        emit:null,
+        autoFallback:false
       });
       if(r.ok){
-        const text=await readInternalProviderText(r.response,14000);
-        if(text){
-          activity(emit,'attachment-media','Media analysis completed with Cloudflare vision','completed','file');
+        const text=await readInternalProviderText(r.response,16000);
+        if(usableMediaAnalysis(text)){
+          activity(emit,'attachment-media-cloudflare','Cloudflare vision finished reading the attachment evidence','completed','image');
+          activity(emit,'attachment-media','Attachment evidence is ready for the selected response model','completed','file');
           return `\n\n[MEDIA ATTACHMENT ANALYSIS — Cloudflare]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
         }
       }
+      activity(emit,'attachment-media-cloudflare','Cloudflare did not return grounded attachment evidence','warning','image');
+    }catch(_){
+      activity(emit,'attachment-media-cloudflare','Cloudflare attachment analysis was unavailable','warning','image');
     }
-  }catch(_){}
+  }
 
-  activity(emit,'attachment-media','Could not visually analyze the attached media with configured vision providers','warning','file');
+  activity(emit,'attachment-media','No configured vision route could read the attached media','warning','file');
   return null;
 }
 
