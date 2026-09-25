@@ -6,7 +6,6 @@
   var doc=document;
   var voiceTimer=null;
   var voiceStartedAt=0;
-  var switchObserver=null;
 
   function directCheckbox(host){
     if(!host||!host.children)return null;
@@ -105,7 +104,11 @@
 
   /* SquishSwitch */
   function switchMetrics(root){
-    var track=root.querySelector(':scope > span:last-child');
+    var track=null;
+    for(var i=root.children.length-1;i>=0;i--){
+      var child=root.children[i];
+      if(child&&child.tagName==='SPAN'){track=child;break;}
+    }
     if(!track)return null;
     var rect=track.getBoundingClientRect();
     var style=getComputedStyle(root);
@@ -187,18 +190,6 @@
     root.querySelectorAll&&root.querySelectorAll('.squish-switch-root').forEach(bindSquish);
   }
 
-  function watchDynamicSwitches(){
-    if(switchObserver||!doc.body)return;
-    switchObserver=new MutationObserver(function(records){
-      records.forEach(function(record){
-        record.addedNodes.forEach(function(node){
-          if(node&&node.nodeType===1)hydrateSquish(node);
-        });
-      });
-    });
-    switchObserver.observe(doc.body,{childList:true,subtree:true});
-  }
-
   /* VoicePill */
   function formatClock(ms){
     var s=Math.max(0,Math.floor(ms/1000));
@@ -275,13 +266,12 @@
     hydrateSquish(doc);
     bindVoice();
     hydrateRefine(doc);
-    watchDynamicSwitches();
-
     var dynamic=new MutationObserver(function(records){
       records.forEach(function(record){
         record.addedNodes.forEach(function(node){
           if(!node||node.nodeType!==1)return;
           hydrateRefine(node);
+          hydrateSquish(node);
           if(node.matches&&node.matches('#replyBellToggle'))bindBell();
           if(node.matches&&node.matches('#promptBar'))bindPrompt();
           if(node.matches&&node.matches('#micBtn,#speechMiniPlayer'))bindVoice();
