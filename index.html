@@ -80,9 +80,10 @@
             height: 100dvh; 
             overflow: hidden !important; 
             overflow-x: hidden !important;
+            overscroll-behavior: none;
             scrollbar-width: none;
             -ms-overflow-style: none;
-            touch-action: pan-y;
+            touch-action: none;
             background-color: var(--bg-color); 
             color: var(--text-main); 
             position: fixed;
@@ -8325,6 +8326,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
             const input = document.getElementById('jdRenameDialogInput');
             input?.blur?.();
+            document.documentElement.classList.remove('jd-rename-lock');
 
             overlay.classList.remove('open');
             overlay.classList.add('closing');
@@ -8386,6 +8388,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             overlay.addEventListener('click', event => {
                 if (event.target === overlay) closeJdRenameDialog();
             });
+            overlay.addEventListener('touchmove', event => {
+                if (overlay.classList.contains('open')) event.preventDefault();
+            }, { passive: false });
 
             const input = overlay.querySelector('#jdRenameDialogInput');
             const submit = overlay.querySelector('#jdRenameDialogSubmit');
@@ -8428,6 +8433,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             overlay.dataset.sessionType = sessionType;
             input.value = String(session.title || '');
             submit.disabled = !input.value.trim();
+            document.documentElement.classList.add('jd-rename-lock');
+            lockDocumentViewport();
             overlay.classList.add('open');
             overlay.setAttribute('aria-hidden', 'false');
 

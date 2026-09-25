@@ -651,6 +651,38 @@ body.theme-light #sidebar .history-item.active{background:rgba(0,0,0,.055)!impor
   #sidebar .jd-sidebar-section-heading svg{transition:none}
 }
 
+/* Mobile scroll contract: only intentional inner content surfaces may scroll. */
+html,
+body,
+.app-container,
+.chat-viewport-wrapper{
+  overscroll-behavior:none!important;
+}
+html,
+body,
+.app-container{
+  overflow:hidden!important;
+}
+html.jd-rename-lock,
+html.jd-rename-lock body,
+html.jd-rename-lock .app-container{
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  touch-action:none!important;
+}
+.jd-rename-overlay{
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  touch-action:none!important;
+}
+.jd-rename-dialog{
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+}
+.jd-rename-field input,
+.jd-rename-actions button{
+  touch-action:manipulation!important;
+}
 /* ChatGPT-style conversation rename flow from the mobile reference video. */
 .jd-rename-overlay{
   display:flex;
