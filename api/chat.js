@@ -2098,6 +2098,47 @@ function completeContextPlan(plan, emit){
   if(first)activity(emit,first.id,first.label,'completed',first.kind,'');
 }
 
+function taskWorkingActivity(plan={}){
+  const profile=plan?.profile||{};
+  const subject=String(profile.subject||'your request').slice(0,110);
+  const intent=profile.intent||{};
+  let kind='process';
+  let label=`Working on: ${subject}`;
+
+  if(profile.kind==='web'){
+    kind=intent.create?'build':'process';
+    label=intent.create
+      ?`Drafting the requested implementation: ${subject}`
+      :intent.edit
+        ?`Preparing the requested code/UI changes: ${subject}`
+        :`Working through the website task: ${subject}`;
+  }else if(profile.kind==='android'){
+    kind='build';label=`Preparing the Android implementation: ${subject}`;
+  }else if(profile.kind==='backend'){
+    kind='api';label=`Working through the API/backend task: ${subject}`;
+  }else if(profile.kind==='deployment'){
+    kind='deploy';label=`Working through the deployment task: ${subject}`;
+  }else if(profile.kind==='github'){
+    kind='process';label=`Working through the repository task: ${subject}`;
+  }else if(profile.kind==='image'){
+    kind='image';label=`Analyzing the image request: ${subject}`;
+  }else if(profile.kind==='video'){
+    kind='file';label=`Analyzing the video request: ${subject}`;
+  }else if(profile.kind==='document'){
+    kind='file';label=`Working from the document request: ${subject}`;
+  }else if(profile.kind==='research'){
+    kind='research';label=`Synthesizing the requested research: ${subject}`;
+  }else if(profile.kind==='study'){
+    kind='process';label=`Working through the study task: ${subject}`;
+  }
+  return {label,kind};
+}
+
+function taskGenerationActivity(plan={}){
+  const subject=String(plan?.profile?.subject||'your request').slice(0,110);
+  return {label:`Generating the response for: ${subject}`,kind:'generate'};
+}
+
 function linkLabel(raw=''){
   try{
     const u=new URL(raw);
@@ -3945,13 +3986,15 @@ async function processChat(body, emit) {
   }
 
   completeContextPlan(contextPlan,emit);
-  // The model request starts here; a single Thinking row stays active
-  // until the provider stream finishes or an actual tool event supersedes it.
-  activity(emit,'thinking','Thinking','running','thinking');
+  // Keep the running status tied to the user's real task instead of a fixed
+  // "Thinking" label. Provider/tool rows remain evidence-backed and separate.
+  const taskWork=taskWorkingActivity(contextPlan);
+  const taskGeneration=taskGenerationActivity(contextPlan);
+  activity(emit,'thinking',taskWork.label,'running',taskWork.kind);
   const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
-    activity(emit,'generation','Generating response','running','generate');
+    activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
     return {
       ok:true,
       response:first.response,
@@ -3959,7 +4002,9 @@ async function processChat(body, emit) {
       startedAt,
       resolvedProvider:first.response.headers.get('x-ai-provider')||provider,
       resolvedModel:first.response.headers.get('x-ai-model')||model,
-      systemInstruction
+      systemInstruction,
+      activityTaskLabel:taskWork.label,
+      activityTaskKind:taskWork.kind
     };
   }
 
@@ -3977,12 +4022,14 @@ async function processChat(body, emit) {
       });
       if(registeredHorde.ok){
         activity(emit,'fallback','Registered AI Horde connected','completed','fallback');
-        activity(emit,'generation','Generating response','running','generate');
+        activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
         return {
           ok:true,response:registeredHorde.response,
           finishState:registeredHorde.finishState||{reason:'stop'},startedAt,
           resolvedProvider:registeredHorde.response.headers.get('x-ai-provider')||'aihorde',
-          resolvedModel:registeredHorde.response.headers.get('x-ai-model')||'auto',systemInstruction
+          resolvedModel:registeredHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
+          activityTaskLabel:taskWork.label,
+          activityTaskKind:taskWork.kind
         };
       }
       activity(emit,'fallback','Registered AI Horde unavailable — trying anonymous AI Horde','running','fallback');
@@ -3992,12 +4039,14 @@ async function processChat(body, emit) {
       });
       if(publicHorde.ok){
         activity(emit,'fallback','Anonymous AI Horde connected','completed','fallback');
-        activity(emit,'generation','Generating response','running','generate');
+        activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
         return {
           ok:true,response:publicHorde.response,
           finishState:publicHorde.finishState||{reason:'stop'},startedAt,
           resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
-          resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',systemInstruction
+          resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
+          activityTaskLabel:taskWork.label,
+          activityTaskKind:taskWork.kind
         };
       }
       activity(emit,'fallback','Both emergency AI Horde routes are unavailable','error','fallback');
@@ -4386,7 +4435,14 @@ function activityStreamResponse(body, requestSignal=null) {
           }
 
           const elapsedMs=Math.max(1,Date.now()-result.startedAt);
-          send('activity',{type:'activity',id:'thinking',label:'Thinking',state:'completed',kind:'thinking',at:Date.now()});
+          send('activity',{
+            type:'activity',
+            id:'thinking',
+            label:result.activityTaskLabel||'Working on your request',
+            state:'completed',
+            kind:result.activityTaskKind||'process',
+            at:Date.now()
+          });
           send('activity',{type:'activity',id:'generation',label:`Response complete in ${(elapsedMs/1000).toFixed(elapsedMs>=1000?1:2)}s`,state:'completed',kind:'generate',at:Date.now()});
           send('done',{elapsedMs,autoContinuations:continuationCount,...meta});
           clearInterval(keepAlive);
