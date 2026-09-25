@@ -10336,8 +10336,7 @@ ${m.text || ''}
             if (/^(javascript|js)$/i.test(language)) {
                 const scriptCode = source.replace(new RegExp('</'+'script', 'gi'), '<\\/script');
                 const closeScript = '</' + 'script>';
-                return `<!DOCTYPE html><html><head>${head}<style>body{font-family:system-ui,sans-serif;padding:16px;color:#111;background:#fff}#out{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><pre id="out"></pre><script>const out=document.getElementById('out');const write=(...a)=>{out.textContent+=a.map(v=>typeof v==='string'?v:JSON.stringify(v,null,2)).join(' ')+'\\n'};console.log=write;console.warn=write;console.error=write;window.onerror=(m)=>write('Error:',m);try{${scriptCode}}catch(e){write('Error:',e?.stack||e?.message||String(e))}${closeScript}    <script src="/reactbits-micro.js" defer></script>
-</body></html>`;
+                return `<!DOCTYPE html><html><head>${head}<style>body{font-family:system-ui,sans-serif;padding:16px;color:#111;background:#fff}#out{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><pre id="out"></pre><script>const out=document.getElementById('out');const write=(...a)=>{out.textContent+=a.map(v=>typeof v==='string'?v:JSON.stringify(v,null,2)).join(' ')+'\\n'};console.log=write;console.warn=write;console.error=write;window.onerror=(m)=>write('Error:',m);try{${scriptCode}}catch(e){write('Error:',e?.stack||e?.message||String(e))}${closeScript}</body></html>`;
             }
             if (/^css$/i.test(language)) {
                 const safeCss = source.replace(new RegExp('</'+'style', 'gi'), '<\\/style');
@@ -12525,5 +12524,6 @@ ${m.text || ''}
     <script src="/agent.js" defer></script>
     <link rel="stylesheet" href="/codex-choice.css">
     <script src="/codex-choice.js" defer></script>
+    <script src="/reactbits-micro.js" defer></script>
 </body>
 </html>
