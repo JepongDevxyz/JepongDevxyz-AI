@@ -8318,13 +8318,24 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function closeJdRenameDialog() {
             const overlay = document.getElementById('jdRenameDialogOverlay');
-            if (!overlay) return;
-            overlay.classList.remove('open');
-            overlay.setAttribute('aria-hidden', 'true');
+            if (!overlay || !overlay.classList.contains('open')) return;
+
+            window.clearTimeout(overlay.__jdRenameFocusTimer);
+            window.clearTimeout(overlay.__jdRenameCleanupTimer);
+
             const input = document.getElementById('jdRenameDialogInput');
-            if (input) input.value = '';
-            overlay.dataset.sessionId = '';
-            overlay.dataset.sessionType = '';
+            input?.blur?.();
+
+            overlay.classList.remove('open');
+            overlay.classList.add('closing');
+            overlay.setAttribute('aria-hidden', 'true');
+
+            overlay.__jdRenameCleanupTimer = window.setTimeout(() => {
+                overlay.classList.remove('closing');
+                if (input) input.value = '';
+                overlay.dataset.sessionId = '';
+                overlay.dataset.sessionType = '';
+            }, 170);
         }
 
         function submitJdRenameDialog() {
@@ -8410,6 +8421,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const overlay = ensureJdRenameDialog();
             const input = overlay.querySelector('#jdRenameDialogInput');
             const submit = overlay.querySelector('#jdRenameDialogSubmit');
+            window.clearTimeout(overlay.__jdRenameFocusTimer);
+            window.clearTimeout(overlay.__jdRenameCleanupTimer);
+            overlay.classList.remove('closing');
             overlay.dataset.sessionId = id;
             overlay.dataset.sessionType = sessionType;
             input.value = String(session.title || '');
@@ -8417,10 +8431,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             overlay.classList.add('open');
             overlay.setAttribute('aria-hidden', 'false');
 
-            requestAnimationFrame(() => {
+            // Match the reference: the card fades/scales in first, then the
+            // Android keyboard starts rising and the selected title is ready to replace.
+            overlay.__jdRenameFocusTimer = window.setTimeout(() => {
+                if (!overlay.classList.contains('open')) return;
                 input.focus({ preventScroll: true });
                 input.select();
-            });
+            }, 120);
         }
 
         function countSavedChatWords() {
