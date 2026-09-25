@@ -705,53 +705,6 @@
             box-sizing: border-box;
             overflow: hidden;
         }
-        .chat-input-pill { 
-            width: 100%;
-            background: var(--input-bg); 
-            border-radius: 24px; 
-            padding: 6px 10px; 
-            display: flex; 
-            align-items: flex-end; 
-            gap: 6px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
-            border: 1px solid var(--border-color); 
-            box-sizing: border-box;
-        }
-        .pill-plus-btn, .pill-dola-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; }
-        .pill-dola-btn { color: #a855f7; }
-
-        .pill-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-main) !important;
-            font-size: 0.95rem;
-            caret-color: #3b82f6;
-            padding: 7px 4px;
-            min-width: 0;
-            min-height: 28px;
-            resize: none;
-            height: 28px;
-            max-height: 120px;
-            line-height: 1.45;
-            overflow-y: hidden;
-            overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
-            scrollbar-width: none;
-        }
-        .pill-input::-webkit-scrollbar { display: none; }
-        .pill-input::placeholder { color: var(--text-muted); }
-
-        .pill-mic-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
-        .pill-action-btn { background: #8b5cf6; color: #ffffff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
-        .wave-container { display: none; flex: 1; align-items: center; justify-content: center; gap: 4px; height: 32px; }
-        .wave-container.active { display: flex; }
-        .wave-bar { width: 3px; background: #e2e8f0; border-radius: 2px; animation: waveAnim 1.2s infinite ease-in-out; }
-        .wave-bar:nth-child(1) { height: 10px; } .wave-bar:nth-child(2) { height: 20px; } .wave-bar:nth-child(3) { height: 28px; } .wave-bar:nth-child(4) { height: 16px; }
-        @keyframes waveAnim { 0%, 100% { transform: scaleY(0.4); opacity: 0.6; } 50% { transform: scaleY(1.2); opacity: 1; background: #8b5cf6; } }
-
         .file-preview-row { display: none; gap: 8px; overflow-x: auto; padding: 4px 2px 8px 2px; scrollbar-width: none; }
         .file-preview-row::-webkit-scrollbar { display: none; }
         .gemini-chip { position: relative; display: inline-flex; align-items: center; background: rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 4px 8px; height: 48px; color: var(--text-main); }
@@ -2037,11 +1990,6 @@
             max-width:210px;max-height:210px;object-fit:cover;border-radius:10px;
             border:1px solid rgba(148,163,184,.14);
         }
-        .attachment-drop-active .chat-input-pill{
-            outline:2px dashed rgba(139,92,246,.72)!important;
-            outline-offset:3px;
-            background:rgba(139,92,246,.075)!important;
-        }
         @media(max-width:520px){
             .attachment-chip{width:154px;grid-template-columns:42px minmax(0,1fr)}
             .attachment-thumb{width:42px;height:42px}
@@ -2060,25 +2008,6 @@
         .attachment-overall-status{display:none;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:2px 4px 6px;color:var(--text-muted);font-size:.61rem}
         .file-preview-row.has-files{flex-wrap:wrap;overflow:visible}
         .file-preview-row.has-files .attachment-overall-status{display:flex;flex:1 0 100%}
-
-        /* ===== CHATGPT-LIKE SEND / CANCEL BUTTON ===== */
-        .pill-action-btn{
-            position:relative;
-            transition:transform .16s ease,background .16s ease,box-shadow .16s ease!important;
-        }
-        .pill-action-btn.generating{
-            background:#3b82f6!important;
-            box-shadow:0 0 0 4px rgba(59,130,246,.12)!important;
-        }
-        .pill-action-btn.generating:hover{transform:scale(1.03)}
-        .pill-action-btn .stop-square{
-            width:12px;height:12px;border-radius:2.5px;background:#fff;display:block;
-            box-shadow:0 0 0 1px rgba(255,255,255,.15);
-        }
-        .pill-action-btn.stopping{
-            opacity:.72;
-            pointer-events:none;
-        }
 
     
         /* ===== HEADER SELECTOR BALANCE FIX ===== */
@@ -3571,64 +3500,11 @@
             .app-container{height:var(--jepong-vh)!important;max-height:var(--jepong-vh)!important;min-height:0!important;transform-origin:top left}
             html.keyboard-open .chat-box{overscroll-behavior-y:contain}
         }
-        /* ===== Mobile composer + read-aloud polish ===== */
-        .speech-mini-player{
-            position:fixed;
-            top:12px;
-            left:50%;
-            transform:translateX(-50%) translateY(-14px);
-            width:min(calc(100vw - 28px),420px);
-            display:flex;
-            align-items:center;
-            gap:10px;
-            padding:10px 12px;
-            border-radius:18px;
-            border:1px solid rgba(148,163,184,.22);
-            background:rgba(10,14,24,.92);
-            backdrop-filter:blur(14px);
-            -webkit-backdrop-filter:blur(14px);
-            box-shadow:0 14px 34px rgba(0,0,0,.34);
-            z-index:90;
-            opacity:0;
-            pointer-events:none;
-            transition:opacity .18s ease, transform .18s ease;
-        }
-        body.theme-light .speech-mini-player{
-            background:rgba(255,255,255,.94);
-            box-shadow:0 14px 34px rgba(15,23,42,.14);
-        }
-        .speech-mini-player.visible{
-            opacity:1;
-            pointer-events:auto;
-            transform:translateX(-50%) translateY(0);
-        }
-        .speech-mini-btn{
-            border:0;
-            width:34px;
-            height:34px;
-            min-width:34px;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            cursor:pointer;
-            color:var(--text-main);
-            background:rgba(255,255,255,.08);
-        }
-        body.theme-light .speech-mini-btn{background:rgba(15,23,42,.08)}
-        .speech-mini-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
-        .speech-mini-title{font-size:.82rem;font-weight:700;line-height:1.1;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .speech-mini-meta{font-size:.68rem;line-height:1.2;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .speech-mini-progress{height:4px;border-radius:999px;background:rgba(148,163,184,.18);overflow:hidden}
-        .speech-mini-progress span{display:block;height:100%;width:18%;border-radius:inherit;background:linear-gradient(90deg,#8b5cf6,#60a5fa);animation:speechMiniPulse 1.4s ease-in-out infinite}
-        @keyframes speechMiniPulse{0%{transform:translateX(-45%)}50%{transform:translateX(140%)}100%{transform:translateX(250%)}}
+        /* Voice/read-aloud presentation is owned by reactbits-micro.css. */
         .live-pet.speaking .live-pet-visual{animation:petHappy .42s ease-in-out infinite alternate}
         .live-pet.speaking .live-pet-bubble.show{max-width:190px}
         @media(max-width:430px){
-            .chat-input-pill{padding:6px 8px;gap:4px}
-            .pill-plus-btn,.pill-dola-btn,.pill-mic-btn,.pill-action-btn{width:32px;height:32px}
-            .pill-input{font-size:.92rem;padding:8px 2px;min-height:32px;height:32px;line-height:1.35}
             .response-effort-btn{min-width:64px;max-width:82px;padding:0 9px;font-size:.66rem}
-            .speech-mini-player{top:8px;width:min(calc(100vw - 18px),400px);padding:9px 10px;border-radius:16px}
         }
 
         /* "Get notified when Claude responds" style permission prompt */
@@ -3985,14 +3861,12 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .composer-tool-sheet{width:min(224px,calc(100vw - 34px))!important;max-height:min(62dvh,390px)!important;padding:7px!important;border-radius:21px!important;gap:0!important}
 .composer-tool-btn{min-height:47px!important;padding:4px 7px!important;grid-template-columns:37px minmax(0,1fr)!important;gap:9px!important;border-radius:13px!important;font-size:.86rem!important}
 .composer-tool-icon{width:36px!important;height:36px!important;min-width:36px!important}.composer-tool-icon i,.composer-tool-icon svg{width:19px!important;height:19px!important}
-.chat-input-pill{min-width:0!important}.pill-input{width:100%!important;min-width:0!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-height:min(32dvh,150px)!important;overflow-x:hidden!important}
 /* consolidated mobile composer / scroll / activity fixes */
 @media(max-width:700px){
 .floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;bottom:calc(env(safe-area-inset-bottom) + 86px)!important;transform:translateX(-50%)!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:50%!important;display:none;align-items:center!important;justify-content:center!important;z-index:72!important}
 .floating-scroll-pill.show{display:flex!important}.floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:22px!important}.floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important}
 .composer-tool-sheet{left:10px!important;right:auto!important;width:min(218px,calc(100vw - 28px))!important;max-height:min(60dvh,340px)!important;padding:6px!important;border-radius:20px!important}
 .composer-tool-btn{min-height:45px!important;padding:4px 7px!important;gap:9px!important;font-size:.84rem!important}.composer-tool-icon{width:35px!important;height:35px!important;flex:0 0 35px!important}
-.pill-input{min-width:0!important;width:100%!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;overflow-x:hidden!important;max-height:min(30dvh,144px)!important}
 
 .bot-message,.bot-content,.message-content{overflow-wrap:anywhere!important;word-break:break-word!important}
 }
@@ -9942,15 +9816,23 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             card.dataset.finalized='true';
             card.innerHTML=`
                 <div class="ai-activity-header-actions">
-                    <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
-                        <span class="ai-activity-summary-icon"><i data-lucide="check"></i></span>
-                        <span class="ai-activity-summary-text">${clean(saved.summary||'Worked on this response',75)}</span>
-                        <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
-                    </button>
+                    <div class="thought-line" data-working="false">
+                        <button type="button" class="thought-line__head" onclick="toggleActivityDetails(this)" aria-expanded="true">
+                            <span class="lattice-loader" data-status="done" role="status" aria-label="Done">
+                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
+                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
+                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
+                            </span>
+                            <span class="thought-line__label"><span class="thought-line__text">${clean(saved.summary||'Worked on this response',75)}</span></span>
+                            <span class="thought-line__chevron"><i data-lucide="chevron-right"></i></span>
+                        </button>
+                    </div>
                     <button type="button" class="ai-activity-details-btn" onclick="openJdThoughts(this)" aria-label="View saved activity details"><span>Thoughts</span><i data-lucide="list"></i></button>
                 </div>
-                <p class="ai-activity-lead">${clean(saved.lead,220)}</p>
-                <div class="ai-activity-list">${steps}</div>
+                <div class="thought-line__trace">
+                    <p class="ai-activity-lead">${clean(saved.lead,220)}</p>
+                    <div class="ai-activity-list">${steps}</div>
+                </div>
             `;
             return card;
         }
