@@ -241,7 +241,7 @@ html,body{background:var(--bg-color)!important}
   color:var(--text-muted)!important;
 }
 .bot-action-btn:hover,.user-action-btn:hover{background:var(--jd-surface)!important;color:var(--text-main)!important}
-.ai-activity-card,.jd-result-card,.generated-artifact-card{
+.jd-result-card,.generated-artifact-card{
   border-color:var(--jd-edge)!important;
   box-shadow:none!important;
 }
