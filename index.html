@@ -4001,27 +4001,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 window.safeVisibleAssistantResponse=window.safeVisibleAssistantResponse||function(text){try{if(typeof window.sanitizeVisibleAssistantResponse==='function')return window.sanitizeVisibleAssistantResponse(text);}catch(_){}return String(text==null?'':text);};
 window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse||function(text){let out=String(text==null?'':text);out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');return out.replace(/\n{3,}/g,'\n\n').trim();};
 </script>
-<style id="activityTimelineV4">
-/* Single borderless ChatGPT-style Activity timeline. */
-.ai-activity-card{clear:both!important;position:relative!important;z-index:2!important;display:block!important;width:min(100%,720px)!important;height:auto!important;margin:8px 0 28px!important;padding:0!important;color:var(--text-main)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;overflow:visible!important}
-.ai-activity-summary-row{position:relative!important;display:flex!important;align-items:center!important;gap:8px!important;width:100%!important;margin:0!important;padding:3px 0 6px!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;color:var(--text-muted)!important;font:inherit!important;text-align:left!important;cursor:pointer!important}
-.ai-activity-summary-icon{width:20px!important;height:20px!important;display:grid!important;place-items:center!important;flex:0 0 20px!important;color:var(--text-muted)!important}.ai-activity-summary-icon svg{width:17px!important;height:17px!important}
-.ai-activity-summary-text{min-width:0!important;flex:1!important;font-size:.82rem!important;line-height:1.35!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-.ai-activity-chevron{display:grid!important;place-items:center!important;color:var(--text-muted)!important;transition:transform .18s ease!important}.ai-activity-chevron svg{width:15px!important;height:15px!important}.ai-activity-card:not(.collapsed) .ai-activity-chevron{transform:rotate(90deg)!important}
-.ai-activity-list{position:relative!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important;height:auto!important;max-height:none!important;margin:0!important;padding:0!important;gap:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;overflow:visible!important;opacity:1!important}
-.ai-activity-card.collapsed .ai-activity-list{display:none!important}
-.ai-activity-row{position:relative!important;inset:auto!important;display:grid!important;grid-template-columns:30px minmax(0,1fr)!important;align-items:start!important;gap:6px!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:7px 0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;transform:none!important;opacity:1!important}
-.ai-activity-card::before,.ai-activity-card::after,.ai-activity-list::before,.ai-activity-list::after,.ai-activity-row::before,.ai-activity-row::after{display:none!important;content:none!important;background:none!important;box-shadow:none!important}
-.ai-activity-card *{text-shadow:none!important}
-.ai-activity-list,.ai-activity-row,.ai-activity-copy{background-color:transparent!important;background-image:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-.ai-activity-icon{width:26px!important;height:26px!important;display:grid!important;place-items:center!important;align-self:start!important;color:var(--text-muted)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}.ai-activity-icon svg{width:19px!important;height:19px!important;stroke-width:1.8!important}
-.ai-activity-copy{min-width:0!important;padding:0!important;background:transparent!important;border:0!important}.ai-activity-label{display:block!important;margin:0!important;padding:0!important;font-size:1rem!important;line-height:1.42!important;font-weight:400!important;letter-spacing:0!important;color:var(--text-muted)!important;overflow-wrap:anywhere!important;word-break:normal!important}.ai-activity-detail{display:block!important;margin:2px 0 0!important;padding:0!important;font-size:.76rem!important;line-height:1.4!important;color:var(--text-muted)!important;opacity:.78!important}
-.ai-activity-row.ai-activity-current .ai-activity-label,.ai-activity-row.running .ai-activity-label{color:var(--text-main)!important;font-weight:400!important}.ai-activity-row.ai-activity-current .ai-activity-icon,.ai-activity-row.running .ai-activity-icon{color:var(--text-main)!important;animation:activityPulse 1.1s ease-in-out infinite!important}
-.ai-activity-card.complete .ai-activity-summary-icon{color:var(--text-muted)!important}.ai-activity-card.error .ai-activity-summary-icon,.ai-activity-card.error .ai-activity-summary-text{color:#fca5a5!important}
-@keyframes activityPulse{0%,100%{opacity:.55}50%{opacity:1}}
-@media(max-width:520px){.ai-activity-card{width:100%!important;margin:6px 0 32px!important}.ai-activity-summary-row{padding:2px 0 5px!important}.ai-activity-row{grid-template-columns:28px minmax(0,1fr)!important;gap:5px!important;padding:7px 0!important}.ai-activity-icon{width:24px!important;height:24px!important}.ai-activity-icon svg{width:18px!important;height:18px!important}.ai-activity-label{font-size:.98rem!important;line-height:1.45!important}}
-</style>
-    <link rel="stylesheet" href="/plugins.css">
+<link rel="stylesheet" href="/plugins.css">
     <link rel="stylesheet" href="/reference-shell.css">
     <link rel="stylesheet" href="/account-appearance.css">
     <link rel="stylesheet" href="/haptics-notifications.css">
@@ -4030,16 +4010,16 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 </head>
 <body>
 
-    <div class="speech-mini-player" id="speechMiniPlayer" aria-live="polite" aria-hidden="true">
-        <button type="button" class="speech-mini-btn" id="speechMiniToggleBtn" onclick="toggleSpeechMiniPlayback()" title="Pause or resume read aloud">
+    <div class="read-aloud-pill" id="speechMiniPlayer" data-state="idle" aria-live="polite" aria-hidden="true">
+        <button type="button" class="read-aloud-pill__control" id="speechMiniToggleBtn" onclick="toggleSpeechMiniPlayback()" title="Pause or resume read aloud" aria-label="Pause or resume read aloud">
             <i data-lucide="pause"></i>
         </button>
-        <div class="speech-mini-copy">
-            <div class="speech-mini-title" id="speechMiniTitle">Read aloud</div>
-            <div class="speech-mini-meta" id="speechMiniMeta">Preparing audio…</div>
-            <div class="speech-mini-progress"><span id="speechMiniProgressBar"></span></div>
+        <div class="read-aloud-pill__body">
+            <div class="read-aloud-pill__title" id="speechMiniTitle">Read aloud</div>
+            <div class="read-aloud-pill__meta" id="speechMiniMeta">Preparing audio…</div>
+            <div class="read-aloud-pill__progress"><span id="speechMiniProgressBar"></span></div>
         </div>
-        <button type="button" class="speech-mini-btn" onclick="closeSpeechMiniPlayer()" title="Close read aloud">
+        <button type="button" class="read-aloud-pill__close" onclick="closeSpeechMiniPlayer()" title="Close read aloud" aria-label="Close read aloud">
             <i data-lucide="x"></i>
         </button>
     </div>
@@ -4199,7 +4179,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             <div class="prompt-suggestions" id="promptSuggestions"></div>
             <div class="file-preview-row" id="filePreviewContainer"></div>
 
-            <div class="chat-input-pill">
+            <div class="prompt-bar" id="promptBar" data-busy="false" data-models="false">
                 <input type="file" id="fileInput" hidden multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xlsx,.xls,.ods,.csv,.txt,.md,.rtf,.json,.xml,.yaml,.yml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.php,.java,.c,.cpp,.h,.hpp,.cs,.sql,.sh,.log,.zip,.epub" onchange="handleFileSelect(event)">
                 <input type="file" id="cameraInput" hidden accept="image/*" capture="environment" onchange="handleFileSelect(event)">
                 <input type="file" id="photoInput" hidden multiple accept="image/*,video/*" onchange="handleFileSelect(event)">
@@ -4213,16 +4193,16 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                     <button type="button" class="composer-tool-btn" id="composerThinkBtn" onclick="composerToolAction('think')"><span class="composer-tool-icon"><i data-lucide="brain"></i></span><span>Think harder</span></button>
                 </div>
                 
-                <button type="button" class="pill-plus-btn" id="composerPlusBtn" onclick="toggleComposerTools(event)" aria-expanded="false" aria-controls="composerToolSheet" title="Add">
+                <button type="button" class="prompt-bar__tool" id="composerPlusBtn" onclick="toggleComposerTools(event)" aria-expanded="false" aria-controls="composerToolSheet" title="Add">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                 </button>
                 
-                <button type="button" class="pill-dola-btn" onclick="openDolaModal()" title="JepongDevxyz AI Vision Prompt">
+                <button type="button" class="prompt-bar__vision" onclick="openDolaModal()" title="JepongDevxyz AI Vision Prompt">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
                 
                 <textarea 
-                    class="pill-input" 
+                    class="prompt-bar__input" 
                     id="userInput" 
                     placeholder="Ask anything…" 
                     rows="1"
@@ -4230,10 +4210,6 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                     onkeydown="handleKeyDown(event)"
                     oninput="autoResizeTextarea(this)"></textarea>
                 
-                <div class="wave-container" id="waveContainer">
-                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                </div>
-
                 <div class="response-effort-wrap" id="responseEffortWrap">
                     <button type="button" class="response-effort-btn" id="responseEffortBtn" onclick="toggleResponseEffortMenu(event)" title="Response effort">
                         <span id="responseEffortLabel">Instant</span>
@@ -4246,12 +4222,18 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                     </div>
                 </div>
 
-                <button type="button" class="pill-mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice input">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                <button type="button" class="voice-pill" id="micBtn" data-state="idle" aria-pressed="false" onclick="toggleSpeechRecognition()" title="Voice input" aria-label="Voice input">
+                    <span class="voice-pill__capsule" aria-hidden="true"></span>
+                    <span class="voice-pill__wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+                    <span class="voice-pill__time" aria-hidden="true">0:00</span>
+                    <span class="voice-pill__glyph" aria-hidden="true">
+                        <span class="voice-pill__mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></span>
+                        <span class="voice-pill__stop"></span>
+                    </span>
                 </button>
                 
-                <button type="button" class="pill-action-btn" id="mainActionBtn" onclick="handleMainAction()" title="Send">
-                    <svg class="send-state-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <button type="button" class="prompt-bar__send" id="mainActionBtn" onclick="handleMainAction()" title="Send">
+                    <svg class="prompt-bar__glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4.5 18.5 11h-4.25v8.5h-4.5V11H5.5L12 4.5Z"></path></svg>
                 </button>
             </div>
         </div>
@@ -4368,11 +4350,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
           <h3 class="settings-section-label">AI & tools</h3>
           <div class="settings-card-group">
-            <div class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="ios-switch" aria-label="Live Web Search"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="ios-slider"></span></label></div>
-            <div class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="ios-switch" aria-label="Response Speech"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="ios-slider"></span></label></div>
+            <div class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="squish-switch-root" aria-label="Live Web Search"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="ios-slider"></span></label></div>
+            <div class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="squish-switch-root" aria-label="Response Speech"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="ios-slider"></span></label></div>
             <button class="settings-nav-row jd-notify-settings-entry" type="button" onclick="openJdReplyNotifications()" aria-label="Reply Notifications settings"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small id="jdReplyNotifyDescription" aria-live="polite">Notify when an AI reply finishes</small></span><i data-lucide="chevron-right"></i></button>
-            <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>All your configured keys are tried first. When exhausted, use registered then anonymous AI Horde if ON.</small></span><label class="mini-toggle"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
-            <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Available only when Auto Provider Fallback is ON</small></span><label class="mini-toggle"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>All your configured keys are tried first. When exhausted, use registered then anonymous AI Horde if ON.</small></span><label class="squish-switch-root"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
+            <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Available only when Auto Provider Fallback is ON</small></span><label class="squish-switch-root"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
             <button class="settings-nav-row" type="button" onclick="openProviderKeysSettings()"><i data-lucide="key-round"></i><span><strong>Custom API Keys</strong><small>Add multiple APIs with automatic or manual setup</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="window.JDPlugins?.open()"><i data-lucide="blocks"></i><span><strong>Plugins</strong><small>GitHub repositories and Superpowers coding workflow</small></span><i data-lucide="chevron-right"></i></button>
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openPresetsModal()"><i data-lucide="notebook-pen"></i><span><strong>Prompt Presets</strong><small>Manage reusable prompts</small></span><i data-lucide="chevron-right"></i></button>
@@ -4451,7 +4433,21 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <div class="jd-reply-notify-group">
             <label class="jd-reply-notify-row">
               <span class="jd-reply-notify-row-copy"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small>Get notified when an AI reply finishes</small></span></span>
-              <span class="jd-reply-notify-switch"><input type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)" aria-label="Enable Reply Notifications"><span class="jd-reply-notify-track"></span></span>
+              <span class="bell-toggle" id="replyBellToggle" data-on="false" data-count="1">
+                <input class="bell-toggle__input" type="checkbox" id="settingsNotifyToggle" onchange="toggleResponseNotifications(this.checked)" aria-label="Enable Reply Notifications">
+                <button type="button" class="bell-toggle__button" aria-pressed="false" aria-label="Reply notifications">
+                  <span class="bell-toggle__bell" aria-hidden="true">
+                    <span class="bell-toggle__glyph"><i data-lucide="bell"></i></span>
+                    <svg class="bell-toggle__wave bell-toggle__wave--left" viewBox="0 0 14 14"><path d="M14 8a6 6 0 0 0-6 6"></path><path d="M14 4A10 10 0 0 0 4 14"></path></svg>
+                    <svg class="bell-toggle__wave bell-toggle__wave--right" viewBox="0 0 14 14"><path d="M0 8a6 6 0 0 1 6 6"></path><path d="M0 4a10 10 0 0 1 10 10"></path></svg>
+                    <span class="bell-toggle__badge">1</span>
+                  </span>
+                  <span class="bell-toggle__say" aria-hidden="true">
+                    <span class="bell-toggle__face bell-toggle__face--off">Notify me</span>
+                    <span class="bell-toggle__face bell-toggle__face--on">You'll be notified</span>
+                  </span>
+                </button>
+              </span>
             </label>
           </div>
           <p class="jd-reply-notify-section-label">Test notifications</p>
@@ -4479,18 +4475,18 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <div class="jd-haptics-group">
             <label class="jd-haptics-row">
               <span class="jd-haptics-copy"><i data-lucide="vibrate"></i><strong>Haptics</strong></span>
-              <span class="jd-haptics-switch"><input type="checkbox" id="jdHapticsToggle" onchange="setJdHaptics(this.checked)" aria-label="Enable Haptics"><span class="jd-haptics-track"></span></span>
+              <span class="squish-switch-root"><input type="checkbox" id="jdHapticsToggle" onchange="setJdHaptics(this.checked)" aria-label="Enable Haptics"><span class="jd-haptics-track"></span></span>
             </label>
           </div>
           <p class="jd-haptics-section-label">When is haptic needed</p>
           <div class="jd-haptics-group jd-haptics-events">
             <label class="jd-haptics-row">
               <span class="jd-haptics-copy"><strong>Pressing buttons</strong></span>
-              <span class="jd-haptics-switch"><input type="checkbox" id="jdHapticsButtonsToggle" onchange="setJdHapticsEvent('buttons',this.checked)" aria-label="Haptics when pressing buttons"><span class="jd-haptics-track"></span></span>
+              <span class="squish-switch-root"><input type="checkbox" id="jdHapticsButtonsToggle" onchange="setJdHapticsEvent('buttons',this.checked)" aria-label="Haptics when pressing buttons"><span class="jd-haptics-track"></span></span>
             </label>
             <label class="jd-haptics-row">
               <span class="jd-haptics-copy"><strong>AI is responding</strong></span>
-              <span class="jd-haptics-switch"><input type="checkbox" id="jdHapticsResponseToggle" onchange="setJdHapticsEvent('response',this.checked)" aria-label="Haptics when AI finishes responding"><span class="jd-haptics-track"></span></span>
+              <span class="squish-switch-root"><input type="checkbox" id="jdHapticsResponseToggle" onchange="setJdHapticsEvent('response',this.checked)" aria-label="Haptics when AI finishes responding"><span class="jd-haptics-track"></span></span>
             </label>
           </div>
           <p id="jdHapticsCapabilityNote" class="jd-haptics-capability-note" aria-live="polite">Vibration requires browser and device support.</p>
@@ -4548,8 +4544,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enthusiastic</strong><small>Control the energy and expressiveness of replies.</small></div><button class="ps-ref-choice" id="psEnthusiasticBtn" onclick="openPersonalizationPicker('enthusiastic','Enthusiastic',[['More','More energetic and expressive'],['Default','Balanced energy'],['Less','Calmer and more restrained']],this)">Default <span class="chev">›</span></button></div>
                 <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Headers &amp; Lists</strong><small>Choose how often structured formatting is used.</small></div><button class="ps-ref-choice" id="psHeadersBtn" onclick="openPersonalizationPicker('headersLists','Headers & Lists',[['More','Use structured headings and lists more often'],['Default','Use structure when useful'],['Less','Prefer flowing paragraphs']],this)">Default <span class="chev">›</span></button></div>
                 <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Emoji</strong><small>Choose how often emoji appear naturally in replies.</small></div><button class="ps-ref-choice" id="psEmojiBtn" onclick="openPersonalizationPicker('emoji','Emoji',[['More','Use emoji a little more often'],['Default','Use emoji when natural'],['Less','Prefer little or no emoji']],this)">Default <span class="chev">›</span></button></div>
-                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Fast answers</strong><small>Prefer a concise answer first when extra detail is unnecessary.</small></div><label class="mini-toggle"><input id="psFastAnswers" type="checkbox" onchange="setPersonalizationToggle('fastAnswers',this.checked)"><span></span></label></div>
-                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Suggested prompts</strong><small>Show prompt suggestions based on your current mode.</small></div><label class="mini-toggle"><input id="psSuggestedPrompts" type="checkbox" onchange="setPersonalizationToggle('suggestedPrompts',this.checked)"><span></span></label></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Fast answers</strong><small>Prefer a concise answer first when extra detail is unnecessary.</small></div><label class="squish-switch-root"><input id="psFastAnswers" type="checkbox" onchange="setPersonalizationToggle('fastAnswers',this.checked)"><span></span></label></div>
+                <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Suggested prompts</strong><small>Show prompt suggestions based on your current mode.</small></div><label class="squish-switch-root"><input id="psSuggestedPrompts" type="checkbox" onchange="setPersonalizationToggle('suggestedPrompts',this.checked)"><span></span></label></div>
               </div>
 
               <div class="ps-v6-card" id="ps-about-you-card">
@@ -4567,24 +4563,24 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
             <section class="ps-ref-section" id="psMemorySection" data-ps-search="memory enable memory summary manage chat history saved memories">
               <h3>Memory <span class="info-circle" title="Synced privately to your account when signed in">?</span></h3>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enable memory</strong><small>Let JepongDevxyz AI personalize future chats using your saved local memory summary and personalization settings.</small></div><label class="mini-toggle"><input id="psMemoryEnabled" type="checkbox" onchange="setPersonalizationToggle('memoryEnabled',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Enable memory</strong><small>Let JepongDevxyz AI personalize future chats using your saved local memory summary and personalization settings.</small></div><label class="squish-switch-root"><input id="psMemoryEnabled" type="checkbox" onchange="setPersonalizationToggle('memoryEnabled',this.checked)"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Memory summary</strong><small id="psMemorySummaryPreview">View and edit an overview of information you want JepongDevxyz AI to keep in mind.</small></div><button class="ps-ref-manage" onclick="openMemorySummaryEditor()">Manage</button></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference chat history</strong><small>Use the active conversation history as context for your next response.</small></div><label class="mini-toggle"><input id="psReferenceHistory" type="checkbox" onchange="setPersonalizationToggle('referenceChatHistory',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference chat history</strong><small>Use the active conversation history as context for your next response.</small></div><label class="squish-switch-root"><input id="psReferenceHistory" type="checkbox" onchange="setPersonalizationToggle('referenceChatHistory',this.checked)"><span></span></label></div>
               <div class="ps-ref-note">Memory may also personalize web-search phrasing when live web context is enabled. Temporary/Incognito chats do not use this personalization payload.</div>
             </section>
 
             <section class="ps-ref-section" id="psWritingSection" data-ps-search="writing reference writing style record history">
               <h3>Writing</h3>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference my writing style</strong><small>Use your writing tone and phrasing in the current conversation as a guide without copying long passages.</small></div><label class="mini-toggle"><input id="psWritingStyle" type="checkbox" onchange="setPersonalizationToggle('referenceWritingStyle',this.checked)"><span></span></label></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference record history</strong><small>Keep voice/record interaction preferences consistent on this device.</small></div><label class="mini-toggle"><input id="psRecordHistory" type="checkbox" onchange="setPersonalizationToggle('referenceRecordHistory',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference my writing style</strong><small>Use your writing tone and phrasing in the current conversation as a guide without copying long passages.</small></div><label class="squish-switch-root"><input id="psWritingStyle" type="checkbox" onchange="setPersonalizationToggle('referenceWritingStyle',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Reference record history</strong><small>Keep voice/record interaction preferences consistent on this device.</small></div><label class="squish-switch-root"><input id="psRecordHistory" type="checkbox" onchange="setPersonalizationToggle('referenceRecordHistory',this.checked)"><span></span></label></div>
             </section>
 
             <section class="ps-ref-section" id="psAdvancedSection" data-ps-search="advanced web search canvas preview voice library file search connectors plugins">
               <h3>Advanced</h3>
-<div class="ps-ref-row"><div class="ps-ref-copy"><strong>Canvas / code preview</strong><small>Allow runnable previews and fullscreen code tools in supported responses.</small></div><label class="mini-toggle"><input id="psCanvas" type="checkbox" onchange="setPersonalizationToggle('canvasPreview',this.checked)"><span></span></label></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Voice</strong><small>Allow response speech and voice controls.</small></div><label class="mini-toggle"><input id="psVoiceFeature" type="checkbox" onchange="setPersonalizationToggle('voiceEnabled',this.checked);syncPersonalizationFeatureToggles()"><span></span></label></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Library / file search</strong><small>Allow attached files to be included in supported AI requests.</small></div><label class="mini-toggle"><input id="psLibrarySearch" type="checkbox" onchange="setPersonalizationToggle('librarySearch',this.checked)"><span></span></label></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Connector search preference</strong><small>Saves your preference for future connected-service integrations. It does not connect an external account by itself.</small></div><label class="mini-toggle"><input id="psConnectorSearch" type="checkbox" onchange="setPersonalizationToggle('connectorSearch',this.checked)"><span></span></label></div>
+<div class="ps-ref-row"><div class="ps-ref-copy"><strong>Canvas / code preview</strong><small>Allow runnable previews and fullscreen code tools in supported responses.</small></div><label class="squish-switch-root"><input id="psCanvas" type="checkbox" onchange="setPersonalizationToggle('canvasPreview',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Voice</strong><small>Allow response speech and voice controls.</small></div><label class="squish-switch-root"><input id="psVoiceFeature" type="checkbox" onchange="setPersonalizationToggle('voiceEnabled',this.checked);syncPersonalizationFeatureToggles()"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Library / file search</strong><small>Allow attached files to be included in supported AI requests.</small></div><label class="squish-switch-root"><input id="psLibrarySearch" type="checkbox" onchange="setPersonalizationToggle('librarySearch',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Connector search preference</strong><small>Saves your preference for future connected-service integrations. It does not connect an external account by itself.</small></div><label class="squish-switch-root"><input id="psConnectorSearch" type="checkbox" onchange="setPersonalizationToggle('connectorSearch',this.checked)"><span></span></label></div>
             </section>
 
             <section class="ps-ref-section" id="psPrivacySection" data-ps-search="privacy storage reset personalization local browser">
@@ -4605,7 +4601,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <div class="ps-pet-list">
             <div class="ps-pet-hero">
               <div class="ps-pet-hero-copy"><strong>Choose your companion</strong><small>Pick a pet to personalize the app and subtly shape JepongDevxyz AI's friendly tone.</small></div>
-              <label class="mini-toggle" title="Show pet in chat"><input id="psShowPetInChat" type="checkbox" onchange="setPersonalizationToggle('showPetInChat',this.checked)"><span></span></label>
+              <label class="squish-switch-root" title="Show pet in chat"><input id="psShowPetInChat" type="checkbox" onchange="setPersonalizationToggle('showPetInChat',this.checked)"><span></span></label>
             </div>
             <div class="ps-pet-behavior-grid" aria-label="Pet interaction options">
               <div class="ps-pet-behavior-row">
@@ -4614,7 +4610,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                   <strong>Drag pet</strong>
                   <small>Move the pet out of the way. When released above the floor, it falls back to its normal walking lane.</small>
                 </div>
-                <label class="mini-toggle ps-pet-behavior-toggle" title="Allow pet dragging"><input id="psPetDragEnabled" type="checkbox" onchange="setPersonalizationToggle('petDragEnabled',this.checked)"><span></span></label>
+                <label class="squish-switch-root" title="Allow pet dragging"><input id="psPetDragEnabled" type="checkbox" onchange="setPersonalizationToggle('petDragEnabled',this.checked)"><span></span></label>
               </div>
               <div class="ps-pet-behavior-row">
                 <span class="ps-pet-behavior-icon" aria-hidden="true"><i data-lucide="ghost"></i></span>
@@ -4622,7 +4618,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                   <strong>Falling scare</strong>
                   <small>Play a short scared reaction when the pet is dropped from above. Its walking area never moves.</small>
                 </div>
-                <label class="mini-toggle ps-pet-behavior-toggle" title="Enable falling scare animation"><input id="psPetFallScareEnabled" type="checkbox" onchange="setPersonalizationToggle('petFallScareEnabled',this.checked)"><span></span></label>
+                <label class="squish-switch-root" title="Enable falling scare animation"><input id="psPetFallScareEnabled" type="checkbox" onchange="setPersonalizationToggle('petFallScareEnabled',this.checked)"><span></span></label>
               </div>
             </div>
             <div class="ps-pet-grid" id="psPetOptions"></div>
@@ -4670,7 +4666,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                       <strong>Match website pet style</strong>
                       <small>Keep the same polished, cute companion style as Luna, Mochi, and the rest.</small>
                     </div>
-                    <label class="mini-toggle" title="Match website pet style"><input id="psAiPetMatchStyle" type="checkbox" checked onchange="setPetCreatorMatchSiteStyle(this.checked)"><span></span></label>
+                    <label class="squish-switch-root" title="Match website pet style"><input id="psAiPetMatchStyle" type="checkbox" checked onchange="setPetCreatorMatchSiteStyle(this.checked)"><span></span></label>
                   </div>
                   <div class="ps-ai-pet-reference-wrap" id="psAiPetReferenceWrap">
                     <span class="ps-ai-pet-option-label">Reference pet style</span>
@@ -4717,7 +4713,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
               <div class="ps-slider-row"><label for="psVoiceSpeedRange">Speed</label><input id="psVoiceSpeedRange" type="range" min="0.7" max="1.3" step="0.05" oninput="setVoiceTuning('voiceSpeed',this.value)"><output id="psVoiceSpeedValue">1.0x</output></div>
               <div class="ps-slider-row"><label for="psVoicePitchRange">Pitch</label><input id="psVoicePitchRange" type="range" min="0.7" max="1.3" step="0.05" oninput="setVoiceTuning('voicePitch',this.value)"><output id="psVoicePitchValue">1.0x</output></div>
               <div class="ps-voice-reset-row"><span>Speed & pitch</span><button type="button" class="ps-voice-reset-btn" id="psVoiceResetTuning" onclick="resetVoiceTuning()" title="Reset speed and pitch to 1.0x"><i data-lucide="rotate-ccw"></i><span>Reset</span></button></div>
-              <div class="ps-auto-preview-row"><strong>Auto-play preview when switching voices</strong><label class="mini-toggle"><input id="psVoiceAutoPreview" type="checkbox" onchange="setPersonalizationToggle('voiceAutoPreview',this.checked)"><span></span></label></div>
+              <div class="ps-auto-preview-row"><strong>Auto-play preview when switching voices</strong><label class="squish-switch-root"><input id="psVoiceAutoPreview" type="checkbox" onchange="setPersonalizationToggle('voiceAutoPreview',this.checked)"><span></span></label></div>
             </div>
             <div class="ps-voice-browser-note"><i data-lucide="info"></i> Voice previews and Read Aloud use ElevenLabs cloud TTS first, with the selected persona and language. Device/browser speech is used only as a fallback when cloud speech is unavailable.</div>
           </div>
@@ -4934,12 +4930,13 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(active){
                 btn.title=stopping?'Stopping…':'Stop generating';
                 btn.setAttribute('aria-label',btn.title);
-                btn.innerHTML='<span class="stop-square" aria-hidden="true"></span>';
+                btn.innerHTML='<span class="prompt-bar__stop" aria-hidden="true"></span>';
             }else{
                 btn.title='Send';
                 btn.setAttribute('aria-label','Send');
-                btn.innerHTML='<svg class="send-state-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+                btn.innerHTML='<svg class="prompt-bar__glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4.5 18.5 11h-4.25v8.5h-4.5V11H5.5L12 4.5Z"></path></svg>';
             }
+            window.JDReactBits?.setPromptBusy?.(active,stopping);
         }
 
         function cancelAIResponse(){
@@ -8686,6 +8683,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 jdCanNotify() && Notification.permission==='granted';
             const toggle=document.getElementById('settingsNotifyToggle');
             if(toggle)toggle.checked=enabled;
+            window.JDReactBits?.syncBell?.();
             const test=document.getElementById('jdNotifyTestButton');
             if(test)test.disabled=!enabled;
             const description=document.getElementById('jdReplyNotifyDescription');
@@ -9024,11 +9022,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             startSpeechMiniTimer();
             setLivePetSpeaking(true,text);
             refreshLucideIcons(player);
+            window.JDReactBits?.syncReadAloud?.();
         }
         function hideSpeechMiniPlayer(){
             const player=document.getElementById('speechMiniPlayer');
             stopSpeechMiniTimer();
             if(player){player.classList.remove('visible');player.setAttribute('aria-hidden','true');}
+            window.JDReactBits?.syncReadAloud?.();
             updateSpeechMiniToggle(false);
             setLivePetSpeaking(false);
         }
@@ -9079,7 +9079,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
         function tickJdActivityClock(card){
             if(!card||card.dataset.finalized==='true')return;
-            const label=card.querySelector('.ai-activity-summary-text');
+            const label=card.querySelector('#aiActivitySummary');
             if(!label)return;
             const elapsed=Math.max(0,Date.now()-Number(card.dataset.startedAt||Date.now()));
             label.textContent='Thinking for '+formatJdActivityElapsed(elapsed);
@@ -9169,15 +9169,23 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             indicator.style.setProperty('z-index','2','important');
             indicator.innerHTML = `
                 <div class="ai-activity-header-actions">
-                    <button type="button" class="ai-activity-summary-row" onclick="toggleActivityDetails(this)" aria-expanded="true">
-                        <span class="ai-activity-summary-icon" id="aiActivitySummaryIcon"><i data-lucide="grip"></i></span>
-                        <span class="ai-activity-summary-text" id="aiActivitySummary">Thinking for 0s</span>
-                        <span class="ai-activity-chevron"><i data-lucide="chevron-right"></i></span>
-                    </button>
+                    <div class="thought-line" data-working="true">
+                        <button type="button" class="thought-line__head" onclick="toggleActivityDetails(this)" aria-expanded="true">
+                            <span class="lattice-loader" id="aiActivityLattice" data-status="working" role="status" aria-label="Thinking">
+                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
+                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
+                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
+                            </span>
+                            <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking for 0s</span></span>
+                            <span class="thought-line__chevron"><i data-lucide="chevron-right"></i></span>
+                        </button>
+                    </div>
                     <button type="button" class="ai-activity-details-btn" onclick="openJdThoughts(this)" aria-label="View real activity details"><span>Thoughts</span><i data-lucide="list"></i></button>
                 </div>
-                <p class="ai-activity-lead" aria-live="polite"></p>
-                <div class="ai-activity-list" id="aiActivityList"></div>
+                <div class="thought-line__trace">
+                    <p class="ai-activity-lead" aria-live="polite"></p>
+                    <div class="ai-activity-list" id="aiActivityList"></div>
+                </div>
             `;
             tickJdActivityClock(indicator);
             jdActivityClock=setInterval(()=>{
@@ -9318,7 +9326,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             card.dataset.finalized = 'true';
             const list = card.querySelector('#aiActivityList');
             const summary = card.querySelector('#aiActivitySummary');
-            const icon = card.querySelector('#aiActivitySummaryIcon');
+            const lattice = card.querySelector('#aiActivityLattice');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
             const worked=`Worked for ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s`;
             completeRunningActivityRows('',success?'completed':'warning');
@@ -9330,21 +9338,21 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             if (summary) summary.textContent = success ? worked : 'Stopped because of an error';
             syncJdThoughts();
-            if (icon) icon.innerHTML = success ? '<i data-lucide="check"></i>' : '<i data-lucide="alert-triangle"></i>';
+            if (lattice) lattice.dataset.status = success ? 'done' : 'error';
             refreshLucideIcons(card);
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
 
             // Respect the user's explicit collapse choice. Auto-collapsing
             // every finished run hid ALL per-task statuses just as the
             // response appeared; completed evidence now remains visible.
-            const toggle = card.querySelector('.ai-activity-summary-row');
+            const toggle = card.querySelector('.thought-line__head');
             toggle?.setAttribute('aria-expanded',String(!card.classList.contains('collapsed')));
             setTimeout(() => {
                 if (!card.isConnected || card.dataset.finalized !== 'true') return;
                 card.removeAttribute('id');
                 list?.removeAttribute('id');
                 summary?.removeAttribute('id');
-                icon?.removeAttribute('id');
+                lattice?.removeAttribute('id');
                 card.classList.add('ai-activity-archived');
             }, 2400);
         }
@@ -9911,7 +9919,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const lead=clean(card.querySelector('.ai-activity-lead')?.textContent,220);
             if(!lead&&!steps.length)return null;
             return {
-                summary:clean(card.querySelector('.ai-activity-summary-text')?.textContent,75),
+                summary:clean(card.querySelector('#aiActivitySummary')?.textContent,75),
                 lead,steps
             };
         }
@@ -10744,7 +10752,11 @@ ${m.text || ''}
                     botMsgElem.innerHTML = `
                         <div>
                             <p style="margin-bottom:8px;font-size:.88rem;color:#a855f7;">✨ Image created with ${escapeHTML(generatedProvider)}.</p>
-                            <img src="${escapeHTML(generatedImageUrl)}" alt="Generated artwork" loading="lazy" onclick="openLightbox(this.src)" style="max-width:100%;border-radius:12px;border:1px solid var(--border-color);cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.3);">
+                            <div class="refine-frame" data-status="complete" role="img" aria-label="Image complete">
+                                <div class="refine-frame__media"><div class="refine-frame__print"><img src="${escapeHTML(generatedImageUrl)}" alt="Generated artwork" loading="lazy" onclick="openLightbox(this.src)" style="cursor:pointer;"></div></div>
+                                <div class="refine-frame__sweep" aria-hidden="true"></div>
+                                <div class="refine-frame__chip" aria-hidden="true"><span class="refine-frame__mark"><i data-lucide="check"></i></span><span>Complete</span></div>
+                            </div>
                         </div>
                         <div class="bot-actions" style="margin-top:10px;display:flex;gap:8px;">
                             <a class="bot-action-btn" href="${escapeHTML(generatedImageUrl)}" download="generated-art.png" title="Download"><i data-lucide="download"></i>Download</a>
@@ -11270,7 +11282,6 @@ ${m.text || ''}
 
         async function toggleSpeechRecognition() {
             const userInput = document.getElementById('userInput');
-            const waveContainer = document.getElementById('waveContainer');
             const micBtn = document.getElementById('micBtn');
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -11296,9 +11307,9 @@ ${m.text || ''}
 
             recognition.onstart = () => {
                 isRecording = true;
-                waveContainer?.classList.add('active');
                 micBtn?.classList.add('recording');
                 micBtn?.setAttribute('aria-pressed', 'true');
+                window.JDReactBits?.syncVoice?.();
             };
 
             recognition.onresult = (event) => {
@@ -11347,10 +11358,10 @@ ${m.text || ''}
 
         function stopRecordingUI() {
             isRecording = false;
-            document.getElementById('waveContainer')?.classList.remove('active');
             const micBtn = document.getElementById('micBtn');
             micBtn?.classList.remove('recording');
             micBtn?.setAttribute('aria-pressed', 'false');
+            window.JDReactBits?.syncVoice?.();
         }
 
         function incrementCounters(text) {
