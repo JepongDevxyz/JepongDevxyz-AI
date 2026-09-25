@@ -8316,18 +8316,111 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             } catch (_) {}
         }
 
+        function closeJdRenameDialog() {
+            const overlay = document.getElementById('jdRenameDialogOverlay');
+            if (!overlay) return;
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+            const input = document.getElementById('jdRenameDialogInput');
+            if (input) input.value = '';
+            overlay.dataset.sessionId = '';
+            overlay.dataset.sessionType = '';
+        }
+
+        function submitJdRenameDialog() {
+            const overlay = document.getElementById('jdRenameDialogOverlay');
+            const input = document.getElementById('jdRenameDialogInput');
+            if (!overlay || !input) return;
+
+            const id = overlay.dataset.sessionId || '';
+            const sessionType = overlay.dataset.sessionType || 'normal';
+            const nextTitle = String(input.value || '').trim();
+            if (!id || !nextTitle) return;
+
+            const sessions = sessionType === 'bible' ? bibleChatSessions : chatSessions;
+            const session = sessions?.[id];
+            if (!session) {
+                closeJdRenameDialog();
+                return;
+            }
+
+            session.title = nextTitle;
+            if (sessionType === 'bible') saveBibleSessions();
+            else saveSessions();
+
+            closeJdRenameDialog();
+        }
+
+        function ensureJdRenameDialog() {
+            let overlay = document.getElementById('jdRenameDialogOverlay');
+            if (overlay) return overlay;
+
+            overlay = document.createElement('div');
+            overlay.id = 'jdRenameDialogOverlay';
+            overlay.className = 'jd-rename-overlay';
+            overlay.setAttribute('role', 'presentation');
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.innerHTML = `
+                <div class="jd-rename-dialog" role="dialog" aria-modal="true" aria-labelledby="jdRenameDialogLabel">
+                    <label class="jd-rename-field">
+                        <span id="jdRenameDialogLabel">New name</span>
+                        <input id="jdRenameDialogInput" type="text" inputmode="text" autocomplete="off" maxlength="120" aria-label="New name">
+                    </label>
+                    <div class="jd-rename-actions">
+                        <button type="button" class="jd-rename-cancel" onclick="closeJdRenameDialog()">Cancel</button>
+                        <button type="button" class="jd-rename-submit" id="jdRenameDialogSubmit" onclick="submitJdRenameDialog()">Rename</button>
+                    </div>
+                </div>
+            `;
+            overlay.addEventListener('click', event => {
+                if (event.target === overlay) closeJdRenameDialog();
+            });
+
+            const input = overlay.querySelector('#jdRenameDialogInput');
+            const submit = overlay.querySelector('#jdRenameDialogSubmit');
+            input.addEventListener('input', () => {
+                submit.disabled = !String(input.value || '').trim();
+            });
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Enter' && !submit.disabled) {
+                    event.preventDefault();
+                    submitJdRenameDialog();
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeJdRenameDialog();
+                }
+            });
+
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+
         function renameChatSession(id, e) {
             if (e) e.stopPropagation();
-            const activeSessions = isBibleMode ? bibleChatSessions : chatSessions;
+            const sessionType = isBibleMode ? 'bible' : 'normal';
+            const activeSessions = sessionType === 'bible' ? bibleChatSessions : chatSessions;
             const session = activeSessions[id];
             if (!session) return;
-            
-            const newTitle = prompt('Rename this chat:', session.title);
-            if (newTitle && newTitle.trim()) {
-                session.title = newTitle.trim();
-                if (isBibleMode) saveBibleSessions();
-                else saveSessions();
-            }
+
+            document.querySelectorAll('#chatHistoryList .history-actions-deck.open').forEach(deck => {
+                deck.classList.remove('open');
+                deck.previousElementSibling?.setAttribute('aria-expanded', 'false');
+            });
+
+            const overlay = ensureJdRenameDialog();
+            const input = overlay.querySelector('#jdRenameDialogInput');
+            const submit = overlay.querySelector('#jdRenameDialogSubmit');
+            overlay.dataset.sessionId = id;
+            overlay.dataset.sessionType = sessionType;
+            input.value = String(session.title || '');
+            submit.disabled = !input.value.trim();
+            overlay.classList.add('open');
+            overlay.setAttribute('aria-hidden', 'false');
+
+            requestAnimationFrame(() => {
+                input.focus({ preventScroll: true });
+                input.select();
+            });
         }
 
         function countSavedChatWords() {
