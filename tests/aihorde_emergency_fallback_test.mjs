@@ -72,6 +72,8 @@ async function fallback({enabled=true,first=failed,registeredSuccess=false,anony
  const deps={
    autoFallback:enabled,first,provider:'groq',model:'openai/gpt-oss-20b',
    history:[],files,message:'Hi',systemInstruction:'Test',routedReason:'',emit:()=>{},startedAt:1,
+   taskWork:{label:'Working on: Hi',kind:'process'},
+   taskGeneration:{label:'Generating the response for: Hi',kind:'generate'},
    isFallbackableProviderFailure:classifier,
    activity:()=>{},providerLabel:x=>x,
    runAIHorde:async args=>{calls.push({kind:'registered',args});return registeredSuccess?success('aihorde'):{ok:false,status:401,error:'invalid registered key'};},
