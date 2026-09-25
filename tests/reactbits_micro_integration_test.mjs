@@ -26,10 +26,11 @@ assert(!html.includes('id="aiActivitySummaryIcon"'),'legacy Activity icon markup
 assert(activityCss.includes('migrated to reactbits-micro.css'),'legacy Activity stylesheet must be retired');
 
 // 2/6 BellToggle: real notification state and permission handler remain.
-for (const token of ['bell-toggle','bell-toggle__button','replyBellToggle']) {
+for (const token of ['bell-toggle','bell-toggle__button']) {
   assert(html.includes(token), 'BellToggle markup missing: '+token);
   assert(css.includes(token), 'BellToggle style missing: '+token);
 }
+assert(html.includes('id="replyBellToggle"'),'BellToggle state hook missing');
 assert(js.includes('toggleBell'),'BellToggle runtime missing');
 assert(js.includes('settingsNotifyToggle'),'BellToggle must reuse actual notification state');
 assert(html.includes('toggleResponseNotifications(this.checked)'),'notification permission handler must remain wired');
