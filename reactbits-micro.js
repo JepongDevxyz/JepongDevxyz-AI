@@ -135,7 +135,15 @@
     root.dataset.rbBound='1';
 
     var state=null;
+    var suppressClick=false;
     input.addEventListener('change',function(){paintSwitch(root,input,null);});
+    root.addEventListener('click',function(e){
+      if(suppressClick){
+        suppressClick=false;
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
     paintSwitch(root,input,null);
 
     root.addEventListener('pointerdown',function(e){
@@ -170,12 +178,16 @@
       root.style.setProperty('--ss-sy','1');
       try{root.releasePointerCapture(e.pointerId);}catch(_){}
       if(cancelled){
+        suppressClick=old.moved;
         paintSwitch(root,input,null);
         return;
       }
-      if(!old.moved){
+      if(old.moved){
+        suppressClick=true;
+      }else if(root.tagName!=='LABEL'){
         input.checked=!input.checked;
         dispatchChange(input);
+        suppressClick=true;
       }
       paintSwitch(root,input,null);
     }
