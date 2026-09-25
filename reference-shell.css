@@ -594,7 +594,7 @@ body.theme-light #sidebar .history-item.active{background:rgba(0,0,0,.055)!impor
     transform 140ms cubic-bezier(.2,.8,.2,1),
     visibility 0s linear 140ms;
 }
-#sidebar .history-actions-deck.open{
+#sidebar .history-actions-deck.open{display:grid!important;
   opacity:1;visibility:visible;pointer-events:auto;
   transform:translateY(0) scale(1);
   transition:
