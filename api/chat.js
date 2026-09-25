@@ -2415,6 +2415,19 @@ function buildOpenAIMessages(history, message, systemInstruction) {
   return messages;
 }
 
+function buildOpenAIVisionMessages(history, message, systemInstruction, files=[]){
+  const messages=[{role:'system',content:systemInstruction},...normalizeHistory(history)];
+  if(messages.length>1 && messages.at(-1).role==='user')messages.pop();
+  const content=[];
+  if(message?.trim())content.push({type:'text',text:message.trim()});
+  for(const f of (Array.isArray(files)?files:[]).slice(0,10)){
+    if(!f?.data||!String(f?.mimeType||'').toLowerCase().startsWith('image/'))continue;
+    content.push({type:'image_url',image_url:{url:`data:${f.mimeType};base64,${f.data}`}});
+  }
+  if(content.length)messages.push({role:'user',content});
+  return messages;
+}
+
 function smartRoute(mode, files, message) {
   const intentText=normalizeIntentText(message);
   const hasImage = Array.isArray(files) && files.some(f => f?.mimeType?.startsWith('image/') && f?.data);
@@ -2804,7 +2817,7 @@ async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='
   return {ok:false,status,error:last};
 }
 
-async function runOpenAICompatible(provider,{model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}) {
+async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
@@ -2826,7 +2839,9 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
   const requested=(DYNAMIC_MODEL_PROVIDERS.has(provider) && suppliedModel)
     ? suppliedModel
     : (PROVIDERS[provider].models.includes(suppliedModel)?suppliedModel:PROVIDERS[provider].defaultModel);
-  const messages=buildOpenAIMessages(history,message,systemInstruction);
+  const messages=visionPayload
+    ?buildOpenAIVisionMessages(history,message,systemInstruction,files)
+    :buildOpenAIMessages(history,message,systemInstruction);
   let modelCandidates=[requested];
 
   // Compatible model substitution is allowed only when the user enabled fallback.
@@ -2889,7 +2904,7 @@ async function runOpenAICompatible(provider,{model,history,message,systemInstruc
           messages,
           stream:true,
           max_tokens:outputBudgetFor(message),
-          temperature:temperatureFor(message,[])
+          temperature:temperatureFor(message,files)
         };
 
         const res=await fetch(cfg.url,{
