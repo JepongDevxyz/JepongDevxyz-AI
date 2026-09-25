@@ -28,3 +28,10 @@ assert(html.includes('function updateGenerationActionButton'),'existing send/sto
 assert(html.includes("action:'generate-image'"),'existing image generation route must remain');
 
 console.log('ReactBits micro integration contract passed');
+
+assert(js.includes('requestAnimationFrame(flushPending)'),'micro DOM upgrades must be frame-batched');
+assert(js.includes("mo.observe(card,{attributes:true,attributeFilter:['class','data-finalized']})"),'Activity observer must only watch status attributes');
+assert(!js.includes("mo.observe(card,{attributes:true,attributeFilter:['class','data-finalized'],childList:true,subtree:true})"),'Activity observer must not recursively watch its own subtree mutations');
+assert(js.includes("setTimeout(function(){safe(start);},0)"),'micro startup must yield after DOMContentLoaded before mutating the page');
+
+console.log('ReactBits startup regression guard passed');
