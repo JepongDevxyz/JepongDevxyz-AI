@@ -3760,8 +3760,14 @@ async function processChat(body, emit) {
   const directVision=provider==='gemini' ||
     (provider==='cloudflare'&&model==='@cf/google/gemma-4-26b-a4b-it');
   const mediaAnalysisContext=visualParts.length
-    ? await analyzeMediaForNonVisionProvider(files,taskMessage,directVision
-        ?(provider==='gemini'?'gemini':'cloudflare-vision'):provider,emit)
+    ? await analyzeMediaForNonVisionProvider(
+        files,
+        taskMessage,
+        directVision?(provider==='gemini'?'gemini':'cloudflare-vision'):provider,
+        model,
+        emit,
+        requestCustomKeys
+      )
     : '';
   if(visualParts.length&&!directVision&&mediaAnalysisContext===null){
     return {ok:false,status:415,error:'The attached image/video frames could not be visually read by the configured vision analyzers. Your selected response model was not changed. Check the Gemini or Cloudflare vision configuration, or choose a vision-capable model.',provider,startedAt};
