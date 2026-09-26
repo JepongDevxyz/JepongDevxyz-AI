@@ -1779,7 +1779,7 @@ function usableMediaAnalysis(text=''){
   return !refusal;
 }
 
-async function analyzeMediaForNonVisionProvider(files=[], message='', selectedProvider='', selectedModel='', emit, customApiKeys=null){
+async function analyzeMediaForNonVisionProvider(files=[], message='', selectedProvider='', selectedModel='', emit, customApiKeys=null, responseEffort='Instant'){
   const media=mediaAttachments(files);
   if(!media.length)return '';
 
@@ -1823,7 +1823,8 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
         emit:null,
         autoFallback:false,
         customApiKeys,
-        visionPayload:true
+        visionPayload:true,
+        responseEffort
       });
       if(r.ok){
         const text=await readInternalProviderText(r.response,16000);
@@ -1852,7 +1853,8 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
         message:prompt,
         systemInstruction:system,
         emit:null,
-        autoFallback:false
+        autoFallback:false,
+        responseEffort
       });
       if(r.ok){
         const text=await readInternalProviderText(r.response,16000);
@@ -1880,7 +1882,8 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
         message:mediaGroundingPrompt(message,imageOnly),
         systemInstruction:system,
         emit:null,
-        autoFallback:false
+        autoFallback:false,
+        responseEffort
       });
       if(r.ok){
         const text=await readInternalProviderText(r.response,16000);
@@ -3935,7 +3938,8 @@ async function processChat(body, emit) {
         directVision?(provider==='gemini'?'gemini':'cloudflare-vision'):provider,
         model,
         emit,
-        requestCustomKeys
+        requestCustomKeys,
+        responseEffort
       )
     : '';
   if(visualParts.length&&!directVision&&mediaAnalysisContext===null){
