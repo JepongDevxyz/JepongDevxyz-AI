@@ -3763,6 +3763,116 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .bot-message,.bot-content,.message-content{overflow-wrap:anywhere!important;word-break:break-word!important}
 }
 </style>
+
+<style id="jdLegalOnboardingStyles">
+/* First-run Welcome + Terms/Privacy surfaces. Uses the existing JepongDevxyz AI
+   theme tokens so dark/light/For You appearance stays visually consistent. */
+.jd-first-run{
+  position:fixed;inset:0;z-index:1400;display:none;flex-direction:column;
+  background:var(--bg-color);color:var(--text-main);
+  padding:max(26px,env(safe-area-inset-top)) 24px max(22px,env(safe-area-inset-bottom));
+  overflow:hidden;touch-action:pan-y;
+}
+.jd-first-run.open{display:flex}
+.jd-first-run__inner{
+  width:min(100%,560px);height:100%;margin:0 auto;display:flex;flex-direction:column;
+}
+.jd-first-run__hero{padding-top:clamp(18px,7dvh,72px)}
+.jd-first-run__brand{
+  width:76px;height:76px;border-radius:24px;display:grid;place-items:center;
+  background:var(--accent-gradient);box-shadow:0 18px 52px rgba(99,102,241,.25);
+  color:#fff;font-weight:800;font-size:1.35rem;letter-spacing:-.04em;margin-bottom:34px;
+}
+.jd-first-run h1{font-size:clamp(2.35rem,8vw,4rem);line-height:1.04;letter-spacing:-.055em;margin:0 0 54px;font-weight:650}
+.jd-first-run__feature{margin:0 0 34px}
+.jd-first-run__feature strong{display:block;font-size:1.08rem;font-weight:650;margin-bottom:10px}
+.jd-first-run__feature p{margin:0;color:var(--text-muted);font-size:1rem;line-height:1.58;max-width:50ch}
+.jd-first-run__footer{margin-top:auto;padding-top:24px}
+.jd-first-run__start{
+  width:100%;min-height:58px;border:0;border-radius:22px;background:var(--accent-gradient);
+  color:#fff;font-size:1.05rem;font-weight:650;cursor:pointer;box-shadow:0 12px 34px rgba(99,102,241,.22);
+}
+.jd-first-run__start:active{transform:scale(.985)}
+.jd-first-run__fineprint{text-align:center;color:var(--text-muted);font-size:.72rem;line-height:1.4;margin:12px 12px 0}
+
+.jd-consent-overlay{
+  position:fixed;inset:0;z-index:1420;display:none;place-items:center;padding:22px;
+  background:rgba(0,0,0,.66);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.jd-consent-overlay.open{display:grid}
+.jd-consent-card{
+  width:min(100%,470px);border-radius:28px;overflow:hidden;background:#242424;color:#f8fafc;
+  border:1px solid rgba(255,255,255,.08);box-shadow:0 28px 90px rgba(0,0,0,.52);
+}
+.jd-consent-copy{padding:30px 26px 26px;text-align:center}
+.jd-consent-mark{
+  width:52px;height:52px;border-radius:17px;margin:0 auto 18px;display:grid;place-items:center;
+  background:var(--accent-gradient);font-weight:800;color:#fff;font-size:.94rem;
+}
+.jd-consent-copy h2{font-size:1.35rem;line-height:1.2;margin:0 0 14px;font-weight:650}
+.jd-consent-copy p{font-size:.96rem;line-height:1.55;color:#d1d5db;margin:0}
+.jd-consent-link{border:0;background:transparent;color:#7c9cff;font:inherit;cursor:pointer;padding:0 2px;text-decoration:none}
+.jd-consent-actions{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08)}
+.jd-consent-actions button{
+  min-height:64px;border:0;background:transparent;color:#f8fafc;font-size:1.02rem;cursor:pointer;
+}
+.jd-consent-actions button+button{border-left:1px solid rgba(255,255,255,.08)}
+.jd-consent-actions .agree{color:#8aa7ff;font-weight:650}
+.jd-consent-actions button:active{background:rgba(255,255,255,.06)}
+
+.jd-legal-policy{
+  position:fixed;inset:0;z-index:1440;display:none;background:var(--bg-color);color:var(--text-main);
+  touch-action:pan-y;
+}
+.jd-legal-policy.open{display:flex}
+.jd-legal-shell{width:100%;height:100%;display:flex;flex-direction:column;min-height:0}
+.jd-legal-header{
+  flex:0 0 auto;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;
+  gap:10px;padding:max(16px,env(safe-area-inset-top)) 16px 13px;
+  border-bottom:1px solid var(--border-color);background:color-mix(in srgb,var(--bg-color) 94%,transparent);
+}
+.jd-legal-back{
+  width:42px;height:42px;border-radius:50%;border:1px solid var(--border-color);
+  background:var(--input-bg);color:var(--text-main);display:grid;place-items:center;cursor:pointer;
+}
+.jd-legal-back i{width:21px;height:21px}
+.jd-legal-header h2{text-align:center;font-size:1.04rem;font-weight:650;margin:0}
+.jd-legal-scroll{
+  flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  padding:22px 20px calc(34px + env(safe-area-inset-bottom));
+}
+.jd-legal-article{display:none;width:min(100%,720px);margin:0 auto}
+.jd-legal-article.active{display:block}
+.jd-legal-article .jd-legal-kicker{color:var(--text-muted);font-size:.78rem;margin-bottom:18px}
+.jd-legal-article h1{font-size:1.85rem;letter-spacing:-.035em;margin:0 0 10px}
+.jd-legal-article h3{font-size:1rem;margin:26px 0 8px;font-weight:650}
+.jd-legal-article p,.jd-legal-article li{color:var(--text-muted);font-size:.92rem;line-height:1.65}
+.jd-legal-article ul{padding-left:20px;margin:8px 0}
+.jd-legal-article li+li{margin-top:6px}
+.jd-legal-callout{
+  margin-top:24px;padding:16px 17px;border:1px solid var(--border-color);border-radius:18px;
+  background:color-mix(in srgb,var(--card-bg) 96%,transparent);
+}
+
+body.theme-light .jd-consent-card{background:#fff;color:#111827;border-color:rgba(15,23,42,.10)}
+body.theme-light .jd-consent-copy p{color:#64748b}
+body.theme-light .jd-consent-actions{border-color:rgba(15,23,42,.10)}
+body.theme-light .jd-consent-actions button{color:#111827}
+body.theme-light .jd-consent-actions button+button{border-color:rgba(15,23,42,.10)}
+body.theme-light .jd-consent-actions .agree,.theme-light .jd-consent-link{color:#4f6ff5}
+
+@media(min-width:768px){
+  .jd-first-run{padding:36px}
+  .jd-legal-policy{align-items:center;justify-content:center;padding:24px}
+  .jd-legal-shell{max-width:720px;height:min(92dvh,920px);border:1px solid var(--border-color);border-radius:30px;overflow:hidden;background:var(--bg-color)}
+}
+@media(max-height:690px){
+  .jd-first-run__hero{padding-top:4px}
+  .jd-first-run h1{font-size:2.2rem;margin-bottom:28px}
+  .jd-first-run__feature{margin-bottom:20px}
+  .jd-first-run__brand{width:62px;height:62px;border-radius:20px;margin-bottom:24px}
+}
+</style>
 <script id="assistant-runtime-guard">
 window.safeVisibleAssistantResponse=window.safeVisibleAssistantResponse||function(text){try{if(typeof window.sanitizeVisibleAssistantResponse==='function')return window.sanitizeVisibleAssistantResponse(text);}catch(_){}return String(text==null?'':text);};
 window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse||function(text){let out=String(text==null?'':text);out=out.replace(/^\s*(?:User\s*Safety|Safety\s*(?:classification|status)?|Moderation\s*(?:result|status)?|Policy\s*(?:result|status)?)\s*:\s*(?:safe|unsafe|allowed|blocked|pass(?:ed)?|ok)\s*$/gim,'');out=out.replace(/^\s*(?:internal\s*)?(?:route|router|provider|classification)\s*:\s*[^\n]{1,160}\s*$/gim,'');return out.replace(/\n{3,}/g,'\n\n').trim();};
@@ -3775,6 +3885,129 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/reactbits-micro.css">
 </head>
 <body>
+
+    <!-- First-run welcome and legal consent. Shown only until the current legal
+         version has been accepted on this device. -->
+    <section id="jdFirstRunWelcome" class="jd-first-run" aria-labelledby="jdFirstRunTitle" aria-hidden="true">
+      <div class="jd-first-run__inner">
+        <div class="jd-first-run__hero">
+          <div class="jd-first-run__brand" aria-hidden="true">JD</div>
+          <h1 id="jdFirstRunTitle">Welcome to<br>JepongDevxyz AI</h1>
+          <div class="jd-first-run__feature">
+            <strong>Your AI workspace</strong>
+            <p>Chat with your selected AI models, use tools, analyze files, search the web, and keep your conversations in one JepongDevxyz interface.</p>
+          </div>
+          <div class="jd-first-run__feature">
+            <strong>AI can make mistakes</strong>
+            <p>Responses are AI-generated and can be inaccurate. Verify important information, especially for medical, legal, financial, or other high-impact decisions.</p>
+          </div>
+        </div>
+        <div class="jd-first-run__footer">
+          <button class="jd-first-run__start" type="button" onclick="openJdLegalConsent()">Start Chat</button>
+          <p class="jd-first-run__fineprint">You’ll review our Terms of Service and Privacy Policy before continuing.</p>
+        </div>
+      </div>
+    </section>
+
+    <div id="jdLegalConsent" class="jd-consent-overlay" role="dialog" aria-modal="true" aria-labelledby="jdLegalConsentTitle" aria-hidden="true">
+      <section class="jd-consent-card">
+        <div class="jd-consent-copy">
+          <div class="jd-consent-mark" aria-hidden="true">JD</div>
+          <h2 id="jdLegalConsentTitle">Welcome to JepongDevxyz AI</h2>
+          <p>
+            Review our
+            <button type="button" class="jd-consent-link" onclick="openJdLegalPolicy('terms')">Terms of Service</button>
+            and
+            <button type="button" class="jd-consent-link" onclick="openJdLegalPolicy('privacy')">Privacy Policy</button>.
+            By tapping Agree, you confirm that you understand and accept these terms.
+          </p>
+        </div>
+        <div class="jd-consent-actions">
+          <button type="button" onclick="jdDeclineLegalConsent()">Disagree</button>
+          <button type="button" class="agree" onclick="jdAcceptLegalConsent()">Agree</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="jdLegalPolicy" class="jd-legal-policy" role="dialog" aria-modal="true" aria-labelledby="jdLegalPolicyTitle" aria-hidden="true">
+      <section class="jd-legal-shell">
+        <header class="jd-legal-header">
+          <button class="jd-legal-back" type="button" onclick="closeJdLegalPolicy()" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+          <h2 id="jdLegalPolicyTitle">Legal</h2>
+          <span></span>
+        </header>
+        <div class="jd-legal-scroll">
+          <article id="jdTermsArticle" class="jd-legal-article">
+            <p class="jd-legal-kicker">Last updated: September 26, 2026</p>
+            <h1>Terms of Service</h1>
+            <p>These Terms govern your use of JepongDevxyz AI. By using the service, you agree to use it responsibly and in accordance with applicable laws and the rules of any connected AI provider, plugin, or third-party service.</p>
+
+            <h3>1. AI-generated content</h3>
+            <p>JepongDevxyz AI can route requests to different AI models and tools. AI outputs may be incomplete, outdated, or incorrect. You are responsible for reviewing outputs before relying on them or using them in important decisions.</p>
+
+            <h3>2. Your content</h3>
+            <p>You are responsible for the prompts, files, links, API credentials, and other content you choose to provide. Do not submit content that you do not have the right to use or that violates applicable law.</p>
+
+            <h3>3. Third-party providers and plugins</h3>
+            <p>When you select or connect a third-party AI provider, search service, plugin, account, or API, relevant request data may be sent to that service so it can perform the requested function. Those services may have their own terms and usage limits.</p>
+
+            <h3>4. API keys and accounts</h3>
+            <p>You are responsible for credentials you add to JepongDevxyz AI and for any usage, charges, quotas, or restrictions imposed by the corresponding provider. Never share credentials you do not own or have permission to use.</p>
+
+            <h3>5. Acceptable use</h3>
+            <ul>
+              <li>Do not use the service to break laws, compromise accounts or systems, or bypass another service’s access controls.</li>
+              <li>Do not intentionally upload malware or use JepongDevxyz AI to harm other people or services.</li>
+              <li>Respect intellectual property, privacy, and the rights of others.</li>
+            </ul>
+
+            <h3>6. Availability and changes</h3>
+            <p>Features, models, providers, limits, and integrations may change or become unavailable. JepongDevxyz AI may update these Terms when the service changes. If a new legal version requires acceptance, the app can ask you to review it again.</p>
+
+            <h3>7. No warranty</h3>
+            <p>The service is provided on an “as available” basis. Do not treat AI output as a substitute for qualified professional advice where expert judgment is required.</p>
+
+            <div class="jd-legal-callout"><p>For questions about these Terms, use the project’s official JepongDevxyz support or repository contact channel.</p></div>
+          </article>
+
+          <article id="jdPrivacyArticle" class="jd-legal-article">
+            <p class="jd-legal-kicker">Last updated: September 26, 2026</p>
+            <h1>Privacy Policy</h1>
+            <p>This Policy explains how JepongDevxyz AI handles information when you use chat, files, account sync, AI providers, web tools, and connected plugins.</p>
+
+            <h3>1. Information you choose to provide</h3>
+            <ul>
+              <li>Prompts, chat messages, files, images, video frames, links, and tool requests.</li>
+              <li>Optional profile information and preferences you save in the app.</li>
+              <li>Optional API keys or connection details you add for external providers.</li>
+            </ul>
+
+            <h3>2. Local app data</h3>
+            <p>JepongDevxyz AI uses browser/device storage for settings and local chat features. Clearing site/app data can remove locally stored information. Some features can also use account-based synchronization when you choose to sign in.</p>
+
+            <h3>3. AI providers and tools</h3>
+            <p>To generate a response or use a tool, JepongDevxyz AI may send the relevant prompt, conversation context, attachment data, or extracted attachment content to the provider or service selected for that request. Data handling by those third parties is governed by their own policies.</p>
+
+            <h3>4. Account authentication</h3>
+            <p>If you sign in using Google, Facebook, GitHub, email, or another supported identity provider, authentication is handled through the configured sign-in service. JepongDevxyz AI does not ask you to enter a third-party provider password directly into its own chat interface.</p>
+
+            <h3>5. Connected plugins</h3>
+            <p>If you install and connect a plugin, the app may access only the data and actions needed for the plugin features you invoke, subject to the permissions granted to that integration.</p>
+
+            <h3>6. Security and credentials</h3>
+            <p>Use unique, revocable API keys where possible. Do not put secrets in ordinary chat messages. No internet service can guarantee absolute security, so review the permissions and account controls of every provider you connect.</p>
+
+            <h3>7. Your controls</h3>
+            <p>You can manage local chats, settings, connected services, and supported account features from the app. You can also clear browser/app storage to remove locally stored data from that device.</p>
+
+            <h3>8. Policy updates</h3>
+            <p>This Policy may change as JepongDevxyz AI adds or removes providers, storage features, plugins, or account capabilities. The app can request renewed acceptance when a materially updated policy version is introduced.</p>
+
+            <div class="jd-legal-callout"><p>Privacy-sensitive behavior depends partly on the external providers you choose. Review each provider’s policy before sending sensitive or confidential information.</p></div>
+          </article>
+        </div>
+      </section>
+    </div>
 
     <div class="read-aloud-pill" id="speechMiniPlayer" data-state="idle" aria-live="polite" aria-hidden="true">
         <button type="button" class="read-aloud-pill__control" id="speechMiniToggleBtn" onclick="toggleSpeechMiniPlayback()" title="Pause or resume read aloud" aria-label="Pause or resume read aloud">
@@ -4180,6 +4413,12 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             <span id="settingsAccentLabel" hidden>Default</span>
             <div class="settings-nav-row settings-static-row"><i data-lucide="chart-no-axes-column"></i><span><strong>Usage & Limits</strong><small><b id="geminiWordCount">0</b> words · <b id="geminiTokenCount">0</b> tokens · <b id="geminiQueryCount">0</b> queries</small></span></div>
             <button class="settings-nav-row" type="button" onclick="closeSettingsModal();openMenuFromBrandIcon()"><i data-lucide="history"></i><span><strong>Chat History</strong><small>Return to saved conversations and exports</small></span><i data-lucide="chevron-right"></i></button>
+          </div>
+
+          <h3 class="settings-section-label">Legal & privacy</h3>
+          <div class="settings-card-group">
+            <button class="settings-nav-row" type="button" onclick="openJdLegalPolicy('terms')" aria-label="Terms of Service"><i data-lucide="file-text"></i><span><strong>Terms of Service</strong><small>Rules for using JepongDevxyz AI and connected services</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="settings-nav-row" type="button" onclick="openJdLegalPolicy('privacy')" aria-label="Privacy Policy"><i data-lucide="shield-check"></i><span><strong>Privacy Policy</strong><small>How chat, files, providers, and account data are handled</small></span><i data-lucide="chevron-right"></i></button>
           </div>
           <p class="settings-home-foot">JepongDevxyz AI</p>
         </div>
@@ -12458,6 +12697,82 @@ ${m.text || ''}
             if (lb) lb.classList.remove('open');
         }
 
+        const JD_LEGAL_VERSION='2026-09-26';
+        const JD_LEGAL_ACCEPTANCE_KEY='jd_legal_acceptance_v1';
+
+        function hasJdLegalAcceptance(){
+            try{
+                const saved=JSON.parse(localStorage.getItem(JD_LEGAL_ACCEPTANCE_KEY)||'null');
+                return saved?.version===JD_LEGAL_VERSION && Boolean(saved?.acceptedAt);
+            }catch(_){return false;}
+        }
+
+        function syncJdFirstRunOnboarding(){
+            const welcome=document.getElementById('jdFirstRunWelcome');
+            if(!welcome)return;
+            const accepted=hasJdLegalAcceptance();
+            welcome.classList.toggle('open',!accepted);
+            welcome.setAttribute('aria-hidden',accepted?'true':'false');
+            if(accepted){
+                document.getElementById('jdLegalConsent')?.classList.remove('open');
+                document.getElementById('jdLegalConsent')?.setAttribute('aria-hidden','true');
+            }
+            setTimeout(()=>refreshLucideIcons(welcome),0);
+        }
+
+        function openJdLegalConsent(){
+            const overlay=document.getElementById('jdLegalConsent');
+            if(!overlay)return;
+            overlay.classList.add('open');
+            overlay.setAttribute('aria-hidden','false');
+            setTimeout(()=>overlay.querySelector('.agree')?.focus(),20);
+        }
+
+        function jdDeclineLegalConsent(){
+            const overlay=document.getElementById('jdLegalConsent');
+            overlay?.classList.remove('open');
+            overlay?.setAttribute('aria-hidden','true');
+            document.getElementById('jdFirstRunWelcome')?.querySelector('.jd-first-run__start')?.focus();
+        }
+
+        function jdAcceptLegalConsent(){
+            try{
+                localStorage.setItem(JD_LEGAL_ACCEPTANCE_KEY,JSON.stringify({
+                    version:JD_LEGAL_VERSION,
+                    acceptedAt:new Date().toISOString()
+                }));
+            }catch(_){}
+            document.getElementById('jdLegalConsent')?.classList.remove('open');
+            document.getElementById('jdLegalConsent')?.setAttribute('aria-hidden','true');
+            const welcome=document.getElementById('jdFirstRunWelcome');
+            welcome?.classList.remove('open');
+            welcome?.setAttribute('aria-hidden','true');
+            if(typeof showModernToast==='function')showModernToast('Welcome to JepongDevxyz AI');
+            setTimeout(()=>document.getElementById('userInput')?.focus(),80);
+        }
+
+        function openJdLegalPolicy(kind='terms'){
+            const privacy=String(kind).toLowerCase()==='privacy';
+            const overlay=document.getElementById('jdLegalPolicy');
+            const termsArticle=document.getElementById('jdTermsArticle');
+            const privacyArticle=document.getElementById('jdPrivacyArticle');
+            if(!overlay||!termsArticle||!privacyArticle)return;
+            termsArticle.classList.toggle('active',!privacy);
+            privacyArticle.classList.toggle('active',privacy);
+            const title=document.getElementById('jdLegalPolicyTitle');
+            if(title)title.textContent=privacy?'Privacy Policy':'Terms of Service';
+            overlay.classList.add('open');
+            overlay.setAttribute('aria-hidden','false');
+            overlay.querySelector('.jd-legal-scroll')?.scrollTo?.({top:0,behavior:'instant'});
+            setTimeout(()=>refreshLucideIcons(overlay),0);
+        }
+
+        function closeJdLegalPolicy(){
+            const overlay=document.getElementById('jdLegalPolicy');
+            overlay?.classList.remove('open');
+            overlay?.setAttribute('aria-hidden','true');
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(()=>refreshLucideIcons(),0); // global icon refresh
             const savedTheme = localStorage.getItem('jepong_theme') || '';
@@ -12496,6 +12811,7 @@ ${m.text || ''}
             } else {
                 createNewChat();
             }
+            syncJdFirstRunOnboarding();
         });
     </script>
     <script src="/plugins.js" defer></script>
