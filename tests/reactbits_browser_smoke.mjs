@@ -73,7 +73,7 @@ for(let i=0;i<80;i++){
 
 const initial=JSON.parse(await evaluate(`JSON.stringify({
   bodyText:document.body.innerText.trim().length,
-  prompt:!!document.querySelector('#promptBar.prompt-bar[data-models="false"]'),
+  prompt:!!document.querySelector('#promptBar.prompt-bar[data-models="false"] .prompt-bar__field .prompt-bar__bar'),
   mic:!!document.querySelector('#micBtn.voice-pill'),
   readAloud:!!document.querySelector('#speechMiniPlayer.read-aloud-pill'),
   bell:!!document.querySelector('#replyBellToggle.bell-toggle'),
@@ -99,16 +99,23 @@ const activity=JSON.parse(await evaluate(`(()=>{
     thought:!!card?.querySelector('.thought-line'),
     trace:!!card?.querySelector('.thought-line__trace'),
     lead:card?.querySelector('.ai-activity-lead')?.textContent||'',
+    headline:card?.querySelector('#aiActivitySummary')?.textContent||'',
+    timer:card?.querySelector('#aiActivityTimer')?.textContent||'',
     rows:card?.querySelectorAll('.ai-activity-row').length||0
   };
   finishAIIndicator(true,1200);
   before.done=card?.querySelector('.lattice-loader')?.dataset.status;
+  before.settled=card?.querySelector('#aiActivitySummary')?.textContent||'';
+  before.finalTimer=card?.querySelector('#aiActivityTimer')?.textContent||'';
   return JSON.stringify(before);
 })()`));
 assert(activity.lattice&&activity.thought&&activity.trace,'LatticeLoader + ThoughtLine failed to render');
 assert.equal(activity.lead,'Auditing requested ReactBits components');
+assert.equal(activity.headline,'Generating response','ThoughtLine did not follow the real running activity event');
 assert(activity.rows>=1,'real Activity row did not render');
 assert.equal(activity.done,'done','LatticeLoader did not settle to done');
+assert.equal(activity.settled,'Thought for','ThoughtLine did not settle like ReactBits');
+assert.equal(activity.finalTimer,'1s','ThoughtLine final elapsed timer mismatch');
 
 // 2/6: BellToggle mirrors actual checkbox state without requesting browser permission.
 const bell=JSON.parse(await evaluate(`(()=>{
@@ -126,14 +133,23 @@ assert.equal(bell.off,'false');assert.equal(bell.on,'true');assert.equal(bell.bu
 // 3/6: PromptBar follows the real send/stop state.
 const prompt=JSON.parse(await evaluate(`(()=>{
   const bar=document.getElementById('promptBar');
+  const input=document.getElementById('userInput');
+  const send=document.getElementById('mainActionBtn');
+  input.value='hello';input.dispatchEvent(new Event('input',{bubbles:true}));
+  const armed=send.hasAttribute('data-armed');
   updateGenerationActionButton(true,false);
   const busy=bar.dataset.busy;
   const stop=!!document.querySelector('#mainActionBtn .prompt-bar__stop');
   updateGenerationActionButton(false,false);
-  return JSON.stringify({busy,stop,idle:bar.dataset.busy,models:bar.dataset.models});
+  return JSON.stringify({
+    busy,stop,idle:bar.dataset.busy,models:bar.dataset.models,armed,
+    field:!!bar.querySelector('.prompt-bar__field'),
+    controls:!!bar.querySelector('.prompt-bar__bar')
+  });
 })()`));
 assert.equal(prompt.busy,'true');assert(prompt.stop,'PromptBar stop state missing');
-assert.equal(prompt.idle,'false');assert.equal(prompt.models,'false');
+assert.equal(prompt.idle,'false');assert.equal(prompt.models,'false');assert(prompt.armed,'PromptBar send never armed');
+assert(prompt.field&&prompt.controls,'PromptBar field/control structure missing');
 
 // 4/6: RefineFrame complete initializes in-browser.
 const refine=JSON.parse(await evaluate(`(()=>{
@@ -153,19 +169,63 @@ const squish=JSON.parse(await evaluate(`(()=>{
 })()`));
 assert(squish.count>=3);assert.equal(squish.bound,squish.count);assert.equal(squish.inputs,squish.count);
 
-// 6/6: VoicePill + read aloud visual states follow the real app state.
-const voice=JSON.parse(await evaluate(`(()=>{
+// 6/6: VoicePill + read aloud states and actual tap/hold gesture contract.
+const voice=JSON.parse(await evaluate(`(async()=>{
   const mic=document.getElementById('micBtn');
-  mic.classList.add('recording');mic.setAttribute('aria-pressed','true');window.JDReactBits.syncVoice();
-  const listening=mic.dataset.state;
-  mic.classList.remove('recording');mic.setAttribute('aria-pressed','false');window.JDReactBits.syncVoice();
-  const idle=mic.dataset.state;
+  const calls=[];
+  window.startSpeechRecognition=()=>{
+    calls.push('start');
+    mic.dataset.state='listening';
+    mic.classList.add('recording');
+    mic.setAttribute('aria-pressed','true');
+    window.JDReactBits.syncVoice();
+    return Promise.resolve(true);
+  };
+  window.stopSpeechRecognition=reason=>{
+    calls.push('stop:'+reason);
+    mic.classList.remove('recording');
+    mic.setAttribute('aria-pressed','false');
+    mic.dataset.state='idle';
+    window.JDReactBits.syncVoice();
+  };
+
+  const fire=(type,id,x)=>mic.dispatchEvent(new PointerEvent(type,{
+    bubbles:true,pointerId:id,clientX:x,button:0,isPrimary:true,pointerType:'touch'
+  }));
+
+  // Quick tap from idle starts and remains listening.
+  fire('pointerdown',11,120);fire('pointerup',11,120);
+  const quick=[...calls];
+  const afterQuick=mic.dataset.state;
+
+  // Quick tap while already listening stops.
+  fire('pointerdown',12,120);fire('pointerup',12,120);
+  const afterToggle=[...calls];
+
+  // Hold from idle starts then stops on release after threshold.
+  fire('pointerdown',13,120);
+  await new Promise(r=>setTimeout(r,330));
+  fire('pointerup',13,120);
+  const afterHold=[...calls];
+
+  // Slide left past 64px cancels.
+  fire('pointerdown',14,120);
+  fire('pointermove',14,45);
+  fire('pointerup',14,45);
+  const afterCancel=[...calls];
+
   const player=document.getElementById('speechMiniPlayer');
   player.classList.add('visible');window.JDReactBits.syncReadAloud();const reading=player.dataset.state;
   player.classList.remove('visible');window.JDReactBits.syncReadAloud();const stopped=player.dataset.state;
-  return JSON.stringify({listening,idle,reading,stopped});
+
+  return JSON.stringify({quick,afterQuick,afterToggle,afterHold,afterCancel,reading,stopped});
 })()`));
-assert.deepEqual(voice,{listening:'listening',idle:'idle',reading:'listening',stopped:'idle'});
+assert.deepEqual(voice.quick,['start'],'quick tap should start dictation without immediate stop');
+assert.equal(voice.afterQuick,'listening');
+assert.deepEqual(voice.afterToggle,['start','stop:tap'],'tap while listening should stop');
+assert.deepEqual(voice.afterHold.slice(-2),['start','stop:release'],'hold must stop on release');
+assert.deepEqual(voice.afterCancel.slice(-2),['start','stop:cancel'],'slide-left must cancel');
+assert.equal(voice.reading,'listening');assert.equal(voice.stopped,'idle');
 
 await sleep(250);
 assert.deepEqual(runtimeErrors,[],'browser runtime exceptions: '+runtimeErrors.join(' | '));
