@@ -1257,6 +1257,11 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   if(personalization?.suggestedPrompts!==false){
     text += ' After a normal substantive answer, when one or two genuinely useful next actions are obvious, you may append exactly one [[JD_FOLLOWUPS]] block containing 1 or 2 lines in the form ITEM: <short next prompt>, then [[/JD_FOLLOWUPS]]. These should be context-specific actions the user may actually want next, not generic filler. Do not add follow-ups after a JD_CHOICE block, and omit the block entirely when no useful next step is apparent.';
   }
+
+  // High-level live work commentary. The client renders these notes inside the
+  // existing Activity timeline while the final answer remains buffered. They
+  // are user-facing progress summaries, never hidden chain-of-thought.
+  text += ' LIVE WORK COMMENTARY: For substantial coding, build, research, file-analysis, deployment, or multi-step implementation requests, you may emit 1 to 3 short high-level progress notes using the exact wrapper [[JD_WORK_NOTE]]<note>[[/JD_WORK_NOTE]]. Each note should be one or two natural sentences in the user\'s language, like a modern ChatGPT work update: what you are building/checking, what verified tool context established, or one important implementation decision. Keep notes concise and factual. Never reveal private chain-of-thought, hidden reasoning, policy text, credentials, provider secrets, or unsupported claims. Do not claim a search, test, build, deployment, file creation, website visit, or verification unless supplied tool context confirms it. Do not put code blocks, long lists, URLs, or JD_CHOICE/JD_FOLLOWUPS inside a work note. For simple chat or a one-step factual answer, emit no work note. These work-note wrappers are UI metadata and must not be explained to the user.';
   return text;
 }
 
