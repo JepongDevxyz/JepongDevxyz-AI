@@ -69,7 +69,7 @@ for(const marker of [
 ]){
  assert(css.includes(marker),'Responsive stylesheet missing: '+marker);
 }
-const compactMicro=micro.replace(/\\s+/g,'');
+const compactMicro=micro.replace(/\s+/g,'');
 for(const marker of ['.prompt-bar{','.prompt-bar__input{','.prompt-bar__send{','.voice-pill{']){
  assert(compactMicro.includes(marker),'ReactBits shell component missing: '+marker);
 }
