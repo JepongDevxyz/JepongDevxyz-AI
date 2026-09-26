@@ -10142,6 +10142,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function renderJdStoredActivity(saved){
             if(!saved||typeof saved!=='object'||!Array.isArray(saved.steps))return null;
             const clean=(value,max=170)=>escapeHTML(String(value||'').slice(0,max));
+            const notes=Array.isArray(saved.notes)?saved.notes.slice(-4).filter(Boolean):[];
+            const notesHtml=notes.map(note=>'<div class="ai-work-commentary"><div class="ai-work-commentary__text">'+clean(note,520)+'</div></div>').join('');
             const steps=saved.steps.slice(-12).filter(x=>x&&typeof x==='object'&&x.label)
                 .map(row=>{
                     const kind=String(row.kind||'process').replace(/[^a-z0-9_-]/gi,'').slice(0,22);
@@ -10152,9 +10154,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                             ${row.detail?`<span class="ai-activity-detail">${clean(row.detail,120)}</span>`:''}
                         </div></div>`;
                 }).join('');
-            if(!steps&&!saved.lead)return null;
+            if(!steps&&!saved.lead&&!notes.length)return null;
             const card=document.createElement('div');
-            card.className='ai-activity-card complete ai-activity-archived';
+            card.className='ai-activity-card complete ai-activity-archived'+(notes.length?' ai-activity-kimi-flow':'');
             card.dataset.finalized='true';
             card.innerHTML=`
                 <div class="ai-activity-header-actions">
@@ -10173,7 +10175,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 </div>
                 <div class="thought-line__trace">
                     <p class="ai-activity-lead">${clean(saved.lead,220)}</p>
-                    <div class="ai-activity-list">${steps}</div>
+                    <div class="ai-activity-list">${notesHtml}${steps}</div>
                 </div>
             `;
             return card;
