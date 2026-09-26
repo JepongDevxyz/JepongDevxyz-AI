@@ -4735,15 +4735,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(!btn)return;
             btn.classList.toggle('generating',!!active);
             btn.classList.toggle('stopping',!!stopping);
-            if(active){
-                btn.title=stopping?'Stopping…':'Stop generating';
-                btn.setAttribute('aria-label',btn.title);
-                btn.innerHTML='<span class="prompt-bar__stop" aria-hidden="true"></span>';
-            }else{
-                btn.title='Send';
-                btn.setAttribute('aria-label','Send');
-                btn.innerHTML='<svg class="prompt-bar__glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4.5 18.5 11h-4.25v8.5h-4.5V11H5.5L12 4.5Z"></path></svg>';
-            }
+            btn.title=active?(stopping?'Stopping…':'Stop generating'):'Send';
+            btn.setAttribute('aria-label',active?'Stop':'Send');
             window.JDReactBits?.setPromptBusy?.(active,stopping);
         }
 
@@ -5159,37 +5152,73 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             return normalizeResponseEffortClient(personalizationSettings.intelligence);
         }
 
+        function responseEffortIndex(level=currentResponseEffort()){
+            return level==='High'?2:level==='Medium'?1:0;
+        }
+
+        function responseEffortStepAt(index){
+            const ratio=index/2;
+            return `calc(11px + (100% - 22px) * ${ratio})`;
+        }
+
+        function responseEffortFillAt(index){
+            return index===2?'100%':`calc(${responseEffortStepAt(index)} + 7px)`;
+        }
+
         function updateResponseEffortUI(){
             const effort=currentResponseEffort();
+            const index=responseEffortIndex(effort);
             const label=document.getElementById('responseEffortLabel');
+            const menuLevel=document.getElementById('responseEffortMenuLevel');
             const btn=document.getElementById('responseEffortBtn');
-            const menu=document.getElementById('responseEffortMenu');
+            const track=document.getElementById('responseEffortTrack');
+            const bar=document.getElementById('promptBar');
+            const field=bar?.querySelector('.prompt-bar__field');
             if(label)label.textContent=effort;
-            if(btn)btn.title=`Response effort: ${effort}`;
-            document.getElementById('composerThinkBtn')?.classList.toggle('think-active',effort==='High');
-            menu?.querySelectorAll('.response-effort-option').forEach(option=>{
-                const active=option.dataset.effort===effort;
-                option.classList.toggle('active',active);
-                const check=option.querySelector('.effort-check');
-                if(check)check.textContent=active?'✓':'';
-            });
+            if(menuLevel)menuLevel.textContent=effort;
+            if(btn){
+                btn.title=`Response effort: ${effort}`;
+                btn.toggleAttribute('data-max',effort==='High');
+            }
+            if(track){
+                track.setAttribute('aria-valuenow',String(index));
+                track.setAttribute('aria-valuetext',effort);
+                track.style.setProperty('--pb-effort-x',responseEffortStepAt(index));
+                track.style.setProperty('--pb-effort-fill',responseEffortFillAt(index));
+                track.querySelectorAll('.prompt-bar__effort-dot').forEach((dot,i)=>{
+                    dot.style.left=responseEffortStepAt(i);
+                });
+            }
+            const maxed=effort==='High';
+            bar?.toggleAttribute('data-max',maxed);
+            field?.toggleAttribute('data-max',maxed);
+            window.JDReactBits?.syncPrompt?.();
         }
 
         function closeResponseEffortMenu(){
-            document.getElementById('responseEffortMenu')?.classList.remove('open');
-            document.getElementById('responseEffortBtn')?.classList.remove('menu-open');
+            const menu=document.getElementById('responseEffortMenu');
+            const btn=document.getElementById('responseEffortBtn');
+            if(menu)menu.hidden=true;
+            btn?.removeAttribute('data-on');
+            btn?.setAttribute('aria-expanded','false');
         }
 
         function toggleResponseEffortMenu(event,force){
             event?.stopPropagation?.();
+            closeComposerTools();
             closeAllDrawers();
             const menu=document.getElementById('responseEffortMenu');
             const btn=document.getElementById('responseEffortBtn');
             if(!menu||!btn)return;
-            const open=typeof force==='boolean'?force:!menu.classList.contains('open');
-            menu.classList.toggle('open',open);
-            btn.classList.toggle('menu-open',open);
-            if(open)updateResponseEffortUI();
+            const open=typeof force==='boolean'?force:menu.hidden;
+            menu.hidden=!open;
+            btn.toggleAttribute('data-on',open);
+            btn.setAttribute('aria-expanded',String(open));
+            if(open){
+                updateResponseEffortUI();
+                requestAnimationFrame(()=>document.getElementById('responseEffortTrack')?.focus({preventScroll:true}));
+            }
+            window.JDReactBits?.syncPrompt?.();
         }
 
         function setResponseEffort(level, options={}){
@@ -5205,6 +5234,20 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             }
         }
 
+        function setResponseEffortByIndex(index,options={}){
+            const levels=['Instant','Medium','High'];
+            const next=Math.max(0,Math.min(2,Math.round(Number(index)||0)));
+            setResponseEffort(levels[next],options);
+        }
+
+        function setResponseEffortFromPointer(event){
+            const track=document.getElementById('responseEffortTrack');
+            if(!track)return;
+            const rect=track.getBoundingClientRect();
+            const k=(event.clientX-rect.left-11)/Math.max(1,rect.width-22);
+            setResponseEffortByIndex(Math.round(Math.max(0,Math.min(1,k))*2),{closeMenu:false,toast:false});
+        }
+
         function syncFastAnswersWithEffort(enabled){
             if(enabled){
                 setResponseEffort('Instant',{closeMenu:false,toast:false});
@@ -5215,11 +5258,40 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         }
 
         document.addEventListener('pointerdown',e=>{
-            const wrap=e.target?.closest?.('#responseEffortWrap');
-            if(!wrap)closeResponseEffortMenu();
+            const track=e.target?.closest?.('#responseEffortTrack');
+            if(track){
+                if(e.button!==0)return;
+                try{track.setPointerCapture(e.pointerId);}catch(_){}
+                setResponseEffortFromPointer(e);
+                return;
+            }
+            if(!e.target?.closest?.('#responseEffortWrap')&&!e.target?.closest?.('#responseEffortMenu')){
+                closeResponseEffortMenu();
+            }
         },{passive:true});
+        document.addEventListener('pointermove',e=>{
+            const track=document.getElementById('responseEffortTrack');
+            if(track?.hasPointerCapture?.(e.pointerId) && (e.buttons&1))setResponseEffortFromPointer(e);
+        },{passive:true});
+        document.addEventListener('keydown',e=>{
+            const track=document.getElementById('responseEffortTrack');
+            if(document.activeElement!==track)return;
+            const current=responseEffortIndex();
+            if(e.key==='ArrowRight'||e.key==='ArrowUp'){
+                e.preventDefault();setResponseEffortByIndex(current+1,{closeMenu:false,toast:false});
+            }else if(e.key==='ArrowLeft'||e.key==='ArrowDown'){
+                e.preventDefault();setResponseEffortByIndex(current-1,{closeMenu:false,toast:false});
+            }else if(e.key==='Home'){
+                e.preventDefault();setResponseEffortByIndex(0,{closeMenu:false,toast:false});
+            }else if(e.key==='End'){
+                e.preventDefault();setResponseEffortByIndex(2,{closeMenu:false,toast:false});
+            }else if(e.key==='Escape'){
+                closeResponseEffortMenu();
+                document.getElementById('userInput')?.focus({preventScroll:true});
+            }
+        });
 
-        let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
+        let isResponseSpeechEnabled =        let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
         let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
         let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
 if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
@@ -5315,25 +5387,42 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             custom: 'Custom Persona'
         };
 
+        function movePromptBarGlow(row){
+            const menu=document.getElementById('composerToolSheet');
+            const glow=document.getElementById('promptBarSourceGlow');
+            if(!menu||!glow||!row)return;
+            glow.style.top=row.offsetTop+'px';
+            glow.style.height=row.offsetHeight+'px';
+            glow.style.opacity='1';
+            menu.querySelectorAll('.prompt-bar__row').forEach(item=>item.setAttribute('aria-selected',String(item===row)));
+        }
+
         function closeComposerTools(){
-            const sheet=document.getElementById('composerToolSheet');
+            const menu=document.getElementById('composerToolSheet');
             const plus=document.getElementById('composerPlusBtn');
-            sheet?.classList.remove('open');
-            plus?.classList.remove('plus-open');
+            if(menu)menu.hidden=true;
+            plus?.removeAttribute('data-on');
             plus?.setAttribute('aria-expanded','false');
         }
 
         function toggleComposerTools(event, force){
             event?.stopPropagation?.();
             closeResponseEffortMenu();
-            const sheet=document.getElementById('composerToolSheet');
+            const menu=document.getElementById('composerToolSheet');
             const plus=document.getElementById('composerPlusBtn');
-            if(!sheet||!plus)return;
-            const open=typeof force==='boolean'?force:!sheet.classList.contains('open');
-            sheet.classList.toggle('open',open);
-            plus.classList.toggle('plus-open',open);
+            if(!menu||!plus)return;
+            const open=typeof force==='boolean'?force:menu.hidden;
+            menu.hidden=!open;
+            plus.toggleAttribute('data-on',open);
             plus.setAttribute('aria-expanded',String(open));
-            if(open)refreshLucideIcons(sheet);
+            if(open){
+                const first=menu.querySelector('.prompt-bar__row');
+                requestAnimationFrame(()=>{
+                    if(first)movePromptBarGlow(first);
+                    refreshLucideIcons(menu);
+                });
+            }
+            window.JDReactBits?.syncPrompt?.();
         }
 
         function openPluginsFromComposer(){
@@ -5357,22 +5446,30 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 document.getElementById('fileInput')?.click();
                 return;
             }
+            if(action==='web'){
+                closeComposerTools();
+                setLiveWebSearchEnabled(true);
+                showModernToast?.('Web search enabled');
+                document.getElementById('userInput')?.focus({preventScroll:true});
+                return;
+            }
             if(action==='plugins'){
                 openPluginsFromComposer();
                 return;
             }
-            if(action==='think'){
-                const next=currentResponseEffort()==='High'?'Medium':'High';
-                setResponseEffort(next,{toast:false});
-                document.getElementById('composerThinkBtn')?.classList.toggle('think-active',next==='High');
-                showModernToast?.(next==='High'?'Think harder enabled':'Think harder disabled');
+            if(action==='vision'){
                 closeComposerTools();
-                document.getElementById('userInput')?.focus({preventScroll:true});
+                openDolaModal();
+                return;
             }
         }
 
         document.addEventListener('pointerdown',e=>{
             if(!e.target?.closest?.('#composerToolSheet')&&!e.target?.closest?.('#composerPlusBtn')) closeComposerTools();
+        },{passive:true});
+        document.addEventListener('pointerover',e=>{
+            const row=e.target?.closest?.('#composerToolSheet .prompt-bar__row');
+            if(row)movePromptBarGlow(row);
         },{passive:true});
         document.addEventListener('keydown',e=>{if(e.key==='Escape')closeComposerTools();});
         window.addEventListener('popstate',closeComposerTools);
@@ -12135,48 +12232,36 @@ ${m.text || ''}
         }
 
         function renderFilePreviews(){
-            const c=document.getElementById('filePreviewContainer');
-            if(!c)return;
-            c.innerHTML='';
-            c.classList.toggle('has-files',selectedFilesData.length>0);
-            if(!selectedFilesData.length){c.style.display='none';return;}
-            c.style.display='flex';
-
-            const done=selectedFilesData.filter(f=>['ready','warning'].includes(f.status)).length;
-            const failed=selectedFilesData.filter(f=>f.status==='error').length;
-            const active=selectedFilesData.length-done-failed;
-            const overall=document.createElement('div');
-            overall.className='attachment-overall-status';
-            overall.innerHTML=`<span>${active?`Preparing ${selectedFilesData.length} file${selectedFilesData.length===1?'':'s'}`:`${done} ready${failed?` · ${failed} failed`:''}`}</span><span>${done}/${selectedFilesData.length} done</span>`;
-            c.appendChild(overall);
-
-            selectedFilesData.forEach(f=>{
-                const el=document.createElement('div');
-                el.className='attachment-chip';
-                const thumb=f.fullData
-                    ? `<img src="${escapeHTML(f.fullData)}" alt="">`
-                    : `<span aria-hidden="true">${attachmentIcon(f.kind)}</span>`;
-                const statusClass=f.status==='processing'?'processing':f.status==='warning'?'warning':f.status==='error'?'error':'';
-                const statusIcon=f.status==='processing'?'<span class="attachment-spinner"></span>':f.status==='error'?'!':f.status==='warning'?'!':'✓';
-                const stats=attachmentProgressStats(f);
-                const percent=f.status==='ready'||f.status==='warning'?100:Math.max(0,Math.min(100,Number(f.progressPercent)||0));
-                const indeterminate=f.status==='processing'&&f.progressIndeterminate;
-                const speed=f.status==='processing'&&!indeterminate?attachmentRate(stats.speed):'—';
-                const eta=f.status==='processing'&&!indeterminate?attachmentEta(stats.eta):'—';
-                el.innerHTML=`
-                    <div class="attachment-thumb">${thumb}</div>
-                    <div class="attachment-info">
-                        <span class="attachment-name" title="${escapeHTML(f.name)}">${escapeHTML(f.name)}</span>
-                        <span class="attachment-meta">${escapeHTML(String(f.kind||'file').toUpperCase())} • ${humanFileSize(f.size)}</span>
-                        <span class="attachment-status ${statusClass}">${statusIcon} ${escapeHTML(f.statusText||'Ready')}</span>
-                        <div class="attachment-progress-wrap">
-                            <div class="attachment-progress-track"><div class="attachment-progress-fill ${indeterminate?'indeterminate':''}" style="width:${percent.toFixed(1)}%"></div></div>
-                            <div class="attachment-progress-stats"><span>${indeterminate?'Processing':`${Math.round(percent)}% · ${speed}`}</span><span>${f.status==='processing'&&!indeterminate?`ETA ${eta}`:(f.status==='ready'||f.status==='warning'?'Completed':'')}</span></div>
-                        </div>
-                    </div>
-                    <button class="attachment-remove" type="button" aria-label="Remove ${escapeHTML(f.name)}" onclick="removeAttachment('${f.id}')">×</button>`;
-                c.appendChild(el);
+            const container=document.getElementById('filePreviewContainer');
+            if(!container)return;
+            container.replaceChildren();
+            const hasFiles=selectedFilesData.length>0;
+            container.hidden=!hasFiles;
+            container.classList.toggle('has-files',hasFiles);
+            selectedFilesData.forEach(file=>{
+                const chip=document.createElement('span');
+                chip.className='prompt-bar__chip';
+                chip.dataset.status=file.status||'ready';
+                chip.title=`${file.name} — ${file.statusText||file.status||'Ready'}`;
+                const icon=document.createElement('span');
+                icon.className='prompt-bar__chip-icon';
+                icon.innerHTML=file.status==='processing'
+                    ? '<span class="attachment-spinner" aria-hidden="true"></span>'
+                    : '<i data-lucide="file"></i>';
+                const name=document.createElement('span');
+                name.className='prompt-bar__chip-name';
+                name.textContent=file.name;
+                const remove=document.createElement('button');
+                remove.type='button';
+                remove.className='prompt-bar__chip-x';
+                remove.setAttribute('aria-label',`Remove ${file.name}`);
+                remove.innerHTML='<i data-lucide="x"></i>';
+                remove.addEventListener('click',()=>removeAttachment(file.id));
+                chip.append(icon,name,remove);
+                container.appendChild(chip);
             });
+            refreshLucideIcons(container);
+            window.JDReactBits?.syncPrompt?.();
         }
 
         function requestSafeAttachmentSummary(f){
