@@ -73,7 +73,7 @@ async function fallback({enabled=true,first=failed,registeredSuccess=false,anony
  },finishState:{reason:'stop'}});
  const deps={
    autoFallback:enabled,first,provider:'groq',model:'openai/gpt-oss-20b',
-   history:[],files,message:'Hi',systemInstruction:'Test',routedReason:'',emit:()=>{},startedAt:1,
+   history:[],files,message:'Hi',systemInstruction:'Test',routedReason:'',emit:()=>{},startedAt:1,responseEffort:'Instant',
    taskWork:{label:'Working on: Hi',kind:'process'},
    taskGeneration:{label:'Generating the response for: Hi',kind:'generate'},
    isFallbackableProviderFailure:classifier,
