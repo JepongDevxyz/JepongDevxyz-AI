@@ -49,6 +49,12 @@ assert(js.includes("bar.dataset.models='false'"),'PromptBar models=false contrac
 assert(js.includes("action.setAttribute('data-armed','')"),'PromptBar armed/send state missing');
 assert(css.includes('.prompt-bar__field{'),'PromptBar field styling missing');
 assert(css.includes('.prompt-bar__bar{'),'PromptBar bottom control bar missing');
+assert(css.includes('--pb-w:400px'),'PromptBar must keep the ReactBits 400px geometry');
+assert(css.includes('border:0!important;border-radius:var(--pb-radius);background:var(--pb-bg)!important'),
+ 'PromptBar field must be borderless like the ReactBits source');
+assert(css.includes('box-shadow:none!important'),'PromptBar must not add the inaccurate purple focus/idle box shadow');
+assert(!css.includes('border-color:color-mix(in srgb,var(--pb-spark) 42%'),
+ 'inaccurate purple PromptBar focus border returned');
 assert(html.includes('function updateGenerationActionButton'),'send/stop state function must remain');
 assert(html.includes('function handleMainAction'),'send/stop handler must remain');
 assert(html.includes('composerToolSheet'),'attachment/tools menu must remain');
