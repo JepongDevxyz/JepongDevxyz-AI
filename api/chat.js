@@ -336,6 +336,77 @@ function responseEffortRank(value='Instant'){
   return RESPONSE_EFFORT_RANK[normalizeResponseEffort(value)] ?? 0;
 }
 
+function responseEffortPolicy(value='Instant'){
+  const level=normalizeResponseEffort(value);
+  const rank=responseEffortRank(level);
+  const reasoningTokens=[0,384,768,1536,3072,5120][rank]||0;
+  return {
+    level,
+    rank,
+    reasoningTokens,
+    // OpenRouter supports a six-step reasoning scale, so preserve all six UI levels.
+    openRouter:['none','minimal','low','medium','high','xhigh'][rank]||'none',
+    // Providers with a three-step native control still retain six distinct app
+    // levels through the shared system instruction, token budget and Extra/Max preflight.
+    standard:rank<=1?'low':rank===2?'medium':'high',
+    gemini:['MINIMAL','LOW','MEDIUM','HIGH','HIGH','HIGH'][rank]||'MINIMAL'
+  };
+}
+
+function effortOutputBudgetFor(message='',effort='Instant'){
+  const base=outputBudgetFor(message);
+  const policy=responseEffortPolicy(effort);
+  return Math.min(16384,base+policy.reasoningTokens);
+}
+
+function nativeEffortFields(provider,model,effort='Instant'){
+  const policy=responseEffortPolicy(effort);
+  const target=String(model||'').toLowerCase();
+
+  if(provider==='openrouter'){
+    return {reasoning:{effort:policy.openRouter,exclude:true}};
+  }
+
+  if(provider==='groq'){
+    if(target==='qwen/qwen3.8-27b'){
+      return {
+        reasoning_effort:policy.rank===0?'none':policy.standard,
+        include_reasoning:false
+      };
+    }
+    if(/^openai\/gpt-oss-(20b|120b)$/.test(target)){
+      return {
+        reasoning_effort:policy.standard,
+        include_reasoning:false
+      };
+    }
+  }
+
+  if(provider==='mistral' && target==='mistral-small-latest'){
+    return {reasoning_effort:policy.rank>=3?'high':'none'};
+  }
+
+  if(provider==='nvidia' && target.includes('nemotron')){
+    if(policy.rank===0)return {chat_template_kwargs:{enable_thinking:false}};
+    return {
+      chat_template_kwargs:{enable_thinking:true},
+      thinking_token_budget:Math.max(384,policy.reasoningTokens)
+    };
+  }
+
+  return {};
+}
+
+function geminiThinkingConfig(model,effort='Instant'){
+  const target=String(model||'').toLowerCase();
+  // The configured Gemini family is 3.x/current-latest; Gemini 3+ exposes
+  // thinkingLevel. Do not request thought text.
+  if(target==='gemini-flash-latest'||/^gemini-3\./.test(target)){
+    return {includeThoughts:false,thinkingLevel:responseEffortPolicy(effort).gemini};
+  }
+  return null;
+}
+
 function outputBudgetFor(message='') {
   // Dynamic response budget: short requests stay efficient, while complex
   // coding/research/troubleshooting tasks have more room to finish properly.
@@ -2680,7 +2751,7 @@ function retryLabel(provider, status, hasNext) {
   return `${providerLabel(provider)} request failed${hasNext ? ' — retrying' : ''}`;
 }
 
-async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
+async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'}) {
   const keys = providerCredentials(getProviderKeys('gemini',autoFallback),autoFallback);
   if (!keys.length) return {ok:false,status:500,error:'Gemini API key is not configured.'};
   const target = PROVIDERS.gemini.models.includes(model) ? model : PROVIDERS.gemini.defaultModel;
@@ -2706,6 +2777,13 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
   if(currentParts.length) contents.push({role:'user',parts:currentParts});
   if(!contents.length) return {ok:false,status:400,error:'No prompt provided.'};
 
+  const generationConfig={
+    maxOutputTokens:effortOutputBudgetFor(message,responseEffort),
+    temperature:temperatureFor(message,files)
+  };
+  const thinkingConfig=geminiThinkingConfig(target,responseEffort);
+  if(thinkingConfig)generationConfig.thinkingConfig=thinkingConfig;
+
   let last=''; let status=500;
   for(let i=0;i<keys.length;i++) {
     providerLifecycleActivity(emit,{
@@ -2714,7 +2792,7 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
     });
     try {
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig:{maxOutputTokens:outputBudgetFor(message),temperature:temperatureFor(message,files)}}),signal:AbortSignal.timeout(90000)
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig}),signal:AbortSignal.timeout(90000)
       });
       if(res.ok) {
         providerLifecycleActivity(emit,{
@@ -2761,7 +2839,7 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
   return {ok:false,status,error:last||'Gemini unavailable'};
 }
 
-async function runCloudflare({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
+async function runCloudflare({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'}) {
   const accounts = providerCredentials(autoFallback?shuffle(getCloudflareAccounts()):getCloudflareAccounts(),autoFallback);
   if(!accounts.length) return {ok:false,status:500,error:'Cloudflare credentials are not configured.'};
   let target=PROVIDERS.cloudflare.models.includes(model)?model:PROVIDERS.cloudflare.defaultModel;
@@ -2787,7 +2865,7 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
     try {
       const a=accounts[i];
       const res=await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(a.accountId)}/ai/v1/chat/completions`,{
-        method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:outputBudgetFor(message),temperature:temperatureFor(message,files)}),signal:AbortSignal.timeout(120000)
+        method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,files)}),signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
         providerLifecycleActivity(emit,{
@@ -2828,14 +2906,14 @@ function sanitizeCustomApiProfile(body){
   baseUrl=baseUrl.replace(/\/$/,'');
   return {name,apiKey,apiKeys,baseUrl,model,autoLoadModels:p.autoLoadModels!==false};
 }
-async function runGenericCustomApi(profile,{history,message,systemInstruction,emit,autoFallback=false}){
+async function runGenericCustomApi(profile,{history,message,systemInstruction,emit,autoFallback=false,responseEffort='Instant'}){
   const url=chatCompletionsUrl(profile.baseUrl,profile.baseUrl);
   const model=profile.model==='auto'?'auto':profile.model;
   const keys=providerCredentials(Array.isArray(profile.apiKeys)&&profile.apiKeys.length?profile.apiKeys:[profile.apiKey],autoFallback);
   let last=null;
   for(let i=0;i<keys.length;i++){
     try{
-      const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:outputBudgetFor(message)}),signal:AbortSignal.timeout(120000)});
+      const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort)}),signal:AbortSignal.timeout(120000)});
       if(!res.ok){last={ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};if([401,402,403,408,409,429,500,502,503,504].includes(res.status)&&i<keys.length-1)continue;return last;}
       const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',i,keys.length,finishState),finishState};
     }catch(err){last={ok:false,status:502,error:err?.message||'Custom API unavailable'};if(i<keys.length-1)continue;}
@@ -2880,7 +2958,7 @@ function seekaiExtractReply(raw,contentType=''){
     reason:String(choice?.finish_reason||''),errored:!!parsed?.error};
 }
 
-async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
+async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant'}){
   const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('seekai',autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:503,error:'SEEKAI_API_KEYS is not configured in Vercel.'};
   const selected=String(model||'').trim();
@@ -2896,7 +2974,7 @@ async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='
       // Buffered JSON avoids treating a 200 HTML page or an empty SSE stream as a reply.
       const upstream=await fetch(endpoint,{method:'POST',headers:{
         Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'application/json'
-      },body:JSON.stringify({model:target,messages,stream:false,max_tokens:Math.min(outputBudgetFor(message),4096)}),
+      },body:JSON.stringify({model:target,messages,stream:false,max_tokens:Math.min(effortOutputBudgetFor(message,responseEffort),8192)}),
       signal:AbortSignal.timeout(85000)});
       status=upstream.status;
       const raw=await upstream.text();
@@ -2934,7 +3012,7 @@ async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='
   return {ok:false,status,error:last};
 }
 
-async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false}) {
+async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false,responseEffort='Instant'}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
@@ -3020,9 +3098,14 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
           model:target,
           messages,
           stream:true,
-          max_tokens:outputBudgetFor(message),
-          temperature:temperatureFor(message,files)
+          max_tokens:effortOutputBudgetFor(message,responseEffort),
+          temperature:temperatureFor(message,files),
+          ...nativeEffortFields(provider,target,responseEffort)
         };
+        if(provider==='groq' && /^(?:openai\/gpt-oss-(?:20b|120b)|qwen\/qwen3\.8-27b)$/i.test(target)){
+          payload.max_completion_tokens=payload.max_tokens;
+          delete payload.max_tokens;
+        }
 
         const res=await fetch(cfg.url,{
           method:'POST',
@@ -3089,7 +3172,7 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
   return {ok:false,status,error:last||`${providerLabel(provider)} unavailable for ${modelLabel(lastTarget)}`};
 }
 
-async function runCohere({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false}) {
+async function runCohere({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'}) {
   const keys=providerCredentials(autoFallback?shuffle(getProviderKeys('cohere')):getProviderKeys('cohere',false),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'Cohere API key is not configured.'};
   const target=PROVIDERS.cohere.models.includes(model)?model:PROVIDERS.cohere.defaultModel;
@@ -3101,7 +3184,7 @@ async function runCohere({model,history,message,systemInstruction,fallbackFrom='
       attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
     });
     try{
-      const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:outputBudgetFor(message),temperature:temperatureFor(message,[])}),signal:AbortSignal.timeout(120000)});
+      const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,[])}),signal:AbortSignal.timeout(120000)});
       if(res.ok){
         providerLifecycleActivity(emit,{
           provider:'cohere',model:target,state:'completed',phase:'connected',
@@ -3349,7 +3432,7 @@ async function aiHordeNativeTextRequest({key,model,messages,maxTokens=256,timeou
 }
 
 async function runAIHordeNativeSelected({model,history,files,message,systemInstruction,
-    fallbackFrom='',routedReason='',emit,autoFallback=false},{anonymous=false}={}){
+    fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'},{anonymous=false}={}){
   const stored=anonymous?[]:getProviderKeys('aihorde',autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
   const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:stored;
   if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
@@ -3385,7 +3468,10 @@ async function runAIHordeNativeSelected({model,history,files,message,systemInstr
       }else{
         const ms=Math.max(18000,Math.min(47000,Number(models[m].eta||0)*1000+18000));
         const outcome=await aiHordeNativeTextRequest({key,model:models[m].name,messages,
-          maxTokens:Math.min(outputBudgetFor(message),String(message||'').length<120?180:512),timeoutMs:ms});
+          maxTokens:Math.min(
+            effortOutputBudgetFor(message,responseEffort),
+            [180,320,512,768,1024,1400][responseEffortRank(responseEffort)]||512
+          ),timeoutMs:ms});
         if(outcome.ok&&outcome.text){
           providerLifecycleActivity(emit,{provider:runtimeProvider,model:models[m].name,
             state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,
@@ -3406,8 +3492,8 @@ async function runAIHordeNativeSelected({model,history,files,message,systemInstr
   return last;
 }
 
-async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false},{anonymous=false}={}){
-  if(model&&model!=='auto')return runAIHordeNativeSelected({model,history,files,message,systemInstruction,fallbackFrom,routedReason,emit,autoFallback},{anonymous});
+async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'},{anonymous=false}={}){
+  if(model&&model!=='auto')return runAIHordeNativeSelected({model,history,files,message,systemInstruction,fallbackFrom,routedReason,emit,autoFallback,responseEffort},{anonymous});
   const configuredKeys=anonymous?[]:providerCredentials(autoFallback?shuffle(getProviderKeys('aihorde')):getProviderKeys('aihorde',false),autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
   // Anonymous is an independent, last-resort attempt invoked only by the
   // emergency fallback coordinator AFTER every registered Horde key fails.
@@ -3464,9 +3550,9 @@ async function runAIHorde({model,history,files,message,systemInstruction,fallbac
             stream:false,
             messages,
             max_tokens:autoMode
-              ?Math.min(outputBudgetFor(message),isAnonymousKey?640:1024,
-                String(message||'').length<=150&&!/\b(code|program|source|implementation|essay|explain in detail|detalyado|mahaba)\b/i.test(String(message||''))?320:1024)
-              :Math.min(outputBudgetFor(message),isAnonymousKey?768:2048),
+              ?Math.min(effortOutputBudgetFor(message,responseEffort),isAnonymousKey?768:(responseEffortRank(responseEffort)>=4?1536:1024),
+                String(message||'').length<=150&&!/\b(code|program|source|implementation|essay|explain in detail|detalyado|mahaba)\b/i.test(String(message||''))?Math.max(320,320+responseEffortRank(responseEffort)*96):1536)
+              :Math.min(effortOutputBudgetFor(message,responseEffort),isAnonymousKey?1024:(responseEffortRank(responseEffort)>=4?3072:2048)),
             temperature:temperatureFor(message,files),
             timeout:autoMode?Math.max(3,Math.floor(attemptMs/1000)-1):isAnonymousKey?55:65
           }),
@@ -3573,7 +3659,7 @@ function anthropicStreamToText(body,finishState={reason:''}){
   }));
 }
 
-async function runAgentRouter({model,history,message,systemInstruction,emit,autoFallback=false,customApiKeys=null}){
+async function runAgentRouter({model,history,message,systemInstruction,emit,autoFallback=false,customApiKeys=null,responseEffort='Instant'}){
   const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:
     getProviderKeys('agentrouter',autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'AGENTROUTER_API_KEYS is not configured.'};
@@ -3593,7 +3679,8 @@ async function runAgentRouter({model,history,message,systemInstruction,emit,auto
   }
   if(String(message||'').trim())messages.push({role:'user',content:String(message).trim().slice(0,8000)});
   if(!messages.length)return {ok:false,status:400,error:'AgentRouter requires a text message.'};
-  const body=JSON.stringify({model:target,messages,system:String(systemInstruction||'').slice(0,18000)});
+  const effort=responseEffortPolicy(responseEffort).level;
+  const body=JSON.stringify({model:target,messages,system:(String(systemInstruction||'')+'\nSelected response effort: '+effort+'.').slice(0,18000)});
   const timestamp=String(Date.now()),encoder=new TextEncoder();
   let last='Railway AgentRouter bridge did not return a model response.',status=502;
   for(let i=0;i<keys.length;i++){
@@ -3639,7 +3726,7 @@ async function runAgentRouter({model,history,message,systemInstruction,emit,auto
   return {ok:false,status,error:last};
 }
 
-async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null}){
+async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant'}){
   const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys(autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
   const target=model||PROVIDERS.bailucode.defaultModel;
@@ -3655,7 +3742,7 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
       const res=await fetch('https://bailucode.com/openapi/v1/messages',{
         method:'POST',
         headers:{'x-api-key':keys[i],Authorization:'Bearer '+keys[i],'anthropic-version':'2023-06-01','content-type':'application/json','accept':'text/event-stream'},
-        body:JSON.stringify({model:target,max_tokens:outputBudgetFor(message),system:systemInstruction,messages,stream:true}),
+        body:JSON.stringify({model:target,max_tokens:effortOutputBudgetFor(message,responseEffort),system:systemInstruction,messages,stream:true}),
         signal:AbortSignal.timeout(120000)
       });
       if(res.ok){
@@ -3683,7 +3770,8 @@ async function runProvider(provider,args){
       message:args.message,
       systemInstruction:args.systemInstruction,
       emit:args.emit,
-      autoFallback:args.autoFallback===true
+      autoFallback:args.autoFallback===true,
+      responseEffort:args.responseEffort||'Instant'
     });
   }
   if(provider==='gemini')return runGemini(args);
@@ -3982,7 +4070,8 @@ async function processChat(body, emit) {
         routedReason:routedReason||'quality-preflight',
         emit:null,
         autoFallback:false,
-        customApiKeys:requestCustomKeys
+        customApiKeys:requestCustomKeys,
+        responseEffort
       });
 
       if(preflight.ok){
@@ -4008,7 +4097,7 @@ async function processChat(body, emit) {
   const taskWork=taskWorkingActivity(contextPlan);
   const taskGeneration=taskGenerationActivity(contextPlan);
   activity(emit,'thinking',taskWork.label,'running',taskWork.kind);
-  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile});
+  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
   if(first.ok){
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
@@ -4035,7 +4124,7 @@ async function processChat(body, emit) {
       activity(emit,'fallback','Selected provider exhausted — checking registered AI Horde','running','fallback');
       const registeredHorde=await runAIHorde({
         model:'auto',history,files,message,systemInstruction,fallbackFrom:provider,
-        routedReason:'fallback-aihorde-registered',emit,autoFallback:true
+        routedReason:'fallback-aihorde-registered',emit,autoFallback:true,responseEffort
       });
       if(registeredHorde.ok){
         activity(emit,'fallback','Registered AI Horde connected','completed','fallback');
@@ -4052,7 +4141,7 @@ async function processChat(body, emit) {
       activity(emit,'fallback','Registered AI Horde unavailable — trying anonymous AI Horde','running','fallback');
       const publicHorde=await runAnonymousAIHordeFallback({
         model:'auto',history,files,message,systemInstruction,fallbackFrom:provider,
-        routedReason:'fallback-public',emit,autoFallback:true
+        routedReason:'fallback-public',emit,autoFallback:true,responseEffort
       });
       if(publicHorde.ok){
         activity(emit,'fallback','Anonymous AI Horde connected','completed','fallback');
@@ -4368,7 +4457,8 @@ function activityStreamResponse(body, requestSignal=null) {
               systemInstruction:continuationSystemInstruction,
               routedReason:'automatic-continuation',
               emit:null,
-              autoFallback:false
+              autoFallback:false,
+              responseEffort:normalizeResponseEffort(body?.personalization?.intelligence,body?.personalization?.fastAnswers)
             });
 
             if(!continuation.ok){
