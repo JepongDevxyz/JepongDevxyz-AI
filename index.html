@@ -9337,7 +9337,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                                 <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
                                 <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
                             </span>
-                            <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking…</span></span>
+                            <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking</span></span>
                             <span class="thought-line__timer" id="aiActivityTimer">0s</span>
                             <span class="thought-line__chevron"><i data-lucide="chevron-right"></i></span>
                         </button>
@@ -9363,7 +9363,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const lead=indicator.querySelector('.ai-activity-lead');
             const summary=indicator.querySelector('#aiActivitySummary');
             if(lead)lead.textContent=String(initialTask.label||'').slice(0,220);
-            if(summary)summary.textContent=String(initialTask.label||'Thinking…').slice(0,88);
+            if(summary)summary.textContent='Thinking';
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
             // The header itself says "Thinking". Do not insert a fake startup row:
@@ -9399,9 +9399,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Keep it out of the step list to avoid repeating the same sentence.
             if(id==='task-context'){
                 const lead=card.querySelector('.ai-activity-lead');
-                const summary=card.querySelector('#aiActivitySummary');
                 if(lead)lead.textContent=String(normalized.label||'').slice(0,220);
-                if(summary&&normalized.label)summary.textContent=String(normalized.label).slice(0,88);
+                card.dataset.taskSummary=String(normalized.label||'').slice(0,220);
+                // Keep the top line stable like ChatGPT/Grok: the task-specific
+                // wording belongs to the lead and real activity rows, not provider plumbing.
                 syncJdThoughts();
                 return;
             }
@@ -9462,11 +9463,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const currentlyRunning=rows.filter(x=>x.classList.contains('running'));
             const current=currentlyRunning.length?currentlyRunning[currentlyRunning.length-1]:rows[rows.length-1];
             rows.forEach(x=>x.classList.toggle('ai-activity-current',x===current && x.classList.contains('running')));
-            // ThoughtLine follows only the newest REAL running backend/tool/provider
-            // milestone. No client-invented plan or hidden reasoning is displayed.
-            if(summary && card.dataset.finalized!=='true' && state==='running' && normalized.label){
-                summary.textContent=String(normalized.label).slice(0,88);
-            }
+            // Keep the header stable as "Thinking" while the detailed timeline
+            // carries the exact real operation. This avoids misleading headers
+            // such as "Connecting to CodeCraft..." when the user's actual task is
+            // a UI/code change.
+            if(summary && card.dataset.finalized!=='true')summary.textContent='Thinking';
             tickJdActivityClock(card);
 
             // Keep a generous bounded history for unusually long tool runs without deleting
