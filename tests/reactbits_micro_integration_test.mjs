@@ -18,8 +18,10 @@ for (const token of ['lattice-loader','thought-line','thought-line__trace']) {
 }
 assert(html.includes('id="aiActivityLattice"'),'Activity LatticeLoader live status hook missing');
 assert(html.includes('id="aiActivityTimer"'),'ThoughtLine elapsed timer hook missing');
-assert(html.includes("summary.textContent=String(normalized.label).slice(0,88)"),
- 'ThoughtLine headline must follow the newest real running activity milestone');
+assert(html.includes("if(summary && card.dataset.finalized!=='true')summary.textContent='Thinking';"),
+ 'ThoughtLine headline must remain stable while exact milestones stay in the activity trace');
+assert(html.includes("card.dataset.taskSummary=String(normalized.label||'').slice(0,220)"),
+ 'Task-specific activity context must be preserved separately from the headline');
 assert(html.includes('function appendActivityEvent'),'real backend Activity event bridge must remain');
 assert(html.includes("if(id==='task-context')"),'real task-context Activity lead must remain');
 assert(html.includes('initialActivityForRequest'),'request-specific temporary lead must remain');
