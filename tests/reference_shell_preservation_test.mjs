@@ -69,8 +69,9 @@ for(const marker of [
 ]){
  assert(css.includes(marker),'Responsive stylesheet missing: '+marker);
 }
+const compactMicro=micro.replace(/\s+/g,'');
 for(const marker of ['.prompt-bar{','.prompt-bar__input{','.prompt-bar__send{','.voice-pill{']){
- assert(micro.includes(marker),'ReactBits shell component missing: '+marker);
+ assert(compactMicro.includes(marker),'ReactBits shell component missing: '+marker);
 }
 assert(!/lottie-player[^\n{]*\{[^}]*animation\s*:/s.test(css),
  'Visual shell must not override actual Lottie animation');
