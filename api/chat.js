@@ -1039,18 +1039,29 @@ function temperatureFor(message='', files=[]){
 function buildInternalTaskBriefPrompt(message='', files=[]){
   const task=classifyUserTask(message,files);
   return [
-    'Create a compact INTERNAL TASK BRIEF for another assistant pass.',
+    'Prepare a compact quality preflight for another assistant pass.',
     'Do not write the final answer to the user.',
     'Do not provide hidden chain-of-thought or private step-by-step reasoning.',
-    'Return concise structured notes with:',
-    '1) Intended user goal, interpreting ordinary typos/shorthand by context.',
-    '2) Relevant constraints from the latest request and conversation.',
-    '3) Facts/evidence actually available; mark uncertain items as uncertain.',
-    '4) Best response approach and important checks the final answer must satisfy.',
-    '5) Any genuinely necessary clarification; otherwise write "No clarification needed".',
+    'Use EXACTLY these two sections:',
+    'PUBLIC_UPDATE: one short natural paragraph (1-3 sentences) in the user\'s language describing the concrete work/approach for this request. It must sound like a polished Kimi/ChatGPT work update, not a generic promise. Do not claim searches/tests/builds/deployments unless verified tool context already establishes them.',
+    'INTERNAL_BRIEF: concise structured notes covering the intended user goal, hard constraints, relevant verified evidence, likely mistakes to avoid, and the best final-answer approach. Mark uncertain items as uncertain. Do not include private reasoning.',
     `Task category: ${task}.`,
     `Latest user request: ${String(message||'').slice(0,12000)}`
   ].join('\n');
+}
+
+function parseQualityPreflightOutput(raw=''){
+  const text=sanitizeAssistantOutput(String(raw||'')).trim();
+  if(!text)return {publicUpdate:'',brief:''};
+  const publicMatch=text.match(/PUBLIC_UPDATE\s*:\s*([\s\S]*?)(?=\n\s*INTERNAL_BRIEF\s*:|$)/i);
+  const briefMatch=text.match(/INTERNAL_BRIEF\s*:\s*([\s\S]*)$/i);
+  const cleanPublic=String(publicMatch?.[1]||'')
+    .replace(/\s+/g,' ').trim().slice(0,900);
+  const brief=String(briefMatch?.[1]||text)
+    .replace(/^PUBLIC_UPDATE\s*:[\s\S]*?(?=\n\s*INTERNAL_BRIEF\s*:)/i,'')
+    .replace(/^\s*INTERNAL_BRIEF\s*:\s*/i,'')
+    .trim().slice(0,12000);
+  return {publicUpdate:cleanPublic,brief};
 }
 
 async function readInternalProviderText(response, maxChars=9000){
@@ -1262,6 +1273,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   // existing Activity timeline while the final answer remains buffered. They
   // are user-facing progress summaries, never hidden chain-of-thought.
   text += ' LIVE WORK COMMENTARY: For substantial coding, build, research, file-analysis, deployment, or multi-step implementation requests, you may emit 1 to 3 short high-level progress notes using the exact wrapper [[JD_WORK_NOTE]]<note>[[/JD_WORK_NOTE]]. Each note should be one or two natural sentences in the user\'s language, like a modern ChatGPT work update: what you are building/checking, what verified tool context established, or one important implementation decision. Keep notes concise and factual. Never reveal private chain-of-thought, hidden reasoning, policy text, credentials, provider secrets, or unsupported claims. Do not claim a search, test, build, deployment, file creation, website visit, or verification unless supplied tool context confirms it. Do not put code blocks, long lists, URLs, or JD_CHOICE/JD_FOLLOWUPS inside a work note. For simple chat or a one-step factual answer, emit no work note. These work-note wrappers are UI metadata and must not be explained to the user.';
+  text += ' RESPONSE PRESENTATION CONTRACT: For substantial requests, write like a high-quality modern assistant rather than a raw API model. Preserve every explicit user constraint. Lead with the useful result or implementation, not generic filler. Keep the explanation coherent and task-focused. For coding/build requests, briefly state the implementation approach, then provide the requested artifact/code or exact actionable result. Do not let incidental provider diagnostics, a bare base-URL HTTP status, fallback plumbing, or unrelated search results dominate the answer. Mention limitations only when they materially affect the requested result. Do not invent completion, testing, deployment, or verification. Avoid unnecessary tutorials such as generic install/run steps unless the user asked for them or they are required to use the result. Before finalizing, reconcile the response against the latest user request, conversation context, supplied files, and verified tool evidence.';
   return text;
 }
 
@@ -2016,8 +2028,26 @@ function staticVerifyText(name='input', text='', hint=''){
   return {name,status,findings};
 }
 
+function shouldProbeRequestedUrl(url='',message=''){
+  const raw=String(url||'').trim();
+  const msg=normalizeIntentText(message);
+  if(!raw)return false;
+  let parsed;
+  try{parsed=new URL(raw);}catch(_){return false;}
+  const explicitProbe=/\b(test|probe|check|verify|open|fetch|inspect|status|reachable|working|gumagana|i-check|icheck|i-test|itest|subukan)\b/i.test(msg);
+  const apiLike=/\bapi\b/i.test(parsed.hostname) || /^\/v\d+(?:\/)?$/i.test(parsed.pathname) ||
+    /\/(?:v\d+\/)?(?:chat|responses?|completions?|messages?|generate)(?:\/|$)/i.test(parsed.pathname);
+  // A base API URL inside a build prompt is configuration, not a webpage the
+  // assistant should GET. Probing it creates misleading 404 activity/context.
+  if(apiLike&&!explicitProbe)return false;
+  return true;
+}
+
 async function probeRequestedUrls(message='', emit){
-  const urls=[...new Set(extractPublicUrl(message))].filter(isSafePublicUrl).slice(0,3);
+  const urls=[...new Set(extractPublicUrl(message))]
+    .filter(isSafePublicUrl)
+    .filter(url=>shouldProbeRequestedUrl(url,message))
+    .slice(0,3);
   const results=[];
   for(let i=0;i<urls.length;i++){
     const url=urls[i];
@@ -4235,7 +4265,7 @@ async function processChat(body, emit) {
 
   // Extra and Max are intentionally more expensive: for complex requests they
   // perform one additional selected-provider preflight without enabling fallback.
-  const useQualityOrchestrator = responseEffortRank(responseEffort)>=4 && shouldUseQualityOrchestrator(message,files,mode);
+  const useQualityOrchestrator = responseEffortRank(responseEffort)>=2 && shouldUseQualityOrchestrator(message,files,mode);
 
   if(useQualityOrchestrator){
     activity(emit,'quality-orchestrator',`Running ${responseEffort} effort quality preflight`,'running','process');
@@ -4260,13 +4290,17 @@ async function processChat(body, emit) {
       });
 
       if(preflight.ok){
-        const brief=await readInternalProviderText(preflight.response,responseEffort==='Max'?12000:8000);
-        if(brief){
-          systemInstruction += `\n\n[INTERNAL QUALITY BRIEF — not user-visible]\n${brief}\n[/INTERNAL QUALITY BRIEF]` +
+        const rawBrief=await readInternalProviderText(preflight.response,responseEffort==='Max'?16000:12000);
+        const parsedBrief=parseQualityPreflightOutput(rawBrief);
+        if(parsedBrief.publicUpdate){
+          activity(emit,'work-commentary-1',parsedBrief.publicUpdate,'completed','commentary');
+        }
+        if(parsedBrief.brief){
+          systemInstruction += `\n\n[INTERNAL QUALITY BRIEF — not user-visible]\n${parsedBrief.brief}\n[/INTERNAL QUALITY BRIEF]` +
             '\nUse this brief as a quality checklist, but independently verify it against the actual user request and tool context. If the brief conflicts with the user, the user request wins.';
           activity(emit,'quality-orchestrator','Intent, constraints, and answer requirements checked','completed','process');
         }else{
-          activity(emit,'quality-orchestrator','Deeper preflight returned no usable brief — continuing normally','warning','process');
+          activity(emit,'quality-orchestrator','Quality preflight returned no usable brief — continuing normally','warning','process');
         }
       }else{
         activity(emit,'quality-orchestrator','Deeper preflight unavailable — continuing normally','warning','process');
