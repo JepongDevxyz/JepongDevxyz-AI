@@ -9,8 +9,16 @@ function between(src,from,to){
  return src.slice(a,b);
 }
 const profileSrc=between(api,"function taskProfile(message='', files=[]){","\nfunction contextActivityPlan(");
-const taskProfile=new Function('extractPublicUrl','shouldAutoResearch','detectArtifactRequest','shortTaskSubject',
- profileSrc+'\nreturn taskProfile;')(()=>[],()=>false,()=>null,text=>text.slice(0,82));
+const taskProfile=new Function(
+ 'extractPublicUrl','shouldAutoResearch','detectArtifactRequest','shortTaskSubject',
+ 'splitContextualTaskMessage','activityTaskSubject','isVagueFreshnessFollowUp',
+ profileSrc+'\nreturn taskProfile;'
+)(
+ ()=>[],()=>false,()=>null,text=>text.slice(0,82),
+ text=>({anchor:'',followUp:'',raw:String(text||'')}),
+ text=>String(text||'').slice(0,82),
+ ()=>false
+);
 const meme='Build a meme generator where users upload images and add draggable text';
 assert.equal(taskProfile(meme,[]).kind,'web','App creation must outrank incidental image keyword');
 assert.equal(taskProfile('Review the image I attached',[{mimeType:'image/png'}]).kind,'image');
