@@ -49,9 +49,11 @@ assert.match(work.label,/meme generator/i);
 
 // The browser's temporary lead must also stay literal instead of keyword
 // classifying the prompt before server Activity arrives.
-const initialSource=between(html,"        function initialActivityForRequest(promptText='',files=[]){",
+const initialSource=between(html,"        function clientActivityTaskSubject(promptText=''){",
   '\n        function normalizeActivityEventForUI(');
-const initial=new Function(initialSource+'\nreturn initialActivityForRequest;')();
+const initial=new Function('getActiveContext',initialSource+'\nreturn initialActivityForRequest;')(
+  ()=>({sessions:{},id:null})
+);
 const firstLead=initial(memePrompt,[]);
 assert.match(firstLead.label,/Working on: Build a meme generator/i);
 assert.doesNotMatch(firstLead.label,/image task/i);
