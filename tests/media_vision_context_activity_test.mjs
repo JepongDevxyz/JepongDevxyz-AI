@@ -82,9 +82,11 @@ assert(process.includes('Your selected response model was not changed'));
 assert(process.includes('const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);'));
 assert(process.includes("activity(emit,id,`Prepared ${videoFrames}"),'Video frame milestones must be factual');
 
-const startup=between(html,"function initialActivityForRequest(promptText='',files=[]){",
+const startup=between(html,"function clientActivityTaskSubject(promptText=''){",
  '        function normalizeActivityEventForUI(');
-const initial=new Function(startup+'\nreturn initialActivityForRequest;')();
+const initial=new Function('getActiveContext',startup+'\nreturn initialActivityForRequest;')(
+ ()=>({sessions:{},id:null})
+);
 assert.match(initial(meme,[]).label,/Working on: Build a meme generator/);
 const local=initial('Read video and screenshot',[{name:'clip.mp4',kind:'video',mimeType:'video/mp4'},
  {name:'frame.jpg',parentName:'clip.mp4',mediaRole:'video-frame',mimeType:'image/jpeg'}]);
