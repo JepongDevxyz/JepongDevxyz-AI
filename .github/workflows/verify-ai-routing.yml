@@ -115,7 +115,7 @@ jobs:
             kill "$HTTP_PID" 2>/dev/null || true
           }
           trap cleanup EXIT
-          node tests/reactbits_browser_smoke_test.mjs
+          node tests/reactbits_browser_smoke.mjs
 
       - name: Structural HTML and handler scan
         if: always()
