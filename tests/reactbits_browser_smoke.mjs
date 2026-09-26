@@ -111,7 +111,7 @@ const activity=JSON.parse(await evaluate(`(()=>{
 })()`));
 assert(activity.lattice&&activity.thought&&activity.trace,'LatticeLoader + ThoughtLine failed to render');
 assert.equal(activity.lead,'Auditing requested ReactBits components');
-assert.equal(activity.headline,'Generating response','ThoughtLine did not follow the real running activity event');
+assert.equal(activity.headline,'Thinking','ThoughtLine header must stay stable while the exact running event remains in the trace');
 assert(activity.rows>=1,'real Activity row did not render');
 assert.equal(activity.done,'done','LatticeLoader did not settle to done');
 assert.equal(activity.settled,'Thought for','ThoughtLine did not settle like ReactBits');
