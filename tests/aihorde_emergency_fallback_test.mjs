@@ -28,6 +28,8 @@ function primary({statuses=[429,200],keys=['key-one','key-two'],fallback=false}=
    buildOpenAIMessages:()=>[{role:'user',content:'Hi'}],
    providerLifecycleActivity:()=>{},
    outputBudgetFor:()=>100,
+   effortOutputBudgetFor:()=>100,
+   nativeEffortFields:()=>({}),
    temperatureFor:()=>0.3,
    AbortSignal:{timeout:ms=>ms},
    fetch:async(_url,opts)=>{
