@@ -109,6 +109,36 @@
 .ai-activity-row.running.ai-activity-current .ai-activity-label{color:var(--rb-ink)}
 .ai-activity-row.running.ai-activity-current .ai-activity-icon{color:var(--rb-ink);animation:rbActivityPulse 1.1s ease-in-out infinite}
 @keyframes rbActivityPulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* Live work commentary is additive: the existing truthful Activity rows stay
+   unchanged, while short model-authored progress notes can appear between them
+   like the reference ChatGPT work flow. */
+.ai-work-commentary{
+  width:100%;
+  padding:8px 0 10px 24px;
+  color:var(--rb-ink);
+  background:transparent;
+  border:0;
+}
+.ai-work-commentary__text{
+  max-width:64ch;
+  font-size:.9rem;
+  line-height:1.58;
+  font-weight:400;
+  color:var(--rb-ink);
+  overflow-wrap:anywhere;
+}
+.ai-work-commentary__text p{margin:0}
+.ai-work-commentary__text p+p{margin-top:6px}
+.ai-work-commentary__text code{
+  font-size:.84em;
+  color:inherit;
+  background:var(--rb-surface);
+  border-radius:5px;
+  padding:1px 4px;
+}
+.ai-activity-card.complete .ai-work-commentary{opacity:.9}
+
 .ai-activity-details-btn{
   display:flex;align-items:center;gap:4px;min-height:28px;padding:4px 6px;margin-left:auto;
   border:0;border-radius:9px;background:transparent;color:var(--rb-muted);
