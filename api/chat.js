@@ -2791,9 +2791,19 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
       attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
     });
     try {
-      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
+      let res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
         method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig}),signal:AbortSignal.timeout(90000)
       });
+      // Current Gemini 3 models support thinkingLevel. If a future alias/model
+      // rejects the native knob, keep the selected Jepong effort via the shared
+      // system instruction and retry once without thinkingConfig.
+      if(!res.ok && [400,422].includes(res.status) && generationConfig.thinkingConfig){
+        const compatibleConfig={...generationConfig};
+        delete compatibleConfig.thinkingConfig;
+        res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
+          method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig:compatibleConfig}),signal:AbortSignal.timeout(90000)
+        });
+      }
       if(res.ok) {
         providerLifecycleActivity(emit,{
           provider:'gemini',model:target,state:'completed',phase:'connected',
@@ -3107,12 +3117,28 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
           delete payload.max_tokens;
         }
 
-        const res=await fetch(cfg.url,{
+        let res=await fetch(cfg.url,{
           method:'POST',
           headers,
           body:JSON.stringify(payload),
           signal:AbortSignal.timeout(120000)
         });
+
+        const nativeFields=nativeEffortFields(provider,target,responseEffort);
+        if(!res.ok && [400,422].includes(res.status) && Object.keys(nativeFields).length){
+          // Some OpenAI-compatible gateways do not expose their upstream model's
+          // native reasoning fields. Retry without only those optional fields;
+          // the six-level Jepong effort still remains active through the shared
+          // system instruction and effort-scaled generation budget.
+          const compatiblePayload={...payload};
+          for(const key of Object.keys(nativeFields))delete compatiblePayload[key];
+          res=await fetch(cfg.url,{
+            method:'POST',
+            headers,
+            body:JSON.stringify(compatiblePayload),
+            signal:AbortSignal.timeout(120000)
+          });
+        }
 
         if(res.ok){
           providerLifecycleActivity(emit,{
