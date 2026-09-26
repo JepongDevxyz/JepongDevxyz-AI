@@ -9,7 +9,7 @@ for(const id of ['jdFirstRunWelcome','jdLegalConsent','jdLegalPolicy','jdTermsAr
 
 assert(html.includes("const JD_LEGAL_VERSION='2026-09-26'"),'versioned legal acceptance missing');
 assert(html.includes("const JD_LEGAL_ACCEPTANCE_KEY='jd_legal_acceptance_v1'"),'legal acceptance storage key missing');
-assert(html.includes('localStorage.setItem(JD_LEGAL_ACCEPTANCE_KEY'), 'Agree must persist acceptance');
+assert(html.includes('safeSetLocalStorage(JD_LEGAL_ACCEPTANCE_KEY'), 'Agree must persist acceptance safely');
 assert(html.includes('syncJdFirstRunOnboarding();'), 'first-run gate must run on startup');
 
 assert(html.includes('onclick="openJdLegalConsent()"'),'Start Chat must open consent dialog');
