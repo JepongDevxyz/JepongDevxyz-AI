@@ -3958,49 +3958,55 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                     <button type="button" class="composer-tool-btn" onclick="composerToolAction('plugins')"><span class="composer-tool-icon"><i data-lucide="blocks"></i></span><span>Plugins</span></button>
                     <button type="button" class="composer-tool-btn" id="composerThinkBtn" onclick="composerToolAction('think')"><span class="composer-tool-icon"><i data-lucide="brain"></i></span><span>Think harder</span></button>
                 </div>
-                
-                <button type="button" class="prompt-bar__tool" id="composerPlusBtn" onclick="toggleComposerTools(event)" aria-expanded="false" aria-controls="composerToolSheet" title="Add">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                </button>
-                
-                <button type="button" class="prompt-bar__vision" onclick="openDolaModal()" title="JepongDevxyz AI Vision Prompt">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-                
-                <textarea 
-                    class="prompt-bar__input" 
-                    id="userInput" 
-                    placeholder="Ask anything…" 
-                    rows="1"
-                    enterkeyhint="enter"
-                    onkeydown="handleKeyDown(event)"
-                    oninput="autoResizeTextarea(this)"></textarea>
-                
-                <div class="response-effort-wrap" id="responseEffortWrap">
-                    <button type="button" class="response-effort-btn" id="responseEffortBtn" onclick="toggleResponseEffortMenu(event)" title="Response effort">
-                        <span id="responseEffortLabel">Instant</span>
-                        <i data-lucide="chevron-down"></i>
-                    </button>
-                    <div class="response-effort-menu" id="responseEffortMenu" role="menu" aria-label="Response effort">
-                        <button type="button" class="response-effort-option" data-effort="Instant" onclick="setResponseEffort('Instant')"><span><strong>Instant</strong><small>Fastest direct response</small></span><span class="effort-check"></span></button>
-                        <button type="button" class="response-effort-option" data-effort="Medium" onclick="setResponseEffort('Medium')"><span><strong>Medium</strong><small>Balanced speed and depth</small></span><span class="effort-check"></span></button>
-                        <button type="button" class="response-effort-option" data-effort="High" onclick="setResponseEffort('High')"><span><strong>High</strong><small>More thorough quality pass</small></span><span class="effort-check"></span></button>
+
+                <div class="prompt-bar__field">
+                    <span class="prompt-bar__spark-glow" aria-hidden="true"></span>
+                    <textarea 
+                        class="prompt-bar__input" 
+                        id="userInput" 
+                        placeholder="Ask anything…" 
+                        rows="1"
+                        enterkeyhint="enter"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResizeTextarea(this)"></textarea>
+
+                    <div class="prompt-bar__bar">
+                        <button type="button" class="prompt-bar__tool" id="composerPlusBtn" onclick="toggleComposerTools(event)" aria-expanded="false" aria-controls="composerToolSheet" title="Add">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        </button>
+                        <button type="button" class="prompt-bar__tool prompt-bar__vision" onclick="openDolaModal()" title="JepongDevxyz AI Vision Prompt" aria-label="Vision prompt">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+
+                        <div class="response-effort-wrap" id="responseEffortWrap">
+                            <button type="button" class="response-effort-btn prompt-bar__pick" id="responseEffortBtn" onclick="toggleResponseEffortMenu(event)" title="Response effort">
+                                <i data-lucide="sparkles"></i><span id="responseEffortLabel">Instant</span>
+                            </button>
+                            <div class="response-effort-menu" id="responseEffortMenu" role="menu" aria-label="Response effort">
+                                <button type="button" class="response-effort-option" data-effort="Instant" onclick="setResponseEffort('Instant')"><span><strong>Instant</strong><small>Fastest direct response</small></span><span class="effort-check"></span></button>
+                                <button type="button" class="response-effort-option" data-effort="Medium" onclick="setResponseEffort('Medium')"><span><strong>Medium</strong><small>Balanced speed and depth</small></span><span class="effort-check"></span></button>
+                                <button type="button" class="response-effort-option" data-effort="High" onclick="setResponseEffort('High')"><span><strong>High</strong><small>More thorough quality pass</small></span><span class="effort-check"></span></button>
+                            </div>
+                        </div>
+
+                        <span class="prompt-bar__spacer"></span>
+
+                        <button type="button" class="voice-pill" id="micBtn" data-state="idle" data-mode="auto" data-hold-after="300" aria-pressed="false" title="Tap to dictate or hold to talk" aria-label="Tap to dictate or hold to talk">
+                            <span class="voice-pill__capsule" aria-hidden="true"></span>
+                            <span class="voice-pill__wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+                            <span class="voice-pill__cancel" aria-hidden="true"><span>‹</span><span>Cancel</span></span>
+                            <span class="voice-pill__time" aria-hidden="true">0:00</span>
+                            <span class="voice-pill__glyph" aria-hidden="true">
+                                <span class="voice-pill__mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></span>
+                                <span class="voice-pill__stop"></span>
+                            </span>
+                        </button>
+
+                        <button type="button" class="prompt-bar__send" id="mainActionBtn" onclick="handleMainAction()" title="Send">
+                            <svg class="prompt-bar__glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4.5 18.5 11h-4.25v8.5h-4.5V11H5.5L12 4.5Z"></path></svg>
+                        </button>
                     </div>
                 </div>
-
-                <button type="button" class="voice-pill" id="micBtn" data-state="idle" aria-pressed="false" onclick="toggleSpeechRecognition()" title="Voice input" aria-label="Voice input">
-                    <span class="voice-pill__capsule" aria-hidden="true"></span>
-                    <span class="voice-pill__wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-                    <span class="voice-pill__time" aria-hidden="true">0:00</span>
-                    <span class="voice-pill__glyph" aria-hidden="true">
-                        <span class="voice-pill__mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></span>
-                        <span class="voice-pill__stop"></span>
-                    </span>
-                </button>
-                
-                <button type="button" class="prompt-bar__send" id="mainActionBtn" onclick="handleMainAction()" title="Send">
-                    <svg class="prompt-bar__glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4.5 18.5 11h-4.25v8.5h-4.5V11H5.5L12 4.5Z"></path></svg>
-                </button>
             </div>
         </div>
     </div>
@@ -8839,10 +8845,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
         function tickJdActivityClock(card){
             if(!card||card.dataset.finalized==='true')return;
-            const label=card.querySelector('#aiActivitySummary');
-            if(!label)return;
+            const timer=card.querySelector('#aiActivityTimer');
+            if(!timer)return;
             const elapsed=Math.max(0,Date.now()-Number(card.dataset.startedAt||Date.now()));
-            label.textContent='Thinking for '+formatJdActivityElapsed(elapsed);
+            timer.textContent=formatJdActivityElapsed(elapsed);
         }
         function stopJdActivityClock(){
             if(jdActivityClock!==null){clearInterval(jdActivityClock);jdActivityClock=null;}
@@ -8936,7 +8942,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                                 <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
                                 <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
                             </span>
-                            <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking for 0s</span></span>
+                            <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking…</span></span>
+                            <span class="thought-line__timer" id="aiActivityTimer">0s</span>
                             <span class="thought-line__chevron"><i data-lucide="chevron-right"></i></span>
                         </button>
                     </div>
@@ -8959,7 +8966,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // row: real rows come only from backend/tool/provider milestones.
             const initialTask=initialActivityForRequest(promptText,files);
             const lead=indicator.querySelector('.ai-activity-lead');
+            const summary=indicator.querySelector('#aiActivitySummary');
             if(lead)lead.textContent=String(initialTask.label||'').slice(0,220);
+            if(summary)summary.textContent=String(initialTask.label||'Thinking…').slice(0,88);
             // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
             // styles lets the collapsed state reliably hide/show the timeline.
             // The header itself says "Thinking". Do not insert a fake startup row:
@@ -8995,7 +9004,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Keep it out of the step list to avoid repeating the same sentence.
             if(id==='task-context'){
                 const lead=card.querySelector('.ai-activity-lead');
+                const summary=card.querySelector('#aiActivitySummary');
                 if(lead)lead.textContent=String(normalized.label||'').slice(0,220);
+                if(summary&&normalized.label)summary.textContent=String(normalized.label).slice(0,88);
                 syncJdThoughts();
                 return;
             }
@@ -9056,9 +9067,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const currentlyRunning=rows.filter(x=>x.classList.contains('running'));
             const current=currentlyRunning.length?currentlyRunning[currentlyRunning.length-1]:rows[rows.length-1];
             rows.forEach(x=>x.classList.toggle('ai-activity-current',x===current && x.classList.contains('running')));
-            // Keep the header stable like ChatGPT: "Thinking" while work is active.
-            // Detailed operation names belong only in the timeline rows below.
-            if(summary && card.dataset.finalized!=='true') tickJdActivityClock(card);
+            // ThoughtLine follows only the newest REAL running backend/tool/provider
+            // milestone. No client-invented plan or hidden reasoning is displayed.
+            if(summary && card.dataset.finalized!=='true' && state==='running' && normalized.label){
+                summary.textContent=String(normalized.label).slice(0,88);
+            }
+            tickJdActivityClock(card);
 
             // Keep a generous bounded history for unusually long tool runs without deleting
             // ordinary completed steps from normal conversations.
@@ -9087,8 +9101,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = card.querySelector('#aiActivityList');
             const summary = card.querySelector('#aiActivitySummary');
             const lattice = card.querySelector('#aiActivityLattice');
+            const timer = card.querySelector('#aiActivityTimer');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
-            const worked=`Worked for ${(elapsed/1000).toFixed(elapsed >= 1000 ? 1 : 2)}s`;
             completeRunningActivityRows('',success?'completed':'warning');
             const responseRow=list?.querySelector('[data-activity-id="response"]');
             if(responseRow && success){
@@ -9096,7 +9110,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 const responseIcon=responseRow.querySelector('.ai-activity-icon');
                 if(responseIcon)responseIcon.innerHTML=activityIconMarkup('process','completed');
             }
-            if (summary) summary.textContent = success ? worked : 'Stopped because of an error';
+            if (summary) summary.textContent = success ? 'Thought for' : 'Stopped because of an error';
+            if (timer) timer.textContent = formatJdActivityElapsed(elapsed);
             syncJdThoughts();
             if (lattice) lattice.dataset.status = success ? 'done' : 'error';
             refreshLucideIcons(card);
@@ -9112,6 +9127,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 card.removeAttribute('id');
                 list?.removeAttribute('id');
                 summary?.removeAttribute('id');
+                timer?.removeAttribute('id');
                 lattice?.removeAttribute('id');
                 card.classList.add('ai-activity-archived');
             }, 2400);
@@ -11047,23 +11063,34 @@ ${m.text || ''}
             }
         }
 
-        async function toggleSpeechRecognition() {
+        let recognitionStartToken = 0;
+        let recognitionStarting = false;
+
+        async function startSpeechRecognition() {
             const userInput = document.getElementById('userInput');
             const micBtn = document.getElementById('micBtn');
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
             if (!SpeechRecognition) {
                 voiceInputNotice('Voice input is not supported by this browser. Open the deployed site in Chrome or another browser with speech recognition support.');
-                return;
+                return false;
             }
+            if (isRecording || recognitionStarting) return true;
 
-            if (isRecording) {
-                try { recognition?.stop(); } catch (_) {}
-                stopRecordingUI();
-                return;
+            const token=++recognitionStartToken;
+            recognitionStarting=true;
+            micBtn?.setAttribute('data-state','starting');
+
+            if (!(await ensureMicrophonePermission())) {
+                recognitionStarting=false;
+                if(token===recognitionStartToken)micBtn?.setAttribute('data-state','idle');
+                return false;
             }
-
-            if (!(await ensureMicrophonePermission())) return;
+            if(token!==recognitionStartToken){
+                recognitionStarting=false;
+                micBtn?.setAttribute('data-state','idle');
+                return false;
+            }
 
             recognitionBaseText = (userInput?.value || '').trim();
             recognition = new SpeechRecognition();
@@ -11073,6 +11100,11 @@ ${m.text || ''}
             recognition.lang = preferredLanguageCode() || 'fil-PH';
 
             recognition.onstart = () => {
+                if(token!==recognitionStartToken){
+                    try{recognition?.abort?.();}catch(_){}
+                    return;
+                }
+                recognitionStarting=false;
                 isRecording = true;
                 micBtn?.classList.add('recording');
                 micBtn?.setAttribute('aria-pressed', 'true');
@@ -11110,17 +11142,41 @@ ${m.text || ''}
                 stopRecordingUI();
             };
             recognition.onend = () => {
+                recognitionStarting=false;
                 stopRecordingUI();
                 recognition = null;
             };
 
             try {
                 recognition.start();
+                recognitionStarting=false;
+                return true;
             } catch (error) {
+                recognitionStarting=false;
                 stopRecordingUI();
                 recognition = null;
-                voiceInputNotice('Voice input could not start. Wait a moment and tap the microphone again.');
+                voiceInputNotice('Voice input could not start. Wait a moment and tap or hold the microphone again.');
+                return false;
             }
+        }
+
+        function stopSpeechRecognition(reason='manual') {
+            ++recognitionStartToken;
+            recognitionStarting=false;
+            const active=recognition;
+            try {
+                if(reason==='cancel') active?.abort?.();
+                else active?.stop?.();
+            } catch (_) {}
+            stopRecordingUI();
+        }
+
+        async function toggleSpeechRecognition() {
+            if (isRecording || recognitionStarting) {
+                stopSpeechRecognition('tap');
+                return false;
+            }
+            return startSpeechRecognition();
         }
 
         function stopRecordingUI() {
@@ -11128,8 +11184,13 @@ ${m.text || ''}
             const micBtn = document.getElementById('micBtn');
             micBtn?.classList.remove('recording');
             micBtn?.setAttribute('aria-pressed', 'false');
+            if(!recognitionStarting)micBtn?.setAttribute('data-state','idle');
             window.JDReactBits?.syncVoice?.();
         }
+
+        window.startSpeechRecognition=startSpeechRecognition;
+        window.stopSpeechRecognition=stopSpeechRecognition;
+        window.toggleSpeechRecognition=toggleSpeechRecognition;
 
         function incrementCounters(text) {
             const clean=String(text||'').trim();

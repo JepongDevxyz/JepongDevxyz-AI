@@ -17,6 +17,9 @@ for (const token of ['lattice-loader','thought-line','thought-line__trace']) {
   assert(css.includes(token), 'Activity style missing: '+token);
 }
 assert(html.includes('id="aiActivityLattice"'),'Activity LatticeLoader live status hook missing');
+assert(html.includes('id="aiActivityTimer"'),'ThoughtLine elapsed timer hook missing');
+assert(html.includes("summary.textContent=String(normalized.label).slice(0,88)"),
+ 'ThoughtLine headline must follow the newest real running activity milestone');
 assert(html.includes('function appendActivityEvent'),'real backend Activity event bridge must remain');
 assert(html.includes("if(id==='task-context')"),'real task-context Activity lead must remain');
 assert(html.includes('initialActivityForRequest'),'request-specific temporary lead must remain');
@@ -38,11 +41,14 @@ assert(!html.includes('jd-reply-notify-switch'),'legacy notification switch mark
 assert(!settingsCss.includes('.jd-reply-notify-switch'),'legacy notification switch CSS must be removed');
 
 // 3/6 PromptBar busy=true/models=false: real send/stop + existing tools preserved.
-for (const token of ['prompt-bar','prompt-bar__input','prompt-bar__send','data-models="false"']) {
+for (const token of ['prompt-bar','prompt-bar__field','prompt-bar__bar','prompt-bar__input','prompt-bar__send','data-models="false"']) {
   assert(html.includes(token), 'PromptBar direct markup missing: '+token);
 }
 assert(css.includes('.prompt-bar[data-busy="true"]'),'PromptBar busy styling missing');
 assert(js.includes("bar.dataset.models='false'"),'PromptBar models=false contract missing');
+assert(js.includes("action.setAttribute('data-armed','')"),'PromptBar armed/send state missing');
+assert(css.includes('.prompt-bar__field{'),'PromptBar field styling missing');
+assert(css.includes('.prompt-bar__bar{'),'PromptBar bottom control bar missing');
 assert(html.includes('function updateGenerationActionButton'),'send/stop state function must remain');
 assert(html.includes('function handleMainAction'),'send/stop handler must remain');
 assert(html.includes('composerToolSheet'),'attachment/tools menu must remain');
@@ -83,7 +89,14 @@ for (const token of ['voice-pill','voice-pill__capsule','voice-pill__wave','read
   assert(html.includes(token), 'VoicePill direct markup missing: '+token);
   assert(css.includes(token), 'VoicePill style missing: '+token);
 }
+assert(html.includes('function startSpeechRecognition'),'explicit microphone start behavior missing');
+assert(html.includes('function stopSpeechRecognition'),'explicit microphone stop behavior missing');
 assert(html.includes('function toggleSpeechRecognition'),'real microphone behavior must remain');
+assert(html.includes('data-mode="auto" data-hold-after="300"'),'VoicePill auto tap/hold configuration missing');
+assert(!html.includes('id="micBtn" data-state="idle" aria-pressed="false" onclick='),'VoicePill must not use legacy click-only microphone binding');
+assert(js.includes('VOICE_HOLD_AFTER=300'),'VoicePill 300ms hold threshold missing');
+assert(js.includes("if(isHold)window.stopSpeechRecognition?.('release')"),'VoicePill hold-to-release behavior missing');
+assert(js.includes('VOICE_CANCEL_DISTANCE=64'),'VoicePill slide-to-cancel distance missing');
 assert(html.includes('function toggleSpeechMiniPlayback'),'real read-aloud playback must remain');
 assert(html.includes('function stopAllSpeech'),'read-aloud stop behavior must remain');
 assert(!html.includes('class="speech-mini-player"'),'legacy read-aloud markup must be removed');

@@ -75,22 +75,60 @@
     var action=doc.getElementById('mainActionBtn');
     if(!bar||!input||!action)return;
     var busy=action.classList.contains('generating')||/stop/i.test(action.title||'');
+    var hasText=!!String(input.value||'').trim();
+    var hasFiles=!!doc.querySelector('#filePreviewContainer > *');
+    var armed=busy||hasText||hasFiles;
+    var plus=doc.getElementById('composerPlusBtn');
+    var effort=doc.getElementById('responseEffortBtn');
+    var effortLabel=doc.getElementById('responseEffortLabel');
+    var field=bar.querySelector('.prompt-bar__field');
+
     bar.dataset.busy=String(busy);
     bar.dataset.models='false';
-    bar.dataset.hasText=String(!!String(input.value||'').trim());
+    bar.dataset.hasText=String(hasText);
+    if(armed)action.setAttribute('data-armed','');
+    else action.removeAttribute('data-armed');
+
+    if(plus){
+      if(plus.getAttribute('aria-expanded')==='true')plus.setAttribute('data-on','');
+      else plus.removeAttribute('data-on');
+    }
+    if(effort){
+      if(effort.getAttribute('aria-expanded')==='true')effort.setAttribute('data-on','');
+      else effort.removeAttribute('data-on');
+    }
+    var maxed=String(effortLabel?.textContent||'').trim().toLowerCase()==='high';
+    if(maxed){
+      bar.setAttribute('data-max','');
+      field?.setAttribute('data-max','');
+      effort?.setAttribute('data-max','');
+    }else{
+      bar.removeAttribute('data-max');
+      field?.removeAttribute('data-max');
+      effort?.removeAttribute('data-max');
+    }
   }
 
   function bindPrompt(){
     var bar=doc.getElementById('promptBar');
     var input=doc.getElementById('userInput');
     var action=doc.getElementById('mainActionBtn');
+    var plus=doc.getElementById('composerPlusBtn');
+    var effort=doc.getElementById('responseEffortBtn');
+    var effortLabel=doc.getElementById('responseEffortLabel');
     if(!bar||!input||!action||bar.dataset.rbBound==='1')return;
     bar.dataset.rbBound='1';
     input.addEventListener('input',syncPrompt);
-    new MutationObserver(syncPrompt).observe(action,{
+    var promptObserver=new MutationObserver(syncPrompt);
+    promptObserver.observe(action,{
       attributes:true,childList:true,subtree:true,
       attributeFilter:['class','title','aria-label']
     });
+    if(plus)promptObserver.observe(plus,{attributes:true,attributeFilter:['aria-expanded']});
+    if(effort)promptObserver.observe(effort,{attributes:true,attributeFilter:['aria-expanded']});
+    if(effortLabel)promptObserver.observe(effortLabel,{childList:true,characterData:true,subtree:true});
+    var preview=doc.getElementById('filePreviewContainer');
+    if(preview)promptObserver.observe(preview,{childList:true});
     syncPrompt();
   }
 
@@ -202,7 +240,14 @@
     root.querySelectorAll&&root.querySelectorAll('.squish-switch-root').forEach(bindSquish);
   }
 
-  /* VoicePill */
+  /* VoicePill — ReactBits auto mode:
+     quick tap toggles dictation; hold >=300ms records until release;
+     slide left 64px cancels. */
+  var voiceGesture=null;
+  var VOICE_HOLD_AFTER=300;
+  var VOICE_CANCEL_DISTANCE=64;
+  var VOICE_SLIDE_MIN=4;
+
   function formatClock(ms){
     var s=Math.max(0,Math.floor(ms/1000));
     return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
@@ -224,7 +269,8 @@
     var mic=doc.getElementById('micBtn');
     if(!mic)return;
     var active=mic.classList.contains('recording')||mic.getAttribute('aria-pressed')==='true';
-    var next=active?'listening':'idle';
+    var starting=mic.dataset.state==='starting';
+    var next=active?'listening':starting?'starting':'idle';
     if(mic.dataset.state!==next)mic.dataset.state=next;
     if(active&&!voiceTimer){
       voiceStartedAt=Date.now();
@@ -233,6 +279,90 @@
       stopVoiceTimer();
       var time=mic.querySelector('.voice-pill__time');
       if(time)time.textContent='0:00';
+    }
+  }
+
+  function settleVoiceSlide(mic){
+    if(!mic)return;
+    delete mic.dataset.sliding;
+    mic.style.setProperty('--vp-slide','0px');
+    mic.style.setProperty('--vp-cancel','0');
+  }
+
+  function voicePointerDown(e){
+    var mic=e.currentTarget;
+    if(e.button!==0||e.isPrimary===false||voiceGesture)return;
+    var already=mic.dataset.state==='listening'||mic.dataset.state==='starting'||mic.getAttribute('aria-pressed')==='true';
+    voiceGesture={
+      id:e.pointerId,
+      downX:e.clientX,
+      downAt:performance.now(),
+      ownPress:!already,
+      sliding:false,
+      cancelled:false
+    };
+    mic.setAttribute('data-pressed','');
+    mic.dataset.input='pointer';
+    try{mic.setPointerCapture(e.pointerId);}catch(_){}
+    if(!already)window.startSpeechRecognition?.();
+  }
+
+  function voicePointerMove(e){
+    var mic=e.currentTarget;
+    var g=voiceGesture;
+    if(!g||g.id!==e.pointerId||!g.ownPress||g.cancelled)return;
+    var dx=e.clientX-g.downX;
+    if(!g.sliding&&dx>-VOICE_SLIDE_MIN)return;
+    g.sliding=true;
+    mic.setAttribute('data-sliding','');
+    var pull=Math.min(VOICE_CANCEL_DISTANCE+24,Math.max(0,-dx));
+    mic.style.setProperty('--vp-slide',(-pull)+'px');
+    var progress=Math.min(1,pull/VOICE_CANCEL_DISTANCE);
+    mic.style.setProperty('--vp-cancel',progress.toFixed(3));
+    if(progress>=1){
+      g.cancelled=true;
+      settleVoiceSlide(mic);
+      window.stopSpeechRecognition?.('cancel');
+    }
+  }
+
+  function voicePointerEnd(e,cancelled){
+    var mic=e.currentTarget;
+    var g=voiceGesture;
+    if(!g||g.id!==e.pointerId)return;
+    voiceGesture=null;
+    mic.removeAttribute('data-pressed');
+    if(g.sliding)settleVoiceSlide(mic);
+    try{
+      if(mic.hasPointerCapture?.(e.pointerId))mic.releasePointerCapture(e.pointerId);
+    }catch(_){}
+    if(g.cancelled)return;
+    if(cancelled){
+      if(g.ownPress)window.stopSpeechRecognition?.('cancel');
+      return;
+    }
+
+    var held=performance.now()-g.downAt;
+    var isHold=held>=Number(mic.dataset.holdAfter||VOICE_HOLD_AFTER);
+    if(g.ownPress){
+      // Exact ReactBits auto behavior:
+      // short tap starts and stays listening; hold stops on release.
+      if(isHold)window.stopSpeechRecognition?.('release');
+    }else{
+      // A press that began while already listening stops it.
+      window.stopSpeechRecognition?.(isHold?'release':'tap');
+    }
+  }
+
+  function voiceKeyDown(e){
+    if(e.key==='Escape'){
+      e.preventDefault();
+      window.stopSpeechRecognition?.('escape');
+      return;
+    }
+    if((e.key===' '||e.key==='Enter')&&!e.repeat){
+      e.preventDefault();
+      window.toggleSpeechRecognition?.();
     }
   }
 
@@ -246,7 +376,22 @@
     var mic=doc.getElementById('micBtn');
     if(mic&&mic.dataset.rbBound!=='1'){
       mic.dataset.rbBound='1';
-      new MutationObserver(syncVoice).observe(mic,{attributes:true,attributeFilter:['class','aria-pressed']});
+      mic.dataset.mode='auto';
+      mic.dataset.holdAfter=String(VOICE_HOLD_AFTER);
+      mic.addEventListener('pointerdown',voicePointerDown);
+      mic.addEventListener('pointermove',voicePointerMove);
+      mic.addEventListener('pointerup',function(e){voicePointerEnd(e,false);});
+      mic.addEventListener('pointercancel',function(e){voicePointerEnd(e,true);});
+      mic.addEventListener('lostpointercapture',function(e){
+        if(voiceGesture&&voiceGesture.id===e.pointerId)voicePointerEnd(e,false);
+      });
+      mic.addEventListener('keydown',voiceKeyDown);
+      mic.addEventListener('click',function(e){
+        // Pointer gestures are handled above. Keep keyboard/synthetic clicks accessible.
+        if(e.detail===0&&!voiceGesture)window.toggleSpeechRecognition?.();
+      });
+      mic.addEventListener('contextmenu',function(e){e.preventDefault();});
+      new MutationObserver(syncVoice).observe(mic,{attributes:true,attributeFilter:['class','aria-pressed','data-state']});
     }
     var player=doc.getElementById('speechMiniPlayer');
     if(player&&player.dataset.rbBound!=='1'){

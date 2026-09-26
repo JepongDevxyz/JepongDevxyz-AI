@@ -10,7 +10,7 @@ function between(source,start,end){
  return source.slice(a,b);
 }
 assert(html.includes("indicator.id = 'activeAiIndicator'"),'Activity container should be created for every request');
-for(const id of ['aiActivityList','aiActivitySummary','aiActivityLattice','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
+for(const id of ['aiActivityList','aiActivitySummary','aiActivityTimer','aiActivityLattice','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
  assert(html.includes('id="'+id+'"'),'Missing activity element: '+id);
 }
 assert(html.includes('<link rel="stylesheet" href="/activity-reference.css">'));
@@ -40,15 +40,15 @@ const format=new Function(formatterSource+'\nreturn formatJdActivityElapsed;')()
 for(const [ms,label] of [[0,'0s'],[950,'0s'],[1000,'1s'],[59999,'59s'],[60000,'1m 0s'],[277000,'4m 37s']]){
  assert.equal(format(ms),label,'Elapsed clock formatting '+ms);
 }
-const label={textContent:''};
+const timer={textContent:''};
 const card={dataset:{startedAt:'100000',finalized:'false'},querySelector(selector){
- return selector==='#aiActivitySummary'?label:null;
+ return selector==='#aiActivityTimer'?timer:null;
 }};
 const tick=new Function('Date',formatterSource+'\nreturn tickJdActivityClock;')({now:()=>377000});
 tick(card);
-assert.equal(label.textContent,'Thinking for 4m 37s');
+assert.equal(timer.textContent,'4m 37s');
 card.dataset.finalized='true';tick(card);
-assert.equal(label.textContent,'Thinking for 4m 37s','Finished card must not restart the clock');
+assert.equal(timer.textContent,'4m 37s','Finished card must not restart the clock');
 
 const normalizer=between(html,'        function normalizeActivityEventForUI(','        function shouldShowAIActivity(');
 const normalize=new Function('sanitizeUiErrorMessage',normalizer+
@@ -63,8 +63,10 @@ assert(append.includes("if(id==='task-context')"),'Backend task-context must bec
 assert(append.includes("lead.textContent=String(normalized.label||'').slice(0,220)"));
 assert(append.includes('syncJdThoughts();'),'New real events must reach an already-open Thoughts sheet');
 assert(append.includes('ChatGPT-style activity history: keep completed statuses visible in order.'));
-assert(!append.includes("summary.textContent='Thinking';"),
- 'Real-time header must not be overwritten by each SSE event');
+assert(append.includes("summary.textContent=String(normalized.label).slice(0,88)"),
+ 'ThoughtLine must reflect the newest real running SSE milestone');
+assert(!append.includes("appendActivityEvent({"),
+ 'Activity renderer must not fabricate client-side plan events');
 assert(backend.includes("activity(emit,id,`Read attached"),'Real file events remain server-grounded');
 assert(backend.includes("activity(emit,'web-search'"),'Real web events remain server-grounded');
 assert(backend.includes("activity(emit,'fallback'"),'Real fallback events remain server-grounded');
