@@ -11004,9 +11004,64 @@ ${m.text || ''}
         }
         async function maybeGenerateAITitle(session,prompt,responseText){ if(!session||session._aiTitleDone||session.messages.length>4)return; session._aiTitleDone=true; try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Create a concise 3 to 6 word chat title. Output only the title, no quotes. Topic:\n${prompt}\n${responseText.slice(0,800)}`,history:[],files:[],provider:currentSelectedProvider,model:currentSelectedModel,mode:'general',autoFallback:autoProviderFallback,smartRouter:false})});if(r.ok){let title=(await r.text()).trim().replace(/["'`]/g,'').split('\n')[0].slice(0,48);if(title){session.title=title;saveSessions();}}}catch(_){} }
 
+        function extractJdWorkNotes(raw=''){
+            const text=String(raw||'');
+            const notes=[];
+            const re=/\[\[JD_WORK_NOTE\]\]([\s\S]*?)\[\[\/JD_WORK_NOTE\]\]/gi;
+            let match;
+            while((match=re.exec(text))!==null){
+                const note=String(match[1]||'')
+                    .replace(/\[\[\/?JD_(?:CHOICE|FOLLOWUPS|WORK_NOTE)\]\]/gi,'')
+                    .replace(/\s+/g,' ')
+                    .trim()
+                    .slice(0,520);
+                if(note&&note.length>=8&&!notes.includes(note))notes.push(note);
+                if(notes.length>=4)break;
+            }
+            return notes;
+        }
+
+        function stripJdWorkNotes(raw=''){
+            let text=String(raw||'');
+            text=text.replace(/\[\[JD_WORK_NOTE\]\][\s\S]*?\[\[\/JD_WORK_NOTE\]\]/gi,'');
+            // Never let a partially streamed protocol token leak into the answer.
+            text=text.replace(/\[\[JD_WORK_NOTE\]\][\s\S]*$/i,'');
+            text=text.replace(/\[\[\/?JD_WORK_NOTE\]\]/gi,'');
+            return text.replace(/\n{3,}/g,'\n\n').trimStart();
+        }
+
+        function appendJdWorkNote(note=''){
+            const value=String(note||'').trim();
+            if(!value)return;
+            const list=document.getElementById('aiActivityList');
+            const card=document.getElementById('activeAiIndicator');
+            if(!list||!card||card.dataset.finalized==='true')return;
+            const row=document.createElement('div');
+            row.className='ai-work-commentary';
+            row.dataset.workNote=value.toLowerCase().replace(/\s+/g,' ').slice(0,180);
+            row.innerHTML=`<div class="ai-work-commentary__text">${renderCustomMarkdown(value)}</div>`;
+            list.appendChild(row);
+            requestAnimationFrame(()=>{
+                try{list.scrollTo({top:list.scrollHeight,behavior:'smooth'});}catch(_){list.scrollTop=list.scrollHeight;}
+            });
+        }
+
+        function syncJdWorkNotesFromStream(raw='',seen=new Set()){
+            const notes=extractJdWorkNotes(raw);
+            for(const note of notes){
+                const key=note.toLowerCase().replace(/\s+/g,' ').trim();
+                if(!key||seen.has(key))continue;
+                seen.add(key);
+                appendJdWorkNote(note);
+            }
+        }
+
         const safeAssistantText = (text='') => {
-            try { return window.safeVisibleAssistantResponse ? window.safeVisibleAssistantResponse(text) : String(text||''); }
-            catch (_) { return String(text||''); }
+            try {
+                const visible=window.safeVisibleAssistantResponse ? window.safeVisibleAssistantResponse(text) : String(text||'');
+                return stripJdWorkNotes(visible);
+            }
+            catch (_) { return stripJdWorkNotes(String(text||'')); }
         };
 
         async function executeAICall(promptText, currentFiles = [], isRegenerate = false, historyFiles = currentFiles) {
@@ -11189,6 +11244,7 @@ ${m.text || ''}
 
                 let fullResponse = '';
                 let assistantInteraction = null;
+                const jdWorkNotesSeen = new Set();
                 let responseStreamFinished = false;
                 let responseRevealScheduled = false;
                 let actualProviderUsed = currentSelectedProvider;
@@ -11235,7 +11291,8 @@ ${m.text || ''}
                             // synthetic "Writing response" row; server/tool activity is the
                             // source of truth for the timeline.
                             fullResponse += payload.text || '';
-                            activePartialResponse=fullResponse;
+                            syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
+                            activePartialResponse=stripJdWorkNotes(fullResponse);
                         },
                         artifact: (payload) => {
                             attachGeneratedArtifact(botMsgElem, payload);
@@ -11255,12 +11312,14 @@ ${m.text || ''}
                         const { done, value } = await reader.read();
                         if (done) break;
                         fullResponse += decoder.decode(value, { stream: true });
-                        activePartialResponse=fullResponse;
+                        syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
+                        activePartialResponse=stripJdWorkNotes(fullResponse);
                     }
                     revealFinalResponse();
                 }
 
                 {
+                    fullResponse=stripJdWorkNotes(fullResponse);
                     const parsedUi=parseJdAssistantInteraction(safeAssistantText(fullResponse));
                     fullResponse=parsedUi.text;
                     assistantInteraction=parsedUi.interaction;
