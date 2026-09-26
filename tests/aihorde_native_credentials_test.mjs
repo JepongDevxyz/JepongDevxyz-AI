@@ -46,6 +46,8 @@ function createRunner({keys=['first-registered-key'],authStatus='valid',generate
   },
   buildOpenAIMessages:(_h,message,system)=>[{role:'system',content:system||'Brief.'},{role:'user',content:message}],
   outputBudgetFor:()=>256,
+  effortOutputBudgetFor:()=>256,
+  responseEffortRank:()=>0,
   checkAIHordeCredential:async k=>k==='0000000000'?'anonymous':authStatus,
   summarizeAIHordeError:(status)=>'upstream HTTP '+status,
   passthroughHeaders:(_up,provider,model)=>({'X-AI-Provider':provider,'X-AI-Model':model}),
