@@ -9439,6 +9439,16 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 syncJdThoughts();
                 return;
             }
+            if(String(normalized.kind||'').toLowerCase()==='commentary'){
+                const key=String(normalized.label||'').toLowerCase().replace(/\s+/g,' ').trim().slice(0,180);
+                if(key && ![...list.querySelectorAll('.ai-work-commentary')].some(node=>node.dataset.workNote===key)){
+                    card.classList.add('ai-activity-kimi-flow');
+                    appendJdWorkNote(normalized.label||'');
+                }
+                tickJdActivityClock(card);
+                syncJdThoughts();
+                return;
+            }
             const normalizedLabelKey=[
                 String(normalized.kind||'process'),
                 String(normalized.label||'').toLowerCase().replace(/\s+/g,' ').trim(),
@@ -10121,10 +10131,12 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                         row.classList.contains('warning')?'warning':'completed'
                 })).filter(row=>row.label);
             const lead=clean(card.querySelector('.ai-activity-lead')?.textContent,220);
-            if(!lead&&!steps.length)return null;
+            const notes=[...card.querySelectorAll('.ai-work-commentary__text')]
+                .map(node=>clean(node.textContent,520)).filter(Boolean).slice(-4);
+            if(!lead&&!steps.length&&!notes.length)return null;
             return {
                 summary:clean(card.querySelector('#aiActivitySummary')?.textContent,75),
-                lead,steps
+                lead,steps,notes
             };
         }
         function renderJdStoredActivity(saved){
