@@ -987,6 +987,29 @@ function responseDepthInstruction(message='', files=[]){
   return ' RESPONSE DEPTH: Be concise and conversational. Answer the question first, then add only the most useful supporting detail.';
 }
 
+function isVisualWebUiRequest(message='', files=[]){
+  const t=normalizeIntentText(message);
+  const hasWebFile=Array.isArray(files)&&files.some(f=>/\.(html?|css|js|mjs|cjs|ts|tsx|jsx)$/i.test(String(f?.name||f?.filename||'')));
+  const buildVerb=/\b(build|create|make|design|redesign|remodel|generate|gawan|gumawa|gawin|ayusin|implement|develop)\b/i.test(t);
+  const uiNoun=/\b(ui|ux|interface|website|web app|webapp|frontend|landing page|dashboard|chatbot|chat app|single html|html app|responsive|mobile layout|preview)\b/i.test(t);
+  const reference=/\b(reference|screenshot|image|video|katulad|gaya|ganito|ganyan|same|match|replicate|carbon copy|pixel)\b/i.test(t);
+  return hasWebFile || (buildVerb&&uiNoun) || (uiNoun&&reference);
+}
+
+function visualUiQualityInstruction(message='', files=[]){
+  if(!isVisualWebUiRequest(message,files))return '';
+  return (
+    ' VISUAL UI IMPLEMENTATION CONTRACT: Treat the requested interface as a real product UI, not a bare HTML demo. ' +
+    'Return polished, complete, responsive code with deliberate visual hierarchy, spacing, typography, surfaces, controls, states, and mobile behavior. ' +
+    'For a single-file HTML preview, make the visual styling self-contained with substantial inline CSS and working JavaScript; do not rely on an external CSS framework unless the user explicitly asks for one. ' +
+    'Do not output an unstyled stack of headings, default buttons, default inputs, or emoji-as-icons when a proper interface was requested. Use consistent CSS variables, intentional sizing, rounded surfaces where appropriate, accessible contrast, focus/hover/active states, and inline SVG icons when icons are needed. ' +
+    'If the user supplied a screenshot/video/reference, match its layout hierarchy, proportions, spacing, visual density, component placement, colors, and interaction pattern as closely as the available source context supports instead of merely taking loose inspiration. ' +
+    'If the requested app is a chat/AI interface, include a finished shell: navigation/header, empty/welcome state, message area, composer, action controls, responsive mobile layout, and any requested tool/settings/history surfaces. ' +
+    'Keep all requested functionality intact while improving presentation. The code must still be understandable and maintainable. ' +
+    'Before finalizing, visually audit the markup/CSS in text form: verify there is a complete design system, no obvious browser-default controls left unstyled, no missing responsive rules, and no dependency that the built-in preview would silently block.'
+  );
+}
+
 function taskSpecificAccuracyInstruction(message='', files=[]){
   const task=classifyUserTask(message,files);
   let text=' ACCURACY DISCIPLINE: If you are uncertain, do not fabricate. State the uncertainty briefly and give the best supported answer or next check.';
@@ -1045,6 +1068,9 @@ function buildInternalTaskBriefPrompt(message='', files=[]){
     'Use EXACTLY these two sections:',
     'PUBLIC_UPDATE: one short natural paragraph (1-3 sentences) in the user\'s language describing the concrete work/approach for this request. It must sound like a polished Kimi/ChatGPT work update, not a generic promise. Do not claim searches/tests/builds/deployments unless verified tool context already establishes them.',
     'INTERNAL_BRIEF: concise structured notes covering the intended user goal, hard constraints, relevant verified evidence, likely mistakes to avoid, and the best final-answer approach. Mark uncertain items as uncertain. Do not include private reasoning.',
+    isVisualWebUiRequest(message,files)
+      ? 'UI_QUALITY_CHECK: identify the target visual structure, responsive/mobile requirements, required styled components, interaction states, and whether the final single-file preview must avoid external styling dependencies. Explicitly reject a bare/default-browser-looking implementation.'
+      : 'UI_QUALITY_CHECK: Not applicable.',
     `Task category: ${task}.`,
     `Latest user request: ${String(message||'').slice(0,12000)}`
   ].join('\n');
@@ -1255,6 +1281,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   text += helpfulnessCoreInstruction(userMessage, history, files);
   text += responseDepthInstruction(userMessage, files);
   text += taskSpecificAccuracyInstruction(userMessage, files);
+  text += visualUiQualityInstruction(userMessage, files);
   text += finalAnswerAuditInstruction();
   text += responseQualityInstruction(userMessage);
   text += languageQualityInstruction(userMessage, personalization);
