@@ -12,7 +12,9 @@ function between(src,start,end){
 }
 
 // Evaluate the intent/context block with only its harmless dependencies.
-const source=between(api,'function normalizeIntentText(input=', '\nfunction contextActivityPlan(');
+const contextSource=between(api,'function normalizeIntentText(input=', '\nfunction contextActivityPlan(');
+const researchSource=between(api,'function shouldAutoResearchCore(message=', '\nfunction isWebsiteSecurityRequest(');
+const source=contextSource+'\n'+researchSource;
 const sandbox={
   extractPublicUrl:text=>String(text||'').match(/https?:\/\/\S+/g)||[],
   detectArtifactRequest:()=>false,
