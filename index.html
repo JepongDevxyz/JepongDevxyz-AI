@@ -9078,7 +9078,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     detail:names.slice(0,2).join(', ').slice(0,120)
                 };
             }
-            if(subject && subject!==prompt){
+            if(resolved && resolved!==prompt){
                 return {label:`Continuing the requested task: ${subject}`,kind:'process',detail:''};
             }
             return {label:subject?`Working on: ${subject}`:'Working on your request',kind:'process',detail:''};
