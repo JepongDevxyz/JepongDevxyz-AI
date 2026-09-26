@@ -58,8 +58,9 @@ def main():
     req('live-pet-sleep-eyes' not in INDEX and '--pet-sleep-lid' not in INDEX,
         'legacy sleeping-eye visuals were reintroduced')
 
-    req('speech-mini-player' in INDEX and 'function toggleSpeechMiniPlayback' in INDEX,
-        'read-aloud mini player is missing')
+    req('read-aloud-pill' in INDEX and 'id="speechMiniPlayer"' in INDEX
+        and 'function toggleSpeechMiniPlayback' in INDEX,
+        'VoicePill read-aloud player is missing')
     req('function updateSpeakingUI' in INDEX and 'setLivePetSpeaking(true,text)' in INDEX,
         'read-aloud state is not connected to the pet / floating player')
     req('Code block ${idx+1} omitted.' in INDEX,

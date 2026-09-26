@@ -3,6 +3,7 @@ import {strict as assert} from 'node:assert';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../reference-shell.css',import.meta.url),'utf8');
+const micro=readFileSync(new URL('../reactbits-micro.css',import.meta.url),'utf8');
 const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
 
 // These existing runtime bindings are essential to the 3-tab UI. The header
@@ -63,11 +64,13 @@ assert(backend.includes("if(autoFallback&&fallbackable){"),
 
 for(const marker of [
  '.jd-navigation','.jd-nav-tab.active','.jd-sidebar-account-row',
- '.chat-input-pill .pill-input','.chat-input-pill .pill-action-btn',
  '.welcome-screen .welcome-title','.sidebar','.msg.user.has-bubble',
  'body.theme-light','@media(max-width:520px)','#sidebar .jd-sidebar-footer-actions'
 ]){
  assert(css.includes(marker),'Responsive stylesheet missing: '+marker);
+}
+for(const marker of ['.prompt-bar{','.prompt-bar__input{','.prompt-bar__send{','.voice-pill{']){
+ assert(micro.includes(marker),'ReactBits shell component missing: '+marker);
 }
 assert(!/lottie-player[^\n{]*\{[^}]*animation\s*:/s.test(css),
  'Visual shell must not override actual Lottie animation');

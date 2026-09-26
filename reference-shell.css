@@ -241,7 +241,7 @@ html,body{background:var(--bg-color)!important}
   color:var(--text-muted)!important;
 }
 .bot-action-btn:hover,.user-action-btn:hover{background:var(--jd-surface)!important;color:var(--text-main)!important}
-.ai-activity-card,.jd-result-card,.generated-artifact-card{
+.jd-result-card,.generated-artifact-card{
   border-color:var(--jd-edge)!important;
   box-shadow:none!important;
 }
@@ -252,97 +252,6 @@ html,body{background:var(--bg-color)!important}
   background:var(--bg-color)!important;
   border-top:0!important;
   overflow:visible!important;
-}
-.chat-input-pill{
-  position:relative!important;
-  width:100%!important;
-  max-width:850px!important;
-  margin:0 auto!important;
-  padding:15px 12px 11px!important;
-  display:grid!important;
-  grid-template-columns:44px 44px minmax(0,1fr) auto 44px 48px!important;
-  grid-template-rows:minmax(46px,auto) 46px!important;
-  align-items:end!important;
-  column-gap:6px!important;row-gap:6px!important;
-  border-radius:30px!important;
-  border:1px solid var(--jd-edge)!important;
-  background:var(--input-bg)!important;
-  box-shadow:none!important;
-  transition:border-color .15s ease;
-}
-.chat-input-pill:focus-within{border-color:rgba(167,167,178,.38)!important}
-.chat-input-pill .pill-input{
-  grid-column:1/-1!important;grid-row:1!important;
-  display:block;
-  width:100%!important;min-width:0!important;
-  min-height:40px!important;
-  height:auto;
-  max-height:min(32dvh,180px)!important;
-  padding:5px 11px 7px!important;
-  margin:0!important;
-  font-size:clamp(.95rem,3.8vw,1.05rem)!important;
-  line-height:1.5!important;
-  color:var(--text-main)!important;
-  background:transparent!important;
-  border:0!important;
-  outline:0!important;
-  resize:none!important;
-}
-.chat-input-pill .pill-input::placeholder{color:var(--text-muted)!important;opacity:1}
-.chat-input-pill .wave-container{grid-column:1/-1!important;grid-row:1!important}
-.chat-input-pill .pill-plus-btn{
-  grid-column:1!important;grid-row:2!important;
-  width:44px!important;height:44px!important;
-  background:var(--jd-surface)!important;
-  border-radius:50%!important;
-}
-.chat-input-pill .pill-dola-btn{
-  grid-column:2!important;grid-row:2!important;
-  width:44px!important;height:44px!important;
-  border-radius:50%!important;
-  color:#b694ff!important;
-}
-.chat-input-pill .response-effort-wrap{
-  grid-column:3/5!important;grid-row:2!important;
-  align-self:center!important;justify-self:start!important;
-  min-width:0;
-}
-.chat-input-pill .response-effort-btn{
-  height:42px!important;
-  min-width:84px!important;max-width:130px!important;
-  border-radius:999px!important;
-  border:1px solid var(--jd-edge)!important;
-  color:var(--text-main)!important;
-  background:var(--jd-surface)!important;
-  font-size:.83rem!important;
-  padding:0 13px!important;
-}
-.chat-input-pill .pill-mic-btn{
-  grid-column:5!important;grid-row:2!important;
-  width:44px!important;height:44px!important;
-  border-radius:50%!important;
-  color:var(--text-muted)!important;
-  background:var(--jd-surface)!important;
-}
-.chat-input-pill .pill-action-btn{
-  grid-column:6!important;grid-row:2!important;
-  width:46px!important;height:46px!important;
-  border-radius:50%!important;
-  background:var(--text-main)!important;
-  color:var(--bg-color)!important;
-  box-shadow:none!important;
-}
-.chat-input-pill .pill-action-btn svg{width:21px;height:21px}
-.chat-input-pill .pill-action-btn.generating{
-  background:#8b5cf6!important;color:#fff!important;
-  box-shadow:none!important;
-}
-.chat-input-pill .pill-action-btn.generating .stop-square{background:#fff}
-.chat-input-pill .composer-tool-sheet{
-  left:0!important;bottom:calc(100% + 8px)!important;
-  background:var(--modal-bg)!important;
-  border:1px solid var(--jd-edge)!important;
-  box-shadow:var(--jd-shadow)!important;
 }
 .response-effort-menu{background:var(--modal-bg)!important;border-color:var(--jd-edge)!important}
 .jd-welcome-quick-actions{
@@ -412,7 +321,6 @@ html.keyboard-open .jd-welcome-quick-actions{display:none!important}
 .option-item:hover{background:var(--jd-surface-hover)!important}
 .chat-search-bar{background:var(--jd-surface)!important;border-color:var(--jd-edge)!important;border-radius:18px!important}
 body.theme-light .jd-quick-action.primary{background:#e5f0ff;color:#244f81;border-color:#c9dcf5}
-body.theme-light .chat-input-pill .pill-action-btn{background:#17171b!important;color:#fff!important}
 @media(min-width:768px){
   body{padding:0!important;display:flex;align-items:center;justify-content:center}
   .app-container{max-width:1050px!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;border:0!important}
@@ -436,17 +344,6 @@ body.theme-light .chat-input-pill .pill-action-btn{background:#17171b!important;
   .header-controls .dropdown-btn{min-height:36px!important;padding:7px 10px!important;font-size:.73rem!important}
   .chat-box{padding:15px 17px 24px!important}
   .input-container{padding:8px 12px max(13px,env(safe-area-inset-bottom,0px))!important}
-  .chat-input-pill{
-    grid-template-columns:40px 40px minmax(0,1fr) auto 40px 43px!important;
-    grid-template-rows:minmax(43px,auto) 43px!important;
-    column-gap:2px!important;row-gap:4px!important;
-    padding:10px 9px 9px!important;
-    border-radius:27px!important;
-  }
-  .chat-input-pill .pill-input{font-size:.96rem!important;min-height:39px!important;padding:4px 8px 5px!important}
-  .chat-input-pill .pill-plus-btn,.chat-input-pill .pill-dola-btn,.chat-input-pill .pill-mic-btn{width:40px!important;height:40px!important}
-  .chat-input-pill .pill-action-btn{width:43px!important;height:43px!important}
-  .chat-input-pill .response-effort-btn{height:39px!important;min-width:70px!important;max-width:95px!important;padding:0 9px!important;font-size:.71rem!important}
   .jd-welcome-quick-actions{margin-bottom:8px}
   .jd-quick-action{min-height:45px;padding:9px 14px;font-size:.78rem!important}
   .jd-quick-action svg{width:18px;height:18px}
@@ -458,13 +355,8 @@ body.theme-light .chat-input-pill .pill-action-btn{background:#17171b!important;
   .jd-menu-btn,.jd-private-btn{width:41px;height:41px}
   .jd-nav-tab{font-size:.84rem!important;padding-inline:2px}
   .header-tools-group .network-status{padding:3px}
-  .chat-input-pill{grid-template-columns:36px 36px minmax(0,1fr) auto 36px 39px!important}
-  .chat-input-pill .pill-plus-btn,.chat-input-pill .pill-dola-btn,.chat-input-pill .pill-mic-btn{width:36px!important;height:36px!important}
-  .chat-input-pill .pill-action-btn{width:39px!important;height:39px!important}
-  .chat-input-pill .response-effort-btn{min-width:63px!important;max-width:80px!important}
 }
 @media(prefers-reduced-motion:reduce){
-  .jd-nav-tab,.jd-menu-btn,.jd-private-btn,.chat-input-pill{transition:none!important}
 }
 
 /* 2026-09-25: video-reference left navigation and decluttered home.

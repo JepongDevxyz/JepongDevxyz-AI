@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const css=readFileSync(new URL('../activity-reference.css',import.meta.url),'utf8');
+const css=readFileSync(new URL('../reactbits-micro.css',import.meta.url),'utf8');
 const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
 function between(source,start,end){
  const a=source.indexOf(start),b=source.indexOf(end,a+start.length);
@@ -10,7 +10,7 @@ function between(source,start,end){
  return source.slice(a,b);
 }
 assert(html.includes("indicator.id = 'activeAiIndicator'"),'Activity container should be created for every request');
-for(const id of ['aiActivityList','aiActivitySummary','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
+for(const id of ['aiActivityList','aiActivitySummary','aiActivityLattice','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
  assert(html.includes('id="'+id+'"'),'Missing activity element: '+id);
 }
 assert(html.includes('<link rel="stylesheet" href="/activity-reference.css">'));
@@ -19,10 +19,14 @@ assert(html.includes('onclick="toggleActivityDetails(this)"'),'Original inline c
 assert(html.includes("if(event.target===this)closeJdThoughts()"));
 assert(html.includes("event.key==='Escape'"),'Thoughts needs keyboard close');
 assert(html.includes('jdThoughtsDragStart'),'Thoughts should allow swipe-down on handle');
-assert(css.includes('.ai-activity-card.collapsed .ai-activity-lead'));
+assert(css.includes('.ai-activity-card.collapsed .thought-line__trace{display:none}'),
+ 'ThoughtLine trace must collapse with the Activity card');
 assert(css.includes('.jd-thoughts-overlay.open{display:flex}'));
 assert(css.includes('.jd-thoughts-list'));
-assert(css.includes('.ai-activity-summary-row{gap:8px!important'));
+assert(css.includes('.thought-line__head{'),
+ 'ThoughtLine header styling must replace the legacy summary row');
+assert(css.includes('.lattice-loader__cell'),
+ 'LatticeLoader styling must be active');
 assert.equal((html.match(/<lottie-player/g)||[]).length,6,'Preserve original welcome animations');
 assert(html.includes('<div class="welcome-title">JepongDevxyz AI</div>'));
 
@@ -38,7 +42,7 @@ for(const [ms,label] of [[0,'0s'],[950,'0s'],[1000,'1s'],[59999,'59s'],[60000,'1
 }
 const label={textContent:''};
 const card={dataset:{startedAt:'100000',finalized:'false'},querySelector(selector){
- return selector==='.ai-activity-summary-text'?label:null;
+ return selector==='#aiActivitySummary'?label:null;
 }};
 const tick=new Function('Date',formatterSource+'\nreturn tickJdActivityClock;')({now:()=>377000});
 tick(card);

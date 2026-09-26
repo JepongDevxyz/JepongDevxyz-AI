@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const css=readFileSync(new URL('../activity-reference.css',import.meta.url),'utf8');
+const css=readFileSync(new URL('../reactbits-micro.css',import.meta.url),'utf8');
 const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
 const between=(src,start,end)=>{
  const a=src.indexOf(start),b=src.indexOf(end,a+start.length);
@@ -40,7 +40,7 @@ assert(normalize({id:'quality-orchestrator',label:'Intent requirements checked',
 assert(normalize({id:'router',label:'Smart Router selected a model',state:'completed',kind:'route'}));
 assert(html.includes("const lead=card.querySelector('.ai-activity-lead')"));
 assert(html.includes("if(id==='task-context')"));
-assert(html.includes("card.querySelector('.ai-activity-summary-text')"));
+assert(html.includes("card.querySelector('#aiActivitySummary')"));
 assert(html.includes("card.classList.contains('collapsed')"));
 const finish=between(html,'        function finishAIIndicator(','        function removeAIIndicator(');
 assert(!finish.includes("card.classList.add('collapsed')"),
@@ -51,8 +51,8 @@ const append=between(html,'        function appendActivityEvent(','        funct
 assert(!append.includes("if(state==='running') completeRunningActivityRows(id)"),
  'Beginning a new step must not falsely mark the preceding step completed');
 assert(append.includes('row.dataset.activityKind='));
-assert(css.includes('.ai-activity-card.complete:not(.collapsed) .ai-activity-list'));
-assert(css.includes('.ai-activity-row.running:not(.ai-activity-current)'));
+assert(css.includes('.ai-activity-card.collapsed .thought-line__trace{display:none}'));
+assert(css.includes('.ai-activity-row.running.ai-activity-current'));
 
 const stream=between(html,'        async function consumeSSEPacket(','        function sanitizeVisibleAssistantResponse(');
 const io=new Function(stream+'\nreturn {consumeSSEPacket,readActivitySSE};')();
