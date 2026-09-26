@@ -4046,6 +4046,69 @@ function responseMeta(response) {
   };
 }
 
+function shouldRunUiRefinementPass(message='',files=[]){
+  return isVisualWebUiRequest(message,files);
+}
+
+function buildUiRefinementPrompt(originalRequest='',draft=''){
+  const safeDraft=String(draft||'').slice(0,90000);
+  return [
+    'Refine the following DRAFT into the final user-facing answer.',
+    'Do not discuss the refinement process. Return only the improved final answer.',
+    'Preserve every functional requirement from the original request.',
+    'If the draft contains HTML/CSS/JavaScript for a UI, keep the requested functionality but make the interface product-quality: complete visual hierarchy, spacing, typography, responsive mobile behavior, polished controls, accessible states, and consistent icons.',
+    'For a single-file HTML app, prefer self-contained inline CSS/JS so the built-in preview renders correctly without depending on a CSS framework. If the draft uses Tailwind or another CDN without the user explicitly requesting it, replace that dependency with equivalent self-contained CSS.',
+    'Do not leave default browser-looking buttons, inputs, headings, lists, or forms unstyled when the user asked for a real interface.',
+    'If a screenshot/video/reference is part of the request context, preserve its layout hierarchy, proportions, density, placement, and interaction pattern as closely as possible.',
+    'Do not remove requested tools/features merely to simplify the UI.',
+    'Do not claim that code was executed or tested unless verified tool context says so.',
+    '',
+    'ORIGINAL REQUEST:',
+    String(originalRequest||'').slice(0,14000),
+    '',
+    'DRAFT:',
+    safeDraft
+  ].join('\n');
+}
+
+async function maybeRefineVisualUiResponse({first,provider,model,history,files,message,systemInstruction,routedReason,emit,customApiKeys,customApiProfile,responseEffort}){
+  if(!first?.ok || !shouldRunUiRefinementPass(message,files))return first;
+  let draft='';
+  try{
+    draft=await readInternalProviderText(first.response.clone(),90000);
+  }catch(_){
+    return first;
+  }
+  if(!draft.trim())return first;
+
+  activity(emit,'ui-polish','Polishing the requested interface, responsive layout, and visual states','running','build');
+  const refineSystem=systemInstruction +
+    '\n FINAL UI REFINEMENT MODE: You are performing a second quality pass on a generated interface. Output only the improved final user-facing answer. Preserve functionality and user constraints. Enforce the VISUAL UI IMPLEMENTATION CONTRACT strictly.';
+  try{
+    const refined=await runProvider(provider,{
+      model,
+      history,
+      files,
+      message:buildUiRefinementPrompt(message,draft),
+      systemInstruction:refineSystem,
+      routedReason:routedReason||'ui-refinement',
+      emit:null,
+      autoFallback:false,
+      customApiKeys,
+      customApiProfile,
+      responseEffort
+    });
+    if(refined?.ok){
+      activity(emit,'ui-polish','Interface quality pass complete','completed','build');
+      return refined;
+    }
+    activity(emit,'ui-polish','Interface quality pass unavailable — using the original generated result','warning','build');
+  }catch(_){
+    activity(emit,'ui-polish','Interface quality pass unavailable — using the original generated result','warning','build');
+  }
+  return first;
+}
+
 async function processChat(body, emit) {
   let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone} = body;
   // Strict routing contract: fallback/router are opt-in only. Truthy strings,
@@ -4343,8 +4406,12 @@ async function processChat(body, emit) {
   const taskWork=taskWorkingActivity(contextPlan);
   const taskGeneration=taskGenerationActivity(contextPlan);
   activity(emit,'thinking',taskWork.label,'running',taskWork.kind);
-  const first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
+  let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
   if(first.ok){
+    first=await maybeRefineVisualUiResponse({
+      first,provider,model,history,files,message,systemInstruction,routedReason,emit,
+      customApiKeys:requestCustomKeys,customApiProfile,responseEffort
+    });
     const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
     return {
