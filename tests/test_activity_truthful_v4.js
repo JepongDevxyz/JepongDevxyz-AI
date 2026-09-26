@@ -55,7 +55,7 @@ assert(show.includes('real rows come only from backend/tool/provider milestones.
   !show.includes("appendActivityEvent({id:'request-submitted'"),
   'client may show a temporary literal task lead but must not synthesize timeline rows before backend events');
 assert(!show.includes("appendActivityEvent({id:'thinking'"),'do not put Thinking ahead of tool work');
-const streamUI=between(ui,"if (contentType.includes('text/event-stream')) {","\n                fullResponse = safeAssistantText(fullResponse);");
+const streamUI=between(ui,"if (contentType.includes('text/event-stream')) {","\n                {\n                    const parsedUi=parseJdAssistantInteraction");
 const textHandler=between(streamUI,'text: (payload) => {','\n                        artifact:');
 assert(!textHandler.includes('renderLiveResponse('),'answer must stay hidden during Activity');
 assert(streamUI.includes('done: (payload) => revealFinalResponse(payload.elapsedMs)'),
