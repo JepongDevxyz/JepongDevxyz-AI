@@ -5291,7 +5291,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             }
         });
 
-        let isResponseSpeechEnabled =        let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
+        let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
         let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
         let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
 if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
