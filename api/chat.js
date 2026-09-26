@@ -880,7 +880,7 @@ function classifyUserTask(message='', files=[]){
   if(hasImage || /\b(image|photo|picture|larawan|screenshot|logo|design)\b/i.test(t)) return 'image';
   if(hasDocument && /\b(summarize|summary|review|read|extract|document|file|pdf|docx|pptx|spreadsheet)\b/i.test(t)) return 'file';
   if(hasCodeFile || /\b(code|coding|debug|bug|error|javascript|typescript|html|css|python|node|api|backend|frontend|react|php|java|sql|github|vercel|deploy|build|compile)\b/i.test(t)) return 'coding';
-  if(/\b(latest|current|today|now|news|research|search|verify online|check online|price|weather|status|available|release|version)\b/i.test(t)) return 'research';
+  if(shouldAutoResearch(raw) || /\b(research|search|verify online|check online|hanapin|maghanap|tingnan online)\b/i.test(t)) return 'research';
   if(/\b(homework|school|study|lesson|explain|solve|equation|quiz|reviewer|flashcard|assignment)\b/i.test(t)) return 'study';
   if(/\b(write|rewrite|grammar|caption|script|email|message|essay|summarize|summary|translate|translation)\b/i.test(t)) return 'writing';
   if(/\b(fix|ayusin|problem|issue|not working|hindi gumagana|gumagana ba|troubleshoot|bakit)\b/i.test(t)) return 'troubleshooting';
@@ -892,7 +892,7 @@ function classifyUserTask(message='', files=[]){
 
 function looksReferential(message=''){
   const t=normalizeIntentText(message);
-  return /\b(ito|iyan|iyon|ganito|ganyan|same|same as before|ulit|again|yung nauna|iyong nauna|doon|diyan|dito|this|that|these|those|above|previous|earlier)\b/i.test(t);
+  return /\b(ito|iyan|iyon|iyong|yung|ganito|ganyan|same|same as before|ulit|again|yung nauna|iyong nauna|doon|diyan|dito|this|that|these|those|above|previous|earlier)\b/i.test(t);
 }
 
 function looksAmbiguousButLowRisk(message=''){
@@ -1266,15 +1266,44 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
    High-level, auditable tools only. No hidden reasoning.
    ========================================================= */
 
-function shouldAutoResearch(message=''){
+function shouldAutoResearchCore(message=''){
   const t=normalizeIntentText(message);
+  if(!t)return false;
+
+  // Explicit research/search requests always count.
+  if(/\b(search|research|verify online|check online|find online|look up|hanapin|maghanap|tingnan online|suriin online)\b/i.test(t))return true;
+
+  // Topics whose answer is inherently live/current.
+  if(/\b(news|breaking|weather|panahon|forecast|outage|price|presyo|exchange rate|stock price|crypto price|schedule today|availability today|live score|score today|election result|polling)\b/i.test(t))return true;
+
   const currentYear=new Date().getUTCFullYear();
   const years=[...t.matchAll(/\b((?:19|20)\d{2})\b/g)].map(m=>Number(m[1]));
-  if(years.some(year=>year>=currentYear-1)) return true;
-  // Deliberately exclude generic words such as "status", "version", "available",
-  // "result", and "online". Those commonly appear in ordinary troubleshooting
-  // prompts and previously caused unrelated live searches.
-  return /\b(latest|current|currently|today|tonight|this week|this month|this year|what year|anong taon|what date|anong petsa|now|real[- ]?time|news|price|presyo|weather|panahon|forecast|outage|release date|released today|schedule today|search|research|verify online|check online|hanapin|maghanap|tingnan online|kasalukuyan|ngayon)\b/i.test(t);
+  if(years.some(year=>year>=currentYear-1))return true;
+
+  const freshness=/\b(latest|current|currently|today|tonight|this week|this month|this year|now|ngayon|kasalukuyan|newest|most recent|release date|released today)\b/i.test(t);
+  if(!freshness)return false;
+
+  // Freshness words alone are not a search command. Require a real subject
+  // after removing conversational filler, so "yung latest ngayon ang gawin mo"
+  // continues the existing task instead of querying Wikipedia.
+  const subject=t
+    .replace(/\b(latest|current|currently|today|tonight|this week|this month|this year|now|ngayon|kasalukuyan|newest|most recent|release date|released today)\b/gi,' ')
+    .replace(/\b(iyong|yung|ito|iyan|iyon|ganito|ganyan|ang|na|naman|sana|please|paki|mo|ko|natin|gawin|gawing|use|do|make|it|that|this|the|one|what|is|are|version)\b/gi,' ')
+    .replace(/[^a-z0-9]+/gi,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+  return subject.split(/\s+/).some(word=>word.length>=3);
+}
+
+function shouldAutoResearch(message=''){
+  const parts=splitContextualTaskMessage(message);
+  if(parts.followUp && isVagueFreshnessFollowUp(parts.followUp)){
+    // A vague follow-up inherits research only when the anchored task was
+    // already an explicit live-research task.
+    return shouldAutoResearchCore(parts.anchor) &&
+      /\b(search|research|news|weather|panahon|forecast|price|presyo|outage|live score|verify online|check online|hanapin|maghanap|tingnan online)\b/i.test(normalizeIntentText(parts.anchor));
+  }
+  return shouldAutoResearchCore(parts.raw);
 }
 
 function isWebsiteSecurityRequest(message=''){
@@ -1322,7 +1351,7 @@ function relevantWebResults(results=[], query=''){
         || (/\b(owasp\.org|developer\.mozilla\.org|web\.dev)\b/i.test(url)
             && /\b(security|http|https|headers|csp|hsts|tls|ssl)\b/i.test(content));
     }
-    if(!terms.length)return true;
+    if(!terms.length)return false;
     const matches=terms.filter(t=>hay.includes(t)).length;
     return matches>=Math.min(2,terms.length);
   }).slice(0,5);
@@ -2024,23 +2053,78 @@ function historyMessageText(item={}){
   return String(item?.text ?? item?.content ?? item?.message ?? '').replace(/\s+/g,' ').trim();
 }
 
+function splitContextualTaskMessage(message=''){
+  const raw=String(message||'').replace(/\s+/g,' ').trim();
+  const marker=' / Follow-up: ';
+  const index=raw.lastIndexOf(marker);
+  if(index<0)return {anchor:'',followUp:'',raw};
+  return {
+    anchor:raw.slice(0,index).trim(),
+    followUp:raw.slice(index+marker.length).trim(),
+    raw
+  };
+}
+
+function isVagueFreshnessFollowUp(message=''){
+  const t=normalizeIntentText(message);
+  if(!/\b(latest|current|currently|now|ngayon|kasalukuyan|updated|update|pinaka bago|newest)\b/i.test(t))return false;
+  const words=t.split(/\s+/).filter(Boolean);
+  if(words.length>10)return false;
+  const stripped=t
+    .replace(/\b(latest|current|currently|now|ngayon|kasalukuyan|updated|update|pinaka bago|newest)\b/gi,' ')
+    .replace(/\b(iyong|yung|ito|iyan|iyon|ganito|ganyan|ang|na|naman|sana|please|paki|mo|ko|natin|gawin|gawing|use|do|make|it|that|this|the|one|version)\b/gi,' ')
+    .replace(/[^a-z0-9]+/gi,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+  return !stripped || looksReferential(message);
+}
+
+function taskAnchorScore(text=''){
+  const t=normalizeIntentText(text);
+  let score=Math.min(5,t.split(/\s+/).filter(Boolean).length/4);
+  if(extractPublicUrl(text).length)score+=6;
+  if(/\b(github|repository|repo|vercel|deployment|app|website|ui|ux|code|api|backend|frontend|android|apk|model|provider|plugin|workflow|project|status activity|notification|chatbox|jepongdevxyz)\b/i.test(t))score+=5;
+  if(/\b(ayusin|fix|edit|update|modify|build|create|implement|test|verify|review|research|search|hanapin|maghanap)\b/i.test(t))score+=2;
+  return score;
+}
+
 function contextualTaskMessage(message='', history=[]){
   const current=String(message||'').replace(/\s+/g,' ').trim();
   if(!current)return current;
 
   const words=current.split(/\s+/).filter(Boolean);
-  const vague=words.length<=8 || /^(?:ito|iyan|yan|yun|iyon|ganito|ganyan|same|still|ulit|again|security|safe|working|gumagana|okay|ayos|fix|why|bakit|paano|how|what about|e kung|eh kung)\b/i.test(current);
+  const vague=words.length<=9 || looksReferential(current) ||
+    /^(?:ito|iyan|yan|yun|iyon|iyong|yung|ganito|ganyan|same|still|ulit|again|security|safe|working|gumagana|okay|ayos|fix|why|bakit|paano|how|what about|e kung|eh kung)\b/i.test(current);
   if(!vague)return current;
 
+  const currentNorm=normalizeIntentText(current);
   const prior=(Array.isArray(history)?history:[])
     .filter(x=>String(x?.role||'').toLowerCase()==='user')
     .map(historyMessageText)
+    .map(x=>String(x||'').replace(/\s+/g,' ').trim())
     .filter(Boolean)
-    .slice(-2);
+    .filter(x=>normalizeIntentText(x)!==currentNorm)
+    .slice(-6);
 
   if(!prior.length)return current;
-  const context=prior.join(' / ').slice(-420);
+
+  // Prefer the most recent concrete task anchor, not simply the immediately
+  // previous tiny follow-up. This keeps "gawin mo yung latest" attached to the
+  // actual project/UI/code request instead of turning "latest" into web research.
+  const ranked=prior.map((text,index)=>({text,index,score:taskAnchorScore(text)}))
+    .sort((a,b)=>b.score-a.score || b.index-a.index);
+  const anchor=ranked[0]?.text || prior.at(-1);
+  const recent=prior.at(-1);
+  const context=(recent&&recent!==anchor?`${anchor} / ${recent}`:anchor).slice(-520);
   return `${context} / Follow-up: ${current}`;
+}
+
+function activityTaskSubject(message=''){
+  const parts=splitContextualTaskMessage(message);
+  if(parts.followUp && (looksReferential(parts.followUp)||isVagueFreshnessFollowUp(parts.followUp))){
+    return shortTaskSubject(parts.anchor||parts.raw);
+  }
+  return shortTaskSubject(parts.raw);
 }
 
 function shortTaskSubject(message=''){
@@ -2077,7 +2161,7 @@ function taskProfile(message='', files=[]){
   else if(/\b(pdf|document|report|reviewer|essay|worksheet|notes|docx|pptx|spreadsheet)\b/i.test(t))kind='document';
   else if(/\b(video|clip|recording)\b/i.test(t)||hasVideos)kind='video';
   else if(/\b(image|photo|picture|logo|design|larawan)\b/i.test(t)||hasImages)kind='image';
-  else if(/\b(research|latest|current|today|news|compare|comparison|hanapin|maghanap)\b/i.test(t))kind='research';
+  else if(shouldAutoResearch(message) || /\b(research|search|hanapin|maghanap|tingnan online)\b/i.test(t))kind='research';
   else if(/\b(math|equation|solve|school|study|lesson|explain|homework)\b/i.test(t))kind='study';
 
   const intent={
@@ -2088,7 +2172,14 @@ function taskProfile(message='', files=[]){
     download:Boolean(detectArtifactRequest(message))
   };
 
-  return {kind,intent,urls,fileNames,subject:shortTaskSubject(message)};
+  const contextual=splitContextualTaskMessage(message);
+  return {
+    kind,intent,urls,fileNames,
+    subject:activityTaskSubject(message),
+    followUpText:contextual.followUp||'',
+    contextualFollowUp:Boolean(contextual.followUp),
+    freshnessFollowUp:Boolean(contextual.followUp&&isVagueFreshnessFollowUp(contextual.followUp)&&!shouldAutoResearch(contextual.followUp))
+  };
 }
 
 function contextActivityPlan(message='', files=[]){
@@ -2096,7 +2187,7 @@ function contextActivityPlan(message='', files=[]){
   const list=Array.isArray(files)?files:[];
   const firstFile=list.find(f=>!['video-frame','pdf-page'].includes(f?.mediaRole))||list[0];
   const name=String(firstFile?.parentName||firstFile?.name||firstFile?.filename||'').slice(0,64);
-  const subject=shortTaskSubject(message);
+  const subject=profile.subject||activityTaskSubject(message);
   const urls=extractPublicUrl(message);
   let label='Understanding your request';
   let kind='process';
@@ -2113,6 +2204,21 @@ function contextActivityPlan(message='', files=[]){
     else if(hasImage){ label=`Preparing uploaded image${name?': '+name:''} for: ${subject}`; kind='image'; }
     else if(hasCode){ label=`Reviewing attached code${name?': '+name:''} for: ${subject}`; kind='file'; }
     else { label=`Reviewing attached file${name?': '+name:''} for: ${subject}`; kind='file'; }
+  }else if(profile.contextualFollowUp && profile.freshnessFollowUp){
+    const noun=profile.kind==='android'?'Android implementation':
+      profile.kind==='github'?'repository work':
+      profile.kind==='deployment'?'deployment':
+      profile.kind==='backend'?'API/backend work':
+      profile.kind==='web'?'app/UI work':
+      profile.kind==='document'?'document work':
+      profile.kind==='video'?'video task':
+      profile.kind==='image'?'image task':'requested work';
+    label=`Updating the latest requested ${noun}: ${subject}`;
+    kind=['deployment'].includes(profile.kind)?'deploy':
+      profile.kind==='backend'?'api':
+      profile.kind==='image'?'image':
+      profile.kind==='video'||profile.kind==='document'?'file':
+      profile.kind==='android'||profile.kind==='web'?'build':'process';
   }else if(isWebsiteSecurityRequest(message)){
     label=host
       ? `Checking website security for ${host}`
@@ -2200,7 +2306,14 @@ function taskWorkingActivity(plan={}){
   let kind='process';
   let label=`Working on: ${subject}`;
 
-  if(profile.kind==='web'){
+  if(profile.contextualFollowUp && profile.freshnessFollowUp){
+    kind=profile.kind==='deployment'?'deploy':
+      profile.kind==='backend'?'api':
+      profile.kind==='image'?'image':
+      profile.kind==='video'||profile.kind==='document'?'file':
+      profile.kind==='android'||profile.kind==='web'?'build':'process';
+    label=`Applying the latest requested changes: ${subject}`;
+  }else if(profile.kind==='web'){
     kind=intent.create?'build':'process';
     label=intent.create
       ?`Drafting the requested implementation: ${subject}`
@@ -2492,14 +2605,15 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   if(!message)return '';
 
   const explicitLive=shouldAutoResearch(message)||extractPublicUrl(message).length>0;
-  // Web Search being enabled is permission to use the web, not a command to search
-  // every non-casual prompt. Only search when the request itself asks for/currently
-  // depends on live information, a URL, or an explicit search/research action.
-  const webIntent=/\b(search|research|look up|find online|check online|verify online|hanapin|maghanap|tingnan online|latest|current|currently|today|news|update|updated|status|outage|price|presyo|weather|panahon|forecast|release|schedule|availability|real[- ]?time)\b/i.test(normalizeIntentText(message));
-  const wantsLive=(explicitLive || (Boolean(webSearch)&&webIntent)) && !isSimpleCasualMessage(message);
+  // Web Search being enabled is permission, not an instruction. A bare
+  // "latest/current/ngayon" follow-up does not launch external research.
+  const explicitSearch=/\b(search|research|look up|find online|check online|verify online|hanapin|maghanap|tingnan online)\b/i.test(normalizeIntentText(message));
+  const wantsLive=(explicitLive || (Boolean(webSearch)&&explicitSearch)) && !isSimpleCasualMessage(message);
   if(!wantsLive)return '';
   const fast=Boolean(options.fast);
-  const searchQuery=buildLiveSearchQuery(message);
+  const contextMessage=String(options.contextMessage||'').trim();
+  const useContextQuery=contextMessage && (looksReferential(message)||String(message).trim().split(/\s+/).length<=6);
+  const searchQuery=buildLiveSearchQuery(useContextQuery?contextMessage:message);
 
   // Current date/year questions are answered from the authoritative server clock
   // injected into the system context; no network round trip is needed.
@@ -2643,7 +2757,7 @@ function smartRoute(mode, files, message) {
     if (configured('cohere')) return {provider:'cohere',model:'command-a-03-2025',reason:'school'};
   }
 
-  const research=/\b(research|latest|current|news|verify|compare|analyze|analysis|source|web|real time)\b/i.test(intentText);
+  const research=shouldAutoResearch(message) || /\b(research|verify online|check online|source search|web research)\b/i.test(intentText);
   if(research){
     if(configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'research synthesis'};
     if(configured('groq')) return {provider:'groq',model:'openai/gpt-oss-120b',reason:'research synthesis'};
@@ -4004,7 +4118,7 @@ async function processChat(body, emit) {
   // accidentally launch an unrelated broad search.
   const liveWebContext=websiteSecurityTask
     ? ''
-    : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers});
+    : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers,contextMessage:taskMessage});
 
   // General security advice cannot establish whether a particular site is safe.
   // The context-aware task may contain a URL from the immediately preceding user turn.
