@@ -22,9 +22,9 @@ for(const level of levels){
   assert(api.includes(`responseEffort==='${level}'`), 'server quality instruction missing for '+level);
 }
 
-assert(api.includes('responseEffortRank(responseEffort)>=4 && shouldUseQualityOrchestrator'),
-  'Extra/Max must enable deeper quality preflight for complex requests');
-assert(api.includes("responseEffort==='Max'?12000:8000"),
+assert(api.includes('responseEffortRank(responseEffort)>=2 && shouldUseQualityOrchestrator'),
+  'Medium/High/Extra/Max must enable provider-independent quality preflight for complex requests');
+assert(api.includes("responseEffort==='Max'?16000:12000"),
   'Max must use the stronger internal verification brief budget');
 assert(api.includes('responseEffortRank(effort)>=3'),
   'High/Extra/Max must be treated as heavy API effort');
