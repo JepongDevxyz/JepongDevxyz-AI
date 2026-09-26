@@ -40,24 +40,36 @@ assert(html.includes('toggleResponseNotifications(this.checked)'),'notification 
 assert(!html.includes('jd-reply-notify-switch'),'legacy notification switch markup must be removed');
 assert(!settingsCss.includes('.jd-reply-notify-switch'),'legacy notification switch CSS must be removed');
 
-// 3/6 PromptBar busy=true/models=false: real send/stop + existing tools preserved.
-for (const token of ['prompt-bar','prompt-bar__field','prompt-bar__bar','prompt-bar__input','prompt-bar__send','data-models="false"']) {
-  assert(html.includes(token), 'PromptBar direct markup missing: '+token);
+// 3/6 PromptBar busy=true, models=false: official ReactBits DOM/CSS/runtime port.
+for (const token of [
+  'prompt-bar','prompt-bar__menu','prompt-bar__glow','prompt-bar__row',
+  'prompt-bar__field','prompt-bar__sparks','prompt-bar__chips','prompt-bar__chip',
+  'prompt-bar__input','prompt-bar__bar','prompt-bar__pick','prompt-bar__send',
+  'prompt-bar__effort-track','data-models="false"'
+]) {
+  assert(html.includes(token) || css.includes(token), 'PromptBar ReactBits token missing: '+token);
 }
-assert(css.includes('.prompt-bar[data-busy="true"]'),'PromptBar busy styling missing');
-assert(js.includes("bar.dataset.models='false'"),'PromptBar models=false contract missing');
-assert(js.includes("action.setAttribute('data-armed','')"),'PromptBar armed/send state missing');
-assert(css.includes('.prompt-bar__field{'),'PromptBar field styling missing');
-assert(css.includes('.prompt-bar__bar{'),'PromptBar bottom control bar missing');
-assert(css.includes('--pb-w:400px'),'PromptBar must keep the ReactBits 400px geometry');
-assert(css.includes('border:0!important;border-radius:var(--pb-radius);background:var(--pb-bg)!important'),
- 'PromptBar field must be borderless like the ReactBits source');
-assert(css.includes('box-shadow:none!important'),'PromptBar must not add the inaccurate purple focus/idle box shadow');
-assert(!css.includes('border-color:color-mix(in srgb,var(--pb-spark) 42%'),
- 'inaccurate purple PromptBar focus border returned');
+assert(html.includes('id="promptBarSendPath"'),'PromptBar morph path hook missing');
+assert(html.includes('id="responseEffortTrack"'),'PromptBar effort slider missing');
+assert(html.includes('id="composerToolSheet"') && html.includes('data-kind="at"'),
+ 'PromptBar source menu missing');
+assert(!html.includes('prompt-bar__vision'),'custom extra bottom-bar Vision control must not alter ReactBits layout');
+assert(!html.includes('class="response-effort-menu"'),'legacy response effort menu markup must be removed');
+assert(!html.includes('class="response-effort-option"'),'legacy response effort options must be removed');
+assert(!html.includes('class="composer-tool-sheet"'),'legacy composer sheet markup must be removed');
+assert(css.includes('--pb-w: 400px;'),'PromptBar width must match ReactBits source');
+assert(css.includes('--pb-radius: 16px;'),'PromptBar radius must match ReactBits source');
+assert(css.includes('.prompt-bar__menu[data-kind=\'effort\']'),'ReactBits effort popup styling missing');
+assert(css.includes('.prompt-bar__effort-thumb'),'ReactBits effort thumb styling missing');
+assert(css.includes('.prompt-bar__chip-x'),'ReactBits attachment chip styling missing');
+assert(js.includes('PB_ARROW_UP') && js.includes('PB_SQUARE'),'ReactBits send morph geometry missing');
+assert(js.includes('animatePromptGlyph'),'ReactBits send morph runtime missing');
+assert(js.includes('startPromptSparks'),'ReactBits max-effort spark runtime missing');
+assert(js.includes("bar.toggleAttribute('data-busy',busy)"),'ReactBits boolean busy attribute contract missing');
+assert(js.includes("action.setAttribute('data-pressed','')"),'ReactBits send press state missing');
 assert(html.includes('function updateGenerationActionButton'),'send/stop state function must remain');
 assert(html.includes('function handleMainAction'),'send/stop handler must remain');
-assert(html.includes('composerToolSheet'),'attachment/tools menu must remain');
+assert(html.includes('composerToolSheet'),'attachment/source menu must remain');
 assert(html.includes('responseEffortMenu'),'response effort menu must remain');
 assert(!html.includes('class="chat-input-pill"'),'legacy composer root markup must be removed');
 assert(!html.includes('class="pill-mic-btn"'),'legacy mic markup must be removed');
