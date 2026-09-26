@@ -63,8 +63,10 @@ assert(append.includes("if(id==='task-context')"),'Backend task-context must bec
 assert(append.includes("lead.textContent=String(normalized.label||'').slice(0,220)"));
 assert(append.includes('syncJdThoughts();'),'New real events must reach an already-open Thoughts sheet');
 assert(append.includes('ChatGPT-style activity history: keep completed statuses visible in order.'));
-assert(append.includes("summary.textContent=String(normalized.label).slice(0,88)"),
- 'ThoughtLine must reflect the newest real running SSE milestone');
+assert(append.includes("if(summary && card.dataset.finalized!=='true')summary.textContent='Thinking';"),
+ 'ThoughtLine header must remain stable while exact real milestones stay in the lead/list');
+assert(append.includes("card.dataset.taskSummary=String(normalized.label||'').slice(0,220)"),
+ 'Task-specific context must stay separate from provider/tool plumbing');
 assert(!append.includes("appendActivityEvent({"),
  'Activity renderer must not fabricate client-side plan events');
 assert(backend.includes("activity(emit,id,`Read attached"),'Real file events remain server-grounded');
