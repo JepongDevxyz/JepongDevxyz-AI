@@ -12701,10 +12701,8 @@ ${m.text || ''}
         const JD_LEGAL_ACCEPTANCE_KEY='jd_legal_acceptance_v1';
 
         function hasJdLegalAcceptance(){
-            try{
-                const saved=JSON.parse(localStorage.getItem(JD_LEGAL_ACCEPTANCE_KEY)||'null');
-                return saved?.version===JD_LEGAL_VERSION && Boolean(saved?.acceptedAt);
-            }catch(_){return false;}
+            const saved=readLocalJSON(JD_LEGAL_ACCEPTANCE_KEY,null);
+            return saved?.version===JD_LEGAL_VERSION && Boolean(saved?.acceptedAt);
         }
 
         function syncJdFirstRunOnboarding(){
@@ -12736,12 +12734,10 @@ ${m.text || ''}
         }
 
         function jdAcceptLegalConsent(){
-            try{
-                localStorage.setItem(JD_LEGAL_ACCEPTANCE_KEY,JSON.stringify({
-                    version:JD_LEGAL_VERSION,
-                    acceptedAt:new Date().toISOString()
-                }));
-            }catch(_){}
+            safeSetLocalStorage(JD_LEGAL_ACCEPTANCE_KEY,JSON.stringify({
+                version:JD_LEGAL_VERSION,
+                acceptedAt:new Date().toISOString()
+            }),true);
             document.getElementById('jdLegalConsent')?.classList.remove('open');
             document.getElementById('jdLegalConsent')?.setAttribute('aria-hidden','true');
             const welcome=document.getElementById('jdFirstRunWelcome');
@@ -12763,7 +12759,7 @@ ${m.text || ''}
             if(title)title.textContent=privacy?'Privacy Policy':'Terms of Service';
             overlay.classList.add('open');
             overlay.setAttribute('aria-hidden','false');
-            overlay.querySelector('.jd-legal-scroll')?.scrollTo?.({top:0,behavior:'instant'});
+            overlay.querySelector('.jd-legal-scroll')?.scrollTo?.({top:0,behavior:'auto'});
             setTimeout(()=>refreshLucideIcons(overlay),0);
         }
 
