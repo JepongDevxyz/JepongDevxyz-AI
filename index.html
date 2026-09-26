@@ -3881,6 +3881,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/reference-shell.css">
     <link rel="stylesheet" href="/account-appearance.css">
     <link rel="stylesheet" href="/haptics-notifications.css">
+    <link rel="stylesheet" href="/interactive-proposals.css">
     <link rel="stylesheet" href="/activity-reference.css">
     <link rel="stylesheet" href="/reactbits-micro.css">
 </head>
@@ -8462,7 +8463,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                         const div = document.createElement('div');
                         div.className = `msg ${m.role === 'user' ? 'user' : 'bot'}`;
                         if (m.role === 'user') div.innerHTML = `<div class="user-bubble-body">${renderUserComposerText(m.text || '')}</div>`;
-                        else div.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>`;
+                        else div.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>${renderJdAssistantInteraction(m.interaction)}`;
                         chatBox.appendChild(div);
                     });
                     scrollToBottom(true);
@@ -8806,6 +8807,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     });
                 }
                 if (m.text && m.text.trim()) parts.push({ text: m.text.trim() });
+                if(m.role==='bot'){
+                    const interactionContext=jdInteractionHistoryText(m.interaction);
+                    if(interactionContext)parts.push({text:interactionContext});
+                }
                 return {
                     role: m.role === 'bot' ? 'model' : 'user',
                     parts: parts
@@ -8958,7 +8963,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                localStorage.getItem(JD_NOTIFY_KEY)!=='true')return false;
             const options={
                 body,tag:'jepong-ai-response',
-                icon:'/favicon.ico',badge:'/favicon.ico',
+                icon:'/favicon.ico',badge:'/notification-badge.svg',
                 data:{url:location.origin+location.pathname}
             };
             if('serviceWorker' in navigator){
@@ -10159,7 +10164,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 } else {
                     const botDiv = document.createElement('div');
                     botDiv.className = 'msg bot';
+                    botDiv.setAttribute('data-message-index',String(messageIndex));
                     botDiv.innerHTML = `<div>${renderCustomMarkdown(m.text || '')}</div>
+                        ${renderJdAssistantInteraction(m.interaction)}
                         ${botActionsHTML()}`;
                     const savedActivity=renderJdStoredActivity(m.activity);
                     if(savedActivity)chatBox.appendChild(savedActivity);
@@ -10683,6 +10690,151 @@ ${m.text || ''}
         const PROMPT_SUGGESTIONS={general:['Explain this simply','Compare two options','Help me brainstorm'],school:['Make a reviewer','Explain step-by-step','Quiz me on this'],coder:['Debug my code','Refactor this','Explain this error'],tagalog:['Ipaliwanag nang simple','Gawan ako ng halimbawa','I-summarize ito'],imagen:['Create a poster','Generate a logo idea','Make an illustration'],custom:['Use my custom persona']};
         function renderPromptSuggestions(){const el=document.getElementById('promptSuggestions');if(!el)return;const items=PROMPT_SUGGESTIONS[currentSelectedMode]||PROMPT_SUGGESTIONS.general;el.innerHTML=items.map(x=>`<button class="prompt-chip" onclick="usePromptSuggestion(${JSON.stringify(x).replace(/"/g,'&quot;')})">${escapeHTML(x)}</button>`).join('');}
         function usePromptSuggestion(text){const input=document.getElementById('userInput');input.value=text;autoResizeTextarea(input);input.focus();}
+
+        // Models can return two tiny, machine-readable UI blocks when a user's
+        // request genuinely benefits from a choice or a useful next-step suggestion.
+        // They are stripped from prose and rendered as native JepongDevxyz UI.
+        function parseJdAssistantInteraction(raw=''){
+            let text=String(raw||'');
+            let choice=null;
+            let followups=[];
+
+            const choiceMatch=text.match(/\[\[JD_CHOICE\]\]([\s\S]*?)\[\[\/JD_CHOICE\]\]/i);
+            if(choiceMatch){
+                const body=String(choiceMatch[1]||'');
+                const lines=body.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+                const questionLine=lines.find(line=>/^QUESTION\s*:/i.test(line));
+                const question=String(questionLine||'').replace(/^QUESTION\s*:\s*/i,'').trim().slice(0,240);
+                const options=[];
+                for(const line of lines){
+                    const match=line.match(/^(?:OPTION\s*:\s*|\d+[.)]\s*)(.+)$/i);
+                    if(!match)continue;
+                    const value=String(match[1]||'').trim().slice(0,180);
+                    if(value&&!options.includes(value))options.push(value);
+                    if(options.length>=4)break;
+                }
+                if(question&&options.length>=2)choice={question,options,dismissed:false};
+                text=text.replace(choiceMatch[0],'');
+            }
+
+            const followMatch=text.match(/\[\[JD_FOLLOWUPS\]\]([\s\S]*?)\[\[\/JD_FOLLOWUPS\]\]/i);
+            if(followMatch){
+                const body=String(followMatch[1]||'');
+                for(const line of body.split(/\r?\n/).map(x=>x.trim()).filter(Boolean)){
+                    const match=line.match(/^(?:ITEM\s*:\s*|[-*]\s+|\d+[.)]\s*)(.+)$/i);
+                    if(!match)continue;
+                    const value=String(match[1]||'').trim().slice(0,160);
+                    if(value&&!followups.includes(value))followups.push(value);
+                    if(followups.length>=2)break;
+                }
+                text=text.replace(followMatch[0],'');
+            }
+
+            // Never leak incomplete UI protocol tags into visible assistant prose.
+            text=text
+                .replace(/\[\[\/?JD_(?:CHOICE|FOLLOWUPS)\]\]/gi,'')
+                .replace(/\n{3,}/g,'\n\n')
+                .trim();
+
+            const interaction=(choice||followups.length)?{choice,followups}:null;
+            return {text,interaction};
+        }
+
+        function jdInteractionHistoryText(interaction){
+            const choice=interaction?.choice;
+            if(!choice||!choice.question||!Array.isArray(choice.options)||choice.options.length<2)return '';
+            const options=choice.options.slice(0,4).map((item,index)=>`${index+1}) ${String(item||'').slice(0,180)}`).join(' ');
+            return `[Interactive question shown to the user: ${String(choice.question).slice(0,240)} Choices: ${options}]`;
+        }
+
+        function renderJdAssistantInteraction(interaction){
+            if(!interaction||typeof interaction!=='object')return '';
+            const choice=interaction.choice&&!interaction.choice.dismissed?interaction.choice:null;
+            const options=Array.isArray(choice?.options)?choice.options.slice(0,4):[];
+            const followups=personalizationSettings?.suggestedPrompts===false
+                ?[]
+                :(Array.isArray(interaction.followups)?interaction.followups.slice(0,2):[]);
+            if(!choice&&!followups.length)return '';
+
+            let html='<div class="jd-ai-interaction">';
+            if(choice&&choice.question&&options.length>=2){
+                const optionHtml=options.map((item,index)=>`
+                    <button type="button" class="jd-choice-option" data-choice="${escapeHTML(String(item))}" onclick="submitJdChoiceOption(this)">
+                        <span class="jd-choice-option__number">${index+1}</span>
+                        <span class="jd-choice-option__label">${escapeHTML(String(item))}</span>
+                    </button>`).join('');
+                html+=`
+                    <section class="jd-choice-card" aria-label="Suggested approach">
+                        <div class="jd-choice-card__head">
+                            <span class="jd-choice-card__step">1 of 1</span>
+                            <button type="button" class="jd-choice-card__close" onclick="dismissJdChoice(this)" aria-label="Close suggestion"><i data-lucide="x"></i></button>
+                        </div>
+                        <div class="jd-choice-card__question">${escapeHTML(String(choice.question))}</div>
+                        <div class="jd-choice-card__options">${optionHtml}</div>
+                        <div class="jd-choice-own">
+                            <input type="text" maxlength="300" placeholder="Type your own answer…" aria-label="Type your own answer" oninput="syncJdChoiceOwnButton(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitJdChoiceOwn(this.nextElementSibling)}">
+                            <button type="button" disabled onclick="submitJdChoiceOwn(this)" aria-label="Send your own answer"><i data-lucide="arrow-up"></i></button>
+                        </div>
+                    </section>`;
+            }
+            if(followups.length){
+                html+='<div class="jd-followups" aria-label="Suggested follow-up prompts">'+followups.map(item=>`
+                    <button type="button" class="jd-followup-btn" data-followup="${escapeHTML(String(item))}" onclick="submitJdFollowup(this)">
+                        <i data-lucide="corner-down-right"></i>
+                        <span>${escapeHTML(String(item))}</span>
+                    </button>`).join('')+'</div>';
+            }
+            return html+'</div>';
+        }
+
+        function submitJdInteractionText(text){
+            const value=String(text||'').trim();
+            if(!value||isAIGenerating)return false;
+            const input=document.getElementById('userInput');
+            if(!input)return false;
+            input.value=value;
+            autoResizeTextarea(input);
+            input.focus();
+            void sendMessage();
+            return true;
+        }
+
+        function submitJdChoiceOption(button){
+            const value=button?.dataset?.choice||'';
+            if(!value)return;
+            const card=button.closest('.jd-choice-card');
+            card?.querySelectorAll('.jd-choice-option').forEach(item=>item.classList.toggle('selected',item===button));
+            submitJdInteractionText(value);
+        }
+
+        function syncJdChoiceOwnButton(input){
+            const button=input?.nextElementSibling;
+            if(button)button.disabled=!String(input.value||'').trim();
+        }
+
+        function submitJdChoiceOwn(button){
+            const input=button?.previousElementSibling;
+            submitJdInteractionText(input?.value||'');
+        }
+
+        function submitJdFollowup(button){
+            submitJdInteractionText(button?.dataset?.followup||'');
+        }
+
+        function dismissJdChoice(button){
+            const card=button?.closest('.jd-choice-card');
+            if(!card)return;
+            card.hidden=true;
+            const messageNode=button.closest('.msg.bot');
+            const messageIndex=Number(messageNode?.dataset?.messageIndex);
+            const ctx=getActiveContext();
+            const message=Number.isInteger(messageIndex)&&messageIndex>=0?ctx.sessions?.[ctx.id]?.messages?.[messageIndex]:null;
+            if(message?.interaction?.choice){
+                message.interaction.choice.dismissed=true;
+                if(ctx.type==='normal')saveSessions();
+            }
+        }
+
         function showStudyPanel(){clearWelcomeScreenIfPresent();const d=document.createElement('div');d.className='study-panel';d.innerHTML=`<h3>📚 Study Mode</h3><p>Pili ng tool, tapos ilagay ang topic o lesson sa input.</p><div class="study-tools"><button class="study-tool-btn" onclick="activateStudyTool('quiz')">🧠 Quiz</button><button class="study-tool-btn" onclick="activateStudyTool('reviewer')">📝 Reviewer</button><button class="study-tool-btn" onclick="activateStudyTool('flashcards')">🗂️ Flashcards</button><button class="study-tool-btn" onclick="activateStudyTool('explain')">💡 Explain Simply</button></div>`;chatBox.appendChild(d);scrollToBottom(true);}
         function activateStudyTool(tool){pendingStudyTool=tool;const input=document.getElementById('userInput');const names={quiz:'Quiz me about: ',reviewer:'Make a reviewer about: ',flashcards:'Make flashcards about: ',explain:'Explain simply: '};input.value=names[tool]||'';autoResizeTextarea(input);input.focus();}
         function startTemporaryChat(){startIncognitoChat();document.getElementById('brandTitleText').innerText='JepongDevxyz AI • Temporary';}
@@ -11002,6 +11154,7 @@ ${m.text || ''}
                 }
 
                 let fullResponse = '';
+                let assistantInteraction = null;
                 let responseStreamFinished = false;
                 let responseRevealScheduled = false;
                 let actualProviderUsed = currentSelectedProvider;
@@ -11012,7 +11165,8 @@ ${m.text || ''}
                 // We buffer streamed text, then collapse Activity and reveal the answer together.
                 const renderLiveResponse = (force=false) => {
                     if (!force && !responseStreamFinished) return;
-                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(safeAssistantText(fullResponse))}</div>
+                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
+                        ${renderJdAssistantInteraction(assistantInteraction)}
                         ${botActionsHTML()}`;
                     botMsgElem.style.removeProperty('display');
                     refreshLucideIcons(botMsgElem);
@@ -11072,7 +11226,11 @@ ${m.text || ''}
                     revealFinalResponse();
                 }
 
-                fullResponse = safeAssistantText(fullResponse);
+                {
+                    const parsedUi=parseJdAssistantInteraction(safeAssistantText(fullResponse));
+                    fullResponse=parsedUi.text;
+                    assistantInteraction=parsedUi.interaction;
+                }
                 activePartialResponse = fullResponse;
                 responseStreamFinished = true;
                 const activeActivityCard=document.getElementById('activeAiIndicator');
@@ -11085,7 +11243,7 @@ ${m.text || ''}
 
                 if (ctx.id && ctx.sessions[ctx.id]) {
                     const savedBotIndex=ctx.sessions[ctx.id].messages.length;
-                    ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse, activity:captureJdActivitySnapshot() });
+                    ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse, interaction:assistantInteraction, activity:captureJdActivitySnapshot() });
                     botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                     if (!isIncognito && !isBibleMode) { saveSessions(); maybeGenerateAITitle(ctx.sessions[ctx.id], promptText, fullResponse); }
                 }
@@ -11108,12 +11266,15 @@ ${m.text || ''}
                 if(wasCancelled){
                     finishAIIndicator(true);
                     if(activePartialResponse){
+                        const stoppedUi=parseJdAssistantInteraction(activePartialResponse);
+                        activePartialResponse=stoppedUi.text;
                         botMsgElem.innerHTML=`<div>${renderCustomMarkdown(activePartialResponse)}</div>
+                            ${renderJdAssistantInteraction(stoppedUi.interaction)}
                             ${botActionsHTML({ vote:false, branch:false })}`;
                         refreshLucideIcons(botMsgElem);
                         if(ctx.id && ctx.sessions[ctx.id]){
                             const savedBotIndex=ctx.sessions[ctx.id].messages.length;
-                            ctx.sessions[ctx.id].messages.push({role:'bot',text:activePartialResponse,stopped:true});
+                            ctx.sessions[ctx.id].messages.push({role:'bot',text:activePartialResponse,interaction:stoppedUi.interaction,stopped:true});
                             botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                             if(!isIncognito && !isBibleMode)saveSessions();
                         }
