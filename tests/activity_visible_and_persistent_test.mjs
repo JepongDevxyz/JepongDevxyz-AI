@@ -87,7 +87,7 @@ assert(helper.includes("escapeHTML(String(value||'').slice(0,max))"),
 const restored=between(html,'        function loadChatSession(','        function saveSessions(');
 assert(restored.includes('const savedActivity=renderJdStoredActivity(m.activity)'));
 assert(restored.includes('if(savedActivity)chatBox.appendChild(savedActivity)'));
-assert(html.includes("text: fullResponse, activity:captureJdActivitySnapshot()"));
+assert(html.includes("text: fullResponse, interaction:assistantInteraction, activity:captureJdActivitySnapshot()"));
 assert.equal((html.match(/<lottie-player\b/g)||[]).length,6,
  'Preserve every original Lottie animation and welcome title');
 assert(html.includes('<div class="welcome-title">JepongDevxyz AI</div>'));
