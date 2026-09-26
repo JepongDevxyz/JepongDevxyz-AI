@@ -1270,6 +1270,10 @@ function shouldAutoResearchCore(message=''){
   const t=normalizeIntentText(message);
   if(!t)return false;
 
+  // "Yung latest ngayon ang gawin mo" is a continuation instruction, not a
+  // request to search the internet. It must inherit the preceding task.
+  if(isVagueFreshnessFollowUp(message))return false;
+
   // Explicit research/search requests always count.
   if(/\b(search|research|verify online|check online|find online|look up|hanapin|maghanap|tingnan online|suriin online)\b/i.test(t))return true;
 
@@ -1312,7 +1316,11 @@ function isWebsiteSecurityRequest(message=''){
 }
 
 function buildLiveSearchQuery(message=''){
-  const raw=String(message||'').trim();
+  const incoming=String(message||'').trim();
+  const parts=splitContextualTaskMessage(incoming);
+  const raw=parts.followUp&&isVagueFreshnessFollowUp(parts.followUp)
+    ? String(parts.anchor||incoming).trim()
+    : incoming;
   const t=normalizeIntentText(raw);
   // A conversational request is not a search query. Search for relevant
   // security guidance, not the user's full Filipino sentence or filler words.
@@ -2050,7 +2058,13 @@ function cleanTaskText(message=''){
 }
 
 function historyMessageText(item={}){
-  return String(item?.text ?? item?.content ?? item?.message ?? '').replace(/\s+/g,' ').trim();
+  const direct=item?.text ?? item?.content ?? item?.message;
+  if(typeof direct==='string' && direct.trim())return direct.replace(/\s+/g,' ').trim();
+  if(Array.isArray(item?.parts)){
+    return item.parts.map(part=>typeof part?.text==='string'?part.text:'')
+      .join(' ').replace(/\s+/g,' ').trim();
+  }
+  return '';
 }
 
 function splitContextualTaskMessage(message=''){
@@ -2108,14 +2122,19 @@ function contextualTaskMessage(message='', history=[]){
 
   if(!prior.length)return current;
 
-  // Prefer the most recent concrete task anchor, not simply the immediately
-  // previous tiny follow-up. This keeps "gawin mo yung latest" attached to the
-  // actual project/UI/code request instead of turning "latest" into web research.
-  const ranked=prior.map((text,index)=>({text,index,score:taskAnchorScore(text)}))
-    .sort((a,b)=>b.score-a.score || b.index-a.index);
-  const anchor=ranked[0]?.text || prior.at(-1);
+  // Follow-up context must be RECENT before it is "important". An older long
+  // repository/project prompt must never beat the user's immediately preceding
+  // concrete task just because it contains more keywords.
+  const reversed=[...prior].reverse();
+  const anchor=reversed.find(text=>{
+    const words=normalizeIntentText(text).split(/\s+/).filter(Boolean);
+    return taskAnchorScore(text)>=2 && (words.length>5 || extractPublicUrl(text).length>0 || !looksAmbiguousButLowRisk(text));
+  }) || prior.at(-1);
   const recent=prior.at(-1);
-  const context=(recent&&recent!==anchor?`${anchor} / ${recent}`:anchor).slice(-520);
+  // Include the latest user turn only when it adds concrete context. Tiny
+  // acknowledgements such as "sige"/"okay" must not pollute the task subject.
+  const recentUseful=recent && recent!==anchor && taskAnchorScore(recent)>=2 && !looksAmbiguousButLowRisk(recent);
+  const context=(recentUseful?`${anchor} / ${recent}`:anchor).slice(-520);
   return `${context} / Follow-up: ${current}`;
 }
 
@@ -2604,16 +2623,26 @@ async function performVerification(message='', files=[], emit){
 async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   if(!message)return '';
 
-  const explicitLive=shouldAutoResearch(message)||extractPublicUrl(message).length>0;
+  const fast=Boolean(options.fast);
+  const contextMessage=String(options.contextMessage||'').trim();
+  const contextualParts=splitContextualTaskMessage(contextMessage);
+  const vagueFreshFollowUp=isVagueFreshnessFollowUp(message);
+  const anchoredLive=vagueFreshFollowUp && contextualParts.anchor
+    ? shouldAutoResearchCore(contextualParts.anchor) &&
+      /\b(search|research|news|weather|panahon|forecast|price|presyo|outage|live score|verify online|check online|find online|look up|hanapin|maghanap|tingnan online)\b/i.test(normalizeIntentText(contextualParts.anchor))
+    : false;
+
+  const explicitLive=(!vagueFreshFollowUp&&shouldAutoResearch(message)) ||
+    extractPublicUrl(message).length>0 || anchoredLive;
   // Web Search being enabled is permission, not an instruction. A bare
   // "latest/current/ngayon" follow-up does not launch external research.
   const explicitSearch=/\b(search|research|look up|find online|check online|verify online|hanapin|maghanap|tingnan online)\b/i.test(normalizeIntentText(message));
   const wantsLive=(explicitLive || (Boolean(webSearch)&&explicitSearch)) && !isSimpleCasualMessage(message);
   if(!wantsLive)return '';
-  const fast=Boolean(options.fast);
-  const contextMessage=String(options.contextMessage||'').trim();
-  const useContextQuery=contextMessage && (looksReferential(message)||String(message).trim().split(/\s+/).length<=6);
+
+  const useContextQuery=contextMessage && (looksReferential(message)||vagueFreshFollowUp||String(message).trim().split(/\s+/).length<=6);
   const searchQuery=buildLiveSearchQuery(useContextQuery?contextMessage:message);
+  if(!searchQuery || isVagueFreshnessFollowUp(searchQuery))return '';
 
   // Current date/year questions are answered from the authoritative server clock
   // injected into the system context; no network round trip is needed.
