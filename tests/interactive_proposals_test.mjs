@@ -30,8 +30,7 @@ function between(src,start,end){
 }
 
 const parserSource=between(html,"        function parseJdAssistantInteraction(raw=''){",
-  '
-        function jdInteractionHistoryText(');
+  "\n        function jdInteractionHistoryText(");
 const parse=new Function(parserSource+'\nreturn parseJdAssistantInteraction;')();
 
 const parsed=parse(`Short intro.
