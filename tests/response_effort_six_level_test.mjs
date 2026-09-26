@@ -31,4 +31,25 @@ assert(api.includes('responseEffortRank(effort)>=3'),
 assert(api.includes("personalization={...personalization,intelligence:responseEffort,fastAnswers}"),
   'normalized six-level effort must be carried into provider system instructions');
 
-console.log('PASS: six-level response effort frontend/backend contract');
+assert(api.includes("openRouter:['none','minimal','low','medium','high','xhigh']"),
+  'OpenRouter must preserve all six native effort positions');
+assert(api.includes("gemini:['MINIMAL','LOW','MEDIUM','HIGH','HIGH','HIGH']"),
+  'Gemini thinking-level mapping missing');
+assert(api.includes("reasoning_effort:policy.rank===0?'none':policy.standard"),
+  'Groq Qwen reasoning effort mapping missing');
+assert(api.includes("reasoning_effort:policy.standard"),
+  'Groq GPT-OSS reasoning effort mapping missing');
+assert(api.includes("provider==='mistral' && target==='mistral-small-latest'"),
+  'Mistral native reasoning mapping missing');
+assert(api.includes("provider==='nvidia' && target.includes('nemotron')"),
+  'NVIDIA thinking budget mapping missing');
+assert(api.includes("effortOutputBudgetFor(message,responseEffort)"),
+  'provider generation budget must reflect selected response effort');
+assert(api.includes("responseEffort:args.responseEffort||'Instant'"),
+  'custom API path must receive selected response effort');
+assert(api.includes("responseEffort:normalizeResponseEffort(body?.personalization?.intelligence,body?.personalization?.fastAnswers)"),
+  'automatic continuation must preserve selected response effort');
+assert(api.includes("Retry without only those optional fields") || api.includes("retry once without thinkingConfig"),
+  'native effort compatibility fallback missing');
+
+console.log('PASS: six-level response effort frontend/backend/provider contract');
