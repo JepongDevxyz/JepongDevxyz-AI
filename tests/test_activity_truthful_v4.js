@@ -45,7 +45,7 @@ assert(sse.includes("send('done'"),'completion event must stream');
 const process=between(api,'async function processChat(','\nasync function providerUsageSnapshot');
 assert(process.includes("const taskWork=taskWorkingActivity(contextPlan);") &&
   process.includes("activity(emit,'thinking',taskWork.label,'running',taskWork.kind);") &&
-  process.includes("const first=await runProvider"),
+  process.includes("let first=await runProvider"),
   'task-specific model work must start at the real provider invocation after context/tool operations');
 assert(process.includes('const grouped=new Map();')&&process.includes('else if(textParts){')&&process.includes('activity(emit,id,`Read attached '),
   'actual extracted attachment content must generate a file-specific event');
