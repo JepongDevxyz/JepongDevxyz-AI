@@ -4182,22 +4182,22 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 <input type="file" id="cameraInput" hidden accept="image/*" capture="environment" onchange="handleFileSelect(event)">
                 <input type="file" id="photoInput" hidden multiple accept="image/*,video/*" onchange="handleFileSelect(event)">
 
-                <div class="prompt-bar__menu" id="composerToolSheet" role="listbox" aria-label="Sources" data-kind="at" hidden>
+                <div class="prompt-bar__menu" id="composerToolSheet" role="listbox" aria-label="Add tools" data-kind="at" hidden>
                     <span class="prompt-bar__glow" id="promptBarSourceGlow" aria-hidden="true"></span>
-                    <button type="button" class="prompt-bar__row" role="option" onmousedown="event.preventDefault()" data-prompt-source="files" onclick="composerToolAction('files')">
-                        <span class="prompt-bar__row-icon"><i data-lucide="paperclip"></i></span>
-                        <span class="prompt-bar__row-name">Photos &amp; files</span>
-                        <span class="prompt-bar__row-desc">Upload from this device</span>
-                    </button>
                     <button type="button" class="prompt-bar__row" role="option" onmousedown="event.preventDefault()" data-prompt-source="camera" onclick="composerToolAction('camera')">
                         <span class="prompt-bar__row-icon"><i data-lucide="camera"></i></span>
                         <span class="prompt-bar__row-name">Camera</span>
                         <span class="prompt-bar__row-desc">Take a photo</span>
                     </button>
-                    <button type="button" class="prompt-bar__row" role="option" onmousedown="event.preventDefault()" data-prompt-source="web" onclick="composerToolAction('web')">
-                        <span class="prompt-bar__row-icon"><i data-lucide="globe-2"></i></span>
-                        <span class="prompt-bar__row-name">Web search</span>
-                        <span class="prompt-bar__row-desc">Live results</span>
+                    <button type="button" class="prompt-bar__row" role="option" onmousedown="event.preventDefault()" data-prompt-source="photos" onclick="composerToolAction('photos')">
+                        <span class="prompt-bar__row-icon"><i data-lucide="image"></i></span>
+                        <span class="prompt-bar__row-name">Photos</span>
+                        <span class="prompt-bar__row-desc">Choose photos or videos</span>
+                    </button>
+                    <button type="button" class="prompt-bar__row" role="option" onmousedown="event.preventDefault()" data-prompt-source="files" onclick="composerToolAction('files')">
+                        <span class="prompt-bar__row-icon"><i data-lucide="paperclip"></i></span>
+                        <span class="prompt-bar__row-name">Files</span>
+                        <span class="prompt-bar__row-desc">Upload a file from this device</span>
                     </button>
                     <button type="button" class="prompt-bar__row" role="option" onmousedown="event.preventDefault()" data-prompt-source="library" onclick="closeComposerTools();openLibrary()">
                         <span class="prompt-bar__row-icon"><i data-lucide="library"></i></span>
