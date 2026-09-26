@@ -11027,7 +11027,7 @@ ${m.text || ''}
             // Never let a partially streamed protocol token leak into the answer.
             text=text.replace(/\[\[JD_WORK_NOTE\]\][\s\S]*$/i,'');
             text=text.replace(/\[\[\/?JD_WORK_NOTE\]\]/gi,'');
-            return text.replace(/\n{3,}/g,'\n\n').trimStart();
+            return text.replace(/\n{3,}/g,'\n\n').trim();
         }
 
         function appendJdWorkNote(note=''){
