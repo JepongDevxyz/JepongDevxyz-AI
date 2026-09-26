@@ -139,6 +139,32 @@
 }
 .ai-activity-card.complete .ai-work-commentary{opacity:.9}
 
+.ai-activity-kimi-flow .ai-activity-lead{
+  color:var(--rb-muted);
+  font-size:.9rem;
+  margin-bottom:10px;
+}
+.ai-activity-kimi-flow .ai-work-commentary{
+  padding:10px 0 14px 24px;
+}
+.ai-activity-kimi-flow .ai-work-commentary__text{
+  max-width:66ch;
+  font-size:1rem;
+  line-height:1.62;
+  letter-spacing:-.01em;
+  color:var(--rb-ink);
+}
+.ai-activity-kimi-flow .ai-activity-row{
+  padding:7px 0!important;
+}
+.ai-activity-kimi-flow .ai-activity-label{
+  font-size:.9rem;
+  line-height:1.5;
+}
+.ai-activity-kimi-flow .ai-activity-detail{
+  font-size:.78rem;
+}
+
 .ai-activity-details-btn{
   display:flex;align-items:center;gap:4px;min-height:28px;padding:4px 6px;margin-left:auto;
   border:0;border-radius:9px;background:transparent;color:var(--rb-muted);
