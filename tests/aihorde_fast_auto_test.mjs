@@ -37,7 +37,7 @@ function mockRunner({keys=[],generate,clock={now:1000000}}){
     getProviderKeys:()=>keys,shuffle:x=>x,resolveAIHordeModels:async()=>ranked,
     buildOpenAIMessages:(_h,message)=>[{role:'user',content:message}],
     providerLifecycleActivity:()=>{},providerLabel:x=>x,
-    outputBudgetFor:()=>4096,temperatureFor:()=>0.4,
+    outputBudgetFor:()=>4096,effortOutputBudgetFor:()=>4096,responseEffortRank:()=>0,temperatureFor:()=>0.4,
     passthroughHeaders:()=>({}),Response:FakeResponse,
     AbortSignal:{timeout:ms=>({timeoutMs:ms})},
     summarizeAIHordeError:()=> 'request failed',isAIHordeCredentialFailure:(status)=>status===401,
