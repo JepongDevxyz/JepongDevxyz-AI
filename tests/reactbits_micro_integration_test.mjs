@@ -51,6 +51,14 @@ for (const token of [
 }
 assert(html.includes('id="promptBarSendPath"'),'PromptBar morph path hook missing');
 assert(html.includes('id="responseEffortTrack"'),'PromptBar effort slider missing');
+assert(html.includes('aria-valuemax="5"'),'PromptBar six-step slider range missing');
+for (const level of ['Instant','Low','Medium','High','Extra','Max']) {
+  assert(html.includes(level), 'PromptBar effort level missing: '+level);
+}
+assert((html.match(/data-effort-index="/g)||[]).length >= 6,'PromptBar must render six discrete effort stops');
+assert(html.includes("const RESPONSE_EFFORT_LEVELS=['Instant','Low','Medium','High','Extra','Max']"),
+ 'PromptBar six-level state model missing');
+assert(js.includes("toLowerCase()==='max'"),'ReactBits spark/max state must be tied to Max, not High');
 assert(html.includes('id="composerToolSheet"') && html.includes('data-kind="at"'),
  'PromptBar source menu missing');
 assert(!html.includes('prompt-bar__vision'),'custom extra bottom-bar Vision control must not alter ReactBits layout');

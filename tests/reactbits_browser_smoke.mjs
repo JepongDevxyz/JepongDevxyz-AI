@@ -149,7 +149,18 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
 
   toggleResponseEffortMenu({stopPropagation(){}},true);
   const effortMenu=document.getElementById('responseEffortMenu');
-  const effortOpen=!effortMenu.hidden && !!effortMenu.querySelector('.prompt-bar__effort-track');
+  const effortTrack=document.getElementById('responseEffortTrack');
+  const effortOpen=!effortMenu.hidden && !!effortTrack;
+  const effortLevels=[];
+  for(let i=0;i<6;i++){
+    setResponseEffortByIndex(i,{closeMenu:false,toast:false});
+    effortLevels.push({
+      label:document.getElementById('responseEffortLabel')?.textContent||'',
+      now:effortTrack?.getAttribute('aria-valuenow')||'',
+      max:bar.hasAttribute('data-max')
+    });
+  }
+  const effortDots=effortTrack?.querySelectorAll('.prompt-bar__effort-dot').length||0;
   closeResponseEffortMenu();
 
   updateGenerationActionButton(true,false);
@@ -167,6 +178,7 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
     field:!!bar.querySelector('.prompt-bar__field'),
     controls:!!bar.querySelector('.prompt-bar__bar'),
     chips:!!bar.querySelector('#filePreviewContainer.prompt-bar__chips'),
+    effortLevels,effortDots,
     arrowBefore,stopPath,arrowAfter
   });
 })()`));
@@ -176,6 +188,19 @@ assert.equal(prompt.models,'false');
 assert(prompt.armed,'PromptBar send never armed');
 assert(prompt.sourceOpen,'ReactBits source menu did not open');
 assert(prompt.effortOpen,'ReactBits effort slider did not open');
+assert.equal(prompt.effortDots,6,'ReactBits effort slider must expose six stops');
+assert.deepEqual(
+  prompt.effortLevels.map(x=>x.label),
+  ['Instant','Low','Medium','High','Extra','Max'],
+  'ReactBits effort slider labels/order mismatch'
+);
+assert.deepEqual(
+  prompt.effortLevels.map(x=>x.now),
+  ['0','1','2','3','4','5'],
+  'ReactBits effort slider aria positions mismatch'
+);
+assert.equal(prompt.effortLevels.at(-1).max,true,'Max effort must enable the ReactBits max/spark state');
+assert.equal(prompt.effortLevels.slice(0,-1).some(x=>x.max),false,'Only Max may enable the ReactBits max/spark state');
 assert(prompt.field&&prompt.controls&&prompt.chips,'ReactBits PromptBar hierarchy missing');
 assert.notEqual(prompt.stopPath,prompt.arrowBefore,'send glyph did not morph to stop');
 assert.equal(prompt.arrowAfter,prompt.arrowBefore,'send glyph did not morph back to arrow');

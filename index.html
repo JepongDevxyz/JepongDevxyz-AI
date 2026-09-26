@@ -3985,15 +3985,18 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 <div class="prompt-bar__menu" id="responseEffortMenu" role="dialog" aria-label="Effort" data-kind="effort" hidden>
                     <div class="prompt-bar__effort-head">
                         <span class="prompt-bar__effort-title">Effort</span>
-                        <span class="prompt-bar__effort-level" id="responseEffortMenuLevel">Medium</span>
+                        <span class="prompt-bar__effort-level" id="responseEffortMenuLevel">Instant</span>
                         <span class="prompt-bar__effort-help" title="Higher effort thinks longer before answering"><i data-lucide="circle-help"></i></span>
                     </div>
                     <div class="prompt-bar__effort-ends"><span>Faster</span><span>Smarter</span></div>
-                    <div class="prompt-bar__effort-track" id="responseEffortTrack" role="slider" tabindex="0" aria-label="Effort" aria-valuemin="0" aria-valuemax="2" aria-valuenow="1" aria-valuetext="Medium">
+                    <div class="prompt-bar__effort-track" id="responseEffortTrack" role="slider" tabindex="0" aria-label="Effort" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="Instant">
                         <span class="prompt-bar__effort-fill"></span>
                         <i class="prompt-bar__effort-dot" data-effort-index="0"></i>
                         <i class="prompt-bar__effort-dot" data-effort-index="1"></i>
                         <i class="prompt-bar__effort-dot" data-effort-index="2"></i>
+                        <i class="prompt-bar__effort-dot" data-effort-index="3"></i>
+                        <i class="prompt-bar__effort-dot" data-effort-index="4"></i>
+                        <i class="prompt-bar__effort-dot" data-effort-index="5"></i>
                         <span class="prompt-bar__effort-thumb"></span>
                     </div>
                 </div>
@@ -4020,7 +4023,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                         <span id="responseEffortWrap">
                             <button type="button" class="prompt-bar__pick" id="responseEffortBtn" aria-label="Choose effort" aria-expanded="false" onmousedown="event.preventDefault()" onclick="toggleResponseEffortMenu(event)">
                                 <i data-lucide="sparkles"></i>
-                                <span id="responseEffortLabel">Medium</span>
+                                <span id="responseEffortLabel">Instant</span>
                             </button>
                         </span>
 
@@ -4515,7 +4518,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             </div>
             <div class="ps-voice-settings">
               <div class="ps-voice-setting-row"><strong>Model</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('voiceModel','Model',[['Live','Quick conversational behavior'],['Standard','Classic response behavior']],this)"><span id="psVoicePageModel">Live</span><i data-lucide="chevron-down"></i></button></div>
-              <div class="ps-voice-setting-row"><strong>Intelligence</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('intelligence','Response effort',[['Instant','Fastest direct response'],['Medium','Balanced speed and depth'],['High','More thorough quality pass']],this)"><span id="psVoicePageIntelligence">Instant</span><i data-lucide="chevron-down"></i></button></div>
+              <div class="ps-voice-setting-row"><strong>Intelligence</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('intelligence','Response effort',[['Instant','Fastest direct response'],['Low','Light reasoning with a quick check'],['Medium','Balanced speed and depth'],['High','More deliberate reasoning and checking'],['Extra','Deeper analysis and verification'],['Max','Maximum available deliberation and verification']],this)"><span id="psVoicePageIntelligence">Instant</span><i data-lucide="chevron-down"></i></button></div>
               <div class="ps-voice-setting-row"><strong>Language</strong><button class="ps-voice-value" onclick="openPersonalizationPicker('language','Language',PERSONALIZATION_LANGUAGES.map(x=>[x,'']),this)"><span id="psVoicePageLanguage">Auto-detect</span><i data-lucide="chevron-down"></i></button></div>
             </div>
             <div class="ps-voice-sliders">
@@ -5135,39 +5138,48 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
         function normalizeResponseEffortClient(value='Instant') {
             const raw=String(value||'Instant').trim().toLowerCase();
+            if(raw==='max'||raw==='maximum')return 'Max';
+            if(raw==='extra'||raw==='xhigh'||raw==='extra-high')return 'Extra';
             if(raw==='high'||raw==='deep')return 'High';
             if(raw==='medium'||raw==='balanced')return 'Medium';
+            if(raw==='low'||raw==='light')return 'Low';
             return 'Instant';
         }
 
-        // Migrate older Balanced/Deep values and repair inconsistent saved Fast Answers state.
+        const RESPONSE_EFFORT_LEVELS=['Instant','Low','Medium','High','Extra','Max'];
+
+        // Migrate older Balanced/Deep values while preserving Instant as a real selectable level.
         personalizationSettings.intelligence=normalizeResponseEffortClient(personalizationSettings.intelligence);
         if(personalizationSettings.fastAnswers===true){
             personalizationSettings.intelligence='Instant';
-        }else if(personalizationSettings.intelligence==='Instant'){
-            personalizationSettings.intelligence='Medium';
         }
+        personalizationSettings.fastAnswers=personalizationSettings.intelligence==='Instant';
 
         function currentResponseEffort(){
             return normalizeResponseEffortClient(personalizationSettings.intelligence);
         }
 
         function responseEffortIndex(level=currentResponseEffort()){
-            return level==='High'?2:level==='Medium'?1:0;
+            const index=RESPONSE_EFFORT_LEVELS.indexOf(normalizeResponseEffortClient(level));
+            return index>=0?index:0;
         }
 
         function responseEffortStepAt(index){
-            const ratio=index/2;
+            const maxIndex=RESPONSE_EFFORT_LEVELS.length-1;
+            const safe=Math.max(0,Math.min(maxIndex,Number(index)||0));
+            const ratio=maxIndex?safe/maxIndex:0;
             return `calc(11px + (100% - 22px) * ${ratio})`;
         }
 
         function responseEffortFillAt(index){
-            return index===2?'100%':`calc(${responseEffortStepAt(index)} + 7px)`;
+            const maxIndex=RESPONSE_EFFORT_LEVELS.length-1;
+            return Number(index)>=maxIndex?'100%':`calc(${responseEffortStepAt(index)} + 7px)`;
         }
 
         function updateResponseEffortUI(){
             const effort=currentResponseEffort();
             const index=responseEffortIndex(effort);
+            const maxIndex=RESPONSE_EFFORT_LEVELS.length-1;
             const label=document.getElementById('responseEffortLabel');
             const menuLevel=document.getElementById('responseEffortMenuLevel');
             const btn=document.getElementById('responseEffortBtn');
@@ -5178,18 +5190,21 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(menuLevel)menuLevel.textContent=effort;
             if(btn){
                 btn.title=`Response effort: ${effort}`;
-                btn.toggleAttribute('data-max',effort==='High');
+                btn.toggleAttribute('data-max',effort==='Max');
             }
             if(track){
+                track.setAttribute('aria-valuemin','0');
+                track.setAttribute('aria-valuemax',String(maxIndex));
                 track.setAttribute('aria-valuenow',String(index));
                 track.setAttribute('aria-valuetext',effort);
                 track.style.setProperty('--pb-effort-x',responseEffortStepAt(index));
                 track.style.setProperty('--pb-effort-fill',responseEffortFillAt(index));
                 track.querySelectorAll('.prompt-bar__effort-dot').forEach((dot,i)=>{
                     dot.style.left=responseEffortStepAt(i);
+                    dot.toggleAttribute('data-active',i<=index);
                 });
             }
-            const maxed=effort==='High';
+            const maxed=effort==='Max';
             bar?.toggleAttribute('data-max',maxed);
             field?.toggleAttribute('data-max',maxed);
             window.JDReactBits?.syncPrompt?.();
@@ -5235,9 +5250,9 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         }
 
         function setResponseEffortByIndex(index,options={}){
-            const levels=['Instant','Medium','High'];
-            const next=Math.max(0,Math.min(2,Math.round(Number(index)||0)));
-            setResponseEffort(levels[next],options);
+            const maxIndex=RESPONSE_EFFORT_LEVELS.length-1;
+            const next=Math.max(0,Math.min(maxIndex,Math.round(Number(index)||0)));
+            setResponseEffort(RESPONSE_EFFORT_LEVELS[next],options);
         }
 
         function setResponseEffortFromPointer(event){
@@ -5245,14 +5260,15 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(!track)return;
             const rect=track.getBoundingClientRect();
             const k=(event.clientX-rect.left-11)/Math.max(1,rect.width-22);
-            setResponseEffortByIndex(Math.round(Math.max(0,Math.min(1,k))*2),{closeMenu:false,toast:false});
+            const maxIndex=RESPONSE_EFFORT_LEVELS.length-1;
+            setResponseEffortByIndex(Math.round(Math.max(0,Math.min(1,k))*maxIndex),{closeMenu:false,toast:false});
         }
 
         function syncFastAnswersWithEffort(enabled){
             if(enabled){
                 setResponseEffort('Instant',{closeMenu:false,toast:false});
             }else{
-                const next=currentResponseEffort()==='Instant'?'Medium':currentResponseEffort();
+                const next=currentResponseEffort()==='Instant'?'Low':currentResponseEffort();
                 setResponseEffort(next,{closeMenu:false,toast:false});
             }
         }
@@ -5277,6 +5293,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const track=document.getElementById('responseEffortTrack');
             if(document.activeElement!==track)return;
             const current=responseEffortIndex();
+            const maxIndex=RESPONSE_EFFORT_LEVELS.length-1;
             if(e.key==='ArrowRight'||e.key==='ArrowUp'){
                 e.preventDefault();setResponseEffortByIndex(current+1,{closeMenu:false,toast:false});
             }else if(e.key==='ArrowLeft'||e.key==='ArrowDown'){
@@ -5284,7 +5301,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             }else if(e.key==='Home'){
                 e.preventDefault();setResponseEffortByIndex(0,{closeMenu:false,toast:false});
             }else if(e.key==='End'){
-                e.preventDefault();setResponseEffortByIndex(2,{closeMenu:false,toast:false});
+                e.preventDefault();setResponseEffortByIndex(maxIndex,{closeMenu:false,toast:false});
             }else if(e.key==='Escape'){
                 closeResponseEffortMenu();
                 document.getElementById('userInput')?.focus({preventScroll:true});

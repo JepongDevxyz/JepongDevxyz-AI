@@ -259,7 +259,7 @@
       effort.toggleAttribute('data-on',effortOpen);
     }
 
-    var maxed=String(effortLabel?.textContent||'').trim().toLowerCase()==='high';
+    var maxed=String(effortLabel?.textContent||'').trim().toLowerCase()==='max';
     bar.toggleAttribute('data-max',maxed);
     field?.toggleAttribute('data-max',maxed);
     effort?.toggleAttribute('data-max',maxed);
