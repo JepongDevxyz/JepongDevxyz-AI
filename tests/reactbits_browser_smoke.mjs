@@ -130,26 +130,55 @@ const bell=JSON.parse(await evaluate(`(()=>{
 })()`));
 assert.equal(bell.off,'false');assert.equal(bell.on,'true');assert.equal(bell.button,'false');
 
-// 3/6: PromptBar follows the real send/stop state.
-const prompt=JSON.parse(await evaluate(`(()=>{
+// 3/6: PromptBar uses the ReactBits menu/slider/chips and morphs send -> stop.
+const prompt=JSON.parse(await evaluate(`(async()=>{
   const bar=document.getElementById('promptBar');
   const input=document.getElementById('userInput');
   const send=document.getElementById('mainActionBtn');
-  input.value='hello';input.dispatchEvent(new Event('input',{bubbles:true}));
+  const path=document.getElementById('promptBarSendPath');
+
+  input.value='hello';
+  input.dispatchEvent(new Event('input',{bubbles:true}));
   const armed=send.hasAttribute('data-armed');
+  const arrowBefore=path?.getAttribute('d')||'';
+
+  toggleComposerTools({stopPropagation(){}},true);
+  const sourceMenu=document.getElementById('composerToolSheet');
+  const sourceOpen=!sourceMenu.hidden && sourceMenu.matches('.prompt-bar__menu[data-kind="at"]');
+  closeComposerTools();
+
+  toggleResponseEffortMenu({stopPropagation(){}},true);
+  const effortMenu=document.getElementById('responseEffortMenu');
+  const effortOpen=!effortMenu.hidden && !!effortMenu.querySelector('.prompt-bar__effort-track');
+  closeResponseEffortMenu();
+
   updateGenerationActionButton(true,false);
-  const busy=bar.dataset.busy;
-  const stop=!!document.querySelector('#mainActionBtn .prompt-bar__stop');
+  await new Promise(r=>setTimeout(r,280));
+  const busy=bar.hasAttribute('data-busy');
+  const stopPath=path?.getAttribute('d')||'';
+
   updateGenerationActionButton(false,false);
+  await new Promise(r=>setTimeout(r,280));
+  const idle=!bar.hasAttribute('data-busy');
+  const arrowAfter=path?.getAttribute('d')||'';
+
   return JSON.stringify({
-    busy,stop,idle:bar.dataset.busy,models:bar.dataset.models,armed,
+    busy,idle,models:bar.dataset.models,armed,sourceOpen,effortOpen,
     field:!!bar.querySelector('.prompt-bar__field'),
-    controls:!!bar.querySelector('.prompt-bar__bar')
+    controls:!!bar.querySelector('.prompt-bar__bar'),
+    chips:!!bar.querySelector('#filePreviewContainer.prompt-bar__chips'),
+    arrowBefore,stopPath,arrowAfter
   });
 })()`));
-assert.equal(prompt.busy,'true');assert(prompt.stop,'PromptBar stop state missing');
-assert.equal(prompt.idle,'false');assert.equal(prompt.models,'false');assert(prompt.armed,'PromptBar send never armed');
-assert(prompt.field&&prompt.controls,'PromptBar field/control structure missing');
+assert(prompt.busy,'PromptBar busy attribute missing');
+assert(prompt.idle,'PromptBar busy attribute did not clear');
+assert.equal(prompt.models,'false');
+assert(prompt.armed,'PromptBar send never armed');
+assert(prompt.sourceOpen,'ReactBits source menu did not open');
+assert(prompt.effortOpen,'ReactBits effort slider did not open');
+assert(prompt.field&&prompt.controls&&prompt.chips,'ReactBits PromptBar hierarchy missing');
+assert.notEqual(prompt.stopPath,prompt.arrowBefore,'send glyph did not morph to stop');
+assert.equal(prompt.arrowAfter,prompt.arrowBefore,'send glyph did not morph back to arrow');
 
 // 4/6: RefineFrame complete initializes in-browser.
 const refine=JSON.parse(await evaluate(`(()=>{
