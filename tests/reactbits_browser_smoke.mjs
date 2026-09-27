@@ -90,7 +90,7 @@ assert(initial.squish>=3,'SquishSwitch controls did not render');
 assert.equal(initial.old,0,'legacy component markup still rendered');
 
 // 1/6: frame-match the supplied Work Activity recording.
-const activity=JSON.parse(await evaluate(`(()=>{
+const activity=JSON.parse(await evaluate(`(async()=>{
   showAIIndicator('Build the requested dashboard',[]);
   appendActivityEvent({id:'task-context',label:'Built the file',kind:'process',state:'completed'});
   appendActivityEvent({id:'web-search',label:'Searching the web',kind:'web',state:'running'});
@@ -99,6 +99,7 @@ const activity=JSON.parse(await evaluate(`(()=>{
   appendActivityEvent({id:'generation',label:'Generating the response',kind:'generate',state:'running'});
   appendActivityEvent({id:'thinking',label:'Preparing implementation',kind:'build',state:'running'});
   appendJdWorkNote('May isang importanteng production detail na kailangan isaalang-alang.');
+  await drainActivityPlayback();
   const card=document.getElementById('activeAiIndicator');
   const rows=[...card.querySelectorAll('.ai-activity-row')];
   const web=rows.find(x=>x.dataset.activityId==='web-search');
