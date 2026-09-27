@@ -25,8 +25,12 @@ assert(css.includes('.jd-thoughts-overlay.open{display:flex}'));
 assert(css.includes('.jd-thoughts-list'));
 assert(css.includes('.thought-line__head{'),
  'ThoughtLine header styling must replace the legacy summary row');
-assert(css.includes('.thought-cluster__dot'),
- 'Reference four-dot thought status styling must be active');
+assert(css.includes('.ai-activity-card.reference-work-flow .ai-activity-header-actions{display:none!important}'),
+ 'Frame-matched Work surface must not show the old Thinking/Thought for header');
+assert(css.includes('font-size:15.5px') && css.includes('font-size:16px'),
+ 'Reference status/commentary typography calibration missing');
+assert(css.includes('.ai-activity-row.ai-activity-iconless'),
+ 'Plain process rows must align like the supplied Work recording');
 assert.equal((html.match(/<lottie-player/g)||[]).length,6,'Preserve original welcome animations');
 assert(html.includes('<div class="welcome-title">JepongDevxyz AI</div>'));
 
@@ -57,14 +61,20 @@ assert.equal(normalize({id:'stream-open',kind:'process',label:'Streaming'}),null
 assert.equal(normalize({id:'live-progress-4',kind:'process',label:'fake scheduled work'}),null);
 assert.equal(normalize({id:'task-context',kind:'process',state:'completed',label:'Checking requested design'}).label,'Checking requested design');
 assert.equal(normalize({id:'web-search',kind:'web',state:'running',label:'Searching live web'}).label,'Searching live web');
+assert.equal(normalize({id:'thinking',kind:'build',state:'running',label:'Preparing implementation'}).label,'Thinking');
+assert.equal(normalize({id:'generation',kind:'generate',state:'running',label:'Generating response'}).visibility,'details');
 
 const append=between(html,'        function appendActivityEvent(evt = {}) {','        function finishAIIndicator(');
 assert(append.includes("if(id==='task-context')"),'Backend task-context must become a reference-style lead');
 assert(append.includes("lead.textContent=String(normalized.label||'').slice(0,220)"));
 assert(append.includes('syncJdThoughts();'),'New real events must reach an already-open Thoughts sheet');
 assert(append.includes('ChatGPT-style activity history: keep completed statuses visible in order.'));
-assert(append.includes("if(summary && card.dataset.finalized!=='true')summary.textContent='Thinking';"),
- 'ThoughtLine header must remain stable while exact real milestones stay in the lead/list');
+assert(append.includes("const detailsOnly = normalized.visibility==='details'"),
+ 'Low-level provider/generation plumbing must be excluded from the primary reference surface');
+assert(append.includes("const iconless = id==='thinking'"),
+ 'Thinking/process work must use the no-icon reference row');
+assert(append.includes("scrollToBottom(false)"),
+ 'Reference activity growth must keep the newest status above the composer');
 assert(append.includes("card.dataset.taskSummary=String(normalized.label||'').slice(0,220)"),
  'Task-specific context must stay separate from provider/tool plumbing');
 assert(!append.includes("appendActivityEvent({"),
@@ -76,4 +86,4 @@ const reveal=between(html,'                const revealFinalResponse = (elapsedM
 assert(reveal.includes('finishAIIndicator(true, elapsedMs);'));
 assert(reveal.includes('requestAnimationFrame(() => requestAnimationFrame(() => {'),
  'Activity must finalize before the reply is revealed');
-console.log('PASS: video-reference four-dot status, elapsed Thought for header, real SSE milestone lead/list, live Thoughts sheet, deduped activity, reply sequencing, and animations preserved.');
+console.log('PASS: frame-matched Work activity surface, exact primary/secondary status split, inline Thinking row, commentary flow, auto-scroll, and truthful SSE sequencing.');
