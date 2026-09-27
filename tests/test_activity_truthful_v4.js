@@ -47,18 +47,19 @@ assert(sse.includes("if(!data || data.type!=='activity')return;")&&sse.includes(
   'real tool events must be validated and streamed');
 assert(sse.includes("send('done'"),'completion event must stream');
 const process=between(api,'async function processChat(','\nasync function providerUsageSnapshot');
-assert(process.includes("const taskWork=taskWorkingActivity(contextPlan);") &&
-  process.includes("activity(emit,'thinking',taskWork.label,'running',taskWork.kind);") &&
+assert(process.includes("activity(emit,'task-work',activityBlueprint.work,'completed','process','')") &&
+  process.includes("activity(emit,'thinking','Thinking','running','process','')") &&
   process.includes("let first=await runProvider"),
-  'task-specific model work must start at the real provider invocation after context/tool operations');
+  'selected-model work trace must end in the reference Thinking state at the real provider invocation');
 assert(process.includes('const grouped=new Map();')&&process.includes('else if(textParts){')&&process.includes('activity(emit,id,`Read attached '),
   'actual extracted attachment content must generate a file-specific event');
 const show=between(ui,'function showAIIndicator(','function toggleActivityDetails(');
-assert(show.includes('real rows come only from backend/tool/provider milestones.') &&
+assert(show.includes("startup.dataset.activityId='client-thinking'") &&
   !show.includes("appendActivityEvent({id:'task-context'") &&
   !show.includes("appendActivityEvent({id:'request-submitted'"),
-  'client may show a temporary literal task lead but must not synthesize timeline rows before backend events');
-assert(!show.includes("appendActivityEvent({id:'thinking'"),'do not put Thinking ahead of tool work');
+  'client may show only the temporary reference Thinking row before backend events');
+assert(!show.includes("appendActivityEvent({id:'thinking'"),
+  'do not synthesize a server Thinking milestone on the client');
 const streamUI=between(ui,"if (contentType.includes('text/event-stream')) {","\n                {\n                    fullResponse=stripJdWorkNotes(fullResponse);");
 const textHandler=between(streamUI,'text: (payload) => {','\n                        artifact:');
 assert(!textHandler.includes('renderLiveResponse('),'answer must stay hidden during Activity');
