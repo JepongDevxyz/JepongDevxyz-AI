@@ -3822,8 +3822,8 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .composer-tool-icon{width:36px!important;height:36px!important;min-width:36px!important}.composer-tool-icon i,.composer-tool-icon svg{width:19px!important;height:19px!important}
 /* consolidated mobile composer / scroll / activity fixes */
 @media(max-width:700px){
-.floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;bottom:calc(env(safe-area-inset-bottom) + 86px)!important;transform:translateX(-50%)!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:50%!important;display:none;align-items:center!important;justify-content:center!important;z-index:72!important}
-.floating-scroll-pill.show{display:flex!important}.floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:22px!important}.floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important}
+.floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;bottom:calc(var(--jd-composer-reserve, 88px) + env(safe-area-inset-bottom,0px) + 18px)!important;transform:translateX(-50%)!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:50%!important;display:none;align-items:center!important;justify-content:center!important;z-index:72!important}
+.floating-scroll-pill.active{display:flex!important}.floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:22px!important}.floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important}
 .composer-tool-sheet{left:10px!important;right:auto!important;width:min(218px,calc(100vw - 28px))!important;max-height:min(60dvh,340px)!important;padding:6px!important;border-radius:20px!important}
 .composer-tool-btn{min-height:45px!important;padding:4px 7px!important;gap:9px!important;font-size:.84rem!important}.composer-tool-icon{width:35px!important;height:35px!important;flex:0 0 35px!important}
 
@@ -6035,8 +6035,13 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         let jdScrollUiTimer=null;
         function syncChatComposerReserve(){
             const input=document.getElementById('inputContainer');
-            const h=Math.ceil(input?.getBoundingClientRect?.().height||0);
-            document.documentElement.style.setProperty('--jd-composer-reserve',`${Math.max(88,h)}px`);
+            const rect=input?.getBoundingClientRect?.();
+            const h=Math.ceil(rect?.height||0);
+            const viewportHeight=Math.ceil(window.visualViewport?.height||window.innerHeight||document.documentElement.clientHeight||0);
+            const viewportTop=Math.ceil(window.visualViewport?.offsetTop||0);
+            const composerTop=Math.ceil(rect?.top||viewportHeight);
+            const visibleComposerReserve=Math.max(88, viewportTop + viewportHeight - composerTop, h);
+            document.documentElement.style.setProperty('--jd-composer-reserve',`${visibleComposerReserve}px`);
         }
         if(typeof ResizeObserver!=='undefined'){
             const jdComposerObserver=new ResizeObserver(syncChatComposerReserve);
