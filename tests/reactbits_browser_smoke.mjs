@@ -37,7 +37,8 @@ ws.addEventListener('message',event=>{
     return;
   }
   if(msg.method==='Runtime.exceptionThrown'){
-    runtimeErrors.push(msg.params?.exceptionDetails?.text||'Runtime exception');
+    const details=msg.params?.exceptionDetails;
+    runtimeErrors.push(details?.exception?.description||details?.exception?.value||details?.text||'Runtime exception');
   }
   if(msg.method==='Runtime.consoleAPICalled'&&msg.params?.type==='error'){
     const text=(msg.params?.args||[]).map(x=>x.value??x.description??'').join(' ');
