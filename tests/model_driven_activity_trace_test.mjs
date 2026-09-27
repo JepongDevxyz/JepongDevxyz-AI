@@ -12,7 +12,7 @@ assert(api.includes("The Activity labels, TRACE, and RESPONSE_CONTRACT must desc
   'Activity and final response must share one semantic plan');
 assert(api.includes("const plannedTrace=Array.isArray(activityBlueprint?.trace)"),
   'runtime must consume the model-created trace');
-assert(api.includes("id:'planned-trace-'+index"),
+assert(api.includes("activity(emit,'planned-trace-'+index"),
   'runtime must emit trace milestones');
 assert(api.includes("activityTrace:plannedTrace"),
   'trace must survive into the response stream lifecycle');
