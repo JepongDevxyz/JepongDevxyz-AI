@@ -1486,7 +1486,7 @@ function parseQualityPreflightOutput(raw='', profile={}){
     const rx=new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*(.+?)(?=\\n\\s*[A-Z_]+\\s*:|$)','i');
     return cleanActivityLabel(text.match(rx)?.[1]||'',max);
   };
-  const publicMatch=text.match(/PUBLIC_UPDATE\s*:\s*([\s\S]*?)(?=\n\s*INTERNAL_BRIEF\s*:|$)/i);
+  const publicMatch=text.match(/PUBLIC_UPDATE\s*:\s*([\s\S]*?)(?=\n\s*(?:RESPONSE_CONTRACT|INTERNAL_BRIEF)\s*:|$)/i);
   const briefMatch=text.match(/INTERNAL_BRIEF\s*:\s*([\s\S]*)$/i);
   const cleanPublic=String(publicMatch?.[1]||'')
     .replace(/\s+/g,' ').trim().slice(0,900);
