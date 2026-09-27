@@ -8,6 +8,9 @@
     "api/codex-account.js": {
       "includeFiles": "codex-runner/**",
       "maxDuration": 60
+    },
+    "api/chat.js": {
+      "maxDuration": 300
     }
   }
 }
