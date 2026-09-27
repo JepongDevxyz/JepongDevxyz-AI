@@ -35,11 +35,11 @@ assert(api.includes("buildGeneratedArtifact(body.message||'',generatedText,body.
   'Artifact builder must see the project attachments');
 assert(api.includes("'Packaging updated code into a ZIP'"),
   'ZIP packaging must emit a truthful activity milestone');
-assert(api.includes('FILE: path/filename.ext'),
+assert(api.includes('FILE: path/filename.ext') || api.includes('FILE: relative/path/filename.ext'),
   'Project artifact prompt must require exact file paths');
 
 const render=between(ui,'                const renderLiveResponse = (force=false) => {','                botMsgElem.style.setProperty');
-assert(render.includes('pendingArtifacts.forEach(artifact=>attachGeneratedArtifact(botMsgElem,artifact))'),
+assert(render.includes('pendingArtifacts.forEach(artifact=>{void attachGeneratedArtifact(botMsgElem,artifact,historyFiles);})'),
   'Generated files must be attached after response innerHTML is rendered');
 const sse=between(ui,"if (contentType.includes('text/event-stream')) {",'                } else {');
 assert(sse.includes('pendingArtifacts.push(payload)'),
