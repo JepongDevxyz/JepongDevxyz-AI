@@ -5193,6 +5193,20 @@ async function processChat(body, emit) {
     }
   }
 
+  // The selected model can provide a variable-length public trace. We advance
+  // these milestones only at truthful lifecycle boundaries; real tool events
+  // remain separate and are never fabricated from the plan.
+  const activityTrace=Array.isArray(activityBlueprint?.trace)
+    ? activityBlueprint.trace.filter(Boolean).slice(0,8)
+    : [];
+  let activityTraceCursor=0;
+  const advanceActivityTrace=(state='completed')=>{
+    if(activityTraceCursor>=activityTrace.length)return;
+    const index=activityTraceCursor++;
+    activity(emit,'planned-trace-'+index,activityTrace[index],state,activityBlueprint.kind||'process','');
+  };
+  if(activityTrace.length)advanceActivityTrace('completed');
+
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   const projectInspectionContext=inspectUploadedProject(files,emit);
   if(files.length){
@@ -5232,6 +5246,7 @@ async function processChat(body, emit) {
     message:taskMessage,
     webSearch:webSearch===true
   });
+  if(activityTrace.length)advanceActivityTrace('completed');
 
   // Analysis via another provider is itself model fallback: never do it when OFF.
   const visualParts=mediaAttachments(files);
@@ -5307,6 +5322,7 @@ async function processChat(body, emit) {
   }
   const providedLinkContext=await inspectProvidedLinks(taskMessage,emit);
   const verificationContext=await performVerification(taskMessage,files,emit);
+  if(activityTrace.length)advanceActivityTrace('completed');
 
   // A site-security request needs evidence about the specific site in context.
   // Never launch a generic web search for a vague security follow-up; inspect the
@@ -5526,6 +5542,9 @@ async function processChat(body, emit) {
     }catch(_){}
   }
 
+  if(activityTrace.length){
+    while(activityTraceCursor<Math.max(0,activityTrace.length-1))advanceActivityTrace('completed');
+  }
   contextPlan.activityBlueprint=activityBlueprint;
   if(activityBlueprint?.responseContract){
     systemInstruction +=
@@ -5547,6 +5566,7 @@ async function processChat(body, emit) {
     activity(emit,'task-work',activityBlueprint.work,'completed','process','');
   }
   const taskGeneration=taskGenerationActivity(contextPlan);
+  if(activityTrace.length)advanceActivityTrace('completed');
   activity(emit,'thinking','Thinking','running','process','');
   let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
   if(first.ok){
