@@ -89,8 +89,8 @@ const RETRYABLE = new Set([401,402,403,408,409,425,429,500,502,503,504]);
 
 // Central chat-model timeout policy. New/future model IDs inherit this automatically
 // because timeout selection is provider/route based, never tied to a hard-coded model list.
-const CHAT_UPSTREAM_TIMEOUT_MS=70000;
-const CHAT_FAST_UPSTREAM_TIMEOUT_MS=55000;
+const CHAT_UPSTREAM_TIMEOUT_MS=Math.max(30_000,Number(process.env.CHAT_UPSTREAM_TIMEOUT_MS||270_000));
+const CHAT_FAST_UPSTREAM_TIMEOUT_MS=Math.max(30_000,Number(process.env.CHAT_FAST_UPSTREAM_TIMEOUT_MS||270_000));
 function chatUpstreamTimeoutMs(provider=''){
   return String(provider||'').toLowerCase()==='codecraft'
     ? CHAT_FAST_UPSTREAM_TIMEOUT_MS
