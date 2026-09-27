@@ -104,7 +104,10 @@ assert(analyzer.includes('usableMediaAnalysis(text)'),
 const process=between(api,'async function processChat(','\nasync function providerUsageSnapshot');
 assert(process.includes('const mediaAnalysisContext=visualParts.length'));
 assert(process.includes('const combinedToolContext='));
-assert(process.includes("activity(emit,'thinking',taskWork.label,'running',taskWork.kind)"));
+assert(process.includes("activity(emit,'task-work',activityBlueprint.work,'completed','process','')"),
+  'media-grounded requests must keep the selected-model work milestone');
+assert(process.includes("activity(emit,'thinking','Thinking','running','process','')"),
+  'final generation must use the reference-style Thinking row');
 assert(process.includes("activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind)"));
 
 assert.equal((html.match(/<lottie-player\b/g)||[]).length,6,'unrelated welcome animations must remain untouched');

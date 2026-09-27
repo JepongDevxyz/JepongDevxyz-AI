@@ -91,8 +91,12 @@ assert(html.includes("text: fullResponse, interaction:assistantInteraction, acti
 assert.equal((html.match(/<lottie-player\b/g)||[]).length,6,
  'Preserve every original Lottie animation and welcome title');
 assert(html.includes('<div class="welcome-title">JepongDevxyz AI</div>'));
-assert(backend.includes('emitContextActivityStart(taskMessage,files,emit)'),
- 'Task-based activity must originate from the user request on the server');
+assert(backend.includes('const taskMessage=contextualTaskMessage(message,history);') &&
+       backend.includes('const contextPlan=contextActivityPlan(taskMessage,files);'),
+ 'Task-based activity must originate from the resolved user request on the server');
+assert(backend.includes("activity(emit,'task-plan',activityBlueprint.planStart") &&
+       backend.includes("activity(emit,'task-plan',activityBlueprint.planDone"),
+ 'The server must stream the selected-model Planning -> Planned transition');
 assert(backend.includes("send('activity',data)"));
 assert(backend.includes("send('done',{elapsedMs"));
 console.log('PASS: real prompt-specific SSE statuses appear, remain expanded, restore after reload, and preserve Thoughts, Lottie and backend routing.');

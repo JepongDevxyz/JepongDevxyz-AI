@@ -9210,8 +9210,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             // Attachment labels are emitted from actual preprocessing; retain their details.
             if(id==='attachments') return {...e,kind:'file'};
+            if(id==='response-audit'){
+                return {...e,label:label || 'Checking the response',kind:'test',visibility:'details'};
+            }
             if(id==='output-verification'){
-                return {...e,label:label || 'Checking generated code',kind:'test'};
+                return {...e,label:label || 'Checking generated code',kind:'test',visibility:'details'};
             }
             if(id==='fallback' && state==='running'){
                 return {...e,label:label||'Checking configured fallback',
@@ -9478,18 +9481,23 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             },1000);
             chatBox.appendChild(indicator);
             const list=indicator.querySelector('#aiActivityList');
-            // Show the user's actual task as the temporary lead while waiting
-            // for the first server activity event. Do not add a fake timeline
-            // row: real rows come only from backend/tool/provider milestones.
-            const initialTask=initialActivityForRequest(promptText,files);
+            // The supplied ChatGPT recording begins with one plain "Thinking"
+            // line, then replaces it with the first model-authored planning state.
+            // This startup line is truthful request-processing state, not a fake tool.
             const lead=indicator.querySelector('.ai-activity-lead');
             const summary=indicator.querySelector('#aiActivitySummary');
-            if(lead)lead.textContent=String(initialTask.label||'').slice(0,220);
+            if(lead)lead.textContent='';
             if(summary)summary.textContent='Thinking';
-            // Visibility/layout belongs to activityTimelineV4. Keeping it out of inline
-            // styles lets the collapsed state reliably hide/show the timeline.
-            // The header itself says "Thinking". Do not insert a fake startup row:
-            // detailed rows must come only from real backend/tool activity.
+            if(list){
+                const startup=document.createElement('div');
+                startup.className='ai-activity-row running ai-activity-current ai-activity-iconless';
+                startup.dataset.activityId='client-thinking';
+                startup.dataset.activityKind='process';
+                startup.dataset.activityVisibility='primary';
+                startup.innerHTML='<div class="ai-activity-icon"></div><div class="ai-activity-copy"><div class="ai-activity-label">Thinking</div></div>';
+                list.appendChild(startup);
+            }
+            // Visibility/layout belongs to the frame-matched Activity surface.
             maybeOfferNotifyPermission();
             refreshLucideIcons(indicator);
             // Bring the LIVE activity header into view once. Do not keep
@@ -9639,6 +9647,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
             const id = String(normalized.id || ('event-' + Date.now())).replace(/[^a-zA-Z0-9_-]/g,'-');
+            const startup=list.querySelector('[data-activity-id="client-thinking"]');
+            if(startup && id!=='client-thinking')startup.remove();
             // The reference's short task lead is the real context-classification
             // milestone emitted by the server, never a client-invented plan.
             // Keep it out of the step list to avoid repeating the same sentence.

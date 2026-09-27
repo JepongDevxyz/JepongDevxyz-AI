@@ -32,13 +32,13 @@ assert.equal(genericApp.kind,'app','Standalone app request must not silently bec
 const explicitWeb=taskProfile('Gawan mo ako ng HTML web app para sa personal notes',[]);
 assert.equal(explicitWeb.kind,'web','Explicit HTML/web request must remain a web task');
 
-assert(api.includes("'RESPONSE_CONTRACT: one compact high-level answer contract"),
+assert(api.includes("'RESPONSE_CONTRACT is a compact high-level contract"),
   'Activity planner needs a shared final-answer contract');
-assert(api.includes("The Activity labels and RESPONSE_CONTRACT must describe the SAME approach."),
+assert(api.includes("All fields must describe ONE coherent approach."),
   'Planner must reject status/answer architecture drift');
 assert(api.includes("[RESPONSE-ACTIVITY COHERENCE CONTRACT — internal, do not quote]"),
   'Final response model must receive the same high-level plan used by Activity');
-assert(api.includes("Do not silently switch the deliverable, platform, architecture, or implementation approach"),
+assert(api.includes("Do not silently switch from native app to website"),
   'Final response must not silently contradict the visible Activity plan');
 
 const dynamicPlanner=between(api,'if(shouldUseDynamicActivityPlanner(taskMessage,files)',"contextPlan.activityBlueprint=activityBlueprint;");
@@ -46,10 +46,14 @@ assert(dynamicPlanner.includes('runProvider(provider,{') && dynamicPlanner.inclu
   'Dynamic Activity planning must use the same selected provider/model variables as the final response');
 assert(dynamicPlanner.includes("autoFallback:false"),
   'Activity plan must not silently switch to another provider/model');
+assert(api.includes("routedReason:'activity-evidence-sync'"),
+  'Real tool evidence must be synchronized back into the same selected-model plan');
+assert(api.includes("runPlannedActivityResearch(activityBlueprint,emit"),
+  'Technical tasks must support real bounded tool research between planning and final response');
 
 assert(html.includes('Planning the GitHub app or repository flow: '),
   'Immediate Activity lead should recognize GitHub app/client prompts');
 assert(html.includes("kind:'github'"),
   'GitHub app Activity should use the GitHub activity kind');
 
-console.log('PASS: Activity and final response share one approach contract; GitHub app prompts no longer drift into website status/result.');
+console.log('PASS: Activity planning, real tool evidence, and final response share one selected-model approach contract.');

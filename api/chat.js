@@ -1170,20 +1170,80 @@ function cleanActivityLabel(value='',max=96){
     .slice(0,max);
 }
 
+function taskPlanningCopy(profile={}){
+  const kind=String(profile?.kind||'general');
+  const subtype=String(profile?.subtype||'general');
+  const key=kind+':'+subtype;
+  const exact={
+    'github:github-client':{start:'Planning the GitHub client',done:'Planned the GitHub client',checkpoint:'Chose the GitHub implementation'},
+    'github:repository-edit':{start:'Planning the repository changes',done:'Planned the repository changes',checkpoint:'Chose the repository update path'},
+    'android:android-build':{start:'Planning the Android app',done:'Planned the Android app',checkpoint:'Chose the Android implementation'},
+    'android:android-repair':{start:'Planning the Android repair',done:'Planned the Android repair',checkpoint:'Narrowed the Android fix'},
+    'web:game':{start:'Planning the game',done:'Planned the game',checkpoint:'Chose the game structure'},
+    'web:ui':{start:'Planning the interface',done:'Planned the interface',checkpoint:'Chose the interface structure'},
+    'backend:api':{start:'Planning the API',done:'Planned the API',checkpoint:'Chose the API structure'},
+    'backend:webhook':{start:'Planning the webhook',done:'Planned the webhook',checkpoint:'Chose the webhook flow'},
+    'study:math':{start:'Planning the solution',done:'Planned the solution',checkpoint:'Set the solution method'},
+    'decision:compare':{start:'Planning the comparison',done:'Planned the comparison',checkpoint:'Set the comparison criteria'}
+  };
+  if(exact[key])return exact[key];
+  const generic={
+    app:{start:'Planning the app',done:'Planned the app',checkpoint:'Chose the app structure'},
+    github:{start:'Planning the repository work',done:'Planned the repository work',checkpoint:'Chose the repository approach'},
+    android:{start:'Planning the Android work',done:'Planned the Android work',checkpoint:'Chose the Android approach'},
+    web:{start:'Planning the web implementation',done:'Planned the web implementation',checkpoint:'Chose the web structure'},
+    backend:{start:'Planning the backend work',done:'Planned the backend work',checkpoint:'Chose the backend approach'},
+    deployment:{start:'Planning the deployment work',done:'Planned the deployment work',checkpoint:'Chose the deployment approach'},
+    research:{start:'Planning the research',done:'Planned the research',checkpoint:'Narrowed the useful evidence'},
+    document:{start:'Planning the document work',done:'Planned the document work',checkpoint:'Organized the document evidence'},
+    image:{start:'Planning the image analysis',done:'Planned the image analysis',checkpoint:'Organized the visible evidence'},
+    video:{start:'Planning the video analysis',done:'Planned the video analysis',checkpoint:'Organized the video evidence'},
+    writing:{start:'Planning the response',done:'Planned the response',checkpoint:'Set the response structure'},
+    study:{start:'Planning the explanation',done:'Planned the explanation',checkpoint:'Set the explanation path'},
+    decision:{start:'Planning the comparison',done:'Planned the comparison',checkpoint:'Set the decision criteria'},
+    troubleshooting:{start:'Planning the diagnosis',done:'Planned the diagnosis',checkpoint:'Narrowed the likely cause'},
+    general:{start:'Thinking through the request',done:'Planned the response',checkpoint:'Set the response approach'}
+  };
+  return generic[kind]||generic.general;
+}
+
+function cleanPlannedResearchQuery(value=''){
+  const t=String(value||'').replace(/\s+/g,' ').trim();
+  if(!t||/^(?:none|n\/a|not needed|no search|-+)$/i.test(t))return '';
+  return t.slice(0,240);
+}
+
+function cleanPlannedResearchDomain(value=''){
+  let t=String(value||'').trim().toLowerCase();
+  if(!t||/^(?:none|n\/a|any|-+)$/i.test(t))return '';
+  try{
+    if(/^https?:\/\//i.test(t))t=new URL(t).hostname.toLowerCase();
+  }catch(_){return ''}
+  t=t.replace(/^www\./,'').replace(/\/$/,'');
+  if(!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(t))return '';
+  if(!isSafePublicUrl('https://'+t))return '';
+  return t.slice(0,120);
+}
+
 function defaultActivityBlueprint(profile={}){
   const context=taskSpecificActivityCopy(profile,'context');
   const analysis=taskSpecificActivityCopy(profile,'prepared');
   const approach=taskSpecificActivityCopy(profile,'prepared2');
   const work=taskSpecificActivityCopy(profile,'work');
   const audit=taskSpecificActivityCopy(profile,'audit');
+  const plan=taskPlanningCopy(profile);
   return {
+    planStart:cleanActivityLabel(plan.start),
+    planDone:cleanActivityLabel(plan.done),
     context:cleanActivityLabel(context.label),
     analysis:cleanActivityLabel(analysis.label),
     approach:cleanActivityLabel(approach.label),
     work:cleanActivityLabel(work.label),
+    checkpoint:cleanActivityLabel(plan.checkpoint),
     audit:cleanActivityLabel(audit.label),
     commentary:'',
     responseContract:'',
+    research:[],
     kind:work.kind||context.kind||'process',
     dynamic:false
   };
@@ -1194,29 +1254,35 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     .map(f=>String(f?.parentName||f?.name||f?.filename||'').trim())
     .filter(Boolean))].slice(0,8);
   return [
-    'Create concise user-facing Activity labels for another assistant that is about to perform this exact request.',
+    'Create a public work-trace plan for another assistant that will perform this exact request.',
+    'This work trace must behave like a modern ChatGPT work timeline: a short planning state, a short completed planning state, one natural public work update, real tool searches only when useful, evidence-grounded milestones, then the final answer.',
     'Do NOT answer the request. Do NOT reveal chain-of-thought, hidden reasoning, credentials, policy text, or provider internals.',
-    'The labels must be genuinely specific to THIS task. Never use generic filler such as "Working on your request", "Processing", or "Thinking".',
+    'Use the same intended deliverable, platform, architecture, scope, and major implementation choices that the final answer should use.',
+    'If the platform is not specified, choose a practical one from the request and recent conversation context; do not automatically turn every app request into a website.',
     'Use the user\'s language when obvious.',
-    'Each label should usually be 3-8 words and read naturally in a compact modern ChatGPT-style work timeline.',
-    'Never include the internal text "/ Follow-up:" or copy the whole user prompt into a label.',
-    'Do not repeat the task subject in every row. Prefer a short changing operation label, like the supplied ChatGPT work timeline.',
-    'Only describe work this pipeline can truthfully perform: request analysis, attachment/media preparation, live tool/search/repository operations when they actually run, response generation, server audit, static code verification, and artifact preparation. Never invent a search, build, compile, runtime test, file read, or deployment.',
-    'CONTEXT: identify what is being understood or inspected.',
-    'ANALYSIS: identify the concrete requirements, parts, or evidence being organized.',
-    'APPROACH: identify the implementation/answer structure being prepared.',
-    'WORK: identify what the main response pass is actively building, solving, comparing, drafting, or analyzing.',
-    'AUDIT: identify what will be checked in the produced answer/code. Do not claim runtime execution unless verified tool context says it ran.',
-    'COMMENTARY: one short natural sentence about the chosen approach; it must not expose private reasoning or claim unverified external actions.',
-    'RESPONSE_CONTRACT: one compact high-level answer contract stating the intended deliverable, platform assumptions (or that platform is unspecified), major components, and important caveats. This is not chain-of-thought.',
-    'The Activity labels and RESPONSE_CONTRACT must describe the SAME approach. Do not plan a website in Activity and then describe a native app in the contract, or vice versa.',
-    'Return EXACTLY these seven lines and nothing else:',
+    'PLAN_START and PLAN_DONE should be the same short idea in progressive/past form, for example "Planning the app" -> "Planned the app".',
+    'CONTEXT, ANALYSIS, APPROACH, WORK, CHECKPOINT, and AUDIT should usually be 3-8 words and must be specific to this request.',
+    'COMMENTARY should be 1-3 natural sentences that publicly summarize the chosen approach at a high level, like a ChatGPT work update. It must not expose private reasoning.',
+    'RESEARCH_QUERY fields are optional. Use them only when current or official documentation materially improves correctness. Prefer official documentation. Leave both query and domain blank when research is unnecessary.',
+    'RESEARCH_DOMAIN must be only a hostname such as docs.github.com or developer.android.com, never a URL path.',
+    'Never claim a search, file read, build, compile, runtime test, deployment, repository write, or environment check unless a real tool can actually perform it.',
+    'CHECKPOINT must be safe even before tool results: prefer "Chose the implementation" or "Set the response structure", not "Built the app" or "Tests passed".',
+    'RESPONSE_CONTRACT is a compact high-level contract for the final answer: intended deliverable, platform assumption, major components, and important caveats. It is not chain-of-thought.',
+    'All fields must describe ONE coherent approach. Never plan one architecture in Activity and answer with another.',
+    'Return EXACTLY these fourteen lines and nothing else:',
+    'PLAN_START: <short running planning label>',
+    'PLAN_DONE: <short completed planning label>',
     'CONTEXT: <specific label>',
     'ANALYSIS: <specific label>',
     'APPROACH: <specific label>',
     'WORK: <specific label>',
+    'CHECKPOINT: <specific evidence-safe milestone>',
     'AUDIT: <specific label>',
-    'COMMENTARY: <one short sentence>',
+    'COMMENTARY: <1-3 sentence public work update>',
+    'RESEARCH_QUERY_1: <query or blank>',
+    'RESEARCH_DOMAIN_1: <hostname or blank>',
+    'RESEARCH_QUERY_2: <query or blank>',
+    'RESEARCH_DOMAIN_2: <hostname or blank>',
     'RESPONSE_CONTRACT: <one-line high-level answer contract>',
     'Task type: '+String(profile?.kind||classifyUserTask(message,files))+'/'+String(profile?.subtype||'general'),
     names.length?'Attachments: '+names.join(', '):'Attachments: none',
@@ -1229,26 +1295,48 @@ function parseActivityBlueprintOutput(raw='', profile={}){
   const text=sanitizeAssistantOutput(String(raw||'')).trim();
   if(!text)return fallback;
   const value=(name,max=150)=>{
-    const rx=new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*(.+?)(?=\\n\\s*[A-Z_]+\\s*:|$)','i');
+    const rx=new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*(.*?)(?=\\n\\s*[A-Z0-9_]+\\s*:|$)','i');
     return cleanActivityLabel(text.match(rx)?.[1]||'',max);
   };
+  const planStart=value('PLAN_START');
+  const planDone=value('PLAN_DONE');
   const context=value('CONTEXT');
   const analysis=value('ANALYSIS');
   const approach=value('APPROACH');
   const work=value('WORK');
+  const checkpoint=value('CHECKPOINT');
   const audit=value('AUDIT');
-  const commentary=value('COMMENTARY',520);
-  const responseContract=value('RESPONSE_CONTRACT',2200);
-  const valid=[context,analysis,approach,work,audit].filter(Boolean).length>=4;
-  if(!valid)return {...fallback,commentary:commentary||fallback.commentary,responseContract:responseContract||fallback.responseContract};
+  const commentary=value('COMMENTARY',1000);
+  const responseContract=value('RESPONSE_CONTRACT',2500);
+  const research=[
+    {
+      query:cleanPlannedResearchQuery(value('RESEARCH_QUERY_1',240)),
+      domain:cleanPlannedResearchDomain(value('RESEARCH_DOMAIN_1',160))
+    },
+    {
+      query:cleanPlannedResearchQuery(value('RESEARCH_QUERY_2',240)),
+      domain:cleanPlannedResearchDomain(value('RESEARCH_DOMAIN_2',160))
+    }
+  ].filter(item=>item.query);
+  const valid=[planStart,planDone,context,analysis,approach,work,audit].filter(Boolean).length>=5;
+  if(!valid)return {
+    ...fallback,
+    commentary:commentary||fallback.commentary,
+    responseContract:responseContract||fallback.responseContract,
+    research
+  };
   return {
+    planStart:planStart||fallback.planStart,
+    planDone:planDone||fallback.planDone,
     context:context||fallback.context,
     analysis:analysis||fallback.analysis,
     approach:approach||fallback.approach,
     work:work||fallback.work,
+    checkpoint:checkpoint||fallback.checkpoint,
     audit:audit||fallback.audit,
     commentary,
     responseContract,
+    research,
     kind:fallback.kind,
     dynamic:true
   };
@@ -1259,6 +1347,145 @@ function shouldUseDynamicActivityPlanner(message='', files=[]){
   if(!t)return false;
   if(/^(?:hi|hello|hey|yo|kumusta|kamusta|thanks|thank you|salamat)[!?.\s]*$/i.test(t))return false;
   return true;
+}
+
+function shouldRunPlannedActivityResearch(profile={},message='',webSearch=false,research=[]){
+  if(!Array.isArray(research)||!research.length)return false;
+  if(webSearch===true)return true;
+  const kind=String(profile?.kind||'general');
+  const technical=['github','android','backend','deployment','web','app'].includes(kind);
+  if(!technical)return false;
+  return /\b(api|sdk|github|git|android|vercel|oauth|auth|authentication|library|framework|package|version|compatib|webhook|repository|commit|push|clone)\b/i.test(normalizeIntentText(message));
+}
+
+function resultMatchesPlannedDomain(result={},domain=''){
+  if(!domain)return true;
+  try{
+    const host=new URL(String(result?.url||'')).hostname.toLowerCase().replace(/^www\./,'');
+    return host===domain||host.endsWith('.'+domain);
+  }catch(_){return false}
+}
+
+function fallbackPlannedActivityResearch(blueprint={},profile={},message=''){
+  const out=[];
+  const t=[message,blueprint?.responseContract,blueprint?.commentary].map(x=>String(x||'')).join(' ');
+  const kind=String(profile?.kind||'general');
+  const intent=profile?.intent||{};
+  if(kind==='github' && (intent.create||intent.edit||intent.test||/\b(commit|push|clone|pull|branch|token|oauth|git)\b/i.test(t))){
+    out.push({
+      query:'GitHub REST API Git database blobs trees commits refs authentication fine-grained token',
+      domain:'docs.github.com'
+    });
+  }
+  if((kind==='android'||/\bnative Android\b|\bAndroid app\b|\bKotlin\b/i.test(t))){
+    out.push({
+      query:'Android app architecture networking secure credential storage permissions',
+      domain:'developer.android.com'
+    });
+  }
+  if(kind==='deployment' || /\bVercel\b/i.test(t)){
+    out.push({
+      query:'Vercel deployment project configuration serverless functions',
+      domain:'vercel.com'
+    });
+  }
+  return out.slice(0,2);
+}
+
+async function runPlannedActivityResearch(blueprint={},emit,{profile={},message='',webSearch=false}={}){
+  const candidates=[
+    ...(Array.isArray(blueprint?.research)?blueprint.research:[]),
+    ...fallbackPlannedActivityResearch(blueprint,profile,message)
+  ];
+  const seen=new Set();
+  const planned=candidates.filter(item=>{
+    const key=(String(item?.domain||'')+'|'+String(item?.query||'')).toLowerCase();
+    if(!key||seen.has(key))return false;
+    seen.add(key);return true;
+  }).slice(0,2);
+  if(!shouldRunPlannedActivityResearch(profile,message,webSearch,planned))return '';
+  const contexts=[];
+  for(let i=0;i<planned.length;i++){
+    const item=planned[i];
+    const query=cleanPlannedResearchQuery(item?.query);
+    const domain=cleanPlannedResearchDomain(item?.domain);
+    if(!query)continue;
+    const id='planned-web-'+i;
+    activity(emit,id,domain?`Searching ${domain}`:'Searching the web','running','web',query.slice(0,120));
+    const scopedQuery=domain?`${query} site:${domain}`:query;
+    let results=[];
+    try{
+      results=await noKeyWebSearch(scopedQuery,null);
+    }catch(_){results=[]}
+    if(domain){
+      const official=results.filter(result=>resultMatchesPlannedDomain(result,domain));
+      if(official.length)results=official;
+    }
+    const selected=results.slice(0,3);
+    let enriched=[];
+    try{
+      enriched=await enrichSearchResults(selected,null,Math.min(2,selected.length));
+    }catch(_){enriched=selected}
+    const usable=enriched.length?enriched:selected;
+    if(usable.length){
+      activity(emit,id,`Searched ${usable.length} website${usable.length===1?'':'s'}`,'completed','web',domain||query.slice(0,100));
+      const ctx=buildLiveSourceContext(usable);
+      if(ctx)contexts.push(ctx);
+    }else{
+      activity(emit,id,domain?`Could not find a usable source on ${domain}`:'No usable web source found','warning','web',query.slice(0,120));
+    }
+  }
+  return contexts.join('\n');
+}
+
+function compactActivityEvidence(parts=[]){
+  const clean=(Array.isArray(parts)?parts:[])
+    .map(x=>String(x||'').trim())
+    .filter(Boolean);
+  if(!clean.length)return '';
+  const per=Math.max(1200,Math.floor(14000/clean.length));
+  return clean.map((x,i)=>`Evidence ${i+1}:\n${x.slice(0,per)}`).join('\n\n').slice(0,14000);
+}
+
+function buildEvidenceActivityUpdatePrompt(message='',blueprint={},evidence=''){
+  return [
+    'Update the public work trace after real tool/file/research evidence was gathered.',
+    'Do NOT answer the user. Do NOT reveal chain-of-thought or private reasoning.',
+    'Use only the evidence below. Never claim a build, compile, runtime test, deployment, repository write, file read, or search unless the evidence actually says it happened.',
+    'CHECKPOINT: 3-8 words, past tense, summarizing what the evidence established or what implementation choice is now justified.',
+    'COMMENTARY: 1-3 natural user-facing sentences explaining what the evidence changed, confirmed, or narrowed. This should read like a ChatGPT work update, not a final answer.',
+    'WORK: 3-8 words describing the next answer-construction step. It may say preparing/structuring/drafting/building the response, but must not pretend an external action ran.',
+    'RESPONSE_CONTRACT: update the high-level final-answer contract so it stays consistent with the evidence.',
+    'Return EXACTLY these four lines and nothing else:',
+    'CHECKPOINT: <short evidence-grounded milestone>',
+    'COMMENTARY: <1-3 sentence public work update>',
+    'WORK: <short next response-construction step>',
+    'RESPONSE_CONTRACT: <updated one-line final-answer contract>',
+    'User request: '+String(message||'').slice(0,7000),
+    'Existing response contract: '+String(blueprint?.responseContract||'').slice(0,2500),
+    'Evidence:',
+    String(evidence||'').slice(0,14000)
+  ].join('\n');
+}
+
+function parseEvidenceActivityUpdate(raw='',blueprint={}){
+  const text=sanitizeAssistantOutput(String(raw||'')).trim();
+  if(!text)return null;
+  const value=(name,max=1000)=>{
+    const rx=new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*(.*?)(?=\\n\\s*[A-Z0-9_]+\\s*:|$)','i');
+    return cleanActivityLabel(text.match(rx)?.[1]||'',max);
+  };
+  const checkpoint=value('CHECKPOINT',140);
+  const commentary=value('COMMENTARY',1200);
+  const work=value('WORK',140);
+  const responseContract=value('RESPONSE_CONTRACT',2500);
+  if(!checkpoint&&!commentary&&!work&&!responseContract)return null;
+  return {
+    checkpoint:checkpoint||blueprint?.checkpoint||'',
+    commentary,
+    work:work||blueprint?.work||'',
+    responseContract:responseContract||blueprint?.responseContract||''
+  };
 }
 
 function buildInternalTaskBriefPrompt(message='', files=[], profile={}){
@@ -1294,7 +1521,7 @@ function parseQualityPreflightOutput(raw='', profile={}){
     const rx=new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*(.+?)(?=\\n\\s*[A-Z_]+\\s*:|$)','i');
     return cleanActivityLabel(text.match(rx)?.[1]||'',max);
   };
-  const publicMatch=text.match(/PUBLIC_UPDATE\s*:\s*([\s\S]*?)(?=\n\s*INTERNAL_BRIEF\s*:|$)/i);
+  const publicMatch=text.match(/PUBLIC_UPDATE\s*:\s*([\s\S]*?)(?=\n\s*(?:RESPONSE_CONTRACT|INTERNAL_BRIEF)\s*:|$)/i);
   const briefMatch=text.match(/INTERNAL_BRIEF\s*:\s*([\s\S]*)$/i);
   const cleanPublic=String(publicMatch?.[1]||'')
     .replace(/\s+/g,' ').trim().slice(0,900);
@@ -4886,9 +5113,7 @@ async function processChat(body, emit) {
   const startedAt=Date.now();
   const requestCustomKeys=sanitizeCustomProviderKeys(body,provider);
   const taskMessage=contextualTaskMessage(message,history);
-  const contextPlan=emitContextActivityStart(taskMessage,files,emit);
-  const taskAnalysis=taskSpecificActivityCopy(contextPlan.profile||{},'prepared');
-  activity(emit,'task-analysis',taskAnalysis.label,'running',taskAnalysis.kind,'');
+  const contextPlan=contextActivityPlan(taskMessage,files);
 
   // Source-specific milestones are emitted after the corresponding input has
   // really been read or added to model context (never on a fixed timer).
@@ -4924,6 +5149,40 @@ async function processChat(body, emit) {
     }
     model=selected&&(allowed||dynamic)?selected:PROVIDERS[provider].defaultModel;
   }
+
+  // ChatGPT-style public work trace: the SAME selected model first chooses the
+  // approach that its final answer must follow. The user sees a compact planning
+  // transition while that metadata pass runs; provider fallback stays disabled.
+  let activityBlueprint=defaultActivityBlueprint(contextPlan?.profile||taskProfile(taskMessage,files));
+  if(shouldUseDynamicActivityPlanner(taskMessage,files)){
+    activity(emit,'task-plan',activityBlueprint.planStart||'Planning the response','running','process','');
+    try{
+      const activityPrompt=buildActivityBlueprintPrompt(taskMessage,files,contextPlan?.profile||{});
+      const activityPlanResponse=await runProvider(provider,{
+        model,
+        history:(Array.isArray(history)?history.slice(-8):[]),
+        files:[],
+        message:activityPrompt,
+        systemInstruction:'PUBLIC WORK TRACE METADATA MODE: Return only the requested public work-trace fields. Keep the plan and final-answer contract on one coherent approach. Do not answer the user, reveal private reasoning, or claim unverified external actions.',
+        routedReason:'activity-blueprint',
+        emit:null,
+        autoFallback:false,
+        customApiKeys:requestCustomKeys,
+        customApiProfile,
+        responseEffort:'Instant'
+      });
+      if(activityPlanResponse.ok){
+        const rawPlan=await readInternalProviderText(activityPlanResponse.response,9000);
+        const parsedPlan=parseActivityBlueprintOutput(rawPlan,contextPlan?.profile||{});
+        if(parsedPlan)activityBlueprint=parsedPlan;
+      }
+    }catch(_){}
+    activity(emit,'task-plan',activityBlueprint.planDone||'Planned the response','completed','process','');
+    if(activityBlueprint?.commentary){
+      activity(emit,'work-commentary-plan',activityBlueprint.commentary,'completed','commentary');
+    }
+  }
+
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   const projectInspectionContext=inspectUploadedProject(files,emit);
   if(files.length){
@@ -4955,6 +5214,15 @@ async function processChat(body, emit) {
       }
     }
   }
+
+  // A model-planned official-doc lookup is a real tool operation. Keep it
+  // bounded to two queries and preserve the user's selected response model.
+  const plannedResearchContext=await runPlannedActivityResearch(activityBlueprint,emit,{
+    profile:contextPlan?.profile||{},
+    message:taskMessage,
+    webSearch:webSearch===true
+  });
+
   // Analysis via another provider is itself model fallback: never do it when OFF.
   const visualParts=mediaAttachments(files);
   // A selected photo/video must not disappear silently because the browser
@@ -5051,10 +5319,7 @@ async function processChat(body, emit) {
     ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
-  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
-  activity(emit,'task-analysis',taskAnalysis.label,'completed',taskAnalysis.kind,'');
-  const taskApproach=taskSpecificActivityCopy(contextPlan.profile||{},'prepared2');
-  activity(emit,'task-approach',taskApproach.label,'running',taskApproach.kind,'');
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${plannedResearchContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
   // Installed skill plugins are explicit, bounded behavior profiles. They do not
@@ -5136,13 +5401,15 @@ async function processChat(body, emit) {
   const useQualityOrchestrator =
     (responseEffortRank(responseEffort)>=2 || projectChangeIntent) &&
     shouldUseQualityOrchestrator(message,files,mode);
-  let activityBlueprint=defaultActivityBlueprint(contextPlan?.profile||taskProfile(message,files));
-
+  // activityBlueprint was already created by the same selected model before
+  // tool work, so quality preflight may refine it but must not replace its plan.
   if(useQualityOrchestrator){
     activity(emit,'quality-orchestrator',projectChangeIntent?'Cross-checking project requirements and inspected evidence':'Cross-checking requirements, constraints, and edge cases','running','process');
     try{
       const briefPrompt=buildInternalTaskBriefPrompt(message,files,contextPlan?.profile||{});
       const briefSystem=systemInstruction +
+        '\n EXISTING PUBLIC WORK-TRACE CONTRACT: '+String(activityBlueprint?.responseContract||'').slice(0,2500)+
+        '\n Preserve the same deliverable/platform/architecture unless verified evidence in the supplied context requires a correction. ' +
         (responseEffort==='Max'
           ? ' INTERNAL PREFLIGHT MODE: Produce only a rigorous task brief. Identify the user goal, hard constraints, assumptions that require checking, edge cases, likely failure modes, and a verification checklist. Do not produce the final user-facing response.'
           : ' INTERNAL PREFLIGHT MODE: Produce only a compact task brief covering the user goal, constraints, important checks, and likely edge cases. Do not produce the final user-facing response.');
@@ -5163,7 +5430,23 @@ async function processChat(body, emit) {
       if(preflight.ok){
         const rawBrief=await readInternalProviderText(preflight.response,responseEffort==='Max'?16000:12000);
         const parsedBrief=parseQualityPreflightOutput(rawBrief,contextPlan?.profile||{});
-        activityBlueprint=parsedBrief.activityBlueprint||activityBlueprint;
+        const briefBlueprint=parsedBrief.activityBlueprint||{};
+        activityBlueprint=activityBlueprint.dynamic
+          ? {
+              ...activityBlueprint,
+              responseContract:activityBlueprint.responseContract||briefBlueprint.responseContract,
+              audit:activityBlueprint.audit||briefBlueprint.audit
+            }
+          : {
+              ...activityBlueprint,
+              context:briefBlueprint.context||activityBlueprint.context,
+              analysis:briefBlueprint.analysis||activityBlueprint.analysis,
+              approach:briefBlueprint.approach||activityBlueprint.approach,
+              work:briefBlueprint.work||activityBlueprint.work,
+              audit:briefBlueprint.audit||activityBlueprint.audit,
+              responseContract:briefBlueprint.responseContract||activityBlueprint.responseContract,
+              dynamic:Boolean(briefBlueprint.dynamic)
+            };
         if(parsedBrief.publicUpdate){
           activity(emit,'work-commentary-1',parsedBrief.publicUpdate,'completed','commentary');
         }
@@ -5182,26 +5465,53 @@ async function processChat(body, emit) {
     }
   }
 
-  if(shouldUseDynamicActivityPlanner(taskMessage,files) && !activityBlueprint?.dynamic){
+  // After real tools/files/searches finish, ask the SAME selected model for one
+  // evidence-grounded checkpoint. This is the second public commentary beat seen
+  // in the reference: it explains what the evidence changed without exposing CoT.
+  const activityEvidence=compactActivityEvidence([
+    projectInspectionContext,
+    mediaAnalysisContext,
+    githubContext,
+    pluginGithubContext,
+    githubExecutionContext,
+    githubIssuesContext,
+    providedLinkContext,
+    plannedResearchContext,
+    liveWebContext,
+    verificationContext
+  ]);
+  if(activityEvidence && shouldUseDynamicActivityPlanner(taskMessage,files)){
     try{
-      const activityPrompt=buildActivityBlueprintPrompt(taskMessage,files,contextPlan?.profile||{});
-      const activityPlanResponse=await runProvider(provider,{
+      const updateResponse=await runProvider(provider,{
         model,
-        history:[],
+        history:(Array.isArray(history)?history.slice(-8):[]),
         files:[],
-        message:activityPrompt,
-        systemInstruction:'ACTIVITY METADATA MODE: Return only concise public progress labels. Do not answer the task, expose private reasoning, or claim unverified external actions.',
-        routedReason:'activity-blueprint',
+        message:buildEvidenceActivityUpdatePrompt(taskMessage,activityBlueprint,activityEvidence),
+        systemInstruction:'PUBLIC WORK TRACE EVIDENCE MODE: Return only the requested checkpoint, commentary, work label, and response contract. Use only supplied evidence. Do not answer the user or reveal private reasoning.',
+        routedReason:'activity-evidence-sync',
         emit:null,
         autoFallback:false,
         customApiKeys:requestCustomKeys,
         customApiProfile,
         responseEffort:'Instant'
       });
-      if(activityPlanResponse.ok){
-        const rawPlan=await readInternalProviderText(activityPlanResponse.response,5000);
-        const parsedPlan=parseActivityBlueprintOutput(rawPlan,contextPlan?.profile||{});
-        if(parsedPlan?.dynamic)activityBlueprint=parsedPlan;
+      if(updateResponse.ok){
+        const rawUpdate=await readInternalProviderText(updateResponse.response,7000);
+        const update=parseEvidenceActivityUpdate(rawUpdate,activityBlueprint);
+        if(update){
+          activityBlueprint={
+            ...activityBlueprint,
+            checkpoint:update.checkpoint||activityBlueprint.checkpoint,
+            work:update.work||activityBlueprint.work,
+            responseContract:update.responseContract||activityBlueprint.responseContract
+          };
+          if(update.checkpoint){
+            activity(emit,'task-checkpoint',update.checkpoint,'completed','process','');
+          }
+          if(update.commentary && update.commentary!==activityBlueprint.commentary){
+            activity(emit,'work-commentary-evidence',update.commentary,'completed','commentary');
+          }
+        }
       }
     }catch(_){}
   }
@@ -5210,23 +5520,24 @@ async function processChat(body, emit) {
   if(activityBlueprint?.responseContract){
     systemInstruction +=
       '\n\n[RESPONSE-ACTIVITY COHERENCE CONTRACT — internal, do not quote]\n' +
-      activityBlueprint.responseContract +
-      '\nThe final answer must stay semantically aligned with this contract and the visible Activity labels. ' +
-      'Do not silently switch the deliverable, platform, architecture, or implementation approach after Activity has described a different one. ' +
-      'If verified tool evidence conflicts with the contract, follow the verified evidence and state the correction plainly in the answer. ' +
-      'This contract is a high-level output plan, not private chain-of-thought.\n[/RESPONSE-ACTIVITY COHERENCE CONTRACT]';
+      'Visible plan: '+String(activityBlueprint.planDone||activityBlueprint.context||'').slice(0,180)+'\n' +
+      'Visible approach: '+String(activityBlueprint.commentary||'').slice(0,1000)+'\n' +
+      'Visible checkpoint: '+String(activityBlueprint.checkpoint||'').slice(0,180)+'\n' +
+      'Visible work step: '+String(activityBlueprint.work||'').slice(0,180)+'\n' +
+      'Final-answer contract: '+activityBlueprint.responseContract +
+      '\nThe final answer must continue the SAME deliverable, platform, architecture, scope, and major implementation choices shown in the visible work trace. ' +
+      'Do not silently switch from native app to website, from one API strategy to another, or from implementation to generic advice after Activity has committed to a different approach. ' +
+      'If verified tool evidence conflicts with the earlier plan, follow the verified evidence and state the correction plainly. ' +
+      'The visible work trace is public high-level progress, not private chain-of-thought.\n[/RESPONSE-ACTIVITY COHERENCE CONTRACT]';
   }
-  activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'');
-  activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'');
-  if(activityBlueprint?.commentary){
-    activity(emit,'work-commentary-blueprint',activityBlueprint.commentary,'completed','commentary');
+
+  // Model-authored reasoning milestones are plain rows. Real web/file/GitHub
+  // operations keep their icons and start->result history separately.
+  if(activityBlueprint?.work){
+    activity(emit,'task-work',activityBlueprint.work,'completed','process','');
   }
-  completeContextPlan(contextPlan,emit);
-  // Keep the running status tied to the user's real task instead of a fixed
-  // "Thinking" label. Provider/tool rows remain evidence-backed and separate.
-  const taskWork=taskWorkingActivity(contextPlan);
   const taskGeneration=taskGenerationActivity(contextPlan);
-  activity(emit,'thinking',taskWork.label,'running',taskWork.kind);
+  activity(emit,'thinking','Thinking','running','process','');
   let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
   if(first.ok){
     first=await maybeRefineVisualUiResponse({
@@ -5243,8 +5554,8 @@ async function processChat(body, emit) {
       resolvedProvider:first.response.headers.get('x-ai-provider')||provider,
       resolvedModel:first.response.headers.get('x-ai-model')||model,
       systemInstruction,
-      activityTaskLabel:taskWork.label,
-      activityTaskKind:taskWork.kind,
+      activityTaskLabel:'Thinking',
+      activityTaskKind:'process',
       activityBlueprint:contextPlan.activityBlueprint||activityBlueprint
     };
   }
@@ -5269,8 +5580,8 @@ async function processChat(body, emit) {
           finishState:registeredHorde.finishState||{reason:'stop'},startedAt,
           resolvedProvider:registeredHorde.response.headers.get('x-ai-provider')||'aihorde',
           resolvedModel:registeredHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
-          activityTaskLabel:taskWork.label,
-          activityTaskKind:taskWork.kind
+          activityTaskLabel:'Thinking',
+          activityTaskKind:'process'
         };
       }
       activity(emit,'fallback','Registered AI Horde unavailable — trying anonymous AI Horde','running','fallback');
@@ -5286,8 +5597,8 @@ async function processChat(body, emit) {
           finishState:publicHorde.finishState||{reason:'stop'},startedAt,
           resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
           resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
-          activityTaskLabel:taskWork.label,
-          activityTaskKind:taskWork.kind
+          activityTaskLabel:'Thinking',
+          activityTaskKind:'process'
         };
       }
       activity(emit,'fallback','Both emergency AI Horde routes are unavailable','error','fallback');

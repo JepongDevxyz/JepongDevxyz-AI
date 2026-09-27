@@ -96,7 +96,8 @@ assert.match(local.label,/Reviewing uploaded video/);
 assert.equal(local.detail,'clip.mp4');
 const renderer=between(html,'function showAIIndicator(','function toggleActivityDetails(');
 assert(!renderer.includes("appendActivityEvent({id:'request-submitted'"));
-assert(renderer.includes("const initialTask=initialActivityForRequest(promptText,files)"));
+assert(renderer.includes("startup.dataset.activityId='client-thinking'"),
+ 'Renderer must begin with the frame-matched temporary Thinking row');
 assert(html.includes("if(id==='task-context')"),'Actual backend task status remains visible');
 assert(html.includes("label:label||'Checking configured fallback'"));
 assert.equal((html.match(/<lottie-player\b/g)||[]).length,6);
