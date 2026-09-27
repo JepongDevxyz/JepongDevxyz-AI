@@ -5539,8 +5539,8 @@ async function processChat(body, emit) {
           finishState:registeredHorde.finishState||{reason:'stop'},startedAt,
           resolvedProvider:registeredHorde.response.headers.get('x-ai-provider')||'aihorde',
           resolvedModel:registeredHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
-          activityTaskLabel:taskWork.label,
-          activityTaskKind:taskWork.kind
+          activityTaskLabel:'Thinking',
+          activityTaskKind:'process'
         };
       }
       activity(emit,'fallback','Registered AI Horde unavailable — trying anonymous AI Horde','running','fallback');
@@ -5556,8 +5556,8 @@ async function processChat(body, emit) {
           finishState:publicHorde.finishState||{reason:'stop'},startedAt,
           resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
           resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
-          activityTaskLabel:taskWork.label,
-          activityTaskKind:taskWork.kind
+          activityTaskLabel:'Thinking',
+          activityTaskKind:'process'
         };
       }
       activity(emit,'fallback','Both emergency AI Horde routes are unavailable','error','fallback');
