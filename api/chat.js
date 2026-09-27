@@ -5375,6 +5375,8 @@ async function processChat(body, emit) {
     try{
       const briefPrompt=buildInternalTaskBriefPrompt(message,files,contextPlan?.profile||{});
       const briefSystem=systemInstruction +
+        '\n EXISTING PUBLIC WORK-TRACE CONTRACT: '+String(activityBlueprint?.responseContract||'').slice(0,2500)+
+        '\n Preserve the same deliverable/platform/architecture unless verified evidence in the supplied context requires a correction. ' +
         (responseEffort==='Max'
           ? ' INTERNAL PREFLIGHT MODE: Produce only a rigorous task brief. Identify the user goal, hard constraints, assumptions that require checking, edge cases, likely failure modes, and a verification checklist. Do not produce the final user-facing response.'
           : ' INTERNAL PREFLIGHT MODE: Produce only a compact task brief covering the user goal, constraints, important checks, and likely edge cases. Do not produce the final user-facing response.');
@@ -5396,16 +5398,22 @@ async function processChat(body, emit) {
         const rawBrief=await readInternalProviderText(preflight.response,responseEffort==='Max'?16000:12000);
         const parsedBrief=parseQualityPreflightOutput(rawBrief,contextPlan?.profile||{});
         const briefBlueprint=parsedBrief.activityBlueprint||{};
-        activityBlueprint={
-          ...activityBlueprint,
-          context:briefBlueprint.context||activityBlueprint.context,
-          analysis:briefBlueprint.analysis||activityBlueprint.analysis,
-          approach:briefBlueprint.approach||activityBlueprint.approach,
-          work:briefBlueprint.work||activityBlueprint.work,
-          audit:briefBlueprint.audit||activityBlueprint.audit,
-          responseContract:briefBlueprint.responseContract||activityBlueprint.responseContract,
-          dynamic:Boolean(activityBlueprint.dynamic||briefBlueprint.dynamic)
-        };
+        activityBlueprint=activityBlueprint.dynamic
+          ? {
+              ...activityBlueprint,
+              responseContract:activityBlueprint.responseContract||briefBlueprint.responseContract,
+              audit:activityBlueprint.audit||briefBlueprint.audit
+            }
+          : {
+              ...activityBlueprint,
+              context:briefBlueprint.context||activityBlueprint.context,
+              analysis:briefBlueprint.analysis||activityBlueprint.analysis,
+              approach:briefBlueprint.approach||activityBlueprint.approach,
+              work:briefBlueprint.work||activityBlueprint.work,
+              audit:briefBlueprint.audit||activityBlueprint.audit,
+              responseContract:briefBlueprint.responseContract||activityBlueprint.responseContract,
+              dynamic:Boolean(briefBlueprint.dynamic)
+            };
         if(parsedBrief.publicUpdate){
           activity(emit,'work-commentary-1',parsedBrief.publicUpdate,'completed','commentary');
         }
