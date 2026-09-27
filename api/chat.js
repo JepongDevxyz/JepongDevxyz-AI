@@ -97,8 +97,8 @@ const API_GUARD = {
   windowMs: Math.max(10_000, Number(process.env.API_RATE_WINDOW_MS || 60_000)),
   maxRequests: Math.max(1, Number(process.env.API_RATE_MAX_REQUESTS || 20)),
   maxHeavyRequests: Math.max(1, Number(process.env.API_RATE_MAX_HEAVY_REQUESTS || 6)),
-  maxBodyChars: Math.max(20_000, Number(process.env.API_MAX_BODY_CHARS || 1_200_000)),
-  maxDailyEstimatedTokens: Math.max(10_000, Number(process.env.API_DAILY_ESTIMATED_TOKEN_BUDGET || 250_000)),
+  maxBodyChars: Math.max(20_000, Number(process.env.API_MAX_BODY_CHARS || 2_200_000)),
+  maxDailyEstimatedTokens: Math.max(10_000, Number(process.env.API_DAILY_ESTIMATED_TOKEN_BUDGET || 600_000)),
   // Comma/newline-separated provider keys are rotated on retry. Keep the cap configurable; default 8.
   maxProviderCredentialsPerRequest: Math.max(1, Math.min(32, Number(process.env.API_MAX_CREDENTIAL_RETRIES || 8))),
   maxFallbackProviders: Math.max(0, Math.min(6, Number(process.env.API_MAX_FALLBACK_PROVIDERS || 2))),
@@ -1033,6 +1033,47 @@ function helpfulnessCoreInstruction(userMessage='', history=[], files=[]){
   return text;
 }
 
+function universalCapabilityInstruction(userMessage='', files=[]) {
+  const task=classifyUserTask(userMessage,files);
+  const hasAttachments=Array.isArray(files)&&files.length>0;
+  const hasProjectArchive=(Array.isArray(files)?files:[]).some(f=>
+    /\.(?:zip|apk|aab|jar|aar)$/i.test(String(f?.parentName||f?.name||f?.filename||'')) ||
+    ['zip','archive','archive-entry'].includes(String(f?.kind||''))
+  );
+
+  let text =
+    ' UNIVERSAL CAPABILITY PIPELINE: The application has already normalized conversation context, attachments, available tool evidence, and task-specific verification before this response reaches the selected model. ' +
+    'Use that supplied evidence regardless of which provider/model is selected. Do not downgrade the answer merely because your provider normally lacks a particular file parser; if parsed attachment/tool context is present, use it. ' +
+    'For every task, first identify the concrete requested outcome and constraints from the latest message plus relevant recent context; then inspect available evidence; then solve or implement; then check the result against the request before answering. ' +
+    'Never substitute a generic tutorial when the user supplied concrete files, code, screenshots, links, logs, or project context. ' +
+    'Never claim inaccessible evidence was inspected. If evidence is partial, use the inspected portions precisely and say only what remains unverified. ' +
+    'Do not expose hidden chain-of-thought; communicate concise conclusions, high-level progress, concrete changes, and verification evidence. ';
+
+  if(hasAttachments){
+    text +=
+      ' ATTACHMENT TASK RULE: Treat supplied attachment content as first-class task input. Cross-reference filenames, declarations, imports, configuration, callers, resources, and errors when relevant instead of judging a file in isolation.';
+  }
+  if(hasProjectArchive){
+    text +=
+      ' PROJECT ARCHIVE RULE: A project archive may be represented by a complete file index plus a task-ranked set of source/config entries. Inspect the actual supplied entries before diagnosing. ' +
+      'For Android projects, cross-check Gradle configuration, namespace/applicationId, manifests, Java/Kotlin package declarations, component names, relevant resources, and bundled library paths when those files are available. ' +
+      'Do not infer a critical package mismatch, missing class, or successful build merely from filenames or IDE metadata. ' +
+      'When asked to fix/update the project, make the smallest evidence-backed changes, preserve unrelated working files, output complete contents for every changed text file, and use exact project-relative paths.';
+  }
+
+  if(['coding','troubleshooting'].includes(task)){
+    text +=
+      ' ENGINEERING CHECK: Trace the failure across the relevant code/config boundary, distinguish root cause from symptom, and ensure the proposed change does not contradict supplied build/configuration evidence.';
+  } else if(task==='research'){
+    text += ' RESEARCH CHECK: Ground time-sensitive claims in supplied live-source results and separate evidence from inference.';
+  } else if(task==='file'){
+    text += ' FILE CHECK: Answer from the actual extracted document/archive content and preserve source-specific terminology.';
+  } else if(task==='image'||task==='video'){
+    text += ' MEDIA CHECK: Ground claims only in supplied visual/media evidence and do not invent unsampled events or audio.';
+  }
+  return text;
+}
+
 function responseDepthInstruction(message='', files=[]){
   const t=normalizeIntentText(message);
   const task=classifyUserTask(message,files);
@@ -1338,6 +1379,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   else if (studyTool === 'flashcards') text += ' STUDY TOOL: Produce concise flashcards in Q: / A: format, one card per pair.';
   else if (studyTool === 'explain') text += ' STUDY TOOL: Explain the topic simply using short steps, analogies, and one concrete example.';
   text += helpfulnessCoreInstruction(userMessage, history, files);
+  text += universalCapabilityInstruction(userMessage, files);
   text += responseDepthInstruction(userMessage, files);
   text += taskSpecificAccuracyInstruction(userMessage, files);
   text += visualUiQualityInstruction(userMessage, files);
@@ -1771,7 +1813,7 @@ function textFromAttachment(file){
     const mime=String(file.mimeType||'').toLowerCase();
     const name=String(file.name||file.filename||'');
     const textual=/^(text\/|application\/(json|javascript|xml|x-yaml|yaml))/i.test(mime) ||
-      /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|md|txt|csv|xml|svg|py|php|java|c|cpp|h|hpp|cs|sql|yaml|yml|sh|log)$/i.test(name);
+      /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|md|txt|csv|xml|svg|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|yaml|yml|sh|log|gradle|properties|toml|ini|cfg|conf|env|pro)$/i.test(name);
     if(!textual)return '';
     const bin=atob(String(file.data));
     const bytes=new Uint8Array(bin.length);
@@ -1782,7 +1824,7 @@ function textFromAttachment(file){
 
 
 function sanitizeIncomingAttachments(files=[]){
-  const input=Array.isArray(files)?files.slice(0,40):[];
+  const input=Array.isArray(files)?files.slice(0,64):[];
   let totalBase64=0;
   let totalText=0;
   const out=[];
@@ -1800,11 +1842,17 @@ function sanitizeIncomingAttachments(files=[]){
       frameTimeSeconds:Number.isFinite(Number(raw.frameTimeSeconds))?Number(raw.frameTimeSeconds):null,
       pageNumber:Number.isFinite(Number(raw.pageNumber))?Number(raw.pageNumber):null,
       extractionError:String(raw.extractionError||'').slice(0,500),
-      extractionWarning:String(raw.extractionWarning||'').slice(0,500)
+      extractionWarning:String(raw.extractionWarning||'').slice(0,500),
+      archiveFileCount:Math.max(0,Number(raw.archiveFileCount)||0),
+      archiveReadableCount:Math.max(0,Number(raw.archiveReadableCount)||0),
+      archiveBinaryCount:Math.max(0,Number(raw.archiveBinaryCount)||0),
+      archiveSelectedCount:Math.max(0,Number(raw.archiveSelectedCount)||0),
+      archiveSelectedChars:Math.max(0,Number(raw.archiveSelectedChars)||0),
+      archivePriority:Number.isFinite(Number(raw.archivePriority))?Number(raw.archivePriority):0
     };
 
-    if(typeof raw.extractedText==='string' && totalText<950000){
-      const remain=950000-totalText;
+    if(typeof raw.extractedText==='string' && totalText<1150000){
+      const remain=1150000-totalText;
       f.extractedText=raw.extractedText.slice(0,Math.min(650000,remain));
       totalText+=f.extractedText.length;
     }else f.extractedText='';
@@ -1854,8 +1902,9 @@ function buildAttachmentSourceContext(files=[], userMessage=''){
   const roots=[...grouped.entries()];
   const t=normalizeIntentText(userMessage);
   const codeEditIntent=/\b(fix|ayusin|edit|modify|update|add|lagyan|implement|paganahin|make it work|working|gumagana|refactor|rewrite)\b/i.test(t);
-  const singleCodeFile=roots.length===1 && /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(roots[0]?.[0]||'');
-  const sourceBudget=(codeEditIntent&&singleCodeFile)?650000:320000;
+  const singleCodeFile=roots.length===1 && /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|ya?ml|sh|gradle|properties|toml)$/i.test(roots[0]?.[0]||'');
+  const hasProjectArchive=roots.some(([name])=>/\.(?:zip|apk|aab|jar|aar)$/i.test(String(name||'')));
+  const sourceBudget=(codeEditIntent&&singleCodeFile)?650000:(hasProjectArchive?380000:320000);
 
   let out='\n\n[ATTACHED SOURCE CONTENT]\n';
   let used=0;
@@ -2437,6 +2486,22 @@ function emitContextActivityStart(message='', files=[], emit){
 function completeContextPlan(plan, emit){
   const first=plan?.steps?.[0];
   if(first)activity(emit,first.id,first.label,'completed',first.kind,'');
+  const profile=plan?.profile||{};
+  const subject=String(profile.subject||'your request').slice(0,96);
+  let label='Request context prepared';
+  let kind='process';
+  if(profile.kind==='android'){label=`Android task requirements prepared: ${subject}`;kind='build';}
+  else if(profile.kind==='web'){label=`Implementation requirements prepared: ${subject}`;kind='process';}
+  else if(profile.kind==='backend'){label=`Backend/API requirements prepared: ${subject}`;kind='api';}
+  else if(profile.kind==='github'){label=`Repository task context prepared: ${subject}`;kind='process';}
+  else if(profile.kind==='deployment'){label=`Deployment task context prepared: ${subject}`;kind='deploy';}
+  else if(profile.kind==='document'){label=`Document task context prepared: ${subject}`;kind='file';}
+  else if(profile.kind==='image'){label=`Image task context prepared: ${subject}`;kind='image';}
+  else if(profile.kind==='video'){label=`Video task context prepared: ${subject}`;kind='file';}
+  else if(profile.kind==='research'){label=`Research scope prepared: ${subject}`;kind='research';}
+  else if(profile.kind==='study'){label=`Learning task prepared: ${subject}`;kind='process';}
+  else if(profile.kind==='general'){label=`Request understood: ${subject}`;kind='process';}
+  activity(emit,'task-prepared',label,'completed',kind,'');
 }
 
 function taskWorkingActivity(plan={}){
@@ -2694,11 +2759,101 @@ function uploadedProjectGroups(files=[]){
   const groups=new Map();
   for(const f of (Array.isArray(files)?files:[])){
     const root=attachmentRootName(f);
-    if(!/\.zip$/i.test(root))continue;
+    if(!/\.(?:zip|apk|aab|jar|aar)$/i.test(root))continue;
     if(!groups.has(root))groups.set(root,[]);
     groups.get(root).push(f);
   }
   return groups;
+}
+
+function archiveEntryBody(file={}){
+  const text=textFromAttachment(file);
+  return text.replace(/^Archive entry:\s*[^\n]+\n/i,'');
+}
+
+function firstRegexValue(text='',patterns=[]){
+  for(const rx of patterns){
+    const m=String(text||'').match(rx);
+    if(m?.[1])return String(m[1]).trim();
+  }
+  return '';
+}
+
+function androidProjectConsistencyEvidence(sourceEntries=[]){
+  const entries=sourceEntries.map(file=>({
+    file,
+    name:String(file?.name||'').replace(/\\/g,'/'),
+    body:archiveEntryBody(file)
+  }));
+  const gradle=entries.filter(e=>/(?:^|\/)(?:build\.gradle(?:\.kts)?|settings\.gradle(?:\.kts)?|gradle\.properties|libs\.versions\.toml)$/i.test(e.name));
+  const manifests=entries.filter(e=>/(?:^|\/)AndroidManifest\.xml$/i.test(e.name));
+  const code=entries.filter(e=>/\.(?:java|kt|kts)$/i.test(e.name));
+
+  const gradleText=gradle.map(e=>e.body).join('\n');
+  const namespace=firstRegexValue(gradleText,[
+    /\bnamespace\s*(?:=\s*)?["']([^"']+)["']/i
+  ]);
+  const applicationId=firstRegexValue(gradleText,[
+    /\bapplicationId\s*(?:=\s*)?["']([^"']+)["']/i
+  ]);
+  const compileSdk=firstRegexValue(gradleText,[
+    /\bcompileSdk(?:Version)?\s*(?:=\s*)?["']?([0-9]{2,3})/i
+  ]);
+  const targetSdk=firstRegexValue(gradleText,[
+    /\btargetSdk(?:Version)?\s*(?:=\s*)?["']?([0-9]{2,3})/i
+  ]);
+  const minSdk=firstRegexValue(gradleText,[
+    /\bminSdk(?:Version)?\s*(?:=\s*)?["']?([0-9]{1,3})/i
+  ]);
+
+  const sourceClasses=new Set();
+  const packagePathMismatches=[];
+  for(const e of code){
+    const pkg=firstRegexValue(e.body,[/^\s*package\s+([A-Za-z_][\w.]*)\s*;?/m]);
+    const base=e.name.split('/').pop()?.replace(/\.(?:java|kt|kts)$/i,'')||'';
+    if(pkg&&base)sourceClasses.add(`${pkg}.${base}`);
+    const marker=e.name.match(/\/(?:java|kotlin)\/(.+)\/[^/]+\.(?:java|kt|kts)$/i);
+    if(pkg&&marker?.[1]){
+      const pathPkg=marker[1].replace(/\//g,'.');
+      if(pathPkg!==pkg)packagePathMismatches.push({name:e.name,declared:pkg,pathPackage:pathPkg});
+    }
+  }
+
+  const manifestComponents=[];
+  let manifestPackage='';
+  for(const e of manifests){
+    if(!manifestPackage)manifestPackage=firstRegexValue(e.body,[
+      /<manifest\b[^>]*\bpackage\s*=\s*["']([^"']+)["']/i
+    ]);
+    for(const m of e.body.matchAll(/<(activity|activity-alias|service|receiver|provider)\b[^>]*\bandroid:name\s*=\s*["']([^"']+)["']/gi)){
+      manifestComponents.push({type:m[1].toLowerCase(),name:m[2]});
+    }
+  }
+  const basePackage=manifestPackage||namespace||applicationId;
+  const unresolvedComponents=[];
+  for(const c of manifestComponents){
+    if(!c.name||/^(?:android|androidx|com\.google)\./i.test(c.name))continue;
+    const fqcn=c.name.startsWith('.')&&basePackage
+      ? basePackage+c.name
+      : (!c.name.includes('.')&&basePackage?basePackage+'.'+c.name:c.name);
+    if(fqcn&&sourceClasses.size&&!sourceClasses.has(fqcn)){
+      unresolvedComponents.push({...c,fqcn});
+    }
+  }
+
+  const dependencyLines=gradleText.split('\n')
+    .map(x=>x.trim())
+    .filter(x=>/^(?:implementation|api|compileOnly|runtimeOnly|kapt|ksp|annotationProcessor|testImplementation|androidTestImplementation)\b/.test(x));
+  const duplicateDependencies=[...new Set(dependencyLines.filter((line,i,a)=>a.indexOf(line)!==i))];
+
+  return {
+    namespace,applicationId,manifestPackage,compileSdk,targetSdk,minSdk,
+    sourceClassCount:sourceClasses.size,
+    manifestComponentCount:manifestComponents.length,
+    packagePathMismatches,
+    unresolvedComponents,
+    duplicateDependencies
+  };
 }
 
 function inspectUploadedProject(files=[], emit){
@@ -2711,6 +2866,9 @@ function inspectUploadedProject(files=[], emit){
     const sourceEntries=parts.filter(p=>String(p?.kind||'')==='archive-entry' && textFromAttachment(p));
     const rootMeta=parts.find(p=>attachmentRootName(p)===root && String(p?.name||'')===root) || parts[0];
     const manifestText=String(rootMeta?.extractedText||'');
+    const indexedCount=Math.max(0,Number(rootMeta?.archiveFileCount)||0);
+    const readableCount=Math.max(0,Number(rootMeta?.archiveReadableCount)||0);
+    const selectedCount=Math.max(sourceEntries.length,Number(rootMeta?.archiveSelectedCount)||0);
     const names=[
       ...new Set([
         ...sourceEntries.map(p=>String(p?.name||'')),
@@ -2718,9 +2876,13 @@ function inspectUploadedProject(files=[], emit){
       ].filter(Boolean))
     ];
     const idBase=`project-${groupIndex++}`;
+    const coverage=readableCount?Math.min(100,Math.round((sourceEntries.length/readableCount)*100)):100;
     activity(emit,`${idBase}-archive`,
-      `Inspected ZIP contents: ${root} • ${sourceEntries.length} readable source/config file${sourceEntries.length===1?'':'s'}`,
-      sourceEntries.length?'completed':'warning','file');
+      `Indexed project archive: ${root} • ${indexedCount||names.length} files • loaded ${sourceEntries.length}${readableCount?`/${readableCount}`:''} readable source/config files`,
+      sourceEntries.length?'completed':'warning','file',
+      readableCount&&sourceEntries.length<readableCount
+        ?`Task-ranked source coverage: ${coverage}% by file count; build/manifest/app sources and request-matching paths are prioritized.`
+        :'Readable project sources available for inspection.');
 
     const gradle=sourceEntries.filter(p=>/(?:^|\/)(?:build\.gradle(?:\.kts)?|settings\.gradle(?:\.kts)?|gradle\.properties|libs\.versions\.toml)$/i.test(String(p.name||'')));
     const manifests=sourceEntries.filter(p=>/(?:^|\/)AndroidManifest\.xml$/i.test(String(p.name||'')));
@@ -2757,8 +2919,8 @@ function inspectUploadedProject(files=[], emit){
 
     const verificationTargets=[...gradle,...manifests,...java,...resources]
       .filter((p,i,a)=>a.indexOf(p)===i)
-      .slice(0,18);
-    const reports=verificationTargets.map(p=>staticVerifyText(String(p.name||'Archive entry'),textFromAttachment(p),String(p.name||'')));
+      .slice(0,28);
+    const reports=verificationTargets.map(p=>staticVerifyText(String(p.name||'Archive entry'),archiveEntryBody(p),String(p.name||'')));
     const failed=reports.filter(r=>r.status==='failed').length;
     const warnings=reports.filter(r=>r.status==='warning').length;
     if(reports.length){
@@ -2771,25 +2933,69 @@ function inspectUploadedProject(files=[], emit){
         failed?'warning':'completed','test');
     }
 
+    const androidEvidence=(gradle.length||manifests.length||java.length)
+      ?androidProjectConsistencyEvidence(sourceEntries):null;
+    if(androidEvidence){
+      const facts=[];
+      if(androidEvidence.namespace)facts.push(`namespace ${androidEvidence.namespace}`);
+      if(androidEvidence.applicationId)facts.push(`applicationId ${androidEvidence.applicationId}`);
+      if(androidEvidence.targetSdk)facts.push(`targetSdk ${androidEvidence.targetSdk}`);
+      if(androidEvidence.packagePathMismatches.length)facts.push(`${androidEvidence.packagePathMismatches.length} package/path mismatch${androidEvidence.packagePathMismatches.length===1?'':'es'}`);
+      if(androidEvidence.duplicateDependencies.length)facts.push(`${androidEvidence.duplicateDependencies.length} duplicate dependency declaration${androidEvidence.duplicateDependencies.length===1?'':'s'}`);
+      activity(emit,`${idBase}-android-consistency`,
+        facts.length?`Cross-checked Android project consistency • ${facts.join(' • ')}`:'Cross-checked Android package/component consistency',
+        (androidEvidence.packagePathMismatches.length||androidEvidence.duplicateDependencies.length)?'warning':'completed',
+        'test',
+        androidEvidence.unresolvedComponents.length
+          ?`${androidEvidence.unresolvedComponents.length} manifest component name(s) were not found in the supplied source pack; omitted project files may account for them.`
+          :`Checked ${androidEvidence.manifestComponentCount} manifest component declaration${androidEvidence.manifestComponentCount===1?'':'s'} against ${androidEvidence.sourceClassCount} supplied source class path${androidEvidence.sourceClassCount===1?'':'s'}.`);
+    }
+
     context+=`Project archive: ${root}\n`;
-    context+=`Readable source/config files supplied separately: ${sourceEntries.length}\n`;
-    if(gradle.length)context+=`Gradle/build files: ${gradle.map(p=>p.name).join(', ')}\n`;
-    if(manifests.length)context+=`Android manifests: ${manifests.map(p=>p.name).join(', ')}\n`;
-    if(java.length)context+=`Java/Kotlin files: ${java.map(p=>p.name).slice(0,40).join(', ')}\n`;
-    if(resources.length)context+=`Resources/config files: ${resources.map(p=>p.name).slice(0,40).join(', ')}\n`;
-    if(nativeNames.length)context+=`Bundled binary/library paths seen in archive manifest: ${nativeNames.slice(0,40).join(', ')}\n`;
+    context+=`Archive files indexed: ${indexedCount||names.length}\n`;
+    context+=`Readable source/config files in archive: ${readableCount||sourceEntries.length}\n`;
+    context+=`Task-ranked readable files supplied to this request: ${sourceEntries.length}\n`;
+    if(readableCount&&sourceEntries.length<readableCount){
+      context+=`Coverage note: not every readable file body fits one model request. Selection is task-ranked; do not say the whole project body was read. Do not infer defects from uninspected files.\n`;
+    }
+    if(gradle.length)context+=`Gradle/build files inspected: ${gradle.map(p=>p.name).join(', ')}\n`;
+    if(manifests.length)context+=`Android manifests inspected: ${manifests.map(p=>p.name).join(', ')}\n`;
+    if(java.length)context+=`Java/Kotlin files inspected: ${java.map(p=>p.name).slice(0,60).join(', ')}\n`;
+    if(resources.length)context+=`Resources/config files inspected: ${resources.map(p=>p.name).slice(0,60).join(', ')}\n`;
+    if(nativeNames.length)context+=`Bundled binary/library paths indexed: ${nativeNames.slice(0,60).join(', ')}\n`;
+    if(androidEvidence){
+      context+='Android consistency evidence:\n';
+      if(androidEvidence.namespace)context+=`- namespace: ${androidEvidence.namespace}\n`;
+      if(androidEvidence.applicationId)context+=`- applicationId: ${androidEvidence.applicationId}\n`;
+      if(androidEvidence.manifestPackage)context+=`- manifest package: ${androidEvidence.manifestPackage}\n`;
+      if(androidEvidence.compileSdk)context+=`- compileSdk: ${androidEvidence.compileSdk}\n`;
+      if(androidEvidence.minSdk)context+=`- minSdk: ${androidEvidence.minSdk}\n`;
+      if(androidEvidence.targetSdk)context+=`- targetSdk: ${androidEvidence.targetSdk}\n`;
+      context+=`- supplied source classes indexed: ${androidEvidence.sourceClassCount}\n`;
+      context+=`- manifest components parsed: ${androidEvidence.manifestComponentCount}\n`;
+      if(androidEvidence.packagePathMismatches.length){
+        for(const x of androidEvidence.packagePathMismatches.slice(0,12)){
+          context+=`- SOURCE PACKAGE/PATH MISMATCH: ${x.name} declares ${x.declared}, path implies ${x.pathPackage}\n`;
+        }
+      }else context+='- no Java/Kotlin package-vs-source-path mismatch detected in supplied source files\n';
+      if(androidEvidence.duplicateDependencies.length){
+        context+=`- duplicate Gradle dependency declarations: ${androidEvidence.duplicateDependencies.join(' | ')}\n`;
+      }
+      if(androidEvidence.unresolvedComponents.length){
+        context+=`- manifest component names not found in supplied source pack (not necessarily missing from full project): ${androidEvidence.unresolvedComponents.slice(0,12).map(x=>x.fqcn).join(', ')}\n`;
+      }
+    }
     if(reports.length){
       context+='Static inspection results:\n';
       for(const r of reports)context+=`- ${r.name}: ${r.status.toUpperCase()} — ${r.findings.join(' ')}\n`;
     }
     context+=
-      'Grounding rule: only claim files listed above were inspected. Binary .so/.jar/.aar contents were not decompiled on the server. ' +
-      'Do not claim a Gradle build, APK install, emulator run, or runtime test unless separate execution evidence exists. ' +
+      'Grounding rule: only claim file bodies listed above were inspected. Binary .so/.jar/.aar contents were not decompiled on the server. ' +
+      'Do not claim a Gradle build, APK install, emulator run, runtime test, or whole-project inspection unless separate execution/full-coverage evidence exists. ' +
       'When proposing changes, preserve unrelated working project files and use exact archive-relative paths in FILE blocks.\n';
   }
   return context+'[/UPLOADED PROJECT INSPECTION]\n';
 }
-
 
 async function performVerification(message='', files=[], emit){
   if(!shouldVerifyTask(message,files))return '';
@@ -2800,7 +3006,7 @@ async function performVerification(message='', files=[], emit){
 
   if(Array.isArray(files)){
     for(let i=0;i<files.length && reports.length<16;i++){
-      if(String(files[i]?.kind||'')==='zip')continue;
+      if(['zip','archive'].includes(String(files[i]?.kind||'')))continue;
       const txt=textFromAttachment(files[i]);
       if(!txt)continue;
       const name=files[i]?.name||files[i]?.filename||`Attachment ${i+1}`;
