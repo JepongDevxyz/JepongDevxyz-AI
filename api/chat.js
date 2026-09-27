@@ -4356,11 +4356,15 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
           delete payload.max_tokens;
         }
 
+        // Keep the upstream request inside the serverless execution budget.
+        // A 120s provider timeout can outlive the hosting request and surface as a
+        // generic "operation was aborted" after the model has already done work.
+        const upstreamTimeoutMs=provider==='codecraft'?55000:70000;
         let res=await fetch(cfg.url,{
           method:'POST',
           headers,
           body:JSON.stringify(payload),
-          signal:AbortSignal.timeout(120000)
+          signal:AbortSignal.timeout(upstreamTimeoutMs)
         });
 
         const nativeFields=nativeEffortFields(provider,target,responseEffort);
@@ -4375,7 +4379,7 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
             method:'POST',
             headers,
             body:JSON.stringify(compatiblePayload),
-            signal:AbortSignal.timeout(120000)
+            signal:AbortSignal.timeout(upstreamTimeoutMs)
           });
         }
 
@@ -4417,8 +4421,9 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
 
         if(!hasAnotherKey && !hasAnotherModel) break;
       }catch(e){
-        status=502;
-        last=e?.message||String(e);
+        const timedOut=e?.name==='TimeoutError'||/timed?\s*out|timeout|aborted due to timeout/i.test(String(e?.message||e));
+        status=timedOut?504:502;
+        last=timedOut?`${providerLabel(provider)} did not start/finish the upstream response within ${Math.round(upstreamTimeoutMs/1000)}s.`:(e?.message||String(e));
         const hasAnotherKey=i<keys.length-1;
         const hasAnotherModel=autoFallback && mi<modelCandidates.length-1;
         const canRetry=hasAnotherKey||hasAnotherModel;
