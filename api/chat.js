@@ -2950,43 +2950,45 @@ async function inspectPublicGitHubRepository(message='', emit){
     const headers={'Accept':'application/vnd.github+json','User-Agent':'JepongDevxyz-AI/1.0'};
     const requestOptions=()=>({headers,signal:AbortSignal.timeout(9000)});
     const id=`github-${name.replace(/[^a-zA-Z0-9]/g,'-')}`;
-    activity(emit,id,`Checking public GitHub repository: ${name}`,'running','web');
+    activity(emit,id,`Searching GitHub repository metadata: ${name}`,'running','github');
     try{
       const res=await safePublicFetch(root,requestOptions(),1);
       if(!res.ok){
-        activity(emit,id,`Could not access public repository: ${name} • HTTP ${res.status}`,'warning','web');
+        activity(emit,id,`Could not access GitHub repository: ${name} • HTTP ${res.status}`,'warning','github');
         context.push(`Repository ${name}: metadata unavailable (HTTP ${res.status}). Do not claim that its contents were inspected.`);
         continue;
       }
       const info=await res.json();
-      activity(emit,id,`Read repository metadata: ${name}`,'completed','web');
+      activity(emit,id,`Read GitHub repository metadata: ${name}`,'completed','github');
       context.push(`Repository: ${name}\nDescription: ${String(info.description||'').slice(0,250)}\nDefault branch: ${String(info.default_branch||'unknown')}\nPublic repository URL: https://github.com/${name}`);
       const treeId=`github-files-${name.replace(/[^a-zA-Z0-9]/g,'-')}`;
-      activity(emit,treeId,`Listing repository files: ${name}`,'running','web');
+      activity(emit,treeId,`Exploring GitHub repository structure: ${name}`,'running','github');
       const listing=await safePublicFetch(`${root}/contents`,requestOptions(),1);
       if(!listing.ok){
-        activity(emit,treeId,`Could not list repository files: ${name} • HTTP ${listing.status}`,'warning','web');
+        activity(emit,treeId,`Could not list GitHub repository files: ${name} • HTTP ${listing.status}`,'warning','github');
         continue;
       }
       const entries=await listing.json();
       if(!Array.isArray(entries)){
-        activity(emit,treeId,`Repository listing unavailable: ${name}`,'warning','web');
+        activity(emit,treeId,`GitHub repository listing unavailable: ${name}`,'warning','github');
         continue;
       }
       const files=entries.filter(x=>x.type==='file');
       const dirs=entries.filter(x=>x.type==='dir');
-      activity(emit,treeId,`Listed ${files.length} files and ${dirs.length} folders: ${name}`,'completed','web');
+      activity(emit,treeId,`Explored repository structure • ${files.length} files • ${dirs.length} folders`,'completed','github',name);
       context.push(`Top-level files: ${files.map(x=>x.name).slice(0,45).join(', ')}\nTop-level folders: ${dirs.map(x=>x.name).slice(0,20).join(', ')}`);
       const task=String(message).toLowerCase();
       const relevant=files.filter(x=>/^(readme(?:\.md)?|index\.html|package\.json|vercel\.json)$/i.test(x.name));
       if(/\b(api|backend|chat|webhook|activity|status)\b/i.test(task) && dirs.some(x=>x.name==='api')){
+        const apiId=`github-api-${name.replace(/[^a-zA-Z0-9]/g,'-')}`;
+        activity(emit,apiId,`Inspecting repository API implementation: ${name}`,'running','github');
         const apiList=await safePublicFetch(`${root}/contents/api`,requestOptions(),1);
         if(apiList.ok){
           const apiFiles=await apiList.json();
           if(Array.isArray(apiFiles)){
             context.push(`API files: ${apiFiles.map(x=>x.name).slice(0,30).join(', ')}`);
             for(const candidate of apiFiles.filter(x=>/^(chat|webhook)\.(?:js|mjs)$/i.test(x.name)).slice(0,1)) relevant.push(candidate);
-            activity(emit,`github-api-${name.replace(/[^a-zA-Z0-9]/g,'-')}`,`Listed API implementation files: ${name}`,'completed','web');
+            activity(emit,apiId,`Inspected repository API implementation • ${apiFiles.length} entries`,'completed','github',name);
           }
         }
       }
@@ -3007,7 +3009,7 @@ async function inspectPublicGitHubRepository(message='', emit){
         }
       }
     }catch(err){
-      activity(emit,id,`Could not inspect public repository: ${name}`,'warning','web',String(err?.message||err).slice(0,100));
+      activity(emit,id,`Could not inspect GitHub repository: ${name}`,'warning','github',String(err?.message||err).slice(0,100));
       context.push(`Repository ${name}: inspection unavailable. Do not claim repository code was read.`);
     }
   }
@@ -3230,6 +3232,7 @@ function inspectUploadedProject(files=[], emit){
     ];
     const idBase=`project-${groupIndex++}`;
     const coverage=readableCount?Math.min(100,Math.round((sourceEntries.length/readableCount)*100)):100;
+    activity(emit,`${idBase}-archive`,`Inspecting uploaded project archive: ${root}`,'running','file');
     activity(emit,`${idBase}-archive`,
       `Indexed project archive: ${root} • ${indexedCount||names.length} files • loaded ${sourceEntries.length}${readableCount?`/${readableCount}`:''} readable source/config files`,
       sourceEntries.length?'completed':'warning','file',
@@ -3244,21 +3247,25 @@ function inspectUploadedProject(files=[], emit){
     const nativeNames=names.filter(name=>/\.(?:so|jar|aar)$/i.test(name));
 
     if(gradle.length){
+      activity(emit,`${idBase}-gradle`,'Inspecting Gradle configuration and dependencies','running','build',root);
       activity(emit,`${idBase}-gradle`,
         `Reviewed Gradle configuration and dependencies • ${gradle.length} build/config file${gradle.length===1?'':'s'}`,
         'completed','build');
     }
     if(manifests.length){
+      activity(emit,`${idBase}-manifest`,'Inspecting Android manifest and component declarations','running','file',root);
       activity(emit,`${idBase}-manifest`,
         `Reviewed Android manifest and component declarations • ${manifests.length} manifest${manifests.length===1?'':'s'}`,
         'completed','file');
     }
     if(java.length){
+      activity(emit,`${idBase}-source`,'Inspecting Java/Kotlin project sources','running','file',root);
       activity(emit,`${idBase}-source`,
         `Inspected Java/Kotlin project sources • ${java.length} file${java.length===1?'':'s'}`,
         'completed','file');
     }
     if(resources.length){
+      activity(emit,`${idBase}-resources`,'Inspecting Android resources and configuration','running','file',root);
       activity(emit,`${idBase}-resources`,
         `Inspected Android resources/configuration • ${resources.length} readable file${resources.length===1?'':'s'}`,
         'completed','file');
@@ -3273,6 +3280,9 @@ function inspectUploadedProject(files=[], emit){
     const verificationTargets=[...gradle,...manifests,...java,...resources]
       .filter((p,i,a)=>a.indexOf(p)===i)
       .slice(0,28);
+    if(verificationTargets.length){
+      activity(emit,`${idBase}-static`,`Running static checks on ${verificationTargets.length} project file${verificationTargets.length===1?'':'s'}`,'running','test',root);
+    }
     const reports=verificationTargets.map(p=>staticVerifyText(String(p.name||'Archive entry'),archiveEntryBody(p),String(p.name||'')));
     const failed=reports.filter(r=>r.status==='failed').length;
     const warnings=reports.filter(r=>r.status==='warning').length;
@@ -4954,6 +4964,7 @@ async function processChat(body, emit) {
   // Explicit GitHub plugin context is fetched server-side; never trust client-provided file text.
   let pluginGithubContext='';
   if(body.plugins?.github?.enabled===true){
+    activity(emit,'plugin-github','Reading selected GitHub repository source','running','github');
     try{
       if(body._githubPermissionDenied)throw new Error('GitHub App has not authorized this repository.');
       pluginGithubContext=await fetchPublicGitHubContext(body.plugins.github,undefined,body._githubAccessToken||'',taskMessage);
@@ -4965,6 +4976,7 @@ async function processChat(body, emit) {
   }
   let githubExecutionContext='';
   if(body.plugins?.github?.enabled===true){
+    activity(emit,'plugin-github-actions','Checking GitHub Actions and pull request status','running','github');
     try{
       if(body._githubPermissionDenied)throw new Error('GitHub App has not authorized this repository.');
       githubExecutionContext=await fetchGitHubRunContext(body.plugins.github,body._githubAccessToken||'',message);
@@ -4973,6 +4985,7 @@ async function processChat(body, emit) {
   }
   let githubIssuesContext='';
   if(body.plugins?.github?.enabled===true&&shouldReadGitHubIssues(message)){
+    activity(emit,'plugin-github-issues','Checking current GitHub issues','running','github');
     try{
       if(body._githubIssuesPermissionDenied)throw new Error('GitHub Issues read permission was not granted.');
       githubIssuesContext=await fetchGitHubIssuesContext(body.plugins.github,body._githubIssuesToken||'',message);
@@ -5593,6 +5606,14 @@ function activityStreamResponse(body, requestSignal=null) {
 
           // Every normal assistant response gets a real server-side result audit.
           // This keeps Activity useful for all prompts, not only uploads/repositories.
+          send('activity',{
+            type:'activity',
+            id:'response-audit',
+            label:'Checking the response against your request',
+            state:'running',
+            kind:'test',
+            at:Date.now()
+          });
           const responseAudit=auditGeneratedResponse(activityContextMessage,generatedText,body.files||[]);
           const auditActivity=taskAuditActivity(activityContextMessage,body.files||[],responseAudit,result.activityBlueprint||null);
           send('activity',{
@@ -5612,6 +5633,15 @@ function activityStreamResponse(body, requestSignal=null) {
           // such as "Gawan mo ako ng HTML snake game" across every selected model.
           const generatedBlocks=responseAudit.codeBlocks||extractCodeBlocks(generatedText);
           if(generatedBlocks.length){
+            send('activity',{
+              type:'activity',
+              id:'output-verification',
+              label:`Checking ${Math.min(generatedBlocks.length,10)} generated code block${Math.min(generatedBlocks.length,10)===1?'':'s'}`,
+              state:'running',
+              kind:'test',
+              detail:'Static verification only; code is not arbitrarily executed.',
+              at:Date.now()
+            });
             const postReports=generatedBlocks.slice(0,10).map((b,i)=>staticVerifyText(`Generated code block ${i+1}`,b.code,b.lang));
             const failed=postReports.filter(r=>r.status==='failed').length;
             const warnings=postReports.filter(r=>r.status==='warning').length;
