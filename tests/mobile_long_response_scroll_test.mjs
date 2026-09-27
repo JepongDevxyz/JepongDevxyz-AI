@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';
 const h=fs.readFileSync('index.html','utf8');
-assert(h.includes('Mobile long-response fix: one vertical scroller only.'));
-assert(h.includes('max-height:none!important;'));
-assert(h.includes('overflow-y:visible!important;'));
-assert(h.includes('.code-block-header{position:relative;top:auto'));
-assert(h.includes("searchTrigger.classList.add('jd-scroll-busy')"));
-assert(h.includes("setTimeout(()=>searchTrigger.classList.remove('jd-scroll-busy'),180)"));
-assert(h.includes('.bot-actions{scroll-margin-bottom:150px}'));
-console.log('PASS: mobile long responses use the chat as the single vertical scroller and transient overlays yield during scroll.');
+assert(h.includes('LONG RESPONSE MOBILE FLOW FIX'));
+assert(h.includes('.code-container-wrap pre{max-height:none!important;overflow-x:auto!important;overflow-y:visible!important'));
+assert(h.includes('.code-block-header{position:relative!important;top:auto!important}'));
+assert(h.includes('function syncChatComposerReserve()'));
+assert(h.includes('new ResizeObserver(syncChatComposerReserve)'));
+assert(h.includes("'--jd-composer-reserve'"));
+assert(h.includes('padding-bottom:calc(var(--jd-composer-reserve,112px) + 24px)!important'));
+console.log('PASS: long code uses the main chat scroller and mobile bottom clearance follows the real composer height.');
