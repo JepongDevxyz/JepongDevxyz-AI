@@ -9069,7 +9069,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const icons={
                 web:'search',search:'search',research:'search',test:'badge-check',file:'paperclip',route:'route',
                 fallback:'refresh-cw',provider:'sparkles',generate:'sparkles',process:'terminal-square',
-                analyze:'scan-search',image:'image',build:'hammer',deploy:'cloud-upload',api:'braces'
+                analyze:'scan-search',image:'image',video:'film',document:'file-text',build:'hammer',
+                deploy:'cloud-upload',api:'braces',github:'github',plugin:'plug'
             };
             return `<i data-lucide="${icons[kind]||'terminal-square'}"></i>`;
         }
@@ -9672,11 +9673,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(row && row.classList.contains('running') && normalized.state!=='running'){
                 const previousLabel=String(row.querySelector('.ai-activity-label')?.textContent||'').replace(/\s+/g,' ').trim();
                 const nextLabel=String(normalized.label||'').replace(/\s+/g,' ').trim();
-                const toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image']);
-                const toolLikeId=/^(?:github|source|attachment|media|web|artifact|plugin|project|repo|url|link)-/i.test(id);
-                const internalStage=/^(?:task-|provider-)/i.test(id) || ['thinking','generation','router','response-audit','output-verification'].includes(id);
+                const toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image','video','document','github','plugin']);
+                const toolLikeId=/^(?:github|source|attachment|media|web|artifact|plugin|project|repo|url|link|response-audit|output-verification)/i.test(id);
+                const internalStage=/^(?:task-|provider-)/i.test(id) || ['thinking','generation','router'].includes(id);
                 if(!internalStage && previousLabel && nextLabel && previousLabel!==nextLabel &&
-                   (toolLikeKinds.has(String(normalized.kind||kind).toLowerCase()) || toolLikeId)){
+                   (toolLikeKinds.has(String(normalized.kind||'process').toLowerCase()) || toolLikeId)){
                     row.dataset.activityId=id+'-history-'+Date.now();
                     row.classList.remove('running','ai-activity-current');
                     row.classList.add('completed');
