@@ -89,34 +89,63 @@ assert(initial.bell,'BellToggle did not render');
 assert(initial.squish>=3,'SquishSwitch controls did not render');
 assert.equal(initial.old,0,'legacy component markup still rendered');
 
-// 1/6: real Activity functions must render the four-dot ThoughtLine status and real labels.
+// 1/6: frame-match the supplied Work Activity recording.
 const activity=JSON.parse(await evaluate(`(()=>{
-  showAIIndicator('Audit ReactBits browser smoke test',[]);
-  appendActivityEvent({id:'task-context',label:'Auditing requested ReactBits components',kind:'process',state:'completed'});
-  appendActivityEvent({id:'generation',label:'Generating response',kind:'generate',state:'running'});
+  showAIIndicator('Build the requested dashboard',[]);
+  appendActivityEvent({id:'task-context',label:'Built the file',kind:'process',state:'completed'});
+  appendActivityEvent({id:'web-search',label:'Searching the web',kind:'web',state:'running'});
+  appendActivityEvent({id:'process-step',label:'Implemented the dashboard',kind:'process',state:'completed'});
+  appendActivityEvent({id:'provider-codecraft',label:'CodeCraftAPI connected',kind:'provider',state:'completed'});
+  appendActivityEvent({id:'generation',label:'Generating the response',kind:'generate',state:'running'});
+  appendActivityEvent({id:'thinking',label:'Preparing implementation',kind:'build',state:'running'});
+  appendJdWorkNote('May isang importanteng production detail na kailangan isaalang-alang.');
   const card=document.getElementById('activeAiIndicator');
+  const rows=[...card.querySelectorAll('.ai-activity-row')];
+  const web=rows.find(x=>x.dataset.activityId==='web-search');
+  const process=rows.find(x=>x.dataset.activityId==='process-step');
+  const thinking=rows.find(x=>x.dataset.activityId==='thinking');
+  const provider=rows.find(x=>x.dataset.activityId==='provider-codecraft');
+  const generation=rows.find(x=>x.dataset.activityId==='generation');
+  const note=card.querySelector('.ai-work-commentary__text');
+  const cardStyle=getComputedStyle(card);
+  const labelStyle=getComputedStyle(web.querySelector('.ai-activity-label'));
+  const noteStyle=getComputedStyle(note);
+  const headerStyle=getComputedStyle(card.querySelector('.ai-activity-header-actions'));
   const before={
-    cluster:!!card?.querySelector('.thought-cluster[data-status="working"]'),
-    thought:!!card?.querySelector('.thought-line'),
-    trace:!!card?.querySelector('.thought-line__trace'),
-    lead:card?.querySelector('.ai-activity-lead')?.textContent||'',
-    headline:card?.querySelector('#aiActivitySummary')?.textContent||'',
-    timer:card?.querySelector('#aiActivityTimer')?.textContent||'',
-    rows:card?.querySelectorAll('.ai-activity-row').length||0
+    reference:card.classList.contains('reference-work-flow'),
+    headerDisplay:headerStyle.display,
+    marginLeft:cardStyle.marginLeft,
+    marginRight:cardStyle.marginRight,
+    labelFont:labelStyle.fontSize,
+    labelLine:labelStyle.lineHeight,
+    noteFont:noteStyle.fontSize,
+    webIconDisplay:getComputedStyle(web.querySelector('.ai-activity-icon')).display,
+    processIconless:process.classList.contains('ai-activity-iconless'),
+    thinkingIconless:thinking.classList.contains('ai-activity-iconless'),
+    thinkingText:thinking.querySelector('.ai-activity-label')?.textContent||'',
+    providerDisplay:getComputedStyle(provider).display,
+    generationDisplay:getComputedStyle(generation).display,
+    lead:card.querySelector('.ai-activity-lead')?.textContent||'',
+    primaryVisible:rows.filter(x=>getComputedStyle(x).display!=='none').map(x=>x.dataset.activityId)
   };
   finishAIIndicator(true,1200);
-  before.done=card?.querySelector('.thought-cluster')?.dataset.status;
-  before.settled=card?.querySelector('#aiActivitySummary')?.textContent||'';
-  before.finalTimer=card?.querySelector('#aiActivityTimer')?.textContent||'';
   return JSON.stringify(before);
 })()`));
-assert(activity.cluster&&activity.thought&&activity.trace,'Four-dot ThoughtLine status failed to render');
-assert.equal(activity.lead,'Auditing requested ReactBits components');
-assert.equal(activity.headline,'Thinking','ThoughtLine header must stay stable while the exact running event remains in the trace');
-assert(activity.rows>=1,'real Activity row did not render');
-assert.equal(activity.done,'done','Four-dot ThoughtLine status did not settle to done');
-assert.equal(activity.settled,'Thought for','ThoughtLine did not settle like ReactBits');
-assert.equal(activity.finalTimer,'1s','ThoughtLine final elapsed timer mismatch');
+assert.equal(activity.reference,true,'Reference Work class missing');
+assert.equal(activity.headerDisplay,'none','Old Thought header must not appear in the supplied Work reference surface');
+assert.equal(activity.marginLeft,'14px');
+assert.equal(activity.marginRight,'12px');
+assert.equal(activity.labelFont,'15.5px');
+assert.equal(activity.noteFont,'16px');
+assert.notEqual(activity.webIconDisplay,'none','Tool/search row must keep its icon');
+assert.equal(activity.processIconless,true,'Plain work milestone must not reserve an icon lane');
+assert.equal(activity.thinkingIconless,true,'Thinking must be a plain terminal row');
+assert.equal(activity.thinkingText,'Thinking','Model-work row must use the literal reference label');
+assert.equal(activity.providerDisplay,'none','Provider plumbing must stay off the primary activity surface');
+assert.equal(activity.generationDisplay,'none','Generation plumbing must stay off the primary activity surface');
+assert.equal(activity.lead,'Built the file');
+assert(activity.primaryVisible.includes('web-search')&&activity.primaryVisible.includes('process-step')&&activity.primaryVisible.includes('thinking'),
+  'Primary reference milestones are missing');
 
 // 2/6: BellToggle mirrors actual checkbox state without requesting browser permission.
 const bell=JSON.parse(await evaluate(`(()=>{
