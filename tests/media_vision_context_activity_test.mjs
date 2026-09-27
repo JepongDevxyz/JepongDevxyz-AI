@@ -27,7 +27,7 @@ const taskSpecificActivityCopy=new Function(taskCopySrc+'\nreturn taskSpecificAc
 const contextSrc=between(api,"function contextActivityPlan(message='', files=[]){","\nfunction emitContextActivityStart(");
 const plan=new Function('taskProfile','taskSpecificActivityCopy','shortTaskSubject','extractPublicUrl','isSafePublicUrl','isWebsiteSecurityRequest','URL',
  contextSrc+'\nreturn contextActivityPlan;')(taskProfile,taskSpecificActivityCopy,m=>m.slice(0,82),()=>[],()=>false,()=>false,URL);
-assert.match(plan(meme,[]).steps[0].label,/tool inputs, outputs, and interaction flow/i);
+assert.match(plan(meme,[]).steps[0].label,/web tool/i);
 const uploadPlan=plan('Analyze this clip',[
  {name:'clip.mp4',mimeType:'video/mp4',kind:'video'},
  {name:'frame 1',parentName:'clip.mp4',mimeType:'image/jpeg',mediaRole:'video-frame'}
@@ -89,7 +89,7 @@ const startup=between(html,"function clientActivityTaskSubject(promptText=''){",
 const initial=new Function('getActiveContext',startup+'\nreturn initialActivityForRequest;')(
  ()=>({sessions:{},id:null})
 );
-assert.match(initial(meme,[]).label,/requested web structure and interactions/i);
+assert.match(initial(meme,[]).label,/website or web app/i);
 const local=initial('Read video and screenshot',[{name:'clip.mp4',kind:'video',mimeType:'video/mp4'},
  {name:'frame.jpg',parentName:'clip.mp4',mediaRole:'video-frame',mimeType:'image/jpeg'}]);
 assert.match(local.label,/Reviewing uploaded video/);

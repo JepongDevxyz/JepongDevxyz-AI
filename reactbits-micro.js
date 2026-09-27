@@ -480,7 +480,7 @@
     voiceGesture={
       id:e.pointerId,
       downX:e.clientX,
-      downAt:performance.now(),
+      downAt:Number.isFinite(Number(e.timeStamp))?Number(e.timeStamp):performance.now(),
       ownPress:!already,
       sliding:false,
       cancelled:false
@@ -526,7 +526,8 @@
       return;
     }
 
-    var held=performance.now()-g.downAt;
+    var eventNow=Number.isFinite(Number(e.timeStamp))?Number(e.timeStamp):performance.now();
+    var held=Math.max(0,eventNow-g.downAt);
     var isHold=held>=Number(mic.dataset.holdAfter||VOICE_HOLD_AFTER);
     if(g.ownPress){
       // Exact ReactBits auto behavior:

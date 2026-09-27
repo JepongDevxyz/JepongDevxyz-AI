@@ -44,8 +44,8 @@ assert(api.includes('const input=Array.isArray(files)?files.slice(0,64):[];'),
   'Server must accept the expanded task-ranked evidence pack');
 assert(api.includes('archiveSelectedCount:Math.max(0,Number(raw.archiveSelectedCount)||0)'),
   'Archive coverage metadata must survive server sanitization');
-assert(api.includes("activity(emit,'task-prepared'"),
-  'Every normal chat request must expose a truthful prepared-context Activity milestone');
+assert(api.includes("activity(emit,'task-analysis'") && api.includes("activity(emit,'task-approach'"),
+  'Every normal chat request must expose truthful analysis and approach Activity milestones');
 assert(api.includes('responseEffortRank(responseEffort)>=2 || projectChangeIntent'),
   'Project archive fixes should receive quality preflight even in Instant/Low');
 assert(api.includes('Do not infer a critical package mismatch'),

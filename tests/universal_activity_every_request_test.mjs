@@ -12,9 +12,11 @@ assert(!html.includes("if(shouldShowAIActivity(promptText, currentFiles)) showAI
   'Activity must not be gated to only heavy/special prompts');
 
 for(const token of [
-  "activity(emit,'task-prepared'",
-  "Game structure and interaction plan prepared",
-  "Building game loop, controls, scoring, and UI",
+  "activity(emit,'task-analysis'",
+  "activity(emit,'task-approach'",
+  "Structuring the game mechanics and controls",
+  "Setting up the page, game loop, and interaction flow",
+  "Building movement, collision, scoring, and UI behavior",
   "activity(emit,'thinking'",
   "id:'response-audit'",
   "taskAuditActivity(body.message||'',body.files||[],responseAudit)",
@@ -49,4 +51,4 @@ assert(!normalizer.includes("id==='response-audit')return null"),
 assert(normalizer.includes("if(id==='output-verification')"),
   'Generated-code verification needs reference-style test status');
 
-console.log('PASS: Activity is universal and task-specific; HTML snake-game creation gets gameplay planning/build wording, final-response audit, and game-code static verification.');
+console.log('PASS: Activity is universal and task-specific; HTML snake-game creation gets compact analysis, approach, build, audit, and code-verification stages.');

@@ -3883,7 +3883,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/haptics-notifications.css">
     <link rel="stylesheet" href="/interactive-proposals.css">
     <link rel="stylesheet" href="/activity-reference.css">
-    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-task-specific-6">
+    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-activity-v7">
     <style id="jdUploadUiCritical">
       #filePreviewContainer.is-visible{
         display:flex!important;
@@ -9131,33 +9131,33 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const lower=prompt.toLowerCase();
             if(/\b(game|snake|tetris|pong|platformer|quiz game|memory game)\b/i.test(lower) &&
                /\b(gawan|gumawa|create|build|make|implement|develop|html|javascript|website|app)\b/i.test(lower)){
-                return {label:'Planning gameplay, controls, and browser behavior: '+subject,kind:'build',detail:''};
+                return {label:'Planning the requested game: '+subject,kind:'build',detail:''};
             }
             if(/\b(android|apk|gradle|manifest|kotlin)\b/i.test(lower)){
                 return {label:/\b(fix|ayusin|repair|error|bug|crash)\b/i.test(lower)
-                    ?'Tracing the Android issue: '+subject
-                    :'Mapping Android app requirements: '+subject,kind:'build',detail:''};
+                    ?'Reviewing the Android issue: '+subject
+                    :'Planning the Android implementation: '+subject,kind:'build',detail:''};
             }
             if(/\b(api|endpoint|backend|webhook|database|sql)\b/i.test(lower)){
-                return {label:'Mapping backend inputs, outputs, and failure paths: '+subject,kind:'api',detail:''};
+                return {label:'Reviewing the API/backend task: '+subject,kind:'api',detail:''};
             }
             if(/\b(research|search|latest|current|news|hanapin|maghanap)\b/i.test(lower)){
-                return {label:'Defining the research question and evidence needed: '+subject,kind:'research',detail:''};
+                return {label:'Reviewing the research question: '+subject,kind:'research',detail:''};
             }
             if(/\b(translate|translation|rewrite|email|message|essay|story|script|summary|summarize)\b/i.test(lower)){
-                return {label:'Shaping the requested writing, tone, and structure: '+subject,kind:'process',detail:''};
+                return {label:'Reviewing the writing request: '+subject,kind:'process',detail:''};
             }
             if(/\b(math|equation|solve|calculate|homework|lesson|explain)\b/i.test(lower)){
-                return {label:'Identifying the problem, target, and method: '+subject,kind:'process',detail:''};
+                return {label:'Reviewing the problem: '+subject,kind:'process',detail:''};
             }
             if(/\b(compare|comparison|choose|recommend|best|alin|budget|plan)\b/i.test(lower)){
-                return {label:'Identifying the decision criteria that matter: '+subject,kind:'process',detail:''};
+                return {label:'Reviewing the comparison or decision: '+subject,kind:'process',detail:''};
             }
             if(/\b(error|bug|crash|issue|problem|not working|hindi gumagana|troubleshoot)\b/i.test(lower)){
-                return {label:'Tracing the reported symptom and likely cause: '+subject,kind:'process',detail:''};
+                return {label:'Reviewing the reported problem: '+subject,kind:'process',detail:''};
             }
             if(/\b(html|css|javascript|typescript|website|web app|ui|responsive|dashboard|generator|editor|tool)\b/i.test(lower)){
-                return {label:'Mapping the requested web structure and interactions: '+subject,kind:'build',detail:''};
+                return {label:'Planning the requested website or web app: '+subject,kind:'build',detail:''};
             }
             return {label:subject?'Understanding the requested outcome: '+subject:'Understanding your request',kind:'process',detail:''};
         }
@@ -9554,7 +9554,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const kind = normalized.kind || 'process';
             const detailsOnly = normalized.visibility==='details' ||
                 kind==='provider' || kind==='route' ||
-                id==='quality-orchestrator' ||
                 /^attachment-media-(?:selected|bridge|cloudflare)$/.test(id);
             const iconless = id==='thinking' || ['process','build','generate','deploy','api'].includes(String(kind).toLowerCase());
             // A new operation does NOT prove the previous one completed.
