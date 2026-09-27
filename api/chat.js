@@ -5368,8 +5368,8 @@ async function processChat(body, emit) {
   const useQualityOrchestrator =
     (responseEffortRank(responseEffort)>=2 || projectChangeIntent) &&
     shouldUseQualityOrchestrator(message,files,mode);
-  let activityBlueprint=defaultActivityBlueprint(contextPlan?.profile||taskProfile(message,files));
-
+  // activityBlueprint was already created by the same selected model before
+  // tool work, so quality preflight may refine it but must not replace its plan.
   if(useQualityOrchestrator){
     activity(emit,'quality-orchestrator',projectChangeIntent?'Cross-checking project requirements and inspected evidence':'Cross-checking requirements, constraints, and edge cases','running','process');
     try{
@@ -5395,7 +5395,17 @@ async function processChat(body, emit) {
       if(preflight.ok){
         const rawBrief=await readInternalProviderText(preflight.response,responseEffort==='Max'?16000:12000);
         const parsedBrief=parseQualityPreflightOutput(rawBrief,contextPlan?.profile||{});
-        activityBlueprint=parsedBrief.activityBlueprint||activityBlueprint;
+        const briefBlueprint=parsedBrief.activityBlueprint||{};
+        activityBlueprint={
+          ...activityBlueprint,
+          context:briefBlueprint.context||activityBlueprint.context,
+          analysis:briefBlueprint.analysis||activityBlueprint.analysis,
+          approach:briefBlueprint.approach||activityBlueprint.approach,
+          work:briefBlueprint.work||activityBlueprint.work,
+          audit:briefBlueprint.audit||activityBlueprint.audit,
+          responseContract:briefBlueprint.responseContract||activityBlueprint.responseContract,
+          dynamic:Boolean(activityBlueprint.dynamic||briefBlueprint.dynamic)
+        };
         if(parsedBrief.publicUpdate){
           activity(emit,'work-commentary-1',parsedBrief.publicUpdate,'completed','commentary');
         }
