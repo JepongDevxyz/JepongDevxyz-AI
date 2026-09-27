@@ -9210,8 +9210,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             // Attachment labels are emitted from actual preprocessing; retain their details.
             if(id==='attachments') return {...e,kind:'file'};
+            if(id==='response-audit'){
+                return {...e,label:label || 'Checking the response',kind:'test',visibility:'details'};
+            }
             if(id==='output-verification'){
-                return {...e,label:label || 'Checking generated code',kind:'test'};
+                return {...e,label:label || 'Checking generated code',kind:'test',visibility:'details'};
             }
             if(id==='fallback' && state==='running'){
                 return {...e,label:label||'Checking configured fallback',
