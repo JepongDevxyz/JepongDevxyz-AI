@@ -82,8 +82,20 @@ assert(!append.includes("appendActivityEvent({"),
 assert(backend.includes("activity(emit,id,`Read attached"),'Real file events remain server-grounded');
 assert(backend.includes("activity(emit,'web-search'"),'Real web events remain server-grounded');
 assert(backend.includes("activity(emit,'fallback'"),'Real fallback events remain server-grounded');
-const reveal=between(html,'                const revealFinalResponse = (elapsedMs=null) => {','                if (contentType.includes(\'text/event-stream\')) {');
-assert(reveal.includes('finishAIIndicator(true, elapsedMs);'));
+const reveal=between(html,'                const revealFinalResponse = async (elapsedMs=null) => {','                if (contentType.includes(\'text/event-stream\')) {');
+assert(reveal.includes('await drainActivityPlayback();'),
+ 'Queued truthful activity must drain before the final answer is revealed');
+assert(reveal.indexOf('await drainActivityPlayback();') < reveal.indexOf('finishAIIndicator(true, elapsedMs);'),
+ 'Activity playback must drain before finalization');
 assert(reveal.includes('requestAnimationFrame(() => requestAnimationFrame(() => {'),
  'Activity must finalize before the reply is revealed');
+assert(html.includes('const JD_ACTIVITY_MIN_VISIBLE_GAP_MS=230;'));
+assert(html.includes('const JD_ACTIVITY_MIN_RUNNING_DWELL_MS=650;'));
+assert(html.includes('const JD_ACTIVITY_FINAL_DRAIN_MAX_MS=2800;'));
+assert(html.includes('function pumpActivityPlayback(){'));
+assert(html.includes('function flushActivityPlaybackNow(){'));
+assert(html.includes('jdActivityPlaybackQueue.push(normalized);'));
+assert(css.includes('@keyframes jdActivityCurrentDot'));
+assert(css.includes('.ai-activity-row.running.ai-activity-current .ai-activity-label::after'),
+ 'Current reference step needs the inline breathing dot seen in the supplied videos');
 console.log('PASS: frame-matched Work activity surface, task-specific model-work row, commentary flow, auto-scroll, and truthful SSE sequencing.');

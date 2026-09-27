@@ -62,8 +62,8 @@ assert(!show.includes("appendActivityEvent({id:'thinking'"),'do not put Thinking
 const streamUI=between(ui,"if (contentType.includes('text/event-stream')) {","\n                {\n                    fullResponse=stripJdWorkNotes(fullResponse);");
 const textHandler=between(streamUI,'text: (payload) => {','\n                        artifact:');
 assert(!textHandler.includes('renderLiveResponse('),'answer must stay hidden during Activity');
-assert(streamUI.includes('done: (payload) => revealFinalResponse(payload.elapsedMs)'),
-  'collapse Activity then reveal final answer');
+assert(streamUI.includes('done: async (payload) => { await revealFinalResponse(payload.elapsedMs); }'),
+  'drain Activity playback then reveal the final answer');
 assert(!sse.includes("id:'stream-open'"),'transport stream opening must not appear as user-visible work');
 assert(sse.includes('completedResponseNumber=continuationCount')&&sse.includes('nextResponseNumber=continuationCount+1')&&sse.includes('Response ${nextResponseNumber} — continuing'),
   'real automatic continuations must expose numbered Response milestones');

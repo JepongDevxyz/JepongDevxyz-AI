@@ -11,7 +11,12 @@ for(const token of [
   "const detailsOnly = normalized.visibility==='details'",
   "const iconless = id==='thinking'",
   "row.dataset.activityVisibility=detailsOnly?'details':'primary'",
-  "scrollToBottom(false)"
+  "scrollToBottom(false)",
+  "const JD_ACTIVITY_MIN_VISIBLE_GAP_MS=230",
+  "const JD_ACTIVITY_MIN_RUNNING_DWELL_MS=650",
+  "function drainActivityPlayback(",
+  "jdActivityPlaybackQueue.push(normalized)",
+  "await drainActivityPlayback();"
 ]) assert(html.includes(token),'Missing frame-reference runtime token: '+token);
 
 for(const token of [
@@ -23,7 +28,9 @@ for(const token of [
   'font-size:16px',
   '.ai-activity-row.ai-activity-iconless',
   '[data-activity-visibility="details"]',
-  '@keyframes jdActivityReferenceIn'
+  '@keyframes jdActivityReferenceIn',
+  '.ai-activity-row.running.ai-activity-current .ai-activity-label::after',
+  '@keyframes jdActivityCurrentDot'
 ]) assert(css.includes(token),'Missing frame-reference CSS metric: '+token);
 
 assert(!/\.reference-work-flow[^}]*display:flex!important/.test(css),

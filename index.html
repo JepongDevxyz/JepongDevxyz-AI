@@ -3883,7 +3883,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/haptics-notifications.css">
     <link rel="stylesheet" href="/interactive-proposals.css">
     <link rel="stylesheet" href="/activity-reference.css">
-    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-activity-v8-dynamic">
+    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-activity-v9-frameplay">
     <style id="jdUploadUiCritical">
       #filePreviewContainer.is-visible{
         display:flex!important;
@@ -9426,6 +9426,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         },{passive:true});
 
         function showAIIndicator(promptText, files = []) {
+            resetActivityPlayback();
             removeAIIndicator();
             closeJdThoughts();
             stopJdActivityClock();
@@ -9502,9 +9503,132 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             btn.setAttribute('aria-expanded', card.classList.contains('collapsed') ? 'false' : 'true');
         }
 
+        // Frame-matched Activity playback.
+        // Server/tool events remain the only source of truth; this queue only prevents
+        // several genuine milestones that arrive in the same network tick from painting
+        // in the same visual frame. A running row receives a short readable dwell before
+        // its matching completion can replace it, like the supplied ChatGPT references.
+        const JD_ACTIVITY_MIN_VISIBLE_GAP_MS=230;
+        const JD_ACTIVITY_MIN_RUNNING_DWELL_MS=650;
+        const JD_ACTIVITY_FINAL_DRAIN_MAX_MS=2800;
+        let jdActivityPlaybackQueue=[];
+        let jdActivityPlaybackTimer=null;
+        let jdActivityPlaybackLastPaintAt=0;
+        let jdActivityPlaybackRunningAt=new Map();
+        let jdActivityPlaybackWaiters=[];
+
+        function activityPlaybackId(evt={}){
+            return String(evt.id||'event').replace(/[^a-zA-Z0-9_-]/g,'-');
+        }
+
+        function activityEventUsesVisibleTimeline(evt={}){
+            const id=activityPlaybackId(evt);
+            const kind=String(evt.kind||'process').toLowerCase();
+            if(evt.visibility==='details'||kind==='provider'||kind==='route')return false;
+            if(/^attachment-media-(?:selected|bridge|cloudflare)$/.test(id))return false;
+            return true;
+        }
+
+        function resolveActivityPlaybackWaiters(){
+            if(jdActivityPlaybackQueue.length||jdActivityPlaybackTimer!==null)return;
+            const waiters=jdActivityPlaybackWaiters.splice(0);
+            waiters.forEach(resolve=>{try{resolve();}catch(_){}});
+        }
+
+        function resetActivityPlayback(){
+            if(jdActivityPlaybackTimer!==null){
+                clearTimeout(jdActivityPlaybackTimer);
+                jdActivityPlaybackTimer=null;
+            }
+            jdActivityPlaybackQueue=[];
+            jdActivityPlaybackLastPaintAt=0;
+            jdActivityPlaybackRunningAt.clear();
+            const waiters=jdActivityPlaybackWaiters.splice(0);
+            waiters.forEach(resolve=>{try{resolve();}catch(_){}});
+        }
+
+        function activityPlaybackDelay(evt={}){
+            const now=performance.now();
+            let delay=jdActivityPlaybackLastPaintAt
+                ? Math.max(0,JD_ACTIVITY_MIN_VISIBLE_GAP_MS-(now-jdActivityPlaybackLastPaintAt))
+                : 0;
+            const id=activityPlaybackId(evt);
+            if(String(evt.state||'running')!=='running'&&jdActivityPlaybackRunningAt.has(id)){
+                delay=Math.max(delay,JD_ACTIVITY_MIN_RUNNING_DWELL_MS-(now-jdActivityPlaybackRunningAt.get(id)));
+            }
+            return Math.max(0,Math.ceil(delay));
+        }
+
+        function pumpActivityPlayback(){
+            if(jdActivityPlaybackTimer!==null)return;
+            if(!jdActivityPlaybackQueue.length){
+                resolveActivityPlaybackWaiters();
+                return;
+            }
+            const next=jdActivityPlaybackQueue[0];
+            const delay=activityPlaybackDelay(next);
+            jdActivityPlaybackTimer=setTimeout(()=>{
+                jdActivityPlaybackTimer=null;
+                const evt=jdActivityPlaybackQueue.shift();
+                if(!evt){
+                    pumpActivityPlayback();
+                    return;
+                }
+                renderActivityEventNow(evt);
+                const paintedAt=performance.now();
+                jdActivityPlaybackLastPaintAt=paintedAt;
+                const id=activityPlaybackId(evt);
+                if(String(evt.state||'running')==='running')jdActivityPlaybackRunningAt.set(id,paintedAt);
+                else jdActivityPlaybackRunningAt.delete(id);
+                pumpActivityPlayback();
+            },delay);
+        }
+
+        function flushActivityPlaybackNow(){
+            if(jdActivityPlaybackTimer!==null){
+                clearTimeout(jdActivityPlaybackTimer);
+                jdActivityPlaybackTimer=null;
+            }
+            while(jdActivityPlaybackQueue.length){
+                const evt=jdActivityPlaybackQueue.shift();
+                renderActivityEventNow(evt);
+                const id=activityPlaybackId(evt);
+                if(String(evt.state||'running')==='running')jdActivityPlaybackRunningAt.set(id,performance.now());
+                else jdActivityPlaybackRunningAt.delete(id);
+            }
+            resolveActivityPlaybackWaiters();
+        }
+
+        async function drainActivityPlayback(maxWaitMs=JD_ACTIVITY_FINAL_DRAIN_MAX_MS){
+            if(!jdActivityPlaybackQueue.length&&jdActivityPlaybackTimer===null)return;
+            let timeoutId=null;
+            await Promise.race([
+                new Promise(resolve=>{
+                    jdActivityPlaybackWaiters.push(resolve);
+                    pumpActivityPlayback();
+                }),
+                new Promise(resolve=>{timeoutId=setTimeout(resolve,Math.max(0,Number(maxWaitMs)||0));})
+            ]);
+            if(timeoutId!==null)clearTimeout(timeoutId);
+            // Never lose truthful milestones just because the response completed quickly.
+            // If the bounded readability window expires, paint the remainder immediately.
+            if(jdActivityPlaybackQueue.length||jdActivityPlaybackTimer!==null)flushActivityPlaybackNow();
+        }
+
         function appendActivityEvent(evt = {}) {
             const normalized=normalizeActivityEventForUI(evt);
             if(!normalized)return;
+            // Diagnostics hidden from the main reference surface do not consume visual
+            // pacing time. They remain available to the details/history implementation.
+            if(!activityEventUsesVisibleTimeline(normalized)){
+                renderActivityEventNow(normalized);
+                return;
+            }
+            jdActivityPlaybackQueue.push(normalized);
+            pumpActivityPlayback();
+        }
+
+        function renderActivityEventNow(normalized = {}) {
             const card = document.getElementById('activeAiIndicator');
             const list = document.getElementById('aiActivityList');
             if (!card || !list) return;
@@ -9668,6 +9792,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function removeAIIndicator() {
             stopJdActivityClock();
+            resetActivityPlayback();
             if(jdThoughtsSource?.id==='activeAiIndicator')closeJdThoughts();
             notifyRequestInFlight = false;
             hideNotifyPermissionCard();
@@ -11229,7 +11354,14 @@ ${m.text || ''}
                 const key=note.toLowerCase().replace(/\s+/g,' ').trim();
                 if(!key||seen.has(key))continue;
                 seen.add(key);
-                appendJdWorkNote(note);
+                // Keep model-authored public progress commentary in the same playback
+                // queue as server milestones so it cannot jump ahead of earlier work.
+                appendActivityEvent({
+                    id:'work-note-'+Date.now()+'-'+seen.size,
+                    label:note,
+                    state:'completed',
+                    kind:'commentary'
+                });
             }
         }
 
@@ -11450,12 +11582,14 @@ ${m.text || ''}
                 };
                 botMsgElem.style.setProperty('display','none','important');
 
-                const revealFinalResponse = (elapsedMs=null) => {
+                const revealFinalResponse = async (elapsedMs=null) => {
                     if (responseRevealScheduled) return;
                     responseRevealScheduled = true;
                     responseStreamFinished = true;
+                    // The stream can finish faster than a human can read a burst of genuine
+                    // status events. Drain the bounded playback queue first, then reveal.
+                    await drainActivityPlayback();
                     finishAIIndicator(true, elapsedMs);
-                    // Let the collapsed Activity state paint first, then reveal the answer.
                     requestAnimationFrame(() => requestAnimationFrame(() => {
                         renderLiveResponse(true);
                     }));
@@ -11478,9 +11612,10 @@ ${m.text || ''}
                                 pendingArtifacts.push(payload);
                             }
                         },
-                        done: (payload) => revealFinalResponse(payload.elapsedMs),
-                        error: (payload) => {
+                        done: async (payload) => { await revealFinalResponse(payload.elapsedMs); },
+                        error: async (payload) => {
                             appendActivityEvent({ id:'server-error', label:sanitizeUiErrorMessage(payload.message || 'AI provider unavailable'), state:'error', kind:'provider' });
+                            await drainActivityPlayback(700);
                             if(!autoProviderFallback) finishAIIndicator(false);
                             throw new Error(sanitizeUiErrorMessage(payload.message || 'AI provider unavailable'));
                         }
@@ -11496,7 +11631,7 @@ ${m.text || ''}
                         syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                         activePartialResponse=stripJdWorkNotes(fullResponse);
                     }
-                    revealFinalResponse();
+                    await revealFinalResponse();
                 }
 
                 {
