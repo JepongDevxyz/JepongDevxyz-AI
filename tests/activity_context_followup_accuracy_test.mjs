@@ -29,6 +29,7 @@ const exported=vm.runInNewContext(source+`
   contextualTaskMessage,
   splitContextualTaskMessage,
   isVagueFreshnessFollowUp,
+  isAcknowledgementFollowUp,
   activityTaskSubject,
   taskProfile,
   shouldAutoResearch
@@ -55,6 +56,12 @@ assert.notEqual(profile.kind,'research','contextual latest follow-up must keep p
 assert.equal(profile.freshnessFollowUp,true,'vague freshness follow-up should be marked as continuation');
 assert(!/Yung latest ngayon ang gawin mo/i.test(profile.subject),
   'activity subject should use the concrete prior task instead of the vague follow-up');
+
+assert.equal(exported.isAcknowledgementFollowUp('Sige'),true,
+  'short acknowledgement follow-ups must be recognized');
+const acknowledged='Gawan mo ako ng HTML snake game / Follow-up: Sige';
+assert.equal(exported.activityTaskSubject(acknowledged),'HTML snake game',
+  'Sige/OK must never leak into the Activity subject or every subsequent status row');
 
 assert(api.includes("getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers,contextMessage:taskMessage})"),
   'live-web gate must evaluate the literal current message and use context only for query construction');
