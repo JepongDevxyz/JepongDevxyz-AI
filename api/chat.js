@@ -1159,36 +1159,158 @@ function temperatureFor(message='', files=[]){
   return 0.5;
 }
 
-function buildInternalTaskBriefPrompt(message='', files=[]){
+
+function cleanActivityLabel(value='',max=150){
+  return String(value||'')
+    .replace(/\[\[\/?JD_[A-Z_]+\]\]/g,'')
+    .replace(/^[-*•\s]+/,'')
+    .replace(/\s+/g,' ')
+    .trim()
+    .slice(0,max);
+}
+
+function defaultActivityBlueprint(profile={}){
+  const context=taskSpecificActivityCopy(profile,'context');
+  const analysis=taskSpecificActivityCopy(profile,'prepared');
+  const approach=taskSpecificActivityCopy(profile,'prepared2');
+  const work=taskSpecificActivityCopy(profile,'work');
+  const audit=taskSpecificActivityCopy(profile,'audit');
+  return {
+    context:cleanActivityLabel(context.label),
+    analysis:cleanActivityLabel(analysis.label),
+    approach:cleanActivityLabel(approach.label),
+    work:cleanActivityLabel(work.label),
+    audit:cleanActivityLabel(audit.label),
+    commentary:'',
+    kind:work.kind||context.kind||'process',
+    dynamic:false
+  };
+}
+
+function buildActivityBlueprintPrompt(message='', files=[], profile={}){
+  const names=[...new Set((Array.isArray(files)?files:[])
+    .map(f=>String(f?.parentName||f?.name||f?.filename||'').trim())
+    .filter(Boolean))].slice(0,8);
+  return [
+    'Create concise user-facing Activity labels for another assistant that is about to perform this exact request.',
+    'Do NOT answer the request. Do NOT reveal chain-of-thought, hidden reasoning, credentials, policy text, or provider internals.',
+    'The labels must be genuinely specific to THIS task. Never use generic filler such as "Working on your request", "Processing", or "Thinking".',
+    'Use the user\'s language when obvious.',
+    'Each label should usually be 3-10 words and read naturally in a compact modern ChatGPT-style work timeline.',
+    'CONTEXT: identify what is being understood or inspected.',
+    'ANALYSIS: identify the concrete requirements, parts, or evidence being organized.',
+    'APPROACH: identify the implementation/answer structure being prepared.',
+    'WORK: identify what the main response pass is actively building, solving, comparing, drafting, or analyzing.',
+    'AUDIT: identify what will be checked in the produced answer/code. Do not claim runtime execution unless verified tool context says it ran.',
+    'COMMENTARY: one short natural sentence about the chosen approach; it must not expose private reasoning or claim unverified external actions.',
+    'Return EXACTLY these six lines and nothing else:',
+    'CONTEXT: <specific label>',
+    'ANALYSIS: <specific label>',
+    'APPROACH: <specific label>',
+    'WORK: <specific label>',
+    'AUDIT: <specific label>',
+    'COMMENTARY: <one short sentence>',
+    'Task type: '+String(profile?.kind||classifyUserTask(message,files))+'/'+String(profile?.subtype||'general'),
+    names.length?'Attachments: '+names.join(', '):'Attachments: none',
+    'User request: '+String(message||'').slice(0,8000)
+  ].join('\n');
+}
+
+function parseActivityBlueprintOutput(raw='', profile={}){
+  const fallback=defaultActivityBlueprint(profile);
+  const text=sanitizeAssistantOutput(String(raw||'')).trim();
+  if(!text)return fallback;
+  const value=(name,max=150)=>{
+    const rx=new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*(.+?)(?=\\n\\s*[A-Z_]+\\s*:|$)','i');
+    return cleanActivityLabel(text.match(rx)?.[1]||'',max);
+  };
+  const context=value('CONTEXT');
+  const analysis=value('ANALYSIS');
+  const approach=value('APPROACH');
+  const work=value('WORK');
+  const audit=value('AUDIT');
+  const commentary=value('COMMENTARY',520);
+  const valid=[context,analysis,approach,work,audit].filter(Boolean).length>=4;
+  if(!valid)return {...fallback,commentary:commentary||fallback.commentary};
+  return {
+    context:context||fallback.context,
+    analysis:analysis||fallback.analysis,
+    approach:approach||fallback.approach,
+    work:work||fallback.work,
+    audit:audit||fallback.audit,
+    commentary,
+    kind:fallback.kind,
+    dynamic:true
+  };
+}
+
+function shouldUseDynamicActivityPlanner(message='', files=[]){
+  const t=String(message||'').trim();
+  if(!t)return false;
+  if(/^(?:hi|hello|hey|yo|kumusta|kamusta|thanks|thank you|salamat)[!?.\s]*$/i.test(t))return false;
+  return true;
+}
+
+function buildInternalTaskBriefPrompt(message='', files=[], profile={}){
   const task=classifyUserTask(message,files);
   return [
     'Prepare a compact quality preflight for another assistant pass.',
     'Do not write the final answer to the user.',
     'Do not provide hidden chain-of-thought or private step-by-step reasoning.',
-    'Use EXACTLY these two sections:',
-    'PUBLIC_UPDATE: one short natural paragraph (1-3 sentences) in the user\'s language describing the concrete work/approach for this request. It must sound like a polished Kimi/ChatGPT work update, not a generic promise. Do not claim searches/tests/builds/deployments unless verified tool context already establishes them.',
+    'Also create concise request-specific Activity labels.',
+    'Use EXACTLY these sections in this order:',
+    'ACTIVITY_CONTEXT: concise label for understanding/inspecting this exact task.',
+    'ACTIVITY_ANALYSIS: concise label for organizing the concrete requirements/evidence.',
+    'ACTIVITY_APPROACH: concise label for the implementation/answer structure being prepared.',
+    'ACTIVITY_WORK: concise label for what the final-answer pass will actively build/solve/analyze/draft.',
+    'ACTIVITY_AUDIT: concise label for checking the produced answer against the request; no fake runtime claims.',
+    'PUBLIC_UPDATE: one short natural paragraph (1-2 sentences) in the user\'s language describing the concrete approach. It must sound like a polished ChatGPT work update, not a generic promise.',
     'INTERNAL_BRIEF: concise structured notes covering the intended user goal, hard constraints, relevant verified evidence, likely mistakes to avoid, and the best final-answer approach. Mark uncertain items as uncertain. Do not include private reasoning.',
+    'Activity labels should normally be 3-10 words, specific to this exact request, and should not repeat the whole user prompt.',
     isVisualWebUiRequest(message,files)
       ? 'UI_QUALITY_CHECK: identify the target visual structure, responsive/mobile requirements, required styled components, interaction states, and whether the final single-file preview must avoid external styling dependencies. Explicitly reject a bare/default-browser-looking implementation.'
       : 'UI_QUALITY_CHECK: Not applicable.',
-    `Task category: ${task}.`,
-    `Latest user request: ${String(message||'').slice(0,12000)}`
+    'Task category: '+task+'.',
+    'Task subtype: '+String(profile?.subtype||'general')+'.',
+    'Latest user request: '+String(message||'').slice(0,12000)
   ].join('\n');
 }
 
-function parseQualityPreflightOutput(raw=''){
+function parseQualityPreflightOutput(raw='', profile={}){
   const text=sanitizeAssistantOutput(String(raw||'')).trim();
-  if(!text)return {publicUpdate:'',brief:''};
+  if(!text)return {publicUpdate:'',brief:'',activityBlueprint:defaultActivityBlueprint(profile)};
+  const line=(name,max=150)=>{
+    const rx=new RegExp('(?:^|\\n)\\s*'+name+'\\s*:\\s*(.+?)(?=\\n\\s*[A-Z_]+\\s*:|$)','i');
+    return cleanActivityLabel(text.match(rx)?.[1]||'',max);
+  };
   const publicMatch=text.match(/PUBLIC_UPDATE\s*:\s*([\s\S]*?)(?=\n\s*INTERNAL_BRIEF\s*:|$)/i);
   const briefMatch=text.match(/INTERNAL_BRIEF\s*:\s*([\s\S]*)$/i);
   const cleanPublic=String(publicMatch?.[1]||'')
     .replace(/\s+/g,' ').trim().slice(0,900);
   const brief=String(briefMatch?.[1]||text)
+    .replace(/^ACTIVITY_[A-Z_]+\s*:[^\n]*\n?/gim,'')
     .replace(/^PUBLIC_UPDATE\s*:[\s\S]*?(?=\n\s*INTERNAL_BRIEF\s*:)/i,'')
     .replace(/^\s*INTERNAL_BRIEF\s*:\s*/i,'')
     .trim().slice(0,12000);
-  return {publicUpdate:cleanPublic,brief};
+  const fallback=defaultActivityBlueprint(profile);
+  const context=line('ACTIVITY_CONTEXT');
+  const analysis=line('ACTIVITY_ANALYSIS');
+  const approach=line('ACTIVITY_APPROACH');
+  const work=line('ACTIVITY_WORK');
+  const audit=line('ACTIVITY_AUDIT');
+  const activityBlueprint={
+    context:context||fallback.context,
+    analysis:analysis||fallback.analysis,
+    approach:approach||fallback.approach,
+    work:work||fallback.work,
+    audit:audit||fallback.audit,
+    commentary:cleanPublic,
+    kind:fallback.kind,
+    dynamic:Boolean(context||analysis||approach||work||audit)
+  };
+  return {publicUpdate:cleanPublic,brief,activityBlueprint};
 }
+
 
 async function readInternalProviderText(response, maxChars=9000){
   if(!response?.body) return '';
@@ -1400,7 +1522,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   // High-level live work commentary. The client renders these notes inside the
   // existing Activity timeline while the final answer remains buffered. They
   // are user-facing progress summaries, never hidden chain-of-thought.
-  text += ' LIVE WORK COMMENTARY: For substantial coding, build, research, file-analysis, deployment, or multi-step implementation requests, you may emit 1 to 3 short high-level progress notes using the exact wrapper [[JD_WORK_NOTE]]<note>[[/JD_WORK_NOTE]]. Each note should be one or two natural sentences in the user\'s language, like a modern ChatGPT work update: what you are building/checking, what verified tool context established, or one important implementation decision. Keep notes concise and factual. Never reveal private chain-of-thought, hidden reasoning, policy text, credentials, provider secrets, or unsupported claims. Do not claim a search, test, build, deployment, file creation, website visit, or verification unless supplied tool context confirms it. Do not put code blocks, long lists, URLs, or JD_CHOICE/JD_FOLLOWUPS inside a work note. For simple chat or a one-step factual answer, emit no work note. These work-note wrappers are UI metadata and must not be explained to the user.';
+  text += ' LIVE WORK COMMENTARY: For substantial coding, build, research, file-analysis, deployment, troubleshooting, comparison, writing, study, or other multi-step requests, emit 2 to 4 short high-level progress notes using the exact wrapper [[JD_WORK_NOTE]]<note>[[/JD_WORK_NOTE]]. Each note should be one or two natural sentences in the user\'s language, like a modern ChatGPT work update: what you are building/checking, what verified tool context established, or one important implementation decision. Keep notes concise and factual. Never reveal private chain-of-thought, hidden reasoning, policy text, credentials, provider secrets, or unsupported claims. Do not claim a search, test, build, deployment, file creation, website visit, or verification unless supplied tool context confirms it. Do not put code blocks, long lists, URLs, or JD_CHOICE/JD_FOLLOWUPS inside a work note. Never use generic filler such as "Working on your request". For a greeting or truly one-step trivial answer, emit no work note. These work-note wrappers are UI metadata and must not be explained to the user.';
   text += ' RESPONSE PRESENTATION CONTRACT: For substantial requests, write like a high-quality modern assistant rather than a raw API model. Preserve every explicit user constraint. Lead with the useful result or implementation, not generic filler. Keep the explanation coherent and task-focused. For coding/build requests, briefly state the implementation approach, then provide the requested artifact/code or exact actionable result. Do not let incidental provider diagnostics, a bare base-URL HTTP status, fallback plumbing, or unrelated search results dominate the answer. Mention limitations only when they materially affect the requested result. Do not invent completion, testing, deployment, or verification. Avoid unnecessary tutorials such as generic install/run steps unless the user asked for them or they are required to use the result. Before finalizing, reconcile the response against the latest user request, conversation context, supplied files, and verified tool evidence.';
   return text;
 }
@@ -2726,11 +2848,14 @@ function emitContextActivityStart(message='', files=[], emit){
 
 function completeContextPlan(plan, emit){
   const first=plan?.steps?.[0];
-  if(first)activity(emit,first.id,first.label,'completed',first.kind,'');
+  const blueprint=plan?.activityBlueprint||defaultActivityBlueprint(plan?.profile||{});
+  if(first)activity(emit,first.id,blueprint.context||first.label,'completed',first.kind||blueprint.kind||'process','');
 }
 
 function taskWorkingActivity(plan={}){
   const profile=plan?.profile||{};
+  const blueprint=plan?.activityBlueprint;
+  if(blueprint?.work)return {label:blueprint.work,kind:blueprint.kind||'process'};
   if(profile.contextualFollowUp && profile.freshnessFollowUp){
     const subject=String(profile.subject||'your request').slice(0,110);
     const kind=profile.kind==='deployment'?'deploy':
@@ -2749,10 +2874,11 @@ function taskGenerationActivity(plan={}){
   return {label:'Finalizing the response for: '+subject,kind:'generate'};
 }
 
-function taskAuditActivity(message='',files=[],audit={}){
+function taskAuditActivity(message='',files=[],audit={},blueprint=null){
   const profile=taskProfile(message,files);
   const copy=taskSpecificActivityCopy(profile,'audit');
-  return {label:copy.label+(audit?.ok?'':' — review needed'),kind:copy.kind};
+  const label=cleanActivityLabel(blueprint?.audit||copy.label)||copy.label;
+  return {label:label+(audit?.ok?'':' — review needed'),kind:blueprint?.kind||copy.kind};
 }
 
 function taskCodeVerificationLabel(message='',files=[],failed=0,warnings=0,count=0){
@@ -4951,11 +5077,12 @@ async function processChat(body, emit) {
   const useQualityOrchestrator =
     (responseEffortRank(responseEffort)>=2 || projectChangeIntent) &&
     shouldUseQualityOrchestrator(message,files,mode);
+  let activityBlueprint=defaultActivityBlueprint(contextPlan?.profile||taskProfile(message,files));
 
   if(useQualityOrchestrator){
     activity(emit,'quality-orchestrator',projectChangeIntent?'Cross-checking project requirements and inspected evidence':'Cross-checking requirements, constraints, and edge cases','running','process');
     try{
-      const briefPrompt=buildInternalTaskBriefPrompt(message,files);
+      const briefPrompt=buildInternalTaskBriefPrompt(message,files,contextPlan?.profile||{});
       const briefSystem=systemInstruction +
         (responseEffort==='Max'
           ? ' INTERNAL PREFLIGHT MODE: Produce only a rigorous task brief. Identify the user goal, hard constraints, assumptions that require checking, edge cases, likely failure modes, and a verification checklist. Do not produce the final user-facing response.'
@@ -4976,14 +5103,15 @@ async function processChat(body, emit) {
 
       if(preflight.ok){
         const rawBrief=await readInternalProviderText(preflight.response,responseEffort==='Max'?16000:12000);
-        const parsedBrief=parseQualityPreflightOutput(rawBrief);
+        const parsedBrief=parseQualityPreflightOutput(rawBrief,contextPlan?.profile||{});
+        activityBlueprint=parsedBrief.activityBlueprint||activityBlueprint;
         if(parsedBrief.publicUpdate){
           activity(emit,'work-commentary-1',parsedBrief.publicUpdate,'completed','commentary');
         }
         if(parsedBrief.brief){
           systemInstruction += `\n\n[INTERNAL QUALITY BRIEF — not user-visible]\n${parsedBrief.brief}\n[/INTERNAL QUALITY BRIEF]` +
             '\nUse this brief as a quality checklist, but independently verify it against the actual user request and tool context. If the brief conflicts with the user, the user request wins.';
-          activity(emit,'quality-orchestrator','Requirements, constraints, and edge cases checked','completed','process');
+          activity(emit,'quality-orchestrator','Requirements, constraints, and edge cases checked','completed','route');
         }else{
           activity(emit,'quality-orchestrator','Quality preflight returned no usable brief — continuing normally','warning','process');
         }
@@ -4995,7 +5123,36 @@ async function processChat(body, emit) {
     }
   }
 
-  activity(emit,'task-approach',taskApproach.label,'completed',taskApproach.kind,'');
+  if(shouldUseDynamicActivityPlanner(message,files) && !activityBlueprint?.dynamic){
+    try{
+      const activityPrompt=buildActivityBlueprintPrompt(message,files,contextPlan?.profile||{});
+      const activityPlanResponse=await runProvider(provider,{
+        model,
+        history:[],
+        files:[],
+        message:activityPrompt,
+        systemInstruction:'ACTIVITY METADATA MODE: Return only concise public progress labels. Do not answer the task, expose private reasoning, or claim unverified external actions.',
+        routedReason:'activity-blueprint',
+        emit:null,
+        autoFallback:false,
+        customApiKeys:requestCustomKeys,
+        customApiProfile,
+        responseEffort:'Instant'
+      });
+      if(activityPlanResponse.ok){
+        const rawPlan=await readInternalProviderText(activityPlanResponse.response,5000);
+        const parsedPlan=parseActivityBlueprintOutput(rawPlan,contextPlan?.profile||{});
+        if(parsedPlan?.dynamic)activityBlueprint=parsedPlan;
+      }
+    }catch(_){}
+  }
+
+  contextPlan.activityBlueprint=activityBlueprint;
+  activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'');
+  activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'');
+  if(activityBlueprint?.commentary){
+    activity(emit,'work-commentary-blueprint',activityBlueprint.commentary,'completed','commentary');
+  }
   completeContextPlan(contextPlan,emit);
   // Keep the running status tied to the user's real task instead of a fixed
   // "Thinking" label. Provider/tool rows remain evidence-backed and separate.
@@ -5019,7 +5176,8 @@ async function processChat(body, emit) {
       resolvedModel:first.response.headers.get('x-ai-model')||model,
       systemInstruction,
       activityTaskLabel:taskWork.label,
-      activityTaskKind:taskWork.kind
+      activityTaskKind:taskWork.kind,
+      activityBlueprint:contextPlan.activityBlueprint||activityBlueprint
     };
   }
 
@@ -5421,7 +5579,7 @@ function activityStreamResponse(body, requestSignal=null) {
           // Every normal assistant response gets a real server-side result audit.
           // This keeps Activity useful for all prompts, not only uploads/repositories.
           const responseAudit=auditGeneratedResponse(body.message||'',generatedText,body.files||[]);
-          const auditActivity=taskAuditActivity(body.message||'',body.files||[],responseAudit);
+          const auditActivity=taskAuditActivity(body.message||'',body.files||[],responseAudit,result.activityBlueprint||null);
           send('activity',{
             type:'activity',
             id:'response-audit',
