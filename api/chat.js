@@ -1366,8 +1366,43 @@ function resultMatchesPlannedDomain(result={},domain=''){
   }catch(_){return false}
 }
 
+function fallbackPlannedActivityResearch(blueprint={},profile={},message=''){
+  const out=[];
+  const t=[message,blueprint?.responseContract,blueprint?.commentary].map(x=>String(x||'')).join(' ');
+  const kind=String(profile?.kind||'general');
+  const intent=profile?.intent||{};
+  if(kind==='github' && (intent.create||intent.edit||intent.test||/\b(commit|push|clone|pull|branch|token|oauth|git)\b/i.test(t))){
+    out.push({
+      query:'GitHub REST API Git database blobs trees commits refs authentication fine-grained token',
+      domain:'docs.github.com'
+    });
+  }
+  if((kind==='android'||/\bnative Android\b|\bAndroid app\b|\bKotlin\b/i.test(t))){
+    out.push({
+      query:'Android app architecture networking secure credential storage permissions',
+      domain:'developer.android.com'
+    });
+  }
+  if(kind==='deployment' || /\bVercel\b/i.test(t)){
+    out.push({
+      query:'Vercel deployment project configuration serverless functions',
+      domain:'vercel.com'
+    });
+  }
+  return out.slice(0,2);
+}
+
 async function runPlannedActivityResearch(blueprint={},emit,{profile={},message='',webSearch=false}={}){
-  const planned=Array.isArray(blueprint?.research)?blueprint.research.slice(0,2):[];
+  const candidates=[
+    ...(Array.isArray(blueprint?.research)?blueprint.research:[]),
+    ...fallbackPlannedActivityResearch(blueprint,profile,message)
+  ];
+  const seen=new Set();
+  const planned=candidates.filter(item=>{
+    const key=(String(item?.domain||'')+'|'+String(item?.query||'')).toLowerCase();
+    if(!key||seen.has(key))return false;
+    seen.add(key);return true;
+  }).slice(0,2);
   if(!shouldRunPlannedActivityResearch(profile,message,webSearch,planned))return '';
   const contexts=[];
   for(let i=0;i<planned.length;i++){
