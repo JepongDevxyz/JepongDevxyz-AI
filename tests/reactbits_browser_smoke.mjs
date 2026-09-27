@@ -264,6 +264,45 @@ assert.equal(uploadChip.ready.name,'Zen Injector.zip');
 assert.equal(uploadChip.emptyHidden,true,'empty attachment host must hide again');
 assert.equal(uploadChip.emptyDisplay,'none','empty attachment host must not reserve PromptBar space');
 
+// Exercise the real <input type=file> -> change -> handleFileSelect path used by mobile browsers.
+const realFileInput=JSON.parse(await evaluate(`(async()=>{
+  const input=document.getElementById('fileInput');
+  const host=document.getElementById('filePreviewContainer');
+  const file=new File(['PK\\u0003\\u0004smoke'],'Zen Injector.zip',{type:'application/zip',lastModified:Date.now()});
+  const dt=new DataTransfer();
+  dt.items.add(file);
+  Object.defineProperty(input,'files',{configurable:true,value:dt.files});
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+
+  for(let i=0;i<20;i++){
+    if(host?.querySelector('.jd-upload-chip'))break;
+    await new Promise(r=>setTimeout(r,25));
+  }
+  const chip=host?.querySelector('.jd-upload-chip');
+  const during={
+    chip:!!chip,
+    hidden:host?.hidden,
+    display:getComputedStyle(host).display,
+    visibility:getComputedStyle(host).visibility,
+    opacity:getComputedStyle(host).opacity,
+    width:chip?.getBoundingClientRect().width||0,
+    height:chip?.getBoundingClientRect().height||0,
+    text:chip?.textContent||''
+  };
+
+  await new Promise(r=>setTimeout(r,200));
+  selectedFilesData.splice(0,selectedFilesData.length);
+  renderFilePreviews();
+  return JSON.stringify(during);
+})()`));
+assert.equal(realFileInput.chip,true,'real file input path did not create the upload chip');
+assert.equal(realFileInput.hidden,false,'real file input path left preview hidden');
+assert.equal(realFileInput.display,'flex','real file input preview is not flex-visible');
+assert.notEqual(realFileInput.visibility,'hidden','real file input preview is visibility:hidden');
+assert.notEqual(realFileInput.opacity,'0','real file input preview is transparent');
+assert(realFileInput.width>40&&realFileInput.height>=24,'real upload chip has no visible geometry');
+assert(realFileInput.text.includes('Zen Injector.zip'),'real file input chip filename missing');
+
 // 4/6: RefineFrame complete initializes in-browser.
 const refine=JSON.parse(await evaluate(`(()=>{
   const frame=document.createElement('div');
