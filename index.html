@@ -12758,32 +12758,55 @@ ${m.text || ''}
         function renderFilePreviews(){
             const container=document.getElementById('filePreviewContainer');
             if(!container)return;
+
             container.replaceChildren();
             const hasFiles=selectedFilesData.length>0;
-            container.hidden=!hasFiles;
+
+            // Keep the reference upload UI visible inside the PromptBar.
+            // Explicit attribute + inline display handling prevents later composer
+            // style changes from accidentally hiding selected attachments.
+            if(hasFiles){
+                container.hidden=false;
+                container.removeAttribute('hidden');
+                container.style.display='flex';
+            }else{
+                container.hidden=true;
+                container.setAttribute('hidden','');
+                container.style.display='none';
+            }
             container.classList.toggle('has-files',hasFiles);
+            container.classList.toggle('is-visible',hasFiles);
+            container.setAttribute('aria-live','polite');
+
             selectedFilesData.forEach(file=>{
                 const chip=document.createElement('span');
-                chip.className='prompt-bar__chip';
+                chip.className='prompt-bar__chip jd-upload-chip';
                 chip.dataset.status=file.status||'ready';
+                chip.setAttribute('role','status');
+                chip.setAttribute('aria-label',`${file.name}, ${file.statusText||file.status||'Ready'}`);
                 chip.title=`${file.name} — ${file.statusText||file.status||'Ready'}`;
+
                 const icon=document.createElement('span');
-                icon.className='prompt-bar__chip-icon';
+                icon.className='prompt-bar__chip-icon jd-upload-chip__icon';
                 icon.innerHTML=file.status==='processing'
                     ? '<span class="attachment-spinner" aria-hidden="true"></span>'
                     : '<i data-lucide="file"></i>';
+
                 const name=document.createElement('span');
-                name.className='prompt-bar__chip-name';
+                name.className='prompt-bar__chip-name jd-upload-chip__name';
                 name.textContent=file.name;
+
                 const remove=document.createElement('button');
                 remove.type='button';
-                remove.className='prompt-bar__chip-x';
+                remove.className='prompt-bar__chip-x jd-upload-chip__remove';
                 remove.setAttribute('aria-label',`Remove ${file.name}`);
                 remove.innerHTML='<i data-lucide="x"></i>';
                 remove.addEventListener('click',()=>removeAttachment(file.id));
+
                 chip.append(icon,name,remove);
                 container.appendChild(chip);
             });
+
             refreshLucideIcons(container);
             window.JDReactBits?.syncPrompt?.();
         }
