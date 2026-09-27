@@ -4224,7 +4224,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         <div class="input-container" id="inputContainer">
             <div class="prompt-suggestions" id="promptSuggestions"></div>
             <div class="prompt-bar" id="promptBar" data-models="false">
-                <input type="file" id="fileInput" hidden multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xlsx,.xls,.ods,.csv,.txt,.md,.rtf,.json,.xml,.yaml,.yml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.php,.java,.c,.cpp,.h,.hpp,.cs,.sql,.sh,.log,.zip,.epub" onchange="handleFileSelect(event)">
+                <input type="file" id="fileInput" hidden multiple accept="image/*,video/*,.pdf,.docx,.pptx,.xlsx,.xls,.ods,.csv,.txt,.md,.rtf,.json,.xml,.yaml,.yml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.php,.java,.kt,.kts,.c,.cpp,.h,.hpp,.cs,.sql,.sh,.log,.gradle,.properties,.toml,.ini,.cfg,.conf,.env,.zip,.apk,.aab,.jar,.aar,.epub" onchange="handleFileSelect(event)">
                 <input type="file" id="cameraInput" hidden accept="image/*" capture="environment" onchange="handleFileSelect(event)">
                 <input type="file" id="photoInput" hidden multiple accept="image/*,video/*" onchange="handleFileSelect(event)">
 
@@ -11698,7 +11698,7 @@ ${m.text || ''}
 
             const selectedAttachmentSnapshot = [...selectedFilesData];
             const persistedAttachmentSnapshot = historySafeAttachments(selectedAttachmentSnapshot);
-            const tempFiles = prepareAttachmentsForRequest(selectedAttachmentSnapshot);
+            const tempFiles = prepareAttachmentsForRequest(selectedAttachmentSnapshot, message);
             const fileHTML = userAttachmentHTML(selectedAttachmentSnapshot);
 
             // Persist the user's message immediately, before the request starts or the
@@ -12378,6 +12378,7 @@ ${m.text || ''}
             if(ext==='pptx'||/presentationml/.test(mime))return 'pptx';
             if(['xlsx','xls','ods'].includes(ext)||/spreadsheet|excel|sheet/.test(mime))return 'spreadsheet';
             if(ext==='zip')return 'zip';
+            if(['apk','aab','jar','aar'].includes(ext))return 'archive';
             if(ext==='epub')return 'epub';
             if(ext==='rtf'||mime==='application/rtf')return 'rtf';
             if(/^(text\/|application\/(json|javascript|xml|x-yaml|yaml))/i.test(mime) ||
@@ -12388,7 +12389,7 @@ ${m.text || ''}
         function attachmentIcon(kind){
             return {
                 image:'🖼️',video:'🎬',pdf:'📕',docx:'📘',pptx:'📊',
-                spreadsheet:'📗',zip:'🗜️',epub:'📚',rtf:'📄',text:'📄',file:'📎'
+                spreadsheet:'📗',zip:'🗜️',archive:'🗜️',epub:'📚',rtf:'📄',text:'📄',file:'📎'
             }[kind]||'📎';
         }
 
@@ -12620,30 +12621,62 @@ ${m.text || ''}
             return {extractedText:text.slice(0,MAX_DOCUMENT_CHARS)};
         }
 
+        function archiveSourcePriority(name='', promptText=''){
+            const n=String(name||'').replace(/\\/g,'/').toLowerCase();
+            const prompt=String(promptText||'').toLowerCase();
+            let score=0;
+
+            // Generated caches and IDE/session metadata are poor evidence for source fixes.
+            if(/(^|\/)(node_modules|build|dist|out|target|\.gradle|\.idea|\.git|\.cache|cache|generated|captures|intermediates|outputs)(\/|$)/.test(n))score-=180;
+            if(/(^|\/)(openedfiles\.json|workspace\.xml|misc\.xml|deploymenttargetselector\.xml)$/.test(n))score-=120;
+
+            // Project structure and build/runtime declarations first.
+            if(/(^|\/)(settings\.gradle(?:\.kts)?|build\.gradle(?:\.kts)?|gradle\.properties|libs\.versions\.toml|package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|pyproject\.toml|requirements\.txt|composer\.json)$/.test(n))score+=170;
+            if(/(^|\/)androidmanifest\.xml$/.test(n))score+=180;
+            if(/(^|\/)(proguard-rules\.pro|network_security_config\.xml|file_paths\.xml)$/.test(n))score+=120;
+            if(/(^|\/)(readme|license)(\.|$)/.test(n))score+=45;
+
+            // App/source code and user-facing resources.
+            if(/(^|\/)(src|app\/src|lib|server|api|pages|components)(\/|$)/.test(n))score+=95;
+            if(/\/src\/main\/(java|kotlin)\//.test(n))score+=135;
+            if(/\/src\/main\/res\/(layout|xml|values|navigation)\//.test(n))score+=110;
+            if(/\.(java|kt|kts|ts|tsx|js|jsx|py|php|c|cpp|cs)$/.test(n))score+=65;
+            if(/\.(gradle|properties|toml|xml|json|ya?ml)$/.test(n))score+=45;
+
+            // Filename/path terms from the actual request get a strong boost.
+            const tokens=[...new Set(prompt.match(/[a-z0-9_.-]{4,}/g)||[])]
+                .filter(x=>!['this','that','with','from','code','file','project','update','ayusin','gawin','please'].includes(x))
+                .slice(0,20);
+            for(const token of tokens)if(n.includes(token))score+=55;
+            return score;
+        }
+
         async function extractArchiveAttachment(file, kind='zip'){
             const JSZip=await getJSZip();
             const zip=await JSZip.loadAsync(await file.arrayBuffer());
             const names=Object.keys(zip.files).filter(n=>!zip.files[n].dir);
-            const textNames=names.filter(n=>/\.(txt|md|csv|json|xml|html?|css|js|mjs|cjs|ts|tsx|jsx|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|ya?ml|sh|log|gradle|properties)$/i.test(n));
+            const textNames=names.filter(n=>/\.(txt|md|csv|json|xml|html?|css|js|mjs|cjs|ts|tsx|jsx|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|ya?ml|sh|log|gradle|properties|toml|ini|cfg|conf|env|pro)$/i.test(n));
             const archiveFiles=[];
             let sourceChars=0;
-            const SOURCE_BUDGET=520000;
-            const MAX_SOURCE_FILES=30;
+            const SOURCE_BUDGET=1200000;
+            const MAX_SOURCE_FILES=80;
+            const ordered=[...textNames].sort((a,b)=>archiveSourcePriority(b)-archiveSourcePriority(a)||a.localeCompare(b));
 
-            // Keep each archive entry distinct. The old extractor flattened the first
-            // files into one long document, which prevented the model from knowing
-            // exactly which Gradle/manifest/source file a finding came from.
-            for(const name of textNames.slice(0,MAX_SOURCE_FILES)){
+            // Build a larger local source bank. Request-time selection is task-aware,
+            // so IDE metadata no longer crowds out Gradle/manifest/app sources.
+            for(const name of ordered.slice(0,MAX_SOURCE_FILES)){
                 if(sourceChars>=SOURCE_BUDGET)break;
                 try{
                     const value=await zip.file(name).async('text');
                     const remaining=SOURCE_BUDGET-sourceChars;
-                    const clipped=String(value||'').slice(0,Math.min(90000,remaining));
+                    const clipped=String(value||'').slice(0,Math.min(110000,remaining));
+                    if(!clipped)continue;
                     archiveFiles.push({
                         name,
                         size:new TextEncoder().encode(clipped).length,
                         extractedText:clipped,
-                        truncated:String(value||'').length>clipped.length
+                        truncated:String(value||'').length>clipped.length,
+                        priority:archiveSourcePriority(name)
                     });
                     sourceChars+=clipped.length;
                 }catch(_){}
@@ -12652,14 +12685,15 @@ ${m.text || ''}
             const binaryCount=Math.max(0,names.length-textNames.length);
             const manifest=[
                 `${kind.toUpperCase()} archive: ${file.name}`,
-                `Files: ${names.length}`,
-                `Readable source/config entries prepared: ${archiveFiles.length}`,
+                `Files indexed: ${names.length}`,
+                `Readable source/config entries indexed: ${textNames.length}`,
+                `Readable source/config entries prepared locally: ${archiveFiles.length}`,
                 `Other/binary entries preserved locally: ${binaryCount}`,
-                'File list:',
-                ...names.slice(0,140)
+                'Complete file list:',
+                ...names.slice(0,260)
             ].join('\n');
             const warning=textNames.length>archiveFiles.length
-                ? `Only ${archiveFiles.length} of ${textNames.length} readable source/config entries fit the request analysis budget; the complete original archive remains available locally for download merging.`
+                ? `${archiveFiles.length} of ${textNames.length} readable source/config entries were cached locally; request-time relevance selection will prioritize build, manifest, app source, resources, and filenames matching the user task.`
                 : '';
             return {
                 extractedText:manifest.slice(0,MAX_DOCUMENT_CHARS),
@@ -12832,11 +12866,11 @@ ${m.text || ''}
                 else if(kind==='docx') result=await extractDocxAttachment(file);
                 else if(kind==='spreadsheet') result=await extractSpreadsheetAttachment(file);
                 else if(kind==='pptx') result=await extractPptxAttachment(file);
-                else if(kind==='zip'||kind==='epub') result=await extractArchiveAttachment(file,kind);
+                else if(kind==='zip'||kind==='archive'||kind==='epub') result=await extractArchiveAttachment(file,kind);
                 else if(kind==='rtf') result={extractedText:`RTF: ${file.name}\n${stripRtf(await file.text()).slice(0,MAX_DOCUMENT_CHARS)}`};
                 else if(kind==='text'){
                     const rawText=await file.text();
-                    const isSource=/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(file.name||'');
+                    const isSource=/\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|ya?ml|sh|gradle|properties|toml|ini|cfg|conf|env)$/i.test(file.name||'');
                     const limit=isSource?MAX_CODE_CHARS:MAX_DOCUMENT_CHARS;
                     result={
                         extractedText:rawText.slice(0,limit),
@@ -12998,7 +13032,7 @@ ${m.text || ''}
                 kind:f.kind||'file',
                 extractedText:String(f.extractedText||'').slice(
                     0,
-                    /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(f.name||'')
+                    /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|ya?ml|sh|gradle|properties|toml|ini|cfg|conf|env)$/i.test(f.name||'')
                         ? MAX_CODE_CHARS
                         : MAX_DOCUMENT_CHARS
                 ),
@@ -13006,11 +13040,14 @@ ${m.text || ''}
                 extractionWarning:f.extractionWarning||'',
                 pageCount:f.pageCount||null,
                 duration:f.duration||null,
-                dimensions:f.dimensions||''
+                dimensions:f.dimensions||'',
+                archiveFileCount:Number(f.archiveFileCount)||0,
+                archiveReadableCount:Number(f.archiveReadableCount)||0,
+                archiveBinaryCount:Number(f.archiveBinaryCount)||0
             };
         }
 
-        function prepareAttachmentsForRequest(files=[]){
+        function prepareAttachmentsForRequest(files=[], promptText=''){
             const requestFiles=[];
             let base64Chars=0;
 
@@ -13025,18 +13062,25 @@ ${m.text || ''}
                     requestFiles.push(base);
                 }
 
-                // For project ZIPs, send extracted source/config entries as separate
-                // grounded files. This lets the backend audit Gradle, manifest and
-                // source code individually instead of pretending the archive is one document.
-                if(f.kind==='zip' && Array.isArray(f.archiveFiles)){
+                // Provider-independent project evidence selection. Every current or
+                // future response model receives the same task-relevant source pack.
+                if((f.kind==='zip'||f.kind==='archive') && Array.isArray(f.archiveFiles)){
                     let archiveChars=0;
-                    for(const entry of f.archiveFiles.slice(0,30)){
-                        if(requestFiles.length>=35)break;
+                    let selectedCount=0;
+                    const MAX_ARCHIVE_REQUEST_CHARS=610000;
+                    const MAX_ARCHIVE_REQUEST_FILES=56;
+                    const ordered=[...f.archiveFiles].sort((a,b)=>
+                        archiveSourcePriority(b?.name,promptText)-archiveSourcePriority(a?.name,promptText) ||
+                        String(a?.name||'').localeCompare(String(b?.name||''))
+                    );
+                    for(const entry of ordered){
+                        if(selectedCount>=MAX_ARCHIVE_REQUEST_FILES||requestFiles.length>=63)break;
                         const content=String(entry?.extractedText||'');
                         if(!content)continue;
-                        const remaining=560000-archiveChars;
+                        const remaining=MAX_ARCHIVE_REQUEST_CHARS-archiveChars;
                         if(remaining<=0)break;
-                        const clipped=content.slice(0,Math.min(90000,remaining));
+                        const clipped=content.slice(0,Math.min(105000,remaining));
+                        if(clipped.length<1)continue;
                         requestFiles.push({
                             name:String(entry.name||'archive-entry.txt').slice(0,220),
                             parentName:f.name,
@@ -13045,10 +13089,16 @@ ${m.text || ''}
                             size:Number(entry.size)||clipped.length,
                             kind:'archive-entry',
                             extractedText:`Archive entry: ${entry.name}\n${clipped}`,
-                            extractionWarning:entry.truncated?'Archive entry was clipped to the analysis budget.':''
+                            extractionWarning:(entry.truncated||clipped.length<content.length)
+                                ?'Archive entry was clipped to the request evidence budget.'
+                                :'',
+                            archivePriority:archiveSourcePriority(entry.name,promptText)
                         });
                         archiveChars+=clipped.length;
+                        selectedCount++;
                     }
+                    base.archiveSelectedCount=selectedCount;
+                    base.archiveSelectedChars=archiveChars;
                 }
 
                 // Tiny videos can be understood natively by Gemini when available.
@@ -13089,7 +13139,7 @@ ${m.text || ''}
                 }
             }
 
-            return requestFiles.slice(0,36);
+            return requestFiles.slice(0,64);
         }
 
         function historySafeAttachments(files=[]){
