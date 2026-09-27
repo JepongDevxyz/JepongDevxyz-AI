@@ -45,7 +45,7 @@ assert.match(plan.steps[0].label,/web tool/i);
 assert.doesNotMatch(plan.steps[0].label,/image task/i);
 const work=sandbox.taskWorkingActivity(plan);
 assert.match(work.label,/requested tool behavior/i);
-assert.match(work.label,/meme generator/i);
+assert.equal(work.label,'Implementing the requested tool behavior');
 
 // The browser's temporary lead must also stay literal instead of keyword
 // classifying the prompt before server Activity arrives.
