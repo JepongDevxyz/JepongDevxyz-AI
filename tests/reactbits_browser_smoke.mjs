@@ -205,6 +205,65 @@ assert(prompt.field&&prompt.controls&&prompt.chips,'ReactBits PromptBar hierarch
 assert.notEqual(prompt.stopPath,prompt.arrowBefore,'send glyph did not morph to stop');
 assert.equal(prompt.arrowAfter,prompt.arrowBefore,'send glyph did not morph back to arrow');
 
+// Upload reference regression: selected files must stay visibly represented inside the PromptBar.
+const uploadChip=JSON.parse(await evaluate(`(()=>{
+  selectedFilesData.splice(0,selectedFilesData.length,{
+    id:'att-smoke',
+    name:'Zen Injector.zip',
+    originalMimeType:'application/zip',
+    mimeType:'application/zip',
+    size:195559424,
+    lastModified:Date.now(),
+    kind:'zip',
+    status:'processing',
+    statusText:'Preparing…',
+    progressBytes:0,
+    progressPercent:0,
+    progressStartedAt:performance.now(),
+    progressIndeterminate:false,
+    extractedText:'',
+    frames:[],
+    data:'',
+    fullData:''
+  });
+  renderFilePreviews();
+  const host=document.getElementById('filePreviewContainer');
+  const chip=host?.querySelector('.prompt-bar__chip.jd-upload-chip');
+  const processing={
+    hidden:host?.hidden,
+    inlineDisplay:host?.style.display||'',
+    visible:host?.classList.contains('is-visible')||false,
+    name:chip?.querySelector('.jd-upload-chip__name')?.textContent||'',
+    spinner:!!chip?.querySelector('.attachment-spinner'),
+    remove:!!chip?.querySelector('.jd-upload-chip__remove')
+  };
+
+  selectedFilesData[0].status='ready';
+  selectedFilesData[0].statusText='Ready';
+  renderFilePreviews();
+  const readyChip=host?.querySelector('.prompt-bar__chip.jd-upload-chip');
+  const ready={
+    spinner:!!readyChip?.querySelector('.attachment-spinner'),
+    fileIcon:!!readyChip?.querySelector('[data-lucide="file"],svg'),
+    name:readyChip?.querySelector('.jd-upload-chip__name')?.textContent||''
+  };
+
+  selectedFilesData.splice(0,selectedFilesData.length);
+  renderFilePreviews();
+  return JSON.stringify({processing,ready,emptyHidden:host?.hidden,emptyDisplay:host?.style.display||''});
+})()`));
+assert.equal(uploadChip.processing.hidden,false,'selected attachment host must not remain hidden');
+assert.equal(uploadChip.processing.inlineDisplay,'flex','selected attachment host must be explicitly visible');
+assert.equal(uploadChip.processing.visible,true,'selected attachment host must carry the visible state');
+assert.equal(uploadChip.processing.name,'Zen Injector.zip','reference upload filename chip missing');
+assert.equal(uploadChip.processing.spinner,true,'processing attachment must show the reference spinner');
+assert.equal(uploadChip.processing.remove,true,'upload chip remove control missing');
+assert.equal(uploadChip.ready.spinner,false,'ready attachment must stop showing the spinner');
+assert.equal(uploadChip.ready.fileIcon,true,'ready attachment must switch to a file icon');
+assert.equal(uploadChip.ready.name,'Zen Injector.zip');
+assert.equal(uploadChip.emptyHidden,true,'empty attachment host must hide again');
+assert.equal(uploadChip.emptyDisplay,'none','empty attachment host must not reserve PromptBar space');
+
 // 4/6: RefineFrame complete initializes in-browser.
 const refine=JSON.parse(await evaluate(`(()=>{
   const frame=document.createElement('div');
