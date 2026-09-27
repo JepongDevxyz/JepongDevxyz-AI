@@ -19,7 +19,7 @@ for(const token of [
   "Building movement, collision, scoring, and UI behavior",
   "activity(emit,'thinking'",
   "id:'response-audit'",
-  "taskAuditActivity(body.message||'',body.files||[],responseAudit)",
+  "taskAuditActivity(body.message||'',body.files||[],responseAudit,result.activityBlueprint||null)",
   "id:'output-verification'",
   "taskCodeVerificationLabel(body.message||'',body.files||[]"
 ]) assert(api.includes(token),'Missing universal/task-specific Activity stage: '+token);
