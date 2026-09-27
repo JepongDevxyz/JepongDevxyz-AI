@@ -3678,9 +3678,12 @@
         #livePetLayer { overflow:hidden!important; contain:layout paint; }
 
         @media(max-width:767px){
-            /* Reserve a clear lane for the floating pet so the latest response does not sit underneath it. */
-            .chat-box { padding-bottom:148px!important; scroll-padding-bottom:160px!important; }
-            html.keyboard-open .chat-box { padding-bottom:138px!important; scroll-padding-bottom:150px!important; }
+            /* The composer is already a flex sibling. Keep only breathing room here;
+               a fixed 148px lane made long replies look packed/stuck above the composer. */
+            .chat-box { padding-bottom:32px!important; scroll-padding-bottom:40px!important; }
+            html.keyboard-open .chat-box { padding-bottom:20px!important; scroll-padding-bottom:28px!important; }
+            .msg.bot{overflow:visible!important}
+            .msg.bot .bot-actions{position:relative!important;inset:auto!important;transform:none!important}
         }
     </style>
 
