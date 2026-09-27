@@ -20,17 +20,17 @@ const math={kind:'study',subtype:'math',intent:{},subject:'quadratic equation'};
 const research={kind:'research',subtype:'current',intent:{research:true},subject:'latest Android release'};
 const troubleshoot={kind:'troubleshooting',subtype:'diagnose',intent:{edit:true},subject:'page crashes on submit'};
 
-assert.match(taskSpecificActivityCopy(snake,'context').label,/gameplay, controls/i);
-assert.match(taskSpecificActivityCopy(snake,'prepared').label,/Game structure/i);
-assert.match(taskSpecificActivityCopy(snake,'work').label,/game loop, controls, scoring/i);
-assert.match(taskSpecificActivityCopy(snake,'audit').label,/game output/i);
+assert.match(taskSpecificActivityCopy(snake,'context').label,/Planning the requested game/i);
+assert.match(taskSpecificActivityCopy(snake,'prepared').label,/game mechanics and controls/i);
+assert.match(taskSpecificActivityCopy(snake,'work').label,/movement, collision, scoring/i);
+assert.match(taskSpecificActivityCopy(snake,'audit').label,/gameplay, controls, restart/i);
 
-assert.match(taskSpecificActivityCopy(apiTask,'context').label,/API inputs, outputs/i);
+assert.match(taskSpecificActivityCopy(apiTask,'context').label,/API task/i);
 assert.match(taskSpecificActivityCopy(apiTask,'work').label,/API behavior/i);
-assert.match(taskSpecificActivityCopy(writing,'context').label,/message purpose, tone, and audience/i);
-assert.match(taskSpecificActivityCopy(math,'work').label,/calculation and checking the result/i);
-assert.match(taskSpecificActivityCopy(research,'context').label,/current facts.*verification/i);
-assert.match(taskSpecificActivityCopy(troubleshoot,'work').label,/root cause/i);
+assert.match(taskSpecificActivityCopy(writing,'prepared').label,/purpose, audience, and tone/i);
+assert.match(taskSpecificActivityCopy(math,'work').label,/Working through the solution/i);
+assert.match(taskSpecificActivityCopy(research,'context').label,/current verification/i);
+assert.match(taskSpecificActivityCopy(troubleshoot,'prepared2').label,/root cause/i);
 
 const labels=[
   taskSpecificActivityCopy(snake,'work').label,
@@ -44,13 +44,13 @@ assert.equal(new Set(labels).size,labels.length,'Different task classes must not
 
 assert(html.includes("return {...e,label:label||'Thinking',kind:kind||'process'}"),
   'Frontend must preserve server task-specific model-work wording');
-assert(html.includes('Planning gameplay, controls, and browser behavior: '),
+assert(html.includes('Planning the requested game: '),
   'Immediate client Activity lead must already recognize game creation');
-assert(html.includes('Mapping backend inputs, outputs, and failure paths: '),
+assert(html.includes('Reviewing the API/backend task: '),
   'Immediate client Activity lead must recognize backend work');
-assert(html.includes('Shaping the requested writing, tone, and structure: '),
+assert(html.includes('Reviewing the writing request: '),
   'Immediate client Activity lead must recognize writing work');
-assert(html.includes('Identifying the problem, target, and method: '),
+assert(html.includes('Reviewing the problem: '),
   'Immediate client Activity lead must recognize study/math work');
 
-console.log('PASS: different user tasks produce distinct, request-related Activity wording while preserving the common reference UI.');
+console.log('PASS: different tasks get compact, distinct, request-related Activity stages while preserving the reference UI.');
