@@ -13032,7 +13032,7 @@ ${m.text || ''}
                 kind:f.kind||'file',
                 extractedText:String(f.extractedText||'').slice(
                     0,
-                    /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh)$/i.test(f.name||'')
+                    /\.(html?|css|js|mjs|cjs|ts|tsx|jsx|json|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|ya?ml|sh|gradle|properties|toml|ini|cfg|conf|env)$/i.test(f.name||'')
                         ? MAX_CODE_CHARS
                         : MAX_DOCUMENT_CHARS
                 ),
