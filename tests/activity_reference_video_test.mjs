@@ -61,7 +61,7 @@ assert.equal(normalize({id:'stream-open',kind:'process',label:'Streaming'}),null
 assert.equal(normalize({id:'live-progress-4',kind:'process',label:'fake scheduled work'}),null);
 assert.equal(normalize({id:'task-context',kind:'process',state:'completed',label:'Checking requested design'}).label,'Checking requested design');
 assert.equal(normalize({id:'web-search',kind:'web',state:'running',label:'Searching live web'}).label,'Searching live web');
-assert.equal(normalize({id:'thinking',kind:'build',state:'running',label:'Preparing implementation'}).label,'Thinking');
+assert.equal(normalize({id:'thinking',kind:'build',state:'running',label:'Preparing implementation'}).label,'Preparing implementation');
 assert.equal(normalize({id:'generation',kind:'generate',state:'running',label:'Generating response'}).visibility,'details');
 
 const append=between(html,'        function appendActivityEvent(evt = {}) {','        function finishAIIndicator(');
@@ -72,7 +72,7 @@ assert(append.includes('ChatGPT-style activity history: keep completed statuses 
 assert(append.includes("const detailsOnly = normalized.visibility==='details'"),
  'Low-level provider/generation plumbing must be excluded from the primary reference surface');
 assert(append.includes("const iconless = id==='thinking'"),
- 'Thinking/process work must use the no-icon reference row');
+ 'Task-specific model work must use the no-icon reference row');
 assert(append.includes("scrollToBottom(false)"),
  'Reference activity growth must keep the newest status above the composer');
 assert(append.includes("card.dataset.taskSummary=String(normalized.label||'').slice(0,220)"),
@@ -86,4 +86,4 @@ const reveal=between(html,'                const revealFinalResponse = (elapsedM
 assert(reveal.includes('finishAIIndicator(true, elapsedMs);'));
 assert(reveal.includes('requestAnimationFrame(() => requestAnimationFrame(() => {'),
  'Activity must finalize before the reply is revealed');
-console.log('PASS: frame-matched Work activity surface, exact primary/secondary status split, inline Thinking row, commentary flow, auto-scroll, and truthful SSE sequencing.');
+console.log('PASS: frame-matched Work activity surface, task-specific model-work row, commentary flow, auto-scroll, and truthful SSE sequencing.');
