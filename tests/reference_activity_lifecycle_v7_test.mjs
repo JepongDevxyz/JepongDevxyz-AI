@@ -34,7 +34,7 @@ assert(!details.includes("id==='quality-orchestrator'"),
 
 assert(html.includes("Planning the requested game: '+subject"),
   'Client lead must use the same compact task vocabulary before SSE arrives');
-assert(html.includes("reactbits-micro.css?v=20260927-activity-v7"),
-  'Activity cache-bust must ship with the lifecycle fix');
+assert(html.includes("reactbits-micro.css?v=20260927-activity-v9-frameplay"),
+  'Activity cache-bust must ship with the frame-playback lifecycle fix');
 
 console.log('PASS: reference Activity now shows a compact, changing real lifecycle instead of one generic status.');
