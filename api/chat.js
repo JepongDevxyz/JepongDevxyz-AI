@@ -5180,6 +5180,15 @@ async function processChat(body, emit) {
       }
     }
   }
+
+  // A model-planned official-doc lookup is a real tool operation. Keep it
+  // bounded to two queries and preserve the user's selected response model.
+  const plannedResearchContext=await runPlannedActivityResearch(activityBlueprint,emit,{
+    profile:contextPlan?.profile||{},
+    message:taskMessage,
+    webSearch:webSearch===true
+  });
+
   // Analysis via another provider is itself model fallback: never do it when OFF.
   const visualParts=mediaAttachments(files);
   // A selected photo/video must not disappear silently because the browser
