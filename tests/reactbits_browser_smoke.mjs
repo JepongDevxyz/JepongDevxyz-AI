@@ -140,7 +140,7 @@ assert.equal(activity.noteFont,'16px');
 assert.notEqual(activity.webIconDisplay,'none','Tool/search row must keep its icon');
 assert.equal(activity.processIconless,true,'Plain work milestone must not reserve an icon lane');
 assert.equal(activity.thinkingIconless,true,'Thinking must be a plain terminal row');
-assert.equal(activity.thinkingText,'Thinking','Model-work row must use the literal reference label');
+assert.equal(activity.thinkingText,'Preparing implementation','Model-work row must preserve the task-specific activity label');
 assert.equal(activity.providerDisplay,'none','Provider plumbing must stay off the primary activity surface');
 assert.equal(activity.generationDisplay,'none','Generation plumbing must stay off the primary activity surface');
 assert.equal(activity.lead,'Built the file');

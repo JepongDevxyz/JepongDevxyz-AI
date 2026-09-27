@@ -20,7 +20,11 @@ const makePlan=vm.runInNewContext(planSource+'\ncontextActivityPlan',{
   shortTaskSubject:message=>String(message||'').trim(),
   extractPublicUrl:()=>[],
   isSafePublicUrl:()=>false,
-  isWebsiteSecurityRequest:()=>false
+  isWebsiteSecurityRequest:()=>false,
+  taskSpecificActivityCopy:(profile,phase)=>({
+    label:(phase==='context'?'Understanding the requested outcome: ':'Working on: ')+String(profile?.subject||'your request'),
+    kind:'process'
+  })
 });
 for(const [message,files] of [
   ['Hi',[]],['Check GitHub workflow for my app',[]],
