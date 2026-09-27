@@ -89,7 +89,7 @@ const startup=between(html,"function clientActivityTaskSubject(promptText=''){",
 const initial=new Function('getActiveContext',startup+'\nreturn initialActivityForRequest;')(
  ()=>({sessions:{},id:null})
 );
-assert.match(initial(meme,[]).label,/Working on: Build a meme generator/);
+assert.match(initial(meme,[]).label,/requested web structure and interactions/i);
 const local=initial('Read video and screenshot',[{name:'clip.mp4',kind:'video',mimeType:'video/mp4'},
  {name:'frame.jpg',parentName:'clip.mp4',mediaRole:'video-frame',mimeType:'image/jpeg'}]);
 assert.match(local.label,/Reviewing uploaded video/);
