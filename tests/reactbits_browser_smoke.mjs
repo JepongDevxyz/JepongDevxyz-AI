@@ -144,9 +144,9 @@ assert.equal(activity.thinkingIconless,true,'Thinking must be a plain terminal r
 assert.equal(activity.thinkingText,'Preparing implementation','Model-work row must preserve the task-specific activity label');
 assert.equal(activity.providerDisplay,'none','Provider plumbing must stay off the primary activity surface');
 assert.equal(activity.generationDisplay,'none','Generation plumbing must stay off the primary activity surface');
-assert.equal(activity.lead,'Built the file');
-assert(activity.primaryVisible.includes('web-search')&&activity.primaryVisible.includes('process-step')&&activity.primaryVisible.includes('thinking'),
-  'Primary reference milestones are missing');
+assert.equal(activity.lead,'','Temporary client lead must clear after the truthful server timeline starts');
+assert(activity.primaryVisible.includes('task-context')&&activity.primaryVisible.includes('web-search')&&activity.primaryVisible.includes('process-step')&&activity.primaryVisible.includes('thinking'),
+  'Primary chronological reference milestones are missing');
 
 // 2/6: BellToggle mirrors actual checkbox state without requesting browser permission.
 const bell=JSON.parse(await evaluate(`(()=>{

@@ -76,6 +76,12 @@ for(const token of [
   'COMMENTARY: <one short sentence>'
 ]) assert(prompt.includes(token),'Missing activity blueprint field '+token);
 assert(prompt.includes('specific to THIS task'),'Planner must reject generic status wording');
+assert(prompt.includes('Never include the internal text "/ Follow-up:"'),
+  'Planner must never expose internal follow-up context markers');
+assert(api.includes('shouldUseDynamicActivityPlanner(taskMessage,files)'),
+  'Dynamic Activity planner must use the resolved conversation task');
+assert(api.includes('buildActivityBlueprintPrompt(taskMessage,files,contextPlan?.profile||{})'),
+  'Dynamic Activity labels must be planned from resolved task context');
 
 for(const token of [
   "routedReason:'activity-blueprint'",
@@ -84,7 +90,7 @@ for(const token of [
   "activity(emit,'task-approach',activityBlueprint.approach",
   "activity(emit,'work-commentary-blueprint'",
   "activityBlueprint:contextPlan.activityBlueprint||activityBlueprint",
-  "taskAuditActivity(body.message||'',body.files||[],responseAudit,result.activityBlueprint||null)"
+  "taskAuditActivity(activityContextMessage,body.files||[],responseAudit,result.activityBlueprint||null)"
 ]){
   assert(api.includes(token),'Missing dynamic Activity integration: '+token);
 }

@@ -1160,9 +1160,10 @@ function temperatureFor(message='', files=[]){
 }
 
 
-function cleanActivityLabel(value='',max=150){
+function cleanActivityLabel(value='',max=96){
   return String(value||'')
     .replace(/\[\[\/?JD_[A-Z_]+\]\]/g,'')
+    .replace(/\s*\/\s*Follow-up\s*:\s*.*$/i,'')
     .replace(/^[-*•\s]+/,'')
     .replace(/\s+/g,' ')
     .trim()
@@ -1196,7 +1197,10 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'Do NOT answer the request. Do NOT reveal chain-of-thought, hidden reasoning, credentials, policy text, or provider internals.',
     'The labels must be genuinely specific to THIS task. Never use generic filler such as "Working on your request", "Processing", or "Thinking".',
     'Use the user\'s language when obvious.',
-    'Each label should usually be 3-10 words and read naturally in a compact modern ChatGPT-style work timeline.',
+    'Each label should usually be 3-8 words and read naturally in a compact modern ChatGPT-style work timeline.',
+    'Never include the internal text "/ Follow-up:" or copy the whole user prompt into a label.',
+    'Do not repeat the task subject in every row. Prefer a short changing operation label, like the supplied ChatGPT work timeline.',
+    'Only describe work this pipeline can truthfully perform: request analysis, attachment/media preparation, live tool/search/repository operations when they actually run, response generation, server audit, static code verification, and artifact preparation. Never invent a search, build, compile, runtime test, file read, or deployment.',
     'CONTEXT: identify what is being understood or inspected.',
     'ANALYSIS: identify the concrete requirements, parts, or evidence being organized.',
     'APPROACH: identify the implementation/answer structure being prepared.',
@@ -2412,6 +2416,15 @@ function isVagueFreshnessFollowUp(message=''){
   return !stripped || looksReferential(message);
 }
 
+function isAcknowledgementFollowUp(message=''){
+  const t=normalizeIntentText(message)
+    .replace(/[.!?,…]+$/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+  if(!t)return false;
+  return /^(?:sige(?: po)?|ok(?:ay)?(?: po)?|oo(?: po)?|opo|yes|yep|yeah|go|go ahead|proceed|continue|tuloy|ituloy|gawin mo(?: na)?|do it|ayos|sure|fine|salamat|thanks|thank you)$/i.test(t);
+}
+
 function taskAnchorScore(text=''){
   const t=normalizeIntentText(text);
   let score=Math.min(5,t.split(/\s+/).filter(Boolean).length/4);
@@ -2459,7 +2472,7 @@ function contextualTaskMessage(message='', history=[]){
 
 function activityTaskSubject(message=''){
   const parts=splitContextualTaskMessage(message);
-  if(parts.followUp && (looksReferential(parts.followUp)||isVagueFreshnessFollowUp(parts.followUp))){
+  if(parts.followUp && (isAcknowledgementFollowUp(parts.followUp)||looksReferential(parts.followUp)||isVagueFreshnessFollowUp(parts.followUp))){
     return shortTaskSubject(parts.anchor||parts.raw);
   }
   return shortTaskSubject(parts.raw);
@@ -2468,6 +2481,7 @@ function activityTaskSubject(message=''){
 function shortTaskSubject(message=''){
   let t=cleanTaskText(message)
     .replace(/^(paki\s+)?(gawan|gumawa|ayusin|i-?test|itest|test|verify|check|suriin|review|hanapin|maghanap|create|build|make|fix|please)\s+(mo\s+)?(ako\s+|kami\s+|naman\s+|ito\s+|itong\s+)?/i,'')
+    .replace(/^(?:ang|ng)\s+/i,'')
     .replace(/\b(paki\s+)?(nga|naman|sana|please)\b/gi,' ')
     .replace(/\s+/g,' ')
     .trim();
@@ -5123,9 +5137,9 @@ async function processChat(body, emit) {
     }
   }
 
-  if(shouldUseDynamicActivityPlanner(message,files) && !activityBlueprint?.dynamic){
+  if(shouldUseDynamicActivityPlanner(taskMessage,files) && !activityBlueprint?.dynamic){
     try{
-      const activityPrompt=buildActivityBlueprintPrompt(message,files,contextPlan?.profile||{});
+      const activityPrompt=buildActivityBlueprintPrompt(taskMessage,files,contextPlan?.profile||{});
       const activityPlanResponse=await runProvider(provider,{
         model,
         history:[],
@@ -5440,6 +5454,7 @@ function activityStreamResponse(body, requestSignal=null) {
       },10000);
       (async()=>{
         try{
+          const activityContextMessage=contextualTaskMessage(body.message||'',body.history||[]);
           const result=await processChat(body,emit);
           if(!result.ok){
             send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'gemini'});
@@ -5578,8 +5593,8 @@ function activityStreamResponse(body, requestSignal=null) {
 
           // Every normal assistant response gets a real server-side result audit.
           // This keeps Activity useful for all prompts, not only uploads/repositories.
-          const responseAudit=auditGeneratedResponse(body.message||'',generatedText,body.files||[]);
-          const auditActivity=taskAuditActivity(body.message||'',body.files||[],responseAudit,result.activityBlueprint||null);
+          const responseAudit=auditGeneratedResponse(activityContextMessage,generatedText,body.files||[]);
+          const auditActivity=taskAuditActivity(activityContextMessage,body.files||[],responseAudit,result.activityBlueprint||null);
           send('activity',{
             type:'activity',
             id:'response-audit',
@@ -5603,7 +5618,7 @@ function activityStreamResponse(body, requestSignal=null) {
             send('activity',{
               type:'activity',
               id:'output-verification',
-              label:taskCodeVerificationLabel(body.message||'',body.files||[],failed,warnings,postReports.length),
+              label:taskCodeVerificationLabel(activityContextMessage,body.files||[],failed,warnings,postReports.length),
               state:failed?'warning':'completed',
               kind:'test',
               detail:'Static verification only; code was not arbitrarily executed.',

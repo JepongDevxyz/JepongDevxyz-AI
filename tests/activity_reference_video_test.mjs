@@ -65,14 +65,19 @@ assert.equal(normalize({id:'thinking',kind:'build',state:'running',label:'Prepar
 assert.equal(normalize({id:'generation',kind:'generate',state:'running',label:'Generating response'}).visibility,'details');
 
 const append=between(html,'        function appendActivityEvent(evt = {}) {','        function finishAIIndicator(');
-assert(append.includes("if(id==='task-context')"),'Backend task-context must become a reference-style lead');
-assert(append.includes("lead.textContent=String(normalized.label||'').slice(0,220)"));
+assert(append.includes("if(id==='task-context')"),'Backend task-context must enter the reference-style timeline');
+assert(append.includes("if(lead)lead.textContent=''"),
+ 'Temporary client lead must clear as soon as the first truthful server milestone arrives');
 assert(append.includes('syncJdThoughts();'),'New real events must reach an already-open Thoughts sheet');
 assert(append.includes('ChatGPT-style activity history: keep completed statuses visible in order.'));
 assert(append.includes("const detailsOnly = normalized.visibility==='details'"),
  'Low-level provider/generation plumbing must be excluded from the primary reference surface');
 assert(append.includes("const iconless = id==='thinking'"),
  'Task-specific model work must use the no-icon reference row');
+assert(append.includes("toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image'])"),
+ 'Real tool lifecycle transitions must be recognized separately from internal stages');
+assert(append.includes("row.dataset.activityId=id+'-history-'+Date.now()"),
+ 'A real running tool row must remain visible when its truthful completion milestone arrives');
 assert(append.includes("scrollToBottom(false)"),
  'Reference activity growth must keep the newest status above the composer');
 assert(append.includes("card.dataset.taskSummary=String(normalized.label||'').slice(0,220)"),
