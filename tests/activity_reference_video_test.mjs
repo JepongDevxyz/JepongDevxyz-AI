@@ -25,8 +25,8 @@ assert(css.includes('.jd-thoughts-overlay.open{display:flex}'));
 assert(css.includes('.jd-thoughts-list'));
 assert(css.includes('.thought-line__head{'),
  'ThoughtLine header styling must replace the legacy summary row');
-assert(css.includes('.lattice-loader__cell'),
- 'LatticeLoader styling must be active');
+assert(css.includes('.thought-cluster__dot'),
+ 'Reference four-dot thought status styling must be active');
 assert.equal((html.match(/<lottie-player/g)||[]).length,6,'Preserve original welcome animations');
 assert(html.includes('<div class="welcome-title">JepongDevxyz AI</div>'));
 
@@ -76,4 +76,4 @@ const reveal=between(html,'                const revealFinalResponse = (elapsedM
 assert(reveal.includes('finishAIIndicator(true, elapsedMs);'));
 assert(reveal.includes('requestAnimationFrame(() => requestAnimationFrame(() => {'),
  'Activity must finalize before the reply is revealed');
-console.log('PASS: video-reference elapsed clock, real SSE milestone lead/list, live Thoughts sheet and swipe/escape, deduped activity, original reply sequencing, and animations preserved.');
+console.log('PASS: video-reference four-dot status, elapsed Thought for header, real SSE milestone lead/list, live Thoughts sheet, deduped activity, reply sequencing, and animations preserved.');
