@@ -5285,10 +5285,8 @@ async function processChat(body, emit) {
     ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
-  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
-  activity(emit,'task-analysis',taskAnalysis.label,'completed',taskAnalysis.kind,'');
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${plannedResearchContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   const taskApproach=taskSpecificActivityCopy(contextPlan.profile||{},'prepared2');
-  activity(emit,'task-approach',taskApproach.label,'running',taskApproach.kind,'');
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
   // Installed skill plugins are explicit, bounded behavior profiles. They do not
