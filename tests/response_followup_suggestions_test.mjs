@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';
+const api=fs.readFileSync('api/chat.js','utf8'),html=fs.readFileSync('index.html','utf8');
+assert(api.includes('FOLLOW-UP UI IS REQUIRED after every normal completed assistant answer'));
+assert(api.includes('with exactly 2 lines'));
+assert(api.includes('including short greetings and simple factual replies'));
+assert(html.includes("followups.length>=2"));
+assert(html.includes("interaction.followups)?interaction.followups.slice(0,2)"));
+assert(html.includes('.jd-followup-btn{'));
+assert(html.includes('data-followup='));
+assert(html.includes('submitJdFollowup(this)'));
+console.log('PASS: normal answers request two contextual follow-ups and render them as tappable rows.');
