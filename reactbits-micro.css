@@ -754,12 +754,49 @@
   }
 }
 
-/* Jepong integration only: preserve native hidden semantics and compact chip icon sizing. */
+/* Jepong integration only: preserve native hidden semantics and the reference upload chip UI. */
 .prompt-bar [hidden] { display: none !important; }
+.prompt-bar__chips.is-visible {
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  min-height:28px;
+  align-items:center;
+}
 .prompt-bar__chip-icon { display:inline-flex; align-items:center; justify-content:center; width:12px; height:12px; flex:none; }
 .prompt-bar__chip-icon svg, .prompt-bar__chip-x svg { width:12px; height:12px; }
 .prompt-bar__chip[data-status='error'] { color:#fca5a5; }
 .prompt-bar__chip[data-status='warning'] { color:#fde68a; }
+
+.jd-upload-chip {
+  flex:0 0 auto;
+  height:28px;
+  max-width:min(230px,calc(100vw - 96px));
+  padding:0 5px 0 9px;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--pb-ink) 8%,transparent);
+  color:color-mix(in srgb,var(--pb-ink) 72%,transparent);
+  line-height:1;
+}
+.jd-upload-chip[data-status='processing'] .jd-upload-chip__icon {
+  color:currentColor;
+}
+.jd-upload-chip .attachment-spinner {
+  width:12px;
+  height:12px;
+  border-width:1.7px;
+}
+.jd-upload-chip__name {
+  max-width:158px;
+  font-size:12px;
+}
+.jd-upload-chip__remove {
+  opacity:.48;
+}
+.jd-upload-chip__remove:active,
+.jd-upload-chip__remove:hover {
+  opacity:1;
+}
 
 /* ---------- 4. RefineFrame status=complete ---------- */
 .refine-frame{
