@@ -2379,6 +2379,9 @@ function taskProfile(message='', files=[]){
   else if(/\b(image|photo|picture|logo|design|larawan)\b/i.test(t)||hasImages)kind='image';
   else if(shouldAutoResearch(message) || /\b(research|search|hanapin|maghanap|tingnan online)\b/i.test(t))kind='research';
   else if(/\b(math|equation|solve|school|study|lesson|explain|homework)\b/i.test(t))kind='study';
+  else if(/\b(write|rewrite|email|message|caption|essay|story|script|translate|translation|summarize|summary|proofread|grammar)\b/i.test(t))kind='writing';
+  else if(/\b(compare|comparison|choose|recommend|recommendation|best|which|alin|budget|plan|planning|pros and cons)\b/i.test(t))kind='decision';
+  else if(/\b(error|bug|crash|issue|problem|not working|hindi gumagana|troubleshoot|why failing|bakit ayaw)\b/i.test(t))kind='troubleshooting';
 
   const intent={
     create:/\b(gawan|gumawa|create|make|build|generate|implement|develop)\b/i.test(t),
@@ -2388,14 +2391,147 @@ function taskProfile(message='', files=[]){
     download:Boolean(detectArtifactRequest(message,files))
   };
 
+  let subtype='general';
+  if(kind==='web'){
+    subtype=/\b(game|snake|tetris|pong|platformer|quiz game|memory game)\b/i.test(t)?'game':
+      /\b(generator|editor|tool|calculator|converter|dashboard)\b/i.test(t)?'tool':
+      /\b(ui|ux|interface|layout|design|responsive)\b/i.test(t)?'ui':'website';
+  }else if(kind==='android') subtype=intent.edit||intent.test?'android-repair':'android-build';
+  else if(kind==='backend') subtype=/\bwebhook\b/i.test(t)?'webhook':/\b(database|sql|schema)\b/i.test(t)?'database':'api';
+  else if(kind==='writing') subtype=/\b(translate|translation)\b/i.test(t)?'translation':/\b(summarize|summary)\b/i.test(t)?'summary':/\b(email|message)\b/i.test(t)?'message':'writing';
+  else if(kind==='study') subtype=/\b(math|equation|solve|calculate)\b/i.test(t)?'math':/\b(quiz|reviewer|flashcard)\b/i.test(t)?'review':'explain';
+  else if(kind==='research') subtype=/\b(news|latest|current|today|now|ngayon)\b/i.test(t)?'current':'research';
+  else if(kind==='image') subtype=hasImages?'image-review':'image-task';
+  else if(kind==='video') subtype=hasVideos?'video-review':'video-task';
+  else if(kind==='document') subtype=/\b(summarize|summary)\b/i.test(t)?'document-summary':/\b(review|inspect|analyze|analyse)\b/i.test(t)?'document-review':'document';
+  else if(kind==='decision') subtype=/\b(compare|comparison|pros and cons)\b/i.test(t)?'compare':'recommend';
+  else if(kind==='troubleshooting') subtype='diagnose';
+
   const contextual=splitContextualTaskMessage(message);
   return {
-    kind,intent,urls,fileNames,
+    kind,subtype,intent,urls,fileNames,
     subject:activityTaskSubject(message),
     followUpText:contextual.followUp||'',
     contextualFollowUp:Boolean(contextual.followUp),
     freshnessFollowUp:Boolean(contextual.followUp&&isVagueFreshnessFollowUp(contextual.followUp)&&!shouldAutoResearch(contextual.followUp))
   };
+}
+
+
+function taskSpecificActivityCopy(profile={}, phase='context'){
+  const subject=String(profile.subject||'your request').slice(0,110);
+  const kind=String(profile.kind||'general');
+  const subtype=String(profile.subtype||'general');
+  const intent=profile.intent||{};
+  const key=kind+':'+subtype;
+
+  const specific={
+    'web:game':{
+      context:'Mapping gameplay, controls, and browser behavior',
+      prepared:'Game structure and interaction plan prepared',
+      work:'Building game loop, controls, scoring, and UI',
+      audit:'Checked the game output against gameplay and delivery requirements'
+    },
+    'web:ui':{
+      context:'Mapping layout, responsive behavior, and interactions',
+      prepared:'UI structure and interaction requirements prepared',
+      work:'Building the requested interface and interactions',
+      audit:'Checked the interface output against requested UI and behavior'
+    },
+    'web:tool':{
+      context:'Defining tool inputs, outputs, and interaction flow',
+      prepared:'Tool behavior and implementation plan prepared',
+      work:'Implementing the requested tool behavior',
+      audit:'Checked the tool output against requested functions'
+    },
+    'android:android-repair':{
+      context:'Tracing the Android issue across app, manifest, and build configuration',
+      prepared:'Android repair scope and affected components prepared',
+      work:'Preparing the Android fix',
+      audit:'Checked the Android fix against app, build, and delivery requirements'
+    },
+    'android:android-build':{
+      context:'Mapping Android app structure, screens, and build requirements',
+      prepared:'Android implementation plan prepared',
+      work:'Building the Android implementation',
+      audit:'Checked the Android output against app, build, and delivery requirements'
+    },
+    'backend:api':{
+      context:'Mapping API inputs, outputs, and failure paths',
+      prepared:'API behavior and validation plan prepared',
+      work:'Implementing the requested API behavior',
+      audit:'Checked the API output against requested behavior and edge cases'
+    },
+    'backend:webhook':{
+      context:'Mapping webhook events, payloads, and failure paths',
+      prepared:'Webhook behavior and validation plan prepared',
+      work:'Implementing the requested webhook behavior',
+      audit:'Checked the webhook output against requested behavior and edge cases'
+    },
+    'backend:database':{
+      context:'Mapping data flow, schema constraints, and query behavior',
+      prepared:'Database behavior and validation plan prepared',
+      work:'Working through the requested database changes',
+      audit:'Checked the database response against requested behavior and constraints'
+    },
+    'writing:translation':{
+      context:'Identifying meaning, tone, and target-language requirements',
+      prepared:'Translation style and terminology prepared',
+      work:'Translating while preserving meaning and tone',
+      audit:'Checked the translation for meaning, tone, and consistency'
+    },
+    'writing:summary':{
+      context:'Identifying the key points and requested summary depth',
+      prepared:'Summary scope and structure prepared',
+      work:'Condensing the content to the requested depth',
+      audit:'Checked the summary for coverage, clarity, and requested length'
+    },
+    'writing:message':{
+      context:'Shaping the message purpose, tone, and audience',
+      prepared:'Message structure and tone prepared',
+      work:'Drafting the requested message',
+      audit:'Checked the message for clarity, tone, and requested format'
+    },
+    'study:math':{
+      context:'Identifying the givens, target, and solution method',
+      prepared:'Solution method prepared',
+      work:'Working through the calculation and checking the result',
+      audit:'Checked the solution against the question and result'
+    },
+    'decision:compare':{
+      context:'Identifying the comparison criteria that matter',
+      prepared:'Comparison criteria and tradeoffs prepared',
+      work:'Comparing the options against the same criteria',
+      audit:'Checked the comparison for consistent criteria and tradeoffs'
+    },
+    'troubleshooting:diagnose':{
+      context:'Tracing the reported symptom and likely failure boundary',
+      prepared:'Diagnostic path and likely causes prepared',
+      work:'Narrowing the root cause and preparing the fix',
+      audit:'Checked the troubleshooting answer against the reported symptom'
+    }
+  };
+
+  const generic={
+    web:{context:intent.edit?'Reviewing the requested website changes':'Mapping the requested website structure',prepared:intent.create?'Website structure and behavior plan prepared':'Website change requirements prepared',work:intent.edit?'Applying the requested website changes':'Building the requested website',audit:'Checked the website output against requested structure and behavior'},
+    research:{context:subtype==='current'?'Identifying the current facts that need verification':'Defining the research question and evidence needed',prepared:'Research scope and evidence requirements prepared',work:'Synthesizing the relevant evidence',audit:'Checked the research response for relevance and evidence alignment'},
+    document:{context:subtype==='document-summary'?'Identifying the key sections to summarize':'Reviewing the document structure and requested focus',prepared:'Document review scope prepared',work:subtype==='document-summary'?'Condensing the document into the requested summary':'Working from the document evidence',audit:'Checked the document response against the requested scope'},
+    image:{context:subtype==='image-review'?'Reviewing visible details in the uploaded image':'Clarifying the requested image task',prepared:'Image task focus prepared',work:'Analyzing the relevant visual details',audit:'Checked the image response against visible evidence and the request'},
+    video:{context:subtype==='video-review'?'Reviewing sampled video evidence and timing':'Clarifying the requested video task',prepared:'Video analysis scope prepared',work:'Analyzing the relevant video evidence',audit:'Checked the video response against available media evidence'},
+    writing:{context:'Clarifying the writing goal, tone, and structure',prepared:'Writing structure and style prepared',work:'Drafting and polishing the requested writing',audit:'Checked the writing for clarity, tone, and requested format'},
+    study:{context:'Identifying the concept and learning goal',prepared:'Explanation structure prepared',work:'Building the explanation step by step',audit:'Checked the explanation against the question'},
+    decision:{context:'Identifying the decision constraints and priorities',prepared:'Decision criteria and tradeoffs prepared',work:'Weighing the options against the user constraints',audit:'Checked the recommendation against the stated constraints'},
+    github:{context:'Mapping repository scope and requested GitHub work',prepared:'Repository task plan prepared',work:'Working through the repository task',audit:'Checked the repository response against requested GitHub work'},
+    deployment:{context:'Reviewing deployment target, configuration, and failure conditions',prepared:'Deployment checks and required changes prepared',work:'Working through the deployment task',audit:'Checked the deployment response against requested outcome'},
+    general:{context:'Understanding the requested outcome',prepared:'Request requirements prepared',work:'Working through the request',audit:'Checked the final response for relevance and completeness'}
+  };
+
+  const set=specific[key]||generic[kind]||generic.general;
+  const base=set[phase]||set.work||'Working through the request';
+  const activityKind=kind==='backend'?'api':kind==='deployment'?'deploy':kind==='research'?'research':
+    kind==='image'?'image':kind==='video'||kind==='document'?'file':kind==='web'||kind==='android'?'build':
+    phase==='audit'?'test':'process';
+  return {label:phase==='audit'?base:(base+': '+subject),kind:activityKind};
 }
 
 function contextActivityPlan(message='', files=[]){
@@ -2468,36 +2604,12 @@ function contextActivityPlan(message='', files=[]){
         ? `Analyzing backend fix: ${subject}`
         : `Analyzing API/backend task: ${subject}`;
     kind='api';
-  }else if(profile.kind==='web'){
-    label=profile.intent.create
-      ? `Reviewing requested app or website build: ${subject}`
-      : profile.intent.edit
-        ? `Reviewing requested website/UI fix: ${subject}`
-        : profile.intent.test
-          ? `Checking requested website behavior: ${subject}`
-          : `Reviewing website task: ${subject}`;
-    kind='process';
-  }else if(profile.kind==='research'){
-    label=`Researching: ${subject}`;
-    kind='research';
-  }else if(profile.kind==='study'){
-    label=`Working through: ${subject}`;
-    kind='process';
-  }else if(profile.kind==='document'){
-    label=profile.intent.edit?`Reviewing document changes: ${subject}`:`Reviewing document task: ${subject}`;
-    kind='file';
-  }else if(profile.kind==='image'){
-    label=`Reviewing image task: ${subject}`;
-    kind='image';
-  }else if(profile.kind==='video'){
-    label=`Reviewing video task: ${subject}`;
-    kind='file';
+  }else if(['web','research','study','document','image','video','writing','decision','troubleshooting'].includes(profile.kind)){
+    const copy=taskSpecificActivityCopy(profile,'context');
+    label=copy.label;kind=copy.kind;
   }else if(subject && subject!=='your request'){
-    label=profile.intent.edit
-      ? `Analyzing requested change: ${subject}`
-      : profile.intent.test
-        ? `Checking requested behavior: ${subject}`
-        : `Understanding: ${subject}`;
+    const copy=taskSpecificActivityCopy(profile,'context');
+    label=copy.label;kind=copy.kind;
   }
 
   return {profile,steps:[{id:'task-context',label,kind}]};
@@ -2514,74 +2626,47 @@ function completeContextPlan(plan, emit){
   const first=plan?.steps?.[0];
   if(first)activity(emit,first.id,first.label,'completed',first.kind,'');
   const profile=plan?.profile||{};
-  const subject=String(profile.subject||'your request').slice(0,96);
-  let label='Request context prepared';
-  let kind='process';
-  if(profile.kind==='android'){label=`Android task requirements prepared: ${subject}`;kind='build';}
-  else if(profile.kind==='web'){
-    label=profile.intent?.create
-      ?`Implementation plan prepared: ${subject}`
-      :`Implementation requirements prepared: ${subject}`;
-    kind=profile.intent?.create?'build':'process';
-  }
-  else if(profile.kind==='backend'){label=`Backend/API requirements prepared: ${subject}`;kind='api';}
-  else if(profile.kind==='github'){label=`Repository task context prepared: ${subject}`;kind='process';}
-  else if(profile.kind==='deployment'){label=`Deployment task context prepared: ${subject}`;kind='deploy';}
-  else if(profile.kind==='document'){label=`Document task context prepared: ${subject}`;kind='file';}
-  else if(profile.kind==='image'){label=`Image task context prepared: ${subject}`;kind='image';}
-  else if(profile.kind==='video'){label=`Video task context prepared: ${subject}`;kind='file';}
-  else if(profile.kind==='research'){label=`Research scope prepared: ${subject}`;kind='research';}
-  else if(profile.kind==='study'){label=`Learning task prepared: ${subject}`;kind='process';}
-  else if(profile.kind==='general'){label=`Request understood: ${subject}`;kind='process';}
-  activity(emit,'task-prepared',label,'completed',kind,'');
+  const prepared=taskSpecificActivityCopy(profile,'prepared');
+  activity(emit,'task-prepared',prepared.label,'completed',prepared.kind,'');
 }
 
 function taskWorkingActivity(plan={}){
   const profile=plan?.profile||{};
-  const subject=String(profile.subject||'your request').slice(0,110);
-  const intent=profile.intent||{};
-  let kind='process';
-  let label=`Working on: ${subject}`;
-
   if(profile.contextualFollowUp && profile.freshnessFollowUp){
-    kind=profile.kind==='deployment'?'deploy':
+    const subject=String(profile.subject||'your request').slice(0,110);
+    const kind=profile.kind==='deployment'?'deploy':
       profile.kind==='backend'?'api':
       profile.kind==='image'?'image':
       profile.kind==='video'||profile.kind==='document'?'file':
       profile.kind==='android'||profile.kind==='web'?'build':'process';
-    label=`Applying the latest requested changes: ${subject}`;
-  }else if(profile.kind==='web'){
-    kind=intent.create?'build':'process';
-    label=intent.create
-      ?`Drafting the requested implementation: ${subject}`
-      :intent.edit
-        ?`Preparing the requested code/UI changes: ${subject}`
-        :`Working through the website task: ${subject}`;
-  }else if(profile.kind==='android'){
-    kind='build';label=`Preparing the Android implementation: ${subject}`;
-  }else if(profile.kind==='backend'){
-    kind='api';label=`Working through the API/backend task: ${subject}`;
-  }else if(profile.kind==='deployment'){
-    kind='deploy';label=`Working through the deployment task: ${subject}`;
-  }else if(profile.kind==='github'){
-    kind='process';label=`Working through the repository task: ${subject}`;
-  }else if(profile.kind==='image'){
-    kind='image';label=`Analyzing the image request: ${subject}`;
-  }else if(profile.kind==='video'){
-    kind='file';label=`Analyzing the video request: ${subject}`;
-  }else if(profile.kind==='document'){
-    kind='file';label=`Working from the document request: ${subject}`;
-  }else if(profile.kind==='research'){
-    kind='research';label=`Synthesizing the requested research: ${subject}`;
-  }else if(profile.kind==='study'){
-    kind='process';label=`Working through the study task: ${subject}`;
+    return {label:'Applying the latest requested changes: '+subject,kind};
   }
-  return {label,kind};
+  return taskSpecificActivityCopy(profile,'work');
 }
 
 function taskGenerationActivity(plan={}){
-  const subject=String(plan?.profile?.subject||'your request').slice(0,110);
-  return {label:`Generating the response for: ${subject}`,kind:'generate'};
+  const profile=plan?.profile||{};
+  const subject=String(profile.subject||'your request').slice(0,110);
+  return {label:'Finalizing the response for: '+subject,kind:'generate'};
+}
+
+function taskAuditActivity(message='',files=[],audit={}){
+  const profile=taskProfile(message,files);
+  const copy=taskSpecificActivityCopy(profile,'audit');
+  return {label:copy.label+(audit?.ok?'':' — review needed'),kind:copy.kind};
+}
+
+function taskCodeVerificationLabel(message='',files=[],failed=0,warnings=0,count=0){
+  const profile=taskProfile(message,files);
+  let noun='generated code';
+  if(profile.kind==='web'&&profile.subtype==='game')noun='generated game code';
+  else if(profile.kind==='web')noun='generated web code';
+  else if(profile.kind==='android')noun='generated Android code';
+  else if(profile.kind==='backend')noun='generated backend code';
+  const title=noun.charAt(0).toUpperCase()+noun.slice(1);
+  if(failed)return title+' static check found '+failed+' issue'+(failed===1?'':'s');
+  if(warnings)return title+' static check completed with '+warnings+' warning'+(warnings===1?'':'s');
+  return title+' passed '+count+' basic static check'+(count===1?'':'s');
 }
 
 function linkLabel(raw=''){
@@ -5234,14 +5319,13 @@ function activityStreamResponse(body, requestSignal=null) {
           // Every normal assistant response gets a real server-side result audit.
           // This keeps Activity useful for all prompts, not only uploads/repositories.
           const responseAudit=auditGeneratedResponse(body.message||'',generatedText,body.files||[]);
+          const auditActivity=taskAuditActivity(body.message||'',body.files||[],responseAudit);
           send('activity',{
             type:'activity',
             id:'response-audit',
-            label:responseAudit.ok
-              ? `Checked final response against ${responseAudit.checks.length} delivery requirement${responseAudit.checks.length===1?'':'s'}`
-              : `Final response check found ${responseAudit.failed.length} delivery issue${responseAudit.failed.length===1?'':'s'}`,
+            label:auditActivity.label,
             state:responseAudit.ok?'completed':'warning',
-            kind:'test',
+            kind:auditActivity.kind||'test',
             detail:responseAudit.ok
               ?'Response structure and requested-output requirements passed the server audit.'
               :responseAudit.failed.map(x=>x.name).slice(0,4).join(' • '),
@@ -5259,11 +5343,7 @@ function activityStreamResponse(body, requestSignal=null) {
             send('activity',{
               type:'activity',
               id:'output-verification',
-              label:failed
-                ? `Generated code static check found ${failed} issue${failed===1?'':'s'}`
-                : warnings
-                  ? `Generated code static check completed with ${warnings} warning${warnings===1?'':'s'}`
-                  : `Generated code passed ${postReports.length} basic static check${postReports.length===1?'':'s'}`,
+              label:taskCodeVerificationLabel(body.message||'',body.files||[],failed,warnings,postReports.length),
               state:failed?'warning':'completed',
               kind:'test',
               detail:'Static verification only; code was not arbitrarily executed.',
