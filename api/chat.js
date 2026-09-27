@@ -5424,26 +5424,53 @@ async function processChat(body, emit) {
     }
   }
 
-  if(shouldUseDynamicActivityPlanner(taskMessage,files) && !activityBlueprint?.dynamic){
+  // After real tools/files/searches finish, ask the SAME selected model for one
+  // evidence-grounded checkpoint. This is the second public commentary beat seen
+  // in the reference: it explains what the evidence changed without exposing CoT.
+  const activityEvidence=compactActivityEvidence([
+    projectInspectionContext,
+    mediaAnalysisContext,
+    githubContext,
+    pluginGithubContext,
+    githubExecutionContext,
+    githubIssuesContext,
+    providedLinkContext,
+    plannedResearchContext,
+    liveWebContext,
+    verificationContext
+  ]);
+  if(activityEvidence && shouldUseDynamicActivityPlanner(taskMessage,files)){
     try{
-      const activityPrompt=buildActivityBlueprintPrompt(taskMessage,files,contextPlan?.profile||{});
-      const activityPlanResponse=await runProvider(provider,{
+      const updateResponse=await runProvider(provider,{
         model,
-        history:[],
+        history:(Array.isArray(history)?history.slice(-8):[]),
         files:[],
-        message:activityPrompt,
-        systemInstruction:'ACTIVITY METADATA MODE: Return only concise public progress labels. Do not answer the task, expose private reasoning, or claim unverified external actions.',
-        routedReason:'activity-blueprint',
+        message:buildEvidenceActivityUpdatePrompt(taskMessage,activityBlueprint,activityEvidence),
+        systemInstruction:'PUBLIC WORK TRACE EVIDENCE MODE: Return only the requested checkpoint, commentary, work label, and response contract. Use only supplied evidence. Do not answer the user or reveal private reasoning.',
+        routedReason:'activity-evidence-sync',
         emit:null,
         autoFallback:false,
         customApiKeys:requestCustomKeys,
         customApiProfile,
         responseEffort:'Instant'
       });
-      if(activityPlanResponse.ok){
-        const rawPlan=await readInternalProviderText(activityPlanResponse.response,5000);
-        const parsedPlan=parseActivityBlueprintOutput(rawPlan,contextPlan?.profile||{});
-        if(parsedPlan?.dynamic)activityBlueprint=parsedPlan;
+      if(updateResponse.ok){
+        const rawUpdate=await readInternalProviderText(updateResponse.response,7000);
+        const update=parseEvidenceActivityUpdate(rawUpdate,activityBlueprint);
+        if(update){
+          activityBlueprint={
+            ...activityBlueprint,
+            checkpoint:update.checkpoint||activityBlueprint.checkpoint,
+            work:update.work||activityBlueprint.work,
+            responseContract:update.responseContract||activityBlueprint.responseContract
+          };
+          if(update.checkpoint){
+            activity(emit,'task-checkpoint',update.checkpoint,'completed','process','');
+          }
+          if(update.commentary && update.commentary!==activityBlueprint.commentary){
+            activity(emit,'work-commentary-evidence',update.commentary,'completed','commentary');
+          }
+        }
       }
     }catch(_){}
   }
@@ -5452,23 +5479,24 @@ async function processChat(body, emit) {
   if(activityBlueprint?.responseContract){
     systemInstruction +=
       '\n\n[RESPONSE-ACTIVITY COHERENCE CONTRACT — internal, do not quote]\n' +
-      activityBlueprint.responseContract +
-      '\nThe final answer must stay semantically aligned with this contract and the visible Activity labels. ' +
-      'Do not silently switch the deliverable, platform, architecture, or implementation approach after Activity has described a different one. ' +
-      'If verified tool evidence conflicts with the contract, follow the verified evidence and state the correction plainly in the answer. ' +
-      'This contract is a high-level output plan, not private chain-of-thought.\n[/RESPONSE-ACTIVITY COHERENCE CONTRACT]';
+      'Visible plan: '+String(activityBlueprint.planDone||activityBlueprint.context||'').slice(0,180)+'\n' +
+      'Visible approach: '+String(activityBlueprint.commentary||'').slice(0,1000)+'\n' +
+      'Visible checkpoint: '+String(activityBlueprint.checkpoint||'').slice(0,180)+'\n' +
+      'Visible work step: '+String(activityBlueprint.work||'').slice(0,180)+'\n' +
+      'Final-answer contract: '+activityBlueprint.responseContract +
+      '\nThe final answer must continue the SAME deliverable, platform, architecture, scope, and major implementation choices shown in the visible work trace. ' +
+      'Do not silently switch from native app to website, from one API strategy to another, or from implementation to generic advice after Activity has committed to a different approach. ' +
+      'If verified tool evidence conflicts with the earlier plan, follow the verified evidence and state the correction plainly. ' +
+      'The visible work trace is public high-level progress, not private chain-of-thought.\n[/RESPONSE-ACTIVITY COHERENCE CONTRACT]';
   }
-  activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'');
-  activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'');
-  if(activityBlueprint?.commentary){
-    activity(emit,'work-commentary-blueprint',activityBlueprint.commentary,'completed','commentary');
+
+  // Model-authored reasoning milestones are plain rows. Real web/file/GitHub
+  // operations keep their icons and start->result history separately.
+  if(activityBlueprint?.work){
+    activity(emit,'task-work',activityBlueprint.work,'completed','process','');
   }
-  completeContextPlan(contextPlan,emit);
-  // Keep the running status tied to the user's real task instead of a fixed
-  // "Thinking" label. Provider/tool rows remain evidence-backed and separate.
-  const taskWork=taskWorkingActivity(contextPlan);
   const taskGeneration=taskGenerationActivity(contextPlan);
-  activity(emit,'thinking',taskWork.label,'running',taskWork.kind);
+  activity(emit,'thinking','Thinking','running','process','');
   let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
   if(first.ok){
     first=await maybeRefineVisualUiResponse({
@@ -5485,8 +5513,8 @@ async function processChat(body, emit) {
       resolvedProvider:first.response.headers.get('x-ai-provider')||provider,
       resolvedModel:first.response.headers.get('x-ai-model')||model,
       systemInstruction,
-      activityTaskLabel:taskWork.label,
-      activityTaskKind:taskWork.kind,
+      activityTaskLabel:'Thinking',
+      activityTaskKind:'process',
       activityBlueprint:contextPlan.activityBlueprint||activityBlueprint
     };
   }
