@@ -16,12 +16,12 @@ for(const token of [
 
 assert(api.includes("activity(emit,'task-analysis',taskAnalysis.label,'running'"),
   'Task analysis must visibly start as real work');
-assert(api.includes("activity(emit,'task-analysis',taskAnalysis.label,'completed'"),
-  'Task analysis must complete after context assembly');
+assert(api.includes("activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed'"),
+  'Task analysis must complete after context assembly using the request-specific label');
 assert(api.includes("activity(emit,'task-approach',taskApproach.label,'running'"),
   'Task approach must visibly start before final prompt preparation');
-assert(api.includes("activity(emit,'task-approach',taskApproach.label,'completed'"),
-  'Task approach must complete before provider generation');
+assert(api.includes("activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed'"),
+  'Task approach must complete before provider generation using the request-specific label');
 assert(api.includes("activity(emit,'thinking',taskWork.label,'running'"),
   'Task-specific implementation work must remain the running model stage');
 
