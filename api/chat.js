@@ -269,8 +269,8 @@ function safeEmit(emit, event) {
   try { emit?.(event); } catch (_) {}
 }
 
-function activity(emit, id, label, state = 'running', kind = 'process', detail = '') {
-  safeEmit(emit, { type:'activity', id, label, state, kind, detail, at:Date.now() });
+function activity(emit, id, label, state = 'running', kind = 'process', detail = '', visibility = '') {
+  safeEmit(emit, { type:'activity', id, label, state, kind, detail, visibility, at:Date.now() });
 }
 
 function providerAttemptDetail({model='',attemptIndex=0,attemptCount=1,attemptNoun='credential',fallbackModel=''}) {
@@ -1184,6 +1184,7 @@ function defaultActivityBlueprint(profile={}){
     audit:cleanActivityLabel(audit.label),
     commentary:'',
     responseContract:'',
+    trace:[],
     kind:work.kind||context.kind||'process',
     dynamic:false
   };
@@ -1209,8 +1210,12 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'AUDIT: identify what will be checked in the produced answer/code. Do not claim runtime execution unless verified tool context says it ran.',
     'COMMENTARY: one short natural sentence about the chosen approach; it must not expose private reasoning or claim unverified external actions.',
     'RESPONSE_CONTRACT: one compact high-level answer contract stating the intended deliverable, platform assumptions (or that platform is unspecified), major components, and important caveats. This is not chain-of-thought.',
-    'The Activity labels and RESPONSE_CONTRACT must describe the SAME approach. Do not plan a website in Activity and then describe a native app in the contract, or vice versa.',
-    'Return EXACTLY these seven lines and nothing else:',
+    'TRACE: 3-8 compact public milestones, separated by " | ". These are the exact visible stages the assistant will perform before the final answer. They must be task-specific, chronological, non-repetitive, and semantically tied to RESPONSE_CONTRACT.',
+    'TRACE is NOT hidden reasoning. It may name observable operations, artifacts, requirements, files, tools, checks, or answer sections, but never private chain-of-thought.',
+    'Do not force a fixed five-stage template. Different user requests should naturally produce different TRACE lengths and labels.',
+    'If an actual external operation is required (search, repository read/write, build, test, deploy), describe it in TRACE only when this pipeline can really perform it; otherwise phrase the milestone as planning/preparing/checking the answer rather than falsely claiming execution.',
+    'The Activity labels, TRACE, and RESPONSE_CONTRACT must describe the SAME approach. Do not plan a website in Activity and then describe a native app in the contract, or vice versa.',
+    'Return EXACTLY these eight lines and nothing else:',
     'CONTEXT: <specific label>',
     'ANALYSIS: <specific label>',
     'APPROACH: <specific label>',
@@ -1218,6 +1223,7 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'AUDIT: <specific label>',
     'COMMENTARY: <one short sentence>',
     'RESPONSE_CONTRACT: <one-line high-level answer contract>',
+    'TRACE: <milestone 1> | <milestone 2> | <milestone 3> ...',
     'Task type: '+String(profile?.kind||classifyUserTask(message,files))+'/'+String(profile?.subtype||'general'),
     names.length?'Attachments: '+names.join(', '):'Attachments: none',
     'User request: '+String(message||'').slice(0,8000)
@@ -1239,8 +1245,10 @@ function parseActivityBlueprintOutput(raw='', profile={}){
   const audit=value('AUDIT');
   const commentary=value('COMMENTARY',520);
   const responseContract=value('RESPONSE_CONTRACT',2200);
+  const traceRaw=value('TRACE',2400);
+  const trace=traceRaw.split(/\s*\|\s*/).map(x=>cleanActivityLabel(x,150)).filter(Boolean).slice(0,8);
   const valid=[context,analysis,approach,work,audit].filter(Boolean).length>=4;
-  if(!valid)return {...fallback,commentary:commentary||fallback.commentary,responseContract:responseContract||fallback.responseContract};
+  if(!valid)return {...fallback,commentary:commentary||fallback.commentary,responseContract:responseContract||fallback.responseContract,trace:trace.length?trace:fallback.trace};
   return {
     context:context||fallback.context,
     analysis:analysis||fallback.analysis,
@@ -1249,6 +1257,7 @@ function parseActivityBlueprintOutput(raw='', profile={}){
     audit:audit||fallback.audit,
     commentary,
     responseContract,
+    trace,
     kind:fallback.kind,
     dynamic:true
   };
@@ -1276,6 +1285,7 @@ function buildInternalTaskBriefPrompt(message='', files=[], profile={}){
     'ACTIVITY_AUDIT: concise label for checking the produced answer against the request; no fake runtime claims.',
     'PUBLIC_UPDATE: one short natural paragraph (1-2 sentences) in the user\'s language describing the concrete approach. It must sound like a polished ChatGPT work update, not a generic promise.',
     'RESPONSE_CONTRACT: one compact high-level answer contract stating the intended deliverable, platform assumptions (or that platform is unspecified), major components, and important caveats. The final answer must follow the same approach as the Activity labels.',
+    'TRACE: 3-8 compact public milestones separated by " | ". Use a request-specific chronological trace, not a fixed generic template. It must match RESPONSE_CONTRACT and must not claim unverified external execution.',
     'INTERNAL_BRIEF: concise structured notes covering the intended user goal, hard constraints, relevant verified evidence, likely mistakes to avoid, and the best final-answer approach. Mark uncertain items as uncertain. Do not include private reasoning.',
     'Activity labels should normally be 3-10 words, specific to this exact request, and should not repeat the whole user prompt.',
     isVisualWebUiRequest(message,files)
@@ -1310,6 +1320,8 @@ function parseQualityPreflightOutput(raw='', profile={}){
   const work=line('ACTIVITY_WORK');
   const audit=line('ACTIVITY_AUDIT');
   const responseContract=line('RESPONSE_CONTRACT',2200);
+  const traceRaw=line('TRACE',2400);
+  const trace=traceRaw.split(/\s*\|\s*/).map(x=>cleanActivityLabel(x,150)).filter(Boolean).slice(0,8);
   const activityBlueprint={
     context:context||fallback.context,
     analysis:analysis||fallback.analysis,
@@ -1318,6 +1330,7 @@ function parseQualityPreflightOutput(raw='', profile={}){
     audit:audit||fallback.audit,
     commentary:cleanPublic,
     responseContract:responseContract||fallback.responseContract,
+    trace:trace.length?trace:fallback.trace,
     kind:fallback.kind,
     dynamic:Boolean(context||analysis||approach||work||audit)
   };
@@ -5216,17 +5229,28 @@ async function processChat(body, emit) {
       'If verified tool evidence conflicts with the contract, follow the verified evidence and state the correction plainly in the answer. ' +
       'This contract is a high-level output plan, not private chain-of-thought.\n[/RESPONSE-ACTIVITY COHERENCE CONTRACT]';
   }
-  activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'');
-  activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'');
+  // The model-created TRACE is the primary public timeline for every model.
+  // Legacy context/analysis/approach rows are retained only as a fallback when
+  // the selected model cannot return valid Activity metadata.
+  const plannedTrace=Array.isArray(activityBlueprint?.trace)?activityBlueprint.trace.filter(Boolean).slice(0,8):[];
+  if(plannedTrace.length){
+    completeContextPlan(contextPlan,emit);
+    activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'', 'details');
+    activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'', 'details');
+    plannedTrace.forEach((label,index)=>{
+      activity(emit,'planned-trace-'+index,label,index===0?'running':'queued',activityBlueprint.kind||'process','');
+    });
+  }else{
+    activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'');
+    activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'');
+    completeContextPlan(contextPlan,emit);
+  }
   if(activityBlueprint?.commentary){
     activity(emit,'work-commentary-blueprint',activityBlueprint.commentary,'completed','commentary');
   }
-  completeContextPlan(contextPlan,emit);
-  // Keep the running status tied to the user's real task instead of a fixed
-  // "Thinking" label. Provider/tool rows remain evidence-backed and separate.
   const taskWork=taskWorkingActivity(contextPlan);
   const taskGeneration=taskGenerationActivity(contextPlan);
-  activity(emit,'thinking',taskWork.label,'running',taskWork.kind);
+  if(!plannedTrace.length)activity(emit,'thinking',taskWork.label,'running',taskWork.kind);
   let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
   if(first.ok){
     first=await maybeRefineVisualUiResponse({
@@ -5245,7 +5269,8 @@ async function processChat(body, emit) {
       systemInstruction,
       activityTaskLabel:taskWork.label,
       activityTaskKind:taskWork.kind,
-      activityBlueprint:contextPlan.activityBlueprint||activityBlueprint
+      activityBlueprint:contextPlan.activityBlueprint||activityBlueprint,
+      activityTrace:plannedTrace
     };
   }
 
@@ -5645,6 +5670,31 @@ function activityStreamResponse(body, requestSignal=null) {
             });
           }
 
+          // Complete the selected model's public plan in order before result audit.
+          // This keeps the visible trace and the final response on the same request-specific plan.
+          if(Array.isArray(result.activityTrace)&&result.activityTrace.length){
+            for(let i=0;i<result.activityTrace.length;i++){
+              send('activity',{
+                type:'activity',
+                id:'planned-trace-'+i,
+                label:result.activityTrace[i],
+                state:'completed',
+                kind:result.activityBlueprint?.kind||'process',
+                at:Date.now()
+              });
+              if(i+1<result.activityTrace.length){
+                send('activity',{
+                  type:'activity',
+                  id:'planned-trace-'+(i+1),
+                  label:result.activityTrace[i+1],
+                  state:'running',
+                  kind:result.activityBlueprint?.kind||'process',
+                  at:Date.now()
+                });
+              }
+            }
+          }
+
           // Every normal assistant response gets a real server-side result audit.
           // This keeps Activity useful for all prompts, not only uploads/repositories.
           send('activity',{
@@ -5712,14 +5762,16 @@ function activityStreamResponse(body, requestSignal=null) {
           }
 
           const elapsedMs=Math.max(1,Date.now()-result.startedAt);
-          send('activity',{
-            type:'activity',
-            id:'thinking',
-            label:result.activityTaskLabel||'Working on your request',
-            state:'completed',
-            kind:result.activityTaskKind||'process',
-            at:Date.now()
-          });
+          if(!Array.isArray(result.activityTrace)||!result.activityTrace.length){
+            send('activity',{
+              type:'activity',
+              id:'thinking',
+              label:result.activityTaskLabel||'Working on your request',
+              state:'completed',
+              kind:result.activityTaskKind||'process',
+              at:Date.now()
+            });
+          }
           send('activity',{type:'activity',id:'generation',label:`Response complete in ${(elapsedMs/1000).toFixed(elapsedMs>=1000?1:2)}s`,state:'completed',kind:'generate',at:Date.now()});
           send('done',{elapsedMs,autoContinuations:continuationCount,...meta});
           clearInterval(keepAlive);
