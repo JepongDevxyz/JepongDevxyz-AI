@@ -24,7 +24,7 @@ for(const token of [
   "taskCodeVerificationLabel(activityContextMessage,body.files||[]"
 ]) assert(api.includes(token),'Missing universal/task-specific Activity stage: '+token);
 
-assert(api.includes("const responseAudit=auditGeneratedResponse(body.message||'',generatedText,body.files||[]);"),
+assert(api.includes("const responseAudit=auditGeneratedResponse(activityContextMessage,generatedText,body.files||[]);"),
   'Every completed response must receive the server result audit');
 assert(api.includes('const generatedBlocks=responseAudit.codeBlocks||extractCodeBlocks(generatedText);'),
   'Generated code must be statically checked without requiring an explicit test keyword');
