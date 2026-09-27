@@ -74,8 +74,10 @@ assert(append.includes("const detailsOnly = normalized.visibility==='details'"),
  'Low-level provider/generation plumbing must be excluded from the primary reference surface');
 assert(append.includes("const iconless = id==='thinking'"),
  'Task-specific model work must use the no-icon reference row');
-assert(append.includes("toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image'])"),
- 'Real tool lifecycle transitions must be recognized separately from internal stages');
+assert(append.includes("toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image','video','document','github','plugin'])"),
+ 'Real tool lifecycle transitions must include web, files, tests, GitHub, and plugins');
+assert(append.includes("['thinking','generation','router'].includes(id)"),
+ 'Response audit and generated-code verification must remain truthful visible tool lifecycles');
 assert(append.includes("row.dataset.activityId=id+'-history-'+Date.now()"),
  'A real running tool row must remain visible when its truthful completion milestone arrives');
 assert(append.includes("scrollToBottom(false)"),
