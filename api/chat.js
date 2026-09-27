@@ -4114,7 +4114,7 @@ async function runCloudflare({model,history,files,message,systemInstruction,fall
     try {
       const a=accounts[i];
       const res=await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(a.accountId)}/ai/v1/chat/completions`,{
-        method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,files)}),signal:AbortSignal.timeout(120000)
+        method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,files)}),signal:AbortSignal.timeout(70000)
       });
       if(res.ok){
         providerLifecycleActivity(emit,{
@@ -4162,7 +4162,7 @@ async function runGenericCustomApi(profile,{history,message,systemInstruction,em
   let last=null;
   for(let i=0;i<keys.length;i++){
     try{
-      const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort)}),signal:AbortSignal.timeout(120000)});
+      const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort)}),signal:AbortSignal.timeout(70000)});
       if(!res.ok){last={ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};if([401,402,403,408,409,429,500,502,503,504].includes(res.status)&&i<keys.length-1)continue;return last;}
       const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',i,keys.length,finishState),finishState};
     }catch(err){last={ok:false,status:502,error:err?.message||'Custom API unavailable'};if(i<keys.length-1)continue;}
@@ -4454,7 +4454,7 @@ async function runCohere({model,history,message,systemInstruction,fallbackFrom='
       attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
     });
     try{
-      const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,[])}),signal:AbortSignal.timeout(120000)});
+      const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,[])}),signal:AbortSignal.timeout(70000)});
       if(res.ok){
         providerLifecycleActivity(emit,{
           provider:'cohere',model:target,state:'completed',phase:'connected',
@@ -5013,7 +5013,7 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
         method:'POST',
         headers:{'x-api-key':keys[i],Authorization:'Bearer '+keys[i],'anthropic-version':'2023-06-01','content-type':'application/json','accept':'text/event-stream'},
         body:JSON.stringify({model:target,max_tokens:effortOutputBudgetFor(message,responseEffort),system:systemInstruction,messages,stream:true}),
-        signal:AbortSignal.timeout(120000)
+        signal:AbortSignal.timeout(70000)
       });
       if(res.ok){
         const finishState={reason:''};
