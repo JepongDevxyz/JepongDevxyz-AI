@@ -77,7 +77,7 @@ assert(append.includes("const iconless = id==='thinking'"),
 assert(append.includes("toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image','video','document','github','plugin'])"),
  'Real tool lifecycle transitions must include web, files, tests, GitHub, and plugins');
 assert(append.includes("['thinking','generation','router'].includes(id)"),
- 'Response audit and generated-code verification must remain truthful visible tool lifecycles');
+ 'Real tool lifecycle history must stay separate from model-internal stages');
 assert(append.includes("row.dataset.activityId=id+'-history-'+Date.now()"),
  'A real running tool row must remain visible when its truthful completion milestone arrives');
 assert(append.includes("scrollToBottom(false)"),
@@ -86,6 +86,12 @@ assert(append.includes("card.dataset.taskSummary=String(normalized.label||'').sl
  'Task-specific context must stay separate from provider/tool plumbing');
 assert(!append.includes("appendActivityEvent({"),
  'Activity renderer must not fabricate client-side plan events');
+assert(html.includes("startup.dataset.activityId='client-thinking'"),
+ 'Reference startup must show one plain Thinking row before the first server milestone');
+assert(append.includes("if(startup && id!=='client-thinking')startup.remove();"),
+ 'First real server milestone must replace the temporary Thinking row');
+assert(normalizer.includes("if(id==='response-audit')") && normalizer.includes("visibility:'details'"),
+ 'Server audit bookkeeping must stay out of the primary frame-matched trace');
 assert(backend.includes("activity(emit,id,`Read attached"),'Real file events remain server-grounded');
 assert(backend.includes("activity(emit,'web-search'"),'Real web events remain server-grounded');
 assert(backend.includes("activity(emit,'fallback'"),'Real fallback events remain server-grounded');
@@ -105,4 +111,4 @@ assert(html.includes('jdActivityPlaybackQueue.push(normalized);'));
 assert(css.includes('@keyframes jdActivityCurrentDot'));
 assert(css.includes('.ai-activity-row.running.ai-activity-current .ai-activity-label::after'),
  'Current reference step needs the inline breathing dot seen in the supplied videos');
-console.log('PASS: frame-matched Work activity surface, task-specific model-work row, commentary flow, auto-scroll, and truthful SSE sequencing.');
+console.log('PASS: frame-matched Work surface starts with Thinking, transitions into model planning, keeps commentary/tool history, and hides internal bookkeeping.');
