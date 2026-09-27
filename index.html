@@ -11354,7 +11354,14 @@ ${m.text || ''}
                 const key=note.toLowerCase().replace(/\s+/g,' ').trim();
                 if(!key||seen.has(key))continue;
                 seen.add(key);
-                appendJdWorkNote(note);
+                // Keep model-authored public progress commentary in the same playback
+                // queue as server milestones so it cannot jump ahead of earlier work.
+                appendActivityEvent({
+                    id:'work-note-'+Date.now()+'-'+seen.size,
+                    label:note,
+                    state:'completed',
+                    kind:'commentary'
+                });
             }
         }
 
