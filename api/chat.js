@@ -2481,6 +2481,7 @@ function activityTaskSubject(message=''){
 function shortTaskSubject(message=''){
   let t=cleanTaskText(message)
     .replace(/^(paki\s+)?(gawan|gumawa|ayusin|i-?test|itest|test|verify|check|suriin|review|hanapin|maghanap|create|build|make|fix|please)\s+(mo\s+)?(ako\s+|kami\s+|naman\s+|ito\s+|itong\s+)?/i,'')
+    .replace(/^(?:ang|ng)\s+/i,'')
     .replace(/\b(paki\s+)?(nga|naman|sana|please)\b/gi,' ')
     .replace(/\s+/g,' ')
     .trim();
