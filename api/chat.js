@@ -1244,6 +1244,7 @@ function defaultActivityBlueprint(profile={}){
     commentary:'',
     responseContract:'',
     research:[],
+    trace:[],
     kind:work.kind||context.kind||'process',
     dynamic:false
   };
@@ -1268,8 +1269,12 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'Never claim a search, file read, build, compile, runtime test, deployment, repository write, or environment check unless a real tool can actually perform it.',
     'CHECKPOINT must be safe even before tool results: prefer "Chose the implementation" or "Set the response structure", not "Built the app" or "Tests passed".',
     'RESPONSE_CONTRACT is a compact high-level contract for the final answer: intended deliverable, platform assumption, major components, and important caveats. It is not chain-of-thought.',
-    'All fields must describe ONE coherent approach. Never plan one architecture in Activity and answer with another.',
-    'Return EXACTLY these fourteen lines and nothing else:',
+    'TRACE: 3-8 compact public milestones separated by " | ". This is the exact request-specific visible sequence between planning and final generation. It must be chronological, non-repetitive, and consistent with RESPONSE_CONTRACT.',
+    'TRACE is public progress metadata, not hidden reasoning. It may name observable operations, artifacts, requirements, files, tools, checks, or answer sections, but never private chain-of-thought.',
+    'Do not force one fixed stage template across requests. A coding task, translation, image/file analysis, research question, troubleshooting request, and repository task should naturally produce different milestone labels and counts.',
+    'Never put an external operation in TRACE unless this pipeline can actually perform it; real search/file/GitHub/build/deploy events remain evidence-backed tool milestones.',
+    'All fields, TRACE, and RESPONSE_CONTRACT must describe ONE coherent approach. Never plan one architecture in Activity and answer with another.',
+    'Return EXACTLY these fifteen lines and nothing else:',
     'PLAN_START: <short running planning label>',
     'PLAN_DONE: <short completed planning label>',
     'CONTEXT: <specific label>',
@@ -1284,6 +1289,7 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'RESEARCH_QUERY_2: <query or blank>',
     'RESEARCH_DOMAIN_2: <hostname or blank>',
     'RESPONSE_CONTRACT: <one-line high-level answer contract>',
+    'TRACE: <milestone 1> | <milestone 2> | <milestone 3> ...',
     'Task type: '+String(profile?.kind||classifyUserTask(message,files))+'/'+String(profile?.subtype||'general'),
     names.length?'Attachments: '+names.join(', '):'Attachments: none',
     'User request: '+String(message||'').slice(0,8000)
@@ -1308,6 +1314,8 @@ function parseActivityBlueprintOutput(raw='', profile={}){
   const audit=value('AUDIT');
   const commentary=value('COMMENTARY',1000);
   const responseContract=value('RESPONSE_CONTRACT',2500);
+  const traceRaw=value('TRACE',2400);
+  const trace=traceRaw.split(/\s*\|\s*/).map(x=>cleanActivityLabel(x,150)).filter(Boolean).slice(0,8);
   const research=[
     {
       query:cleanPlannedResearchQuery(value('RESEARCH_QUERY_1',240)),
@@ -1323,7 +1331,8 @@ function parseActivityBlueprintOutput(raw='', profile={}){
     ...fallback,
     commentary:commentary||fallback.commentary,
     responseContract:responseContract||fallback.responseContract,
-    research
+    research,
+    trace:trace.length?trace:fallback.trace
   };
   return {
     planStart:planStart||fallback.planStart,
@@ -1337,6 +1346,7 @@ function parseActivityBlueprintOutput(raw='', profile={}){
     commentary,
     responseContract,
     research,
+    trace,
     kind:fallback.kind,
     dynamic:true
   };
