@@ -1512,8 +1512,35 @@ function relevantWebResults(results=[], query=''){
 
 function shouldVerifyTask(message='', files=[]){
   const t=normalizeIntentText(message);
-  if(Array.isArray(files) && files.length && /\b(test|verify|check|inspect|validate|debug|run|working|gumagana|subukan|i-test|itest|suriin|ayusin|error|bug|build|compile|deploy)\b/i.test(t)) return true;
-  return /\b(test|verify|check|inspect|validate|debug|run|working|gumagana|subukan|i-test|itest|suriin|build|compile|deploy|endpoint|website|url|api)\b/i.test(t);
+  if(Array.isArray(files) && files.length && /\b(test|verify|check|inspect|validate|debug|run|working|gumagana|subukan|i-test|itest|suriin|ayusin|error|bug|build|compile|deploy|create|make|gawan|gumawa|implement|develop)\b/i.test(t)) return true;
+  return /\b(test|verify|check|inspect|validate|debug|run|working|gumagana|subukan|i-test|itest|suriin|build|compile|deploy|endpoint|website|url|api|create|make|gawan|gumawa|implement|develop|html|javascript|typescript|python|java|kotlin|game)\b/i.test(t);
+}
+
+function auditGeneratedResponse(message='',generatedText='',files=[]){
+  const text=String(generatedText||'').trim();
+  const checks=[];
+  checks.push({name:'non-empty response',ok:text.length>0});
+  checks.push({name:'internal markers hidden',ok:!/(?:\[INTERNAL_|\[UPLOADED PROJECT INSPECTION\]|JD_WORK_NOTE|PUBLIC_UPDATE:|INTERNAL_BRIEF:)/i.test(text)});
+
+  const codeBlocks=extractCodeBlocks(text);
+  const t=normalizeIntentText(message);
+  const asksCode=/\b(code|html|css|javascript|typescript|python|java|kotlin|android|app|website|game|api|backend|frontend|build|create|make|gawan|gumawa|implement|develop|program)\b/i.test(t);
+  if(asksCode){
+    checks.push({name:'requested implementation present',ok:codeBlocks.length>0 || /\b(?:FILE|Filename)\s*:/i.test(text)});
+  }
+
+  if(wantsCompleteCode(message)){
+    const omitted=/\b(rest omitted|same as before|unchanged code here|remaining code|code omitted|etc\.?\s*$)/im.test(text);
+    checks.push({name:'no placeholder omission',ok:!omitted});
+  }
+
+  const artifact=detectArtifactRequest(message,files);
+  if(artifact?.kind==='zip' && Array.isArray(files) && files.some(f=>/\.zip$/i.test(String(f?.parentName||f?.name||f?.filename||'')))){
+    checks.push({name:'updated project file blocks',ok:/\bFILE\s*:\s*[^\n]+/i.test(text)});
+  }
+
+  const failed=checks.filter(x=>!x.ok);
+  return {checks,failed,ok:failed.length===0,codeBlocks};
 }
 
 function htmlDecode(s=''){
@@ -2491,7 +2518,12 @@ function completeContextPlan(plan, emit){
   let label='Request context prepared';
   let kind='process';
   if(profile.kind==='android'){label=`Android task requirements prepared: ${subject}`;kind='build';}
-  else if(profile.kind==='web'){label=`Implementation requirements prepared: ${subject}`;kind='process';}
+  else if(profile.kind==='web'){
+    label=profile.intent?.create
+      ?`Implementation plan prepared: ${subject}`
+      :`Implementation requirements prepared: ${subject}`;
+    kind=profile.intent?.create?'build':'process';
+  }
   else if(profile.kind==='backend'){label=`Backend/API requirements prepared: ${subject}`;kind='api';}
   else if(profile.kind==='github'){label=`Repository task context prepared: ${subject}`;kind='process';}
   else if(profile.kind==='deployment'){label=`Deployment task context prepared: ${subject}`;kind='deploy';}
@@ -5199,26 +5231,44 @@ function activityStreamResponse(body, requestSignal=null) {
             });
           }
 
-          if(shouldVerifyTask(body.message||'',body.files||[])){
-            const generatedBlocks=extractCodeBlocks(generatedText);
-            if(generatedBlocks.length){
-              const postReports=generatedBlocks.slice(0,8).map((b,i)=>staticVerifyText(`Generated code block ${i+1}`,b.code,b.lang));
-              const failed=postReports.filter(r=>r.status==='failed').length;
-              const warnings=postReports.filter(r=>r.status==='warning').length;
-              send('activity',{
-                type:'activity',
-                id:'output-verification',
-                label:failed
-                  ? `Generated code static check found ${failed} issue${failed===1?'':'s'}`
-                  : warnings
-                    ? `Generated code static check completed with ${warnings} warning${warnings===1?'':'s'}`
-                    : `Generated code passed ${postReports.length} basic static check${postReports.length===1?'':'s'}`,
-                state:failed?'warning':'completed',
-                kind:'test',
-                detail:'Static verification only; code was not arbitrarily executed.',
-                at:Date.now()
-              });
-            }
+          // Every normal assistant response gets a real server-side result audit.
+          // This keeps Activity useful for all prompts, not only uploads/repositories.
+          const responseAudit=auditGeneratedResponse(body.message||'',generatedText,body.files||[]);
+          send('activity',{
+            type:'activity',
+            id:'response-audit',
+            label:responseAudit.ok
+              ? `Checked final response against ${responseAudit.checks.length} delivery requirement${responseAudit.checks.length===1?'':'s'}`
+              : `Final response check found ${responseAudit.failed.length} delivery issue${responseAudit.failed.length===1?'':'s'}`,
+            state:responseAudit.ok?'completed':'warning',
+            kind:'test',
+            detail:responseAudit.ok
+              ?'Response structure and requested-output requirements passed the server audit.'
+              :responseAudit.failed.map(x=>x.name).slice(0,4).join(' • '),
+            at:Date.now()
+          });
+
+          // Whenever the model actually generated code, statically inspect it even
+          // if the user did not literally say "test" or "verify". This covers prompts
+          // such as "Gawan mo ako ng HTML snake game" across every selected model.
+          const generatedBlocks=responseAudit.codeBlocks||extractCodeBlocks(generatedText);
+          if(generatedBlocks.length){
+            const postReports=generatedBlocks.slice(0,10).map((b,i)=>staticVerifyText(`Generated code block ${i+1}`,b.code,b.lang));
+            const failed=postReports.filter(r=>r.status==='failed').length;
+            const warnings=postReports.filter(r=>r.status==='warning').length;
+            send('activity',{
+              type:'activity',
+              id:'output-verification',
+              label:failed
+                ? `Generated code static check found ${failed} issue${failed===1?'':'s'}`
+                : warnings
+                  ? `Generated code static check completed with ${warnings} warning${warnings===1?'':'s'}`
+                  : `Generated code passed ${postReports.length} basic static check${postReports.length===1?'':'s'}`,
+              state:failed?'warning':'completed',
+              kind:'test',
+              detail:'Static verification only; code was not arbitrarily executed.',
+              at:Date.now()
+            });
           }
 
           const artifactReq=detectArtifactRequest(body.message||'',body.files||[]);
