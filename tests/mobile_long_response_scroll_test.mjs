@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';
 const h=fs.readFileSync('index.html','utf8');
-const mobile=h.slice(h.indexOf('/* Mobile long-response fix:'),h.indexOf('/* Cloud account + Library v11 */'));
-assert(mobile.includes('max-height:none!important'));
-assert(mobile.includes('overflow-y:visible!important'));
-assert(mobile.includes('touch-action:pan-x pan-y'));
+assert(h.includes('.code-container-wrap pre{max-height:none!important;overflow-x:auto!important;overflow-y:visible!important'));
+assert(!h.includes('max-height:min(62vh,520px)'));
+assert(!h.includes('max-height:54vh'));
 assert(h.includes('.chat-box { padding-bottom:32px!important; scroll-padding-bottom:40px!important; }'));
-assert(h.includes('html.keyboard-open .chat-box { padding-bottom:20px!important; scroll-padding-bottom:28px!important; }'));
 assert(!h.includes('padding-bottom:148px!important'));
 assert(!h.includes('padding-bottom:138px!important'));
-console.log('PASS: mobile long responses use the chat as vertical scroller and no oversized bottom lane remains.');
+assert(h.includes('.msg.bot .bot-actions{position:relative!important;inset:auto!important;transform:none!important}'));
+assert(h.includes('.bot-actions{scroll-margin-bottom:32px}'));
+console.log('PASS: long responses use one vertical chat scroller and actions remain in normal flow.');
