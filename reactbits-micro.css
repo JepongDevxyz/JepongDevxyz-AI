@@ -16,15 +16,21 @@
   --rb-ease-io:cubic-bezier(.77,0,.175,1);
 }
 
-/* ---------- 1. Reference Activity / ThoughtLine ---------- */
+/* ---------- 1. Frame-matched Work Activity ---------- */
+/* Reference calibration: supplied 886x1920 phone recording. The live Work
+   surface is intentionally plain: no card, no spinner header, compact inline
+   status rows, tool icons only where the reference shows them, and commentary
+   in the same reading column. */
 .ai-activity-card{
+  --activity-muted:color-mix(in srgb,var(--rb-ink) 62%,transparent);
+  --activity-muted-soft:color-mix(in srgb,var(--rb-ink) 48%,transparent);
   clear:both;
   position:relative;
   z-index:2;
   display:block;
-  width:min(100%,760px);
+  width:min(calc(100% - 26px),760px);
   height:auto;
-  margin:9px 0 26px;
+  margin:8px 12px 30px 14px;
   padding:0;
   color:var(--rb-ink);
   background:transparent;
@@ -33,298 +39,139 @@
   overflow:visible;
   scroll-margin-block:18px;
 }
-.ai-activity-header-actions{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  width:100%;
-  min-width:0;
-}
-.thought-line{
-  min-width:0;
-  flex:1 1 auto;
-  color:var(--rb-muted);
-  font-size:13px;
-}
+/* The supplied Work reference has no top "Thinking/Thought for" bar while work
+   is active. Keep the DOM only for compatibility/persistence, but never render
+   it on the reference surface. */
+.ai-activity-card.reference-work-flow .ai-activity-header-actions{display:none!important}
+.ai-activity-header-actions{align-items:center;gap:6px;width:100%;min-width:0}
+.thought-line{min-width:0;flex:1 1 auto;color:var(--activity-muted);font-size:13px}
 .thought-line__head{
-  min-width:0;
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  margin:0;
-  padding:4px 0 6px;
-  border:0;
-  background:transparent;
-  color:inherit;
-  font:inherit;
-  text-align:left;
-  cursor:pointer;
-  outline:none;
+  min-width:0;display:inline-flex;align-items:center;gap:7px;margin:0;padding:4px 0 6px;
+  border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none
 }
-.thought-line__head:focus-visible{
-  outline:2px solid var(--jd-focus,#8b5cf6);
-  outline-offset:3px;
-  border-radius:8px;
-}
-.thought-cluster{
-  width:18px;
-  height:18px;
-  flex:0 0 18px;
-  display:grid;
-  grid-template-columns:repeat(2,5px);
-  grid-template-rows:repeat(2,5px);
-  place-content:center;
-  gap:2px;
-  color:#22c55e;
-}
-.thought-cluster__dot{
-  width:5px;
-  height:5px;
-  border-radius:50%;
-  background:currentColor;
-  opacity:.32;
-  transform:scale(.78);
-  animation:thought-dot 1.05s ease-in-out infinite;
-}
+.thought-line__head:focus-visible{outline:2px solid var(--jd-focus,#8b5cf6);outline-offset:3px;border-radius:8px}
+.thought-cluster{width:18px;height:18px;flex:0 0 18px;display:grid;grid-template-columns:repeat(2,5px);grid-template-rows:repeat(2,5px);place-content:center;gap:2px;color:#22c55e}
+.thought-cluster__dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.32;transform:scale(.78);animation:thought-dot 1.05s ease-in-out infinite}
 .thought-cluster__dot:nth-child(2){animation-delay:.14s}
 .thought-cluster__dot:nth-child(4){animation-delay:.28s}
 .thought-cluster__dot:nth-child(3){animation-delay:.42s}
-.ai-activity-card.complete .thought-cluster__dot,
-.ai-activity-card.error .thought-cluster__dot{
-  animation:none;
-  opacity:.92;
-  transform:scale(1);
-}
+.ai-activity-card.complete .thought-cluster__dot,.ai-activity-card.error .thought-cluster__dot{animation:none;opacity:.92;transform:scale(1)}
 .ai-activity-card.error .thought-cluster{color:#ef4444}
-@keyframes thought-dot{
-  0%,100%{opacity:.24;transform:scale(.72)}
-  48%{opacity:1;transform:scale(1)}
-}
-.thought-line__label{
-  position:relative;
-  display:inline-flex;
-  align-items:center;
-  min-width:0;
-  max-width:min(66vw,560px);
-  font-weight:500;
-}
-.thought-line__text{
-  min-width:0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.thought-line__timer{
-  flex:0 0 auto;
-  margin-left:-2px;
-  color:var(--rb-muted);
-  font-size:1em;
-  font-variant-numeric:tabular-nums;
-  white-space:nowrap;
-}
-.thought-line__chevron{
-  display:grid;
-  place-items:center;
-  margin-left:0;
-  transition:transform .18s var(--rb-ease-out);
-}
+@keyframes thought-dot{0%,100%{opacity:.24;transform:scale(.72)}48%{opacity:1;transform:scale(1)}}
+.thought-line__label{position:relative;display:inline-flex;align-items:center;min-width:0;max-width:min(66vw,560px);font-weight:500}
+.thought-line__text{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thought-line__timer{flex:0 0 auto;margin-left:-2px;color:var(--activity-muted);font-size:1em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.thought-line__chevron{display:grid;place-items:center;margin-left:0;transition:transform .18s var(--rb-ease-out)}
 .thought-line__chevron svg{width:13px;height:13px;stroke-width:1.8}
 .ai-activity-card:not(.collapsed) .thought-line__chevron{transform:rotate(90deg)}
-.thought-line__trace{
-  display:block;
-  overflow:hidden;
-  padding-top:1px;
-}
+.thought-line__trace{display:block;overflow:visible;padding:0}
 .ai-activity-card.collapsed .thought-line__trace{display:none}
+
+/* Plain lead line — same visual role as "Built the file" in the reference. */
 .ai-activity-lead{
-  margin:2px 0 8px 25px;
+  margin:0 0 9px;
   max-width:68ch;
-  color:var(--rb-ink);
-  font-size:.88rem;
-  line-height:1.52;
+  color:var(--activity-muted);
+  font-size:14px;
+  line-height:1.45;
+  font-weight:400;
+  letter-spacing:-.005em;
   white-space:pre-wrap;
-  overflow-wrap:anywhere;
+  overflow-wrap:anywhere
 }
 .ai-activity-lead:empty{display:none}
-.ai-activity-list{
-  display:flex;
-  flex-direction:column;
-  gap:0;
-  width:100%;
-  overflow:visible;
-}
+.ai-activity-list{display:flex;flex-direction:column;gap:0;width:100%;overflow:visible}
+
+/* Tool rows: 22px icon lane + text. At 886px source width this reproduces the
+   reference's ~38px activity left edge and ~100px tool-label start. */
 .ai-activity-row{
   display:grid!important;
-  grid-template-columns:20px minmax(0,1fr)!important;
+  grid-template-columns:22px minmax(0,1fr)!important;
   align-items:start!important;
-  gap:6px!important;
+  gap:7px!important;
   width:100%!important;
-  min-height:28px!important;
+  min-height:34px!important;
   padding:5px 0!important;
   opacity:1!important;
   visibility:visible!important;
   background:transparent!important;
   border:0!important;
+  box-shadow:none!important
 }
+.ai-activity-row.ai-activity-iconless{grid-template-columns:minmax(0,1fr)!important;gap:0!important}
+.ai-activity-row.ai-activity-iconless .ai-activity-icon{display:none!important}
+.ai-activity-card .ai-activity-row[data-activity-visibility="details"]{display:none!important}
 .ai-activity-icon{
-  width:18px;
-  height:22px;
-  display:grid;
-  place-items:center;
-  color:var(--rb-muted);
-  opacity:.92;
+  width:20px;height:23px;display:grid;place-items:center;color:var(--activity-muted);
+  opacity:.96
 }
-.ai-activity-icon svg{width:14px;height:14px;stroke-width:1.8}
+.ai-activity-icon svg{width:16px;height:16px;stroke-width:1.9}
 .ai-activity-copy{min-width:0}
 .ai-activity-label{
-  font-size:.86rem;
-  line-height:1.48;
+  font-size:15.5px;
+  line-height:1.46;
   font-weight:400;
-  color:var(--rb-muted);
-  overflow-wrap:anywhere;
+  letter-spacing:-.006em;
+  color:var(--activity-muted);
+  overflow-wrap:anywhere
 }
 .ai-activity-detail{
-  margin-top:1px;
-  font-size:.74rem;
+  margin-top:2px;
+  max-width:64ch;
+  font-size:12.5px;
   line-height:1.42;
-  color:var(--rb-muted);
-  opacity:.74;
+  color:var(--activity-muted-soft);
+  opacity:.92
 }
-.ai-activity-row.running.ai-activity-current .ai-activity-label{color:var(--rb-ink)}
-.ai-activity-row.running.ai-activity-current .ai-activity-icon{
-  color:var(--rb-ink);
-  animation:rbActivityPulse 1.05s ease-in-out infinite;
-}
-@keyframes rbActivityPulse{0%,100%{opacity:.45}50%{opacity:1}}
+/* In the source recording the newest line fades in rather than pulsing like a
+   loader. Keep it readable and let the appearance transition carry the motion. */
+.ai-activity-row.ai-activity-enter{animation:jdActivityReferenceIn .18s ease-out both}
+@keyframes jdActivityReferenceIn{from{opacity:.16!important;transform:translateY(2px)}to{opacity:1!important;transform:none}}
+.ai-activity-row.running.ai-activity-current .ai-activity-label{color:var(--activity-muted)}
+.ai-activity-row.running.ai-activity-current .ai-activity-icon{color:var(--activity-muted)}
+.ai-activity-row[data-activity-id="thinking"]{margin-top:2px}
+.ai-activity-row[data-activity-id="thinking"] .ai-activity-label{color:var(--activity-muted-soft)}
+
+/* Model-authored high-level work commentary sits flush with the same reading
+   column, matching the white explanatory paragraphs in the supplied recording. */
 .ai-work-commentary{
   width:100%;
-  padding:7px 0 9px 25px;
+  padding:7px 0 10px;
   color:var(--rb-ink);
   background:transparent;
-  border:0;
+  border:0
 }
 .ai-work-commentary__text{
   max-width:66ch;
-  font-size:.9rem;
-  line-height:1.56;
+  font-size:16px;
+  line-height:1.55;
   font-weight:400;
+  letter-spacing:-.006em;
   color:var(--rb-ink);
-  overflow-wrap:anywhere;
+  overflow-wrap:anywhere
 }
 .ai-work-commentary__text p{margin:0}
-.ai-work-commentary__text p+p{margin-top:5px}
-.ai-work-commentary__text code{
-  font-size:.84em;
-  color:inherit;
-  background:var(--rb-surface);
-  border-radius:5px;
-  padding:1px 4px;
-}
-.ai-activity-card.complete .ai-work-commentary{opacity:.9}
-.ai-activity-kimi-flow .ai-activity-lead{
-  color:var(--rb-muted);
-  font-size:.88rem;
-  margin-bottom:8px;
-}
-.ai-activity-kimi-flow .ai-work-commentary{padding:8px 0 10px 25px}
-.ai-activity-kimi-flow .ai-work-commentary__text{
-  max-width:66ch;
-  font-size:.94rem;
-  line-height:1.58;
-  letter-spacing:-.005em;
-}
-.ai-activity-details-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  min-height:28px;
-  padding:4px 5px;
-  margin-left:auto;
-  border:0;
-  border-radius:8px;
-  background:transparent;
-  color:var(--rb-muted);
-  font-size:.72rem;
-  font-weight:500;
-  cursor:pointer;
-  white-space:nowrap;
-}
-.ai-activity-details-btn:hover{background:var(--rb-surface);color:var(--rb-ink)}
-.ai-activity-details-btn svg{width:13px;height:13px;stroke-width:1.8}
+.ai-work-commentary__text p+p{margin-top:6px}
+.ai-work-commentary__text code{font-size:.86em;color:inherit;background:transparent;border-radius:0;padding:0}
+.ai-activity-card.complete .ai-work-commentary{opacity:1}
+.ai-activity-kimi-flow .ai-activity-lead{color:var(--activity-muted);font-size:14px;margin-bottom:9px}
+.ai-activity-kimi-flow .ai-work-commentary{padding:7px 0 10px}
+.ai-activity-kimi-flow .ai-work-commentary__text{max-width:66ch;font-size:16px;line-height:1.55;letter-spacing:-.006em;color:var(--rb-ink)}
+.ai-activity-details-btn{display:none!important}
 
-/* Thoughts detail sheet mirrors the same auditable activity; it never exposes hidden CoT. */
-.jd-thoughts-overlay{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:2500;
-  background:rgba(0,0,0,.58);
-  align-items:flex-end;
-  justify-content:center;
-}
+/* Retained details sheet: secondary/provider diagnostics are hidden from the
+   frame-matched main surface but remain auditable here when invoked by legacy UI. */
+.jd-thoughts-overlay{display:none;position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.58);align-items:flex-end;justify-content:center}
 .jd-thoughts-overlay.open{display:flex}
-.jd-thoughts-sheet{
-  display:flex;
-  flex-direction:column;
-  width:min(100%,700px);
-  height:min(84dvh,860px);
-  min-height:180px;
-  background:var(--modal-bg);
-  color:var(--rb-ink);
-  border-radius:25px 25px 0 0;
-  border:1px solid var(--jd-edge);
-  border-bottom:0;
-  overflow:hidden;
-  box-shadow:0 -14px 60px rgba(0,0,0,.28);
-}
-.jd-thoughts-grab{
-  flex:0 0 auto;
-  width:35px;
-  height:4px;
-  margin:9px auto 8px;
-  background:var(--rb-muted);
-  opacity:.5;
-  border-radius:999px;
-}
-.jd-thoughts-head{
-  display:grid;
-  grid-template-columns:38px 1fr 38px;
-  align-items:center;
-  padding:0 12px 9px;
-}
+.jd-thoughts-sheet{display:flex;flex-direction:column;width:min(100%,700px);height:min(84dvh,860px);min-height:180px;background:var(--modal-bg);color:var(--rb-ink);border-radius:25px 25px 0 0;border:1px solid var(--jd-edge);border-bottom:0;overflow:hidden;box-shadow:0 -14px 60px rgba(0,0,0,.28)}
+.jd-thoughts-grab{flex:0 0 auto;width:35px;height:4px;margin:9px auto 8px;background:var(--rb-muted);opacity:.5;border-radius:999px}
+.jd-thoughts-head{display:grid;grid-template-columns:38px 1fr 38px;align-items:center;padding:0 12px 9px}
 .jd-thoughts-head strong{text-align:center;font-size:.95rem}
-.jd-thoughts-close{
-  width:36px;
-  height:36px;
-  border:0;
-  border-radius:50%;
-  background:var(--rb-surface);
-  color:var(--rb-ink);
-  display:grid;
-  place-items:center;
-  cursor:pointer;
-}
+.jd-thoughts-close{width:36px;height:36px;border:0;border-radius:50%;background:var(--rb-surface);color:var(--rb-ink);display:grid;place-items:center;cursor:pointer}
 .jd-thoughts-close svg{width:18px;height:18px}
-.jd-thoughts-list{
-  flex:1 1 auto;
-  min-height:0;
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  padding:13px 21px max(24px,env(safe-area-inset-bottom,0px));
-}
-.jd-thoughts-intro{
-  color:var(--rb-ink);
-  font-size:.88rem;
-  line-height:1.55;
-  margin:0 0 13px;
-  overflow-wrap:anywhere;
-}
-.jd-thoughts-empty{
-  color:var(--rb-muted);
-  font-size:.82rem;
-  line-height:1.55;
-  margin:13px 0;
-}
+.jd-thoughts-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:13px 21px max(24px,env(safe-area-inset-bottom,0px))}
+.jd-thoughts-intro{color:var(--rb-ink);font-size:.88rem;line-height:1.55;margin:0 0 13px;overflow-wrap:anywhere}
+.jd-thoughts-empty{color:var(--rb-muted);font-size:.82rem;line-height:1.55;margin:13px 0}
 
 /* ---------- 2. BellToggle ---------- */
 .bell-toggle{
@@ -1067,16 +914,16 @@
 .read-aloud-pill__progress>span{display:block;height:100%;width:0;background:var(--rb-accent);transition:width .2s linear}
 
 @media(max-width:520px){
-  .ai-activity-card{width:100%;margin:6px 0 28px}
-  .thought-line{font-size:12.5px}
-  .thought-line__head{gap:6px}
-  .ai-activity-row{grid-template-columns:19px minmax(0,1fr)!important;gap:5px!important;padding:5px 0!important}
-  .ai-activity-lead{margin-left:24px;font-size:.85rem}
-  .ai-activity-details-btn{font-size:.7rem;padding-inline:4px}
+  .ai-activity-card{width:calc(100% - 26px);margin:7px 12px 30px 14px}
+  .ai-activity-lead{font-size:14px;line-height:1.45}
+  .ai-activity-row{grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important;padding:5px 0!important;min-height:34px!important}
+  .ai-activity-row.ai-activity-iconless{grid-template-columns:minmax(0,1fr)!important}
+  .ai-activity-label{font-size:15.5px;line-height:1.46}
+  .ai-work-commentary__text,.ai-activity-kimi-flow .ai-work-commentary__text{font-size:16px;line-height:1.55}
   .jd-thoughts-sheet{width:100%;height:min(87dvh,850px);border-radius:22px 22px 0 0}
 }
 @media(prefers-reduced-motion:reduce){
-  .thought-cluster__dot{animation:none!important;opacity:.9!important;transform:none!important}
+  .thought-cluster__dot,.ai-activity-row.ai-activity-enter{animation:none!important;opacity:1!important;transform:none!important}
   .bell-toggle,.bell-toggle__face,.bell-toggle__badge,.prompt-bar,.prompt-bar__send,
   .refine-frame__chip,.squish-switch-root>span:last-child::after,.voice-pill,.voice-pill__capsule,
   .voice-pill__time,.voice-pill__wave,.voice-pill__mic,.voice-pill__stop,.read-aloud-pill{transition-duration:1ms!important}
