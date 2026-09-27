@@ -11343,17 +11343,24 @@ ${m.text || ''}
             }
             const messages=branchMessagesThroughIndex(source.messages,messageIndex);
             if(!messages.length)return;
-            const id=`session_${Date.now()}_branch`;
+            const branchCreatedAt=Date.now();
+            const branchSuffix=(globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2,10)).replace(/-/g,'').slice(0,12);
+            const id=`session_${branchCreatedAt}_branch_${branchSuffix}`;
+            const sourceTitle=String(source.title||'Chat').replace(/^Branch ·\s*/i,'').trim()||'Chat';
             chatSessions[id]={
                 id,
-                title:`Branch · ${source.title||'Chat'}`.slice(0,60),
+                title:`Branch · ${sourceTitle}`.slice(0,60),
                 messages,
                 pinned:false,
-                branchFrom:{sessionId:ctx.id,messageIndex,createdAt:Date.now()}
+                branchFrom:{sessionId:ctx.id,messageIndex,createdAt:branchCreatedAt}
             };
+            // Persist the branch before navigation so a refresh cannot lose it.
             saveSessions();
+            localStorage.setItem('jepong_last_session_id',id);
             loadChatSession(id);
-            if(typeof showModernToast==='function')showModernToast('Branch created');
+            renderSidebarHistory();
+            requestAnimationFrame(()=>scrollToBottom(true));
+            if(typeof showModernToast==='function')showModernToast('Branched into a new chat');
         }
 
         let activeReadAloudButton=null;
@@ -12059,7 +12066,7 @@ ${m.text || ''}
             // GUMAMIT NG APPENDCHILD SA HALIP NA INNERHTML += PARA HINDI MASIRA ANG BOT NODES
             const userMsgDiv = document.createElement('div');
             userMsgDiv.className = 'msg user has-bubble';
-            userMsgDiv.setAttribute('data-message-index', String(activeSession?.messages?.length || 0));
+            userMsgDiv.setAttribute('data-message-index', String(Math.max(0,(activeSession?.messages?.length || 1)-1)));
             userMsgDiv.innerHTML = `
                 <div class="user-bubble-body">${renderUserComposerText(message)}${fileHTML}</div>
                 <div class="user-actions">
