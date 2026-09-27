@@ -3883,7 +3883,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/haptics-notifications.css">
     <link rel="stylesheet" href="/interactive-proposals.css">
     <link rel="stylesheet" href="/activity-reference.css">
-    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-activity-artifacts-3">
+    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-frame-reference-4">
     <style id="jdUploadUiCritical">
       #filePreviewContainer.is-visible{
         display:flex!important;
@@ -9157,10 +9157,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     // slot information is implementation detail.
                     safeDetail=safeDetail.replace(/credential\s+\d+\s*\/\s*\d+/gi,'configured API key').slice(0,110);
                 }
-                return {...e,label:safeLabel,detail:safeDetail};
+                return {...e,label:safeLabel,detail:safeDetail,visibility:'details'};
+            }
+            if(id==='thinking'){
+                return {...e,label:'Thinking',kind:'process'};
             }
             if(id==='generation'){
-                return {...e,label:label||'Generating response',kind:'generate'};
+                return {...e,label:label||'Generating response',kind:'generate',visibility:'details'};
             }
 
             // Only real tool/context operations receive ChatGPT-style wording.
@@ -9344,6 +9347,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             list?.querySelectorAll('.ai-activity-row').forEach(row=>{
                 const clone=row.cloneNode(true);
                 clone.removeAttribute('id');
+                clone.removeAttribute('data-activity-visibility');
+                clone.style.removeProperty('display');
                 content.push(clone);
             });
             if(!content.length){
@@ -9395,7 +9400,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             jdResponseFeedbackSent=false;
             const indicator = document.createElement('div');
             indicator.id = 'activeAiIndicator';
-            indicator.className = 'ai-activity-card';
+            indicator.className = 'ai-activity-card reference-work-flow';
             indicator.dataset.startedAt = String(Date.now());
             // Runtime visibility is authoritative: legacy stylesheet layers must never
             // be able to hide or clip the live Activity timeline.
@@ -9515,6 +9520,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
+            const detailsOnly = normalized.visibility==='details' ||
+                kind==='provider' || kind==='route' ||
+                id==='quality-orchestrator' ||
+                /^attachment-media-(?:selected|bridge|cloudflare)$/.test(id);
+            const iconless = id==='thinking' || ['process','build','generate','deploy','api'].includes(String(kind).toLowerCase());
             // A new operation does NOT prove the previous one completed.
             // Only a matching backend completion event may mark it completed.
             if(state==='running'){
@@ -9522,12 +9532,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     if(previous!==row)previous.classList.remove('ai-activity-current');
                 });
             }
-            row.className = `ai-activity-row ${state}`;
-            row.style.setProperty('display','grid','important');
+            row.className = `ai-activity-row ${state}${iconless?' ai-activity-iconless':''}`;
+            row.dataset.activityVisibility=detailsOnly?'details':'primary';
+            row.classList.remove('ai-activity-enter');
+            if(!detailsOnly){
+                void row.offsetWidth;
+                row.classList.add('ai-activity-enter');
+            }
+            row.style.setProperty('display',detailsOnly?'none':'grid','important');
             row.style.setProperty('visibility','visible','important');
             row.style.setProperty('opacity','1','important');
             row.style.setProperty('height','auto','important');
-            row.style.setProperty('min-height','30px','important');
             row.innerHTML = `
                 <div class="ai-activity-icon">${activityIconMarkup(kind,state)}</div>
                 <div class="ai-activity-copy">
@@ -9569,6 +9584,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             requestAnimationFrame(()=>{
                 try{list.scrollTo({top:list.scrollHeight,behavior:'smooth'});}catch(_){list.scrollTop=list.scrollHeight;}
                 refreshLucideIcons(list);
+                if(!detailsOnly && !userIsScrollingUp){
+                    try{scrollToBottom(false);}catch(_){}
+                }
             });
             syncJdThoughts();
             // No card.scrollIntoView here: attachments should remain visible after sending.
@@ -11129,6 +11147,9 @@ ${m.text || ''}
             list.appendChild(row);
             requestAnimationFrame(()=>{
                 try{list.scrollTo({top:list.scrollHeight,behavior:'smooth'});}catch(_){list.scrollTop=list.scrollHeight;}
+                if(!userIsScrollingUp){
+                    try{scrollToBottom(false);}catch(_){}
+                }
             });
         }
 
