@@ -2427,112 +2427,214 @@ function taskSpecificActivityCopy(profile={}, phase='context'){
 
   const specific={
     'web:game':{
-      context:'Mapping gameplay, controls, and browser behavior',
-      prepared:'Game structure and interaction plan prepared',
-      work:'Building game loop, controls, scoring, and UI',
-      audit:'Checked the game output against gameplay and delivery requirements'
+      context:'Planning the requested game',
+      prepared:'Structuring the game mechanics and controls',
+      prepared2:'Setting up the page, game loop, and interaction flow',
+      work:'Building movement, collision, scoring, and UI behavior',
+      audit:'Checking gameplay, controls, restart, and delivery',
+      verify:'Checking the generated game code'
     },
     'web:ui':{
-      context:'Mapping layout, responsive behavior, and interactions',
-      prepared:'UI structure and interaction requirements prepared',
-      work:'Building the requested interface and interactions',
-      audit:'Checked the interface output against requested UI and behavior'
+      context:'Reviewing the requested interface',
+      prepared:'Mapping layout, hierarchy, and responsive behavior',
+      prepared2:'Preparing interaction states and component structure',
+      work:'Building the interface and interactions',
+      audit:'Checking layout, responsiveness, and requested behavior',
+      verify:'Checking the generated interface code'
     },
     'web:tool':{
-      context:'Defining tool inputs, outputs, and interaction flow',
-      prepared:'Tool behavior and implementation plan prepared',
+      context:'Planning the requested web tool',
+      prepared:'Mapping inputs, outputs, and interaction flow',
+      prepared2:'Preparing the component and state structure',
       work:'Implementing the requested tool behavior',
-      audit:'Checked the tool output against requested functions'
+      audit:'Checking the tool flow and requested functions',
+      verify:'Checking the generated tool code'
     },
     'android:android-repair':{
-      context:'Tracing the Android issue across app, manifest, and build configuration',
-      prepared:'Android repair scope and affected components prepared',
-      work:'Preparing the Android fix',
-      audit:'Checked the Android fix against app, build, and delivery requirements'
+      context:'Reviewing the Android issue',
+      prepared:'Tracing affected app, manifest, and build configuration',
+      prepared2:'Preparing the smallest evidence-backed repair',
+      work:'Applying the Android fix',
+      audit:'Checking app, manifest, build, and delivery requirements',
+      verify:'Checking the generated Android code'
     },
     'android:android-build':{
-      context:'Mapping Android app structure, screens, and build requirements',
-      prepared:'Android implementation plan prepared',
+      context:'Planning the Android implementation',
+      prepared:'Mapping screens, app structure, and build requirements',
+      prepared2:'Preparing manifest, resources, and source structure',
       work:'Building the Android implementation',
-      audit:'Checked the Android output against app, build, and delivery requirements'
+      audit:'Checking app structure and delivery requirements',
+      verify:'Checking the generated Android code'
     },
     'backend:api':{
-      context:'Mapping API inputs, outputs, and failure paths',
-      prepared:'API behavior and validation plan prepared',
+      context:'Reviewing the API task',
+      prepared:'Mapping inputs, outputs, validation, and failure paths',
+      prepared2:'Preparing endpoint and data-flow structure',
       work:'Implementing the requested API behavior',
-      audit:'Checked the API output against requested behavior and edge cases'
+      audit:'Checking API behavior, validation, and edge cases',
+      verify:'Checking the generated backend code'
     },
     'backend:webhook':{
-      context:'Mapping webhook events, payloads, and failure paths',
-      prepared:'Webhook behavior and validation plan prepared',
+      context:'Reviewing the webhook task',
+      prepared:'Mapping events, payloads, retries, and failure paths',
+      prepared2:'Preparing webhook validation and response flow',
       work:'Implementing the requested webhook behavior',
-      audit:'Checked the webhook output against requested behavior and edge cases'
+      audit:'Checking webhook behavior and error handling',
+      verify:'Checking the generated webhook code'
     },
     'backend:database':{
-      context:'Mapping data flow, schema constraints, and query behavior',
-      prepared:'Database behavior and validation plan prepared',
+      context:'Reviewing the database task',
+      prepared:'Mapping schema, constraints, and query behavior',
+      prepared2:'Preparing data-flow and validation changes',
       work:'Working through the requested database changes',
-      audit:'Checked the database response against requested behavior and constraints'
+      audit:'Checking data behavior and constraints',
+      verify:'Checking the generated database code'
     },
     'writing:translation':{
-      context:'Identifying meaning, tone, and target-language requirements',
-      prepared:'Translation style and terminology prepared',
+      context:'Reviewing the translation request',
+      prepared:'Identifying meaning, tone, and target-language requirements',
+      prepared2:'Preparing terminology and phrasing choices',
       work:'Translating while preserving meaning and tone',
-      audit:'Checked the translation for meaning, tone, and consistency'
+      audit:'Checking meaning, tone, and consistency'
     },
     'writing:summary':{
-      context:'Identifying the key points and requested summary depth',
-      prepared:'Summary scope and structure prepared',
-      work:'Condensing the content to the requested depth',
-      audit:'Checked the summary for coverage, clarity, and requested length'
+      context:'Reviewing the summary request',
+      prepared:'Identifying the key points and requested depth',
+      prepared2:'Organizing the information into a concise structure',
+      work:'Condensing the content',
+      audit:'Checking coverage, clarity, and requested length'
     },
     'writing:message':{
-      context:'Shaping the message purpose, tone, and audience',
-      prepared:'Message structure and tone prepared',
+      context:'Reviewing the message request',
+      prepared:'Identifying purpose, audience, and tone',
+      prepared2:'Preparing the message structure',
       work:'Drafting the requested message',
-      audit:'Checked the message for clarity, tone, and requested format'
+      audit:'Checking clarity, tone, and requested format'
     },
     'study:math':{
-      context:'Identifying the givens, target, and solution method',
-      prepared:'Solution method prepared',
-      work:'Working through the calculation and checking the result',
-      audit:'Checked the solution against the question and result'
+      context:'Reviewing the problem',
+      prepared:'Identifying the givens, target, and method',
+      prepared2:'Setting up the calculation',
+      work:'Working through the solution',
+      audit:'Checking the result against the question'
     },
     'decision:compare':{
-      context:'Identifying the comparison criteria that matter',
-      prepared:'Comparison criteria and tradeoffs prepared',
+      context:'Reviewing the comparison',
+      prepared:'Identifying the criteria that matter',
+      prepared2:'Organizing the tradeoffs consistently',
       work:'Comparing the options against the same criteria',
-      audit:'Checked the comparison for consistent criteria and tradeoffs'
+      audit:'Checking the comparison and tradeoffs'
     },
     'troubleshooting:diagnose':{
-      context:'Tracing the reported symptom and likely failure boundary',
-      prepared:'Diagnostic path and likely causes prepared',
-      work:'Narrowing the root cause and preparing the fix',
-      audit:'Checked the troubleshooting answer against the reported symptom'
+      context:'Reviewing the reported problem',
+      prepared:'Tracing the symptom and likely failure boundary',
+      prepared2:'Narrowing the root cause and safest fix',
+      work:'Preparing the fix',
+      audit:'Checking the fix against the reported symptom'
     }
   };
 
   const generic={
-    web:{context:intent.edit?'Reviewing the requested website changes':'Mapping the requested website structure',prepared:intent.create?'Website structure and behavior plan prepared':'Website change requirements prepared',work:intent.edit?'Applying the requested website changes':'Building the requested website',audit:'Checked the website output against requested structure and behavior'},
-    research:{context:subtype==='current'?'Identifying the current facts that need verification':'Defining the research question and evidence needed',prepared:'Research scope and evidence requirements prepared',work:'Synthesizing the relevant evidence',audit:'Checked the research response for relevance and evidence alignment'},
-    document:{context:subtype==='document-summary'?'Identifying the key sections to summarize':'Reviewing the document structure and requested focus',prepared:'Document review scope prepared',work:subtype==='document-summary'?'Condensing the document into the requested summary':'Working from the document evidence',audit:'Checked the document response against the requested scope'},
-    image:{context:subtype==='image-review'?'Reviewing visible details in the uploaded image':'Clarifying the requested image task',prepared:'Image task focus prepared',work:'Analyzing the relevant visual details',audit:'Checked the image response against visible evidence and the request'},
-    video:{context:subtype==='video-review'?'Reviewing sampled video evidence and timing':'Clarifying the requested video task',prepared:'Video analysis scope prepared',work:'Analyzing the relevant video evidence',audit:'Checked the video response against available media evidence'},
-    writing:{context:'Clarifying the writing goal, tone, and structure',prepared:'Writing structure and style prepared',work:'Drafting and polishing the requested writing',audit:'Checked the writing for clarity, tone, and requested format'},
-    study:{context:'Identifying the concept and learning goal',prepared:'Explanation structure prepared',work:'Building the explanation step by step',audit:'Checked the explanation against the question'},
-    decision:{context:'Identifying the decision constraints and priorities',prepared:'Decision criteria and tradeoffs prepared',work:'Weighing the options against the user constraints',audit:'Checked the recommendation against the stated constraints'},
-    github:{context:'Mapping repository scope and requested GitHub work',prepared:'Repository task plan prepared',work:'Working through the repository task',audit:'Checked the repository response against requested GitHub work'},
-    deployment:{context:'Reviewing deployment target, configuration, and failure conditions',prepared:'Deployment checks and required changes prepared',work:'Working through the deployment task',audit:'Checked the deployment response against requested outcome'},
-    general:{context:'Understanding the requested outcome',prepared:'Request requirements prepared',work:'Working through the request',audit:'Checked the final response for relevance and completeness'}
+    web:{
+      context:intent.edit?'Reviewing the requested website changes':'Planning the requested website',
+      prepared:'Mapping structure, behavior, and responsive requirements',
+      prepared2:'Preparing the implementation flow',
+      work:intent.edit?'Applying the requested website changes':'Building the requested website',
+      audit:'Checking structure, behavior, and requested features',
+      verify:'Checking the generated web code'
+    },
+    research:{
+      context:subtype==='current'?'Reviewing what needs current verification':'Reviewing the research question',
+      prepared:'Identifying the evidence needed',
+      prepared2:'Organizing the relevant source context',
+      work:'Synthesizing the relevant evidence',
+      audit:'Checking relevance and evidence alignment'
+    },
+    document:{
+      context:'Reviewing the document task',
+      prepared:subtype==='document-summary'?'Identifying the sections and key points to summarize':'Identifying the requested document focus',
+      prepared2:'Organizing the document evidence',
+      work:subtype==='document-summary'?'Condensing the document':'Working from the document evidence',
+      audit:'Checking the response against the requested document scope'
+    },
+    image:{
+      context:'Reviewing the image task',
+      prepared:'Identifying the visual details relevant to the request',
+      prepared2:'Organizing the visible evidence',
+      work:'Analyzing the relevant visual details',
+      audit:'Checking the response against visible evidence'
+    },
+    video:{
+      context:'Reviewing the video task',
+      prepared:'Identifying the relevant frames and timing',
+      prepared2:'Organizing the available media evidence',
+      work:'Analyzing the relevant video evidence',
+      audit:'Checking the response against available media evidence'
+    },
+    writing:{
+      context:'Reviewing the writing request',
+      prepared:'Identifying tone, audience, and structure',
+      prepared2:'Preparing the response outline',
+      work:'Drafting and polishing the writing',
+      audit:'Checking clarity, tone, and format'
+    },
+    study:{
+      context:'Reviewing the learning task',
+      prepared:'Identifying the concept and target',
+      prepared2:'Preparing the explanation path',
+      work:'Building the explanation step by step',
+      audit:'Checking the explanation against the question'
+    },
+    decision:{
+      context:'Reviewing the decision',
+      prepared:'Identifying constraints and priorities',
+      prepared2:'Organizing the tradeoffs',
+      work:'Weighing the options',
+      audit:'Checking the recommendation against the stated constraints'
+    },
+    github:{
+      context:'Reviewing the repository task',
+      prepared:'Mapping repository scope and requested changes',
+      prepared2:'Preparing the repository workflow',
+      work:'Working through the repository task',
+      audit:'Checking the result against the requested GitHub work'
+    },
+    deployment:{
+      context:'Reviewing the deployment task',
+      prepared:'Checking target, configuration, and failure conditions',
+      prepared2:'Preparing deployment steps and verification',
+      work:'Working through the deployment task',
+      audit:'Checking the deployment result against the requested outcome'
+    },
+    general:{
+      context:'Reviewing the request',
+      prepared:'Identifying the requested outcome and constraints',
+      prepared2:'Preparing the response approach',
+      work:'Working through the request',
+      audit:'Checking the final response for relevance and completeness'
+    }
   };
 
   const set=specific[key]||generic[kind]||generic.general;
   const base=set[phase]||set.work||'Working through the request';
   const activityKind=kind==='backend'?'api':kind==='deployment'?'deploy':kind==='research'?'research':
     kind==='image'?'image':kind==='video'||kind==='document'?'file':kind==='web'||kind==='android'?'build':
-    phase==='audit'?'test':'process';
-  return {label:phase==='audit'?base:(base+': '+subject),kind:activityKind};
+    phase==='audit'||phase==='verify'?'test':'process';
+
+  // Only the lead/context row repeats the task subject. The reference timeline
+  // uses short changing milestones below it rather than restating the whole prompt.
+  return {label:phase==='context'?(base+': '+subject):base,kind:activityKind};
 }
+
+function taskPreparationStages(profile={}){
+  const first=taskSpecificActivityCopy(profile,'prepared');
+  const second=taskSpecificActivityCopy(profile,'prepared2');
+  return [
+    {id:'task-prepared',label:first.label,kind:first.kind},
+    {id:'task-approach',label:second.label,kind:second.kind}
+  ].filter(step=>step.label);
+}
+
 
 function contextActivityPlan(message='', files=[]){
   const profile=taskProfile(message,files);
@@ -2625,9 +2727,6 @@ function emitContextActivityStart(message='', files=[], emit){
 function completeContextPlan(plan, emit){
   const first=plan?.steps?.[0];
   if(first)activity(emit,first.id,first.label,'completed',first.kind,'');
-  const profile=plan?.profile||{};
-  const prepared=taskSpecificActivityCopy(profile,'prepared');
-  activity(emit,'task-prepared',prepared.label,'completed',prepared.kind,'');
 }
 
 function taskWorkingActivity(plan={}){
@@ -2658,16 +2757,13 @@ function taskAuditActivity(message='',files=[],audit={}){
 
 function taskCodeVerificationLabel(message='',files=[],failed=0,warnings=0,count=0){
   const profile=taskProfile(message,files);
-  let noun='generated code';
-  if(profile.kind==='web'&&profile.subtype==='game')noun='generated game code';
-  else if(profile.kind==='web')noun='generated web code';
-  else if(profile.kind==='android')noun='generated Android code';
-  else if(profile.kind==='backend')noun='generated backend code';
-  const title=noun.charAt(0).toUpperCase()+noun.slice(1);
-  if(failed)return title+' static check found '+failed+' issue'+(failed===1?'':'s');
-  if(warnings)return title+' static check completed with '+warnings+' warning'+(warnings===1?'':'s');
-  return title+' passed '+count+' basic static check'+(count===1?'':'s');
+  const copy=taskSpecificActivityCopy(profile,'verify');
+  const noun=copy.label||'Checking the generated code';
+  if(failed)return noun+' — '+failed+' issue'+(failed===1?'':'s')+' found';
+  if(warnings)return noun+' — '+warnings+' warning'+(warnings===1?'':'s');
+  return noun+' — '+count+' static check'+(count===1?'':'s')+' passed';
 }
+
 
 function linkLabel(raw=''){
   try{
@@ -4609,6 +4705,8 @@ async function processChat(body, emit) {
   const requestCustomKeys=sanitizeCustomProviderKeys(body,provider);
   const taskMessage=contextualTaskMessage(message,history);
   const contextPlan=emitContextActivityStart(taskMessage,files,emit);
+  const taskAnalysis=taskSpecificActivityCopy(contextPlan.profile||{},'prepared');
+  activity(emit,'task-analysis',taskAnalysis.label,'running',taskAnalysis.kind,'');
 
   // Source-specific milestones are emitted after the corresponding input has
   // really been read or added to model context (never on a fixed timer).
@@ -4769,6 +4867,9 @@ async function processChat(body, emit) {
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
   const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
+  activity(emit,'task-analysis',taskAnalysis.label,'completed',taskAnalysis.kind,'');
+  const taskApproach=taskSpecificActivityCopy(contextPlan.profile||{},'prepared2');
+  activity(emit,'task-approach',taskApproach.label,'running',taskApproach.kind,'');
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
   // Installed skill plugins are explicit, bounded behavior profiles. They do not
@@ -4852,7 +4953,7 @@ async function processChat(body, emit) {
     shouldUseQualityOrchestrator(message,files,mode);
 
   if(useQualityOrchestrator){
-    activity(emit,'quality-orchestrator',projectChangeIntent?'Cross-checking project requirements and inspected evidence':`Running ${responseEffort} effort quality preflight`,'running','process');
+    activity(emit,'quality-orchestrator',projectChangeIntent?'Cross-checking project requirements and inspected evidence':'Cross-checking requirements, constraints, and edge cases','running','process');
     try{
       const briefPrompt=buildInternalTaskBriefPrompt(message,files);
       const briefSystem=systemInstruction +
@@ -4882,7 +4983,7 @@ async function processChat(body, emit) {
         if(parsedBrief.brief){
           systemInstruction += `\n\n[INTERNAL QUALITY BRIEF — not user-visible]\n${parsedBrief.brief}\n[/INTERNAL QUALITY BRIEF]` +
             '\nUse this brief as a quality checklist, but independently verify it against the actual user request and tool context. If the brief conflicts with the user, the user request wins.';
-          activity(emit,'quality-orchestrator','Intent, constraints, and answer requirements checked','completed','process');
+          activity(emit,'quality-orchestrator','Requirements, constraints, and edge cases checked','completed','process');
         }else{
           activity(emit,'quality-orchestrator','Quality preflight returned no usable brief — continuing normally','warning','process');
         }
@@ -4894,6 +4995,7 @@ async function processChat(body, emit) {
     }
   }
 
+  activity(emit,'task-approach',taskApproach.label,'completed',taskApproach.kind,'');
   completeContextPlan(contextPlan,emit);
   // Keep the running status tied to the user's real task instead of a fixed
   // "Thinking" label. Provider/tool rows remain evidence-backed and separate.
