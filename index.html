@@ -682,6 +682,17 @@
         .bot-action-btn:hover { background: rgba(255,255,255,.06); color: var(--text-main); }
         .bot-action-btn.active-action { color: #8b5cf6; background: rgba(139, 92, 246, 0.15); }
         .bot-action-btn i, .bot-action-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .bot-actions{position:relative}
+        .bot-action-btn{min-width:34px;min-height:34px;justify-content:center}
+        .bot-action-btn span{display:none}
+        .jd-message-more{position:absolute;left:0;top:calc(100% + 8px);z-index:140;width:min(280px,calc(100vw - 44px));padding:8px;border:1px solid var(--border-color);border-radius:18px;background:var(--modal-bg);box-shadow:0 16px 45px rgba(0,0,0,.32);display:none}
+        .jd-message-more.open{display:block}
+        .jd-message-menu-row{width:100%;border:0;background:transparent;color:var(--text-main);display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;text-align:left;font:inherit;cursor:pointer}
+        .jd-message-menu-row:hover,.jd-message-menu-row:active{background:rgba(148,163,184,.10)}
+        .jd-message-menu-row svg{width:18px;height:18px}.jd-message-menu-sep{height:1px;background:var(--border-color);margin:5px 4px}
+        .jd-reconnect-card{position:fixed;z-index:12000;left:50%;top:50%;transform:translate(-50%,-50%);width:min(650px,calc(100vw - 32px));border:1px solid var(--border-color);border-radius:24px;background:var(--modal-bg);box-shadow:0 20px 60px rgba(0,0,0,.38);padding:18px 24px;display:none;align-items:center;gap:18px;font-size:1.08rem}
+        .jd-reconnect-card.open{display:flex}.jd-reconnect-card svg{width:30px;height:30px;flex:0 0 30px}.jd-reconnect-spinner{margin-left:auto;width:42px;height:42px;border:5px solid rgba(148,163,184,.28);border-top-color:var(--text-main);border-radius:50%;animation:jdReconnectSpin .8s linear infinite}
+        @keyframes jdReconnectSpin{to{transform:rotate(360deg)}}
         .bot-disclaimer { font-size: .66rem; color: var(--text-muted); opacity: .68; margin: 4px 2px 0; }
 
         .input-container { 
@@ -9289,6 +9300,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return text.length>180 ? text.slice(0,177)+'…' : text;
         }
 
+        function setReconnectVisible(show){
+            const card=document.getElementById('jdReconnectCard');if(!card)return;
+            card.classList.toggle('open',!!show);if(show)refreshLucideIcons(card);
+        }
+
         function syncComposerPlaceholder(){
             const box=document.getElementById('userInput');
             if(!box) return;
@@ -10923,7 +10939,8 @@ ${m.text || ''}
             if (/^(javascript|js)$/i.test(language)) {
                 const scriptCode = source.replace(new RegExp('</'+'script', 'gi'), '<\\/script');
                 const closeScript = '</' + 'script>';
-                return `<!DOCTYPE html><html><head>${head}<style>body{font-family:system-ui,sans-serif;padding:16px;color:#111;background:#fff}#out{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><pre id="out"></pre><script>const out=document.getElementById('out');const write=(...a)=>{out.textContent+=a.map(v=>typeof v==='string'?v:JSON.stringify(v,null,2)).join(' ')+'\\n'};console.log=write;console.warn=write;console.error=write;window.onerror=(m)=>write('Error:',m);try{${scriptCode}}catch(e){write('Error:',e?.stack||e?.message||String(e))}${closeScript}</body></html>`;
+                return `<!DOCTYPE html><html><head>${head}<style>body{font-family:system-ui,sans-serif;padding:16px;color:#111;background:#fff}#out{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><pre id="out"></pre><script>const out=document.getElementById('out');const write=(...a)=>{out.textContent+=a.map(v=>typeof v==='string'?v:JSON.stringify(v,null,2)).join(' ')+'\\n'};console.log=write;console.warn=write;console.error=write;window.onerror=(m)=>write('Error:',m);try{${scriptCode}}catch(e){write('Error:',e?.stack||e?.message||String(e))}${closeScript}    <div class="jd-reconnect-card" id="jdReconnectCard" role="status" aria-live="assertive"><i data-lucide="globe-2"></i><span><strong>Network connection lost.</strong><br>Attempting to reconnect…</span><span class="jd-reconnect-spinner" aria-hidden="true"></span></div>
+</body></html>`;
             }
             if (/^css$/i.test(language)) {
                 const safeCss = source.replace(new RegExp('</'+'style', 'gi'), '<\\/style');
@@ -11282,17 +11299,48 @@ ${m.text || ''}
         function botActionsHTML({ vote = true, continueBtn = true, branch = true, readAloud = true, disclaimer = true } = {}) {
             return `
                 <div class="bot-actions">
-                    ${vote ? `
-                    <button class="bot-action-btn" onclick="voteMessage(this, 'like')" title="Helpful"><i data-lucide="thumbs-up"></i></button>
-                    <button class="bot-action-btn" onclick="voteMessage(this, 'dislike')" title="Not helpful"><i data-lucide="thumbs-down"></i></button>
-                    <button class="bot-action-btn" onclick="regenerateAnswer(this)" title="Regenerate"><i data-lucide="refresh-cw"></i></button>` : ''}
-                    ${continueBtn ? `<button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue from where it stopped"><i data-lucide="chevrons-right"></i></button>` : ''}
-                    ${branch ? `<button class="bot-action-btn" onclick="branchConversation(this)" title="Branch conversation"><i data-lucide="git-branch"></i></button>` : ''}
-                    ${readAloud ? assistantReadAloudButtonHTML() : ''}
                     <button class="bot-action-btn" onclick="copyText(this)" title="Copy"><i data-lucide="copy"></i></button>
+                    ${vote ? `<button class="bot-action-btn" onclick="voteMessage(this, 'like')" title="Helpful"><i data-lucide="thumbs-up"></i></button>
+                    <button class="bot-action-btn" onclick="voteMessage(this, 'dislike')" title="Not helpful"><i data-lucide="thumbs-down"></i></button>` : ''}
+                    ${readAloud ? assistantReadAloudButtonHTML() : ''}
+                    <button class="bot-action-btn" onclick="shareAssistantMessage(this)" title="Share"><i data-lucide="share-2"></i></button>
+                    <button class="bot-action-btn" onclick="toggleMessageMore(this,event)" title="More"><i data-lucide="more-vertical"></i></button>
+                    <div class="jd-message-more" role="menu">
+                        ${branch ? `<button class="jd-message-menu-row" onclick="branchConversation(this);closeMessageMoreMenus()"><i data-lucide="git-branch"></i>Branch in new chat</button>` : ''}
+                        <div class="jd-message-menu-sep"></div>
+                        <button class="jd-message-menu-row" disabled><i data-lucide="cpu"></i>Used ${escapeHTML(providerLabel(currentSelectedProvider))} · ${escapeHTML(currentSelectedModel||'Auto')}</button>
+                        <button class="jd-message-menu-row" onclick="regenerateAnswer(this);closeMessageMoreMenus()"><i data-lucide="refresh-cw"></i>Retry</button>
+                        <button class="jd-message-menu-row" onclick="useThinkingForMessage(this)"><i data-lucide="lightbulb"></i>Use Thinking</button>
+                        <button class="jd-message-menu-row" onclick="searchWebForMessage(this)"><i data-lucide="globe-2"></i>Search the web</button>
+                    </div>
+                    ${continueBtn ? `<button class="bot-action-btn" onclick="continueGenerating(this)" title="Continue" style="display:none"><i data-lucide="chevrons-right"></i></button>` : ''}
                 </div>
                 ${disclaimer ? `<div class="bot-disclaimer">JepongDevxyz AI can make mistakes. Check important info.</div>` : ''}
             `;
+        }
+
+        function closeMessageMoreMenus(){document.querySelectorAll('.jd-message-more.open').forEach(x=>x.classList.remove('open'));}
+        function toggleMessageMore(btn,event){
+            event?.stopPropagation?.();const menu=btn?.parentElement?.querySelector('.jd-message-more');if(!menu)return;
+            const open=!menu.classList.contains('open');closeMessageMoreMenus();if(open)menu.classList.add('open');refreshLucideIcons(menu);
+        }
+        document.addEventListener('click',e=>{if(!e.target?.closest?.('.bot-actions'))closeMessageMoreMenus();});
+        function assistantMessagePlainText(btn){
+            const msg=btn?.closest?.('.msg.bot');const content=msg?.querySelector(':scope > div:not(.bot-actions):not(.jd-ai-interaction)');
+            return String(content?.innerText||content?.textContent||'').trim();
+        }
+        async function shareAssistantMessage(btn){
+            const text=assistantMessagePlainText(btn);if(!text)return;
+            try{
+                if(navigator.share){await navigator.share({title:'JepongDevxyz AI',text});return;}
+                await navigator.clipboard.writeText(text);showModernToast('Response copied — share it from any app.');
+            }catch(err){if(err?.name!=='AbortError')showModernToast('Could not open sharing.');}
+        }
+        function useThinkingForMessage(btn){
+            setResponseEffort('High',{toast:true});closeMessageMoreMenus();regenerateAnswer(btn);
+        }
+        function searchWebForMessage(btn){
+            setLiveWebSearchEnabled(true);closeMessageMoreMenus();regenerateAnswer(btn);
         }
 
         function assistantReadAloudButtonHTML(){
@@ -11758,6 +11806,8 @@ ${m.text || ''}
                     }
                     botMsgElem.style.removeProperty('display');
                 }else{
+                    const networkFailure=!navigator.onLine || /failed to fetch|network|connection|internet|load failed/i.test(String(err?.message||''));
+                    if(networkFailure)setReconnectVisible(true);
                     const cleanError=sanitizeUiErrorMessage(err?.message || 'Request failed');
                     appendActivityEvent({ id:'client-catch', label:cleanError, state:'error', kind:'provider' });
                     finishAIIndicator(false);
@@ -13619,8 +13669,9 @@ ${m.text || ''}
 
             measureNetworkPing();
             setInterval(measureNetworkPing, 8000);
-            window.addEventListener('online', measureNetworkPing);
-            window.addEventListener('offline', measureNetworkPing);
+            window.addEventListener('online', ()=>{measureNetworkPing();setReconnectVisible(false);});
+            window.addEventListener('offline', ()=>{measureNetworkPing();setReconnectVisible(true);});
+            if(!navigator.onLine)setReconnectVisible(true);
 
             if (currentSessionId && chatSessions[currentSessionId]) {
                 loadChatSession(currentSessionId);
