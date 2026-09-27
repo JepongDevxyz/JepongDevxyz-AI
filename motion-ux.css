@@ -1,0 +1,241 @@
+/* JepongDevxyz AI — three reference motion/UX behaviors
+   1) pull-to-refresh physics, 2) exact scroll restoration, 3) honest upload queue */
+
+.chat-viewport-wrapper{position:relative}
+
+/* Pull-to-refresh: stretch -> threshold -> spinner handoff -> settle. */
+.jd-pull-refresh{
+  --jd-pull:0px;
+  --jd-pull-progress:0;
+  position:absolute;
+  top:6px;
+  left:50%;
+  z-index:25;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:34px;
+  max-width:calc(100% - 28px);
+  padding:6px 10px;
+  border:1px solid color-mix(in srgb,var(--text-main) 9%,transparent);
+  border-radius:999px;
+  background:color-mix(in srgb,var(--modal-bg) 88%,transparent);
+  color:var(--text-muted);
+  box-shadow:0 8px 26px rgba(0,0,0,.18);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  opacity:0;
+  pointer-events:none;
+  transform:translate(-50%,calc(-44px + min(var(--jd-pull),52px))) scale(.96);
+  transition:opacity .14s ease,transform .14s cubic-bezier(.22,1,.36,1);
+  white-space:nowrap;
+}
+.jd-pull-refresh.visible{opacity:1;transform:translate(-50%,calc(-44px + min(var(--jd-pull),52px))) scale(1)}
+.jd-pull-refresh__label{font-size:.68rem;font-weight:600;letter-spacing:.01em}
+.jd-pull-refresh__ring{
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  border-radius:50%;
+  border:2px solid color-mix(in srgb,var(--text-muted) 35%,transparent);
+  transform:scaleX(calc(.72 + var(--jd-pull-progress)*.28)) scaleY(calc(1.18 - var(--jd-pull-progress)*.18));
+  transition:border-color .12s ease,transform .12s ease;
+}
+.jd-pull-refresh__ring i{
+  display:block;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:calc(.25 + var(--jd-pull-progress)*.75);
+}
+.jd-pull-refresh.armed{color:#2dd4bf;border-color:rgba(45,212,191,.28)}
+.jd-pull-refresh.armed .jd-pull-refresh__ring{border-color:currentColor;transform:scale(1)}
+.jd-pull-refresh.loading .jd-pull-refresh__ring{
+  border-color:rgba(45,212,191,.25);
+  border-top-color:#2dd4bf;
+  transform:scale(1);
+  animation:jdPullSpin .72s linear infinite;
+}
+.jd-pull-refresh.loading .jd-pull-refresh__ring i{display:none}
+.jd-pull-refresh.done{color:#34d399}
+.jd-pull-refresh.done .jd-pull-refresh__ring{border-color:currentColor}
+.jd-pull-refresh.done .jd-pull-refresh__ring::after{content:"✓";font-size:11px;font-weight:800}
+.jd-pull-refresh.done .jd-pull-refresh__ring i{display:none}
+.jd-pull-refresh.failed{color:#f87171}
+@keyframes jdPullSpin{to{transform:rotate(360deg)}}
+
+.chat-box.jd-pull-shift{
+  transform:translate3d(0,var(--jd-pull-y,0px),0);
+  will-change:transform;
+}
+.chat-box.jd-pull-settle{
+  transition:transform .38s cubic-bezier(.18,.89,.32,1.22);
+}
+
+/* Scroll is state: restored entries and jump targets land below fixed chrome. */
+.chat-box .msg,
+.chat-box .ai-activity-card,
+.chat-box mark.chat-highlight,
+.chat-box [data-jd-scroll-anchor]{
+  scroll-margin-top:72px;
+}
+
+/* Honest upload queue. Existing renderer remains the source of truth; this layer
+   adds visible progress/speed/ETA and independent per-file lanes. */
+#filePreviewContainer.is-visible{
+  width:100%!important;
+  align-items:stretch!important;
+  flex-direction:column!important;
+  gap:6px!important;
+}
+#filePreviewContainer .jd-upload-queue-summary{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 2px;
+  color:var(--text-muted);
+  font-size:10px;
+  line-height:1.2;
+}
+#filePreviewContainer .jd-upload-chip.jd-upload-card{
+  width:100%!important;
+  max-width:none!important;
+  height:auto!important;
+  min-height:48px!important;
+  display:grid!important;
+  grid-template-columns:20px minmax(0,1fr) auto auto!important;
+  align-items:center!important;
+  gap:8px!important;
+  padding:7px 6px 7px 9px!important;
+  border:1px solid color-mix(in srgb,var(--text-main) 9%,transparent)!important;
+  border-radius:10px!important;
+  background:color-mix(in srgb,var(--modal-bg) 83%,transparent)!important;
+  color:var(--text-main)!important;
+  overflow:hidden!important;
+}
+body.theme-light #filePreviewContainer .jd-upload-chip.jd-upload-card{
+  background:rgba(15,23,42,.045)!important;
+}
+#filePreviewContainer .jd-upload-card__body{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+#filePreviewContainer .jd-upload-card .jd-upload-chip__name{
+  display:block!important;
+  max-width:none!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  text-overflow:ellipsis!important;
+  color:var(--text-main)!important;
+  font-size:11px!important;
+  font-weight:650!important;
+  line-height:1.15!important;
+}
+#filePreviewContainer .jd-upload-card__meta{
+  display:block;
+  min-height:10px;
+  overflow:hidden;
+  color:var(--text-muted);
+  font-size:9px;
+  line-height:1.1;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+#filePreviewContainer .jd-upload-card__progress{
+  position:relative;
+  display:block;
+  width:100%;
+  height:3px;
+  overflow:hidden;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--text-main) 10%,transparent);
+}
+#filePreviewContainer .jd-upload-card__progress i{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:#2dd4bf;
+  transition:width .12s linear;
+}
+#filePreviewContainer .jd-upload-card__progress.indeterminate i{
+  width:36%!important;
+  animation:jdUploadLane 1s ease-in-out infinite;
+}
+#filePreviewContainer .jd-upload-card[data-status="ready"] .jd-upload-card__progress i,
+#filePreviewContainer .jd-upload-card[data-status="warning"] .jd-upload-card__progress i{
+  background:#34d399;
+}
+#filePreviewContainer .jd-upload-card[data-status="error"] .jd-upload-card__progress i{background:#f87171}
+#filePreviewContainer .jd-upload-card__retry{
+  height:24px;
+  padding:0 7px;
+  border:1px solid rgba(248,113,113,.25);
+  border-radius:7px;
+  background:rgba(248,113,113,.08);
+  color:#fca5a5;
+  font:inherit;
+  font-size:9px;
+  font-weight:650;
+  cursor:pointer;
+}
+#filePreviewContainer .jd-upload-card .jd-upload-chip__remove{
+  position:static!important;
+  width:20px!important;
+  height:20px!important;
+  opacity:.55!important;
+}
+@keyframes jdUploadLane{
+  0%{transform:translateX(-120%)}
+  100%{transform:translateX(320%)}
+}
+
+/* Drag feedback from the third reference. */
+#inputContainer.attachment-drop-active .prompt-bar__field{
+  box-shadow:0 0 0 1px rgba(45,212,191,.32),0 0 34px rgba(45,212,191,.12)!important;
+}
+#inputContainer.attachment-drop-active .prompt-bar__field::after{
+  content:"Release to add files";
+  position:absolute;
+  inset:6px;
+  z-index:8;
+  display:grid;
+  place-items:center;
+  border:1px dashed rgba(45,212,191,.62);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--pb-bg) 78%,transparent);
+  color:#5eead4;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.01em;
+  pointer-events:none;
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+
+@media(max-width:520px){
+  .jd-pull-refresh{top:4px}
+  #filePreviewContainer .jd-upload-chip.jd-upload-card{
+    grid-template-columns:18px minmax(0,1fr) auto auto!important;
+    gap:6px!important;
+    min-height:46px!important;
+  }
+  #filePreviewContainer .jd-upload-card__meta{font-size:8.5px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .jd-pull-refresh,
+  .chat-box.jd-pull-settle,
+  #filePreviewContainer .jd-upload-card__progress i{transition:none!important}
+  .jd-pull-refresh.loading .jd-pull-refresh__ring,
+  #filePreviewContainer .jd-upload-card__progress.indeterminate i{animation:none!important}
+}
