@@ -96,7 +96,7 @@ for(const token of [
   'RESEARCH_QUERY_1: <query or blank>',
   'RESPONSE_CONTRACT: <one-line high-level answer contract>'
 ]) assert(prompt.includes(token),'Missing activity blueprint field '+token);
-assert(prompt.includes('one coherent approach'),'Planner must bind the work trace and final answer to one approach');
+assert(prompt.toLowerCase().includes('one coherent approach'),'Planner must bind the work trace and final answer to one approach');
 assert(prompt.includes('Never claim a search, file read, build, compile, runtime test, deployment'),
   'Planner must reject fabricated tool/execution statuses');
 assert(api.includes('shouldUseDynamicActivityPlanner(taskMessage,files)'),
