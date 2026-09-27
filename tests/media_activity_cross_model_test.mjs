@@ -41,7 +41,7 @@ const memePrompt='Build a meme generator where users upload or pick an image, ad
 const profile=sandbox.taskProfile(memePrompt,[]);
 assert.equal(profile.kind,'web','build/generator intent must win over incidental image words');
 const plan=sandbox.contextActivityPlan(memePrompt,[]);
-assert.match(plan.steps[0].label,/tool inputs, outputs, and interaction flow/i);
+assert.match(plan.steps[0].label,/web tool/i);
 assert.doesNotMatch(plan.steps[0].label,/image task/i);
 const work=sandbox.taskWorkingActivity(plan);
 assert.match(work.label,/requested tool behavior/i);
@@ -55,7 +55,7 @@ const initial=new Function('getActiveContext',initialSource+'\nreturn initialAct
   ()=>({sessions:{},id:null})
 );
 const firstLead=initial(memePrompt,[]);
-assert.match(firstLead.label,/requested web structure and interactions/i);
+assert.match(firstLead.label,/website or web app/i);
 assert.doesNotMatch(firstLead.label,/image task/i);
 const fileLead=initial('Please review this and tell me what changed',[
   {name:'clip.mp4',mimeType:'video/mp4',kind:'video'},
