@@ -5235,8 +5235,9 @@ async function processChat(body, emit) {
   const plannedTrace=Array.isArray(activityBlueprint?.trace)?activityBlueprint.trace.filter(Boolean).slice(0,8):[];
   if(plannedTrace.length){
     completeContextPlan(contextPlan,emit);
-    activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'', 'details');
-    activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'', 'details');
+    // Do not surface the legacy fixed analysis/approach template when a dynamic
+    // trace exists. The selected model's TRACE becomes the visible public plan.
+    // Real tool/provider events remain separate evidence-backed rows.
     plannedTrace.forEach((label,index)=>{
       activity(emit,'planned-trace-'+index,label,index===0?'running':'queued',activityBlueprint.kind||'process','');
     });
