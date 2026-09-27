@@ -685,8 +685,9 @@
         .bot-actions{position:relative}
         .bot-action-btn{min-width:34px;min-height:34px;justify-content:center}
         .bot-action-btn span{display:none}
-        .jd-message-more{position:absolute;left:0;top:calc(100% + 8px);z-index:140;width:min(280px,calc(100vw - 44px));padding:8px;border:1px solid var(--border-color);border-radius:18px;background:var(--modal-bg);box-shadow:0 16px 45px rgba(0,0,0,.32);display:none}
+        .jd-message-more{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:14000;width:min(300px,calc(100vw - 32px));max-height:min(430px,calc(100dvh - 32px));overflow-y:auto;padding:8px;border:1px solid var(--border-color);border-radius:18px;background:var(--modal-bg);box-shadow:0 20px 60px rgba(0,0,0,.42);display:none;overscroll-behavior:contain}
         .jd-message-more.open{display:block}
+        @supports not (height:100dvh){.jd-message-more{max-height:calc(100vh - 32px)}}
         .jd-message-menu-row{width:100%;border:0;background:transparent;color:var(--text-main);display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;text-align:left;font:inherit;cursor:pointer}
         .jd-message-menu-row:hover,.jd-message-menu-row:active{background:rgba(148,163,184,.10)}
         .jd-message-menu-row svg{width:18px;height:18px}.jd-message-menu-sep{height:1px;background:var(--border-color);margin:5px 4px}
@@ -11388,20 +11389,45 @@ ${m.text || ''}
         }
 
         function closeMessageMoreMenus(){document.querySelectorAll('.jd-message-more.open').forEach(x=>x.classList.remove('open'));}
+        function positionMessageMoreMenu(menu){
+            if(!menu)return;
+            const vv=window.visualViewport;
+            const viewportTop=vv?.offsetTop||0;
+            const viewportHeight=vv?.height||window.innerHeight||document.documentElement.clientHeight;
+            menu.style.left='50%';
+            menu.style.top=`${Math.round(viewportTop+(viewportHeight/2))}px`;
+            menu.style.transform='translate(-50%,-50%)';
+            menu.style.maxHeight=`${Math.max(180,Math.round(viewportHeight-32))}px`;
+        }
         function toggleMessageMore(btn,event){
             event?.stopPropagation?.();const menu=btn?.parentElement?.querySelector('.jd-message-more');if(!menu)return;
-            const open=!menu.classList.contains('open');closeMessageMoreMenus();if(open)menu.classList.add('open');refreshLucideIcons(menu);
+            const open=!menu.classList.contains('open');closeMessageMoreMenus();
+            if(open){positionMessageMoreMenu(menu);menu.classList.add('open');refreshLucideIcons(menu);}
         }
+        window.visualViewport?.addEventListener?.('resize',()=>document.querySelectorAll('.jd-message-more.open').forEach(positionMessageMoreMenu));
+        window.visualViewport?.addEventListener?.('scroll',()=>document.querySelectorAll('.jd-message-more.open').forEach(positionMessageMoreMenu));
         document.addEventListener('click',e=>{if(!e.target?.closest?.('.bot-actions'))closeMessageMoreMenus();});
         function assistantMessagePlainText(btn){
             const msg=btn?.closest?.('.msg.bot');const content=msg?.querySelector(':scope > div:not(.bot-actions):not(.jd-ai-interaction)');
             return String(content?.innerText||content?.textContent||'').trim();
         }
+        function buildMessageShareLink(btn){
+            const node=btn?.closest?.('.msg.bot');
+            const messageIndex=Number(node?.dataset?.messageIndex);
+            const ctx=getActiveContext();
+            if(!ctx?.id||!Number.isInteger(messageIndex)||messageIndex<0)return location.href;
+            const url=new URL(location.href);
+            url.hash=`share=${encodeURIComponent(ctx.id)}&message=${messageIndex}`;
+            return url.toString();
+        }
         async function shareAssistantMessage(btn){
             const text=assistantMessagePlainText(btn);if(!text)return;
+            const url=buildMessageShareLink(btn);
+            const shareData={title:'JepongDevxyz AI',text,url};
             try{
-                if(navigator.share){await navigator.share({title:'JepongDevxyz AI',text});return;}
-                await navigator.clipboard.writeText(text);showModernToast('Response copied — share it from any app.');
+                if(navigator.share){await navigator.share(shareData);return;}
+                await navigator.clipboard.writeText(url);
+                showModernToast('Share link copied');
             }catch(err){if(err?.name!=='AbortError')showModernToast('Could not open sharing.');}
         }
         function useThinkingForMessage(btn){
