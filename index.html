@@ -3495,7 +3495,7 @@
 
         /* ChatGPT-style code card: compact sticky toolbar and smooth code scrolling. */
         .code-block-header{position:sticky;top:0;z-index:3;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-        .code-container-wrap pre{max-height:min(62vh,520px);overflow:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+        .code-container-wrap pre{max-height:none!important;overflow-x:auto!important;overflow-y:visible!important;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
         .code-container-wrap pre code{display:block;min-width:max-content;padding-bottom:4px}
         @media(max-width:767px){
             /* Mobile long-response fix: one vertical scroller only. Nested code scrolling
@@ -3512,7 +3512,7 @@
             }
             .code-container-wrap pre code{min-width:max-content}
             .msg.bot{padding-bottom:4px}
-            .bot-actions{scroll-margin-bottom:150px}
+            .bot-actions{scroll-margin-bottom:32px}
             .floating-search-trigger-btn{top:8px;right:8px;opacity:.78}
             .floating-search-trigger-btn.jd-scroll-busy{opacity:0;pointer-events:none}
         }
