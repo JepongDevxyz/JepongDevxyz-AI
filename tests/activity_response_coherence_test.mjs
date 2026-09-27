@@ -34,8 +34,8 @@ assert.equal(explicitWeb.kind,'web','Explicit HTML/web request must remain a web
 
 assert(api.includes("'RESPONSE_CONTRACT is a compact high-level contract"),
   'Activity planner needs a shared final-answer contract');
-assert(api.includes("All fields must describe ONE coherent approach."),
-  'Planner must reject status/answer architecture drift');
+assert(api.includes("All fields, TRACE, and RESPONSE_CONTRACT must describe ONE coherent approach."),
+  'Planner must reject status/answer architecture drift and bind the dynamic trace to the same contract');
 assert(api.includes("[RESPONSE-ACTIVITY COHERENCE CONTRACT — internal, do not quote]"),
   'Final response model must receive the same high-level plan used by Activity');
 assert(api.includes("Do not silently switch from native app to website"),

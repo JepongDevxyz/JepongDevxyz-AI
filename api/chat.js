@@ -1244,6 +1244,7 @@ function defaultActivityBlueprint(profile={}){
     commentary:'',
     responseContract:'',
     research:[],
+    trace:[],
     kind:work.kind||context.kind||'process',
     dynamic:false
   };
@@ -1268,8 +1269,12 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'Never claim a search, file read, build, compile, runtime test, deployment, repository write, or environment check unless a real tool can actually perform it.',
     'CHECKPOINT must be safe even before tool results: prefer "Chose the implementation" or "Set the response structure", not "Built the app" or "Tests passed".',
     'RESPONSE_CONTRACT is a compact high-level contract for the final answer: intended deliverable, platform assumption, major components, and important caveats. It is not chain-of-thought.',
-    'All fields must describe ONE coherent approach. Never plan one architecture in Activity and answer with another.',
-    'Return EXACTLY these fourteen lines and nothing else:',
+    'TRACE: 3-8 compact public milestones separated by " | ". This is the exact request-specific visible sequence between planning and final generation. It must be chronological, non-repetitive, and consistent with RESPONSE_CONTRACT.',
+    'TRACE is public progress metadata, not hidden reasoning. It may name observable operations, artifacts, requirements, files, tools, checks, or answer sections, but never private chain-of-thought.',
+    'Do not force one fixed stage template across requests. A coding task, translation, image/file analysis, research question, troubleshooting request, and repository task should naturally produce different milestone labels and counts.',
+    'Never put an external operation in TRACE unless this pipeline can actually perform it; real search/file/GitHub/build/deploy events remain evidence-backed tool milestones.',
+    'All fields, TRACE, and RESPONSE_CONTRACT must describe ONE coherent approach. Never plan one architecture in Activity and answer with another.',
+    'Return EXACTLY these fifteen lines and nothing else:',
     'PLAN_START: <short running planning label>',
     'PLAN_DONE: <short completed planning label>',
     'CONTEXT: <specific label>',
@@ -1284,6 +1289,7 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'RESEARCH_QUERY_2: <query or blank>',
     'RESEARCH_DOMAIN_2: <hostname or blank>',
     'RESPONSE_CONTRACT: <one-line high-level answer contract>',
+    'TRACE: <milestone 1> | <milestone 2> | <milestone 3> ...',
     'Task type: '+String(profile?.kind||classifyUserTask(message,files))+'/'+String(profile?.subtype||'general'),
     names.length?'Attachments: '+names.join(', '):'Attachments: none',
     'User request: '+String(message||'').slice(0,8000)
@@ -1308,6 +1314,8 @@ function parseActivityBlueprintOutput(raw='', profile={}){
   const audit=value('AUDIT');
   const commentary=value('COMMENTARY',1000);
   const responseContract=value('RESPONSE_CONTRACT',2500);
+  const traceRaw=value('TRACE',2400);
+  const trace=traceRaw.split(/\s*\|\s*/).map(x=>cleanActivityLabel(x,150)).filter(Boolean).slice(0,8);
   const research=[
     {
       query:cleanPlannedResearchQuery(value('RESEARCH_QUERY_1',240)),
@@ -1323,7 +1331,8 @@ function parseActivityBlueprintOutput(raw='', profile={}){
     ...fallback,
     commentary:commentary||fallback.commentary,
     responseContract:responseContract||fallback.responseContract,
-    research
+    research,
+    trace:trace.length?trace:fallback.trace
   };
   return {
     planStart:planStart||fallback.planStart,
@@ -1337,6 +1346,7 @@ function parseActivityBlueprintOutput(raw='', profile={}){
     commentary,
     responseContract,
     research,
+    trace,
     kind:fallback.kind,
     dynamic:true
   };
@@ -5183,6 +5193,20 @@ async function processChat(body, emit) {
     }
   }
 
+  // The selected model can provide a variable-length public trace. We advance
+  // these milestones only at truthful lifecycle boundaries; real tool events
+  // remain separate and are never fabricated from the plan.
+  const activityTrace=Array.isArray(activityBlueprint?.trace)
+    ? activityBlueprint.trace.filter(Boolean).slice(0,8)
+    : [];
+  let activityTraceCursor=0;
+  const advanceActivityTrace=(state='completed')=>{
+    if(activityTraceCursor>=activityTrace.length)return;
+    const index=activityTraceCursor++;
+    activity(emit,'planned-trace-'+index,activityTrace[index],state,activityBlueprint.kind||'process','');
+  };
+  if(activityTrace.length)advanceActivityTrace('completed');
+
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   const projectInspectionContext=inspectUploadedProject(files,emit);
   if(files.length){
@@ -5222,6 +5246,7 @@ async function processChat(body, emit) {
     message:taskMessage,
     webSearch:webSearch===true
   });
+  if(activityTrace.length)advanceActivityTrace('completed');
 
   // Analysis via another provider is itself model fallback: never do it when OFF.
   const visualParts=mediaAttachments(files);
@@ -5297,6 +5322,7 @@ async function processChat(body, emit) {
   }
   const providedLinkContext=await inspectProvidedLinks(taskMessage,emit);
   const verificationContext=await performVerification(taskMessage,files,emit);
+  if(activityTrace.length)advanceActivityTrace('completed');
 
   // A site-security request needs evidence about the specific site in context.
   // Never launch a generic web search for a vague security follow-up; inspect the
@@ -5516,6 +5542,9 @@ async function processChat(body, emit) {
     }catch(_){}
   }
 
+  if(activityTrace.length){
+    while(activityTraceCursor<Math.max(0,activityTrace.length-1))advanceActivityTrace('completed');
+  }
   contextPlan.activityBlueprint=activityBlueprint;
   if(activityBlueprint?.responseContract){
     systemInstruction +=
@@ -5537,6 +5566,7 @@ async function processChat(body, emit) {
     activity(emit,'task-work',activityBlueprint.work,'completed','process','');
   }
   const taskGeneration=taskGenerationActivity(contextPlan);
+  if(activityTrace.length)advanceActivityTrace('completed');
   activity(emit,'thinking','Thinking','running','process','');
   let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
   if(first.ok){
