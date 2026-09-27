@@ -5078,9 +5078,8 @@ async function processChat(body, emit) {
   const startedAt=Date.now();
   const requestCustomKeys=sanitizeCustomProviderKeys(body,provider);
   const taskMessage=contextualTaskMessage(message,history);
-  const contextPlan=emitContextActivityStart(taskMessage,files,emit);
+  const contextPlan=contextActivityPlan(taskMessage,files);
   const taskAnalysis=taskSpecificActivityCopy(contextPlan.profile||{},'prepared');
-  activity(emit,'task-analysis',taskAnalysis.label,'running',taskAnalysis.kind,'');
 
   // Source-specific milestones are emitted after the corresponding input has
   // really been read or added to model context (never on a fixed timer).
@@ -5116,6 +5115,40 @@ async function processChat(body, emit) {
     }
     model=selected&&(allowed||dynamic)?selected:PROVIDERS[provider].defaultModel;
   }
+
+  // ChatGPT-style public work trace: the SAME selected model first chooses the
+  // approach that its final answer must follow. The user sees a compact planning
+  // transition while that metadata pass runs; provider fallback stays disabled.
+  let activityBlueprint=defaultActivityBlueprint(contextPlan?.profile||taskProfile(taskMessage,files));
+  if(shouldUseDynamicActivityPlanner(taskMessage,files)){
+    activity(emit,'task-plan',activityBlueprint.planStart||'Planning the response','running','process','');
+    try{
+      const activityPrompt=buildActivityBlueprintPrompt(taskMessage,files,contextPlan?.profile||{});
+      const activityPlanResponse=await runProvider(provider,{
+        model,
+        history:(Array.isArray(history)?history.slice(-8):[]),
+        files:[],
+        message:activityPrompt,
+        systemInstruction:'PUBLIC WORK TRACE METADATA MODE: Return only the requested public work-trace fields. Keep the plan and final-answer contract on one coherent approach. Do not answer the user, reveal private reasoning, or claim unverified external actions.',
+        routedReason:'activity-blueprint',
+        emit:null,
+        autoFallback:false,
+        customApiKeys:requestCustomKeys,
+        customApiProfile,
+        responseEffort:'Instant'
+      });
+      if(activityPlanResponse.ok){
+        const rawPlan=await readInternalProviderText(activityPlanResponse.response,9000);
+        const parsedPlan=parseActivityBlueprintOutput(rawPlan,contextPlan?.profile||{});
+        if(parsedPlan)activityBlueprint=parsedPlan;
+      }
+    }catch(_){}
+    activity(emit,'task-plan',activityBlueprint.planDone||'Planned the response','completed','process','');
+    if(activityBlueprint?.commentary){
+      activity(emit,'work-commentary-plan',activityBlueprint.commentary,'completed','commentary');
+    }
+  }
+
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
   const projectInspectionContext=inspectUploadedProject(files,emit);
   if(files.length){
