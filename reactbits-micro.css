@@ -127,8 +127,28 @@
    loader. Keep it readable and let the appearance transition carry the motion. */
 .ai-activity-row.ai-activity-enter{animation:jdActivityReferenceIn .18s ease-out both}
 @keyframes jdActivityReferenceIn{from{opacity:.16!important;transform:translateY(2px)}to{opacity:1!important;transform:none}}
-.ai-activity-row.running.ai-activity-current .ai-activity-label{color:var(--activity-muted)}
-.ai-activity-row.running.ai-activity-current .ai-activity-icon{color:var(--activity-muted)}
+.ai-activity-row.running.ai-activity-current .ai-activity-label{color:color-mix(in srgb,var(--rb-ink) 72%,transparent)}
+.ai-activity-row.running.ai-activity-current .ai-activity-icon{color:color-mix(in srgb,var(--rb-ink) 68%,transparent)}
+/* The reference marks only the current operation with a tiny breathing dot
+   directly after its text. Completed history stays still and visually quieter. */
+.ai-activity-row.running.ai-activity-current .ai-activity-label::after{
+  content:"";
+  display:inline-block;
+  width:7px;
+  height:7px;
+  margin-left:8px;
+  border-radius:50%;
+  vertical-align:1px;
+  background:currentColor;
+  opacity:.72;
+  animation:jdActivityCurrentDot 1.05s ease-in-out infinite
+}
+@keyframes jdActivityCurrentDot{
+  0%,100%{opacity:.28;transform:scale(.78)}
+  48%{opacity:.9;transform:scale(1)}
+}
+.ai-activity-row.completed .ai-activity-label,
+.ai-activity-row.completed .ai-activity-icon{color:var(--activity-muted)}
 .ai-activity-row[data-activity-id="thinking"]{margin-top:2px}
 .ai-activity-row[data-activity-id="thinking"] .ai-activity-label{color:var(--activity-muted-soft)}
 
@@ -923,6 +943,7 @@
   .jd-thoughts-sheet{width:100%;height:min(87dvh,850px);border-radius:22px 22px 0 0}
 }
 @media(prefers-reduced-motion:reduce){
+  .ai-activity-row.running.ai-activity-current .ai-activity-label::after{animation:none!important;opacity:.72!important;transform:none!important}
   .thought-cluster__dot,.ai-activity-row.ai-activity-enter{animation:none!important;opacity:1!important;transform:none!important}
   .bell-toggle,.bell-toggle__face,.bell-toggle__badge,.prompt-bar,.prompt-bar__send,
   .refine-frame__chip,.squish-switch-root>span:last-child::after,.voice-pill,.voice-pill__capsule,
