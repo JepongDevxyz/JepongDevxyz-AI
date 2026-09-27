@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';
+const h=fs.readFileSync('index.html','utf8');
+assert(h.includes('Mobile long-response fix: one vertical scroller only.'));
+assert(h.includes('max-height:none!important;'));
+assert(h.includes('overflow-y:visible!important;'));
+assert(h.includes('.code-block-header{position:relative;top:auto'));
+assert(h.includes("searchTrigger.classList.add('jd-scroll-busy')"));
+assert(h.includes("setTimeout(()=>searchTrigger.classList.remove('jd-scroll-busy'),180)"));
+assert(h.includes('.bot-actions{scroll-margin-bottom:150px}'));
+console.log('PASS: mobile long responses use the chat as the single vertical scroller and transient overlays yield during scroll.');
