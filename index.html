@@ -9348,6 +9348,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 const clone=row.cloneNode(true);
                 clone.removeAttribute('id');
                 clone.removeAttribute('data-activity-visibility');
+                clone.style.removeProperty('display');
                 content.push(clone);
             });
             if(!content.length){
@@ -9538,7 +9539,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 void row.offsetWidth;
                 row.classList.add('ai-activity-enter');
             }
-            row.style.setProperty('display','grid','important');
+            row.style.setProperty('display',detailsOnly?'none':'grid','important');
             row.style.setProperty('visibility','visible','important');
             row.style.setProperty('opacity','1','important');
             row.style.setProperty('height','auto','important');
