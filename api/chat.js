@@ -525,15 +525,23 @@ function artifactInstruction(message='', files=[]) {
   const req=detectArtifactRequest(message,files);
   if(!req) return '';
 
+  const inputFiles=Array.isArray(files)?files:[];
+  const attachedZip=inputFiles.find(f=>/\.zip$/i.test(String(f?.parentName||f?.name||f?.filename||'')));
   let text =
     ' The user requested a real downloadable artifact. Generate the complete final content that should go inside that artifact. ' +
     'Do not merely explain how to create the file and do not invent a fake download URL. ';
 
-  if(req.kind==='zip'){
+  if(req.kind==='zip' && attachedZip){
     text +=
-      'For a ZIP/project request, put EVERY generated or updated project file in its own fenced code block and immediately precede it with a line exactly like "FILE: path/filename.ext". ' +
-      'Use real relative paths, not display labels. Include all source/config files required for the project to work; do not use placeholders such as "unchanged code here", "same as before", or "rest omitted". ' +
-      'Also show the useful updated code in the visible answer; the server will package the FILE blocks into a real downloadable ZIP. ';
+      'The user uploaded an existing project ZIP. The browser keeps the original archive locally and will overlay your changed/new files onto it, so unchanged files and binary libraries remain intact. ' +
+      'For EVERY file you actually changed or created, emit one line exactly "FILE: relative/path/filename.ext" immediately followed by a fenced code block containing the COMPLETE final contents of that file. ' +
+      'Use the real archive-relative path. Never emit placeholders such as "same as before", "unchanged code here", "rest omitted", or fabricated binary contents. ' +
+      'Do not rewrite files you did not need to change merely to make the ZIP look complete. ' +
+      'In the visible final answer, be concise but concrete: state what you inspected, the real fixes made, what verification actually passed, any build/runtime limitation, and that the updated downloadable project ZIP contains the preserved original files plus your changed files. ';
+  }else if(req.kind==='zip'){
+    text +=
+      'For a new ZIP/project request, put EVERY generated project file in its own fenced code block and immediately precede it with a line exactly like "FILE: path/filename.ext". ' +
+      'Use real relative paths, not display labels. Include all source/config files required for the project to work; do not use placeholders such as "unchanged code here", "same as before", or "rest omitted". ';
   }else if(req.kind==='pdf'){
     text +=
       'For a PDF request, write polished document content with clear headings and readable prose; the server will convert your response into an actual PDF. ';
@@ -758,17 +766,19 @@ function extensionFromFence(lang=''){
   return map[String(lang||'').toLowerCase()]||'txt';
 }
 
-function extractZipEntries(responseText='',requestedFilename=''){
+function extractZipEntries(responseText='',requestedFilename='',options={}){
   const text=String(responseText||'');
   const entries=[];
-  const named=/(?:^|\n)\s*(?:#{1,6}\s*)?(?:\*\*)?(?:(?:FILE|Filename|File)\s*:\s*)?([\w.@+()\-\/\\ ]+\.(?:html?|css|m?js|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|xml|svg|sql|ya?ml|sh|gradle|properties|md|txt))(?:\*\*)?\s*\n```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/gi;
+  const explicitOnly=options?.explicitOnly===true;
+  const addReadme=options?.addReadme!==false;
+  const named=/(?:^|\n)\s*(?:#{1,6}\s*)?(?:\*\*)?(?:(?:FILE|Filename|File)\s*:\s*)?([\w.@+()\-\/\\ ]+\.(?:html?|css|m?js|cjs|ts|tsx|jsx|json|py|php|java|kt|kts|c|cpp|h|hpp|cs|xml|svg|sql|ya?ml|sh|gradle|properties|md|txt))(?:\*\*)?\s*\n```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/gi;
   let m;
   while((m=named.exec(text))){
     const name=m[1].trim().replace(/[^\w./\- ()]/g,'_').replace(/^\/+/,'');
     entries.push({name:name||`file-${entries.length+1}.${extensionFromFence(m[2])}`,data:m[3]});
   }
 
-  if(!entries.length){
+  if(!entries.length && !explicitOnly){
     const fence=/```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/g;
     while((m=fence.exec(text))){
       const ext=extensionFromFence(m[1]);
@@ -779,8 +789,10 @@ function extractZipEntries(responseText='',requestedFilename=''){
     }
   }
 
-  if(!entries.length) entries.push({name:'response.md',data:text});
-  if(!entries.some(e=>e.name.toLowerCase()==='readme.md')) entries.push({name:'README.md',data:text});
+  if(!entries.length && !explicitOnly) entries.push({name:'response.md',data:text});
+  if(addReadme && entries.length && !entries.some(e=>e.name.toLowerCase()==='readme.md')){
+    entries.push({name:'README.md',data:text});
+  }
   return entries;
 }
 
@@ -820,10 +832,25 @@ function buildGeneratedArtifact(message='',responseText='',files=[]){
   let bytes;
   let filename=req.filename;
   let mimeType=mimeForExtension(req.ext);
+  let entryCount=1;
+  let overlay=false;
 
   if(req.kind==='zip'){
     filename=filename.toLowerCase().endsWith('.zip')?filename:`${filename.replace(/\.[^.]+$/,'')}.zip`;
-    bytes=makeZip(extractZipEntries(responseText,''));
+    overlay=(Array.isArray(files)?files:[]).some(f=>/\.zip$/i.test(String(f?.parentName||f?.name||f?.filename||'')));
+    const entries=extractZipEntries(responseText,'',{
+      explicitOnly:overlay,
+      addReadme:!overlay
+    });
+    if(overlay && !entries.length){
+      return {
+        error:'The model did not return any complete FILE: path blocks to overlay onto the uploaded project ZIP.',
+        filename,
+        size:0
+      };
+    }
+    entryCount=entries.length;
+    bytes=makeZip(entries);
     mimeType='application/zip';
   }else if(req.kind==='pdf'){
     filename=filename.toLowerCase().endsWith('.pdf')?filename:`${filename.replace(/\.[^.]+$/,'')}.pdf`;
@@ -834,7 +861,8 @@ function buildGeneratedArtifact(message='',responseText='',files=[]){
     bytes=utf8Bytes(content);
   }
 
-  // Keep SSE payloads comfortably bounded. This still supports typical full-code files.
+  // Keep SSE payloads comfortably bounded. Existing uploaded ZIPs are merged in
+  // the browser, so this payload carries only changed/new text files.
   if(bytes.length>6_000_000){
     return {
       error:'Generated file is too large to send through the chat stream.',
@@ -843,7 +871,6 @@ function buildGeneratedArtifact(message='',responseText='',files=[]){
     };
   }
 
-  const entryCount=req.kind==='zip'?extractZipEntries(responseText,'').length:1;
   return {
     filename,
     mimeType,
@@ -851,10 +878,14 @@ function buildGeneratedArtifact(message='',responseText='',files=[]){
     base64:bytesToBase64(bytes),
     kind:req.kind,
     entryCount,
-    label:req.kind==='zip'?(`ZIP project · ${entryCount} file${entryCount===1?'':'s'}`):req.kind==='pdf'?'PDF document':`${req.ext.toUpperCase()} file`
+    overlay,
+    label:req.kind==='zip'
+      ? (overlay
+          ? `Updated project patch · ${entryCount} changed file${entryCount===1?'':'s'}`
+          : `ZIP project · ${entryCount} file${entryCount===1?'':'s'}`)
+      : req.kind==='pdf'?'PDF document':`${req.ext.toUpperCase()} file`
   };
 }
-
 
 
 /* =========================================================
@@ -2659,6 +2690,107 @@ async function inspectProvidedLinks(message='', emit){
 }
 
 
+function uploadedProjectGroups(files=[]){
+  const groups=new Map();
+  for(const f of (Array.isArray(files)?files:[])){
+    const root=attachmentRootName(f);
+    if(!/\.zip$/i.test(root))continue;
+    if(!groups.has(root))groups.set(root,[]);
+    groups.get(root).push(f);
+  }
+  return groups;
+}
+
+function inspectUploadedProject(files=[], emit){
+  const groups=uploadedProjectGroups(files);
+  if(!groups.size)return '';
+
+  let context='\n\n[UPLOADED PROJECT INSPECTION]\n';
+  let groupIndex=0;
+  for(const [root,parts] of groups){
+    const sourceEntries=parts.filter(p=>String(p?.kind||'')==='archive-entry' && textFromAttachment(p));
+    const rootMeta=parts.find(p=>attachmentRootName(p)===root && String(p?.name||'')===root) || parts[0];
+    const manifestText=String(rootMeta?.extractedText||'');
+    const names=[
+      ...new Set([
+        ...sourceEntries.map(p=>String(p?.name||'')),
+        ...manifestText.split('\n').filter(line=>/[/.]/.test(line)&&line.length<240)
+      ].filter(Boolean))
+    ];
+    const idBase=`project-${groupIndex++}`;
+    activity(emit,`${idBase}-archive`,
+      `Inspected ZIP contents: ${root} • ${sourceEntries.length} readable source/config file${sourceEntries.length===1?'':'s'}`,
+      sourceEntries.length?'completed':'warning','file');
+
+    const gradle=sourceEntries.filter(p=>/(?:^|\/)(?:build\.gradle(?:\.kts)?|settings\.gradle(?:\.kts)?|gradle\.properties|libs\.versions\.toml)$/i.test(String(p.name||'')));
+    const manifests=sourceEntries.filter(p=>/(?:^|\/)AndroidManifest\.xml$/i.test(String(p.name||'')));
+    const java=sourceEntries.filter(p=>/\.(?:java|kt|kts)$/i.test(String(p.name||'')));
+    const resources=sourceEntries.filter(p=>/(?:^|\/)res\//i.test(String(p.name||'')) || /\.(?:xml)$/i.test(String(p.name||'')));
+    const nativeNames=names.filter(name=>/\.(?:so|jar|aar)$/i.test(name));
+
+    if(gradle.length){
+      activity(emit,`${idBase}-gradle`,
+        `Reviewed Gradle configuration and dependencies • ${gradle.length} build/config file${gradle.length===1?'':'s'}`,
+        'completed','build');
+    }
+    if(manifests.length){
+      activity(emit,`${idBase}-manifest`,
+        `Reviewed Android manifest and component declarations • ${manifests.length} manifest${manifests.length===1?'':'s'}`,
+        'completed','file');
+    }
+    if(java.length){
+      activity(emit,`${idBase}-source`,
+        `Inspected Java/Kotlin project sources • ${java.length} file${java.length===1?'':'s'}`,
+        'completed','file');
+    }
+    if(resources.length){
+      activity(emit,`${idBase}-resources`,
+        `Inspected Android resources/configuration • ${resources.length} readable file${resources.length===1?'':'s'}`,
+        'completed','file');
+    }
+    if(nativeNames.length){
+      activity(emit,`${idBase}-bundled-libs`,
+        `Located bundled library/native artifacts • ${nativeNames.length} file${nativeNames.length===1?'':'s'}`,
+        'completed','file',
+        'Binary contents are preserved locally; this status does not claim binary decompilation.');
+    }
+
+    const verificationTargets=[...gradle,...manifests,...java,...resources]
+      .filter((p,i,a)=>a.indexOf(p)===i)
+      .slice(0,18);
+    const reports=verificationTargets.map(p=>staticVerifyText(String(p.name||'Archive entry'),textFromAttachment(p),String(p.name||'')));
+    const failed=reports.filter(r=>r.status==='failed').length;
+    const warnings=reports.filter(r=>r.status==='warning').length;
+    if(reports.length){
+      activity(emit,`${idBase}-static`,
+        failed
+          ? `Project static checks found ${failed} issue${failed===1?'':'s'} across ${reports.length} inspected file${reports.length===1?'':'s'}`
+          : warnings
+            ? `Project static checks completed with ${warnings} warning${warnings===1?'':'s'} across ${reports.length} file${reports.length===1?'':'s'}`
+            : `Project static checks passed • ${reports.length} inspected file${reports.length===1?'':'s'}`,
+        failed?'warning':'completed','test');
+    }
+
+    context+=`Project archive: ${root}\n`;
+    context+=`Readable source/config files supplied separately: ${sourceEntries.length}\n`;
+    if(gradle.length)context+=`Gradle/build files: ${gradle.map(p=>p.name).join(', ')}\n`;
+    if(manifests.length)context+=`Android manifests: ${manifests.map(p=>p.name).join(', ')}\n`;
+    if(java.length)context+=`Java/Kotlin files: ${java.map(p=>p.name).slice(0,40).join(', ')}\n`;
+    if(resources.length)context+=`Resources/config files: ${resources.map(p=>p.name).slice(0,40).join(', ')}\n`;
+    if(nativeNames.length)context+=`Bundled binary/library paths seen in archive manifest: ${nativeNames.slice(0,40).join(', ')}\n`;
+    if(reports.length){
+      context+='Static inspection results:\n';
+      for(const r of reports)context+=`- ${r.name}: ${r.status.toUpperCase()} — ${r.findings.join(' ')}\n`;
+    }
+    context+=
+      'Grounding rule: only claim files listed above were inspected. Binary .so/.jar/.aar contents were not decompiled on the server. ' +
+      'Do not claim a Gradle build, APK install, emulator run, or runtime test unless separate execution evidence exists. ' +
+      'When proposing changes, preserve unrelated working project files and use exact archive-relative paths in FILE blocks.\n';
+  }
+  return context+'[/UPLOADED PROJECT INSPECTION]\n';
+}
+
+
 async function performVerification(message='', files=[], emit){
   if(!shouldVerifyTask(message,files))return '';
   const reports=[];
@@ -2667,7 +2799,8 @@ async function performVerification(message='', files=[], emit){
   promptBlocks.forEach((b,i)=>reports.push(staticVerifyText(`Prompt code block ${i+1}`,b.code,b.lang)));
 
   if(Array.isArray(files)){
-    for(let i=0;i<files.length && reports.length<10;i++){
+    for(let i=0;i<files.length && reports.length<16;i++){
+      if(String(files[i]?.kind||'')==='zip')continue;
       const txt=textFromAttachment(files[i]);
       if(!txt)continue;
       const name=files[i]?.name||files[i]?.filename||`Attachment ${i+1}`;
@@ -4189,6 +4322,7 @@ async function processChat(body, emit) {
     model=selected&&(allowed||dynamic)?selected:PROVIDERS[provider].defaultModel;
   }
   const attachmentSourceContext=buildAttachmentSourceContext(files,taskMessage);
+  const projectInspectionContext=inspectUploadedProject(files,emit);
   if(files.length){
     const grouped=new Map();
     for(const file of files){
@@ -4311,7 +4445,7 @@ async function processChat(body, emit) {
     ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
-  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
   // Installed skill plugins are explicit, bounded behavior profiles. They do not
