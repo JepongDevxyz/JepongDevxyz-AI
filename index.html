@@ -9508,9 +9508,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         // several genuine milestones that arrive in the same network tick from painting
         // in the same visual frame. A running row receives a short readable dwell before
         // its matching completion can replace it, like the supplied ChatGPT references.
-        const JD_ACTIVITY_MIN_VISIBLE_GAP_MS=145;
-        const JD_ACTIVITY_MIN_RUNNING_DWELL_MS=520;
-        const JD_ACTIVITY_FINAL_DRAIN_MAX_MS=1900;
+        const JD_ACTIVITY_MIN_VISIBLE_GAP_MS=230;
+        const JD_ACTIVITY_MIN_RUNNING_DWELL_MS=650;
+        const JD_ACTIVITY_FINAL_DRAIN_MAX_MS=2800;
         let jdActivityPlaybackQueue=[];
         let jdActivityPlaybackTimer=null;
         let jdActivityPlaybackLastPaintAt=0;
@@ -11606,8 +11606,9 @@ ${m.text || ''}
                             }
                         },
                         done: async (payload) => { await revealFinalResponse(payload.elapsedMs); },
-                        error: (payload) => {
+                        error: async (payload) => {
                             appendActivityEvent({ id:'server-error', label:sanitizeUiErrorMessage(payload.message || 'AI provider unavailable'), state:'error', kind:'provider' });
+                            await drainActivityPlayback(700);
                             if(!autoProviderFallback) finishAIIndicator(false);
                             throw new Error(sanitizeUiErrorMessage(payload.message || 'AI provider unavailable'));
                         }
