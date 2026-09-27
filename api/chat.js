@@ -5114,7 +5114,6 @@ async function processChat(body, emit) {
   const requestCustomKeys=sanitizeCustomProviderKeys(body,provider);
   const taskMessage=contextualTaskMessage(message,history);
   const contextPlan=contextActivityPlan(taskMessage,files);
-  const taskAnalysis=taskSpecificActivityCopy(contextPlan.profile||{},'prepared');
 
   // Source-specific milestones are emitted after the corresponding input has
   // really been read or added to model context (never on a fixed timer).
@@ -5321,7 +5320,6 @@ async function processChat(body, emit) {
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
   const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${plannedResearchContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
-  const taskApproach=taskSpecificActivityCopy(contextPlan.profile||{},'prepared2');
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
 
   // Installed skill plugins are explicit, bounded behavior profiles. They do not
