@@ -311,10 +311,12 @@ const motionUx=JSON.parse(await evaluate(`(async()=>{
   const inputContainer=document.getElementById('inputContainer');
   const field=document.querySelector('#promptBar .prompt-bar__field');
 
-  // Upload queue enhancement on the real renderer.
+  // Upload queue enhancement must stay compact while exposing honest per-file state.
   selectedFilesData.splice(0,selectedFilesData.length,{
     id:'motion-upload',
     name:'demo-recording.mp4',
+    originalMimeType:'video/mp4',
+    mimeType:'video/mp4',
     size:48*1024*1024,
     kind:'video',
     status:'processing',
@@ -326,45 +328,49 @@ const motionUx=JSON.parse(await evaluate(`(async()=>{
     frames:[],data:'',fullData:''
   });
   renderFilePreviews();
-  const uploadCard=host?.querySelector('.jd-upload-card');
+  const uploadLane=host?.querySelector('.jd-upload-lane');
   const upload={
-    card:!!uploadCard,
-    meta:uploadCard?.querySelector('.jd-upload-card__meta')?.textContent||'',
-    progress:!!uploadCard?.querySelector('.jd-upload-card__progress'),
-    width:uploadCard?.getBoundingClientRect().width||0
+    lane:!!uploadLane,
+    meta:uploadLane?.querySelector('.jd-upload-lane__meta')?.textContent||'',
+    status:uploadLane?.querySelector('.jd-upload-lane__status')?.textContent||'',
+    progress:!!uploadLane?.querySelector('.jd-upload-lane__progress'),
+    thumb:!!uploadLane?.querySelector('.jd-upload-lane__thumb'),
+    width:uploadLane?.getBoundingClientRect().width||0
   };
   inputContainer?.classList.add('attachment-drop-active');
   const dropContent=field?getComputedStyle(field,'::after').content:'';
   inputContainer?.classList.remove('attachment-drop-active');
 
-  // Pull-to-refresh physics and threshold handoff.
+  // Pull-to-refresh should be a compact icon revealed by elastic pull, not a text pill.
   const pullLow=api.setPull(40);
-  const lowLabel=document.querySelector('#jdPullRefresh .jd-pull-refresh__label')?.textContent||'';
-  const pullHigh=api.setPull(100);
+  const pullHigh=api.setPull(110);
   const indicator=document.getElementById('jdPullRefresh');
-  const highLabel=indicator?.querySelector('.jd-pull-refresh__label')?.textContent||'';
   const pull={
     lowArmed:pullLow.armed,
     highArmed:pullHigh.armed,
-    lowLabel,highLabel,
     visible:indicator?.classList.contains('visible')||false,
-    armed:indicator?.classList.contains('armed')||false
+    armed:indicator?.classList.contains('armed')||false,
+    label:indicator?.getAttribute('aria-label')||'',
+    arrow:!!indicator?.querySelector('.jd-pull-refresh__arrow'),
+    visibleText:String(indicator?.textContent||'').trim()
   };
   api.settlePull();
-  await new Promise(r=>setTimeout(r,460));
+  await new Promise(r=>setTimeout(r,420));
 
-  // Exact scroll-state restoration with a stable anchor.
+  // Exact scroll-state restoration with a stable message anchor.
   const chat=document.getElementById('chatBox');
   const original=chat.innerHTML;
-  chat.innerHTML='<button class="floating-scroll-pill" id="scrollPill"><span class="latest-label">Latest</span><span class="unread-badge" id="unreadBadge" style="display:none;">0</span></button><div class="msg bot" style="height:520px">A</div><div class="msg bot" style="height:520px">B</div><div class="msg bot" style="height:520px">C</div>';
+  chat.innerHTML='<button class="floating-scroll-pill" id="scrollPill"><span class="latest-label">Latest</span><span class="unread-badge" id="unreadBadge" style="display:none;">0</span></button><div class="msg bot" data-message-index="1" style="height:520px">A</div><div class="msg bot" data-message-index="2" style="height:520px">B</div><div class="msg bot" data-message-index="3" style="height:520px">C</div>';
   api.decorateScrollAnchors();
+  const anchorBefore=chat.querySelectorAll('.msg')[1]?.dataset?.jdScrollAnchor||'';
   chat.scrollTop=610;
   api.captureScroll('browser-smoke');
   const savedTop=chat.scrollTop;
   chat.scrollTop=0;
   api.restoreScroll('browser-smoke');
-  await new Promise(r=>setTimeout(r,280));
+  await new Promise(r=>setTimeout(r,760));
   const restoredTop=chat.scrollTop;
+  const anchorAfter=chat.querySelectorAll('.msg')[1]?.dataset?.jdScrollAnchor||'';
   chat.innerHTML=original;
 
   selectedFilesData.splice(0,selectedFilesData.length);
@@ -377,22 +383,28 @@ const motionUx=JSON.parse(await evaluate(`(async()=>{
     pull,
     savedTop,
     restoredTop,
+    anchorBefore,
+    anchorAfter,
     manual:history.scrollRestoration
   });
 })()`));
 
-assert.equal(motionUx.version,'2026-09-27-three-reference-v1','three-reference motion runtime missing');
-assert.equal(motionUx.upload.card,true,'honest upload queue card did not render');
+assert.equal(motionUx.version,'2026-09-27-three-reference-v2','three-reference motion v2 runtime missing');
+assert.equal(motionUx.upload.lane,true,'per-file upload lane did not render');
 assert.equal(motionUx.upload.progress,true,'per-file upload progress lane missing');
-assert(motionUx.upload.meta.includes('%'),'measurable upload preparation must expose honest percent progress');
-assert(motionUx.upload.width>80,'upload lane has no visible geometry');
+assert.equal(motionUx.upload.thumb,true,'upload visual proof/thumbnail slot missing');
+assert(motionUx.upload.meta.includes('MP4')&&motionUx.upload.meta.includes('MB'),'upload lane must expose type and size');
+assert(motionUx.upload.status.includes('50%'),'measurable upload preparation must expose honest percent progress');
+assert(motionUx.upload.width>120&&motionUx.upload.width<=260,'upload lane should remain compact inside PromptBar');
 assert(String(motionUx.dropContent).includes('Release to add files'),'drag/release feedback is not visible');
 assert.equal(motionUx.pull.lowArmed,false,'pull threshold armed too early');
 assert.equal(motionUx.pull.highArmed,true,'pull threshold did not arm');
-assert.equal(motionUx.pull.lowLabel,'Pull to refresh');
-assert.equal(motionUx.pull.highLabel,'Release to refresh');
 assert.equal(motionUx.pull.visible,true);
 assert.equal(motionUx.pull.armed,true);
+assert.equal(motionUx.pull.arrow,true,'pull affordance arrow missing');
+assert.equal(motionUx.pull.visibleText,'','pull affordance must not render the old text pill');
+assert.equal(motionUx.pull.label,'Release to refresh','pull affordance accessibility state did not update');
+assert(motionUx.anchorBefore&&motionUx.anchorBefore===motionUx.anchorAfter,'stable scroll anchor changed across restore');
 assert(Math.abs(motionUx.restoredTop-motionUx.savedTop)<5,'chat scroll position did not restore exactly');
 assert.equal(motionUx.manual,'manual','browser scroll restoration must be manual');
 
