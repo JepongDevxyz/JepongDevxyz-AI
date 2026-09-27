@@ -5,25 +5,23 @@ const api=fs.readFileSync('api/chat.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 
 for(const token of [
-  "activity(emit,'task-analysis'",
-  "activity(emit,'task-approach'",
-  "Structuring the game mechanics and controls",
-  "Setting up the page, game loop, and interaction flow",
-  "Building movement, collision, scoring, and UI behavior",
-  "Checking gameplay, controls, restart, and delivery",
-  "Checking the generated game code"
+  "activity(emit,'task-plan'",
+  "activityBlueprint.planStart",
+  "activityBlueprint.planDone",
+  "work-commentary-plan",
+  "runPlannedActivityResearch(activityBlueprint,emit",
+  "activity(emit,'task-checkpoint'",
+  "work-commentary-evidence",
+  "activity(emit,'task-work'",
+  "activity(emit,'thinking','Thinking'"
 ]) assert(api.includes(token),'Missing compact reference lifecycle token: '+token);
 
-assert(api.includes("activity(emit,'task-analysis',taskAnalysis.label,'running'"),
-  'Task analysis must visibly start as real work');
-assert(api.includes("activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed'"),
-  'Task analysis must complete after context assembly using the request-specific label');
-assert(api.includes("activity(emit,'task-approach',taskApproach.label,'running'"),
-  'Task approach must visibly start before final prompt preparation');
-assert(api.includes("activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed'"),
-  'Task approach must complete before provider generation using the request-specific label');
-assert(api.includes("activity(emit,'thinking',taskWork.label,'running'"),
-  'Task-specific implementation work must remain the running model stage');
+assert(api.includes("routedReason:'activity-blueprint'"),
+  'The selected model must create the visible planning trace');
+assert(api.includes("routedReason:'activity-evidence-sync'"),
+  'Real tool evidence must update the same selected-model work trace');
+assert(api.includes("The final answer must continue the SAME deliverable, platform, architecture, scope"),
+  'Visible Activity and final answer must stay on one implementation approach');
 
 const detailsStart=html.indexOf("const detailsOnly = normalized.visibility==='details'");
 const detailsEnd=html.indexOf("const iconless =",detailsStart);
@@ -32,9 +30,9 @@ const details=html.slice(detailsStart,detailsEnd);
 assert(!details.includes("id==='quality-orchestrator'"),
   'Real requirement/edge-case preflight must not be hidden from the main Activity timeline');
 
-assert(html.includes("Planning the requested game: '+subject"),
-  'Client lead must use the same compact task vocabulary before SSE arrives');
+assert(html.includes("startup.dataset.activityId='client-thinking'"),
+  'Client must show only the reference-style temporary Thinking row before SSE arrives');
 assert(html.includes("reactbits-micro.css?v=20260927-activity-v9-frameplay"),
   'Activity cache-bust must ship with the frame-playback lifecycle fix');
 
-console.log('PASS: reference Activity now shows a compact, changing real lifecycle instead of one generic status.');
+console.log('PASS: reference Activity shows Thinking -> selected-model plan -> real tools/commentary -> aligned final generation.');
