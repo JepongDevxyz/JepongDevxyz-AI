@@ -518,7 +518,7 @@ function detectArtifactRequest(message='', files=[]) {
     .replace(/[^\w.\- ()]/g,'_')
     .slice(0,100);
 
-  return {kind,ext:wantedExt,filename:safeName,implicitProjectArtifact,attachedZip,attachedProjectFiles};
+  return {kind,ext:wantedExt,filename:safeName};
 }
 
 function artifactInstruction(message='', files=[]) {
