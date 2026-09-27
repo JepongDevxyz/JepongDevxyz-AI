@@ -3883,7 +3883,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/haptics-notifications.css">
     <link rel="stylesheet" href="/interactive-proposals.css">
     <link rel="stylesheet" href="/activity-reference.css">
-    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-frame-reference-4">
+    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-deep-project-5">
     <style id="jdUploadUiCritical">
       #filePreviewContainer.is-visible{
         display:flex!important;
@@ -9681,30 +9681,69 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return `${(n/1024/1024).toFixed(1)} MB`;
         }
 
-        function attachGeneratedArtifact(botMsgElem, artifact) {
+        async function mergeGeneratedZipWithOriginal(artifact, sourceAttachments=[]){
+            const patchBlob=artifactBase64ToBlob(artifact.base64,artifact.mimeType||'application/zip');
+            if(artifact?.kind!=='zip')return {blob:patchBlob,merged:false,changed:artifact?.entryCount||0};
+            const source=(Array.isArray(sourceAttachments)?sourceAttachments:[])
+                .find(item=>item?.kind==='zip' && item?._localFile instanceof Blob);
+            if(!source)return {blob:patchBlob,merged:false,changed:artifact?.entryCount||0};
+
+            try{
+                const JSZip=await getJSZip();
+                const original=await JSZip.loadAsync(await source._localFile.arrayBuffer());
+                const patch=await JSZip.loadAsync(await patchBlob.arrayBuffer());
+                const names=Object.keys(patch.files).filter(name=>!patch.files[name].dir);
+                let changed=0;
+                for(const name of names){
+                    const clean=String(name||'').replace(/^\/+/, '').replace(/\.\.(?:\/|\\)/g,'');
+                    if(!clean)continue;
+                    const bytes=await patch.file(name).async('uint8array');
+                    original.file(clean,bytes);
+                    changed++;
+                }
+                const blob=await original.generateAsync({
+                    type:'blob',
+                    compression:'DEFLATE',
+                    compressionOptions:{level:6},
+                    platform:'UNIX'
+                });
+                return {blob,merged:true,changed,sourceName:source.name};
+            }catch(error){
+                console.warn('Local project ZIP merge failed; using generated patch ZIP instead.',error);
+                return {blob:patchBlob,merged:false,changed:artifact?.entryCount||0};
+            }
+        }
+
+        async function attachGeneratedArtifact(botMsgElem, artifact, sourceAttachments=[]) {
             if(!botMsgElem || !artifact?.base64 || !artifact?.filename)return;
             const artifactKey=`${artifact.filename}|${artifact.size||0}`;
             if([...botMsgElem.querySelectorAll('.generated-artifact-card')].some(node=>node.dataset.artifactKey===artifactKey))return;
             try{
-                const blob=artifactBase64ToBlob(artifact.base64,artifact.mimeType);
+                const prepared=await mergeGeneratedZipWithOriginal(artifact,sourceAttachments);
+                const blob=prepared.blob;
                 const url=URL.createObjectURL(blob);
                 const card=document.createElement('div');
                 card.className='generated-artifact-card';
                 card.dataset.artifactKey=artifactKey;
+                card.dataset.sourceMerged=prepared.merged?'true':'false';
                 card.style.cssText='margin:12px 0 4px;padding:12px;border:1px solid var(--border-color,#343434);border-radius:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--sidebar-bg,rgba(127,127,127,.06));';
                 const safeName=escapeHTML(artifact.filename);
-                const safeLabel=escapeHTML(artifact.label||'Generated file');
+                const baseLabel=artifact.label||'Generated file';
+                const mergeLabel=prepared.merged
+                    ? `Updated project ZIP · ${prepared.changed} changed file${prepared.changed===1?'':'s'} · original files preserved`
+                    : baseLabel;
+                const safeLabel=escapeHTML(mergeLabel);
                 card.innerHTML=`
                     <div style="min-width:0;flex:1 1 180px">
                         <div style="font-weight:700;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeName}</div>
-                        <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${safeLabel} • ${formatArtifactSize(artifact.size)}</div>
+                        <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${safeLabel} • ${formatArtifactSize(blob.size)}</div>
                     </div>
                     <a class="bot-action-btn generated-download-btn" href="${url}" download="${safeName}" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 12px">
                         <i data-lucide="download"></i>
                         Download
                     </a>`;
                 botMsgElem.appendChild(card);
-                refreshLucideIcons();
+                refreshLucideIcons(card);
             }catch(err){
                 appendActivityEvent({id:'artifact-client-error',label:'Could not prepare the generated download file.',state:'error',kind:'file'});
             }
@@ -11366,7 +11405,7 @@ ${m.text || ''}
                     botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
                         ${renderJdAssistantInteraction(assistantInteraction)}
                         ${botActionsHTML()}`;
-                    pendingArtifacts.forEach(artifact=>attachGeneratedArtifact(botMsgElem,artifact));
+                    pendingArtifacts.forEach(artifact=>{void attachGeneratedArtifact(botMsgElem,artifact,historyFiles);});
                     botMsgElem.style.removeProperty('display');
                     refreshLucideIcons(botMsgElem);
                     if (userIsScrollingUp) {
@@ -12585,16 +12624,51 @@ ${m.text || ''}
             const JSZip=await getJSZip();
             const zip=await JSZip.loadAsync(await file.arrayBuffer());
             const names=Object.keys(zip.files).filter(n=>!zip.files[n].dir);
-            const textNames=names.filter(n=>/\.(txt|md|csv|json|xml|html?|css|js|mjs|cjs|ts|tsx|jsx|py|php|java|c|cpp|h|hpp|cs|sql|ya?ml|sh|log)$/i.test(n));
-            let text=`${kind.toUpperCase()} archive: ${file.name}\nFiles: ${names.length}\nFile list:\n${names.slice(0,80).join('\n')}\n`;
-            for(const name of textNames.slice(0,30)){
-                if(text.length>=MAX_DOCUMENT_CHARS)break;
+            const textNames=names.filter(n=>/\.(txt|md|csv|json|xml|html?|css|js|mjs|cjs|ts|tsx|jsx|py|php|java|kt|kts|c|cpp|h|hpp|cs|sql|ya?ml|sh|log|gradle|properties)$/i.test(n));
+            const archiveFiles=[];
+            let sourceChars=0;
+            const SOURCE_BUDGET=520000;
+            const MAX_SOURCE_FILES=30;
+
+            // Keep each archive entry distinct. The old extractor flattened the first
+            // files into one long document, which prevented the model from knowing
+            // exactly which Gradle/manifest/source file a finding came from.
+            for(const name of textNames.slice(0,MAX_SOURCE_FILES)){
+                if(sourceChars>=SOURCE_BUDGET)break;
                 try{
                     const value=await zip.file(name).async('text');
-                    text+=`\n\n--- ${name} ---\n${value}`;
+                    const remaining=SOURCE_BUDGET-sourceChars;
+                    const clipped=String(value||'').slice(0,Math.min(90000,remaining));
+                    archiveFiles.push({
+                        name,
+                        size:new TextEncoder().encode(clipped).length,
+                        extractedText:clipped,
+                        truncated:String(value||'').length>clipped.length
+                    });
+                    sourceChars+=clipped.length;
                 }catch(_){}
             }
-            return {extractedText:text.slice(0,MAX_DOCUMENT_CHARS)};
+
+            const binaryCount=Math.max(0,names.length-textNames.length);
+            const manifest=[
+                `${kind.toUpperCase()} archive: ${file.name}`,
+                `Files: ${names.length}`,
+                `Readable source/config entries prepared: ${archiveFiles.length}`,
+                `Other/binary entries preserved locally: ${binaryCount}`,
+                'File list:',
+                ...names.slice(0,140)
+            ].join('\n');
+            const warning=textNames.length>archiveFiles.length
+                ? `Only ${archiveFiles.length} of ${textNames.length} readable source/config entries fit the request analysis budget; the complete original archive remains available locally for download merging.`
+                : '';
+            return {
+                extractedText:manifest.slice(0,MAX_DOCUMENT_CHARS),
+                archiveFiles,
+                archiveFileCount:names.length,
+                archiveReadableCount:textNames.length,
+                archiveBinaryCount:binaryCount,
+                extractionWarning:warning
+            };
         }
 
         async function seekVideo(video,time){
@@ -12741,6 +12815,9 @@ ${m.text || ''}
             placeholder.kind=kind;
             placeholder.status='processing';
             placeholder.statusText='Preparing…';
+            if(kind==='zip'){
+                try{Object.defineProperty(placeholder,'_localFile',{value:file,writable:false,enumerable:false,configurable:true});}catch(_){placeholder._localFile=file;}
+            }
             renderFilePreviews();
 
             try{
@@ -12946,6 +13023,32 @@ ${m.text || ''}
                     base64Chars+=f.data.length;
                 }else{
                     requestFiles.push(base);
+                }
+
+                // For project ZIPs, send extracted source/config entries as separate
+                // grounded files. This lets the backend audit Gradle, manifest and
+                // source code individually instead of pretending the archive is one document.
+                if(f.kind==='zip' && Array.isArray(f.archiveFiles)){
+                    let archiveChars=0;
+                    for(const entry of f.archiveFiles.slice(0,30)){
+                        if(requestFiles.length>=35)break;
+                        const content=String(entry?.extractedText||'');
+                        if(!content)continue;
+                        const remaining=560000-archiveChars;
+                        if(remaining<=0)break;
+                        const clipped=content.slice(0,Math.min(90000,remaining));
+                        requestFiles.push({
+                            name:String(entry.name||'archive-entry.txt').slice(0,220),
+                            parentName:f.name,
+                            mimeType:'text/plain',
+                            originalMimeType:'text/plain',
+                            size:Number(entry.size)||clipped.length,
+                            kind:'archive-entry',
+                            extractedText:`Archive entry: ${entry.name}\n${clipped}`,
+                            extractionWarning:entry.truncated?'Archive entry was clipped to the analysis budget.':''
+                        });
+                        archiveChars+=clipped.length;
+                    }
                 }
 
                 // Tiny videos can be understood natively by Gemini when available.
