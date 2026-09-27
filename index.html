@@ -9411,10 +9411,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 <div class="ai-activity-header-actions">
                     <div class="thought-line" data-working="true">
                         <button type="button" class="thought-line__head" onclick="toggleActivityDetails(this)" aria-expanded="true">
-                            <span class="lattice-loader" id="aiActivityLattice" data-status="working" role="status" aria-label="Thinking">
-                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
-                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
-                                <span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span><span class="lattice-loader__cell"></span>
+                            <span class="thought-cluster" id="aiActivityLattice" data-status="working" role="status" aria-label="Thinking">
+                                <span class="thought-cluster__dot"></span><span class="thought-cluster__dot"></span>
+                                <span class="thought-cluster__dot"></span><span class="thought-cluster__dot"></span>
                             </span>
                             <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking</span></span>
                             <span class="thought-line__timer" id="aiActivityTimer">0s</span>
@@ -9666,11 +9665,14 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function attachGeneratedArtifact(botMsgElem, artifact) {
             if(!botMsgElem || !artifact?.base64 || !artifact?.filename)return;
+            const artifactKey=`${artifact.filename}|${artifact.size||0}`;
+            if([...botMsgElem.querySelectorAll('.generated-artifact-card')].some(node=>node.dataset.artifactKey===artifactKey))return;
             try{
                 const blob=artifactBase64ToBlob(artifact.base64,artifact.mimeType);
                 const url=URL.createObjectURL(blob);
                 const card=document.createElement('div');
                 card.className='generated-artifact-card';
+                card.dataset.artifactKey=artifactKey;
                 card.style.cssText='margin:12px 0 4px;padding:12px;border:1px solid var(--border-color,#343434);border-radius:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--sidebar-bg,rgba(127,127,127,.06));';
                 const safeName=escapeHTML(artifact.filename);
                 const safeLabel=escapeHTML(artifact.label||'Generated file');
@@ -10544,7 +10546,7 @@ ${m.text || ''}
             upgradeVerifiedResultCards(tempDiv);
 
             const codeBlocks = tempDiv.querySelectorAll('pre');
-            codeBlocks.forEach((pre) => {
+            codeBlocks.forEach((pre, codeIndex) => {
                 const codeEl = pre.querySelector('code');
                 const codeContent = codeEl ? codeEl.textContent : pre.textContent;
                 let lang = 'code';
@@ -10552,10 +10554,15 @@ ${m.text || ''}
                     const match = codeEl.className.match(/language-([a-zA-Z0-9_\-]+)/);
                     if (match) lang = match[1];
                 }
+                const previousText=String(pre.previousElementSibling?.textContent||'').trim();
+                const fileMatch=previousText.match(/(?:^|\b)(?:FILE\s*:\s*)?([\w.@+()\-\/\\ ]+\.(?:html?|css|m?js|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|xml|svg|sql|ya?ml|sh|gradle|properties|md|txt))\s*$/i);
+                const defaultExt=({javascript:'js',js:'js',typescript:'ts',ts:'ts',tsx:'tsx',jsx:'jsx',python:'py',py:'py',html:'html',css:'css',json:'json',java:'java',cpp:'cpp',c:'c',csharp:'cs',cs:'cs',xml:'xml',svg:'svg',sql:'sql',yaml:'yaml',yml:'yml',bash:'sh',shell:'sh',sh:'sh',properties:'properties',gradle:'gradle',markdown:'md',md:'md'})[String(lang).toLowerCase()]||'txt';
+                const inferredFilename=(fileMatch?.[1]||`code-${codeIndex+1}.${defaultExt}`).replace(/\\/g,'/').split('/').pop().replace(/[^\w.@+()\- ]/g,'_').slice(0,96);
                 const isRunnable = /^(html|htm|javascript|js|css|svg|xml)$/i.test(lang) || /<(!doctype|html|head|body|div|p|style|script)/i.test(codeContent);
                 const container = document.createElement('div');
                 container.className = 'code-container-wrap';
                 container.dataset.lang = lang;
+                container.dataset.filename = inferredFilename;
                 container.innerHTML = `
                     <div class="code-block-header">
                         <span class="code-lang-label">
@@ -10566,6 +10573,7 @@ ${m.text || ''}
                             ${isRunnable ? `<button type="button" class="code-action-btn run-btn" onclick="executeSnippetFromButton(this)" title="Live Preview"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Run</button>` : ''}
                             <button type="button" class="code-action-btn" onclick="stageCodeSnippetFromButton(this)" title="Stage reviewed code for a GitHub pull request">GitHub PR</button>
                             <button type="button" class="code-action-btn" onclick="openCodeFullscreenFromButton(this)" title="Fullscreen code">⛶ Full</button>
+                            <button type="button" class="code-action-btn" onclick="downloadSnippetFromButton(this)" title="Download code file"><i data-lucide="download"></i><span>Download</span></button>
                             <button type="button" class="code-action-btn" onclick="copySnippetFromButton(this)" title="Copy code"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg><span>Copy</span></button>
                         </div>
                     </div>
@@ -10579,7 +10587,25 @@ ${m.text || ''}
         function snippetFromButton(btn) {
             const wrap = btn?.closest?.('.code-container-wrap');
             if (!wrap) return null;
-            return { code: wrap.querySelector('pre code')?.textContent || '', lang: String(wrap.dataset.lang || 'code').toLowerCase() };
+            return {
+                code: wrap.querySelector('pre code')?.textContent || '',
+                lang: String(wrap.dataset.lang || 'code').toLowerCase(),
+                filename: String(wrap.dataset.filename || 'code.txt')
+            };
+        }
+
+        function downloadSnippetFromButton(btn) {
+            const item=snippetFromButton(btn);
+            if(!item||!item.code)return;
+            const blob=new Blob([item.code],{type:'text/plain;charset=utf-8'});
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url;
+            a.download=(item.filename||'code.txt').replace(/[^\w.@+()\- ]/g,'_').slice(0,96);
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(()=>URL.revokeObjectURL(url),1200);
         }
 
         function stageCodeSnippetFromButton(btn) {
@@ -11305,6 +11331,7 @@ ${m.text || ''}
                 let fullResponse = '';
                 let assistantInteraction = null;
                 const jdWorkNotesSeen = new Set();
+                const pendingArtifacts = [];
                 let responseStreamFinished = false;
                 let responseRevealScheduled = false;
                 let actualProviderUsed = currentSelectedProvider;
@@ -11318,6 +11345,7 @@ ${m.text || ''}
                     botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
                         ${renderJdAssistantInteraction(assistantInteraction)}
                         ${botActionsHTML()}`;
+                    pendingArtifacts.forEach(artifact=>attachGeneratedArtifact(botMsgElem,artifact));
                     botMsgElem.style.removeProperty('display');
                     refreshLucideIcons(botMsgElem);
                     if (userIsScrollingUp) {
@@ -11355,7 +11383,9 @@ ${m.text || ''}
                             activePartialResponse=stripJdWorkNotes(fullResponse);
                         },
                         artifact: (payload) => {
-                            attachGeneratedArtifact(botMsgElem, payload);
+                            if(payload?.filename && !pendingArtifacts.some(item=>item?.filename===payload.filename && item?.size===payload.size)){
+                                pendingArtifacts.push(payload);
+                            }
                         },
                         done: (payload) => revealFinalResponse(payload.elapsedMs),
                         error: (payload) => {
