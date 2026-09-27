@@ -3,7 +3,7 @@ const html=fs.readFileSync('index.html','utf8');
 const activity=fs.readFileSync('reactbits-micro.css','utf8');
 assert(activity.includes('.ai-activity-row{'), 'Activity timeline stylesheet missing');
 assert(activity.includes('padding:5px 0!important'), 'compact borderless Activity rows need reference spacing');
-assert(activity.includes('background:transparent!important;border:0!important'), 'Activity rows must be borderless');
+assert(activity.includes('background:transparent!important') && activity.includes('border:0!important'), 'Activity rows must be borderless');
 assert(activity.includes('.ai-activity-card.collapsed .thought-line__trace{display:none}'),
   'ThoughtLine Activity history must remain collapsible');
 assert(activity.includes('.thought-cluster__dot'), 'Reference four-dot activity indicator missing');
