@@ -6,7 +6,7 @@ const html=fs.readFileSync('index.html','utf8');
 
 for(const token of [
   "const archiveFiles=[]",
-  "Readable source/config entries prepared:",
+  "Readable source/config entries prepared locally:",
   "kind:'archive-entry'",
   "parentName:f.name",
   "Archive entry:",
@@ -19,7 +19,7 @@ for(const token of [
 for(const token of [
   "function uploadedProjectGroups(files=[])",
   "function inspectUploadedProject(files=[], emit)",
-  "Inspected ZIP contents:",
+  "Indexed project archive:",
   "Reviewed Gradle configuration and dependencies",
   "Reviewed Android manifest and component declarations",
   "Inspected Java/Kotlin project sources",
@@ -30,7 +30,7 @@ for(const token of [
   "Updated project patch"
 ]) assert(api.includes(token),'Missing deep ZIP server contract: '+token);
 
-assert(api.includes("Do not claim a Gradle build, APK install, emulator run, or runtime test unless separate execution evidence exists."),
+assert(api.includes("Do not claim a Gradle build, APK install, emulator run, runtime test, or whole-project inspection unless separate execution/full-coverage evidence exists."),
   'Project inspection must not fabricate execution evidence');
 assert(api.includes("browser keeps the original archive locally and will overlay your changed/new files onto it"),
   'Model must know unchanged/binary project files are preserved by local merge');
