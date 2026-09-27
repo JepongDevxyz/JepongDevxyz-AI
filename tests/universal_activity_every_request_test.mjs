@@ -12,12 +12,12 @@ assert(!html.includes("if(shouldShowAIActivity(promptText, currentFiles)) showAI
   'Activity must not be gated to only heavy/special prompts');
 
 for(const token of [
-  "activity(emit,'task-analysis'",
-  "activity(emit,'task-approach'",
-  "Structuring the game mechanics and controls",
-  "Setting up the page, game loop, and interaction flow",
-  "Building movement, collision, scoring, and UI behavior",
-  "activity(emit,'thinking'",
+  "activity(emit,'task-plan'",
+  "work-commentary-plan",
+  "runPlannedActivityResearch(activityBlueprint,emit",
+  "activity(emit,'task-checkpoint'",
+  "activity(emit,'task-work'",
+  "activity(emit,'thinking','Thinking'",
   "id:'response-audit'",
   "taskAuditActivity(activityContextMessage,body.files||[],responseAudit,result.activityBlueprint||null)",
   "id:'output-verification'",
@@ -41,14 +41,16 @@ assert.equal(shouldVerifyTask('Gawan mo ako ng HTML snake game',[]),true);
 assert.equal(shouldVerifyTask('Create a Python calculator',[]),true);
 assert.equal(shouldVerifyTask('Write JavaScript for a todo app',[]),true);
 
-// UI must keep the new audit milestones visible instead of classifying them as transport details.
+// Internal bookkeeping stays auditable but must not clutter the primary ChatGPT-style work trace.
 const normalizeStart=html.indexOf('        function normalizeActivityEventForUI(evt = {}) {');
 const normalizeEnd=html.indexOf('\n        function shouldShowAIActivity',normalizeStart);
 assert(normalizeStart>=0&&normalizeEnd>normalizeStart,'Activity UI normalizer missing');
 const normalizer=html.slice(normalizeStart,normalizeEnd);
-assert(!normalizer.includes("id==='response-audit')return null"),
-  'Final response audit must remain visible');
+assert(normalizer.includes("if(id==='response-audit')"),
+  'Final response audit must still exist for details/history');
 assert(normalizer.includes("if(id==='output-verification')"),
-  'Generated-code verification needs reference-style test status');
+  'Generated-code verification must still exist for details/history');
+assert(normalizer.includes("visibility:'details'"),
+  'Internal audit/verification rows must stay out of the primary reference surface');
 
-console.log('PASS: Activity is universal and task-specific; HTML snake-game creation gets compact analysis, approach, build, audit, and code-verification stages.');
+console.log('PASS: Activity is universal and task-specific; model planning, real tools, commentary, work, and hidden audits share one request flow.');
