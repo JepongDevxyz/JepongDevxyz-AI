@@ -13,13 +13,14 @@ assert(!html.includes("if(shouldShowAIActivity(promptText, currentFiles)) showAI
 
 for(const token of [
   "activity(emit,'task-prepared'",
-  "Implementation plan prepared:",
+  "Game structure and interaction plan prepared",
+  "Building game loop, controls, scoring, and UI",
   "activity(emit,'thinking'",
   "id:'response-audit'",
-  "Checked final response against",
+  "taskAuditActivity(body.message||'',body.files||[],responseAudit)",
   "id:'output-verification'",
-  "Generated code passed"
-]) assert(api.includes(token),'Missing universal Activity stage: '+token);
+  "taskCodeVerificationLabel(body.message||'',body.files||[]"
+]) assert(api.includes(token),'Missing universal/task-specific Activity stage: '+token);
 
 assert(api.includes("const responseAudit=auditGeneratedResponse(body.message||'',generatedText,body.files||[]);"),
   'Every completed response must receive the server result audit');
@@ -48,4 +49,4 @@ assert(!normalizer.includes("id==='response-audit')return null"),
 assert(normalizer.includes("if(id==='output-verification')"),
   'Generated-code verification needs reference-style test status');
 
-console.log('PASS: Activity is universal for normal AI requests; HTML snake-game creation gets plan, Thinking, final-response audit, and generated-code static verification.');
+console.log('PASS: Activity is universal and task-specific; HTML snake-game creation gets gameplay planning/build wording, final-response audit, and game-code static verification.');
