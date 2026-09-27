@@ -89,14 +89,14 @@ assert(initial.bell,'BellToggle did not render');
 assert(initial.squish>=3,'SquishSwitch controls did not render');
 assert.equal(initial.old,0,'legacy component markup still rendered');
 
-// 1/6: real Activity functions must render LatticeLoader + ThoughtLine and real labels.
+// 1/6: real Activity functions must render the four-dot ThoughtLine status and real labels.
 const activity=JSON.parse(await evaluate(`(()=>{
   showAIIndicator('Audit ReactBits browser smoke test',[]);
   appendActivityEvent({id:'task-context',label:'Auditing requested ReactBits components',kind:'process',state:'completed'});
   appendActivityEvent({id:'generation',label:'Generating response',kind:'generate',state:'running'});
   const card=document.getElementById('activeAiIndicator');
   const before={
-    lattice:!!card?.querySelector('.lattice-loader[data-status="working"]'),
+    cluster:!!card?.querySelector('.thought-cluster[data-status="working"]'),
     thought:!!card?.querySelector('.thought-line'),
     trace:!!card?.querySelector('.thought-line__trace'),
     lead:card?.querySelector('.ai-activity-lead')?.textContent||'',
@@ -105,16 +105,16 @@ const activity=JSON.parse(await evaluate(`(()=>{
     rows:card?.querySelectorAll('.ai-activity-row').length||0
   };
   finishAIIndicator(true,1200);
-  before.done=card?.querySelector('.lattice-loader')?.dataset.status;
+  before.done=card?.querySelector('.thought-cluster')?.dataset.status;
   before.settled=card?.querySelector('#aiActivitySummary')?.textContent||'';
   before.finalTimer=card?.querySelector('#aiActivityTimer')?.textContent||'';
   return JSON.stringify(before);
 })()`));
-assert(activity.lattice&&activity.thought&&activity.trace,'LatticeLoader + ThoughtLine failed to render');
+assert(activity.cluster&&activity.thought&&activity.trace,'Four-dot ThoughtLine status failed to render');
 assert.equal(activity.lead,'Auditing requested ReactBits components');
 assert.equal(activity.headline,'Thinking','ThoughtLine header must stay stable while the exact running event remains in the trace');
 assert(activity.rows>=1,'real Activity row did not render');
-assert.equal(activity.done,'done','LatticeLoader did not settle to done');
+assert.equal(activity.done,'done','Four-dot ThoughtLine status did not settle to done');
 assert.equal(activity.settled,'Thought for','ThoughtLine did not settle like ReactBits');
 assert.equal(activity.finalTimer,'1s','ThoughtLine final elapsed timer mismatch');
 

@@ -313,6 +313,11 @@ function wantsCompleteCode(message='') {
     /\bcomplete\s+(?:source\s+)?code\b/i,
     /\bwhole\s+(?:source\s+)?code\b/i,
     /\bentire\s+(?:source\s+)?code\b/i,
+    /\bupdated\s+(?:source\s+)?code\b/i,
+    /\bupdate(?:d)?\s+code\b/i,
+    /\bfixed\s+(?:source\s+)?code\b/i,
+    /\bworking\s+(?:source\s+)?code\b/i,
+    /\bready[- ]to[- ](?:import|build)\b/i,
     /\bdo\s+not\s+(?:split|truncate)\b/i,
     /\b(?:don't|dont)\s+(?:split|truncate)\b/i
   ].some(rx=>rx.test(text));
@@ -436,7 +441,7 @@ function responseQualityInstruction(message='') {
 }
 
 
-function detectArtifactRequest(message='') {
+function detectArtifactRequest(message='', files=[]) {
   const text=String(message||'').trim();
   if(!text) return null;
 
@@ -456,21 +461,35 @@ function detectArtifactRequest(message='') {
 
   const deliveryVerb=/\b(?:download|downloadable|i-download|idownload|export|save(?:\s+as)?|send(?:\s+me)?|pa[ -]?send|paki[ -]?send|bigay|ibigay|bigyan)\b/i.test(text);
   const createVerb=/\b(?:gawan|gumawa|create|generate)\b/i.test(text);
-  const artifactNoun=/\b(?:file|zip|pdf|document|doc|archive|download)\b/i.test(text);
+  const artifactNoun=/\b(?:file|zip|pdf|document|doc|archive|download|code|source|project)\b/i.test(text);
   const typedFile=/\b(?:html|javascript|js|css|python|json|markdown|text|txt|csv|xml|svg|sql|typescript|tsx|jsx|php|java|c\+\+|cpp|c#|yaml|yml|shell|bash)\s+(?:file|document|code)\b/i.test(text);
   const directType=/(?:^|\s)\.(?:zip|pdf|txt|md|html|js|css|py|json|csv|xml|svg|sql|ts|tsx|jsx|php|java|cpp|cs|yaml|yml|sh)\b/i.test(text) ||
     /\b(?:zip file|pdf file|downloadable file|download file)\b/i.test(text);
 
+  const inputFiles=Array.isArray(files)?files:[];
+  const rootNames=[...new Set(inputFiles.map(f=>String(f?.parentName||f?.name||f?.filename||'')).filter(Boolean))];
+  const attachedZip=rootNames.find(name=>/\.zip$/i.test(name))||'';
+  const attachedProjectFiles=rootNames.filter(name=>/\.(?:html?|css|m?js|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|xml|svg|sql|ya?ml|sh|gradle|properties|md|txt)$/i.test(name));
+  const codeDeliveryIntent=wantsCompleteCode(text) ||
+    /\b(?:updated|fixed|complete|full|buong)\s+(?:source\s+)?(?:code|project)\b/i.test(text) ||
+    /\b(?:bigay|ibigay|send|pa[ -]?send|export|download)\b[\s\S]{0,45}\b(?:code|source|project)\b/i.test(text);
+  const projectEditIntent=/\b(?:ayusin|fix|update|modify|edit|refactor|convert|gawing|build|create|gumawa|gawan)\b/i.test(text) &&
+    /\b(?:code|project|app|website|android|aide|gradle|source)\b/i.test(text);
+  const implicitProjectArtifact=Boolean(attachedZip && (codeDeliveryIntent||projectEditIntent));
+
   const explicitlyRequested =
     (deliveryVerb && (artifactNoun || directType || !!filename || typedFile)) ||
-    (createVerb && (artifactNoun || typedFile || directType));
+    (createVerb && (artifactNoun || typedFile || directType)) ||
+    codeDeliveryIntent ||
+    implicitProjectArtifact;
 
   if(!explicitlyRequested) return null;
 
   let kind='file';
   let wantedExt=ext;
 
-  if(ext==='zip' || /(?:^|\s)\.zip\b|\bzip file\b/i.test(text)) {
+  if(ext==='zip' || /(?:^|\s)\.zip\b|\bzip file\b/i.test(text) || implicitProjectArtifact ||
+     (codeDeliveryIntent && /\b(?:project|app|website|android|aide|gradle)\b/i.test(text))) {
     kind='zip'; wantedExt='zip';
   } else if(ext==='pdf' || /(?:^|\s)\.pdf\b|\bpdf (?:file|document)\b/i.test(text)) {
     kind='pdf'; wantedExt='pdf';
@@ -489,15 +508,21 @@ function detectArtifactRequest(message='') {
     if(!wantedExt) wantedExt='txt';
   }
 
-  const safeName=(filename || `JepongDevxyz-output.${wantedExt}`)
+  const zipBase=attachedZip
+    ? attachedZip.replace(/\.zip$/i,'').replace(/[^\w.\- ()]/g,'_').slice(0,78)
+    : '';
+  const autoName=(kind==='zip' && zipBase)
+    ? `${zipBase}_updated.zip`
+    : `JepongDevxyz-output.${wantedExt}`;
+  const safeName=(filename || autoName)
     .replace(/[^\w.\- ()]/g,'_')
     .slice(0,100);
 
   return {kind,ext:wantedExt,filename:safeName};
 }
 
-function artifactInstruction(message='') {
-  const req=detectArtifactRequest(message);
+function artifactInstruction(message='', files=[]) {
+  const req=detectArtifactRequest(message,files);
   if(!req) return '';
 
   let text =
@@ -506,8 +531,9 @@ function artifactInstruction(message='') {
 
   if(req.kind==='zip'){
     text +=
-      'For a ZIP request, if the answer contains multiple project files, put each file in its own fenced code block and immediately precede it with a line exactly like "FILE: path/filename.ext". ' +
-      'Include every required project file; do not use placeholders for omitted code. ';
+      'For a ZIP/project request, put EVERY generated or updated project file in its own fenced code block and immediately precede it with a line exactly like "FILE: path/filename.ext". ' +
+      'Use real relative paths, not display labels. Include all source/config files required for the project to work; do not use placeholders such as "unchanged code here", "same as before", or "rest omitted". ' +
+      'Also show the useful updated code in the visible answer; the server will package the FILE blocks into a real downloadable ZIP. ';
   }else if(req.kind==='pdf'){
     text +=
       'For a PDF request, write polished document content with clear headings and readable prose; the server will convert your response into an actual PDF. ';
@@ -735,7 +761,7 @@ function extensionFromFence(lang=''){
 function extractZipEntries(responseText='',requestedFilename=''){
   const text=String(responseText||'');
   const entries=[];
-  const named=/(?:^|\n)\s*(?:FILE|Filename|File)\s*:\s*([^\n`]+)\n```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/gi;
+  const named=/(?:^|\n)\s*(?:#{1,6}\s*)?(?:\*\*)?(?:(?:FILE|Filename|File)\s*:\s*)?([\w.@+()\-\/\\ ]+\.(?:html?|css|m?js|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|xml|svg|sql|ya?ml|sh|gradle|properties|md|txt))(?:\*\*)?\s*\n```([a-zA-Z0-9_+#.-]*)\n([\s\S]*?)```/gi;
   let m;
   while((m=named.exec(text))){
     const name=m[1].trim().replace(/[^\w./\- ()]/g,'_').replace(/^\/+/,'');
@@ -787,8 +813,8 @@ function mimeForExtension(ext='txt'){
   return map[ext]||'application/octet-stream';
 }
 
-function buildGeneratedArtifact(message='',responseText=''){
-  const req=detectArtifactRequest(message);
+function buildGeneratedArtifact(message='',responseText='',files=[]){
+  const req=detectArtifactRequest(message,files);
   if(!req) return null;
 
   let bytes;
@@ -809,7 +835,7 @@ function buildGeneratedArtifact(message='',responseText=''){
   }
 
   // Keep SSE payloads comfortably bounded. This still supports typical full-code files.
-  if(bytes.length>3_000_000){
+  if(bytes.length>6_000_000){
     return {
       error:'Generated file is too large to send through the chat stream.',
       filename,
@@ -817,13 +843,15 @@ function buildGeneratedArtifact(message='',responseText=''){
     };
   }
 
+  const entryCount=req.kind==='zip'?extractZipEntries(responseText,'').length:1;
   return {
     filename,
     mimeType,
     size:bytes.length,
     base64:bytesToBase64(bytes),
     kind:req.kind,
-    label:req.kind==='zip'?'ZIP project':req.kind==='pdf'?'PDF document':`${req.ext.toUpperCase()} file`
+    entryCount,
+    label:req.kind==='zip'?(`ZIP project · ${entryCount} file${entryCount===1?'':'s'}`):req.kind==='pdf'?'PDF document':`${req.ext.toUpperCase()} file`
   };
 }
 
@@ -1285,7 +1313,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   text += finalAnswerAuditInstruction();
   text += responseQualityInstruction(userMessage);
   text += languageQualityInstruction(userMessage, personalization);
-  text += artifactInstruction(userMessage);
+  text += artifactInstruction(userMessage, files);
   text += ' When tool results are supplied in bracketed LIVE/VERIFICATION/PROVIDED LINK sections, use them only when relevant to the user request and distinguish actual fetched/tested results from inference. Never say you searched, tested, ran, compiled, inspected an environment, or opened a website unless the supplied tool context confirms that action. For code, report static verification as static verification—not successful execution. Keep the final answer tightly aligned to the user\'s actual task, attached files, provided URLs, and requested output.';
   text += ' When reporting a concrete VERIFIED software/project result (for example CI passed, deployment status, PR status, build verification, or repository work), you may use at most two compact status cards. A card must be a Markdown blockquote whose first line is exactly > [!STATUS success|Badge text], > [!STATUS info|Badge text], > [!STATUS warning|Badge text], or > [!STATUS error|Badge text]. Put a short heading, optional metadata such as Repository:/Commit:/Branch:, a concise checklist, and at most one normal Markdown link inside the same blockquote. Use success only for facts actually verified by tool context. Do not use status cards for ordinary chat, explanations, guesses, or unverified claims.';
 
@@ -2250,7 +2278,7 @@ function taskProfile(message='', files=[]){
     edit:/\b(ayusin|fix|edit|update|modify|refactor|repair)\b/i.test(t),
     test:/\b(test|i-?test|itest|verify|validate|check|suriin|debug|working|gumagana)\b/i.test(t),
     research:shouldAutoResearch(message),
-    download:Boolean(detectArtifactRequest(message))
+    download:Boolean(detectArtifactRequest(message,files))
   };
 
   const contextual=splitContextualTaskMessage(message);
@@ -4844,7 +4872,11 @@ function activityStreamResponse(body, requestSignal=null) {
             }
           }
 
-          const artifact=buildGeneratedArtifact(body.message||'',generatedText);
+          const artifactReq=detectArtifactRequest(body.message||'',body.files||[]);
+          if(artifactReq){
+            send('activity',{type:'activity',id:'artifact',label:artifactReq.kind==='zip'?'Packaging updated code into a ZIP':'Preparing requested download file',state:'running',kind:'file',at:Date.now()});
+          }
+          const artifact=buildGeneratedArtifact(body.message||'',generatedText,body.files||[]);
           if(artifact){
             if(artifact.error){
               send('activity',{type:'activity',id:'artifact',label:artifact.error,state:'warning',kind:'file',at:Date.now()});

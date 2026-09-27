@@ -11,12 +11,12 @@ const settingsCss=readFileSync('haptics-notifications.css','utf8');
 assert(html.includes('/reactbits-micro.css'),'ReactBits stylesheet must load');
 assert(html.includes('/reactbits-micro.js'),'ReactBits runtime must load');
 
-// 1/6 LatticeLoader + ThoughtLine: direct real Activity rendering, not overlay injection.
-for (const token of ['lattice-loader','thought-line','thought-line__trace']) {
+// 1/6 Reference ThoughtLine: direct real Activity rendering, not overlay injection.
+for (const token of ['thought-cluster','thought-line','thought-line__trace']) {
   assert(html.includes(token), 'Activity direct markup missing: '+token);
   assert(css.includes(token), 'Activity style missing: '+token);
 }
-assert(html.includes('id="aiActivityLattice"'),'Activity LatticeLoader live status hook missing');
+assert(html.includes('id="aiActivityLattice"'),'Activity live status hook missing');
 assert(html.includes('id="aiActivityTimer"'),'ThoughtLine elapsed timer hook missing');
 assert(html.includes("if(summary && card.dataset.finalized!=='true')summary.textContent='Thinking';"),
  'ThoughtLine headline must remain stable while exact milestones stay in the activity trace');
@@ -25,7 +25,7 @@ assert(html.includes("card.dataset.taskSummary=String(normalized.label||'').slic
 assert(html.includes('function appendActivityEvent'),'real backend Activity event bridge must remain');
 assert(html.includes("if(id==='task-context')"),'real task-context Activity lead must remain');
 assert(html.includes('initialActivityForRequest'),'request-specific temporary lead must remain');
-assert(html.includes("lattice.dataset.status = success ? 'done' : 'error'"),'Activity final status must drive LatticeLoader');
+assert(html.includes("lattice.dataset.status = success ? 'done' : 'error'"),'Activity final status hook must remain');
 assert(!html.includes('class="ai-activity-summary-row"'),'legacy Activity summary markup must be removed');
 assert(!html.includes('id="aiActivitySummaryIcon"'),'legacy Activity icon markup must be removed');
 assert(activityCss.includes('migrated to reactbits-micro.css'),'legacy Activity stylesheet must be retired');
