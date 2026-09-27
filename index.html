@@ -3883,7 +3883,53 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/haptics-notifications.css">
     <link rel="stylesheet" href="/interactive-proposals.css">
     <link rel="stylesheet" href="/activity-reference.css">
-    <link rel="stylesheet" href="/reactbits-micro.css">
+    <link rel="stylesheet" href="/reactbits-micro.css?v=20260927-upload-ui-2">
+    <style id="jdUploadUiCritical">
+      #filePreviewContainer.is-visible{
+        display:flex!important;
+        visibility:visible!important;
+        opacity:1!important;
+        min-height:28px!important;
+        align-items:center!important;
+        flex-wrap:wrap!important;
+        gap:6px!important;
+        position:relative!important;
+        z-index:3!important;
+      }
+      #filePreviewContainer .jd-upload-chip{
+        display:inline-flex!important;
+        align-items:center!important;
+        gap:6px!important;
+        height:28px!important;
+        max-width:min(230px,calc(100vw - 96px))!important;
+        padding:0 5px 0 9px!important;
+        border-radius:9px!important;
+        background:rgba(255,255,255,.08)!important;
+        color:inherit!important;
+        line-height:1!important;
+      }
+      body.theme-light #filePreviewContainer .jd-upload-chip{
+        background:rgba(15,23,42,.08)!important;
+      }
+      #filePreviewContainer .jd-upload-chip__icon{
+        width:12px!important;height:12px!important;display:inline-flex!important;
+        align-items:center!important;justify-content:center!important;flex:none!important;
+      }
+      #filePreviewContainer .jd-upload-chip__name{
+        display:block!important;max-width:158px!important;overflow:hidden!important;
+        white-space:nowrap!important;text-overflow:ellipsis!important;font-size:12px!important;
+      }
+      #filePreviewContainer .jd-upload-chip__remove{
+        display:inline-grid!important;place-items:center!important;width:18px!important;height:18px!important;
+        padding:0!important;border:0!important;border-radius:5px!important;background:transparent!important;
+        color:inherit!important;opacity:.55!important;
+      }
+      #filePreviewContainer .attachment-spinner{
+        display:inline-block!important;width:12px!important;height:12px!important;
+        border:1.7px solid currentColor!important;border-right-color:transparent!important;
+        border-radius:50%!important;animation:attachmentSpin .7s linear infinite!important;
+      }
+    </style>
 </head>
 <body>
 
@@ -12731,6 +12777,10 @@ ${m.text || ''}
                     fullData:''
                 };
                 selectedFilesData.push(placeholder);
+                // Paint the reference upload chip immediately after Android/iOS
+                // returns from the native file picker, before any heavy extraction starts.
+                renderFilePreviews();
+                await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
                 const job=processAttachmentFile(file,placeholder)
                     .finally(()=>attachmentJobs.delete(placeholder.id));
                 attachmentJobs.set(placeholder.id,job);
@@ -13105,6 +13155,6 @@ ${m.text || ''}
     <script src="/agent.js" defer></script>
     <link rel="stylesheet" href="/codex-choice.css">
     <script src="/codex-choice.js" defer></script>
-    <script src="/reactbits-micro.js" defer></script>
+    <script src="/reactbits-micro.js?v=20260927-upload-ui-2" defer></script>
 </body>
 </html>
