@@ -457,7 +457,9 @@
       let thumb=chip.querySelector('.jd-upload-lane__thumb');
       if(!thumb){thumb=doc.createElement('span');thumb.className='jd-upload-lane__thumb';chip.prepend(thumb);}
       const preview=previewSource(file);
-      thumb.innerHTML=preview?'<img alt="" src="'+String(preview).replace(/"/g,'&quot;')+'">':fallbackIcon(file.kind);
+      thumb.innerHTML=preview
+        ? '<img alt="" src="'+String(preview).replace(/"/g,'&quot;')+'">'
+        : (file.status==='processing' ? '<span class="attachment-spinner" aria-hidden="true"></span>' : fallbackIcon(file.kind));
 
       let body=chip.querySelector('.jd-upload-lane__body');
       if(!body){body=doc.createElement('span');body.className='jd-upload-lane__body';chip.insertBefore(body,remove);body.appendChild(name);}
