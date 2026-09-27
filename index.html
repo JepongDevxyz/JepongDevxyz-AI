@@ -9700,6 +9700,14 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
+            // Future model-planned milestones are sent as queued metadata so the
+            // UI knows the whole plan without showing steps before they begin.
+            if(state==='queued'){
+                row.remove();
+                tickJdActivityClock(card);
+                syncJdThoughts();
+                return;
+            }
             const detailsOnly = normalized.visibility==='details' ||
                 kind==='provider' || kind==='route' ||
                 /^attachment-media-(?:selected|bridge|cloudflare)$/.test(id);
