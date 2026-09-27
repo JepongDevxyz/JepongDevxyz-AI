@@ -1183,6 +1183,7 @@ function defaultActivityBlueprint(profile={}){
     work:cleanActivityLabel(work.label),
     audit:cleanActivityLabel(audit.label),
     commentary:'',
+    responseContract:'',
     kind:work.kind||context.kind||'process',
     dynamic:false
   };
@@ -1207,13 +1208,16 @@ function buildActivityBlueprintPrompt(message='', files=[], profile={}){
     'WORK: identify what the main response pass is actively building, solving, comparing, drafting, or analyzing.',
     'AUDIT: identify what will be checked in the produced answer/code. Do not claim runtime execution unless verified tool context says it ran.',
     'COMMENTARY: one short natural sentence about the chosen approach; it must not expose private reasoning or claim unverified external actions.',
-    'Return EXACTLY these six lines and nothing else:',
+    'RESPONSE_CONTRACT: one compact high-level answer contract stating the intended deliverable, platform assumptions (or that platform is unspecified), major components, and important caveats. This is not chain-of-thought.',
+    'The Activity labels and RESPONSE_CONTRACT must describe the SAME approach. Do not plan a website in Activity and then describe a native app in the contract, or vice versa.',
+    'Return EXACTLY these seven lines and nothing else:',
     'CONTEXT: <specific label>',
     'ANALYSIS: <specific label>',
     'APPROACH: <specific label>',
     'WORK: <specific label>',
     'AUDIT: <specific label>',
     'COMMENTARY: <one short sentence>',
+    'RESPONSE_CONTRACT: <one-line high-level answer contract>',
     'Task type: '+String(profile?.kind||classifyUserTask(message,files))+'/'+String(profile?.subtype||'general'),
     names.length?'Attachments: '+names.join(', '):'Attachments: none',
     'User request: '+String(message||'').slice(0,8000)
@@ -1234,8 +1238,9 @@ function parseActivityBlueprintOutput(raw='', profile={}){
   const work=value('WORK');
   const audit=value('AUDIT');
   const commentary=value('COMMENTARY',520);
+  const responseContract=value('RESPONSE_CONTRACT',2200);
   const valid=[context,analysis,approach,work,audit].filter(Boolean).length>=4;
-  if(!valid)return {...fallback,commentary:commentary||fallback.commentary};
+  if(!valid)return {...fallback,commentary:commentary||fallback.commentary,responseContract:responseContract||fallback.responseContract};
   return {
     context:context||fallback.context,
     analysis:analysis||fallback.analysis,
@@ -1243,6 +1248,7 @@ function parseActivityBlueprintOutput(raw='', profile={}){
     work:work||fallback.work,
     audit:audit||fallback.audit,
     commentary,
+    responseContract,
     kind:fallback.kind,
     dynamic:true
   };
@@ -1269,6 +1275,7 @@ function buildInternalTaskBriefPrompt(message='', files=[], profile={}){
     'ACTIVITY_WORK: concise label for what the final-answer pass will actively build/solve/analyze/draft.',
     'ACTIVITY_AUDIT: concise label for checking the produced answer against the request; no fake runtime claims.',
     'PUBLIC_UPDATE: one short natural paragraph (1-2 sentences) in the user\'s language describing the concrete approach. It must sound like a polished ChatGPT work update, not a generic promise.',
+    'RESPONSE_CONTRACT: one compact high-level answer contract stating the intended deliverable, platform assumptions (or that platform is unspecified), major components, and important caveats. The final answer must follow the same approach as the Activity labels.',
     'INTERNAL_BRIEF: concise structured notes covering the intended user goal, hard constraints, relevant verified evidence, likely mistakes to avoid, and the best final-answer approach. Mark uncertain items as uncertain. Do not include private reasoning.',
     'Activity labels should normally be 3-10 words, specific to this exact request, and should not repeat the whole user prompt.',
     isVisualWebUiRequest(message,files)
@@ -1302,6 +1309,7 @@ function parseQualityPreflightOutput(raw='', profile={}){
   const approach=line('ACTIVITY_APPROACH');
   const work=line('ACTIVITY_WORK');
   const audit=line('ACTIVITY_AUDIT');
+  const responseContract=line('RESPONSE_CONTRACT',2200);
   const activityBlueprint={
     context:context||fallback.context,
     analysis:analysis||fallback.analysis,
@@ -1309,6 +1317,7 @@ function parseQualityPreflightOutput(raw='', profile={}){
     work:work||fallback.work,
     audit:audit||fallback.audit,
     commentary:cleanPublic,
+    responseContract:responseContract||fallback.responseContract,
     kind:fallback.kind,
     dynamic:Boolean(context||analysis||approach||work||audit)
   };
@@ -2500,15 +2509,18 @@ function taskProfile(message='', files=[]){
   const hasVideos=(Array.isArray(files)?files:[]).some(f=>String(f?.mimeType||'').startsWith('video/')||f?.mediaRole==='video-frame');
 
   let kind='general';
-  // An app or meme-generator request may mention uploaded images. Classify
-  // what the user wants to BUILD before treating incidental "image" as an
-  // image-generation or screenshot-analysis task.
-  if(/\b(?:build|create|make|gawan|gumawa|implement|develop)\b/i.test(t) &&
-     /\b(?:app|website|web app|generator|editor|game|application|tool)\b/i.test(t))kind='web';
-  else if(/\b(apk|android|web\s*to\s*apk|webview|gradle|manifest)\b/i.test(t))kind='android';
+  // Classify the task's actual domain before the generic word "app".
+  // A request such as "make an app that can edit/commit/push to GitHub"
+  // is a GitHub client task, not automatically a website task.
+  if(/\b(apk|android|web\s*to\s*apk|webview|gradle|manifest|kotlin)\b/i.test(t))kind='android';
+  else if(/\b(github|repository|repo|pull request|workflow|actions|commit|push|branch|clone)\b/i.test(t))kind='github';
   else if(/\b(vercel|deployment|deploy|serverless|edge function)\b/i.test(t))kind='deployment';
-  else if(/\b(github|repository|repo|pull request|workflow|actions)\b/i.test(t))kind='github';
   else if(/\b(api|endpoint|backend|webhook|server|database)\b/i.test(t))kind='backend';
+  else if(/\b(?:build|create|make|gawan|gumawa|implement|develop)\b/i.test(t) &&
+          /\b(?:app|application)\b/i.test(t) &&
+          !/\b(?:website|web app|html|css|javascript|browser)\b/i.test(t))kind='app';
+  else if(/\b(?:build|create|make|gawan|gumawa|implement|develop)\b/i.test(t) &&
+          /\b(?:website|web app|generator|editor|game|tool)\b/i.test(t))kind='web';
   else if(/\b(html|css|javascript|typescript|frontend|website|web app|ui|responsive)\b/i.test(t)||hasCodeFiles)kind='web';
   else if(/\b(pdf|document|report|reviewer|essay|worksheet|notes|docx|pptx|spreadsheet)\b/i.test(t))kind='document';
   else if(/\b(video|clip|recording)\b/i.test(t)||hasVideos)kind='video';
@@ -2532,7 +2544,10 @@ function taskProfile(message='', files=[]){
     subtype=/\b(game|snake|tetris|pong|platformer|quiz game|memory game)\b/i.test(t)?'game':
       /\b(generator|editor|tool|calculator|converter|dashboard)\b/i.test(t)?'tool':
       /\b(ui|ux|interface|layout|design|responsive)\b/i.test(t)?'ui':'website';
-  }else if(kind==='android') subtype=intent.edit||intent.test?'android-repair':'android-build';
+  }else if(kind==='app') subtype=intent.edit||intent.test?'app-change':'app-build';
+  else if(kind==='android') subtype=intent.edit||intent.test?'android-repair':'android-build';
+  else if(kind==='github') subtype=intent.create&&/\b(app|application|client|editor|tool)\b/i.test(t)?'github-client':
+      intent.edit?'repository-edit':intent.test?'repository-check':'repository';
   else if(kind==='backend') subtype=/\bwebhook\b/i.test(t)?'webhook':/\b(database|sql|schema)\b/i.test(t)?'database':'api';
   else if(kind==='writing') subtype=/\b(translate|translation)\b/i.test(t)?'translation':/\b(summarize|summary)\b/i.test(t)?'summary':/\b(email|message)\b/i.test(t)?'message':'writing';
   else if(kind==='study') subtype=/\b(math|equation|solve|calculate)\b/i.test(t)?'math':/\b(quiz|reviewer|flashcard)\b/i.test(t)?'review':'explain';
@@ -2626,6 +2641,14 @@ function taskSpecificActivityCopy(profile={}, phase='context'){
       audit:'Checking data behavior and constraints',
       verify:'Checking the generated database code'
     },
+    'github:github-client':{
+      context:'Planning the GitHub client',
+      prepared:'Mapping authentication, repository access, edit, commit, and push',
+      prepared2:'Preparing files, branches, commits, and push flow',
+      work:'Building the requested GitHub client flow',
+      audit:'Checking authentication, editing, commit, and push behavior',
+      verify:'Checking the generated GitHub client code'
+    },
     'writing:translation':{
       context:'Reviewing the translation request',
       prepared:'Identifying meaning, tone, and target-language requirements',
@@ -2671,6 +2694,14 @@ function taskSpecificActivityCopy(profile={}, phase='context'){
   };
 
   const generic={
+    app:{
+      context:intent.edit?'Reviewing the requested app changes':'Planning the requested application',
+      prepared:'Mapping features, data flow, and platform requirements',
+      prepared2:'Preparing application structure and interaction flow',
+      work:intent.edit?'Applying the requested application changes':'Building the requested application',
+      audit:'Checking the application flow and requested features',
+      verify:'Checking the generated application code'
+    },
     web:{
       context:intent.edit?'Reviewing the requested website changes':'Planning the requested website',
       prepared:'Mapping structure, behavior, and responsive requirements',
@@ -2753,9 +2784,10 @@ function taskSpecificActivityCopy(profile={}, phase='context'){
 
   const set=specific[key]||generic[kind]||generic.general;
   const base=set[phase]||set.work||'Working through the request';
-  const activityKind=kind==='backend'?'api':kind==='deployment'?'deploy':kind==='research'?'research':
-    kind==='image'?'image':kind==='video'||kind==='document'?'file':kind==='web'||kind==='android'?'build':
-    phase==='audit'||phase==='verify'?'test':'process';
+  const activityKind=phase==='audit'||phase==='verify'?'test':
+    kind==='backend'?'api':kind==='deployment'?'deploy':kind==='research'?'research':
+    kind==='github'?'github':kind==='image'?'image':kind==='video'||kind==='document'?'file':
+    kind==='web'||kind==='android'||kind==='app'?'build':'process';
 
   // Only the lead/context row repeats the task subject. The reference timeline
   // uses short changing milestones below it rather than restating the whole prompt.
@@ -5175,6 +5207,15 @@ async function processChat(body, emit) {
   }
 
   contextPlan.activityBlueprint=activityBlueprint;
+  if(activityBlueprint?.responseContract){
+    systemInstruction +=
+      '\n\n[RESPONSE-ACTIVITY COHERENCE CONTRACT — internal, do not quote]\n' +
+      activityBlueprint.responseContract +
+      '\nThe final answer must stay semantically aligned with this contract and the visible Activity labels. ' +
+      'Do not silently switch the deliverable, platform, architecture, or implementation approach after Activity has described a different one. ' +
+      'If verified tool evidence conflicts with the contract, follow the verified evidence and state the correction plainly in the answer. ' +
+      'This contract is a high-level output plan, not private chain-of-thought.\n[/RESPONSE-ACTIVITY COHERENCE CONTRACT]';
+  }
   activity(emit,'task-analysis',activityBlueprint.analysis||taskAnalysis.label,'completed',activityBlueprint.kind||taskAnalysis.kind,'');
   activity(emit,'task-approach',activityBlueprint.approach||taskApproach.label,'completed',activityBlueprint.kind||taskApproach.kind,'');
   if(activityBlueprint?.commentary){

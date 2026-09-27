@@ -9139,6 +9139,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     ?'Reviewing the Android issue: '+subject
                     :'Planning the Android implementation: '+subject,kind:'build',detail:''};
             }
+            if(/\b(github|repository|repo|pull request|workflow|actions|commit|push|branch|clone)\b/i.test(lower)){
+                return {label:/\b(gawan|gumawa|create|build|make|implement|develop)\b/i.test(lower)
+                    ?'Planning the GitHub app or repository flow: '+subject
+                    :'Reviewing the GitHub repository task: '+subject,kind:'github',detail:''};
+            }
             if(/\b(api|endpoint|backend|webhook|database|sql)\b/i.test(lower)){
                 return {label:'Reviewing the API/backend task: '+subject,kind:'api',detail:''};
             }
