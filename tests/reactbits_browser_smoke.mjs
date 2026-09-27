@@ -356,7 +356,7 @@ const motionUx=JSON.parse(await evaluate(`(async()=>{
   // Exact scroll-state restoration with a stable anchor.
   const chat=document.getElementById('chatBox');
   const original=chat.innerHTML;
-  chat.innerHTML='<div class="msg bot" style="height:520px">A</div><div class="msg bot" style="height:520px">B</div><div class="msg bot" style="height:520px">C</div>';
+  chat.innerHTML='<button class="floating-scroll-pill" id="scrollPill"><span class="latest-label">Latest</span><span class="unread-badge" id="unreadBadge" style="display:none;">0</span></button><div class="msg bot" style="height:520px">A</div><div class="msg bot" style="height:520px">B</div><div class="msg bot" style="height:520px">C</div>';
   api.decorateScrollAnchors();
   chat.scrollTop=610;
   api.captureScroll('browser-smoke');
