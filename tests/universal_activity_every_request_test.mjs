@@ -21,7 +21,7 @@ for(const token of [
   "id:'response-audit'",
   "taskAuditActivity(activityContextMessage,body.files||[],responseAudit,result.activityBlueprint||null)",
   "id:'output-verification'",
-  "taskCodeVerificationLabel(body.message||'',body.files||[]"
+  "taskCodeVerificationLabel(activityContextMessage,body.files||[]"
 ]) assert(api.includes(token),'Missing universal/task-specific Activity stage: '+token);
 
 assert(api.includes("const responseAudit=auditGeneratedResponse(body.message||'',generatedText,body.files||[]);"),
