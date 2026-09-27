@@ -3158,16 +3158,41 @@ function taskGenerationActivity(plan={}){
 }
 
 function taskAuditActivity(message='',files=[],audit={},blueprint=null){
+  // Once a model-created public plan exists, never fall back to legacy
+  // website/app/repository domain copy. The audit is a real server operation,
+  // so keep its label universal and let the result detail carry the evidence.
+  const dynamicPlan=Boolean(blueprint&&(
+    (Array.isArray(blueprint.trace)&&blueprint.trace.length) ||
+    blueprint.responseContract ||
+    blueprint.planDone
+  ));
+  if(dynamicPlan){
+    return {
+      label:audit?.ok?'Checked the response against your request':'Response check found items to review',
+      kind:'test'
+    };
+  }
   const profile=taskProfile(message,files);
   const copy=taskSpecificActivityCopy(profile,'audit');
-  const label=cleanActivityLabel(blueprint?.audit||copy.label)||copy.label;
-  return {label:label+(audit?.ok?'':' — review needed'),kind:blueprint?.kind||copy.kind};
+  const label=cleanActivityLabel(copy.label)||'Checking the final response';
+  return {label:label+(audit?.ok?'':' — review needed'),kind:copy.kind};
 }
 
-function taskCodeVerificationLabel(message='',files=[],failed=0,warnings=0,count=0){
-  const profile=taskProfile(message,files);
-  const copy=taskSpecificActivityCopy(profile,'verify');
-  const noun=copy.label||'Checking the generated code';
+function taskCodeVerificationLabel(message='',files=[],failed=0,warnings=0,count=0,blueprint=null){
+  // Static code verification is evidence-backed, but its public label must not
+  // guess "website", "Android", "GitHub", etc. from regex classification when
+  // the selected model already supplied the coherent request plan.
+  const dynamicPlan=Boolean(blueprint&&(
+    (Array.isArray(blueprint.trace)&&blueprint.trace.length) ||
+    blueprint.responseContract ||
+    blueprint.planDone
+  ));
+  let noun='Checking the generated code';
+  if(!dynamicPlan){
+    const profile=taskProfile(message,files);
+    const copy=taskSpecificActivityCopy(profile,'verify');
+    noun=copy.label||noun;
+  }
   if(failed)return noun+' — '+failed+' issue'+(failed===1?'':'s')+' found';
   if(warnings)return noun+' — '+warnings+' warning'+(warnings===1?'':'s');
   return noun+' — '+count+' static check'+(count===1?'':'s')+' passed';
@@ -6030,7 +6055,7 @@ function activityStreamResponse(body, requestSignal=null) {
             send('activity',{
               type:'activity',
               id:'output-verification',
-              label:taskCodeVerificationLabel(activityContextMessage,body.files||[],failed,warnings,postReports.length),
+              label:taskCodeVerificationLabel(activityContextMessage,body.files||[],failed,warnings,postReports.length,result.activityBlueprint||null),
               state:failed?'warning':'completed',
               kind:'test',
               detail:'Static verification only; code was not arbitrarily executed.',
