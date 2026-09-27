@@ -37,7 +37,8 @@ ws.addEventListener('message',event=>{
     return;
   }
   if(msg.method==='Runtime.exceptionThrown'){
-    runtimeErrors.push(msg.params?.exceptionDetails?.text||'Runtime exception');
+    const details=msg.params?.exceptionDetails;
+    runtimeErrors.push(details?.exception?.description||details?.exception?.value||details?.text||'Runtime exception');
   }
   if(msg.method==='Runtime.consoleAPICalled'&&msg.params?.type==='error'){
     const text=(msg.params?.args||[]).map(x=>x.value??x.description??'').join(' ');
@@ -65,7 +66,7 @@ await call('Page.enable');
 await call('Log.enable');
 
 for(let i=0;i<80;i++){
-  const ready=await evaluate(`document.readyState !== 'loading' && !!document.body && window.__JD_REACTBITS_MICRO_READY__ === true`);
+  const ready=await evaluate(`document.readyState !== 'loading' && !!document.body && window.__JD_REACTBITS_MICRO_READY__ === true && window.__JD_MOTION_UX_READY__ === true`);
   if(ready)break;
   if(i===79)throw new Error('JepongDevxyz AI ReactBits runtime did not become ready');
   await sleep(250);
@@ -302,6 +303,98 @@ assert.notEqual(realFileInput.visibility,'hidden','real file input preview is vi
 assert.notEqual(realFileInput.opacity,'0','real file input preview is transparent');
 assert(realFileInput.width>40&&realFileInput.height>=24,'real upload chip has no visible geometry');
 assert(realFileInput.text.includes('Zen Injector.zip'),'real file input chip filename missing');
+
+// Three supplied motion references: pull physics, exact scroll restoration, honest upload lanes.
+const motionUx=JSON.parse(await evaluate(`(async()=>{
+  const api=window.JDMotionUX;
+  const host=document.getElementById('filePreviewContainer');
+  const inputContainer=document.getElementById('inputContainer');
+  const field=document.querySelector('#promptBar .prompt-bar__field');
+
+  // Upload queue enhancement on the real renderer.
+  selectedFilesData.splice(0,selectedFilesData.length,{
+    id:'motion-upload',
+    name:'demo-recording.mp4',
+    size:48*1024*1024,
+    kind:'video',
+    status:'processing',
+    statusText:'Preparing…',
+    progressBytes:24*1024*1024,
+    progressPercent:50,
+    progressStartedAt:performance.now()-2000,
+    progressIndeterminate:false,
+    frames:[],data:'',fullData:''
+  });
+  renderFilePreviews();
+  const uploadCard=host?.querySelector('.jd-upload-card');
+  const upload={
+    card:!!uploadCard,
+    meta:uploadCard?.querySelector('.jd-upload-card__meta')?.textContent||'',
+    progress:!!uploadCard?.querySelector('.jd-upload-card__progress'),
+    width:uploadCard?.getBoundingClientRect().width||0
+  };
+  inputContainer?.classList.add('attachment-drop-active');
+  const dropContent=field?getComputedStyle(field,'::after').content:'';
+  inputContainer?.classList.remove('attachment-drop-active');
+
+  // Pull-to-refresh physics and threshold handoff.
+  const pullLow=api.setPull(40);
+  const lowLabel=document.querySelector('#jdPullRefresh .jd-pull-refresh__label')?.textContent||'';
+  const pullHigh=api.setPull(100);
+  const indicator=document.getElementById('jdPullRefresh');
+  const highLabel=indicator?.querySelector('.jd-pull-refresh__label')?.textContent||'';
+  const pull={
+    lowArmed:pullLow.armed,
+    highArmed:pullHigh.armed,
+    lowLabel,highLabel,
+    visible:indicator?.classList.contains('visible')||false,
+    armed:indicator?.classList.contains('armed')||false
+  };
+  api.settlePull();
+  await new Promise(r=>setTimeout(r,460));
+
+  // Exact scroll-state restoration with a stable anchor.
+  const chat=document.getElementById('chatBox');
+  const original=chat.innerHTML;
+  chat.innerHTML='<button class="floating-scroll-pill" id="scrollPill"><span class="latest-label">Latest</span><span class="unread-badge" id="unreadBadge" style="display:none;">0</span></button><div class="msg bot" style="height:520px">A</div><div class="msg bot" style="height:520px">B</div><div class="msg bot" style="height:520px">C</div>';
+  api.decorateScrollAnchors();
+  chat.scrollTop=610;
+  api.captureScroll('browser-smoke');
+  const savedTop=chat.scrollTop;
+  chat.scrollTop=0;
+  api.restoreScroll('browser-smoke');
+  await new Promise(r=>setTimeout(r,280));
+  const restoredTop=chat.scrollTop;
+  chat.innerHTML=original;
+
+  selectedFilesData.splice(0,selectedFilesData.length);
+  renderFilePreviews();
+
+  return JSON.stringify({
+    version:api.version,
+    upload,
+    dropContent,
+    pull,
+    savedTop,
+    restoredTop,
+    manual:history.scrollRestoration
+  });
+})()`));
+
+assert.equal(motionUx.version,'2026-09-27-three-reference-v1','three-reference motion runtime missing');
+assert.equal(motionUx.upload.card,true,'honest upload queue card did not render');
+assert.equal(motionUx.upload.progress,true,'per-file upload progress lane missing');
+assert(motionUx.upload.meta.includes('%'),'measurable upload preparation must expose honest percent progress');
+assert(motionUx.upload.width>80,'upload lane has no visible geometry');
+assert(String(motionUx.dropContent).includes('Release to add files'),'drag/release feedback is not visible');
+assert.equal(motionUx.pull.lowArmed,false,'pull threshold armed too early');
+assert.equal(motionUx.pull.highArmed,true,'pull threshold did not arm');
+assert.equal(motionUx.pull.lowLabel,'Pull to refresh');
+assert.equal(motionUx.pull.highLabel,'Release to refresh');
+assert.equal(motionUx.pull.visible,true);
+assert.equal(motionUx.pull.armed,true);
+assert(Math.abs(motionUx.restoredTop-motionUx.savedTop)<5,'chat scroll position did not restore exactly');
+assert.equal(motionUx.manual,'manual','browser scroll restoration must be manual');
 
 // 4/6: RefineFrame complete initializes in-browser.
 const refine=JSON.parse(await evaluate(`(()=>{
