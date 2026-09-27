@@ -9357,7 +9357,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 text=String(parsed.detail || parsed.error || parsed.message || text).trim();
             }
             text=text.replace(/^error\s*:\s*/i,'').replace(/\s+/g,' ').trim();
-            if(/failed to fetch|network\s*error|networkerror|load failed|err_internet_disconnected|err_connection|err_name_not_resolved|the internet connection appears to be offline/i.test(text)) return 'Connection interrupted. Check your internet connection and try again.';
+            if(/err_internet_disconnected|the internet connection appears to be offline/i.test(text)) return 'Internet connection appears to be offline. Please reconnect and try again.';
+            if(/failed to fetch|network\s*error|networkerror|load failed|err_connection|err_name_not_resolved|connection (?:closed|reset|terminated)|terminated|premature|stream/i.test(text)) return 'The AI response stream was interrupted before completion. Please retry the response.';
             if(/no user matching sent api key/i.test(text)) return 'AI Horde API key was rejected. Check or replace AIHORDE_API_KEY, or use another provider.';
             if(/api key is not configured/i.test(text)) return 'This provider is not configured on the server yet.';
             if(/rate limit/i.test(text)) return 'Rate limit reached. Please try again in a moment.';
@@ -11904,8 +11905,8 @@ ${m.text || ''}
                     }
                     botMsgElem.style.removeProperty('display');
                 }else{
-                    const networkFailure=!navigator.onLine || /failed to fetch|network|connection|internet|load failed/i.test(String(err?.message||''));
-                    if(networkFailure)setReconnectVisible(true);
+                    const browserOffline=!navigator.onLine || /err_internet_disconnected|the internet connection appears to be offline/i.test(String(err?.message||''));
+                    if(browserOffline)setReconnectVisible(true);
                     const cleanError=sanitizeUiErrorMessage(err?.message || 'Request failed');
                     appendActivityEvent({ id:'client-catch', label:cleanError, state:'error', kind:'provider' });
                     finishAIIndicator(false);
