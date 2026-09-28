@@ -59,11 +59,11 @@ const PROVIDERS = {
   },
   codecraft: {
     label: 'CodeCraft API',
-    // Bootstrap only. The UI replaces this list with the authenticated live
-    // GET /v1/models catalog, so newly added/removed CodeCraft models follow
-    // the provider automatically without stale hard-coded IDs.
-    models: ['claude-opus-4.8'],
-    defaultModel: 'claude-opus-4.8'
+    // Explicit CodeCraft catalog requested for JepongDevxyz AI. The live
+    // /v1/models sync can still refresh/replace this bootstrap list when the
+    // provider catalog is reachable.
+    models: ["deepseek-v4-pro-max","deepseek-v4-flash-0731","deepseek-v4-pro-0813","gemma-2-2b","qwen3.8-max","qwen3.8-27b","qwen3.7-max","glm-5.3","glm-5.2","muse-spark-1.1","seed-2.1-pro","seed-2.1-turbo","gemini-3.6-flash","gemini-3.7-flash","gemini-3.1-pro","grok-4.5","grok-4.6","kimi-k3","kimi-k2.6","gpt-5.5","gpt-5.5-pro","gpt-5.6-luna","gpt-5.6-terra","gpt-5.6-sol","claude-mythos-preview","claude-opus-4.6","claude-opus-5.5","claude-fable-5.1"],
+    defaultModel: 'gpt-5.6-sol'
   },
   agentrouter: {
     label: 'AgentRouter',
