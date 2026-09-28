@@ -41,9 +41,10 @@ const storage={
   getItem:key=>saved.get(key)||null,
   setItem:(key,value)=>saved.set(key,value)
 };
-const harness=new Function('document','localStorage','navigator','Date','safeSetLocalStorage',
+const harness=new Function('document','localStorage','navigator','Date','safeGetLocalStorage','safeSetLocalStorage',
   source+'\nreturn {setJdHaptics,jdHapticPulse,syncJdHapticsUI,jdHapticsSupported};')(
   documentMock,storage,navigatorMock,{now:()=>timestamp},
+  (key,fallback=null)=>saved.has(key)?saved.get(key):fallback,
   (key,value)=>{saved.set(key,value);return true;}
 );
 harness.syncJdHapticsUI();
