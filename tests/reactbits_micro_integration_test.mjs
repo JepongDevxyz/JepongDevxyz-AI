@@ -67,6 +67,10 @@ assert(!html.includes('prompt-bar__vision'),'custom extra bottom-bar Vision cont
 assert(!html.includes('class="response-effort-menu"'),'legacy response effort menu markup must be removed');
 assert(!html.includes('class="response-effort-option"'),'legacy response effort options must be removed');
 assert(!html.includes('class="composer-tool-sheet"'),'legacy composer sheet markup must be removed');
+assert(!html.includes('.composer-tool-sheet')&&!html.includes('.composer-tool-btn')&&!html.includes('.composer-tool-icon'),
+ 'legacy composer stylesheet patches must be removed with the old markup');
+assert(!html.includes('composerToolsIn')&&!html.includes('id="composerVerticalReferenceFix"'),
+ 'retired composer animation/override style block must be removed');
 assert(css.includes('--pb-w: 400px;'),'PromptBar width must match ReactBits source');
 assert(css.includes('--pb-radius: 16px;'),'PromptBar radius must match ReactBits source');
 assert(css.includes('.prompt-bar__menu[data-kind=\'effort\']'),'ReactBits effort popup styling missing');

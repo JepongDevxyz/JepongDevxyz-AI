@@ -1870,22 +1870,6 @@
         }
 
     
-        /* ===== CHATGPT-STYLE COMPOSER + PLUS TOOL SHEET (pending preview) ===== */
-        .composer-tool-sheet{position:absolute;left:12px;right:auto;bottom:calc(100% + 8px);z-index:80;width:min(270px,calc(100vw - 32px));max-height:min(520px,70dvh);display:none;flex-direction:column;gap:4px;padding:10px;border:1px solid var(--border-color);border-radius:22px;background:color-mix(in srgb,var(--modal-bg) 96%,transparent);box-shadow:0 -10px 35px rgba(0,0,0,.28);backdrop-filter:blur(18px);overflow-y:auto;overscroll-behavior:contain;transform-origin:bottom left;animation:composerToolsIn .16s ease-out}
-        .composer-tool-sheet.open{display:flex}
-        @keyframes composerToolsIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
-        .composer-tool-btn{width:100%;min-width:0;border:0;background:transparent;color:var(--text-main);border-radius:15px;padding:8px 10px;display:flex;flex-direction:row;align-items:center;gap:12px;cursor:pointer;font-size:.88rem;font-weight:650;text-align:left}
-        .composer-tool-btn:active{background:rgba(148,163,184,.12);transform:scale(.97)}
-        .composer-tool-icon{
-            width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
-            background:rgba(148,163,184,.10);border:1px solid rgba(148,163,184,.12);color:var(--text-main)
-        }
-        .composer-tool-icon i,.composer-tool-icon svg{width:19px;height:19px}
-        .composer-tool-btn.think-active .composer-tool-icon{background:rgba(139,92,246,.16);color:#a78bfa;border-color:rgba(139,92,246,.30)}
-        html.keyboard-open .composer-tool-sheet{max-height:min(180px,34dvh)}
-        @media(max-width:520px){.composer-tool-sheet{width:min(260px,calc(100vw - 28px));max-height:min(500px,68dvh)}.composer-tool-btn{font-size:.86rem;padding:7px 9px}.composer-tool-icon{width:38px;height:38px;flex:0 0 38px}}
-        @media(max-width:360px){.composer-tool-sheet{width:min(248px,calc(100vw - 24px))}}
-
         /* LONG RESPONSE MOBILE FLOW FIX
            Long assistant/code output must belong to the chat scroller, never a nested
            fixed-height pane that looks frozen. Keep the composer/header outside that
@@ -3782,19 +3766,6 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .live-pet-visual .pet-state-image{display:block!important;width:82px!important;height:82px!important;object-fit:contain!important;object-position:center!important;border:0!important;border-radius:0!important;clip-path:none!important;filter:drop-shadow(0 9px 11px rgba(0,0,0,.28))!important}
 
 </style>
-<style id="composerVerticalReferenceFix">
-/* Canonical compact composer tools. Older size/layout overrides were removed
-   because this later block already superseded them in the cascade. */
-.composer-tool-btn:active{background:rgba(148,163,184,.12)!important}
-/* Compact vertical composer tools — reference layout */
-.composer-tool-sheet{left:0!important;right:auto!important;bottom:calc(100% + 10px)!important;width:min(248px,calc(100vw - 44px))!important;max-height:min(68dvh,430px)!important;display:none!important;grid-template-columns:1fr!important;gap:1px!important;padding:9px!important;border:1px solid rgba(148,163,184,.18)!important;border-radius:24px!important;overflow-y:auto!important;overflow-x:hidden!important;background:color-mix(in srgb,var(--modal-bg) 98%,transparent)!important;box-shadow:0 18px 46px rgba(0,0,0,.38)!important}
-.composer-tool-sheet.open{display:grid!important}
-.composer-tool-btn{width:100%!important;min-height:52px!important;padding:5px 8px!important;display:grid!important;grid-template-columns:42px minmax(0,1fr)!important;align-items:center!important;justify-items:start!important;gap:11px!important;border-radius:15px!important;font-size:.90rem!important;font-weight:600!important;line-height:1.15!important;text-align:left!important}
-.composer-tool-icon{width:40px!important;height:40px!important;min-width:40px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:rgba(148,163,184,.14)!important}
-.composer-tool-icon i,.composer-tool-icon svg{width:21px!important;height:21px!important}
-.composer-tool-btn.think-active .composer-tool-icon{background:rgba(139,92,246,.22)!important;color:#a78bfa!important}
-@media(max-width:390px){.composer-tool-sheet{width:min(232px,calc(100vw - 36px))!important;padding:8px!important}.composer-tool-btn{min-height:50px!important;grid-template-columns:40px minmax(0,1fr)!important;gap:10px!important;font-size:.86rem!important}.composer-tool-icon{width:38px!important;height:38px!important;min-width:38px!important}}
-</style>
 <style id="latest-and-activity-layout-fix">
 /* Bottom-center arrow-only jump control. */
 .floating-scroll-pill{
@@ -3815,18 +3786,12 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important;min-width:17px!important;height:17px!important;padding:0 4px!important;display:grid;place-items:center;font-size:9px!important}
 .floating-scroll-pill .unread-badge[style*="display:none"]{display:none!important}
 
-/* Consolidated mobile composer/runtime overrides.
-   Removed a malformed nested style-tag prelude; effective rules below keep their order. */
+/* Consolidated scroll/runtime overrides. */
 .floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:21px!important;line-height:1!important}
-.composer-tool-sheet{width:min(224px,calc(100vw - 34px))!important;max-height:min(62dvh,390px)!important;padding:7px!important;border-radius:21px!important;gap:0!important}
-.composer-tool-btn{min-height:47px!important;padding:4px 7px!important;grid-template-columns:37px minmax(0,1fr)!important;gap:9px!important;border-radius:13px!important;font-size:.86rem!important}
-.composer-tool-icon{width:36px!important;height:36px!important;min-width:36px!important}.composer-tool-icon i,.composer-tool-icon svg{width:19px!important;height:19px!important}
-/* consolidated mobile composer / scroll / activity fixes */
+/* consolidated mobile scroll / activity fixes */
 @media(max-width:700px){
 .floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;top:var(--jd-scroll-pill-top,calc(100dvh - 144px))!important;bottom:auto!important;transform:translateX(-50%)!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:50%!important;display:none;align-items:center!important;justify-content:center!important;z-index:72!important}
 .floating-scroll-pill.active{display:flex!important}.floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:22px!important}.floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important}
-.composer-tool-sheet{left:10px!important;right:auto!important;width:min(218px,calc(100vw - 28px))!important;max-height:min(60dvh,340px)!important;padding:6px!important;border-radius:20px!important}
-.composer-tool-btn{min-height:45px!important;padding:4px 7px!important;gap:9px!important;font-size:.84rem!important}.composer-tool-icon{width:35px!important;height:35px!important;flex:0 0 35px!important}
 
 .bot-message,.bot-content,.message-content{overflow-wrap:anywhere!important;word-break:break-word!important}
 }
