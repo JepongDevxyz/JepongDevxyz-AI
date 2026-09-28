@@ -5096,6 +5096,47 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         let isAIGenerating = false;
         let activePartialResponse = '';
         let activeBotMessageElement = null;
+        let activeGenerationDraft = null;
+        let activeDraftPersistTimer = 0;
+
+        function persistActiveGenerationDraft(force=false){
+            if(isIncognito || isBibleMode || !activeGenerationDraft?.sessionId)return;
+            if(!force && activeDraftPersistTimer)return;
+            const write=()=>{
+                activeDraftPersistTimer=0;
+                const draft={...activeGenerationDraft,text:String(activePartialResponse||activeGenerationDraft.text||''),updatedAt:Date.now()};
+                try{localStorage.setItem('jepong_active_generation',JSON.stringify(draft));}catch(_){}
+            };
+            if(force)write();
+            else activeDraftPersistTimer=setTimeout(write,250);
+        }
+        function clearActiveGenerationDraft(){
+            if(activeDraftPersistTimer){clearTimeout(activeDraftPersistTimer);activeDraftPersistTimer=0;}
+            activeGenerationDraft=null;
+            try{localStorage.removeItem('jepong_active_generation');}catch(_){}
+        }
+        function recoverInterruptedGenerationDraft(){
+            if(isIncognito || isBibleMode)return;
+            let draft=null;
+            try{draft=JSON.parse(localStorage.getItem('jepong_active_generation')||'null');}catch(_){}
+            if(!draft?.sessionId || !draft?.text)return;
+            const session=chatSessions?.[draft.sessionId];
+            if(!session?.messages)return clearActiveGenerationDraft();
+            const alreadySaved=session.messages.some(m=>m?.role==='bot' && m?.generationId===draft.generationId);
+            if(!alreadySaved){
+                session.messages.push({
+                    role:'bot',
+                    text:String(draft.text),
+                    stopped:true,
+                    interrupted:true,
+                    generationId:draft.generationId
+                });
+                safeSetLocalStorage('jepong_ai_chats',JSON.stringify(chatSessions));
+            }
+            clearActiveGenerationDraft();
+        }
+        window.addEventListener('pagehide',()=>persistActiveGenerationDraft(true));
+        document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persistActiveGenerationDraft(true);});
 
         function updateGenerationActionButton(active, stopping=false){
             isAIGenerating=!!active;
@@ -10587,6 +10628,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return card;
         }
 
+        recoverInterruptedGenerationDraft();
+
         function loadChatSession(id) {
             removeAIIndicator();
             currentSessionId = id;
@@ -11596,6 +11639,20 @@ ${m.text || ''}
                 ? rawContinuousChatHistory.slice(-14)
                 : await prepareHistoryForRequest(rawContinuousChatHistory);
             const ctx = getActiveContext();
+            const generationId='gen_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+            if(!isIncognito && !isBibleMode && ctx.id){
+                activeGenerationDraft={
+                    generationId,
+                    sessionId:ctx.id,
+                    prompt:promptText,
+                    provider:currentSelectedProvider,
+                    model:currentSelectedModel,
+                    text:'',
+                    startedAt:Date.now(),
+                    updatedAt:Date.now()
+                };
+                persistActiveGenerationDraft(true);
+            }
 
             // Normal sends are persisted synchronously in sendMessage() before this
             // async request begins. Keep this fallback only for callers that invoke
@@ -11812,6 +11869,7 @@ ${m.text || ''}
                             fullResponse += payload.text || '';
                             syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                             activePartialResponse=stripJdWorkNotes(fullResponse);
+                            if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
                         },
                         artifact: (payload) => {
                             if(payload?.filename && !pendingArtifacts.some(item=>item?.filename===payload.filename && item?.size===payload.size)){
@@ -11836,6 +11894,7 @@ ${m.text || ''}
                         fullResponse += decoder.decode(value, { stream: true });
                         syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                         activePartialResponse=stripJdWorkNotes(fullResponse);
+                            if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
                     }
                     await revealFinalResponse();
                 }
@@ -11858,7 +11917,7 @@ ${m.text || ''}
 
                 if (ctx.id && ctx.sessions[ctx.id]) {
                     const savedBotIndex=ctx.sessions[ctx.id].messages.length;
-                    ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse, interaction:assistantInteraction, activity:captureJdActivitySnapshot() });
+                    ctx.sessions[ctx.id].messages.push({ role: 'bot', text: fullResponse, interaction:assistantInteraction, activity:captureJdActivitySnapshot(), generationId });
                     botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                     if (!isIncognito && !isBibleMode) { saveSessions(); maybeGenerateAITitle(ctx.sessions[ctx.id], promptText, fullResponse); }
                 }
@@ -11889,7 +11948,7 @@ ${m.text || ''}
                         refreshLucideIcons(botMsgElem);
                         if(ctx.id && ctx.sessions[ctx.id]){
                             const savedBotIndex=ctx.sessions[ctx.id].messages.length;
-                            ctx.sessions[ctx.id].messages.push({role:'bot',text:activePartialResponse,interaction:stoppedUi.interaction,stopped:true});
+                            ctx.sessions[ctx.id].messages.push({role:'bot',text:activePartialResponse,interaction:stoppedUi.interaction,stopped:true,generationId});
                             botMsgElem.setAttribute('data-message-index', String(savedBotIndex));
                             if(!isIncognito && !isBibleMode)saveSessions();
                         }
@@ -11903,7 +11962,21 @@ ${m.text || ''}
                     const cleanError=sanitizeUiErrorMessage(err?.message || 'Request failed');
                     appendActivityEvent({ id:'client-catch', label:cleanError, state:'error', kind:'provider' });
                     finishAIIndicator(false);
-                    botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ ${escapeHTML(cleanError)}</span>`;
+                    if(activePartialResponse){
+                        const interruptedUi=parseJdAssistantInteraction(activePartialResponse);
+                        botMsgElem.innerHTML=`<div>${renderCustomMarkdown(interruptedUi.text)}</div>
+                            <div style="margin-top:10px;color:var(--text-muted);font-size:.86rem">Response interrupted — partial answer preserved.</div>
+                            ${renderJdAssistantInteraction(interruptedUi.interaction)}
+                            ${botActionsHTML({vote:false})}`;
+                        if(ctx.id && ctx.sessions[ctx.id] && !ctx.sessions[ctx.id].messages.some(m=>m?.generationId===generationId)){
+                            const savedBotIndex=ctx.sessions[ctx.id].messages.length;
+                            ctx.sessions[ctx.id].messages.push({role:'bot',text:interruptedUi.text,interaction:interruptedUi.interaction,interrupted:true,generationId});
+                            botMsgElem.setAttribute('data-message-index',String(savedBotIndex));
+                            if(!isIncognito&&!isBibleMode)saveSessions();
+                        }
+                    }else{
+                        botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ ${escapeHTML(cleanError)}</span>`;
+                    }
                 }
                 botMsgElem.style.removeProperty('display');
                 scrollToBottom(true);
@@ -11913,6 +11986,11 @@ ${m.text || ''}
                 activeBotMessageElement=null;
                 updateGenerationActionButton(false,false);
                 setLivePetWorking(false);
+                if(activeGenerationDraft?.generationId===generationId){
+                    // If a partial exists but the page is unloading, pagehide already wrote it.
+                    // Normal completion/error paths above have now persisted the assistant turn.
+                    clearActiveGenerationDraft();
+                }
             }
         }
 
