@@ -104,8 +104,22 @@ export function githubOAuthConfig(){
   if(!clientId||!clientSecret)throw new Error('GitHub OAuth is not configured.');
   return {clientId,clientSecret};
 }
+export function githubApiUrl(path){
+  const raw=String(path||'').trim();
+  if(!raw)throw new Error('GitHub API path is required.');
+  let url;
+  try{
+    url=raw.startsWith('/')?new URL(raw,'https://api.github.com'):new URL(raw);
+  }catch{
+    throw new Error('Invalid GitHub API URL.');
+  }
+  if(url.protocol!=='https:'||url.origin!=='https://api.github.com'||url.username||url.password||url.hash){
+    throw new Error('GitHub API credentials may only be sent to https://api.github.com.');
+  }
+  return url.toString();
+}
 export async function githubApi(path,token,{method='GET',body,signal}={}){
-  const url=path.startsWith('https://')?path:'https://api.github.com'+path;
+  const url=githubApiUrl(path);
   const headers={
     Accept:'application/vnd.github+json',
     Authorization:'Bearer '+token,
