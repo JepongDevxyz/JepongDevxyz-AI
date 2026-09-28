@@ -11874,6 +11874,9 @@ ${m.text || ''}
                             ${responseStreamFinished?renderJdAssistantInteraction(assistantInteraction):''}
                             ${responseStreamFinished?botActionsHTML():''}`;
                         botMsgElem.style.removeProperty('display');
+                        if(responseStreamFinished){
+                            pendingArtifacts.forEach(artifact=>{void attachGeneratedArtifact(botMsgElem,artifact,historyFiles);});
+                        }
                         refreshLucideIcons(botMsgElem);
                         if(!userIsScrollingUp)scrollToBottom(false);
                     };

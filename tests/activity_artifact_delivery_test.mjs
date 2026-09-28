@@ -38,7 +38,7 @@ assert(api.includes("'Packaging updated code into a ZIP'"),
 assert(api.includes('FILE: path/filename.ext') || api.includes('FILE: relative/path/filename.ext'),
   'Project artifact prompt must require exact file paths');
 
-const render=between(ui,'                const renderLiveResponse = (force=false) => {','                botMsgElem.style.setProperty');
+const render=between(ui,'const renderLiveResponse = (force=false) => {','const revealFinalResponse = async (elapsedMs=null) => {');
 assert(render.includes('pendingArtifacts.forEach(artifact=>{void attachGeneratedArtifact(botMsgElem,artifact,historyFiles);})'),
   'Generated files must be attached after response innerHTML is rendered');
 const sse=between(ui,"if (contentType.includes('text/event-stream')) {",'                } else {');
@@ -51,8 +51,8 @@ assert(ui.includes('downloadSnippetFromButton(this)'),'Every rendered code block
 assert(ui.includes('function downloadSnippetFromButton'),'Code download handler missing');
 assert(ui.includes('container.dataset.filename = inferredFilename'),'Code blocks must preserve an inferred filename');
 
-assert(ui.includes('class="thought-cluster"'),'Reference four-dot activity status missing');
-assert(css.includes('.thought-cluster__dot'),'Reference four-dot activity styling missing');
-assert(!css.includes('.lattice-loader__cell'),'Old 3x3 lattice status should not remain');
+assert(ui.includes('class="rb-lattice-loader"'),'Requested 3x3 Lattice activity status missing');
+assert(css.includes('.rb-lattice-loader>i'),'Lattice activity styling missing');
+assert(!css.includes('.thought-line::after'),'Thought Line must not restore the unwanted horizontal divider');
 
-console.log('PASS: reference activity status plus durable code/ZIP artifact delivery contract.');
+console.log('PASS: requested Lattice activity status plus durable code/ZIP artifact delivery contract.');
