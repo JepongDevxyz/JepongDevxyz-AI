@@ -946,7 +946,7 @@
 }
 @media(prefers-reduced-motion:reduce){
   .ai-activity-row.running.ai-activity-current .ai-activity-label::after{animation:none!important;opacity:.72!important;transform:none!important}
-  .thought-cluster__dot,.ai-activity-row.ai-activity-enter{animation:none!important;opacity:1!important;transform:none!important}
+  .ai-activity-row.ai-activity-enter{animation:none!important;opacity:1!important;transform:none!important}
   .bell-toggle,.bell-toggle__face,.bell-toggle__badge,.prompt-bar,.prompt-bar__send,
   .refine-frame__chip,.squish-switch-root>span:last-child::after,.voice-pill,.voice-pill__capsule,
   .voice-pill__time,.voice-pill__wave,.voice-pill__mic,.voice-pill__stop,.read-aloud-pill{transition-duration:1ms!important}
