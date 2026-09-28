@@ -7933,8 +7933,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const runId=smartSpeechRunId;
             const profile=options.profile||getVoiceProfile();
             ensureSpeechVoicesReady(1800).then(()=>loadVoices()).catch(()=>{});
-            const targetLang=preferredLanguageCode() || detectSpeechLanguage(clean);
-            const personaVoice=resolvePersonalizationSystemVoice(profile,clean,targetLang);
             // Server/cloud is authoritative for every selected language so named personas
             // remain distinct across devices. Device speech is fallback only.
             const chunks=speechChunks(clean,420);
