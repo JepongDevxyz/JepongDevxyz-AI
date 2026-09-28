@@ -622,6 +622,9 @@
     }
 
     var eventNow=Number.isFinite(Number(e.timeStamp))?Number(e.timeStamp):performance.now();
+    // Synthetic PointerEvents can report a zero/default timestamp while pointerdown
+    // used a monotonic timestamp. Keep both ends in the same clock domain.
+    if(eventNow<g.downAt)eventNow=performance.now();
     var held=Math.max(0,eventNow-g.downAt);
     var isHold=held>=Number(mic.dataset.holdAfter||VOICE_HOLD_AFTER);
     if(g.ownPress){
