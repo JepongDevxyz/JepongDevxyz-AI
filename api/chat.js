@@ -3039,16 +3039,6 @@ function taskSpecificActivityCopy(profile={}, phase='context'){
   return {label:phase==='context'?(base+': '+subject):base,kind:activityKind};
 }
 
-){
-  const first=taskSpecificActivityCopy(profile,'prepared');
-  const second=taskSpecificActivityCopy(profile,'prepared2');
-  return [
-    {id:'task-prepared',label:first.label,kind:first.kind},
-    {id:'task-approach',label:second.label,kind:second.kind}
-  ].filter(step=>step.label);
-}
-
-
 function contextActivityPlan(message='', files=[]){
   const profile=taskProfile(message,files);
   const list=Array.isArray(files)?files:[];
