@@ -3866,6 +3866,9 @@ function isFallbackableProviderFailure(status,error=''){
   if([401,403].includes(code)||isProviderQuotaFailure(code,error))return true;
   return /no user matching sent api key|credential was rejected|invalid api key/.test(String(error||'').toLowerCase());
 }
+function shouldRetryProviderCredential(status,error=''){
+  return isRetryableStatus(status)||isProviderQuotaFailure(status,error);
+}
 
 
 function passthroughHeaders(upstream, provider, model, fallbackFrom = '', routedReason = '', keyIndex = 0, keyCount = 1) {
@@ -4041,7 +4044,7 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
         provider:'gemini',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
         detail:retryLabel('gemini',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
       });
-      if(!isRetryableStatus(status)&&!isProviderQuotaFailure(status,last)) break;
+      if(!shouldRetryProviderCredential(status,last)) break;
     } catch(e) {
       status=502; last=e?.message||String(e);
       const canRetry=i<keys.length-1;
@@ -4435,7 +4438,7 @@ async function runCohere({model,history,message,systemInstruction,fallbackFrom='
         provider:'cohere',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
         detail:retryLabel('cohere',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
       });
-      if(!isRetryableStatus(status)&&!isProviderQuotaFailure(status,last))break;
+      if(!shouldRetryProviderCredential(status,last))break;
     }catch(e){
       status=502;last=e?.message||String(e);
       const canRetry=i<keys.length-1;
@@ -4986,7 +4989,7 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
         return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'bailucode',target,fallbackFrom,routedReason||'bailu-anthropic',i,keys.length)}),finishState};
       }
       status=res.status;last=cleanUpstreamError(await res.text().catch(()=>''),status,'bailucode',target);
-      if(!isRetryableStatus(status)&&!isProviderQuotaFailure(status,last))break;
+      if(!shouldRetryProviderCredential(status,last))break;
     }catch(e){status=502;last=e?.message||String(e);}
   }
   return {ok:false,status,error:last||'Bailucode Anthropic route unavailable'};
