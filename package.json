@@ -14,5 +14,6 @@
     "test:contracts": "set -e; for test in tests/*_test.py; do python3 \"$test\"; done; for test in tests/*_test.mjs tests/test_*.js; do [ -e \"$test\" ] || continue; node \"$test\"; done",
     "test:codex-tenants": "node --test tests/codex_sandbox_tenant.test.mjs tests/codex_account_identity.test.mjs tests/codex_node_bridge.test.mjs tests/codex_account_status_reason.test.mjs",
     "verify:final": "npm run check"
-  }
+  },
+  "vercelRedeployNonce": "2026-09-29T00:22+08:00-final-clean-baseline"
 }
