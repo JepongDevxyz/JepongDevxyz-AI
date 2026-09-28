@@ -1,12 +1,17 @@
 {
   "name": "jepong-devxyz-ai",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
   "dependencies": {
     "@vercel/sandbox": "3.3.0",
     "@anthropic-ai/sdk": "0.128.0"
   },
   "scripts": {
+    "check": "npm run check:syntax && npm run test:contracts",
+    "check:syntax": "node --check agent.js && node --check codex-choice.js && node --check motion-ux.js && node --check plugins.js && node --check reactbits-micro.js && find api codex-runner -type f \\( -name '*.js' -o -name '*.mjs' \\) -print0 | sort -z | xargs -0 -r -n1 node --check",
+    "test": "npm run test:contracts",
+    "test:contracts": "set -e; for test in tests/*_test.py; do python3 \"$test\"; done; for test in tests/*_test.mjs tests/test_*.js; do [ -e \"$test\" ] || continue; node \"$test\"; done",
     "test:codex-tenants": "node --test tests/codex_sandbox_tenant.test.mjs tests/codex_account_identity.test.mjs tests/codex_node_bridge.test.mjs tests/codex_account_status_reason.test.mjs"
   }
 }
