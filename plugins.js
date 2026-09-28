@@ -425,7 +425,6 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     }catch(error){notice(error.message||'GitHub unavailable.',true);return null;}
     finally{setBusy(false);}
   }
-  function shortFileName(path){return String(path||'').split('/').pop()||'';}
   async function browse(path){
     const data=await call('list',{path,ref:state.ref});if(!data)return;
     state.directory=path;const area=$('jdplugResults');area.replaceChildren();text('jdplugLocation',state.repo+'/'+path);
