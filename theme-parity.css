@@ -501,3 +501,76 @@ body{
     grid-template-columns:46px minmax(0,1fr) var(--jd-settings-control-rail)!important;
   }
 }
+
+
+/* ===== FINAL switch geometry normalization =====
+   Do not resize SquishSwitch wrappers: ReactBits computes the checked-thumb travel
+   from its native 48/54px geometry. Alignment is controlled by the parent rail only. */
+body{
+  --jd-settings-control-rail:72px;
+}
+#personalizationModalOverlay .ps-ref-row,
+#personalizationPetPage .ps-pet-hero{
+  grid-template-columns:minmax(0,1fr) var(--jd-settings-control-rail)!important;
+}
+#personalizationPetPage .ps-pet-behavior-row{
+  grid-template-columns:56px minmax(0,1fr) var(--jd-settings-control-rail)!important;
+}
+#personalizationModalOverlay .ps-ref-row>.squish-switch-root,
+#settingsModal .squish-switch-root{
+  --ss-w:48px!important;
+  --ss-h:28px!important;
+  --ss-thumb:22px!important;
+  --ss-inset:3px!important;
+  width:48px!important;
+  min-width:48px!important;
+  max-width:48px!important;
+  height:28px!important;
+  flex:0 0 48px!important;
+  justify-self:center!important;
+  align-self:center!important;
+  margin:0!important;
+}
+#personalizationModalOverlay .ps-ref-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after,
+#settingsModal .squish-switch-root:not([data-held])>input:checked+span:last-child::after{
+  --ss-x:20px!important;
+}
+#personalizationPetPage .ps-pet-hero>.squish-switch-root,
+#personalizationPetPage .ps-pet-behavior-row>.squish-switch-root{
+  --ss-w:54px!important;
+  --ss-h:32px!important;
+  --ss-thumb:26px!important;
+  --ss-inset:3px!important;
+  width:54px!important;
+  min-width:54px!important;
+  max-width:54px!important;
+  height:32px!important;
+  flex:0 0 54px!important;
+  justify-self:center!important;
+  align-self:center!important;
+  margin:0!important;
+}
+#personalizationPetPage .ps-pet-hero>.squish-switch-root:not([data-held])>input:checked+span:last-child::after,
+#personalizationPetPage .ps-pet-behavior-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after{
+  --ss-x:22px!important;
+}
+/* Native/legacy toggles use the same centered rail when they appear in these rows. */
+#personalizationModalOverlay .ps-ref-row>:is(.toggle-switch,.switch,.toggle,.modern-toggle),
+#settingsModal .setting-row>:is(.toggle-switch,.switch,.toggle,.modern-toggle){
+  justify-self:center!important;
+  align-self:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+@media(max-width:520px){
+  body{--jd-settings-control-rail:66px}
+  #personalizationPetPage .ps-pet-behavior-row{
+    grid-template-columns:50px minmax(0,1fr) var(--jd-settings-control-rail)!important;
+  }
+}
+@media(max-width:390px){
+  body{--jd-settings-control-rail:62px}
+  #personalizationPetPage .ps-pet-behavior-row{
+    grid-template-columns:46px minmax(0,1fr) var(--jd-settings-control-rail)!important;
+  }
+}
