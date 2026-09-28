@@ -6088,17 +6088,9 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             // double-counts it and pushes the jump arrow into the middle of the chat.
             const visibleComposerReserve=Math.max(72, Math.ceil(viewportTop+viewportHeight-composerTop));
             document.documentElement.style.setProperty('--jd-composer-reserve',`${visibleComposerReserve}px`);
-            // Lock the jump button to the composer's *actual top edge*. This keeps
-            // a constant 14px gap even when the composer grows, the browser chrome
-            // changes the visual viewport, or safe-area/keyboard metrics change.
-            const pillHeight=42;
-            const pillGap=14;
-            const pillTop=Math.max(viewportTop+8, Math.floor(composerTop-pillGap-pillHeight));
-            const pill=document.getElementById('scrollPill');
-            if(pill){
-                pill.style.setProperty('top',`${pillTop}px`,'important');
-                pill.style.setProperty('bottom','auto','important');
-            }
+            // The jump control is positioned only by CSS from the fixed composer
+            // reserve. Never write an inline top value: stale visual-viewport geometry
+            // was what made it climb into long conversations.
         }
         if(typeof ResizeObserver!=='undefined'){
             const jdComposerObserver=new ResizeObserver(syncChatComposerReserve);
@@ -13858,5 +13850,71 @@ ${m.text || ''}
     <link rel="stylesheet" href="/codex-choice.css">
     <script src="/codex-choice.js" defer></script>
     <script src="/reactbits-micro.js?v=20260927-upload-ui-2" defer></script>\n    <script src="/motion-ux.js?v=20260927-three-reference-v2" defer></script>
+
+<style id="jd-final-mobile-theme-invariants">
+/* Final invariants: later than all legacy/reference layers. */
+@media (max-width:700px){
+  #scrollPill.floating-scroll-pill{
+    position:fixed!important;
+    left:50%!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:calc(var(--jd-composer-reserve,92px) + 14px)!important;
+    transform:translateX(-50%)!important;
+    width:42px!important;height:42px!important;
+    margin:0!important;
+    z-index:72!important;
+  }
+}
+/* PromptBar must inherit the app theme instead of keeping ReactBits dark constants. */
+body.theme-light #promptBar.prompt-bar{
+  --pb-bg:#ffffff!important;
+  --pb-ink:#17171b!important;
+  --pb-menu:#ffffff!important;
+  --pb-muted:#6b6b73!important;
+  --pb-hover:rgba(20,20,28,.065)!important;
+  --pb-spark:#756be8!important;
+}
+body.theme-light #promptBar .prompt-bar__field{
+  background:#fff!important;
+  color:#17171b!important;
+  border:1px solid rgba(25,25,35,.13)!important;
+  box-shadow:0 8px 26px rgba(20,20,30,.07)!important;
+}
+body.theme-light #promptBar .prompt-bar__input,
+body.theme-light #promptBar .prompt-bar__tool,
+body.theme-light #promptBar .prompt-bar__effort,
+body.theme-light #promptBar .prompt-bar__effort-label{
+  color:#17171b!important;
+}
+body.theme-light #promptBar .prompt-bar__input::placeholder{color:#777780!important}
+body.theme-light #promptBar .prompt-bar__send{background:#ececf0!important;color:#55555d!important}
+body.theme-light #promptBar .prompt-bar__send[data-armed]{background:#17171b!important;color:#fff!important}
+
+/* Activity/status contrast: no dark-theme tokens may leak into light mode. */
+body.theme-light .ai-activity-card{
+  --rb-ink:#17171b!important;
+  --activity-muted:#55555f!important;
+  --activity-muted-soft:#6c6c76!important;
+  color:#17171b!important;
+}
+body.theme-light .ai-activity-card .ai-activity-lead,
+body.theme-light .ai-activity-card .ai-activity-label,
+body.theme-light .ai-activity-card .ai-activity-detail,
+body.theme-light .ai-activity-card .ai-work-commentary__text,
+body.theme-light .ai-activity-card .thought-line,
+body.theme-light .ai-activity-card .thought-line__head,
+body.theme-light .ai-activity-card .thought-line__timer{
+  color:#4d4d56!important;
+  opacity:1!important;
+}
+body.theme-light .ai-activity-card .ai-activity-row.running .ai-activity-label,
+body.theme-light .ai-activity-card .ai-activity-row.ai-activity-current .ai-activity-label{
+  color:#202025!important;
+}
+body.theme-light .ai-activity-card svg{stroke:currentColor!important}
+body.theme-light .ai-activity-card .ai-activity-icon{color:#55555f!important;opacity:1!important}
+body.theme-light .ai-activity-card .ai-work-commentary{background:transparent!important;color:#33333a!important}
+</style>
 </body>
 </html>
