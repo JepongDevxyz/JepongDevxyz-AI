@@ -44,7 +44,8 @@ function primary({statuses=[429,200],keys=['key-one','key-two'],fallback=false}=
    retryLabel:()=> 'quota exceeded',
    providerLabel:x=>x,
    modelLabel:x=>x,
-   chatCompletionsUrl:()=>''
+   chatCompletionsUrl:()=>'',
+   chatUpstreamTimeoutMs:()=>60000
  };
  const runner=new Function(...Object.keys(deps),providerRunner+'\nreturn runOpenAICompatible;')(...Object.values(deps));
  return {attempts,execute:()=>runner('groq',{model:'openai/gpt-oss-20b',history:[],message:'Hi',autoFallback:fallback})};

@@ -4355,6 +4355,7 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
         headers['X-Title']='JepongDevxyz AI';
       }
 
+      const upstreamTimeoutMs=chatUpstreamTimeoutMs(provider);
       try{
         const payload={
           model:target,
@@ -4372,7 +4373,6 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
         // Keep the upstream request inside the serverless execution budget.
         // A 120s provider timeout can outlive the hosting request and surface as a
         // generic "operation was aborted" after the model has already done work.
-        const upstreamTimeoutMs=chatUpstreamTimeoutMs(provider);
         let res=await fetch(cfg.url,{
           method:'POST',
           headers,
