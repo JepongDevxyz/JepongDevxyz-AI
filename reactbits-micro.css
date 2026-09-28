@@ -39,9 +39,8 @@
   overflow:visible;
   scroll-margin-block:18px;
 }
-/* The supplied Work reference has no top "Thinking/Thought for" bar while work
-   is active. Keep the DOM only for compatibility/persistence, but never render
-   it on the reference surface. */
+/* Requested additive Activity header: keep the real timeline below it while
+   exposing the Lattice Loader + Thought Line above the status rows. */
 .ai-activity-card.reference-work-flow .ai-activity-header-actions{
   display:flex!important;
   min-height:26px;

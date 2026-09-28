@@ -20,7 +20,9 @@ for(const token of [
 ]) assert(html.includes(token),'Missing frame-reference runtime token: '+token);
 
 for(const token of [
-  '.ai-activity-card.reference-work-flow .ai-activity-header-actions{display:none!important}',
+  '.ai-activity-card.reference-work-flow .ai-activity-header-actions{',
+  'display:flex!important;',
+  '.rb-lattice-loader',
   'width:min(calc(100% - 26px),760px)',
   'margin:8px 12px 30px 14px',
   'grid-template-columns:22px minmax(0,1fr)!important',
@@ -33,9 +35,9 @@ for(const token of [
   '@keyframes jdActivityCurrentDot'
 ]) assert(css.includes(token),'Missing frame-reference CSS metric: '+token);
 
-assert(!/\.reference-work-flow[^}]*display:flex!important/.test(css),
-  'Reference Work surface must not resurrect the old header');
+assert(/\.ai-activity-card\.reference-work-flow \.ai-activity-header-actions\{[\s\S]*?display:flex!important;[\s\S]*?\}/.test(css),
+  'Requested Lattice/Thought header must remain visible without replacing the real Activity timeline');
 assert(html.includes("clone.removeAttribute('data-activity-visibility')"),
   'Secondary diagnostics must remain visible in the audit sheet');
 
-console.log('PASS: supplied-video Work Activity frame contract is locked.');
+console.log('PASS: requested Work Activity frame contract with visible Lattice/Thought header is locked.');

@@ -25,8 +25,10 @@ assert(css.includes('.jd-thoughts-overlay.open{display:flex}'));
 assert(css.includes('.jd-thoughts-list'));
 assert(css.includes('.thought-line__head{'),
  'ThoughtLine header styling must replace the legacy summary row');
-assert(css.includes('.ai-activity-card.reference-work-flow .ai-activity-header-actions{display:none!important}'),
- 'Frame-matched Work surface must not show the old Thinking/Thought for header');
+assert(/\.ai-activity-card\.reference-work-flow \.ai-activity-header-actions\{[\s\S]*?display:flex!important;[\s\S]*?\}/.test(css),
+ 'Requested Lattice/Thought header must remain visible above the real Activity timeline');
+assert(html.includes('class="rb-lattice-loader"'),
+ 'Live and restored Activity must use the requested 3x3 Lattice loader');
 assert(css.includes('font-size:15.5px') && css.includes('font-size:16px'),
  'Reference status/commentary typography calibration missing');
 assert(css.includes('.ai-activity-row.ai-activity-iconless'),
@@ -111,4 +113,4 @@ assert(html.includes('jdActivityPlaybackQueue.push(normalized);'));
 assert(css.includes('@keyframes jdActivityCurrentDot'));
 assert(css.includes('.ai-activity-row.running.ai-activity-current .ai-activity-label::after'),
  'Current reference step needs the inline breathing dot seen in the supplied videos');
-console.log('PASS: frame-matched Work surface starts with Thinking, transitions into model planning, keeps commentary/tool history, and hides internal bookkeeping.');
+console.log('PASS: requested Work surface keeps visible Lattice/Thought header, real model/tool history, and hidden internal bookkeeping.');

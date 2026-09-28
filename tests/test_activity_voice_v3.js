@@ -6,10 +6,10 @@ assert(activity.includes('padding:5px 0!important'), 'compact borderless Activit
 assert(activity.includes('background:transparent!important') && activity.includes('border:0!important'), 'Activity rows must be borderless');
 assert(activity.includes('.ai-activity-card.collapsed .thought-line__trace{display:none}'),
   'ThoughtLine Activity history must remain collapsible');
-assert(activity.includes('.thought-cluster__dot'), 'Reference four-dot activity indicator missing');
+assert(activity.includes('.rb-lattice-loader>i'), 'Requested 3x3 Lattice activity indicator missing');
 assert(html.includes('async function ensureAudioPlaybackUnlocked'),'audio playback unlock helper missing');
 assert(html.includes('await ensureAudioPlaybackUnlocked()'),'voice actions must unlock audio from user gesture');
 assert(html.includes('if(!neuralStarted)'),'neural TTS needs device fallback when playback never starts');
 assert(html.includes('class="voice-pill" id="micBtn"'),'VoicePill microphone markup missing');
 assert(html.includes('class="read-aloud-pill" id="speechMiniPlayer"'),'VoicePill read-aloud markup missing');
-console.log('PASS ReactBits activity + voice v3');
+console.log('PASS ReactBits Lattice activity + voice v3');
