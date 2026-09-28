@@ -80,10 +80,11 @@ const doc={
 const local={getItem:key=>store.get(key)||null,setItem:(key,val)=>store.set(key,val)};
 let listener=null,systemIsLight=false;
 const win={matchMedia:()=>({get matches(){return systemIsLight},addEventListener(_name,fn){listener=fn}})};
-const api=new Function('document','localStorage','window','safeSetLocalStorage',
+const api=new Function('document','localStorage','window','safeGetLocalStorage','safeSetLocalStorage',
  'closeTransientSurfaces','requestAnimationFrame','refreshLucideIcons',appearance+
  '\nreturn {applyJdAppearance,setJdChatTextSize};')(
- doc,local,win,(k,v)=>{store.set(k,v);return true;},()=>{},fn=>fn(),()=>{}
+ doc,local,win,(k,fallback=null)=>store.has(k)?store.get(k):fallback,
+ (k,v)=>{store.set(k,v);return true;},()=>{},fn=>fn(),()=>{}
 );
 api.applyJdAppearance('dark');
 assert.equal(doc.body.className,'');
