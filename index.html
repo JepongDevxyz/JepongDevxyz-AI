@@ -5145,7 +5145,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 const liveActivity=liveCard ? captureJdActivitySnapshot(true) : (activeGenerationDraft.activity||null);
                 const draft={...activeGenerationDraft,text:String(activePartialResponse||activeGenerationDraft.text||''),activity:liveActivity,updatedAt:Date.now()};
                 activeGenerationDraft=draft;
-                try{localStorage.setItem('jepong_active_generation',JSON.stringify(draft));}catch(_){}
+                safeSetLocalStorage('jepong_active_generation',JSON.stringify(draft),true);
             };
             if(force)write();
             else activeDraftPersistTimer=setTimeout(write,250);
@@ -5153,7 +5153,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         function clearActiveGenerationDraft(){
             if(activeDraftPersistTimer){clearTimeout(activeDraftPersistTimer);activeDraftPersistTimer=0;}
             activeGenerationDraft=null;
-            try{localStorage.removeItem('jepong_active_generation');}catch(_){}
+            safeRemoveLocalStorage('jepong_active_generation');
         }
         function recoverInterruptedGenerationDraft(){
             if(isIncognito || isBibleMode)return;
@@ -5222,17 +5222,22 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             }
         }
 
-        function readLocalJSON(key, fallback) {
+        function safeGetLocalStorage(key, fallback = null) {
             try {
-                return safeParseJSON(localStorage.getItem(key), fallback);
+                const value = window.localStorage.getItem(key);
+                return value == null ? fallback : value;
             } catch (_) {
                 return fallback;
             }
         }
 
+        function readLocalJSON(key, fallback) {
+            return safeParseJSON(safeGetLocalStorage(key), fallback);
+        }
+
         function safeSetLocalStorage(key, value, quiet = false) {
             try {
-                localStorage.setItem(key, value);
+                window.localStorage.setItem(key, value);
                 return true;
             } catch (error) {
                 console.warn(`Could not save ${key}:`, error);
@@ -5243,42 +5248,51 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             }
         }
 
+        function safeRemoveLocalStorage(key) {
+            try {
+                window.localStorage.removeItem(key);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
         let chatSessions = readLocalJSON('jepong_ai_chats', {});
-        let currentSessionId = localStorage.getItem('jepong_last_session_id') || null;
+        let currentSessionId = safeGetLocalStorage('jepong_last_session_id') || null;
         
-        let currentSelectedProvider = localStorage.getItem('jepong_last_provider') || 'gemini';
-        let currentSelectedModel = localStorage.getItem('jepong_last_model') || 'gemini-flash-latest';
+        let currentSelectedProvider = safeGetLocalStorage('jepong_last_provider') || 'gemini';
+        let currentSelectedModel = safeGetLocalStorage('jepong_last_model') || 'gemini-flash-latest';
         window.getJDPluginActiveModel = () => ({provider:currentSelectedProvider,model:currentSelectedModel});
         // Migrate previously selected AI Horde users to an ordinary provider.
         // Horde is now an emergency-only route, never a direct carousel choice.
         if(currentSelectedProvider==='aihorde'||currentSelectedProvider==='aihorde-public'){
             currentSelectedProvider='gemini';
             currentSelectedModel='gemini-flash-latest';
-            localStorage.setItem('jepong_last_provider',currentSelectedProvider);
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
+            safeSetLocalStorage('jepong_last_provider',currentSelectedProvider);
+            safeSetLocalStorage('jepong_last_model',currentSelectedModel);
         }
-        let currentSelectedImageModel = localStorage.getItem('jepong_image_model') || 'auto';
+        let currentSelectedImageModel = safeGetLocalStorage('jepong_image_model') || 'auto';
         if (!['auto','flux'].includes(currentSelectedImageModel)) currentSelectedImageModel = 'auto';
 
         // Only these six SEEKAI IDs are permitted by this user's configured key.
         const SEEKAI_ALLOWED_MODEL_IDS=["deepseek-v4.1-flash","glm-5.3-flash","mimo-v2.6-flash","deepseek-ai/DeepSeek-V4-Flash-0731","qwen3.8-flash","deepseek-v4-flash"];
         if(currentSelectedProvider==='seekai'&&!SEEKAI_ALLOWED_MODEL_IDS.includes(currentSelectedModel)){
             currentSelectedModel='deepseek-v4-flash';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
+            safeSetLocalStorage('jepong_last_model',currentSelectedModel);
         }
 
         // Migrate model IDs that were retired or replaced.
         if(currentSelectedProvider==='mistral' && currentSelectedModel==='mistral-small-latest'){
             currentSelectedModel='mistral-small-2603';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
+            safeSetLocalStorage('jepong_last_model',currentSelectedModel);
         }
         if(currentSelectedProvider==='mistral' && currentSelectedModel==='mistral-large-latest'){
             currentSelectedModel='mistral-large-2512';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
+            safeSetLocalStorage('jepong_last_model',currentSelectedModel);
         }
         if(currentSelectedProvider==='mistral' && ['mistral-small-2603','mistral-small-latest'].includes(currentSelectedModel)){
             currentSelectedModel='mistral-small-latest';
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
+            safeSetLocalStorage('jepong_last_model',currentSelectedModel);
         }
         const CURATED_MODEL_DEFAULTS = {
             cloudflare: '@cf/openai/gpt-oss-120b',
@@ -5296,24 +5310,24 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         };
         if(CURATED_MODELS[currentSelectedProvider] && !CURATED_MODELS[currentSelectedProvider].includes(currentSelectedModel)){
             currentSelectedModel=CURATED_MODEL_DEFAULTS[currentSelectedProvider];
-            localStorage.setItem('jepong_last_model',currentSelectedModel);
+            safeSetLocalStorage('jepong_last_model',currentSelectedModel);
         }
 
         let currentProviderPage = Math.max(0, ['gemini','cloudflare','groq','openrouter','mistral','cohere','unorouter','nvidia','codecraft','agentrouter','hcnsec','bailucode','seekai','image'].indexOf(currentSelectedProvider));
 
         // One-time routing reset for trustworthy per-model testing.
         const ROUTING_DEFAULT_VERSION='direct-model-test-v2';
-        if(localStorage.getItem('jepong_routing_default_version')!==ROUTING_DEFAULT_VERSION){
-            localStorage.setItem('jepong_auto_fallback','false');
-            localStorage.setItem('jepong_smart_router','false');
-            localStorage.setItem('jepong_routing_default_version',ROUTING_DEFAULT_VERSION);
+        if(safeGetLocalStorage('jepong_routing_default_version')!==ROUTING_DEFAULT_VERSION){
+            safeSetLocalStorage('jepong_auto_fallback','false');
+            safeSetLocalStorage('jepong_smart_router','false');
+            safeSetLocalStorage('jepong_routing_default_version',ROUTING_DEFAULT_VERSION);
         }
         let autoProviderFallback = readLocalJSON('jepong_auto_fallback', false) === true;
         let smartModelRouter = readLocalJSON('jepong_smart_router', false);
-        if(!autoProviderFallback){smartModelRouter=false;localStorage.setItem('jepong_smart_router','false');}
+        if(!autoProviderFallback){smartModelRouter=false;safeSetLocalStorage('jepong_smart_router','false');}
         let pendingStudyTool = null;
         let lastProviderMeta = readLocalJSON('jepong_provider_meta', {});
-        let currentSelectedMode = localStorage.getItem('jepong_last_mode') || 'general';
+        let currentSelectedMode = safeGetLocalStorage('jepong_last_mode') || 'general';
         let isWebSearchEnabled = readLocalJSON('jepong_last_websearch', false);
         
         let isIncognito = false;
@@ -5435,7 +5449,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 if(['google','twitter','apple','github','facebook','email'].includes(provider))safeSetLocalStorage('jd_last_login_provider',provider,true);
             }
             if(last){
-                const providerName={google:'Google',twitter:'X',apple:'Apple',github:'GitHub',facebook:'Facebook',email:'email'}[localStorage.getItem('jd_last_login_provider')];
+                const providerName={google:'Google',twitter:'X',apple:'Apple',github:'GitHub',facebook:'Facebook',email:'email'}[safeGetLocalStorage('jd_last_login_provider')];
                 last.hidden=!providerName;
                 last.textContent=providerName?'You last logged in with '+providerName:'';
             }
@@ -5531,11 +5545,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(!cloudUser)return;
             const {data,error}=await cloudClient.from('user_settings').select('personalization,appearance,voice,pet,preferences,updated_at').eq('user_id',cloudUser.id).maybeSingle();
             if(error){console.warn('Cloud state load:',error.message);return;}
-            const remote=data?.personalization||{}; const localUpdated=Number(localStorage.getItem('jepong_personalization_updated_at')||0); const remoteUpdated=data?.updated_at?Date.parse(data.updated_at):0;
-            if(Object.keys(remote).length && remoteUpdated>=localUpdated){personalizationSettings={...PERSONALIZATION_DEFAULTS,...personalizationSettings,...remote};localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));renderPersonalizationSettings();syncPersonalizationFeatureToggles();}
+            const remote=data?.personalization||{}; const localUpdated=Number(safeGetLocalStorage('jepong_personalization_updated_at')||0); const remoteUpdated=data?.updated_at?Date.parse(data.updated_at):0;
+            if(Object.keys(remote).length && remoteUpdated>=localUpdated){personalizationSettings={...PERSONALIZATION_DEFAULTS,...personalizationSettings,...remote};safeSetLocalStorage('jepong_personalization',JSON.stringify(personalizationSettings));renderPersonalizationSettings();syncPersonalizationFeatureToggles();}
             // Memory is deliberately stored separately from settings/chat history and scoped by auth.uid() RLS.
             const mem=await cloudClient.from('memories').select('id,content,updated_at').eq('user_id',cloudUser.id).eq('source','memory_summary').order('updated_at',{ascending:false}).limit(1).maybeSingle();
-            if(!mem.error && mem.data?.content){personalizationSettings.memorySummary=mem.data.content;localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));}
+            if(!mem.error && mem.data?.content){personalizationSettings.memorySummary=mem.data.content;safeSetLocalStorage('jepong_personalization',JSON.stringify(personalizationSettings));}
             const prefs=data?.preferences||{};
             // Chat persistence rule: this browser's saved copy wins for sessions it
             // already knows about. Cloud only fills sessions missing locally.
@@ -5556,14 +5570,14 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         async function syncCloudNow(silent=false){
             if(!cloudUser||!cloudClient){if(!silent)openAccountModal();return;}
             const now=new Date().toISOString();
-            const payload={user_id:cloudUser.id,personalization:personalizationSettings,appearance:{theme:localStorage.getItem('jepong_theme')||''},voice:{enabled:!!personalizationSettings.voiceEnabled,persona:personalizationSettings.voicePersona},pet:{pet:personalizationSettings.pet,description:personalizationSettings.petDescription},preferences:{chatSessions},updated_at:now};
+            const payload={user_id:cloudUser.id,personalization:personalizationSettings,appearance:{theme:safeGetLocalStorage('jepong_theme')||''},voice:{enabled:!!personalizationSettings.voiceEnabled,persona:personalizationSettings.voicePersona},pet:{pet:personalizationSettings.pet,description:personalizationSettings.petDescription},preferences:{chatSessions},updated_at:now};
             const {error}=await cloudClient.from('user_settings').upsert(payload,{onConflict:'user_id'}); if(error){if(!silent)showModernAlert(error.message,'Cloud sync');return;}
             // Keep user-controlled memory in its own per-user table; never mix it with another user's state.
             const existing=await cloudClient.from('memories').select('id').eq('user_id',cloudUser.id).eq('source','memory_summary').limit(1).maybeSingle();
             const memoryPayload={user_id:cloudUser.id,content:String(personalizationSettings.memorySummary||'').slice(0,12000),source:'memory_summary',metadata:{enabled:!!personalizationSettings.memoryEnabled},updated_at:now};
             const memoryResult=existing.data?.id?await cloudClient.from('memories').update(memoryPayload).eq('id',existing.data.id).eq('user_id',cloudUser.id):await cloudClient.from('memories').insert(memoryPayload);
             if(memoryResult.error){if(!silent)showModernAlert(memoryResult.error.message,'Memory sync');return;}
-            localStorage.setItem('jepong_personalization_updated_at',String(Date.now()));if(!silent)showModernAlert('Memory, settings and chats synced.','Cloud sync');renderCloudAccount();
+            safeSetLocalStorage('jepong_personalization_updated_at',String(Date.now()));if(!silent)showModernAlert('Memory, settings and chats synced.','Cloud sync');renderCloudAccount();
         }
         async function saveFileToLibrary(file,item){
             if(!cloudUser||!cloudClient||!file)return;
@@ -5759,8 +5773,8 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         });
 
         let isResponseSpeechEnabled = readLocalJSON('jepong_speech_enabled', false);
-        let selectedVoiceURI = localStorage.getItem('jepong_selected_voice') || '';
-        let speechRate = parseFloat(localStorage.getItem('jepong_speech_rate') || '1.0');
+        let selectedVoiceURI = safeGetLocalStorage('jepong_selected_voice') || '';
+        let speechRate = parseFloat(safeGetLocalStorage('jepong_speech_rate') || '1.0');
 if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
     speechRate = 1.0;
     safeSetLocalStorage('jepong_speech_rate', String(speechRate), true);
@@ -5964,7 +5978,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         const JD_APPEARANCE_KEY='jd_appearance_mode';
         const JD_TEXT_SIZE_KEY='jd_chat_text_size';
-        let jdAppearanceMode=localStorage.getItem(JD_APPEARANCE_KEY)||'';
+        let jdAppearanceMode=safeGetLocalStorage(JD_APPEARANCE_KEY)||'';
         let jdChatTextSize=100;
         function syncJdAppearanceControls(){
             document.querySelectorAll('#jdAppearanceModal [data-jd-appearance]').forEach(button=>{
@@ -5985,7 +5999,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         }
         function setTheme(themeName,{preserveAppearance=false}={}) {
             document.body.className = themeName;
-            localStorage.setItem('jepong_theme', themeName);
+            safeSetLocalStorage('jepong_theme', themeName);
             const toggle = document.getElementById('themeIosToggle');
             if (toggle) toggle.checked = themeName === 'theme-light';
             if(!preserveAppearance){
@@ -6016,9 +6030,9 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         const JD_HAPTICS_KEY='jd_haptics_enabled';
         const JD_HAPTICS_BUTTONS_KEY='jd_haptics_buttons';
         const JD_HAPTICS_RESPONSE_KEY='jd_haptics_response';
-        let jdHapticsEnabled=localStorage.getItem(JD_HAPTICS_KEY)==='true';
-        let jdHapticsButtonsEnabled=localStorage.getItem(JD_HAPTICS_BUTTONS_KEY)!=='false';
-        let jdHapticsResponseEnabled=localStorage.getItem(JD_HAPTICS_RESPONSE_KEY)!=='false';
+        let jdHapticsEnabled=safeGetLocalStorage(JD_HAPTICS_KEY)==='true';
+        let jdHapticsButtonsEnabled=safeGetLocalStorage(JD_HAPTICS_BUTTONS_KEY)!=='false';
+        let jdHapticsResponseEnabled=safeGetLocalStorage(JD_HAPTICS_RESPONSE_KEY)!=='false';
         let jdLastHapticAt=0;
         function jdHapticsSupported(){
             return typeof navigator.vibrate==='function';
@@ -6102,7 +6116,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         function setLiveWebSearchEnabled(enabled) {
             isWebSearchEnabled = !!enabled;
             personalizationSettings.advancedWebSearch = isWebSearchEnabled;
-            localStorage.setItem('jepong_last_websearch', JSON.stringify(isWebSearchEnabled));
+            safeSetLocalStorage('jepong_last_websearch', JSON.stringify(isWebSearchEnabled));
             persistPersonalization();
             updateWebSearchUI();
             renderPersonalizationSettings();
@@ -6178,8 +6192,8 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
         }
 
         function persistPersonalization() {
-            localStorage.setItem('jepong_personalization', JSON.stringify(personalizationSettings));
-            localStorage.setItem('jepong_personalization_updated_at', String(Date.now()));
+            safeSetLocalStorage('jepong_personalization', JSON.stringify(personalizationSettings));
+            safeSetLocalStorage('jepong_personalization_updated_at', String(Date.now()));
             queueCloudSync();
         }
 
@@ -8286,7 +8300,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function syncPersonalizationFeatureToggles() {
             if (!personalizationSettings.voiceEnabled && isResponseSpeechEnabled) {
                 isResponseSpeechEnabled = false;
-                localStorage.setItem('jepong_speech_enabled', 'false');
+                safeSetLocalStorage('jepong_speech_enabled', 'false');
                 const t = document.getElementById('responseSpeechToggle');
                 if (t) t.checked = false;
                 document.getElementById('speechSettingsGroup')?.classList.add('disabled');
@@ -8294,7 +8308,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             }
             if (!personalizationSettings.advancedWebSearch && isWebSearchEnabled) {
                 isWebSearchEnabled = false;
-                localStorage.setItem('jepong_last_websearch', 'false');
+                safeSetLocalStorage('jepong_last_websearch', 'false');
                 if (typeof updateWebSearchUI === 'function') updateWebSearchUI();
             }
         }
@@ -8377,7 +8391,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 personalizationSettings.voiceEnabled = true;
                 persistPersonalization();
             }
-            localStorage.setItem('jepong_speech_enabled', JSON.stringify(isResponseSpeechEnabled));
+            safeSetLocalStorage('jepong_speech_enabled', JSON.stringify(isResponseSpeechEnabled));
             const group = document.getElementById('speechSettingsGroup');
             if (group) group.classList.toggle('disabled', !isResponseSpeechEnabled);
             if (!isResponseSpeechEnabled) stopAllSpeech();
@@ -8469,7 +8483,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
 
         function selectVoiceOption(uri) {
             selectedVoiceURI = uri;
-            localStorage.setItem('jepong_selected_voice', uri);
+            safeSetLocalStorage('jepong_selected_voice', uri);
             updateVoiceLabelUI();
             closeVoiceModal();
         }
@@ -8749,7 +8763,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 return;
             }
             const saved = safeSetLocalStorage('jepong_ai_chats', JSON.stringify(chatSessions));
-            if (saved) localStorage.setItem('jepong_chats_updated_at', String(Date.now()));
+            if (saved) safeSetLocalStorage('jepong_chats_updated_at', String(Date.now()));
             queueCloudSync();
         }
 
@@ -8965,11 +8979,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function updateUsageUI() {
-            let words=parseInt(localStorage.getItem('jepong_word_count')||'0',10);
+            let words=parseInt(safeGetLocalStorage('jepong_word_count')||'0',10);
             if(!Number.isFinite(words)||words<0)words=0;
             const savedWords=countSavedChatWords();
             const sidebarWords=Math.max(words,savedWords);
-            let queries=parseInt(localStorage.getItem('jepong_query_count')||'0',10);
+            let queries=parseInt(safeGetLocalStorage('jepong_query_count')||'0',10);
             if(!Number.isFinite(queries)||queries<0)queries=0;
             const tokens=Math.ceil(words*1.35);
             const w=document.getElementById('geminiWordCount');
@@ -9084,7 +9098,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             openSettingsModal();
         }
         function syncReplyNotificationSettings(message=''){
-            const enabled=localStorage.getItem(JD_NOTIFY_KEY)==='true' &&
+            const enabled=safeGetLocalStorage(JD_NOTIFY_KEY)==='true' &&
                 jdCanNotify() && Notification.permission==='granted';
             const toggle=document.getElementById('settingsNotifyToggle');
             if(toggle)toggle.checked=enabled;
@@ -9107,8 +9121,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
         function shouldOfferNotifyPrompt(){
             return jdCanNotify() && Notification.permission==='default' &&
-                localStorage.getItem(JD_NOTIFY_KEY)!=='true' &&
-                localStorage.getItem('jepong_notify_dismissed')!=='true';
+                safeGetLocalStorage(JD_NOTIFY_KEY)!=='true' &&
+                safeGetLocalStorage('jepong_notify_dismissed')!=='true';
         }
         function maybeOfferNotifyPermission(){
             notifyRequestInFlight=true;
@@ -9203,7 +9217,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
         async function jdShowReplyNotification(title,body){
             if(!jdCanNotify()||Notification.permission!=='granted'||
-               localStorage.getItem(JD_NOTIFY_KEY)!=='true')return false;
+               safeGetLocalStorage(JD_NOTIFY_KEY)!=='true')return false;
             const options={
                 body,tag:'jepong-ai-response',
                 icon:'/favicon.ico',badge:'/notification-badge.svg',
@@ -9255,7 +9269,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             jdResponseFeedbackSent=true;
             if(!success||activeAIAbortController?.signal?.aborted)return;
             if(jdHapticsEnabled&&jdHapticsResponseEnabled)jdHapticPulse(20);
-            if(localStorage.getItem(JD_NOTIFY_KEY)!=='true')return;
+            if(safeGetLocalStorage(JD_NOTIFY_KEY)!=='true')return;
             void jdShowReplyNotification('JepongDevxyz AI','Tapos na ang sagot. Bumalik ka para makita.')
                 .catch(error=>{
                     syncReplyNotificationSettings(error?.message||'The browser could not display a notification.');
@@ -10394,7 +10408,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 return true;
             }
             if (mainCmd === '/bclear') {
-                localStorage.removeItem('jepong_bible_chats');
+                safeRemoveLocalStorage('jepong_bible_chats');
                 bibleChatSessions = {};
                 createBibleChatSession();
                 return true;
@@ -10578,7 +10592,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             removeAIIndicator();
             currentSessionId = 'session_' + Date.now();
             chatSessions[currentSessionId] = { id: currentSessionId, title: 'New Conversation', messages: [] };
-            localStorage.setItem('jepong_last_session_id', currentSessionId);
+            safeSetLocalStorage('jepong_last_session_id', currentSessionId);
             saveSessions();
             renderWelcomeScreen();
             closeAllDrawers();
@@ -10666,7 +10680,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function loadChatSession(id) {
             removeAIIndicator();
             currentSessionId = id;
-            localStorage.setItem('jepong_last_session_id', id);
+            safeSetLocalStorage('jepong_last_session_id', id);
             const session = chatSessions[id];
             if (!session || session.messages.length === 0) {
                 renderWelcomeScreen();
@@ -10711,7 +10725,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Local persistence is synchronous and authoritative so both completed
             // AI responses and Clear survive an immediate browser refresh.
             const saved=safeSetLocalStorage('jepong_ai_chats', JSON.stringify(chatSessions));
-            if(saved) localStorage.setItem('jepong_chats_updated_at', String(Date.now()));
+            if(saved) safeSetLocalStorage('jepong_chats_updated_at', String(Date.now()));
             queueCloudSync();
             renderSidebarHistory();
         }
@@ -11134,16 +11148,16 @@ ${m.text || ''}
         }
         function toggleAutoFallback(v){
             autoProviderFallback = (v === true);
-            localStorage.setItem('jepong_auto_fallback',JSON.stringify(autoProviderFallback));
+            safeSetLocalStorage('jepong_auto_fallback',JSON.stringify(autoProviderFallback));
             if(!autoProviderFallback){
                 smartModelRouter=false;
-                localStorage.setItem('jepong_smart_router','false');
+                safeSetLocalStorage('jepong_smart_router','false');
             }
             syncStrictRoutingControls();
         }
         function toggleSmartRouter(v){
             smartModelRouter=autoProviderFallback&&v===true;
-            localStorage.setItem('jepong_smart_router',JSON.stringify(smartModelRouter));
+            safeSetLocalStorage('jepong_smart_router',JSON.stringify(smartModelRouter));
             syncStrictRoutingControls();
         }
         function closeCodeFullscreen(){ document.getElementById('fullscreenCodeOverlay')?.classList.remove('open'); }
@@ -11431,7 +11445,7 @@ ${m.text || ''}
             };
             // Persist the branch before navigation so a refresh cannot lose it.
             saveSessions();
-            localStorage.setItem('jepong_last_session_id',id);
+            safeSetLocalStorage('jepong_last_session_id',id);
             loadChatSession(id);
             renderSidebarHistory();
             requestAnimationFrame(()=>scrollToBottom(true));
@@ -12157,8 +12171,8 @@ ${m.text || ''}
                     window.location.reload();
                     return;
                 } else if (cmd === '/clearcache') {
-                    localStorage.removeItem('jepong_ai_chats');
-                    localStorage.removeItem('jepong_bible_chats');
+                    safeRemoveLocalStorage('jepong_ai_chats');
+                    safeRemoveLocalStorage('jepong_bible_chats');
                     chatSessions = {};
                     bibleChatSessions = {};
                     createNewChat();
@@ -12482,12 +12496,12 @@ ${m.text || ''}
         function incrementCounters(text) {
             const clean=String(text||'').trim();
             const words=clean?clean.split(/\s+/).filter(Boolean).length:0;
-            const storedWords=parseInt(localStorage.getItem('jepong_word_count')||'0',10);
-            const storedQueries=parseInt(localStorage.getItem('jepong_query_count')||'0',10);
+            const storedWords=parseInt(safeGetLocalStorage('jepong_word_count')||'0',10);
+            const storedQueries=parseInt(safeGetLocalStorage('jepong_query_count')||'0',10);
             const currentWords=(Number.isFinite(storedWords)?storedWords:0)+words;
             const currentQueries=(Number.isFinite(storedQueries)?storedQueries:0)+1;
-            localStorage.setItem('jepong_word_count',String(currentWords));
-            localStorage.setItem('jepong_query_count',String(currentQueries));
+            safeSetLocalStorage('jepong_word_count',String(currentWords));
+            safeSetLocalStorage('jepong_query_count',String(currentQueries));
             updateUsageUI();
         }
 
@@ -12689,8 +12703,8 @@ ${m.text || ''}
         function selectMode(key, name) {
             currentSelectedMode = key;
             const displayName = name || MODE_DISPLAY_NAMES[key] || 'General AI';
-            localStorage.setItem('jepong_last_mode', key);
-            localStorage.setItem('jepong_last_mode_name', displayName);
+            safeSetLocalStorage('jepong_last_mode', key);
+            safeSetLocalStorage('jepong_last_mode_name', displayName);
             const iconSvg = modeIconsMap[key] || '';
             document.getElementById('selectedModeText').innerHTML = `${iconSvg} <span class="mode-label-text">${escapeHTML(displayName)}</span>`;
             
@@ -12709,7 +12723,7 @@ ${m.text || ''}
 
         const CUSTOM_API_PROFILE_STORAGE='jd_custom_api_profiles_v2';
         function getCustomApiProfiles(){const v=readLocalJSON(CUSTOM_API_PROFILE_STORAGE,[]);return Array.isArray(v)?v:[];}
-        function saveCustomApiProfiles(v){localStorage.setItem(CUSTOM_API_PROFILE_STORAGE,JSON.stringify(v));}
+        function saveCustomApiProfiles(v){safeSetLocalStorage(CUSTOM_API_PROFILE_STORAGE,JSON.stringify(v));}
         function inferCustomProvider(name='',key=''){
           const t=(name+' '+key).toLowerCase();
           const known=[['openrouter','OpenRouter','https://openrouter.ai/api/v1'],['nvidia','NVIDIA','https://integrate.api.nvidia.com/v1'],['unorouter','UnoRouter','https://api.unorouter.com/v1'],['codecraft','CodeCraft API','https://www.codecraftapi.com/v1'],['agentrouter','AgentRouter','https://agentrouter.org/v1'],['hcnsec','HCNSEC','https://api.hcnsec.cn/v1'],['bailu','Bailucode','https://bailucode.com/openapi/v1'],['seekai','SEEKAI','https://seekai.cc/v1']];
@@ -12722,7 +12736,7 @@ ${m.text || ''}
         function updateCustomApiProfile(id,field,value){const list=getCustomApiProfiles();const p=list.find(x=>x.id===id);if(!p)return;p[field]=value;if((field==='name'||field==='apiKey')&&p.autoSetup){const hit=inferCustomProvider(p.name,p.apiKey);p.provider=hit.provider;if(hit.baseUrl)p.baseUrl=hit.baseUrl;}saveCustomApiProfiles(list);}
         function customApiField(label,value,type,placeholder,span2=false,icon='circle',help=''){const l=document.createElement('label');l.className='custom-api-field'+(span2?' custom-api-span2':'');const ico=document.createElement('i');ico.className='custom-field-icon';ico.setAttribute('data-lucide',icon);const lab=document.createElement('span');lab.className='custom-field-label';lab.textContent=label;const i=document.createElement('input');i.type=type;i.value=value||'';i.placeholder=placeholder;i.autocomplete='off';const h=document.createElement('span');h.className='custom-field-help';h.textContent=help;l.append(ico,lab,i,h);return [l,i];}
         let customApiTesterProfileId=null;
-        function saveCustomApiProfile(id){const p=getCustomApiProfiles().find(x=>x.id===id);if(!p)return;if(!p.name.trim()){showModernToast('Name is required.');return;}if(!p.apiKey.trim()){showModernToast('API Key is required.');return;}if(!/^https:\/\//i.test(p.baseUrl||'')){showModernToast('Valid HTTPS Base URL is required.');return;}localStorage.setItem('jd_selected_custom_api_profile',id);currentSelectedProvider='custom-api';currentSelectedModel=p.model||'auto';localStorage.setItem('jepong_last_provider','custom-api');localStorage.setItem('jepong_last_model',currentSelectedModel);refreshCustomApiModelPages();updateSelectedModelUI();showModernToast((p.name||'Custom API')+' saved and added to the model carousel.');renderProviderKeyFields();}
+        function saveCustomApiProfile(id){const p=getCustomApiProfiles().find(x=>x.id===id);if(!p)return;if(!p.name.trim()){showModernToast('Name is required.');return;}if(!p.apiKey.trim()){showModernToast('API Key is required.');return;}if(!/^https:\/\//i.test(p.baseUrl||'')){showModernToast('Valid HTTPS Base URL is required.');return;}safeSetLocalStorage('jd_selected_custom_api_profile',id);currentSelectedProvider='custom-api';currentSelectedModel=p.model||'auto';safeSetLocalStorage('jepong_last_provider','custom-api');safeSetLocalStorage('jepong_last_model',currentSelectedModel);refreshCustomApiModelPages();updateSelectedModelUI();showModernToast((p.name||'Custom API')+' saved and added to the model carousel.');renderProviderKeyFields();}
         function openCustomApiTester(id){const p=getCustomApiProfiles().find(x=>x.id===id);if(!p)return;customApiTesterProfileId=id;document.getElementById('customApiTesterName').textContent=p.name||'Custom API';document.getElementById('customTesterModel').value=p.model||'auto';document.getElementById('customTesterStatus').textContent='Waiting for a test.';document.getElementById('customTesterResult').textContent='No result yet.';document.getElementById('customApiTesterOverlay').classList.add('open');refreshLucideIcons(document.getElementById('customApiTesterOverlay'));}
         function closeCustomApiTester(){document.getElementById('customApiTesterOverlay')?.classList.remove('open');}
         async function testerLoadModels(){const p=getCustomApiProfiles().find(x=>x.id===customApiTesterProfileId);if(!p)return;const s=document.getElementById('customTesterStatus'),r=document.getElementById('customTesterResult');s.className='custom-api-test-status';s.textContent='Loading models…';try{const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'custom-api-models',customApiProfile:p})});const d=await res.json();if(!res.ok)throw new Error(d.error||('HTTP '+res.status));const ms=Array.isArray(d.models)?d.models:[];s.className='custom-api-test-status good';s.textContent='Working ✓ · '+ms.length+' models detected';r.textContent=ms.map((m,i)=>String(i+1).padStart(3,'0')+'. '+(m.name||m.id)+'\n    '+m.id).join('\n')||'No models returned.';if(ms[0]&&document.getElementById('customTesterModel').value==='auto')document.getElementById('customTesterModel').value=ms[0].id;}catch(e){s.className='custom-api-test-status bad';s.textContent='Failed';r.textContent=String(e.message||e);}}
@@ -12790,8 +12804,8 @@ ${m.text || ''}
             for(const m of models){const id=String(m.id||m.name||'').trim();if(!id)continue;const b=document.createElement('button');b.className='option-item';b.dataset.provider='custom-api';b.dataset.model=id;b.dataset.customApiId=p.id;b.innerHTML='<div class="option-info"><div><div class="option-name">'+escapeHTML(m.name||id)+'</div><div class="option-desc">'+escapeHTML(p.name||'Custom API')+'</div></div></div><div class="radio-icon"></div>';b.onclick=()=>selectCustomApiModel(p.id,id,m.name||id);page.append(b);}track.append(page);
           }
         }
-        function selectCustomApiModel(profileId,model,name){const p=getCustomApiProfiles().find(x=>x.id===profileId);if(!p)return;currentSelectedProvider='custom-api';currentSelectedModel=model;localStorage.setItem('jepong_last_provider','custom-api');localStorage.setItem('jepong_last_model',model);localStorage.setItem('jd_selected_custom_api_profile',profileId);if(name)MODEL_DISPLAY_NAMES[model]=name;updateSelectedModelUI();toggleModal('modelModalOverlay',false);}
-        function selectedCustomApiProfile(){if(currentSelectedProvider!=='custom-api')return null;const id=localStorage.getItem('jd_selected_custom_api_profile');const p=getCustomApiProfiles().find(x=>x.id===id);return p?{...p,apiKeys:[p.apiKey,...String(p.apiKeys||'').split(/[\\n,]+/)].map(x=>String(x||'').trim()).filter((x,i,a)=>x&&a.indexOf(x)===i),model:currentSelectedModel||p.model||'auto'}:null;}
+        function selectCustomApiModel(profileId,model,name){const p=getCustomApiProfiles().find(x=>x.id===profileId);if(!p)return;currentSelectedProvider='custom-api';currentSelectedModel=model;safeSetLocalStorage('jepong_last_provider','custom-api');safeSetLocalStorage('jepong_last_model',model);safeSetLocalStorage('jd_selected_custom_api_profile',profileId);if(name)MODEL_DISPLAY_NAMES[model]=name;updateSelectedModelUI();toggleModal('modelModalOverlay',false);}
+        function selectedCustomApiProfile(){if(currentSelectedProvider!=='custom-api')return null;const id=safeGetLocalStorage('jd_selected_custom_api_profile');const p=getCustomApiProfiles().find(x=>x.id===id);return p?{...p,apiKeys:[p.apiKey,...String(p.apiKeys||'').split(/[\\n,]+/)].map(x=>String(x||'').trim()).filter((x,i,a)=>x&&a.indexOf(x)===i),model:currentSelectedModel||p.model||'auto'}:null;}
         function selectProviderModel(provider,key,name){
             if(provider==='seekai'&&!SEEKAI_ALLOWED_MODEL_IDS.includes(key))return;
             if(modelUnavailable(provider)){
@@ -12799,7 +12813,7 @@ ${m.text || ''}
                 return;
             }
             currentSelectedProvider=provider; currentSelectedModel=key;
-            localStorage.setItem('jepong_last_provider',provider); localStorage.setItem('jepong_last_model',key);
+            safeSetLocalStorage('jepong_last_provider',provider); safeSetLocalStorage('jepong_last_model',key);
             if(name) MODEL_DISPLAY_NAMES[key]=name;
             currentProviderPage=Math.max(0,PROVIDER_ORDER.indexOf(provider)); updateSelectedModelUI(); renderProviderPage(); toggleModal('modelModalOverlay',false);
         }
@@ -13697,7 +13711,7 @@ ${m.text || ''}
             const pending=pendingLargePaste;
             if(!pending)return closeLargePasteSheet();
             const remember=document.getElementById('largePasteRemember')?.checked===true;
-            if(remember)localStorage.setItem('jd-large-paste-choice',choice);
+            if(remember)safeSetLocalStorage('jd-large-paste-choice',choice);
             pendingLargePaste=null;
             closeLargePasteSheet();
             if(choice==='file'){
@@ -13728,7 +13742,7 @@ ${m.text || ''}
             const text=e.clipboardData?.getData('text/plain')||'';
             if(text.length<LARGE_PASTE_THRESHOLD)return;
             e.preventDefault();
-            const remembered=localStorage.getItem('jd-large-paste-choice');
+            const remembered=safeGetLocalStorage('jd-large-paste-choice');
             pendingLargePaste={text,start:target.selectionStart,end:target.selectionEnd};
             if(remembered==='file'||remembered==='text'){resolveLargePaste(remembered);return;}
             const remember=document.getElementById('largePasteRemember');
@@ -13854,8 +13868,8 @@ ${m.text || ''}
 
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(()=>refreshLucideIcons(),0); // global icon refresh
-            const savedTheme = localStorage.getItem('jepong_theme') || '';
-            const savedAppearance=localStorage.getItem(JD_APPEARANCE_KEY);
+            const savedTheme = safeGetLocalStorage('jepong_theme') || '';
+            const savedAppearance=safeGetLocalStorage(JD_APPEARANCE_KEY);
             if(['system','foryou','dark','light'].includes(savedAppearance)){
                 applyJdAppearance(savedAppearance,{persist:false});
             }else if(savedTheme){
@@ -13863,10 +13877,10 @@ ${m.text || ''}
             }else{
                 applyJdAppearance('system',{persist:true});
             }
-            setJdChatTextSize(localStorage.getItem(JD_TEXT_SIZE_KEY)||100,{persist:false});
+            setJdChatTextSize(safeGetLocalStorage(JD_TEXT_SIZE_KEY)||100,{persist:false});
             syncJdHapticsUI();
             syncReplyNotificationSettings();
-            const savedModeName = localStorage.getItem('jepong_last_mode_name');
+            const savedModeName = safeGetLocalStorage('jepong_last_mode_name');
             const modeName = savedModeName || MODE_DISPLAY_NAMES[currentSelectedMode] || 'General AI';
             selectMode(currentSelectedMode, modeName);
             updateSelectedModelUI();

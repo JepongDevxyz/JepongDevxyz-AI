@@ -5,9 +5,10 @@ CHAT=(ROOT/'api'/'chat.js').read_text(encoding='utf-8')
 def req(c,m):
     if not c: raise AssertionError(m)
 def main():
-    req('function safeParseJSON' in INDEX and 'function readLocalJSON' in INDEX,'safe local JSON helpers missing')
+    req('function safeParseJSON' in INDEX and 'function safeGetLocalStorage' in INDEX and 'function readLocalJSON' in INDEX,'safe local JSON helpers missing')
     req('JSON.parse(localStorage.getItem(' not in INDEX,'unsafe localStorage JSON.parse remains')
-    req('function safeSetLocalStorage' in INDEX,'safe localStorage write helper missing')
+    req('function safeSetLocalStorage' in INDEX and 'function safeRemoveLocalStorage' in INDEX,'safe localStorage write/remove helpers missing')
+    req(INDEX.count('window.localStorage.')==3,'localStorage access must stay centralized in safe helpers')
     req("safeSetLocalStorage('jepong_ai_chats'" in INDEX,'chat saves can still crash on storage quota')
     req('function sanitizeRenderedMarkdown' in INDEX and 'sanitizeRenderedMarkdown(tempDiv)' in INDEX,'markdown sanitizer not applied')
     req("span.innerHTML = node.nodeValue.replace" not in INDEX,'in-chat search still reinterprets text as HTML')

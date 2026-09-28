@@ -81,6 +81,7 @@ assert(css.includes('.rb-sling-band'),'Sling Button pull-band styling missing');
 assert(js.includes('function bindSling'),'Sling Button pointer runtime missing');
 assert(js.includes("window.handleMainAction==='function'"),'Sling Button must reuse the real send/stop handler');
 assert(!css.includes('.thought-line::after'),'Thought Line must not render the unwanted horizontal divider');
+assert(!css.includes('.thought-cluster'),'Retired four-dot Activity CSS must not remain layered under the 3x3 Lattice implementation');
 assert(html.includes('function updateGenerationActionButton'),'send/stop state function must remain');
 assert(html.includes('function handleMainAction'),'send/stop handler must remain');
 assert(html.includes('composerToolSheet'),'attachment/source menu must remain');
