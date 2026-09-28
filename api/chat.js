@@ -206,21 +206,27 @@ function providerCredentials(keys,autoFallback=false){
     .slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
+const PROVIDER_KEY_ENV = Object.freeze({
+  gemini:['GEMINI_API_KEYS','GEMINI_API_KEY'],
+  groq:['GROQ_API_KEYS','GROQ_API_KEY'],
+  openrouter:['OPENROUTER_API_KEYS','OPENROUTER_API_KEY'],
+  mistral:['MISTRAL_API_KEYS','MISTRAL_API_KEY'],
+  cohere:['COHERE_API_KEYS','COHERE_API_KEY'],
+  aihorde:['AIHORDE_API_KEYS','AIHORDE_API_KEY'],
+  unorouter:['UNOROUTER_API_KEYS','UNOROUTER_API_KEY'],
+  nvidia:['NVIDIA_API_KEYS','NVIDIA_API_KEY'],
+  codecraft:['CODECRAFT_API_KEYS','CODECRAFT_API_KEY'],
+  agentrouter:['AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY'],
+  hcnsec:['HCNSEC_API_KEYS','HCNSEC_API_KEY'],
+  bailucode:['BAILUCODE_API_KEYS','BAILUCODE_API_KEY'],
+  seekai:['SEEKAI_API_KEYS','SEEKAI_API_KEY']
+});
+
 function getProviderKeys(provider,rotate=true) {
-  if (provider === 'gemini') return (rotate?rotateProviderKeys('gemini', parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY')):parseKeys('GEMINI_API_KEYS','GEMINI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'groq') return (rotate?rotateProviderKeys('groq', parseKeys('GROQ_API_KEYS','GROQ_API_KEY')):parseKeys('GROQ_API_KEYS','GROQ_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'openrouter') return (rotate?rotateProviderKeys('openrouter', parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY')):parseKeys('OPENROUTER_API_KEYS','OPENROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'mistral') return (rotate?rotateProviderKeys('mistral', parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY')):parseKeys('MISTRAL_API_KEYS','MISTRAL_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'cohere') return (rotate?rotateProviderKeys('cohere', parseKeys('COHERE_API_KEYS','COHERE_API_KEY')):parseKeys('COHERE_API_KEYS','COHERE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'aihorde') return (rotate?rotateProviderKeys('aihorde', parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY')):parseKeys('AIHORDE_API_KEYS','AIHORDE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'unorouter') return (rotate?rotateProviderKeys('unorouter', parseKeys('UNOROUTER_API_KEYS','UNOROUTER_API_KEY')):parseKeys('UNOROUTER_API_KEYS','UNOROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'nvidia') return (rotate?rotateProviderKeys('nvidia', parseKeys('NVIDIA_API_KEYS','NVIDIA_API_KEY')):parseKeys('NVIDIA_API_KEYS','NVIDIA_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'codecraft') return (rotate?rotateProviderKeys('codecraft', parseKeys('CODECRAFT_API_KEYS','CODECRAFT_API_KEY')):parseKeys('CODECRAFT_API_KEYS','CODECRAFT_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'agentrouter') return (rotate?rotateProviderKeys('agentrouter', parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY')):parseKeys('AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'hcnsec') return (rotate?rotateProviderKeys('hcnsec', parseKeys('HCNSEC_API_KEYS','HCNSEC_API_KEY')):parseKeys('HCNSEC_API_KEYS','HCNSEC_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'bailucode') return (rotate?rotateProviderKeys('bailucode', parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY')):parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  if (provider === 'seekai') return (rotate?rotateProviderKeys('seekai', parseKeys('SEEKAI_API_KEYS','SEEKAI_API_KEY')):parseKeys('SEEKAI_API_KEYS','SEEKAI_API_KEY')).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-  return [];
+  const envNames=PROVIDER_KEY_ENV[provider];
+  if(!envNames)return [];
+  const keys=parseKeys(envNames[0],envNames[1]);
+  return (rotate?rotateProviderKeys(provider,keys):keys).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
 function getCloudflareAccounts() {
