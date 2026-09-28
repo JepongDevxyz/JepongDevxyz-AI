@@ -384,80 +384,89 @@ body.theme-light .squish-switch-root>input:checked+.squish-switch__track{
 }
 
 /* ===== Canonical settings toggle system =====
-   Single source of truth. Toggles align to the title line, not the vertical
-   center of a multi-line description. No competing layout overrides below. */
-body{--jd-toggle-rail:68px}
+   One layout authority. Switches sit on the row/card top rail with a fixed inset;
+   they are not vertically centered against variable-height descriptions. */
+body{--jd-toggle-rail:68px;--jd-toggle-top:0px}
 
-/* Shared row rails */
+/* Personalization rows */
 #personalizationModalOverlay .ps-ref-row{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) var(--jd-toggle-rail)!important;
-  align-items:start!important;
-  column-gap:14px!important;
+  position:relative!important;
+  display:block!important;
+  padding-right:calc(var(--jd-toggle-rail) + 14px)!important;
 }
-#personalizationPetPage .ps-pet-hero{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) var(--jd-toggle-rail)!important;
-  align-items:start!important;
-}
-#personalizationPetPage .ps-pet-behavior-row{
-  display:grid!important;
-  grid-template-columns:56px minmax(0,1fr) var(--jd-toggle-rail)!important;
-  align-items:start!important;
-}
-#personalizationPetPage .ps-ai-pet-setting-row{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) var(--jd-toggle-rail)!important;
-  align-items:start!important;
-  column-gap:14px!important;
-}
-
-/* Standard ReactBits switch: exact native geometry. */
-#personalizationModalOverlay .ps-ref-row>.squish-switch-root,
-#settingsModal .squish-switch-root{
+#personalizationModalOverlay .ps-ref-row>.squish-switch-root{
   --ss-w:48px!important;--ss-h:28px!important;--ss-inset:3px!important;--ss-thumb:22px!important;
+  position:absolute!important;right:10px!important;top:var(--jd-toggle-top)!important;
   width:48px!important;min-width:48px!important;max-width:48px!important;height:28px!important;
-  flex:0 0 48px!important;
-  justify-self:center!important;
-  align-self:start!important;
-  margin:-4px 0 0!important;
+  margin:0!important;transform:none!important;
 }
-#personalizationModalOverlay .ps-ref-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after,
-#settingsModal .squish-switch-root:not([data-held])>input:checked+span:last-child::after{--ss-x:20px!important}
+#personalizationModalOverlay .ps-ref-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after{--ss-x:20px!important}
 
-/* Pet ReactBits switch: exact native geometry, same title-line alignment. */
+/* Pet cards: anchor every toggle to the same top/right inset, independent of copy height. */
+#personalizationPetPage .ps-pet-hero,
+#personalizationPetPage .ps-pet-behavior-row,
+#personalizationPetPage .ps-ai-pet-setting-row{
+  position:relative!important;
+  padding-right:calc(var(--jd-toggle-rail) + 18px)!important;
+}
 #personalizationPetPage .ps-pet-hero>.squish-switch-root,
 #personalizationPetPage .ps-pet-behavior-row>.squish-switch-root,
 #personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root{
   --ss-w:54px!important;--ss-h:32px!important;--ss-inset:3px!important;--ss-thumb:26px!important;
+  position:absolute!important;right:18px!important;top:20px!important;
   width:54px!important;min-width:54px!important;max-width:54px!important;height:32px!important;
-  flex:0 0 54px!important;
-  justify-self:center!important;
-  align-self:start!important;
-  margin:-4px 0 0!important;
+  margin:0!important;transform:none!important;
 }
 #personalizationPetPage .ps-pet-hero>.squish-switch-root:not([data-held])>input:checked+span:last-child::after,
 #personalizationPetPage .ps-pet-behavior-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after,
 #personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after{--ss-x:22px!important}
 
-/* Legacy toggles follow the same title-line rule. */
+/* Preserve behavior-card icon/copy structure after removing the toggle from grid flow. */
+#personalizationPetPage .ps-pet-behavior-row{
+  display:grid!important;
+  grid-template-columns:56px minmax(0,1fr)!important;
+  align-items:start!important;
+  column-gap:20px!important;
+}
+#personalizationPetPage .ps-pet-hero{
+  display:block!important;
+}
+#personalizationPetPage .ps-ai-pet-setting-row{
+  display:block!important;
+}
+
+/* Other settings surfaces using ReactBits/legacy switches: top-align consistently. */
+#settingsModal .setting-row,
+#settingsModal .settings-item:has(.squish-switch-root),
+#settingsModal .settings-nav-row:has(.squish-switch-root){
+  position:relative!important;
+}
+#settingsModal .squish-switch-root{
+  --ss-w:48px!important;--ss-h:28px!important;--ss-inset:3px!important;--ss-thumb:22px!important;
+  width:48px!important;height:28px!important;min-width:48px!important;max-width:48px!important;
+  margin:-4px 0 0!important;transform:none!important;
+}
+#settingsModal .squish-switch-root:not([data-held])>input:checked+span:last-child::after{--ss-x:20px!important}
 #personalizationModalOverlay .ps-ref-row>:is(.toggle-switch,.switch,.toggle,.modern-toggle),
 #settingsModal .setting-row>:is(.toggle-switch,.switch,.toggle,.modern-toggle){
-  justify-self:center!important;
-  align-self:start!important;
-  margin:-4px auto 0!important;
+  align-self:flex-start!important;margin-top:-4px!important;
 }
 
 @media(max-width:520px){
   body{--jd-toggle-rail:64px}
   #personalizationPetPage .ps-pet-behavior-row{
-    grid-template-columns:50px minmax(0,1fr) var(--jd-toggle-rail)!important;
+    grid-template-columns:50px minmax(0,1fr)!important;column-gap:14px!important;
   }
+  #personalizationPetPage .ps-pet-hero>.squish-switch-root,
+  #personalizationPetPage .ps-pet-behavior-row>.squish-switch-root,
+  #personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root{right:16px!important;top:18px!important}
 }
 @media(max-width:390px){
   body{--jd-toggle-rail:60px}
-  #personalizationModalOverlay .ps-ref-row{column-gap:10px!important}
   #personalizationPetPage .ps-pet-behavior-row{
-    grid-template-columns:46px minmax(0,1fr) var(--jd-toggle-rail)!important;
+    grid-template-columns:46px minmax(0,1fr)!important;column-gap:12px!important;
   }
+  #personalizationPetPage .ps-pet-hero>.squish-switch-root,
+  #personalizationPetPage .ps-pet-behavior-row>.squish-switch-root,
+  #personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root{right:14px!important;top:16px!important}
 }
