@@ -5,6 +5,35 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   'use strict';
   const $ = id => document.getElementById(id);
   const STORAGE_KEY='jepong_plugins_directory_v2';
+  function storageGet(key,fallback=null){
+    try{
+      const value=window.localStorage.getItem(key);
+      return value==null?fallback:value;
+    }catch(error){
+      console.warn('Plugin storage read failed:',error);
+      return fallback;
+    }
+  }
+  function storageSet(key,value){
+    try{
+      window.localStorage.setItem(key,value);
+      return true;
+    }catch(error){
+      console.warn('Plugin storage write failed:',error);
+      return false;
+    }
+  }
+  function storageJson(key,fallback){
+    const raw=storageGet(key,null);
+    if(raw==null)return fallback;
+    try{
+      const parsed=JSON.parse(raw);
+      return parsed&&typeof parsed==='object'?parsed:fallback;
+    }catch(error){
+      console.warn('Plugin storage JSON is invalid:',error);
+      return fallback;
+    }
+  }
   const phases=[
     {id:'auto',name:'Automatic skill selection',description:'Choose the relevant coding workflow automatically from each chat message.'},
     {id:'plan',name:'Brainstorming & planning',description:'Clarify the goal, inspect available evidence, and outline the implementation.'},
@@ -42,8 +71,27 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   let savedGithubSelection=false,githubRestorePromise=Promise.resolve();
   const history=[];
   function text(id,value){const el=$(id);if(el)el.textContent=String(value||'');}
-  function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({repo:state.repo,ref:state.ref,path:state.path,installed:Object.fromEntries(Object.keys(catalogue).map(id=>[id,state.installed?.[id]===true])),github:!!state.installed.github&&state.github,superpowers:!!state.installed.superpowers&&state.superpowers,phase:state.phase}));}catch(_){}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(s&&typeof s==='object'){state.repo=typeof s.repo==='string'?s.repo:'';state.installed=Object.fromEntries(Object.keys(catalogue).map(id=>[id,s.installed?.[id]===true]));state.ref=typeof s.ref==='string'?s.ref:'';state.path=typeof s.path==='string'?s.path:'';state.github=false;state.superpowers=state.installed.superpowers&&s.superpowers===true;state.phase=phases.some(p=>p.id===s.phase)?s.phase:'auto';savedGithubSelection=state.installed.github&&s.github===true&&!!state.repo;}}catch(_){}}
+  function persist(){
+    storageSet(STORAGE_KEY,JSON.stringify({
+      repo:state.repo,ref:state.ref,path:state.path,
+      installed:Object.fromEntries(Object.keys(catalogue).map(id=>[id,state.installed?.[id]===true])),
+      github:!!state.installed.github&&state.github,
+      superpowers:!!state.installed.superpowers&&state.superpowers,
+      phase:state.phase
+    }));
+  }
+  function restore(){
+    const s=storageJson(STORAGE_KEY,null);
+    if(!s||typeof s!=='object')return;
+    state.repo=typeof s.repo==='string'?s.repo:'';
+    state.installed=Object.fromEntries(Object.keys(catalogue).map(id=>[id,s.installed?.[id]===true]));
+    state.ref=typeof s.ref==='string'?s.ref:'';
+    state.path=typeof s.path==='string'?s.path:'';
+    state.github=false;
+    state.superpowers=state.installed.superpowers&&s.superpowers===true;
+    state.phase=phases.some(p=>p.id===s.phase)?s.phase:'auto';
+    savedGithubSelection=state.installed.github&&s.github===true&&!!state.repo;
+  }
   restore();
   githubRestorePromise=restoreGithubContext();
 
@@ -939,7 +987,7 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     init();tab=tabName==='skills'?'skills':'plugins';view='directory';history.length=0;render();
     $('jdplugPanel').classList.add('open');$('jdplugClose').focus();
     refreshGithubSession({loadRepos:false});
-    if(!state.repo)try{state.repo=localStorage.getItem('jepong_plugin_public_repo')||'';}catch(_){}
+    if(!state.repo)state.repo=storageGet('jepong_plugin_public_repo','')||'';
     $('jdplugRepoInput').value=state.repo;
   }
   function close(){hidePluginConfirmation();hideWorkspaceConfirmation();clearBatchConfirmation();pendingBatch=null;pendingExecution=null;pendingProposal=null;

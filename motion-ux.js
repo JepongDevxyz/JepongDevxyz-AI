@@ -5,12 +5,45 @@
 
   const doc=document;
   const SCROLL_KEY='jd_scroll_state_v3';
+  const MAX_SCROLL_SNAPSHOTS=80;
+  function storageGet(key,fallback=null){
+    try{
+      const value=window.localStorage.getItem(key);
+      return value==null?fallback:value;
+    }catch(_){
+      return fallback;
+    }
+  }
+  function storageSet(key,value){
+    try{
+      window.localStorage.setItem(key,value);
+      return true;
+    }catch(error){
+      console.warn('Scroll state persistence failed:',error);
+      return false;
+    }
+  }
+  function readScrollStates(){
+    const raw=storageGet(SCROLL_KEY,null);
+    if(raw==null)return {};
+    try{
+      const parsed=JSON.parse(raw);
+      return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{};
+    }catch(_){
+      return {};
+    }
+  }
+  function pruneScrollStates(input){
+    return Object.fromEntries(Object.entries(input||{})
+      .filter(([,value])=>value&&typeof value==='object')
+      .sort((a,b)=>Number(b[1]?.savedAt||0)-Number(a[1]?.savedAt||0))
+      .slice(0,MAX_SCROLL_SNAPSHOTS));
+  }
   const PULL_THRESHOLD=96;
   const PULL_MAX=78;
   const PULL_HOLD=48;
   const RESTORE_DELAYS=[0,48,120,240,420,700];
-  let scrollStates={};
-  try{scrollStates=JSON.parse(localStorage.getItem(SCROLL_KEY)||'{}')||{};}catch(_){scrollStates={};}
+  let scrollStates=pruneScrollStates(readScrollStates());
 
   const state={
     restoring:false,
@@ -24,7 +57,8 @@
     armed:false,
     refreshing:false,
     thresholdTicked:false,
-    userInterruptedRestore:false
+    userInterruptedRestore:false,
+    lifecycleBound:false
   };
 
   function box(){return doc.getElementById('chatBox');}
@@ -80,7 +114,8 @@
   }
 
   function persistScrollStates(){
-    try{localStorage.setItem(SCROLL_KEY,JSON.stringify(scrollStates));}catch(_){}
+    scrollStates=pruneScrollStates(scrollStates);
+    storageSet(SCROLL_KEY,JSON.stringify(scrollStates));
   }
 
   function captureScroll(key=activeScrollKey()){
@@ -157,9 +192,12 @@
       state.saveTimer=setTimeout(()=>captureScroll(),80);
     },{passive:true});
     ['touchstart','pointerdown','wheel'].forEach(type=>el.addEventListener(type,cancelRestore,{passive:true}));
-    window.addEventListener('pagehide',()=>captureScroll(),{passive:true});
-    window.addEventListener('beforeunload',()=>captureScroll(),{passive:true});
-    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')captureScroll();},{passive:true});
+    if(!state.lifecycleBound){
+      state.lifecycleBound=true;
+      window.addEventListener('pagehide',()=>captureScroll(),{passive:true});
+      window.addEventListener('beforeunload',()=>captureScroll(),{passive:true});
+      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')captureScroll();},{passive:true});
+    }
   }
 
   function wrapNavigation(){
