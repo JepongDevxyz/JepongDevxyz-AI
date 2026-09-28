@@ -9655,9 +9655,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 <div class="ai-activity-header-actions">
                     <div class="thought-line" data-working="true">
                         <button type="button" class="thought-line__head" onclick="toggleActivityDetails(this)" aria-expanded="true">
-                            <span class="thought-cluster" id="aiActivityLattice" data-status="working" role="status" aria-label="Thinking">
-                                <span class="thought-cluster__dot"></span><span class="thought-cluster__dot"></span>
-                                <span class="thought-cluster__dot"></span><span class="thought-cluster__dot"></span>
+                            <span class="rb-lattice-loader" id="aiActivityLattice" data-status="working" role="status" aria-label="Thinking">
+                                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
                             </span>
                             <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking</span></span>
                             <span class="thought-line__timer" id="aiActivityTimer">0s</span>
