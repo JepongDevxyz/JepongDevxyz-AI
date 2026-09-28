@@ -159,10 +159,6 @@ function checkApiGuard(req,body){
   }
   return {ok:true,key,estimate,remaining:Math.max(0,API_GUARD.maxRequests-w.count)};
 }
-function guardResponseHeaders(guard){
-  return {'X-App-RateLimit-Limit':String(API_GUARD.maxRequests),'X-App-RateLimit-Remaining':String(guard?.remaining??API_GUARD.maxRequests),'X-App-Estimated-Tokens':String(guard?.estimate||0)};
-}
-
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -3043,7 +3039,7 @@ function taskSpecificActivityCopy(profile={}, phase='context'){
   return {label:phase==='context'?(base+': '+subject):base,kind:activityKind};
 }
 
-function taskPreparationStages(profile={}){
+){
   const first=taskSpecificActivityCopy(profile,'prepared');
   const second=taskSpecificActivityCopy(profile,'prepared2');
   return [
@@ -3134,20 +3130,7 @@ function contextActivityPlan(message='', files=[]){
   return {profile,steps:[{id:'task-context',label,kind}]};
 }
 
-function emitContextActivityStart(message='', files=[], emit){
-  const plan=contextActivityPlan(message,files);
-  const first=plan.steps[0];
-  if(first)activity(emit,first.id,first.label,'running',first.kind,'');
-  return plan;
-}
-
-function completeContextPlan(plan, emit){
-  const first=plan?.steps?.[0];
-  const blueprint=plan?.activityBlueprint||defaultActivityBlueprint(plan?.profile||{});
-  if(first)activity(emit,first.id,blueprint.context||first.label,'completed',first.kind||blueprint.kind||'process','');
-}
-
-function taskWorkingActivity(plan={}){
+){
   const profile=plan?.profile||{};
   const blueprint=plan?.activityBlueprint;
   if(blueprint?.work)return {label:blueprint.work,kind:blueprint.kind||'process'};
@@ -3797,41 +3780,6 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   return buildLiveSourceContext(await enrichSearchResults(results,emit,sourcePages));
 }
 
-
-async function getLiveWebContext(message, webSearch, emit) {
-  if (!webSearch || !message) return '';
-  activity(emit,'web-search','JepongDevxyz is checking live web context','running','web');
-  try {
-    const isWeather = /(weather|panahon|ulan|init|bagyo|temperatura|forecast)/i.test(message);
-    if (isWeather) {
-      const match = message.match(/(?:sa|in|for|at)\s+([a-zA-Z\s,.-]+)/i);
-      const location = match ? match[1].trim() : 'Guimba';
-      const res = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`, {
-        headers: {'User-Agent':'JepongDevxyz-AI/1.0'}, signal: AbortSignal.timeout(3500)
-      });
-      if (res.ok) {
-        const d = await res.json();
-        const c = d.current_condition?.[0] || {};
-        const n = d.nearest_area?.[0] || {};
-        activity(emit,'web-search',`Live weather context ready for ${n.areaName?.[0]?.value || location}`,'completed','web');
-        return `\n\n[REAL-TIME WEATHER]\nLocation: ${n.areaName?.[0]?.value || location}\nTemperature: ${c.temp_C || 'N/A'}°C\nFeels like: ${c.FeelsLikeC || 'N/A'}°C\nCondition: ${c.weatherDesc?.[0]?.value || 'Unknown'}\nHumidity: ${c.humidity || 'N/A'}%\nWind: ${c.windspeedKmph || 'N/A'} km/h\nRain: ${c.precipMM || 'N/A'} mm.`;
-      }
-    } else {
-      const res = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(message)}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(3000) });
-      if (res.ok) {
-        const d = await res.json();
-        if (d.AbstractText) {
-          activity(emit,'web-search','Live web context found','completed','web');
-          return `\n\n[LIVE WEB RESULT]\n${d.AbstractText}\nSource: ${d.AbstractURL || 'Internet'}`;
-        }
-      }
-    }
-    activity(emit,'web-search','No instant web result found — continuing normally','warning','web');
-  } catch (_) {
-    activity(emit,'web-search','Live web lookup timed out — continuing normally','warning','web');
-  }
-  return '';
-}
 
 function normalizeHistory(history = []) {
   return (Array.isArray(history)?history:[])
