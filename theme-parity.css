@@ -383,90 +383,137 @@ body.theme-light .squish-switch-root>input:checked+.squish-switch__track{
   background:#6d4aff!important;border-color:#6d4aff!important;
 }
 
-/* ===== Canonical settings toggle system =====
-   One layout authority. Switches sit on the row/card top rail with a fixed inset;
-   they are not vertically centered against variable-height descriptions. */
-body{--jd-toggle-rail:68px;--jd-toggle-top:0px}
-
-/* Personalization rows */
-#personalizationModalOverlay .ps-ref-row{
+/* ===== Canonical centered toggle =====
+   Replace SquishSwitch presentation with one simple, fixed-size toggle.
+   Every settings row centers the control vertically; no per-screen offsets. */
+.squish-switch-root{
+  --jd-toggle-w:46px;
+  --jd-toggle-h:26px;
+  --jd-toggle-pad:3px;
+  --jd-toggle-knob:20px;
   position:relative!important;
+  display:inline-block!important;
+  width:var(--jd-toggle-w)!important;
+  min-width:var(--jd-toggle-w)!important;
+  max-width:var(--jd-toggle-w)!important;
+  height:var(--jd-toggle-h)!important;
+  flex:0 0 var(--jd-toggle-w)!important;
+  margin:0!important;
+  padding:0!important;
+  transform:none!important;
+  vertical-align:middle!important;
+}
+.squish-switch-root>input{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  opacity:0!important;
+  cursor:pointer!important;
+  z-index:2!important;
+}
+.squish-switch-root>span:last-child{
+  position:absolute!important;
+  inset:0!important;
   display:block!important;
-  padding-right:calc(var(--jd-toggle-rail) + 14px)!important;
+  width:100%!important;
+  height:100%!important;
+  border-radius:999px!important;
+  background:#3f4653!important;
+  border:1px solid rgba(148,163,184,.30)!important;
+  box-shadow:none!important;
+  transform:none!important;
+  transition:background .18s ease,border-color .18s ease!important;
 }
-#personalizationModalOverlay .ps-ref-row>.squish-switch-root{
-  --ss-w:48px!important;--ss-h:28px!important;--ss-inset:3px!important;--ss-thumb:22px!important;
-  position:absolute!important;right:10px!important;top:var(--jd-toggle-top)!important;
-  width:48px!important;min-width:48px!important;max-width:48px!important;height:28px!important;
-  margin:0!important;transform:none!important;
+.squish-switch-root>span:last-child::after{
+  content:""!important;
+  position:absolute!important;
+  width:var(--jd-toggle-knob)!important;
+  height:var(--jd-toggle-knob)!important;
+  left:var(--jd-toggle-pad)!important;
+  top:50%!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.28)!important;
+  transform:translateY(-50%)!important;
+  transition:left .18s ease!important;
 }
-#personalizationModalOverlay .ps-ref-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after{--ss-x:20px!important}
+.squish-switch-root>input:checked+span:last-child{
+  background:#6d4aff!important;
+  border-color:#6d4aff!important;
+}
+.squish-switch-root>input:checked+span:last-child::after{
+  left:calc(100% - var(--jd-toggle-knob) - var(--jd-toggle-pad))!important;
+  transform:translateY(-50%)!important;
+}
+.squish-switch-root[data-held]>span:last-child,
+.squish-switch-root[data-held]>span:last-child::after{transform:none!important}
+.squish-switch-root[data-held]>span:last-child::after{transform:translateY(-50%)!important}
 
-/* Pet cards: anchor every toggle to the same top/right inset, independent of copy height. */
-#personalizationPetPage .ps-pet-hero,
-#personalizationPetPage .ps-pet-behavior-row,
-#personalizationPetPage .ps-ai-pet-setting-row{
-  position:relative!important;
-  padding-right:calc(var(--jd-toggle-rail) + 18px)!important;
-}
-#personalizationPetPage .ps-pet-hero>.squish-switch-root,
-#personalizationPetPage .ps-pet-behavior-row>.squish-switch-root,
-#personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root{
-  --ss-w:54px!important;--ss-h:32px!important;--ss-inset:3px!important;--ss-thumb:26px!important;
-  position:absolute!important;right:18px!important;top:20px!important;
-  width:54px!important;min-width:54px!important;max-width:54px!important;height:32px!important;
-  margin:0!important;transform:none!important;
-}
-#personalizationPetPage .ps-pet-hero>.squish-switch-root:not([data-held])>input:checked+span:last-child::after,
-#personalizationPetPage .ps-pet-behavior-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after,
-#personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root:not([data-held])>input:checked+span:last-child::after{--ss-x:22px!important}
-
-/* Preserve behavior-card icon/copy structure after removing the toggle from grid flow. */
-#personalizationPetPage .ps-pet-behavior-row{
+/* All known settings rows use the same centered control column. */
+#personalizationModalOverlay .ps-ref-row{
   display:grid!important;
-  grid-template-columns:56px minmax(0,1fr)!important;
-  align-items:start!important;
-  column-gap:20px!important;
+  grid-template-columns:minmax(0,1fr) 58px!important;
+  align-items:center!important;
+  column-gap:12px!important;
 }
 #personalizationPetPage .ps-pet-hero{
-  display:block!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 58px!important;
+  align-items:center!important;
+  gap:14px!important;
+}
+#personalizationPetPage .ps-pet-behavior-row{
+  display:grid!important;
+  grid-template-columns:50px minmax(0,1fr) 58px!important;
+  align-items:center!important;
+  gap:14px!important;
 }
 #personalizationPetPage .ps-ai-pet-setting-row{
-  display:block!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 58px!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+#personalizationModalOverlay .ps-ref-row>.squish-switch-root,
+#personalizationPetPage .ps-pet-hero>.squish-switch-root,
+#personalizationPetPage .ps-pet-behavior-row>.squish-switch-root,
+#personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root,
+#settingsModal .squish-switch-root{
+  position:relative!important;
+  inset:auto!important;
+  justify-self:center!important;
+  align-self:center!important;
+  margin:0!important;
+  transform:none!important;
 }
 
-/* Other settings surfaces using ReactBits/legacy switches: top-align consistently. */
-#settingsModal .setting-row,
-#settingsModal .settings-item:has(.squish-switch-root),
-#settingsModal .settings-nav-row:has(.squish-switch-root){
-  position:relative!important;
-}
-#settingsModal .squish-switch-root{
-  --ss-w:48px!important;--ss-h:28px!important;--ss-inset:3px!important;--ss-thumb:22px!important;
-  width:48px!important;height:28px!important;min-width:48px!important;max-width:48px!important;
-  margin:-4px 0 0!important;transform:none!important;
-}
-#settingsModal .squish-switch-root:not([data-held])>input:checked+span:last-child::after{--ss-x:20px!important}
+/* Legacy toggles follow the same vertical centering rule. */
 #personalizationModalOverlay .ps-ref-row>:is(.toggle-switch,.switch,.toggle,.modern-toggle),
 #settingsModal .setting-row>:is(.toggle-switch,.switch,.toggle,.modern-toggle){
-  align-self:flex-start!important;margin-top:-4px!important;
+  align-self:center!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
 }
 
-@media(max-width:520px){
-  body{--jd-toggle-rail:64px}
-  #personalizationPetPage .ps-pet-behavior-row{
-    grid-template-columns:50px minmax(0,1fr)!important;column-gap:14px!important;
-  }
-  #personalizationPetPage .ps-pet-hero>.squish-switch-root,
-  #personalizationPetPage .ps-pet-behavior-row>.squish-switch-root,
-  #personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root{right:16px!important;top:18px!important}
+body.theme-light .squish-switch-root>span:last-child{
+  background:#d7d8de!important;
+  border-color:#c6c8d0!important;
 }
+body.theme-light .squish-switch-root>input:checked+span:last-child{
+  background:#6d4aff!important;
+  border-color:#6d4aff!important;
+}
+
 @media(max-width:390px){
-  body{--jd-toggle-rail:60px}
-  #personalizationPetPage .ps-pet-behavior-row{
-    grid-template-columns:46px minmax(0,1fr)!important;column-gap:12px!important;
+  #personalizationModalOverlay .ps-ref-row,
+  #personalizationPetPage .ps-pet-hero,
+  #personalizationPetPage .ps-ai-pet-setting-row{
+    grid-template-columns:minmax(0,1fr) 54px!important;
   }
-  #personalizationPetPage .ps-pet-hero>.squish-switch-root,
-  #personalizationPetPage .ps-pet-behavior-row>.squish-switch-root,
-  #personalizationPetPage .ps-ai-pet-setting-row>.squish-switch-root{right:14px!important;top:16px!important}
+  #personalizationPetPage .ps-pet-behavior-row{
+    grid-template-columns:46px minmax(0,1fr) 54px!important;
+    gap:12px!important;
+  }
 }
