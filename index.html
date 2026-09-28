@@ -5104,7 +5104,10 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(!force && activeDraftPersistTimer)return;
             const write=()=>{
                 activeDraftPersistTimer=0;
-                const draft={...activeGenerationDraft,text:String(activePartialResponse||activeGenerationDraft.text||''),updatedAt:Date.now()};
+                const liveCard=document.getElementById('activeAiIndicator');
+                const liveActivity=liveCard ? captureJdActivitySnapshot(true) : (activeGenerationDraft.activity||null);
+                const draft={...activeGenerationDraft,text:String(activePartialResponse||activeGenerationDraft.text||''),activity:liveActivity,updatedAt:Date.now()};
+                activeGenerationDraft=draft;
                 try{localStorage.setItem('jepong_active_generation',JSON.stringify(draft));}catch(_){}
             };
             if(force)write();
@@ -5119,16 +5122,17 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(isIncognito || isBibleMode)return;
             let draft=null;
             try{draft=JSON.parse(localStorage.getItem('jepong_active_generation')||'null');}catch(_){}
-            if(!draft?.sessionId || !draft?.text)return;
+            if(!draft?.sessionId)return;
             const session=chatSessions?.[draft.sessionId];
             if(!session?.messages)return clearActiveGenerationDraft();
             const alreadySaved=session.messages.some(m=>m?.role==='bot' && m?.generationId===draft.generationId);
-            if(!alreadySaved){
+            if(!alreadySaved && (draft.text || draft.activity)){
                 session.messages.push({
                     role:'bot',
-                    text:String(draft.text),
+                    text:String(draft.text||''),
                     stopped:true,
                     interrupted:true,
+                    activity:draft.activity||null,
                     generationId:draft.generationId
                 });
                 safeSetLocalStorage('jepong_ai_chats',JSON.stringify(chatSessions));
@@ -10556,9 +10560,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         // Save a small, sanitized activity snapshot with the corresponding
         // assistant turn. Without this, the entire task-specific status trail
         // vanished when a user refreshed or reopened a saved conversation.
-        function captureJdActivitySnapshot(){
+        function captureJdActivitySnapshot(allowLive=false){
             const card=document.getElementById('activeAiIndicator');
-            if(!card||card.dataset.finalized!=='true')return null;
+            if(!card||(!allowLive && card.dataset.finalized!=='true'))return null;
             const clean=(text,limit=170)=>String(text||'').trim().slice(0,limit);
             const steps=[...card.querySelectorAll('.ai-activity-list .ai-activity-row')]
                 .slice(-12).map(row=>({
@@ -11816,26 +11820,28 @@ ${m.text || ''}
                 let actualModelUsed = currentSelectedModel;
                 const contentType = response.headers.get('content-type') || '';
 
-                // Keep the assistant answer hidden while Activity is still running.
-                // We buffer streamed text, then collapse Activity and reveal the answer together.
+                // Stream the answer visibly, like ChatGPT. A refresh can therefore
+                // preserve exactly what the user had already received instead of revealing
+                // nothing until the provider closes the stream.
+                let liveRenderFrame=0;
                 const renderLiveResponse = (force=false) => {
-                    if (!force && !responseStreamFinished) return;
-                    botMsgElem.innerHTML = `<div>${renderCustomMarkdown(fullResponse)}</div>
-                        ${renderJdAssistantInteraction(assistantInteraction)}
-                        ${botActionsHTML()}`;
-                    pendingArtifacts.forEach(artifact=>{void attachGeneratedArtifact(botMsgElem,artifact,historyFiles);});
-                    botMsgElem.style.removeProperty('display');
-                    refreshLucideIcons(botMsgElem);
-                    if (userIsScrollingUp) {
-                        unreadMessagesCount++;
-                        const badge = document.getElementById('unreadBadge');
-                        badge.style.display = 'inline-block';
-                        badge.innerText = 'New';
-                    } else {
-                        scrollToBottom(false);
-                    }
+                    if(!force && liveRenderFrame)return;
+                    const paint=()=>{
+                        liveRenderFrame=0;
+                        const visibleText=stripJdWorkNotes(fullResponse);
+                        const cursor=!responseStreamFinished && visibleText
+                            ? '<span class="jd-stream-cursor" aria-label="Generating"><i></i><i></i><i></i></span>' : '';
+                        botMsgElem.innerHTML = `<div>${renderCustomMarkdown(visibleText)}${cursor}</div>
+                            ${responseStreamFinished?renderJdAssistantInteraction(assistantInteraction):''}
+                            ${responseStreamFinished?botActionsHTML():''}`;
+                        botMsgElem.style.removeProperty('display');
+                        refreshLucideIcons(botMsgElem);
+                        if(!userIsScrollingUp)scrollToBottom(false);
+                    };
+                    if(force)paint();
+                    else liveRenderFrame=requestAnimationFrame(paint);
                 };
-                botMsgElem.style.setProperty('display','none','important');
+                botMsgElem.style.removeProperty('display');
 
                 const revealFinalResponse = async (elapsedMs=null) => {
                     if (responseRevealScheduled) return;
@@ -11862,6 +11868,7 @@ ${m.text || ''}
                             syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                             activePartialResponse=stripJdWorkNotes(fullResponse);
                             if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
+                            renderLiveResponse(false);
                         },
                         artifact: (payload) => {
                             if(payload?.filename && !pendingArtifacts.some(item=>item?.filename===payload.filename && item?.size===payload.size)){
@@ -11887,6 +11894,7 @@ ${m.text || ''}
                         syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                         activePartialResponse=stripJdWorkNotes(fullResponse);
                             if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
+                        renderLiveResponse(false);
                     }
                     await revealFinalResponse();
                 }
@@ -13915,6 +13923,19 @@ body.theme-light .ai-activity-card .ai-activity-row.ai-activity-current .ai-acti
 body.theme-light .ai-activity-card svg{stroke:currentColor!important}
 body.theme-light .ai-activity-card .ai-activity-icon{color:#55555f!important;opacity:1!important}
 body.theme-light .ai-activity-card .ai-work-commentary{background:transparent!important;color:#33333a!important}
+
+/* ChatGPT-like in-progress continuation marker shown at the live response edge. */
+.jd-stream-cursor{
+  display:inline-flex;align-items:center;justify-content:center;gap:3px;
+  width:38px;height:30px;margin:6px 0 2px 6px;vertical-align:middle;
+  border-radius:16px;background:color-mix(in srgb,var(--modal-bg) 94%,transparent);
+  border:1px solid var(--border-color);box-shadow:0 4px 14px rgba(0,0,0,.16);
+}
+.jd-stream-cursor i{width:4px;height:4px;border-radius:50%;background:var(--text-main);opacity:.35;animation:jdStreamDot 1.05s ease-in-out infinite}
+.jd-stream-cursor i:nth-child(2){animation-delay:.14s}.jd-stream-cursor i:nth-child(3){animation-delay:.28s}
+@keyframes jdStreamDot{0%,100%{opacity:.28;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
+body.theme-light .jd-stream-cursor{background:#f2f2f4!important;border-color:#d9d9de!important;box-shadow:0 4px 14px rgba(20,20,30,.10)!important}
+body.theme-light .jd-stream-cursor i{background:#3b3b43!important}
 </style>
 </body>
 </html>
