@@ -5157,8 +5157,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         }
         function recoverInterruptedGenerationDraft(){
             if(isIncognito || isBibleMode)return;
-            let draft=null;
-            try{draft=JSON.parse(localStorage.getItem('jepong_active_generation')||'null');}catch(_){}
+            const draft=readLocalJSON('jepong_active_generation', null);
             if(!draft?.sessionId)return;
             const session=chatSessions?.[draft.sessionId];
             if(!session?.messages)return clearActiveGenerationDraft();
@@ -5224,7 +5223,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         }
 
         function readLocalJSON(key, fallback) {
-            return safeParseJSON(localStorage.getItem(key), fallback);
+            try {
+                return safeParseJSON(localStorage.getItem(key), fallback);
+            } catch (_) {
+                return fallback;
+            }
         }
 
         function safeSetLocalStorage(key, value, quiet = false) {
