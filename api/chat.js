@@ -482,7 +482,6 @@ function detectArtifactRequest(message='', files=[]) {
   const inputFiles=Array.isArray(files)?files:[];
   const rootNames=[...new Set(inputFiles.map(f=>String(f?.parentName||f?.name||f?.filename||'')).filter(Boolean))];
   const attachedZip=rootNames.find(name=>/\.zip$/i.test(name))||'';
-  const attachedProjectFiles=rootNames.filter(name=>/\.(?:html?|css|m?js|cjs|ts|tsx|jsx|json|py|php|java|c|cpp|h|hpp|cs|xml|svg|sql|ya?ml|sh|gradle|properties|md|txt)$/i.test(name));
   const codeDeliveryIntent=wantsCompleteCode(text) ||
     /\b(?:updated|fixed|complete|full|buong)\s+(?:source\s+)?(?:code|project)\b/i.test(text) ||
     /\b(?:bigay|ibigay|send|pa[ -]?send|export|download)\b[\s\S]{0,45}\b(?:code|source|project)\b/i.test(text);
@@ -3530,7 +3529,6 @@ function inspectUploadedProject(files=[], emit){
     const manifestText=String(rootMeta?.extractedText||'');
     const indexedCount=Math.max(0,Number(rootMeta?.archiveFileCount)||0);
     const readableCount=Math.max(0,Number(rootMeta?.archiveReadableCount)||0);
-    const selectedCount=Math.max(sourceEntries.length,Number(rootMeta?.archiveSelectedCount)||0);
     const names=[
       ...new Set([
         ...sourceEntries.map(p=>String(p?.name||'')),
@@ -5617,7 +5615,6 @@ async function processChat(body, emit) {
       first,provider,model,history,files,message,systemInstruction,routedReason,emit,
       customApiKeys:requestCustomKeys,customApiProfile,responseEffort
     });
-    const usedProvider=providerLabel(first.response.headers.get('x-ai-provider')||provider);
     activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
     return {
       ok:true,
