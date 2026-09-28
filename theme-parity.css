@@ -233,3 +233,84 @@ body:not(.theme-light) .jd-profile-home,
 body:not(.theme-light) .jd-appearance-home,
 body:not(.theme-light) .jd-haptics-home,
 body:not(.theme-light) .jd-reply-notify-home{background:#171717!important;color:#f5f5f5!important}
+
+
+/* ---------- Light-mode control contrast audit (mobile personalization/API settings) ----------
+   The previous parity layer themed the surfaces but ReactBits SquishSwitch kept
+   dark-mode custom properties. In Light mode that produced nearly-black circles
+   with no readable state. Keep state + affordance visibly distinct. */
+body.theme-light .squish-switch-root{
+  --ss-track:#d9d9df!important;
+  --ss-track-on:#6d4aff!important;
+  --ss-thumb-color:#ffffff!important;
+  --ss-thumb-on:#ffffff!important;
+}
+body.theme-light .squish-switch-root>span:last-child{
+  background:var(--ss-track)!important;
+  border:1px solid #c8c8d0!important;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.025)!important;
+}
+body.theme-light .squish-switch-root>input:checked+span:last-child{
+  background:var(--ss-track-on)!important;
+  border-color:#6d4aff!important;
+}
+body.theme-light .squish-switch-root>span:last-child::after{
+  background:#fff!important;
+  box-shadow:0 1px 3px rgba(0,0,0,.24)!important;
+}
+body.theme-light .squish-switch-root>input:checked+span:last-child::after{background:#fff!important}
+body.theme-light .squish-switch-root>input:disabled+span:last-child{opacity:.52!important}
+
+/* Personalization information must stay readable beside the switches. */
+body.theme-light #personalizationModalOverlay .ps-ref-content,
+body.theme-light #personalizationModalOverlay .ps-ref-section,
+body.theme-light #personalizationModalOverlay .ps-ref-row,
+body.theme-light #personalizationModalOverlay .ps-ref-copy,
+body.theme-light #personalizationModalOverlay .ps-ref-copy strong{
+  color:#17171b!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-copy small,
+body.theme-light #personalizationModalOverlay .section-help,
+body.theme-light #personalizationModalOverlay .ps-ref-note{
+  color:#606069!important;
+  opacity:1!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-row+.ps-ref-row,
+body.theme-light #personalizationModalOverlay .ps-ref-section{
+  border-color:rgba(24,24,31,.10)!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-choice{
+  color:#2f2f36!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-choice .chev{
+  background:#ececf0!important;color:#4f4f58!important;
+}
+body.theme-light #personalizationModalOverlay .ps-badge{
+  background:#e7f5ef!important;color:#247257!important;border-color:#c8e7da!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-reset{
+  background:#fff!important;color:#c43b47!important;border-color:#e7aeb4!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-danger{color:#b4232f!important}
+
+/* Custom API Keys and generic settings action cards must not inherit dark cards. */
+body.theme-light #settingsModal .api-key-card,
+body.theme-light #settingsModal .custom-api-card,
+body.theme-light #settingsModal [class*="api-key"],
+body.theme-light #settingsModal [class*="custom-api"],
+body.theme-light #settingsModal .settings-action-card{
+  background:#fff!important;color:#17171b!important;border-color:#dcdce2!important;
+}
+body.theme-light #settingsModal .settings-action-card small,
+body.theme-light #settingsModal [class*="api-key"] small,
+body.theme-light #settingsModal [class*="custom-api"] small{color:#65656e!important}
+
+/* Generic legacy switches/toggles that are not SquishSwitch. */
+body.theme-light #settingsModal .toggle-track,
+body.theme-light #settingsModal .switch-track,
+body.theme-light #personalizationModalOverlay .toggle-track,
+body.theme-light #personalizationModalOverlay .switch-track{background:#d9d9df!important;border-color:#c8c8d0!important}
+body.theme-light #settingsModal input:checked + .toggle-track,
+body.theme-light #settingsModal input:checked + .switch-track,
+body.theme-light #personalizationModalOverlay input:checked + .toggle-track,
+body.theme-light #personalizationModalOverlay input:checked + .switch-track{background:#6d4aff!important;border-color:#6d4aff!important}
