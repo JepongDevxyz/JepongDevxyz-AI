@@ -4,7 +4,7 @@ const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('const LARGE_PASTE_THRESHOLD=12000;'));
 assert(html.includes("resolveLargePaste('file')"));
 assert(html.includes("resolveLargePaste('text')"));
-assert(html.includes("localStorage.setItem('jd-large-paste-choice',choice)"));
+assert(html.includes("safeSetLocalStorage('jd-large-paste-choice',choice)"));
 assert(html.includes("new File([pending.text]"));
 assert(html.includes("await addSelectedFiles([file])"));
 assert(html.includes("input.setRangeText(pending.text,start,end,'end')"));
