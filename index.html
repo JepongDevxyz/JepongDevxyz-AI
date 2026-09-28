@@ -4281,13 +4281,13 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 </svg>
             </button>
 
-            <div class="chat-box" id="chatBox">
-                <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span class="latest-label">Latest</span>
-                    <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
-                </button>
-            </div>
+            <div class="chat-box" id="chatBox"></div>
         </div>
+
+        <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)" aria-label="Scroll to latest message">
+            <span class="latest-label">Latest</span>
+            <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
+        </button>
 
         <div class="input-container" id="inputContainer">
             <div class="prompt-suggestions" id="promptSuggestions"></div>
@@ -6053,7 +6053,11 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             const pillHeight=42;
             const pillGap=14;
             const pillTop=Math.max(viewportTop+8, Math.floor(composerTop-pillGap-pillHeight));
-            document.documentElement.style.setProperty('--jd-scroll-pill-top',`${pillTop}px`);
+            const pill=document.getElementById('scrollPill');
+            if(pill){
+                pill.style.setProperty('top',`${pillTop}px`,'important');
+                pill.style.setProperty('bottom','auto','important');
+            }
         }
         if(typeof ResizeObserver!=='undefined'){
             const jdComposerObserver=new ResizeObserver(syncChatComposerReserve);
@@ -10109,10 +10113,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const welcome = chatBox.querySelector('.welcome-screen');
             if (welcome) {
                 chatBox.innerHTML = `
-                    <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                        <span class="latest-label">Latest</span>
-                        <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
-                    </button>
+                    
                 `;
             }
         }
@@ -10255,10 +10256,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 renderBibleWelcomeScreen();
             } else {
                 chatBox.innerHTML = `
-                    <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                        <span class="latest-label">Latest</span>
-                        <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
-                    </button>
+                    
                 `;
                 session.messages.forEach(msg => {
                     if (msg.role === 'user') {
@@ -10301,10 +10299,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <div class="welcome-title" style="background: linear-gradient(90deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bible Mode 📖🕊️</div>
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
-                <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span class="latest-label">Latest</span>
-                    <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
-                </button>
+                
             `;
         }
 
@@ -10490,10 +10485,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <div class="welcome-title" style="background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Incognito Mode 🕵️‍♂️</div>
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
-                <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span class="latest-label">Latest</span>
-                    <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
-                </button>
+                
             `;
         }
 
@@ -10524,10 +10516,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <div class="welcome-title">JepongDevxyz AI</div>
                     <lottie-player class="welcome-lottie-bottom" src="https://lottie.host/2477a7dc-71fb-4c1b-ab00-e006ead8ebe6/Ydd9GqGGLm.json" background="transparent" speed="1" loop autoplay></lottie-player>
                 </div>
-                <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span class="latest-label">Latest</span>
-                    <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
-                </button>
+                
             `;
         }
 
@@ -10608,10 +10597,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 return;
             }
             chatBox.innerHTML = `
-                <button class="floating-scroll-pill" id="scrollPill" onclick="scrollToBottom(true)">
-                    <span class="latest-label">Latest</span>
-                    <span class="unread-badge" id="unreadBadge" style="display:none;">0</span>
-                </button>
+                
             `;
             session.messages.forEach((m, messageIndex) => {
                 if (m.role === 'user') {
