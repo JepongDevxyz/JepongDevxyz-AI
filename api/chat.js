@@ -3120,6 +3120,19 @@ function contextActivityPlan(message='', files=[]){
   return {profile,steps:[{id:'task-context',label,kind}]};
 }
 
+function emitContextActivityStart(message='', files=[], emit){
+  const plan=contextActivityPlan(message,files);
+  const first=plan.steps[0];
+  if(first)activity(emit,first.id,first.label,'running',first.kind,'');
+  return plan;
+}
+
+function completeContextPlan(plan, emit){
+  const first=plan?.steps?.[0];
+  const blueprint=plan?.activityBlueprint||defaultActivityBlueprint(plan?.profile||{});
+  if(first)activity(emit,first.id,blueprint.context||first.label,'completed',first.kind||blueprint.kind||'process','');
+}
+
 function taskWorkingActivity(plan={}){
   const profile=plan?.profile||{};
   const blueprint=plan?.activityBlueprint;
