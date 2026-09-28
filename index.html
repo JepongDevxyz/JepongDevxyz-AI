@@ -11805,6 +11805,11 @@ ${m.text || ''}
                 }
             }
 
+            // Match the frame-by-frame Activity flow: keep normal text responses hidden
+            // while truthful Activity is still running. Streamed text is still buffered
+            // and persisted for interruption/reload recovery, then revealed after finalization.
+            botMsgElem.style.display='none';
+
             const aiRequestStartedAt = performance.now();
             try {
                 // Install/configuration is shared across chats and independent of the selected AI provider.
@@ -11857,9 +11862,9 @@ ${m.text || ''}
                 let actualModelUsed = currentSelectedModel;
                 const contentType = response.headers.get('content-type') || '';
 
-                // Stream the answer visibly, like ChatGPT. A refresh can therefore
-                // preserve exactly what the user had already received instead of revealing
-                // nothing until the provider closes the stream.
+                // Buffer streamed text while Activity is visible. Draft persistence still
+                // preserves partial output across interruption/reload, but the visible answer
+                // is revealed only after Activity drains and finalizes.
                 let liveRenderFrame=0;
                 const renderLiveResponse = (force=false) => {
                     if(!force && liveRenderFrame)return;
@@ -11881,8 +11886,6 @@ ${m.text || ''}
                     if(force)paint();
                     else liveRenderFrame=requestAnimationFrame(paint);
                 };
-                botMsgElem.style.removeProperty('display');
-
                 const revealFinalResponse = async (elapsedMs=null) => {
                     if (responseRevealScheduled) return;
                     responseRevealScheduled = true;
@@ -11908,7 +11911,6 @@ ${m.text || ''}
                             syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                             activePartialResponse=stripJdWorkNotes(fullResponse);
                             if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
-                            renderLiveResponse(false);
                         },
                         artifact: (payload) => {
                             if(payload?.filename && !pendingArtifacts.some(item=>item?.filename===payload.filename && item?.size===payload.size)){
@@ -11933,8 +11935,7 @@ ${m.text || ''}
                         fullResponse += decoder.decode(value, { stream: true });
                         syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                         activePartialResponse=stripJdWorkNotes(fullResponse);
-                            if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
-                        renderLiveResponse(false);
+                        if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
                     }
                     await revealFinalResponse();
                 }
