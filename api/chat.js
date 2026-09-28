@@ -206,24 +206,22 @@ function providerCredentials(keys,autoFallback=false){
     .slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
-const PROVIDER_KEY_ENV = Object.freeze({
-  gemini:['GEMINI_API_KEYS','GEMINI_API_KEY'],
-  groq:['GROQ_API_KEYS','GROQ_API_KEY'],
-  openrouter:['OPENROUTER_API_KEYS','OPENROUTER_API_KEY'],
-  mistral:['MISTRAL_API_KEYS','MISTRAL_API_KEY'],
-  cohere:['COHERE_API_KEYS','COHERE_API_KEY'],
-  aihorde:['AIHORDE_API_KEYS','AIHORDE_API_KEY'],
-  unorouter:['UNOROUTER_API_KEYS','UNOROUTER_API_KEY'],
-  nvidia:['NVIDIA_API_KEYS','NVIDIA_API_KEY'],
-  codecraft:['CODECRAFT_API_KEYS','CODECRAFT_API_KEY'],
-  agentrouter:['AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY'],
-  hcnsec:['HCNSEC_API_KEYS','HCNSEC_API_KEY'],
-  bailucode:['BAILUCODE_API_KEYS','BAILUCODE_API_KEY'],
-  seekai:['SEEKAI_API_KEYS','SEEKAI_API_KEY']
-});
-
 function getProviderKeys(provider,rotate=true) {
-  const envNames=PROVIDER_KEY_ENV[provider];
+  const envNames={
+    gemini:['GEMINI_API_KEYS','GEMINI_API_KEY'],
+    groq:['GROQ_API_KEYS','GROQ_API_KEY'],
+    openrouter:['OPENROUTER_API_KEYS','OPENROUTER_API_KEY'],
+    mistral:['MISTRAL_API_KEYS','MISTRAL_API_KEY'],
+    cohere:['COHERE_API_KEYS','COHERE_API_KEY'],
+    aihorde:['AIHORDE_API_KEYS','AIHORDE_API_KEY'],
+    unorouter:['UNOROUTER_API_KEYS','UNOROUTER_API_KEY'],
+    nvidia:['NVIDIA_API_KEYS','NVIDIA_API_KEY'],
+    codecraft:['CODECRAFT_API_KEYS','CODECRAFT_API_KEY'],
+    agentrouter:['AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY'],
+    hcnsec:['HCNSEC_API_KEYS','HCNSEC_API_KEY'],
+    bailucode:['BAILUCODE_API_KEYS','BAILUCODE_API_KEY'],
+    seekai:['SEEKAI_API_KEYS','SEEKAI_API_KEY']
+  }[provider];
   if(!envNames)return [];
   const keys=parseKeys(envNames[0],envNames[1]);
   return (rotate?rotateProviderKeys(provider,keys):keys).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
