@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 const html=readFileSync('index.html','utf8');
 const css=readFileSync('reactbits-micro.css','utf8');
 const js=readFileSync('reactbits-micro.js','utf8');
-const activityCss=readFileSync('activity-reference.css','utf8');
 const shellCss=readFileSync('reference-shell.css','utf8');
 const settingsCss=readFileSync('haptics-notifications.css','utf8');
 
@@ -28,7 +27,7 @@ assert(html.includes('initialActivityForRequest'),'request-specific temporary le
 assert(html.includes("lattice.dataset.status = success ? 'done' : 'error'"),'Activity final status hook must remain');
 assert(!html.includes('class="ai-activity-summary-row"'),'legacy Activity summary markup must be removed');
 assert(!html.includes('id="aiActivitySummaryIcon"'),'legacy Activity icon markup must be removed');
-assert(activityCss.includes('migrated to reactbits-micro.css'),'legacy Activity stylesheet must be retired');
+assert(!html.includes('/activity-reference.css'),'legacy Activity compatibility stylesheet must stay retired');
 
 // 2/6 BellToggle: real notification state and permission handler remain.
 for (const token of ['bell-toggle','bell-toggle__button']) {
