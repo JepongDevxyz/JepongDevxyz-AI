@@ -1,6 +1,7 @@
 export const GITHUB_SESSION_COOKIE='jdgh_session';
 export const GITHUB_STATE_COOKIE='jdgh_state';
 export const GITHUB_RETURN_COOKIE='jdgh_return';
+export const GITHUB_SESSION_MAX_AGE_MS=7*24*60*60*1000;
 
 const encoder=new TextEncoder();
 const decoder=new TextDecoder();
@@ -62,6 +63,8 @@ export async function openSession(value){
     const clear=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,payload);
     const data=JSON.parse(decoder.decode(clear));
     if(!data||typeof data!=='object'||typeof data.token!=='string'||!data.token)return null;
+    const issuedAt=Number(data.createdAt||0);
+    if(!Number.isFinite(issuedAt)||issuedAt<=0||issuedAt>Date.now()+60_000||Date.now()-issuedAt>GITHUB_SESSION_MAX_AGE_MS)return null;
     return data;
   }catch(_){return null;}
 }

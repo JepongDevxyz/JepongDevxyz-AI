@@ -1,4 +1,4 @@
-import {GITHUB_SESSION_COOKIE,GITHUB_STATE_COOKIE,GITHUB_RETURN_COOKIE,clearCookie,githubOAuthConfig,oauthCallbackUrl,readCookie,sanitizeReturnPath,sealSession,secureCookie,githubApi} from './_github_oauth.js';
+import {GITHUB_SESSION_COOKIE,GITHUB_STATE_COOKIE,GITHUB_RETURN_COOKIE,GITHUB_SESSION_MAX_AGE_MS,clearCookie,githubOAuthConfig,oauthCallbackUrl,readCookie,sanitizeReturnPath,sealSession,secureCookie,githubApi} from './_github_oauth.js';
 export const config={runtime:'edge'};
 function redirect(url,cookies=[]){const headers=new Headers({Location:url,'Cache-Control':'no-store'});for(const c of cookies)headers.append('Set-Cookie',c);return new Response(null,{status:302,headers});}
 export default async function handler(request){
@@ -30,7 +30,7 @@ export default async function handler(request){
       htmlUrl:String(user.html_url||''),createdAt:Date.now()
     });
     const target=new URL(returnTo,origin);target.searchParams.set('github','connected');
-    return redirect(target.toString(),[secureCookie(GITHUB_SESSION_COOKIE,session,{maxAge:60*60*24*7}),...cleanup]);
+    return redirect(target.toString(),[secureCookie(GITHUB_SESSION_COOKIE,session,{maxAge:Math.floor(GITHUB_SESSION_MAX_AGE_MS/1000)}),...cleanup]);
   }catch(error){
     const target=new URL(returnTo,origin);target.searchParams.set('github','error');target.searchParams.set('github_error',String(error?.message||'OAuth failed').slice(0,140));
     return redirect(target.toString(),cleanup);
