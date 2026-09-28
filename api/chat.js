@@ -1959,12 +1959,17 @@ function isPrivateIpv4(host=''){
     (a===100&&b>=64&&b<=127) || a>=224;
 }
 
-function isSafePublicUrl(raw=''){
+function isSafePublicUrl(raw='',policy={}){
   try{
     const u=new URL(raw);
-    if(!['http:','https:'].includes(u.protocol))return false;
+    const httpsOnly=policy?.httpsOnly===true;
+    if(httpsOnly ? u.protocol!=='https:' : !['http:','https:'].includes(u.protocol))return false;
+    if(u.username||u.password)return false;
+    if(policy?.standardPortsOnly===true && u.port && u.port!==(u.protocol==='https:'?'443':'80'))return false;
+    if(policy?.noQueryHash===true && (u.search||u.hash))return false;
     const h=u.hostname.toLowerCase().replace(/^\[|\]$/g,'').replace(/\.$/,'');
-    if(!h || h==='localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal'))return false;
+    if(!h || h==='localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal') ||
+      h.endsWith('.lan') || h.endsWith('.home') || h.endsWith('.corp') || h.endsWith('.onion'))return false;
     if(h.includes(':')){
       if(h==='::1' || h==='::' || h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80:') || /^fe[89ab][0-9a-f]*:/i.test(h) || h.startsWith('ff'))return false;
       if(h.startsWith('::ffff:'))return false;
@@ -1974,10 +1979,10 @@ function isSafePublicUrl(raw=''){
   }catch(_){return false;}
 }
 
-async function safePublicFetch(url, options={}, maxRedirects=3){
+async function safePublicFetch(url, options={}, maxRedirects=3, policy={}){
   let current=url;
   for(let i=0;i<=maxRedirects;i++){
-    if(!isSafePublicUrl(current))throw new Error('Blocked non-public URL');
+    if(!isSafePublicUrl(current,policy))throw new Error('Blocked non-public URL');
     const res=await fetch(current,{...options,redirect:'manual'});
     if(res.status>=300&&res.status<400){
       const loc=res.headers.get('location');
@@ -4164,18 +4169,22 @@ function sanitizeCustomApiProfile(body){
   let baseUrl=String(p.baseUrl||'').trim().slice(0,500);
   const name=String(p.name||'Custom API').trim().slice(0,80);
   const model=String(p.model||'auto').trim().slice(0,200)||'auto';
-  if(!apiKey||!/^https:\/\//i.test(baseUrl))return null;
-  baseUrl=baseUrl.replace(/\/$/,'');
+  const publicHttpsPolicy={httpsOnly:true,standardPortsOnly:true,noQueryHash:true};
+  if(!apiKey||!/^https:\/\//i.test(baseUrl)||!isSafePublicUrl(baseUrl,publicHttpsPolicy))return null;
+  const parsedBase=new URL(baseUrl);
+  baseUrl=(parsedBase.origin+parsedBase.pathname).replace(/\/+$/,'');
   return {name,apiKey,apiKeys,baseUrl,model,autoLoadModels:p.autoLoadModels!==false};
 }
 async function runGenericCustomApi(profile,{history,message,systemInstruction,emit,autoFallback=false,responseEffort='Instant'}){
+  const customApiPolicy={httpsOnly:true,standardPortsOnly:true,noQueryHash:true};
   const url=chatCompletionsUrl(profile.baseUrl,profile.baseUrl);
+  if(!isSafePublicUrl(url,customApiPolicy))return {ok:false,status:400,error:'Custom API Base URL must be a public HTTPS endpoint on the standard TLS port.'};
   const model=profile.model==='auto'?'auto':profile.model;
   const keys=providerCredentials(Array.isArray(profile.apiKeys)&&profile.apiKeys.length?profile.apiKeys:[profile.apiKey],autoFallback);
   let last=null;
   for(let i=0;i<keys.length;i++){
     try{
-      const res=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort)}),signal:AbortSignal.timeout(chatUpstreamTimeoutMs('generic'))});
+      const res=await safePublicFetch(url,{method:'POST',headers:{Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model,messages:buildOpenAIMessages(history,message,systemInstruction),stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort)}),signal:AbortSignal.timeout(chatUpstreamTimeoutMs('generic'))},0,customApiPolicy);
       if(!res.ok){last={ok:false,status:res.status,error:cleanUpstreamError(await res.text().catch(()=>''),res.status,'custom',model)};if([401,402,403,408,409,429,500,502,503,504].includes(res.status)&&i<keys.length-1)continue;return last;}
       const finishState={reason:'unknown'};return {ok:true,response:openAIStreamToText(res,profile.name,model,'','custom-api',i,keys.length,finishState),finishState};
     }catch(err){last={ok:false,status:502,error:err?.message||'Custom API unavailable'};if(i<keys.length-1)continue;}
@@ -6780,8 +6789,10 @@ export default async function handler(req){
       if(!p)return json({error:'Valid API key and HTTPS Base URL are required.'},400);
       const root=p.baseUrl.replace(/\/chat\/completions$/i,'').replace(/\/$/,'');
       const modelsUrl=/\/(?:openapi\/)?v1$/i.test(root)?root+'/models':root+'/v1/models';
+      const customApiPolicy={httpsOnly:true,standardPortsOnly:true,noQueryHash:true};
+      if(!isSafePublicUrl(modelsUrl,customApiPolicy))return json({error:'Custom API Base URL must be a public HTTPS endpoint on the standard TLS port.'},400);
       try{
-        let r=null,lastError='';for(const key of (p.apiKeys?.length?p.apiKeys:[p.apiKey])){r=await fetch(modelsUrl,{headers:{Authorization:'Bearer '+key,Accept:'application/json'},signal:AbortSignal.timeout(12000)});if(r.ok)break;lastError=cleanUpstreamError(await r.text().catch(()=>''),r.status,'custom','models');}if(!r?.ok)return json({error:lastError||'All API keys failed.',status:r?.status||502},r?.status||502);
+        let r=null,lastError='';for(const key of (p.apiKeys?.length?p.apiKeys:[p.apiKey])){r=await safePublicFetch(modelsUrl,{headers:{Authorization:'Bearer '+key,Accept:'application/json'},signal:AbortSignal.timeout(12000)},0,customApiPolicy);if(r.ok)break;lastError=cleanUpstreamError(await r.text().catch(()=>''),r.status,'custom','models');}if(!r?.ok)return json({error:lastError||'All API keys failed.',status:r?.status||502},r?.status||502);
         const models=normalizeModelCatalog(await safeJsonResponse(r));
         return json({models,status:models.length?'ready':'empty',source:modelsUrl});
       }catch(e){return json({error:e?.message||'Could not load models.'},502);}
