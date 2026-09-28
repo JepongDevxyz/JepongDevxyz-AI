@@ -950,3 +950,28 @@
   .voice-pill__time,.voice-pill__wave,.voice-pill__mic,.voice-pill__stop,.read-aloud-pill{transition-duration:1ms!important}
   .bell-toggle.rb-ring .bell-toggle__glyph,.voice-pill__wave i,.refine-frame__sweep{animation:none!important}
 }
+
+
+/* ===== Jepong ReactBits additions: Lattice Loader + Thought Line + Sling Button ===== */
+/* Additive activity visuals: these do not replace or hide the existing activity/status DOM. */
+.rb-lattice-loader{--rb-lattice:currentColor;display:inline-grid;grid-template-columns:repeat(3,4px);grid-template-rows:repeat(3,4px);gap:3px;width:18px;height:18px;place-content:center;color:var(--activity-muted);vertical-align:middle}
+.rb-lattice-loader>i{width:4px;height:4px;border-radius:1px;background:var(--rb-lattice);opacity:.22;animation:rb-lattice-pulse 1.15s ease-in-out infinite}
+.rb-lattice-loader>i:nth-child(2),.rb-lattice-loader>i:nth-child(4){animation-delay:.08s}.rb-lattice-loader>i:nth-child(3),.rb-lattice-loader>i:nth-child(5),.rb-lattice-loader>i:nth-child(7){animation-delay:.16s}.rb-lattice-loader>i:nth-child(6),.rb-lattice-loader>i:nth-child(8){animation-delay:.24s}.rb-lattice-loader>i:nth-child(9){animation-delay:.32s}
+@keyframes rb-lattice-pulse{0%,100%{opacity:.18;transform:scale(.72)}50%{opacity:1;transform:scale(1)}}
+.ai-activity-card.complete .rb-lattice-loader>i,.ai-activity-card.error .rb-lattice-loader>i{animation:none;opacity:.55;transform:none}
+
+/* Thought Line is layered into the existing header without changing status labels/events. */
+.thought-line{position:relative}
+.thought-line::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;transform-origin:left center;transform:scaleX(.18);opacity:.32;background:linear-gradient(90deg,currentColor,transparent);animation:rb-thought-line 1.6s ease-in-out infinite}
+.ai-activity-card.complete .thought-line::after,.ai-activity-card.error .thought-line::after{animation:none;transform:scaleX(1);opacity:.16}
+@keyframes rb-thought-line{0%,100%{transform:scaleX(.14);opacity:.18}50%{transform:scaleX(1);opacity:.48}}
+
+/* Sling Button presentation. The existing mainActionBtn click handler remains authoritative. */
+.prompt-bar__send.rb-sling-button{overflow:visible;isolation:isolate;border-radius:999px;width:32px;height:32px;background:var(--pb-ink);color:var(--pb-bg);transition:transform .24s cubic-bezier(.2,.8,.2,1),box-shadow .24s ease,background-color .2s ease}
+.prompt-bar__send.rb-sling-button::before{content:"";position:absolute;inset:-4px;border-radius:inherit;border:1px solid color-mix(in srgb,var(--pb-ink) 24%,transparent);opacity:0;transform:scale(.72);transition:opacity .18s ease,transform .28s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.prompt-bar__send.rb-sling-button:hover::before,.prompt-bar__send.rb-sling-button:focus-visible::before{opacity:1;transform:scale(1)}
+.prompt-bar__send.rb-sling-button:active,.prompt-bar__send.rb-sling-button[data-pressed]{transform:translateY(1px) scale(.88)}
+.prompt-bar__send.rb-sling-button .prompt-bar__glyph{transition:transform .34s cubic-bezier(.2,.9,.2,1)}
+.prompt-bar__send.rb-sling-button:hover .prompt-bar__glyph{transform:translateY(-1px) rotate(-8deg) scale(1.06)}
+.prompt-bar__send.rb-sling-button:active .prompt-bar__glyph{transform:translateY(-3px) rotate(-16deg) scale(.92)}
+@media(prefers-reduced-motion:reduce){.rb-lattice-loader>i,.thought-line::after{animation:none!important}.prompt-bar__send.rb-sling-button,.prompt-bar__send.rb-sling-button::before,.prompt-bar__send.rb-sling-button .prompt-bar__glyph{transition:none!important}}
