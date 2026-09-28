@@ -5,9 +5,21 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
   'use strict';
   const $ = id => document.getElementById(id);
   const STORAGE_KEY='jepong_plugins_directory_v2';
-  function storageGet(key,fallback=null){
+  function pluginStorage(){
     try{
-      const value=window.localStorage.getItem(key);
+      const storage=globalThis.localStorage || globalThis.window?.localStorage || null;
+      return storage && typeof storage.getItem==='function' && typeof storage.setItem==='function'
+        ? storage
+        : null;
+    }catch(_){
+      return null;
+    }
+  }
+  function storageGet(key,fallback=null){
+    const storage=pluginStorage();
+    if(!storage)return fallback;
+    try{
+      const value=storage.getItem(key);
       return value==null?fallback:value;
     }catch(error){
       console.warn('Plugin storage read failed:',error);
@@ -15,8 +27,10 @@ const PANEL_HTML="\n<section class=\"jdplug-dialog\" role=\"dialog\" aria-modal=
     }
   }
   function storageSet(key,value){
+    const storage=pluginStorage();
+    if(!storage)return false;
     try{
-      window.localStorage.setItem(key,value);
+      storage.setItem(key,value);
       return true;
     }catch(error){
       console.warn('Plugin storage write failed:',error);
