@@ -3120,6 +3120,22 @@ function contextActivityPlan(message='', files=[]){
   return {profile,steps:[{id:'task-context',label,kind}]};
 }
 
+function taskWorkingActivity(plan={}){
+  const profile=plan?.profile||{};
+  const blueprint=plan?.activityBlueprint;
+  if(blueprint?.work)return {label:blueprint.work,kind:blueprint.kind||'process'};
+  if(profile.contextualFollowUp && profile.freshnessFollowUp){
+    const subject=String(profile.subject||'your request').slice(0,110);
+    const kind=profile.kind==='deployment'?'deploy':
+      profile.kind==='backend'?'api':
+      profile.kind==='image'?'image':
+      profile.kind==='video'||profile.kind==='document'?'file':
+      profile.kind==='android'||profile.kind==='web'?'build':'process';
+    return {label:'Applying the latest requested changes: '+subject,kind};
+  }
+  return taskSpecificActivityCopy(profile,'work');
+}
+
 function taskGenerationActivity(plan={}){
   const profile=plan?.profile||{};
   const subject=String(profile.subject||'your request').slice(0,110);
