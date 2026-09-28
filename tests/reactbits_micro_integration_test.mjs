@@ -12,7 +12,7 @@ assert(html.includes('/reactbits-micro.css'),'ReactBits stylesheet must load');
 assert(html.includes('/reactbits-micro.js'),'ReactBits runtime must load');
 
 // 1/6 Reference ThoughtLine: direct real Activity rendering, not overlay injection.
-for (const token of ['thought-cluster','thought-line','thought-line__trace']) {
+for (const token of ['rb-lattice-loader','thought-line','thought-line__trace']) {
   assert(html.includes(token), 'Activity direct markup missing: '+token);
   assert(css.includes(token), 'Activity style missing: '+token);
 }
@@ -76,7 +76,11 @@ assert(js.includes('PB_ARROW_UP') && js.includes('PB_SQUARE'),'ReactBits send mo
 assert(js.includes('animatePromptGlyph'),'ReactBits send morph runtime missing');
 assert(js.includes('startPromptSparks'),'ReactBits max-effort spark runtime missing');
 assert(js.includes("bar.toggleAttribute('data-busy',busy)"),'ReactBits boolean busy attribute contract missing');
-assert(js.includes("action.setAttribute('data-pressed','')"),'ReactBits send press state missing');
+assert(html.includes('id="mainActionSling"'),'Sling Button wrapper missing');
+assert(css.includes('.rb-sling-band'),'Sling Button pull-band styling missing');
+assert(js.includes('function bindSling'),'Sling Button pointer runtime missing');
+assert(js.includes("window.handleMainAction==='function'"),'Sling Button must reuse the real send/stop handler');
+assert(!css.includes('.thought-line::after'),'Thought Line must not render the unwanted horizontal divider');
 assert(html.includes('function updateGenerationActionButton'),'send/stop state function must remain');
 assert(html.includes('function handleMainAction'),'send/stop handler must remain');
 assert(html.includes('composerToolSheet'),'attachment/source menu must remain');

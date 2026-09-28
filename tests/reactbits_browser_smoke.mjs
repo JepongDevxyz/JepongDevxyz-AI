@@ -115,6 +115,7 @@ const activity=JSON.parse(await evaluate(`(async()=>{
   const before={
     reference:card.classList.contains('reference-work-flow'),
     headerDisplay:headerStyle.display,
+    latticeCells:card.querySelectorAll('#aiActivityLattice > i').length,
     marginLeft:cardStyle.marginLeft,
     marginRight:cardStyle.marginRight,
     labelFont:labelStyle.fontSize,
@@ -133,7 +134,8 @@ const activity=JSON.parse(await evaluate(`(async()=>{
   return JSON.stringify(before);
 })()`));
 assert.equal(activity.reference,true,'Reference Work class missing');
-assert.equal(activity.headerDisplay,'none','Old Thought header must not appear in the supplied Work reference surface');
+assert.equal(activity.headerDisplay,'flex','Requested Lattice/Thought header must remain visible above the existing Activity timeline');
+assert.equal(activity.latticeCells,9,'Lattice Loader must render the full 3x3 grid');
 assert.equal(activity.marginLeft,'14px');
 assert.equal(activity.marginRight,'12px');
 assert.equal(activity.labelFont,'15.5px');
