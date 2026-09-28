@@ -119,6 +119,42 @@ const API_GUARD = {
 };
 const apiGuardWindows = new Map();
 const apiGuardDaily = new Map();
+
+async function readJsonBodyBounded(req,maxChars=API_GUARD.maxBodyChars){
+  const charLimit=Math.max(1,Number(maxChars)||API_GUARD.maxBodyChars);
+  const byteLimit=charLimit*4+1024;
+  const stated=Number(req?.headers?.get('content-length')||0);
+  if(Number.isFinite(stated)&&stated>byteLimit)return {ok:false,status:413,error:'Request is too large.'};
+  const reader=req?.body?.getReader?.();
+  if(!reader)return {ok:false,status:400,error:'Invalid JSON request body.'};
+  const decoder=new TextDecoder();
+  let text='',chars=0,bytes=0;
+  try{
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      bytes+=value?.byteLength||0;
+      if(bytes>byteLimit){
+        try{await reader.cancel('request-too-large');}catch(_){}
+        return {ok:false,status:413,error:'Request is too large.'};
+      }
+      const part=decoder.decode(value,{stream:true});
+      chars+=part.length;
+      if(chars>charLimit){
+        try{await reader.cancel('request-too-large');}catch(_){}
+        return {ok:false,status:413,error:'Request is too large.'};
+      }
+      text+=part;
+    }
+    const tail=decoder.decode();
+    chars+=tail.length;
+    if(chars>charLimit)return {ok:false,status:413,error:'Request is too large.'};
+    text+=tail;
+    return {ok:true,body:JSON.parse(text)};
+  }catch(_){
+    return {ok:false,status:400,error:'Invalid JSON request body.'};
+  }
+}
 function stableClientKey(req){
   const raw=String(req?.headers?.get('x-forwarded-for')||req?.headers?.get('x-real-ip')||req?.headers?.get('cf-connecting-ip')||'unknown').split(',')[0].trim();
   let h=2166136261;
@@ -6762,18 +6798,12 @@ export default async function handler(req){
   if(req.method==='HEAD')return new Response(null,{status:200});
   if(req.method!=='POST')return json({error:'Method not allowed'},405);
 
-  let body;
-  try{
-    body=await req.json();
-  }catch(_){
-    return json({error:'Invalid JSON request body.'},400);
-  }
+  const parsedRequest=await readJsonBodyBounded(req,API_GUARD.maxBodyChars);
+  if(!parsedRequest.ok)return json({error:parsedRequest.error},parsedRequest.status);
+  const body=parsedRequest.body;
   if(!body||typeof body!=='object'||Array.isArray(body)){
     return json({error:'Request body must be a JSON object.'},400);
   }
-  let bodyChars=0;
-  try{bodyChars=JSON.stringify(body).length;}catch(_){}
-  if(bodyChars>API_GUARD.maxBodyChars)return json({error:'Request is too large.'},413);
   const apiGuard=checkApiGuard(req,body);
   if(!apiGuard.ok)return json({error:apiGuard.error,rateLimited:apiGuard.status===429},apiGuard.status,apiGuard.headers||{});
 

@@ -10,6 +10,13 @@ async function call(body, {method='POST', raw=false}={}) {
   return {status:res.status,text:await res.text()};
 }
 
+const oversizedHeader=await handler(new Request('https://example.test/api/chat',{
+  method:'POST',
+  headers:{'content-type':'application/json','content-length':'99999999'},
+  body:'{}'
+}));
+if(oversizedHeader.status!==413) throw new Error(`oversized Content-Length must be rejected before JSON parsing, got ${oversizedHeader.status}`);
+
 const malformed=await call('{',{raw:true});
 if(malformed.status!==400) throw new Error(`malformed JSON must be 400, got ${malformed.status}: ${malformed.text}`);
 for(const value of [null,[],"x",123]){
@@ -25,3 +32,8 @@ if(head.status!==200) throw new Error(`HEAD expected 200, got ${head.status}`);
 const get=await call(null,{method:'GET'});
 if(get.status!==405) throw new Error(`GET expected 405, got ${get.status}`);
 console.log('backend request validation checks passed');
+
+const source=await (await import('node:fs')).promises.readFile(new URL('../api/chat.js',import.meta.url),'utf8');
+if(!source.includes('async function readJsonBodyBounded(')||!source.includes('await reader.read()'))
+  throw new Error('bounded streaming request reader missing');
+if(source.includes('body=await req.json()'))throw new Error('chat handler must not parse an unbounded request body');
