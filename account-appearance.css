@@ -284,3 +284,83 @@ body.theme-light .jd-text-size-reset{color:#17171b}
 @media(prefers-reduced-motion:reduce){
   #cloudAccountModal .auth-provider.jd-auth-choice{transition:none}
 }
+
+
+/* Global theme parity audit — every account/settings/auth surface follows the
+   selected app theme. Keep this at EOF so old reference-specific dark constants
+   cannot leak through in Light mode. */
+body.theme-light #cloudAccountModal{
+  background:#f7f7f8!important;color:#17171b!important;
+}
+body.theme-light #cloudAccountModal .jd-account-screen{
+  background:#f7f7f8!important;color:#17171b!important;
+}
+body.theme-light #cloudAccountModal .jd-account-close{color:#27272d!important}
+body.theme-light #cloudAccountModal #jdAuthTitle,
+body.theme-light #cloudAccountModal .jd-auth-step h3{color:#17171b!important}
+body.theme-light #cloudAccountModal .cloud-status,
+body.theme-light #cloudAccountModal .jd-auth-last,
+body.theme-light #cloudAccountModal .jd-auth-switch,
+body.theme-light #cloudAccountModal .jd-auth-privacy,
+body.theme-light #cloudAccountModal .jd-auth-signed-in p{color:#66666f!important}
+body.theme-light #cloudAccountModal .auth-provider.jd-auth-choice,
+body.theme-light #cloudAccountModal #cloudEmailStage .auth-provider.jd-auth-choice{
+  background:#fff!important;color:#17171b!important;
+  border-color:#d5d5da!important;
+}
+body.theme-light #cloudAccountModal .auth-provider.jd-auth-choice:hover,
+body.theme-light #cloudAccountModal .auth-provider.jd-auth-choice:focus-visible{
+  background:#f0f0f2!important;border-color:#a9a9b1!important;
+}
+body.theme-light #cloudAccountModal .jd-auth-secondary-provider,
+body.theme-light #cloudAccountModal .jd-auth-step .cloud-auth-back,
+body.theme-light #cloudAccountModal .jd-auth-resend{color:#3f3f46!important}
+body.theme-light #cloudAccountModal .jd-auth-switch button{color:#17171b!important}
+body.theme-light #cloudAccountModal .jd-auth-step .auth-email input,
+body.theme-light #cloudAccountModal .jd-auth-step .otp-input{
+  background:#fff!important;color:#17171b!important;border-color:#cfcfd5!important;
+}
+body.theme-light #cloudAccountModal .jd-auth-step .auth-email input::placeholder,
+body.theme-light #cloudAccountModal .jd-auth-step .otp-input::placeholder{color:#777780!important}
+body.theme-light #cloudAccountModal .jd-auth-step .auth-provider.jd-auth-submit{
+  background:#17171b!important;color:#fff!important;border-color:#17171b!important;
+}
+body.theme-light #cloudAccountModal .jd-auth-signout{color:#b4232b!important}
+
+/* Settings, profile, appearance and nested sheets. */
+body.theme-light #settingsModal,
+body.theme-light #settingsModal .settings-home,
+body.theme-light .settings-home-overlay .settings-home,
+body.theme-light .jd-profile-home,
+body.theme-light .jd-appearance-home{
+  background:#f7f7f8!important;color:#17171b!important;
+}
+body.theme-light #settingsModal .settings-section,
+body.theme-light #settingsModal .settings-item,
+body.theme-light #settingsModal .usage-metric-card,
+body.theme-light #settingsModal .limit-card,
+body.theme-light #settingsModal .setting-row,
+body.theme-light #settingsModal .settings-card{
+  background:#fff!important;color:#17171b!important;border-color:rgba(0,0,0,.10)!important;
+}
+body.theme-light #settingsModal input,
+body.theme-light #settingsModal textarea,
+body.theme-light #settingsModal select{
+  background:#fff!important;color:#17171b!important;border-color:#d7d7dc!important;
+  color-scheme:light;
+}
+body.theme-light #settingsModal .modern-slider{background:#dedee3!important}
+body.theme-light #settingsModal .setting-option-label,
+body.theme-light #settingsModal .usage-title,
+body.theme-light #settingsModal .settings-subtitle{color:#62626b!important}
+body.theme-light .modal-overlay{color-scheme:light}
+body.theme-light .floating-modal,
+body.theme-light .modal-content{background:var(--modal-bg)!important;color:var(--text-main)!important;border-color:var(--border-color)!important}
+
+/* Dark mode is equally explicit: no light surfaces remain after switching back. */
+body:not(.theme-light) #cloudAccountModal,
+body:not(.theme-light) #cloudAccountModal .jd-account-screen{background:#121212!important;color:#f7f7f7!important;color-scheme:dark}
+body:not(.theme-light) .jd-profile-home,
+body:not(.theme-light) .jd-appearance-home{background:#171717!important;color:#f5f5f5!important;color-scheme:dark}
+body:not(.theme-light) #settingsModal,
+body:not(.theme-light) #settingsModal .settings-home{color-scheme:dark}
