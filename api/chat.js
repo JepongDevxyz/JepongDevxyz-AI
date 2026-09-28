@@ -1700,7 +1700,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   let text =
     'You are JepongDevxyz AI, a capable general-purpose conversational assistant created by Jepong Devxyz (Jay-Ar Lee Espiritu). ' +
     'Your job is to answer the user directly, understand what they are actually trying to accomplish, and help them reach that goal efficiently. ' +
-    'Respond like a polished modern chat assistant: natural, context-aware, concise by default, thorough when the task needs it, and never robotic. ' +
+    'Respond like a polished modern chat assistant: natural, context-aware, concise by default, thorough when the task needs it, and never robotic. Give the direct answer first, then the most useful reasoning, evidence, steps, examples, or code. Fully satisfy every explicit requirement before ending; do not abandon an answer mid-sentence, mid-code-block, or before requested deliverables are complete. Prefer correctness over confident guessing, reconcile contradictions, and make technical answers executable and specific. ' +
     'For greetings and casual conversation, reply conversationally instead of exposing analysis or classifications. For technical tasks, be precise and actionable. ' +
     'Internal safety checks, moderation labels, routing decisions, provider names, hidden analysis, quality briefs, and classification metadata are never the final answer and must never replace the answer to the user. ' +
     'Be accurate, useful, natural, and honest about uncertainty. Do not claim knowledge you do not have; use conversation, supplied files, tools, or model knowledge appropriately. Put programming code inside fenced Markdown code blocks.';
@@ -5796,7 +5796,7 @@ async function providerUsageSnapshot(){
 }
 
 
-const MAX_AUTO_CONTINUATIONS = 2;
+const MAX_AUTO_CONTINUATIONS = 4;
 
 function finishReasonNeedsContinuation(reason=''){
   const r=String(reason||'').toLowerCase();
@@ -5826,6 +5826,7 @@ function looksObviouslyTruncated(text=''){
 
 function continuationNeeded(finishState, generatedText=''){
   if(finishReasonNeedsContinuation(finishState?.reason)) return true;
+  if(looksObviouslyTruncated(generatedText)) return true;
   if(String(finishState?.reason||'').toLowerCase()==='unknown' && String(generatedText||'').trim()) return true;
   return false;
 }
@@ -5915,13 +5916,20 @@ function activityStreamResponse(body, requestSignal=null) {
             activeReader=reader;
             const decoder=new TextDecoder();
 
+            let streamReadError=null;
             while(!cancelled){
-              const {done,value}=await reader.read();
-              if(done)break;
-              const text=decoder.decode(value,{stream:true});
-              if(text){
-                generatedText+=text;
-                send('text',{text});
+              try{
+                const {done,value}=await reader.read();
+                if(done)break;
+                const text=decoder.decode(value,{stream:true});
+                if(text){
+                  generatedText+=text;
+                  send('text',{text});
+                }
+              }catch(readError){
+                streamReadError=readError;
+                activeFinishState={reason:'unknown'};
+                break;
               }
             }
             const tail=decoder.decode();
@@ -5931,6 +5939,17 @@ function activityStreamResponse(body, requestSignal=null) {
             }
 
             if(cancelled) break;
+            if(streamReadError && generatedText.trim()){
+              send('activity',{
+                type:'activity',
+                id:`stream-recovery-${continuationCount+1}`,
+                label:'Response stream was interrupted — resuming automatically',
+                state:'warning',
+                kind:'generate',
+                detail:'Keeping the response already generated and continuing from the same point.',
+                at:Date.now()
+              });
+            }
             if(!continuationNeeded(activeFinishState,generatedText)) break;
             if(continuationCount>=MAX_AUTO_CONTINUATIONS){
               send('activity',{
