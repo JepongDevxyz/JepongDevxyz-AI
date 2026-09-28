@@ -1,0 +1,235 @@
+/* JepongDevxyz AI — canonical whole-app theme parity layer.
+   Loaded last. It intentionally overrides legacy/reference hard-coded surfaces. */
+
+html{color-scheme:dark}
+body.theme-light{color-scheme:light}
+body:not(.theme-light){color-scheme:dark}
+
+/* ---------- canonical tokens ---------- */
+body.theme-light{
+  --bg-color:#f7f7f8!important;
+  --card-bg:#ffffff!important;
+  --input-bg:#ffffff!important;
+  --modal-bg:#ffffff!important;
+  --user-msg:#ededf0!important;
+  --border-color:rgba(24,24,31,.13)!important;
+  --text-main:#17171b!important;
+  --text-muted:#66666f!important;
+  --jd-surface:#ffffff!important;
+  --jd-surface-hover:#efeff2!important;
+  --jd-edge:rgba(24,24,31,.12)!important;
+  --rb-bg:#ffffff!important;
+  --rb-surface:#f1f1f3!important;
+  --rb-ink:#17171b!important;
+  --rb-muted:#66666f!important;
+  --rb-edge:rgba(24,24,31,.13)!important;
+}
+body:not(.theme-light){
+  --bg-color:#171717;
+  --card-bg:#171717;
+  --input-bg:#292929;
+  --modal-bg:#202020;
+  --user-msg:#2b2b2b;
+  --border-color:rgba(255,255,255,.105);
+  --text-main:#f4f4f5;
+  --text-muted:#a1a1aa;
+  --jd-surface:#222;
+  --jd-surface-hover:#2c2c2c;
+  --jd-edge:rgba(255,255,255,.09);
+}
+
+/* ---------- application shell + composer ---------- */
+body.theme-light,
+body.theme-light .app-container,
+body.theme-light .header,
+body.theme-light .chat-viewport-wrapper,
+body.theme-light .chat-box,
+body.theme-light .welcome-screen{background:#f7f7f8!important;color:#17171b!important}
+body.theme-light .input-container,
+body.theme-light .composer-shell,
+body.theme-light .prompt-bar__field{background:#fff!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .prompt-bar{--pb-bg:#fff!important;--pb-ink:#17171b!important;--pb-menu:#fff!important}
+body.theme-light .prompt-bar__menu{background:#fff!important;border:1px solid #dedee3!important;box-shadow:0 12px 35px rgba(20,20,30,.12)!important}
+body.theme-light .prompt-bar textarea,
+body.theme-light .prompt-bar input,
+body.theme-light #messageInput{color:#17171b!important;background:transparent!important}
+body.theme-light .prompt-bar textarea::placeholder,
+body.theme-light .prompt-bar input::placeholder,
+body.theme-light #messageInput::placeholder{color:#7a7a83!important}
+body.theme-light .floating-search-trigger-btn,
+body.theme-light .floating-scroll-pill{background:#fff!important;color:#35353c!important;border-color:#dcdce1!important;box-shadow:0 5px 18px rgba(20,20,30,.10)!important}
+
+/* ---------- menus, dropdowns, drawers, history ---------- */
+body.theme-light .sidebar,
+body.theme-light .dropdown-menu,
+body.theme-light .dropdown-content,
+body.theme-light .context-menu,
+body.theme-light .jd-message-menu,
+body.theme-light .command-menu,
+body.theme-light .model-menu{background:#fff!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .dropdown-btn,
+body.theme-light .search-chat-input,
+body.theme-light .custom-prompt-input,
+body.theme-light .command-row,
+body.theme-light .gemini-chip,
+body.theme-light .model-provider-tab,
+body.theme-light .provider-status-card,
+body.theme-light .sidebar-word-pill{background:#f1f1f3!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .history-item:hover,
+body.theme-light .jd-message-menu-row:hover,
+body.theme-light .jd-message-menu-row:active{background:#efeff2!important}
+
+/* ---------- all modal/dialog/sheet families ---------- */
+body.theme-light .modal-overlay,
+body.theme-light .large-paste-backdrop,
+body.theme-light .jd-thoughts-overlay,
+body.theme-light .jdplug-overlay,
+body.theme-light .jd-rename-overlay{background:rgba(30,30,35,.24)!important}
+body.theme-light .floating-modal,
+body.theme-light .modal-content,
+body.theme-light .settings-home,
+body.theme-light .personalization-modal,
+body.theme-light .personalization-modal.ps-reference-ui,
+body.theme-light .large-paste-sheet,
+body.theme-light .jd-thoughts-sheet,
+body.theme-light .jd-rename-dialog,
+body.theme-light .app-alert-card{background:#fff!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .dola-modal-close,
+body.theme-light .ps-ref-close:hover,
+body.theme-light .ps-pet-back,
+body.theme-light .ps-voice-back,
+body.theme-light .ps-icon-btn,
+body.theme-light .ps-upload-btn{background:#f1f1f3!important;color:#17171b!important;border-color:#dcdce1!important}
+
+/* ---------- settings + every nested settings page ---------- */
+body.theme-light #settingsModal,
+body.theme-light #settingsModal .settings-home,
+body.theme-light .jd-profile-home,
+body.theme-light .jd-appearance-home,
+body.theme-light .jd-haptics-home,
+body.theme-light .jd-reply-notify-home,
+body.theme-light [class*="settings-"][class*="-home"],
+body.theme-light [class*="settings-"][class*="-panel"]{background:#f7f7f8!important;color:#17171b!important}
+body.theme-light #settingsModal .settings-card,
+body.theme-light #settingsModal .settings-card-group,
+body.theme-light #settingsModal .settings-section,
+body.theme-light #settingsModal .settings-item,
+body.theme-light #settingsModal .setting-row,
+body.theme-light #settingsModal .usage-metric-card,
+body.theme-light #settingsModal .limit-card,
+body.theme-light .jd-haptics-group,
+body.theme-light .jd-reply-notify-group,
+body.theme-light .jd-panel-info,
+body.theme-light .jd-text-preview,
+body.theme-light .jd-appearance-choice{background:#fff!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light #settingsModal input,
+body.theme-light #settingsModal textarea,
+body.theme-light #settingsModal select,
+body.theme-light .jd-panel-input,
+body.theme-light .ps-input,
+body.theme-light .ps-textarea,
+body.theme-light .ps-select{background:#fff!important;color:#17171b!important;border-color:#d4d4da!important;color-scheme:light!important}
+body.theme-light .modern-slider{background:#dedee3!important}
+
+/* ---------- personalization / pet / voice ---------- */
+body.theme-light .ps-section,
+body.theme-light .ps-pet-card,
+body.theme-light .ps-ai-pet-ref-chip,
+body.theme-light .ps-ref-field input,
+body.theme-light .ps-ref-field textarea{background:#fff!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .ps-ref-tab.active,
+body.theme-light .ps-pet-card:hover,
+body.theme-light .ps-ai-pet-ref-chip:hover{background:#f0f0f3!important}
+body.theme-light .ps-ai-pet-ref-chip.active{color:#4c358b!important;background:#eee9ff!important}
+body.theme-light .ps-memory-card{background:#f3efff!important;color:#30264f!important}
+
+/* ---------- authentication/account ---------- */
+body.theme-light #cloudAccountModal,
+body.theme-light #cloudAccountModal .jd-account-screen{background:#f7f7f8!important;color:#17171b!important}
+body.theme-light #cloudAccountModal .auth-provider.jd-auth-choice,
+body.theme-light #cloudAccountModal #cloudEmailStage .auth-provider.jd-auth-choice{background:#fff!important;color:#17171b!important;border-color:#d5d5da!important}
+body.theme-light #cloudAccountModal .jd-auth-step .auth-email input,
+body.theme-light #cloudAccountModal .jd-auth-step .otp-input{background:#fff!important;color:#17171b!important;border-color:#cfcfd5!important}
+body.theme-light #cloudAccountModal .jd-account-close,
+body.theme-light #cloudAccountModal .jd-auth-step .cloud-auth-back,
+body.theme-light #cloudAccountModal .jd-auth-secondary-provider,
+body.theme-light #cloudAccountModal .jd-auth-resend,
+body.theme-light #cloudAccountModal .jd-auth-switch button{color:#17171b!important}
+
+/* ---------- plugins + agent ---------- */
+body.theme-light .jdplug-dialog,
+body.theme-light .jdplug-card,
+body.theme-light .jdplug-entry-menu,
+body.theme-light .jdplug-confirm-card,
+body.theme-light .jdplug-demo-card{background:#fff!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .jdplug-top-tabs,
+body.theme-light .jdplug-search,
+body.theme-light .jdplug-input,
+body.theme-light .jdplug-select,
+body.theme-light .jdplug-demo{background:#f3f3f5!important;color:#17171b!important;border-color:#d5d5da!important}
+body.theme-light .jdplug-strip-item,
+body.theme-light .jdplug-entry-icon{background:#efeff2!important;color:#17171b!important}
+body.theme-light #jdagentOverlay,
+body.theme-light #jdAgentOverlay{background:#f7f7f8!important;color:#17171b!important}
+body.theme-light .jd-agent-view textarea,
+body.theme-light #jdAgentFiles pre,
+body.theme-light .jd-agent-view button{background:#fff!important;color:#17171b!important;border-color:#d5d5da!important}
+
+/* ---------- activity/status/result UI ---------- */
+body.theme-light .ai-activity-card,
+body.theme-light .ai-work-commentary,
+body.theme-light .ai-work-commentary__text,
+body.theme-light .ai-activity-label,
+body.theme-light .ai-activity-icon{color:#3f3f47!important}
+body.theme-light .ai-activity-detail,
+body.theme-light .ai-activity-lead{color:#696971!important}
+body.theme-light .jd-result-card,
+body.theme-light .study-panel{color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .jd-result-card code{background:#eeeef1!important;color:#17171b!important}
+
+/* ---------- code / terminal / generated artifact surfaces ---------- */
+body.theme-light .code-container-wrap,
+body.theme-light .code-container-wrap pre,
+body.theme-light .code-container-wrap code,
+body.theme-light .fullscreen-code-overlay,
+body.theme-light .fullscreen-code-body,
+body.theme-light .runner-modal,
+body.theme-light .runner-body{background:#f7f7f8!important;color:#17171b!important}
+body.theme-light .fullscreen-code-head,
+body.theme-light .runner-header{background:#fff!important;color:#17171b!important;border-color:#dedee3!important}
+body.theme-light .fullscreen-code-close,
+body.theme-light .runner-btn{background:#f0f0f2!important;color:#17171b!important;border-color:#d5d5da!important}
+
+/* ---------- uploads, forms, previews ---------- */
+body.theme-light .dola-dropzone,
+body.theme-light .dola-prompt-input,
+body.theme-light #filePreviewContainer .jd-upload-chip{background:#f5f2ff!important;color:#17171b!important;border-color:#d9d0f2!important}
+body.theme-light input,
+body.theme-light textarea,
+body.theme-light select{color-scheme:light}
+body.theme-light input::placeholder,
+body.theme-light textarea::placeholder{color:#777780}
+
+/* ---------- lightbox keeps media readable, controls still themed ---------- */
+body.theme-light .image-lightbox-overlay{background:rgba(247,247,248,.94)!important}
+body.theme-light .image-lightbox-overlay button{background:#fff!important;color:#17171b!important;border-color:#d5d5da!important}
+
+/* ---------- legal / onboarding ---------- */
+body.theme-light .jd-first-run,
+body.theme-light .jd-consent-overlay,
+body.theme-light .jd-legal-page,
+body.theme-light .jd-welcome-page{background:#f7f7f8!important;color:#17171b!important}
+body.theme-light .jd-first-run__feature,
+body.theme-light .jd-legal-card,
+body.theme-light .jd-consent-card{color:#17171b!important}
+
+/* ---------- dark reset for surfaces that can survive theme switching ---------- */
+body:not(.theme-light) .app-container,
+body:not(.theme-light) .header,
+body:not(.theme-light) .chat-viewport-wrapper{color:var(--text-main)}
+body:not(.theme-light) #cloudAccountModal,
+body:not(.theme-light) #cloudAccountModal .jd-account-screen{background:#121212!important;color:#f7f7f7!important}
+body:not(.theme-light) .jd-profile-home,
+body:not(.theme-light) .jd-appearance-home,
+body:not(.theme-light) .jd-haptics-home,
+body:not(.theme-light) .jd-reply-notify-home{background:#171717!important;color:#f5f5f5!important}
