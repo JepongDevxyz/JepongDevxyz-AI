@@ -3823,7 +3823,7 @@ body.theme-light #personalizationModalOverlay .ps-ref-back{background:#fff;color
 .composer-tool-icon{width:36px!important;height:36px!important;min-width:36px!important}.composer-tool-icon i,.composer-tool-icon svg{width:19px!important;height:19px!important}
 /* consolidated mobile composer / scroll / activity fixes */
 @media(max-width:700px){
-.floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;bottom:calc(var(--jd-composer-reserve, 88px) + 14px)!important;transform:translateX(-50%)!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:50%!important;display:none;align-items:center!important;justify-content:center!important;z-index:72!important}
+.floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;top:var(--jd-scroll-pill-top,calc(100dvh - 144px))!important;bottom:auto!important;transform:translateX(-50%)!important;width:42px!important;height:42px!important;min-width:42px!important;padding:0!important;border-radius:50%!important;display:none;align-items:center!important;justify-content:center!important;z-index:72!important}
 .floating-scroll-pill.active{display:flex!important}.floating-scroll-pill .latest-label{font-size:0!important}.floating-scroll-pill .latest-label::after{content:"↓"!important;font-size:22px!important}.floating-scroll-pill .unread-badge{position:absolute!important;top:-5px!important;right:-5px!important}
 .composer-tool-sheet{left:10px!important;right:auto!important;width:min(218px,calc(100vw - 28px))!important;max-height:min(60dvh,340px)!important;padding:6px!important;border-radius:20px!important}
 .composer-tool-btn{min-height:45px!important;padding:4px 7px!important;gap:9px!important;font-size:.84rem!important}.composer-tool-icon{width:35px!important;height:35px!important;flex:0 0 35px!important}
@@ -6047,6 +6047,13 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             // double-counts it and pushes the jump arrow into the middle of the chat.
             const visibleComposerReserve=Math.max(72, Math.ceil(viewportTop+viewportHeight-composerTop));
             document.documentElement.style.setProperty('--jd-composer-reserve',`${visibleComposerReserve}px`);
+            // Lock the jump button to the composer's *actual top edge*. This keeps
+            // a constant 14px gap even when the composer grows, the browser chrome
+            // changes the visual viewport, or safe-area/keyboard metrics change.
+            const pillHeight=42;
+            const pillGap=14;
+            const pillTop=Math.max(viewportTop+8, Math.floor(composerTop-pillGap-pillHeight));
+            document.documentElement.style.setProperty('--jd-scroll-pill-top',`${pillTop}px`);
         }
         if(typeof ResizeObserver!=='undefined'){
             const jdComposerObserver=new ResizeObserver(syncChatComposerReserve);
