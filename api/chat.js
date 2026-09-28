@@ -59,7 +59,10 @@ const PROVIDERS = {
   },
   codecraft: {
     label: 'CodeCraft API',
-    models: ['claude-opus-4.8','deepseek-v4-flash-0731','gpt-5.6-luna'],
+    // Bootstrap only. The UI replaces this list with the authenticated live
+    // GET /v1/models catalog, so newly added/removed CodeCraft models follow
+    // the provider automatically without stale hard-coded IDs.
+    models: ['claude-opus-4.8'],
     defaultModel: 'claude-opus-4.8'
   },
   agentrouter: {
@@ -5740,7 +5743,12 @@ function normalizeModelCatalog(data){
       id,
       name:String(item?.name||item?.display_name||item?.displayName||id),
       type:String(item?.type||item?.object||''),
-      capabilities:Array.isArray(item?.capabilities)?item.capabilities.map(String):[]
+      capabilities:Array.isArray(item?.capabilities)?item.capabilities.map(String):[],
+      contextWindow:Number(item?.context_window||item?.contextWindow||0)||null,
+      pricing:item?.pricing&&typeof item.pricing==='object'?{
+        inputPer1k:Number(item.pricing.input_per_1k)||null,
+        outputPer1k:Number(item.pricing.output_per_1k)||null
+      }:null
     });
   }
   return out.slice(0,500);
