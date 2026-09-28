@@ -5020,7 +5020,7 @@ async function runProvider(provider,args){
   if(provider==='bailucode')return runBailucode(args);
   if(provider==='agentrouter')return runAgentRouter(args);
   if(provider==='seekai')return runSeekAI(args);
-  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec','seekai'].includes(provider))return runOpenAICompatible(provider,args);
+  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
