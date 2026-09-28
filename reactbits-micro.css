@@ -42,7 +42,18 @@
 /* The supplied Work reference has no top "Thinking/Thought for" bar while work
    is active. Keep the DOM only for compatibility/persistence, but never render
    it on the reference surface. */
-.ai-activity-card.reference-work-flow .ai-activity-header-actions{display:none!important}
+.ai-activity-card.reference-work-flow .ai-activity-header-actions{
+  display:flex!important;
+  min-height:26px;
+  margin:0 0 7px;
+  padding:0;
+  overflow:visible;
+}
+/* Keep the existing real Activity timeline untouched; this compact micro header
+   only exposes the requested Lattice Loader + Thought Line above it. */
+.ai-activity-card.reference-work-flow .thought-line{display:block;min-width:0}
+.ai-activity-card.reference-work-flow .thought-line__head{display:inline-flex;max-width:100%}
+.ai-activity-card.reference-work-flow .thought-line__trace{display:block}
 .ai-activity-header-actions{align-items:center;gap:6px;width:100%;min-width:0}
 .thought-line{min-width:0;flex:1 1 auto;color:var(--activity-muted);font-size:13px}
 .thought-line__head{
