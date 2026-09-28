@@ -79,7 +79,7 @@ assert.deepEqual(received.map(x=>x.id||'done'),['task-context','provider-codecra
  'Real statuses must survive split SSE chunks, comments, and normalizer');
 assert.equal(received.at(-1).done,41600);
 
-const helper=between(html,'        function captureJdActivitySnapshot(){','        function loadChatSession(');
+const helper=between(html,'        function captureJdActivitySnapshot(allowLive=false){','        function loadChatSession(');
 assert(helper.includes("id:clean(row.dataset.activityId,64)"));
 assert(helper.includes('.slice(-12)'),'Saved activity must be size bounded');
 assert(helper.includes("escapeHTML(String(value||'').slice(0,max))"),
