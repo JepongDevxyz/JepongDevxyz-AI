@@ -51,10 +51,11 @@ const doc={getElementById:id=>switches.get(id)||null,
  addEventListener:(type,handler)=>{assert.equal(type,'click');clickHandler=handler;}};
 const nav={vibrate:v=>{pulses.push(v);return true;}};
 const haptics=new Function('document','navigator','Date','localStorage',
- 'safeSetLocalStorage','closeTransientSurfaces','requestAnimationFrame','refreshLucideIcons',
+ 'safeGetLocalStorage','safeSetLocalStorage','closeTransientSurfaces','requestAnimationFrame','refreshLucideIcons',
  'openSettingsModal',hapticSource+
  '\nreturn {setJdHaptics,setJdHapticsEvent,jdHapticPulse,syncJdHapticsUI};')(
  doc,nav,{now:()=>now},{getItem:k=>hapticStore.get(k)||null},
+ (k,fallback=null)=>hapticStore.has(k)?hapticStore.get(k):fallback,
  (k,v)=>{hapticStore.set(k,v);},()=>{},fn=>fn(),()=>{},()=>{}
 );
 haptics.syncJdHapticsUI();
@@ -90,12 +91,13 @@ const navigatorMock={serviceWorker:{register:async(path,options)=>{
  return reg;},ready:Promise.resolve(reg)}};
 const nWindow={isSecureContext:true};
 const notificationApi=new Function('document','navigator','window','Notification','localStorage',
- 'safeSetLocalStorage','jdHapticsEnabled','jdHapticsResponseEnabled',
+ 'safeGetLocalStorage','safeSetLocalStorage','jdHapticsEnabled','jdHapticsResponseEnabled',
  'jdHapticPulse','activeAIAbortController','clearTimeout','setTimeout',
  'refreshLucideIcons','location',notifySource+
  '\nreturn {toggleResponseNotifications,notifyResponseReady,testResponseNotification,syncReplyNotificationSettings,shouldOfferNotifyPrompt};')(
  nDoc,navigatorMock,nWindow,NotificationMock,
  {getItem:k=>notificationStore.get(k)||null},
+ (k,fallback=null)=>notificationStore.has(k)?notificationStore.get(k):fallback,
  (k,v)=>{notificationStore.set(k,v);},
  false,false,()=>{},null,()=>{},()=>{},()=>{},
  {origin:'https://example.test',pathname:'/'}
