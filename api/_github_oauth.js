@@ -51,7 +51,8 @@ async function aesKey(){
 export async function sealSession(data){
   const iv=crypto.getRandomValues(new Uint8Array(12));
   const key=await aesKey();
-  const clear=encoder.encode(JSON.stringify(data));
+  const payload={...(data&&typeof data==='object'?data:{}),createdAt:Number(data?.createdAt)||Date.now()};
+  const clear=encoder.encode(JSON.stringify(payload));
   const encrypted=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,clear));
   return base64url(iv)+'.'+base64url(encrypted);
 }
