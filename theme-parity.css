@@ -314,3 +314,87 @@ body.theme-light #settingsModal input:checked + .toggle-track,
 body.theme-light #settingsModal input:checked + .switch-track,
 body.theme-light #personalizationModalOverlay input:checked + .toggle-track,
 body.theme-light #personalizationModalOverlay input:checked + .switch-track{background:#6d4aff!important;border-color:#6d4aff!important}
+
+
+/* ===== Screenshot audit: remaining Light-mode settings surfaces =====
+   Covers Custom API empty state/action row and all personalization toggle lanes. */
+body.theme-light #providerKeysModalOverlay,
+body.theme-light #providerKeysModalOverlay .settings-home,
+body.theme-light #providerKeysModalOverlay .settings-home-scroll,
+body.theme-light #providerKeysModalOverlay #providerKeyFields{
+  background:#f7f7f8!important;
+  color:#17171b!important;
+}
+body.theme-light #providerKeysModalOverlay .settings-home-header{
+  background:#f7f7f8!important;
+  color:#17171b!important;
+  border-color:#dedee3!important;
+}
+body.theme-light #providerKeysModalOverlay .settings-home-header h2,
+body.theme-light #providerKeysModalOverlay .settings-home-foot,
+body.theme-light #providerKeysModalOverlay .settings-nav-row strong{
+  color:#17171b!important;
+}
+body.theme-light #providerKeysModalOverlay .settings-home-header p,
+body.theme-light #providerKeysModalOverlay .settings-nav-row small{
+  color:#65656e!important;
+  opacity:1!important;
+}
+body.theme-light #providerKeysModalOverlay #providerKeyFields>.settings-nav-row{
+  background:#ffffff!important;
+  color:#17171b!important;
+  border:1px solid #dedee3!important;
+  box-shadow:none!important;
+}
+body.theme-light #providerKeysModalOverlay #providerKeyFields>.settings-nav-row>svg,
+body.theme-light #providerKeysModalOverlay #providerKeyFields>.settings-nav-row>i{
+  color:#55555e!important;
+}
+body.theme-light #providerKeysModalOverlay .custom-api-card{
+  background:#ffffff!important;
+  background-image:none!important;
+  color:#17171b!important;
+  border-color:#dedee3!important;
+}
+body.theme-light #providerKeysModalOverlay .custom-api-field{
+  background:#f7f7f8!important;
+  color:#17171b!important;
+  border-color:#d8d8df!important;
+}
+body.theme-light #providerKeysModalOverlay .custom-api-field input{
+  background:#ffffff!important;color:#17171b!important;border-color:#cfcfd6!important;
+}
+body.theme-light #providerKeysModalOverlay .custom-api-sub,
+body.theme-light #providerKeysModalOverlay .custom-field-help,
+body.theme-light #providerKeysModalOverlay .custom-api-option-copy small,
+body.theme-light #providerKeysModalOverlay .custom-api-test-status{
+  color:#65656e!important;opacity:1!important;
+}
+body.theme-light #providerKeysModalOverlay .custom-api-option-copy strong,
+body.theme-light #providerKeysModalOverlay .custom-field-label{
+  color:#17171b!important;
+}
+
+/* Personalization rows: reserve only the actual switch width instead of a dark/empty
+   90px control lane; this keeps all explanatory text readable on narrow phones. */
+body.theme-light #personalizationModalOverlay .ps-ref-row{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  column-gap:16px!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-row>.squish-switch-root{
+  justify-self:end!important;
+  align-self:center!important;
+}
+body.theme-light #personalizationModalOverlay .ps-ref-copy strong{color:#17171b!important;opacity:1!important}
+body.theme-light #personalizationModalOverlay .ps-ref-copy small{color:#5f5f68!important;opacity:1!important}
+body.theme-light #personalizationModalOverlay .ps-ref-section>h3{color:#202026!important}
+body.theme-light #personalizationModalOverlay .ps-ref-row>.ps-badge{justify-self:end!important}
+body.theme-light #personalizationModalOverlay .ps-ref-row>.ps-ref-reset{justify-self:end!important}
+
+/* The ReactBits track may use either a bare span or squish-switch__track. */
+body.theme-light .squish-switch-root>.squish-switch__track{
+  background:#d9d9df!important;border:1px solid #c8c8d0!important;
+}
+body.theme-light .squish-switch-root>input:checked+.squish-switch__track{
+  background:#6d4aff!important;border-color:#6d4aff!important;
+}
