@@ -83,10 +83,11 @@ while ((token = rawTag.exec(html))) {
 }
 assert.equal(mode, null, 'Unclosed script/style raw-text block in index.html');
 
-// Guard the composer cleanup: keep the compact canonical layer, not the
-// superseded 330px override that used to sit immediately before it.
-const composer = html.match(/<style id="composerVerticalReferenceFix">([\s\S]*?)<\/style>/)?.[1] || '';
-assert(composer.includes('width:min(248px,calc(100vw - 44px))'), 'Canonical compact composer rule missing');
-assert(!composer.includes('width:min(330px,calc(100vw - 34px))'), 'Superseded composer override returned');
+// Guard the composer cleanup: the superseded intermediate layer must stay
+// removed; the later runtime layer owns the effective compact composer rules.
+assert(!html.includes('id="composerVerticalReferenceFix"'), 'Superseded composer override layer returned');
+const composer = html.match(/<style id="latest-and-activity-layout-fix">([\s\S]*?)<\/style>/)?.[1] || '';
+assert(composer.includes('width:min(224px,calc(100vw - 34px))'), 'Effective compact composer rule missing');
+assert(!composer.includes('width:min(330px,calc(100vw - 34px))'), 'Old 330px composer override returned');
 
 console.log(`codebase structure audit passed: ${sourceFiles.length} source/config files checked`);
