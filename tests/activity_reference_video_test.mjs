@@ -13,7 +13,7 @@ assert(html.includes("indicator.id = 'activeAiIndicator'"),'Activity container s
 for(const id of ['aiActivityList','aiActivitySummary','aiActivityTimer','aiActivityLattice','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
  assert(html.includes('id="'+id+'"'),'Missing activity element: '+id);
 }
-assert(html.includes('<link rel="stylesheet" href="/reactbits-micro.css?v=20260929-activity-green-autocollapse">'),
+assert(html.includes('<link rel="stylesheet" href="/reactbits-micro.css?v=20260929-thought-checklist-addonly">'),
  'Canonical Activity stylesheet must remain loaded');
 assert(html.includes('onclick="openJdThoughts(this)"'));
 assert(html.includes('onclick="toggleActivityDetails(this)"'),'Original inline collapse remains usable');

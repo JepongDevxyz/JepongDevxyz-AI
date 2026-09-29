@@ -14,10 +14,11 @@ assert(/\.rb-lattice-loader\{[^}]*color:var\(--rb-success\)/.test(css),
   'The active Lattice Loader must be green');
 assert(/\.ai-activity-row\.running\.ai-activity-current \.ai-activity-label\{[^}]*color:var\(--rb-success\)/.test(css),
   'The current activity text and its marker must be green');
-assert(css.includes('.ai-activity-row.completed.ai-activity-iconless .ai-activity-icon{display:grid!important'),
-  'Completed thought steps must show the circled reference checkmarks');
-assert(html.includes("state==='completed'&&['process','build','generate','deploy','api'].includes(String(kind||'').toLowerCase())"),
-  'Real completed thought steps must render check icons while tool-specific icons remain intact');
+assert(css.includes('.thought-line__step-marker--done::before{content:"✓"}'),
+  'The added checklist must show checkmarks without changing existing activity icons');
+const activityIcon=html.slice(html.indexOf('function activityIconMarkup('),html.indexOf('function clientActivityTaskSubject('));
+assert(!activityIcon.includes("state==='completed'"),
+  'The add-on must preserve existing Activity timeline icon behavior');
 assert(finish.includes("if(isActivityAutoCollapseEnabled())card.classList.add('collapsed')"),
   'Auto-collapse must apply only when the real activity finishes');
 assert(finish.includes("toggle?.setAttribute('aria-expanded',String(!card.classList.contains('collapsed')))"),

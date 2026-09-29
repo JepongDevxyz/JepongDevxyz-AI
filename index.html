@@ -3971,7 +3971,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/account-appearance.css">
     <link rel="stylesheet" href="/haptics-notifications.css">
     <link rel="stylesheet" href="/interactive-proposals.css">
-    <link rel="stylesheet" href="/reactbits-micro.css?v=20260929-activity-green-autocollapse">
+    <link rel="stylesheet" href="/reactbits-micro.css?v=20260929-thought-checklist-addonly">
     <link rel="stylesheet" href="/theme-parity.css?v=20260928-full-theme-audit">
     <style id="jdUploadUiCritical">
       #filePreviewContainer.is-visible{
@@ -9254,9 +9254,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 analyze:'scan-search',image:'image',video:'film',document:'file-text',build:'hammer',
                 deploy:'cloud-upload',api:'braces',github:'github',plugin:'plug'
             };
-            if(state==='completed'&&['process','build','generate','deploy','api'].includes(String(kind||'').toLowerCase())){
-                return '<i data-lucide="check"></i>';
-            }
             return `<i data-lucide="${icons[kind]||'terminal-square'}"></i>`;
         }
 
@@ -9628,6 +9625,34 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             target.replaceChildren(...content);
             if(pinnedToBottom)target.scrollTop=target.scrollHeight;
         }
+        function syncThoughtLineSteps(card=document.getElementById('activeAiIndicator')){
+            const container=card?.querySelector('#aiActivityThoughtSteps');
+            const list=card?.querySelector('#aiActivityList');
+            if(!container||!list)return;
+            const rows=[...list.querySelectorAll('.ai-activity-row[data-activity-visibility="primary"]')]
+                .filter(row=>row.dataset.activityId!=='client-thinking')
+                .slice(-4);
+            const items=rows.map(row=>{
+                const step=document.createElement('div');
+                const state=row.classList.contains('running')?'active':
+                    row.classList.contains('completed')?'done':
+                    row.classList.contains('error')?'error':
+                    row.classList.contains('warning')?'warning':'done';
+                step.className='thought-line__step thought-line__step--'+state;
+                step.setAttribute('role','listitem');
+                const marker=document.createElement('span');
+                marker.className='thought-line__step-marker thought-line__step-marker--'+state;
+                marker.setAttribute('aria-hidden','true');
+                const label=document.createElement('span');
+                label.className='thought-line__step-label';
+                label.textContent=row.querySelector('.ai-activity-label')?.textContent?.trim()||'';
+                if(!label.textContent)return null;
+                step.append(marker,label);
+                return step;
+            }).filter(Boolean);
+            container.hidden=items.length===0;
+            container.replaceChildren(...items);
+        }
         function openJdThoughts(button){
             const card=button?.closest?.('.ai-activity-card');
             if(!card)return;
@@ -9710,6 +9735,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 </div>
                 <div class="thought-line__trace">
                     <p class="ai-activity-lead" aria-live="polite"></p>
+                    <div class="thought-line__steps" id="aiActivityThoughtSteps" role="list" aria-label="Recent activity steps" aria-hidden="true" hidden></div>
                     <div class="ai-activity-list" id="aiActivityList"></div>
                 </div>
             `;
@@ -10007,6 +10033,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const currentlyRunning=rows.filter(x=>x.classList.contains('running'));
             const current=currentlyRunning.length?currentlyRunning[currentlyRunning.length-1]:rows[rows.length-1];
             rows.forEach(x=>x.classList.toggle('ai-activity-current',x===current && x.classList.contains('running')));
+            syncThoughtLineSteps(card);
             // Keep the header stable as "Thinking" while the detailed timeline
             // carries the exact real operation. This avoids misleading headers
             // such as "Connecting to CodeCraft..." when the user's actual task is
@@ -10054,6 +10081,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 const responseIcon=responseRow.querySelector('.ai-activity-icon');
                 if(responseIcon)responseIcon.innerHTML=activityIconMarkup('process','completed');
             }
+            syncThoughtLineSteps(card);
             if (summary) summary.textContent = success ? 'Thought for' : 'Stopped because of an error';
             if (timer) timer.textContent = formatJdActivityElapsed(elapsed);
             syncJdThoughts();

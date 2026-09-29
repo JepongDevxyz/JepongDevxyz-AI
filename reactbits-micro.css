@@ -76,6 +76,17 @@
 .ai-activity-card:not(.collapsed) .thought-line__chevron{transform:rotate(90deg)}
 .thought-line__trace{display:block;overflow:visible;padding:0}
 .ai-activity-card.collapsed .thought-line__trace{display:none}
+.thought-line__steps{display:flex;flex-direction:column;gap:0;width:min(100%,620px);margin:3px 0 7px;padding:0 0 0 clamp(28px,5vw,42px)}
+.thought-line__step{display:grid;grid-template-columns:14px minmax(0,1fr);align-items:start;column-gap:10px;min-height:32px;padding:4px 0;color:var(--activity-muted);font-size:16px;line-height:1.4}
+.thought-line__step-marker{display:grid;place-items:center;width:14px;height:22px;color:var(--activity-muted);font-size:18px;line-height:1}
+.thought-line__step-marker--done::before{content:"✓"}
+.thought-line__step-marker--active::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.thought-line__step-marker--error{color:var(--rb-error)}
+.thought-line__step-marker--error::before{content:"×"}
+.thought-line__step-marker--warning{color:#d69e2e}
+.thought-line__step-marker--warning::before{content:"!";font-weight:650}
+.thought-line__step-label{min-width:0;overflow-wrap:anywhere}
+.thought-line__step--active .thought-line__step-label{color:var(--rb-ink)}
 
 /* Plain lead line — same visual role as "Built the file" in the reference. */
 .ai-activity-lead{
@@ -162,9 +173,6 @@
 .ai-activity-row[data-activity-id="thinking"]{margin-top:2px}
 .ai-activity-row[data-activity-id="thinking"] .ai-activity-label{color:var(--activity-muted-soft)}
 .ai-activity-row[data-activity-id="thinking"].running.ai-activity-current .ai-activity-label{color:var(--rb-success)}
-.ai-activity-row.completed.ai-activity-iconless{grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important}
-.ai-activity-row.completed.ai-activity-iconless .ai-activity-icon{display:grid!important;color:var(--activity-muted)}
-.ai-activity-row.completed.ai-activity-iconless .ai-activity-icon svg{width:18px;height:18px;stroke-width:1.8}
 
 /* Model-authored high-level work commentary sits flush with the same reading
    column, matching the white explanatory paragraphs in the supplied recording. */
