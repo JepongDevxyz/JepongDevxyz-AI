@@ -5389,7 +5389,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         };
         let personalizationSettings = (() => {
             try {
-                return { ...PERSONALIZATION_DEFAULTS, ...readLocalJSON('jepong_personalization', {}) };
+                return personalizationWithHistoryPolicy({ ...PERSONALIZATION_DEFAULTS, ...readLocalJSON('jepong_personalization', {}) });
             } catch (_) {
                 return { ...PERSONALIZATION_DEFAULTS };
             }
@@ -5397,6 +5397,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         if(personalizationSettings.referenceRecordHistory===false){
             localStorage.removeItem('jepong_selected_voice');
             localStorage.removeItem('jepong_speech_rate');
+            localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));
         }
 
         // Supabase Cloud Sync v11: auth-scoped settings, memory, chats and private Library.
@@ -5544,10 +5545,10 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const {data,error}=await cloudClient.from('user_settings').select('personalization,appearance,voice,pet,preferences,updated_at').eq('user_id',cloudUser.id).maybeSingle();
             if(error){console.warn('Cloud state load:',error.message);return;}
             const remote=data?.personalization||{}; const localUpdated=Number(localStorage.getItem('jepong_personalization_updated_at')||0); const remoteUpdated=data?.updated_at?Date.parse(data.updated_at):0;
-            if(Object.keys(remote).length && remoteUpdated>=localUpdated){personalizationSettings={...PERSONALIZATION_DEFAULTS,...personalizationSettings,...remote};localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));renderPersonalizationSettings();syncPersonalizationFeatureToggles();}
+            if(Object.keys(remote).length && remoteUpdated>=localUpdated){personalizationSettings=personalizationWithHistoryPolicy({...PERSONALIZATION_DEFAULTS,...personalizationSettings,...remote});localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));renderPersonalizationSettings();syncPersonalizationFeatureToggles();}
             // Memory is deliberately stored separately from settings/chat history and scoped by auth.uid() RLS.
             const mem=await cloudClient.from('memories').select('id,content,updated_at').eq('user_id',cloudUser.id).eq('source','memory_summary').order('updated_at',{ascending:false}).limit(1).maybeSingle();
-            if(!mem.error && mem.data?.content){personalizationSettings.memorySummary=mem.data.content;localStorage.setItem('jepong_personalization',JSON.stringify(personalizationSettings));}
+            if(!mem.error && mem.data?.content){personalizationSettings.memorySummary=mem.data.content;localStorage.setItem('jepong_personalization',JSON.stringify(personalizationWithHistoryPolicy()));}
             const prefs=data?.preferences||{};
             // Chat persistence rule: this browser's saved copy wins for sessions it
             // already knows about. Cloud only fills sessions missing locally.

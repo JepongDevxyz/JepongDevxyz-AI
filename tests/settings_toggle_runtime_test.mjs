@@ -17,6 +17,8 @@ const voiceSettings={referenceRecordHistory:true,voicePersona:'Luna',voiceModel:
 assert.equal(historyPolicy(voiceSettings).voicePersona,'Luna','ON must retain the selected voice preference');
 assert.equal(historyPolicy({...voiceSettings,referenceRecordHistory:false}).voicePersona,'Jepong','OFF must not retain the selected voice preference');
 assert.equal(historyPolicy({...voiceSettings,referenceRecordHistory:false}).voiceSpeed,1,'OFF must restore the default tuning');
+assert(html.includes('personalizationSettings=personalizationWithHistoryPolicy({...PERSONALIZATION_DEFAULTS,...personalizationSettings,...remote})'),'Cloud settings hydration must enforce the OFF policy before local persistence');
+assert(html.includes("localStorage.setItem('jepong_personalization',JSON.stringify(personalizationWithHistoryPolicy()))"),'Cloud memory hydration must persist only policy-approved preferences');
 
 const executeSource=section(html,'function executeSnippetFromButton(btn) {','function openCodeFullscreenFromButton(btn) {');
 const execute= new Function('personalizationSettings','snippetFromButton','document','closeTransientSurfaces','buildRunnableSnippetDocument','showModernToast',executeSource+'\nreturn executeSnippetFromButton;');
