@@ -16,8 +16,8 @@ assert(api.includes('RESPONSE PRESENTATION CONTRACT:'),'universal polished respo
 assert(api.includes('PUBLIC_UPDATE:'),'quality preflight must produce a visible work update');
 assert(api.includes("activity(emit,'work-commentary-1',parsedBrief.publicUpdate,'completed','commentary')"),
   'server must emit the quality work update as real activity');
-assert(api.includes('responseEffortRank(responseEffort)>=2 || projectChangeIntent') && api.includes('shouldUseQualityOrchestrator(message,files,mode)'),
-  'complex Medium+ requests and project repairs should get model-independent preflight');
+assert(/effortPolicy\.qualityPreflight\s*&&\s*shouldUseQualityOrchestrator\(message,files,mode\)/.test(api),
+  'Medium+ requests should get preflight while Instant/Low avoid its extra generation');
 
 const parseSrc=between(api,"function cleanActivityLabel(value=",
   '\nasync function readInternalProviderText(');

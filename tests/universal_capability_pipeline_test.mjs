@@ -48,8 +48,8 @@ assert(api.includes("activity(emit,'task-plan'") &&
        api.includes("activity(emit,'task-work'") &&
        api.includes("routedReason:'activity-evidence-sync'"),
   'Every normal chat request must expose selected-model planning/work milestones and synchronize real evidence');
-assert(api.includes('responseEffortRank(responseEffort)>=2 || projectChangeIntent'),
-  'Project archive fixes should receive quality preflight even in Instant/Low');
+assert(/effortPolicy\.activityEvidence\s*&&\s*activityEvidence&&shouldUseDynamicActivityPlanner\(taskMessage,files\)/.test(api),
+  'Evidence checkpoints must be effort-gated so Instant can use the direct response path');
 assert(api.includes('Do not infer a critical package mismatch'),
   'All models must be warned not to infer package failures from filenames/IDE metadata');
 

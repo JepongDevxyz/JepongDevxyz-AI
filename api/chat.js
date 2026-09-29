@@ -362,6 +362,11 @@ function responseEffortPolicy(value='Instant'){
     level,
     rank,
     reasoningTokens,
+    // Keep the selected level's latency policy shared across providers. Instant
+    // answers avoid auxiliary model calls; later levels progressively add them.
+    activityPlanner:rank>=1,
+    qualityPreflight:rank>=2,
+    activityEvidence:rank>=3,
     // OpenRouter supports a six-step reasoning scale, so preserve all six UI levels.
     openRouter:['none','minimal','low','medium','high','xhigh'][rank]||'none',
     // Providers with a three-step native control still retain six distinct app
@@ -4937,7 +4942,12 @@ async function runAgentRouter({model,history,message,systemInstruction,emit,auto
   if(String(message||'').trim())messages.push({role:'user',content:String(message).trim().slice(0,8000)});
   if(!messages.length)return {ok:false,status:400,error:'AgentRouter requires a text message.'};
   const effort=responseEffortPolicy(responseEffort).level;
-  const body=JSON.stringify({model:target,messages,system:(String(systemInstruction||'')+'\nSelected response effort: '+effort+'.').slice(0,18000)});
+  const body=JSON.stringify({
+    model:target,
+    messages,
+    system:(String(systemInstruction||'')+'\nSelected response effort: '+effort+'.').slice(0,18000),
+    max_tokens:effortOutputBudgetFor(message,responseEffort)
+  });
   const timestamp=String(Date.now()),encoder=new TextEncoder();
   let last='Railway AgentRouter bridge did not return a model response.',status=502;
   for(let i=0;i<keys.length;i++){
@@ -5216,6 +5226,7 @@ async function processChat(body, emit) {
   smartRouter = autoFallback && body.smartRouter === true; // Fallback OFF locks the selected provider and model.
   files=sanitizeIncomingAttachments(files);
   const responseEffort=normalizeResponseEffort(personalization?.intelligence,personalization?.fastAnswers);
+  const effortPolicy=responseEffortPolicy(responseEffort);
   const fastAnswers=responseEffort==='Instant';
   if(personalization && typeof personalization==='object'){
     personalization={...personalization,intelligence:responseEffort,fastAnswers};
@@ -5264,7 +5275,7 @@ async function processChat(body, emit) {
   // approach that its final answer must follow. The user sees a compact planning
   // transition while that metadata pass runs; provider fallback stays disabled.
   let activityBlueprint=defaultActivityBlueprint(contextPlan?.profile||taskProfile(taskMessage,files));
-  if(shouldUseDynamicActivityPlanner(taskMessage,files)){
+  if(effortPolicy.activityPlanner&&shouldUseDynamicActivityPlanner(taskMessage,files)){
     activity(emit,'task-plan',activityBlueprint.planStart||'Planning the response','running','process','');
     try{
       const activityPrompt=buildActivityBlueprintPrompt(taskMessage,files,contextPlan?.profile||{});
@@ -5524,8 +5535,7 @@ async function processChat(body, emit) {
   );
   const projectChangeIntent=hasProjectArchive &&
     /\b(?:fix|ayusin|repair|update|modify|edit|refactor|debug|build|compile|make it work|paganahin|working|gumagana|inspect|suriin|review|audit)\b/i.test(normalizeIntentText(message));
-  const useQualityOrchestrator =
-    (responseEffortRank(responseEffort)>=2 || projectChangeIntent) &&
+  const useQualityOrchestrator = effortPolicy.qualityPreflight &&
     shouldUseQualityOrchestrator(message,files,mode);
   // activityBlueprint was already created by the same selected model before
   // tool work, so quality preflight may refine it but must not replace its plan.
@@ -5606,7 +5616,7 @@ async function processChat(body, emit) {
     liveWebContext,
     verificationContext
   ]);
-  if(activityEvidence && shouldUseDynamicActivityPlanner(taskMessage,files)){
+  if(effortPolicy.activityEvidence&&activityEvidence&&shouldUseDynamicActivityPlanner(taskMessage,files)){
     try{
       const updateResponse=await runProvider(provider,{
         model,

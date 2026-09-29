@@ -22,8 +22,8 @@ for(const level of levels){
   assert(api.includes(`responseEffort==='${level}'`), 'server quality instruction missing for '+level);
 }
 
-assert(api.includes('responseEffortRank(responseEffort)>=2 || projectChangeIntent') && api.includes('shouldUseQualityOrchestrator(message,files,mode)'),
-  'Medium/High/Extra/Max must enable provider-independent preflight, with project repairs additionally covered at Instant/Low');
+assert(/effortPolicy\.qualityPreflight\s*&&\s*shouldUseQualityOrchestrator\(message,files,mode\)/.test(api),
+  'Medium/High/Extra/Max must enable provider-independent preflight, while Instant/Low stay on the faster path');
 assert(api.includes("responseEffort==='Max'?16000:12000"),
   'Max must use the stronger internal verification brief budget');
 assert(api.includes('responseEffortRank(effort)>=3'),

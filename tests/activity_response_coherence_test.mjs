@@ -41,7 +41,7 @@ assert(api.includes("[RESPONSE-ACTIVITY COHERENCE CONTRACT — internal, do not 
 assert(api.includes("Do not silently switch from native app to website"),
   'Final response must not silently contradict the visible Activity plan');
 
-const dynamicPlanner=between(api,'if(shouldUseDynamicActivityPlanner(taskMessage,files)',"contextPlan.activityBlueprint=activityBlueprint;");
+const dynamicPlanner=between(api,'if(effortPolicy.activityPlanner&&shouldUseDynamicActivityPlanner(taskMessage,files)',"contextPlan.activityBlueprint=activityBlueprint;");
 assert(dynamicPlanner.includes('runProvider(provider,{') && dynamicPlanner.includes('model,'),
   'Dynamic Activity planning must use the same selected provider/model variables as the final response');
 assert(dynamicPlanner.includes("autoFallback:false"),
