@@ -6,6 +6,8 @@ const runnablePreview=h.slice(h.indexOf('function buildRunnableSnippetDocument')
 assert(reconnectCard>=0&&reconnectCard< h.indexOf('<script>\n        function showModernAlert'), 'reconnect card must exist in the real app document outside generated previews');
 assert(!runnablePreview.includes('id="jdReconnectCard"'), 'reconnect card must not be injected into user JavaScript previews');
 assert(h.includes('.jd-reconnect-card.open{display:flex}'), 'reconnect card must have a visible online recovery state');
+assert(!h.includes('motion-ux.css?v=20260927-three-reference-v2">\\n</head>'), 'HTML head must not render a literal escaped newline');
+assert(!h.includes('reactbits-micro.js?v=20260927-upload-ui-2" defer></script>\\n    <script'), 'script tags must be separated by a real newline, not visible text');
 const actions=h.slice(h.indexOf('function botActionsHTML'),h.indexOf('function assistantReadAloudButtonHTML'));
 for(const icon of ['copy','thumbs-up','thumbs-down','share-2','more-vertical'])assert(actions.includes(icon),icon);
 console.log('PASS: response toolbar/menu actions and reconnect UI are wired to real handlers.');
