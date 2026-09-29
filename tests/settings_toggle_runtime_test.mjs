@@ -47,10 +47,18 @@ assert(gateStart>=0&&gateEnd>gateStart,'API must expose a request-boundary setti
 const featureGate=new Function(api.slice(gateStart,gateEnd)+'\nreturn applyChatFeatureSettings;')();
 const gated=featureGate({message:'hello',files:[{name:'private.txt'}],plugins:{github:{enabled:true}},personalization:{librarySearch:false,connectorSearch:false}});
 assert.deepEqual(gated.files,[],'API must not pass attachments while File search is OFF');
-assert.deepEqual(gated.plugins,{},'API must not query connectors while Connector search is OFF');
+assert.equal(gated.plugins.github,undefined,'API must not query connectors while Connector search is OFF');
+const internalPlugins={superpowers:{enabled:true},skills:['tdd'],autoUse:true};
+assert.deepEqual(featureGate({plugins:{...internalPlugins,github:{enabled:true}},personalization:{connectorSearch:false}}).plugins,internalPlugins,'Connector OFF must preserve internal skill workflows');
 const enabled=featureGate({message:'hello',files:[{name:'private.txt'}],plugins:{github:{enabled:true}},personalization:{librarySearch:true,connectorSearch:true}});
 assert.equal(enabled.files.length,1,'File search ON must preserve attachments');
 assert.equal(enabled.plugins.github.enabled,true,'Connector search ON must preserve connected-service context');
+
+const pluginContextSource=section(html,'function getChatPluginContext(){','function getHistoryForRequest(history)');
+const getChatPluginContext=new Function('window','personalizationSettings',pluginContextSource+'\nreturn getChatPluginContext;');
+const allPluginContext={...internalPlugins,github:{enabled:true,repo:'owner/repo'}};
+assert.deepEqual(getChatPluginContext({JDPlugins:{contextForChat:()=>allPluginContext}},{connectorSearch:false})(),internalPlugins,'Connector OFF must preserve internal skills but omit connected services');
+assert.equal(getChatPluginContext({JDPlugins:{contextForChat:()=>allPluginContext}},{connectorSearch:true})().github.repo,'owner/repo','Connector ON must provide connected service context');
 
 const effortApi=section(api,"const RESPONSE_EFFORT_LEVELS=['Instant'",'function geminiThinkingConfig(');
 const effort=new Function('outputBudgetFor',effortApi+'\nreturn {normalizeResponseEffort,responseEffortRank,responseEffortPolicy,effortOutputBudgetFor,nativeEffortFields};')(()=>4096);

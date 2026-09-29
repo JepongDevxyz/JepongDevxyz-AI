@@ -8322,6 +8322,13 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             };
         }
 
+        function getChatPluginContext(){
+            const context=window.JDPlugins?.contextForChat?.()||{};
+            if(personalizationSettings.connectorSearch!==false)return context;
+            const {superpowers,skills,autoUse}=context;
+            return {superpowers,skills,autoUse};
+        }
+
         function getHistoryForRequest(history) {
             if (isIncognito) return history;
             return personalizationSettings.referenceChatHistory ? history : [];
@@ -11966,7 +11973,7 @@ ${m.text || ''}
                         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
                         clientUtcOffsetMinutes: -new Date().getTimezoneOffset(),
                         personalization: getPersonalizationPayload(),
-                        plugins: personalizationSettings.connectorSearch===false ? {} : (window.JDPlugins?.contextForChat?.() || {}),
+                        plugins: getChatPluginContext(),
                         customApiKeys: getCustomApiKeys(),
                         customApiProfile: selectedCustomApiProfile()
                     })

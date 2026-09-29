@@ -5180,10 +5180,12 @@ async function maybeRefineVisualUiResponse({first,provider,model,history,files,m
 
 function applyChatFeatureSettings(body={}){
   const settings=body.personalization||{};
+  const plugins=body.plugins||{};
+  const {superpowers,skills,autoUse}=plugins;
   return {
     ...body,
     ...(settings.librarySearch===false?{files:[]}:{}),
-    ...(settings.connectorSearch===false?{plugins:{}}:{})
+    ...(settings.connectorSearch===false?{plugins:{superpowers,skills,autoUse}}:{})
   };
 }
 
