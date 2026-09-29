@@ -13,7 +13,7 @@ const normalizerSource=between(html,'        function normalizeActivityEventForU
 const normalize=new Function('sanitizeUiErrorMessage',normalizerSource+'\nreturn normalizeActivityEventForUI;')(
   value=>String(value||'')
 );
-const timelineSource=between(html,'        function activityEventUsesVisibleTimeline(evt={}){','        function resolveActivityPlaybackWaiters(');
+const timelineSource=between(html,'        function activityPlaybackId(evt={}){','        function resolveActivityPlaybackWaiters(');
 const usesVisibleTimeline=new Function(timelineSource+'\nreturn activityEventUsesVisibleTimeline;')();
 
 const priorStatuses=[

@@ -21,7 +21,8 @@ def main():
     require('function isFallbackableProviderFailure' in CHAT,
             'quota/credential emergency-fallback classifier missing')
     helper_start = CHAT.index('function isProviderQuotaFailure')
-    helper_block = CHAT[helper_start:helper_start + 1400]
+    helper_end = CHAT.index('function shouldRetryProviderCredential', helper_start)
+    helper_block = CHAT[helper_start:helper_end]
     for status in ('401', '402', '403', '429'):
         require(status in helper_block, f'quota/credential status {status} is missing')
     for phrase in ('quota', 'credits?', 'rate[ _-]?limit'):

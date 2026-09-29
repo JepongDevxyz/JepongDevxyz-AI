@@ -3861,6 +3861,20 @@ function isProviderQuotaFailure(status,error=''){
   return [402,429].includes(code) ||
     /quota[ _-]?(?:exceeded|exhausted|reached)|(?:insufficient|exhausted|out of) (?:credits?|balance|quota)|rate[ _-]?limit[ _-]?(?:exceeded|reached)|resource_exhausted|insufficient_quota|(?:daily|monthly|usage|billing hard) limit (?:exceeded|reached)|credits? (?:exhausted|depleted)|credit balance (?:exhausted|insufficient)/.test(text);
 }
+function captureProviderStreamError(finishState,errorPayload={}){
+  const payload=errorPayload&&typeof errorPayload==='object'?errorPayload:{message:String(errorPayload||'')};
+  const nested=payload.error&&typeof payload.error==='object'?payload.error:{};
+  const status=Number(payload.status||payload.status_code||payload.statusCode||payload.code||nested.status||nested.code)||0;
+  const message=String(payload.message||payload.detail||payload.type||nested.message||nested.type||errorPayload||'Provider stream failed').slice(0,900);
+  const codeText=String(payload.status||payload.code||nested.status||nested.code||'');
+  const creditExhausted=status===402||/RESOURCE_EXHAUSTED|INSUFFICIENT_QUOTA/i.test(codeText)||
+    (status===429&&/quota|credit|billing/i.test(`${codeText} ${message}`))||
+    /(?:credit(?:s)?\s+(?:exhausted|depleted|insufficient|balance)|insufficient[_ ]quota|resource_exhausted|quota\s+(?:exhausted|exceeded|reached)|billing.{0,30}(?:limit|quota|credit)|(?:limit|quota).{0,30}(?:billing|credit))/i.test(message);
+  finishState.creditExhausted=creditExhausted;
+  finishState.reason=creditExhausted?'credit_exhausted':'provider_error';
+  finishState.status=status||(creditExhausted?402:502);
+  finishState.error=message;
+}
 function isFallbackableProviderFailure(status,error=''){
   const code=Number(status)||0;
   if([401,403].includes(code)||isProviderQuotaFailure(code,error))return true;
@@ -3907,6 +3921,7 @@ function openAIStreamToText(body, finishState={reason:''}) {
         }
         try {
           const p=JSON.parse(s);
+          if(p?.error){captureProviderStreamError(finishState,p.error);continue;}
           const choice=p.choices?.[0];
           const rawText=choice?.delta?.content ?? choice?.message?.content;
           const text=typeof rawText==='string'
@@ -3937,6 +3952,7 @@ function cohereStreamToText(body, finishState={reason:''}) {
         const t=line.trim(); if(!t.startsWith('data:')) continue;
         try{
           const p=JSON.parse(t.slice(5).trim());
+          if(p?.error||p?.type==='error'){captureProviderStreamError(finishState,p.error||p);continue;}
           const text=p?.delta?.message?.content?.text;
           const reason=p?.delta?.finish_reason ?? p?.finish_reason ?? p?.finishReason;
           if(reason) finishState.reason=String(reason).toLowerCase();
@@ -4028,6 +4044,7 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
               const t=line.trim();if(!t.startsWith('data:'))continue;
               try{
                 const p=JSON.parse(t.slice(5).trim());
+                if(p?.error){captureProviderStreamError(finishState,p.error);continue;}
                 const candidate=p.candidates?.[0];
                 if(candidate?.finishReason) finishState.reason=String(candidate.finishReason).toLowerCase();
                 for(const part of candidate?.content?.parts||[]) if(part.text) controller.enqueue(encoder.encode(part.text));
@@ -4886,6 +4903,7 @@ function anthropicStreamToText(body,finishState={reason:''}){
         const raw=t.slice(5).trim();if(!raw||raw==='[DONE]')continue;
         try{
           const p=JSON.parse(raw);
+          if(p?.error||p?.type==='error'){captureProviderStreamError(finishState,p.error||p);continue;}
           const text=p?.delta?.text ?? p?.content_block?.text;
           const reason=p?.delta?.stop_reason ?? p?.message?.stop_reason;
           if(reason)finishState.reason=String(reason).toLowerCase();
@@ -5890,10 +5908,17 @@ function looksObviouslyTruncated(text=''){
 }
 
 function continuationNeeded(finishState, generatedText=''){
-  if(finishReasonNeedsContinuation(finishState?.reason)) return true;
-  if(looksObviouslyTruncated(generatedText)) return true;
-  if(String(finishState?.reason||'').toLowerCase()==='unknown' && String(generatedText||'').trim()) return true;
-  return false;
+  return finishState?.creditExhausted===true && String(generatedText||'').trim().length>0;
+}
+
+function continuationOverlapLength(previousText='', continuationText='', maxOverlap=8192){
+  const previous=String(previousText||'');
+  const next=String(continuationText||'');
+  const limit=Math.min(previous.length,next.length,Math.max(0,Number(maxOverlap)||0));
+  for(let size=limit;size>=16;size--){
+    if(previous.slice(-size)===next.slice(0,size))return size;
+  }
+  return 0;
 }
 
 function buildContinuationHistory(body, generatedText=''){
@@ -5980,6 +6005,18 @@ function activityStreamResponse(body, requestSignal=null) {
             const reader=activeResponse.body.getReader();
             activeReader=reader;
             const decoder=new TextDecoder();
+            const continuationBoundary=generatedText;
+            let pendingContinuationPrefix=continuationCount>0?'':null;
+            const emitGeneratedText=(piece='',flush=false)=>{
+              let visible=String(piece||'');
+              if(pendingContinuationPrefix!==null){
+                pendingContinuationPrefix+=visible;
+                if(!flush&&pendingContinuationPrefix.length<128)return;
+                visible=pendingContinuationPrefix.slice(continuationOverlapLength(continuationBoundary,pendingContinuationPrefix));
+                pendingContinuationPrefix=null;
+              }
+              if(visible){generatedText+=visible;send('text',{text:visible});}
+            };
 
             let streamReadError=null;
             while(!cancelled){
@@ -5987,10 +6024,7 @@ function activityStreamResponse(body, requestSignal=null) {
                 const {done,value}=await reader.read();
                 if(done)break;
                 const text=decoder.decode(value,{stream:true});
-                if(text){
-                  generatedText+=text;
-                  send('text',{text});
-                }
+                if(text)emitGeneratedText(text);
               }catch(readError){
                 streamReadError=readError;
                 activeFinishState={reason:'unknown'};
@@ -5998,22 +6032,24 @@ function activityStreamResponse(body, requestSignal=null) {
               }
             }
             const tail=decoder.decode();
-            if(tail){
-              generatedText+=tail;
-              send('text',{text:tail});
-            }
+            if(tail)emitGeneratedText(tail);
+            if(pendingContinuationPrefix!==null)emitGeneratedText('',true);
 
             if(cancelled) break;
-            if(streamReadError && generatedText.trim()){
-              send('activity',{
+            if(streamReadError){
+              if(generatedText.trim())send('activity',{
                 type:'activity',
-                id:`stream-recovery-${continuationCount+1}`,
-                label:'Response stream was interrupted — resuming automatically',
+                id:`stream-interrupted-${continuationCount+1}`,
+                label:'Response stream was interrupted — partial answer preserved',
                 state:'warning',
                 kind:'generate',
-                detail:'Keeping the response already generated and continuing from the same point.',
+                detail:'Automatic continuation only starts after a confirmed provider credit exhaustion.',
                 at:Date.now()
               });
+              send('error',{message:generatedText.trim()?'The provider stream was interrupted. The partial answer is preserved; retry to continue.':'The provider stream was interrupted before a response was received. Please retry.',status:502,provider:resolvedProvider});
+              clearInterval(keepAlive);
+              try{controller.close();}catch(_){}
+              return;
             }
             if(!continuationNeeded(activeFinishState,generatedText)) break;
             if(continuationCount>=MAX_AUTO_CONTINUATIONS){
@@ -6035,10 +6071,10 @@ function activityStreamResponse(body, requestSignal=null) {
             send('activity',{
               type:'activity',
               id:`response-${completedResponseNumber}`,
-              label:`Response ${completedResponseNumber} reached the provider output limit`,
+              label:`Response ${completedResponseNumber} lost its provider credit stream`,
               state:'completed',
               kind:'generate',
-              detail:'Continuing automatically without repeating the answer.',
+              detail:'Continuing the partial answer with the next available API key or enabled fallback.',
               at:Date.now()
             });
             send('activity',{
@@ -6110,6 +6146,10 @@ function activityStreamResponse(body, requestSignal=null) {
               kind:'generate',
               at:Date.now()
             });
+          }
+
+          if(finishReasonNeedsContinuation(activeFinishState?.reason)&&generatedText.trim()){
+            send('activity',{type:'activity',id:'provider-output-limit',label:'Provider output limit reached — partial answer preserved',state:'warning',kind:'generate',at:Date.now()});
           }
 
           generatedText=sanitizeAssistantOutput(generatedText);
