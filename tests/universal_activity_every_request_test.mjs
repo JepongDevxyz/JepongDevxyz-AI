@@ -41,7 +41,7 @@ assert.equal(shouldVerifyTask('Gawan mo ako ng HTML snake game',[]),true);
 assert.equal(shouldVerifyTask('Create a Python calculator',[]),true);
 assert.equal(shouldVerifyTask('Write JavaScript for a todo app',[]),true);
 
-// Internal bookkeeping stays auditable but must not clutter the primary ChatGPT-style work trace.
+// Real audit and code-verification milestones remain visible with the original work trace.
 const normalizeStart=html.indexOf('        function normalizeActivityEventForUI(evt = {}) {');
 const normalizeEnd=html.indexOf('\n        function shouldShowAIActivity',normalizeStart);
 assert(normalizeStart>=0&&normalizeEnd>normalizeStart,'Activity UI normalizer missing');
@@ -50,7 +50,7 @@ assert(normalizer.includes("if(id==='response-audit')"),
   'Final response audit must still exist for details/history');
 assert(normalizer.includes("if(id==='output-verification')"),
   'Generated-code verification must still exist for details/history');
-assert(normalizer.includes("visibility:'details'"),
-  'Internal audit/verification rows must stay out of the primary reference surface');
+assert(!normalizer.includes("visibility:'details'"),
+  'Real response-audit and code-verification rows must stay in the primary reference surface');
 
-console.log('PASS: Activity is universal and task-specific; model planning, real tools, commentary, work, and hidden audits share one request flow.');
+console.log('PASS: Activity is universal and task-specific; model planning, real tools, commentary, work, and audits share one visible request flow.');

@@ -9380,13 +9380,15 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     // slot information is implementation detail.
                     safeDetail=safeDetail.replace(/credential\s+\d+\s*\/\s*\d+/gi,'configured API key').slice(0,110);
                 }
-                return {...e,label:safeLabel,detail:safeDetail,visibility:'details'};
+                // Keep the original provider lifecycle status visible; credential
+                // slot data is removed above before it reaches the user.
+                return {...e,label:safeLabel,detail:safeDetail};
             }
             if(id==='thinking'){
                 return {...e,label:label||'Thinking',kind:kind||'process'};
             }
             if(id==='generation'){
-                return {...e,label:label||'Generating response',kind:'generate',visibility:'details'};
+                return {...e,label:label||'Generating response',kind:'generate'};
             }
 
             // Only real tool/context operations receive ChatGPT-style wording.
@@ -9396,10 +9398,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Attachment labels are emitted from actual preprocessing; retain their details.
             if(id==='attachments') return {...e,kind:'file'};
             if(id==='response-audit'){
-                return {...e,label:label || 'Checking the response',kind:'test',visibility:'details'};
+                return {...e,label:label || 'Checking the response',kind:'test'};
             }
             if(id==='output-verification'){
-                return {...e,label:label || 'Checking generated code',kind:'test',visibility:'details'};
+                return {...e,label:label || 'Checking generated code',kind:'test'};
             }
             if(id==='fallback' && state==='running'){
                 return {...e,label:label||'Checking configured fallback',
@@ -9852,11 +9854,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function activityEventUsesVisibleTimeline(evt={}){
-            const id=activityPlaybackId(evt);
-            const kind=String(evt.kind||'process').toLowerCase();
-            if(evt.visibility==='details'||kind==='provider'||kind==='route')return false;
-            if(/^attachment-media-(?:selected|bridge|cloudflare)$/.test(id))return false;
-            return true;
+            // Existing provider, router, attachment, generation, and verification
+            // milestones belong in the original timeline. Only an event explicitly
+            // classified as internal details may bypass the visible playback queue.
+            return evt.visibility!=='details';
         }
 
         function resolveActivityPlaybackWaiters(){
@@ -10026,9 +10027,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
-            const detailsOnly = normalized.visibility==='details' ||
-                kind==='provider' || kind==='route' ||
-                /^attachment-media-(?:selected|bridge|cloudflare)$/.test(id);
+            const detailsOnly = normalized.visibility==='details';
             const iconless = id==='thinking' || ['process','build','generate','deploy','api'].includes(String(kind).toLowerCase());
             // A new operation does NOT prove the previous one completed.
             // Only a matching backend completion event may mark it completed.
