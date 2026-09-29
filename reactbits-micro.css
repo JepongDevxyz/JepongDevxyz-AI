@@ -78,7 +78,7 @@
 .ai-activity-card.collapsed .thought-line__trace{display:none}
 .thought-line__steps{display:flex;flex-direction:column;gap:0;width:min(100%,620px);margin:3px 0 7px;padding:0 0 0 clamp(28px,5vw,42px)}
 .thought-line__step{display:grid;grid-template-columns:14px minmax(0,1fr);align-items:start;column-gap:10px;min-height:32px;padding:4px 0;color:var(--activity-muted);font-size:16px;line-height:1.4}
-.thought-line__step-marker{display:grid;place-items:center;width:14px;height:22px;color:var(--activity-muted);font-size:18px;line-height:1}
+.thought-line__step-marker{display:grid;place-items:center;width:14px;height:22px;color:var(--rb-success);font-size:18px;line-height:1}
 .thought-line__step-marker--done::before{content:"✓"}
 .thought-line__step-marker--active::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
 .thought-line__step-marker--error{color:var(--rb-error)}
@@ -169,7 +169,9 @@
   48%{opacity:.9;transform:scale(1)}
 }
 .ai-activity-row.completed .ai-activity-label,
-.ai-activity-row.completed .ai-activity-icon{color:var(--activity-muted)}
+.ai-activity-row.completed .ai-activity-icon{color:var(--rb-success)}
+.ai-activity-row.completed .ai-activity-label{color:var(--activity-muted)}
+.ai-activity-row.error .ai-activity-icon{color:var(--rb-error)}
 .ai-activity-row[data-activity-id="thinking"]{margin-top:2px}
 .ai-activity-row[data-activity-id="thinking"] .ai-activity-label{color:var(--activity-muted-soft)}
 .ai-activity-row[data-activity-id="thinking"].running.ai-activity-current .ai-activity-label{color:var(--rb-success)}
@@ -1013,7 +1015,8 @@
 /* No horizontal separator under Thinking. Motion belongs to the ThoughtLine text itself. */
 .thought-line{position:relative}
 .thought-line__label{gap:4px}
-.thought-line__glyph{display:inline-block;flex:0 0 auto;color:var(--rb-muted);font-size:.9em;line-height:1;transform-origin:center;opacity:1}
+.thought-line__glyph{display:inline-block;flex:0 0 auto;color:var(--rb-success);font-size:.9em;line-height:1;transform-origin:center;opacity:1}
+.ai-activity-card.error .thought-line__glyph{color:var(--rb-error)}
 .thought-line__breath{display:inline-block;min-width:0}
 .thought-line[data-working="true"] .thought-line__glyph{animation:rb-thought-breathe 1.6s cubic-bezier(.77,0,.175,1) infinite}
 .thought-line[data-working="true"] .thought-line__breath[data-shimmer]{

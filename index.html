@@ -691,8 +691,8 @@
         .jd-message-menu-row{width:100%;border:0;background:transparent;color:var(--text-main);display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;text-align:left;font:inherit;cursor:pointer}
         .jd-message-menu-row:hover,.jd-message-menu-row:active{background:rgba(148,163,184,.10)}
         .jd-message-menu-row svg{width:18px;height:18px}.jd-message-menu-sep{height:1px;background:var(--border-color);margin:5px 4px}
-        .jd-reconnect-card{position:fixed;z-index:12000;left:50%;top:50%;transform:translate(-50%,-50%);width:min(650px,calc(100vw - 32px));border:1px solid var(--border-color);border-radius:24px;background:var(--modal-bg);color:var(--text-main);box-shadow:0 20px 60px rgba(0,0,0,.38);padding:18px 24px;display:none;align-items:center;gap:18px;font-size:1.08rem;line-height:1.5}
-        .jd-reconnect-card.open{display:flex}.jd-reconnect-icon{position:relative;width:34px;height:34px;flex:0 0 34px}.jd-reconnect-icon svg{position:absolute;inset:0;width:34px;height:34px}.jd-reconnect-icon svg.jd-reconnect-x{inset:auto;right:-2px;bottom:-2px;width:15px;height:15px;background:var(--modal-bg);stroke-width:3}.jd-reconnect-spinner{margin-left:auto;width:42px;height:42px;flex:0 0 42px;border:5px solid rgba(148,163,184,.28);border-top-color:var(--text-main);border-radius:50%;animation:jdReconnectSpin .8s linear infinite}
+        .jd-reconnect-card{position:fixed;z-index:14;left:50%;top:auto;bottom:var(--jd-composer-clearance,calc(var(--jd-composer-height, 0px) + env(safe-area-inset-bottom, 0px) + 12px));transform:translateX(-50%);width:min(560px,calc(100vw - 32px));max-height:min(34dvh,220px);min-width:0;min-height:0;overflow:auto;border:1px solid var(--border-color);border-radius:22px;background:var(--modal-bg);color:var(--text-main);box-shadow:0 12px 32px rgba(0,0,0,.22);padding:15px 18px;display:none;align-items:center;gap:14px;font-size:1rem;line-height:1.4;box-sizing:border-box}
+        .jd-reconnect-card.open{display:flex}.jd-reconnect-icon{position:relative;width:34px;height:34px;flex:0 0 34px}.jd-reconnect-icon svg{position:absolute;inset:0;width:34px;height:34px}.jd-reconnect-icon svg.jd-reconnect-x{inset:auto;right:-2px;bottom:-2px;width:15px;height:15px;background:var(--modal-bg);stroke-width:3}.jd-reconnect-message{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}.jd-reconnect-spinner{margin-left:auto;width:34px;height:34px;flex:0 0 34px;border:4px solid rgba(148,163,184,.28);border-top-color:var(--text-main);border-radius:50%;animation:jdReconnectSpin .8s linear infinite}
         @keyframes jdReconnectSpin{to{transform:rotate(360deg)}}
         .bot-disclaimer { font-size: .66rem; color: var(--text-muted); opacity: .68; margin: 4px 2px 0; }
 
@@ -3971,7 +3971,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
     <link rel="stylesheet" href="/account-appearance.css">
     <link rel="stylesheet" href="/haptics-notifications.css">
     <link rel="stylesheet" href="/interactive-proposals.css">
-    <link rel="stylesheet" href="/reactbits-micro.css?v=20260929-thought-checklist-addonly">
+    <link rel="stylesheet" href="/reactbits-micro.css?v=20260929-reconnect-notice-green">
     <link rel="stylesheet" href="/theme-parity.css?v=20260928-full-theme-audit">
     <style id="jdUploadUiCritical">
       #filePreviewContainer.is-visible{
@@ -4562,6 +4562,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             <div class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="squish-switch-root" aria-label="Live Web Search"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="squish-switch__track"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="squish-switch-root" aria-label="Response Speech"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="squish-switch__track"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="list-checks"></i><span><strong>Auto-collapse activity</strong><small>Collapse activity steps after the response finishes</small></span><label class="squish-switch-root" aria-label="Auto-collapse activity"><input type="checkbox" id="jdAutoCollapseActivityToggle" onchange="setActivityAutoCollapse(this.checked)"><span class="squish-switch__track"></span></label></div>
+            <div class="settings-toggle-row"><i data-lucide="wifi"></i><span><strong>Reconnect notice</strong><small>Show the network reconnect card above the message box</small></span><label class="squish-switch-root" aria-label="Reconnect notice"><input type="checkbox" id="jdReconnectCardToggle" onchange="setReconnectCardEnabled(this.checked)"><span class="squish-switch__track"></span></label></div>
             <button class="settings-nav-row jd-notify-settings-entry" type="button" onclick="openJdReplyNotifications()" aria-label="Reply Notifications settings"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small id="jdReplyNotifyDescription" aria-live="polite">Notify when an AI reply finishes</small></span><i data-lucide="chevron-right"></i></button>
             <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>All your configured keys are tried first. When exhausted, use registered then anonymous AI Horde if ON.</small></span><label class="squish-switch-root"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
             <label class="settings-toggle-row"><i data-lucide="route"></i><span><strong>Smart Model Router</strong><small>Available only when Auto Provider Fallback is ON</small></span><label class="squish-switch-root"><input id="smartRouterToggle" type="checkbox" onchange="toggleSmartRouter(this.checked)"><span></span></label></label>
@@ -5091,7 +5092,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
     <div class="jd-reconnect-card" id="jdReconnectCard" role="status" aria-live="assertive" aria-atomic="true">
       <span class="jd-reconnect-icon" aria-hidden="true"><i data-lucide="globe-2"></i><i class="jd-reconnect-x" data-lucide="x"></i></span>
-      <span><strong>Network connection lost.</strong><br>Attempting to reconnect…</span>
+      <span class="jd-reconnect-message"><strong>Network connection lost.</strong><br>Attempting to reconnect…</span>
       <span class="jd-reconnect-spinner" aria-hidden="true"></span>
     </div>
 
@@ -8334,6 +8335,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (speechToggle) speechToggle.checked = isResponseSpeechEnabled;
             const webToggle = document.getElementById('settingsWebSearchToggle');
             if (webToggle) webToggle.checked = !!isWebSearchEnabled;
+            const reconnectToggle=document.getElementById('jdReconnectCardToggle');
+            if(reconnectToggle)reconnectToggle.checked=isReconnectCardEnabled();
             syncReplyNotificationSettings();
             if (group) group.classList.toggle('disabled', !isResponseSpeechEnabled);
             speechRate = Math.max(0.7, Math.min(1.3, Number(personalizationSettings.voiceSpeed) || speechRate || 1.0));
@@ -9475,10 +9478,45 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             });
         }
 
-        function setReconnectVisible(show){
-            const card=document.getElementById('jdReconnectCard');if(!card)return;
-            card.classList.toggle('open',!!show);if(show)refreshLucideIcons(card);
+        let jdReconnectRequested=false;
+        function isReconnectCardEnabled(){
+            try{return localStorage.getItem('jd_reconnect_card_enabled')!=='false';}
+            catch(_){return true;}
         }
+        function setReconnectCardEnabled(enabled){
+            const checked=!!enabled;
+            try{localStorage.setItem('jd_reconnect_card_enabled',JSON.stringify(checked));}catch(_){ }
+            const input=document.getElementById('jdReconnectCardToggle');
+            if(input)input.checked=checked;
+            const card=document.getElementById('jdReconnectCard');
+            if(card){card.classList.toggle('open',checked&&jdReconnectRequested);if(checked&&jdReconnectRequested)refreshLucideIcons(card);}
+        }
+        function syncReconnectCardPosition(){
+            const composer=document.getElementById('inputContainer');
+            if(!composer)return;
+            const rect=composer.getBoundingClientRect();
+            const height=Math.max(0,Math.ceil(rect.height));
+            const clearance=Math.max(0,Math.ceil(window.innerHeight-rect.top+12));
+            document.documentElement.style.setProperty('--jd-composer-height',`${height}px`);
+            document.documentElement.style.setProperty('--jd-composer-clearance',`${clearance}px`);
+        }
+        function setReconnectVisible(show){
+            jdReconnectRequested=!!show;
+            const card=document.getElementById('jdReconnectCard');if(!card)return;
+            syncReconnectCardPosition();
+            const visible=jdReconnectRequested&&isReconnectCardEnabled();
+            card.classList.toggle('open',visible);if(visible)refreshLucideIcons(card);
+        }
+        const jdReconnectCardToggle=document.getElementById('jdReconnectCardToggle');
+        if(jdReconnectCardToggle)jdReconnectCardToggle.checked=isReconnectCardEnabled();
+        syncReconnectCardPosition();
+        if(typeof ResizeObserver==='function'){
+            const jdReconnectComposerObserver=new ResizeObserver(syncReconnectCardPosition);
+            const jdReconnectComposer=document.getElementById('inputContainer');
+            if(jdReconnectComposer)jdReconnectComposerObserver.observe(jdReconnectComposer);
+        }
+        window.addEventListener('resize',syncReconnectCardPosition,{passive:true});
+        window.visualViewport?.addEventListener('resize',syncReconnectCardPosition,{passive:true});
 
         function syncComposerPlaceholder(){
             const box=document.getElementById('userInput');
@@ -14029,7 +14067,8 @@ body.theme-light .ai-activity-card .ai-activity-row.ai-activity-current .ai-acti
   color:#202025!important;
 }
 body.theme-light .ai-activity-card svg{stroke:currentColor!important}
-body.theme-light .ai-activity-card .ai-activity-icon{color:#55555f!important;opacity:1!important}
+body.theme-light .ai-activity-card .ai-activity-icon{color:var(--rb-success)!important;opacity:1!important}
+body.theme-light .ai-activity-card .ai-activity-row.error .ai-activity-icon{color:var(--rb-error)!important}
 body.theme-light .ai-activity-card .ai-work-commentary{background:transparent!important;color:#33333a!important}
 
 /* ChatGPT-like in-progress continuation marker shown at the live response edge. */
