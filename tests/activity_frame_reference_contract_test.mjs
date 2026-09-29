@@ -7,7 +7,7 @@ const css=fs.readFileSync('reactbits-micro.css','utf8');
 for(const token of [
   "indicator.className = 'ai-activity-card reference-work-flow'",
   "return {...e,label:label||'Thinking',kind:kind||'process'}",
-  "return evt.visibility!=='details'",
+  "return visibility==='details'",
   "const detailsOnly = normalized.visibility==='details'",
   "const iconless = id==='thinking'",
   "row.dataset.activityVisibility=detailsOnly?'details':'primary'",

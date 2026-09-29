@@ -9367,7 +9367,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // or completed high-effort preflight. Their absence left the
             // activity view with only "Thinking", despite real server work.
             if (/^(?:live-progress-|progress-heartbeat-)/.test(id)) return null;
-            if (['prepare','response-prep','response-generation','task-next'].includes(id)) return null;
             if (kind==='provider') {
                 let safeLabel=String(label||'Connecting to the selected model');
                 let safeDetail=String(e.detail||'');
@@ -9386,7 +9385,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 return {...e,label:label||'Thinking',kind:kind||'process'};
             }
             if(id==='generation'){
-                return {...e,label:label||'Generating response',kind:'generate',visibility:'details'};
+                return {...e,label:label||'Generating response',kind:'generate',visibility:'primary'};
             }
 
             // Only real tool/context operations receive ChatGPT-style wording.
@@ -9396,10 +9395,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Attachment labels are emitted from actual preprocessing; retain their details.
             if(id==='attachments') return {...e,kind:'file'};
             if(id==='response-audit'){
-                return {...e,label:label || 'Checking the response',kind:'test',visibility:'details'};
+                return {...e,label:label || 'Checking the response',kind:'test',visibility:'primary'};
             }
             if(id==='output-verification'){
-                return {...e,label:label || 'Checking generated code',kind:'test',visibility:'details'};
+                return {...e,label:label || 'Checking generated code',kind:'test',visibility:'primary'};
             }
             if(id==='fallback' && state==='running'){
                 return {...e,label:label||'Checking configured fallback',
@@ -9636,8 +9635,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const id=String(value.id||value.dataset?.activityId||'');
             const kind=String(value.kind||value.dataset?.activityKind||'').toLowerCase();
             const visibility=value.visibility||value.dataset?.activityVisibility||'';
-            return visibility==='details'||kind==='route'||
-                (/^provider-/i.test(id)&&kind!=='provider')||/^attachment-media-(?:selected|bridge|cloudflare)$/i.test(id);
+            return visibility==='details';
         }
         function syncJdThoughts(){
             const overlay=document.getElementById('jdThoughtsOverlay');
@@ -9849,8 +9847,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function activityEventUsesVisibleTimeline(evt={}){
             const id=activityPlaybackId(evt);
             const kind=String(evt.kind||'process').toLowerCase();
-            if(evt.visibility==='details'||kind==='route')return false;
-            if(/^attachment-media-(?:selected|bridge|cloudflare)$/.test(id))return false;
+            if(evt.visibility==='details')return false;
             return true;
         }
 
@@ -9943,8 +9940,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function appendActivityEvent(evt = {}) {
             const normalized=normalizeActivityEventForUI(evt);
             if(!normalized)return;
-            // Diagnostics hidden from the main reference surface do not consume visual
-            // pacing time. They remain available to the details/history implementation.
+            // Only transport events are hidden; real provider, model, routing,
+            // attachment, and verification milestones remain in chronological order.
             if(!activityEventUsesVisibleTimeline(normalized)){
                 renderActivityEventNow(normalized);
                 return;
@@ -9987,26 +9984,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 String(normalized.detail||'').toLowerCase().replace(/\s+/g,' ').trim()
             ].join('|');
             let row = list.querySelector(`[data-activity-id="${id}"]`);
-            if (!row && normalizedLabelKey) {
-                row=[...list.querySelectorAll('.ai-activity-row')].find(candidate =>
-                    candidate.dataset.activityLabelKey===normalizedLabelKey
-                ) || null;
-            }
-
             // ChatGPT's Work timeline retains meaningful start→result transitions
             // from real tools (for example "Searching…" followed by "Searched…").
             // Keep both truthful milestones instead of rewriting the earlier row.
-            if(row && row.classList.contains('running') && normalized.state!=='running'){
-                const previousLabel=String(row.querySelector('.ai-activity-label')?.textContent||'').replace(/\s+/g,' ').trim();
-                const nextLabel=String(normalized.label||'').replace(/\s+/g,' ').trim();
-                const toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image','video','document','github','plugin']);
-                const toolLikeId=/^(?:github|source|attachment|media|web|artifact|plugin|project|repo|url|link|response-audit|output-verification)/i.test(id);
-                const internalStage=/^(?:task-|provider-)/i.test(id) || ['thinking','generation','router'].includes(id);
-                if(!internalStage && previousLabel && nextLabel && previousLabel!==nextLabel &&
-                   (toolLikeKinds.has(String(normalized.kind||'process').toLowerCase()) || toolLikeId)){
+            if(row && normalized.state!=='running'){
+                const previousLabel=String(row.querySelector('.ai-activity-label')?.textContent||'').replace(/\\s+/g,' ').trim();
+                const nextLabel=String(normalized.label||'').replace(/\\s+/g,' ').trim();
+                if(previousLabel && nextLabel && previousLabel!==nextLabel){
+                    const wasRunning=row.classList.contains('running');
                     row.dataset.activityId=id+'-history-'+Date.now();
-                    row.classList.remove('running','ai-activity-current');
-                    row.classList.add('completed');
+                    row.classList.remove('ai-activity-current');
+                    if(wasRunning){row.classList.remove('running');row.classList.add('completed');}
                     row=null;
                 }
             }
@@ -10021,9 +10009,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
-            const detailsOnly = normalized.visibility==='details' ||
-                kind==='route' ||
-                /^attachment-media-(?:selected|bridge|cloudflare)$/.test(id);
+            const detailsOnly = normalized.visibility==='details';
             const iconless = id==='thinking' || ['process','build','generate','deploy','api'].includes(String(kind).toLowerCase());
             // A new operation does NOT prove the previous one completed.
             // Only a matching backend completion event may mark it completed.
@@ -10055,13 +10041,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // the summary/current marker of a later operation that is still running.
             // ChatGPT-style activity history: keep completed statuses visible in order.
             // A repeated id updates that same operation, while distinct operations remain as history.
-            // Defensive de-duplication: a backend retry/reconnect may replay the same
-            // semantic activity with a different event id. Keep only the newest row.
-            if(normalizedLabelKey){
-                [...list.querySelectorAll('.ai-activity-row')].forEach(candidate=>{
-                    if(candidate!==row && candidate.dataset.activityLabelKey===normalizedLabelKey) candidate.remove();
-                });
-            }
             const rows=[...list.querySelectorAll('.ai-activity-row')];
             const currentlyRunning=rows.filter(x=>x.classList.contains('running'));
             const current=currentlyRunning.length?currentlyRunning[currentlyRunning.length-1]:rows[rows.length-1];
@@ -10073,14 +10052,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // a UI/code change.
             if(summary && card.dataset.finalized!=='true')summary.textContent='Thinking';
             tickJdActivityClock(card);
-
-            // Keep a generous bounded history for unusually long tool runs without deleting
-            // ordinary completed steps from normal conversations.
-            if(rows.length>MAX_VISIBLE_ACTIVITY_ROWS){
-                const refreshed=[...list.querySelectorAll('.ai-activity-row')];
-                const removable=refreshed.find(x=>x!==row && !x.classList.contains('ai-activity-current'));
-                removable?.remove();
-            }
 
             requestAnimationFrame(()=>{
                 try{list.scrollTo({top:list.scrollHeight,behavior:'smooth'});}catch(_){list.scrollTop=list.scrollHeight;}
@@ -10718,7 +10689,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const clean=(text,limit=170)=>String(text||'').trim().slice(0,limit);
             const steps=[...card.querySelectorAll('.ai-activity-list .ai-activity-row')]
                 .filter(row=>!isPrivateActivityDetails({id:row.dataset.activityId,kind:row.dataset.activityKind,visibility:row.dataset.activityVisibility}))
-                .slice(-12).map(row=>({
+                .map(row=>({
                     id:clean(row.dataset.activityId,64),
                     kind:clean(row.dataset.activityKind,22)||'process',
                     label:clean(row.querySelector('.ai-activity-label')?.textContent),
@@ -10740,7 +10711,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const clean=(value,max=170)=>escapeHTML(String(value||'').slice(0,max));
             const notes=Array.isArray(saved.notes)?saved.notes.slice(-4).filter(Boolean):[];
             const notesHtml=notes.map(note=>'<div class="ai-work-commentary"><div class="ai-work-commentary__text">'+clean(note,520)+'</div></div>').join('');
-            const steps=saved.steps.slice(-12).filter(x=>x&&typeof x==='object'&&x.label&&!isPrivateActivityDetails(x))
+            const steps=saved.steps.filter(x=>x&&typeof x==='object'&&x.label&&!isPrivateActivityDetails(x))
                 .map(row=>{
                     const kind=String(row.kind||'process').replace(/[^a-z0-9_-]/gi,'').slice(0,22);
                     const state=['completed','warning','error'].includes(row.state)?row.state:'completed';

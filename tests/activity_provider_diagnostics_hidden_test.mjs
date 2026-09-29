@@ -17,14 +17,14 @@ assert.notEqual(provider.visibility,'details','Provider connection status must n
 assert.equal(usesVisible(provider),true,'Provider connection status must be shown in the live activity timeline');
 assert.equal(usesVisible(normalize({id:'provider-codecraft',kind:'provider',state:'completed',label:'CodeCraft API connected'})),true,
   'Provider connected status must remain visible');
-assert.equal(usesVisible({id:'router',kind:'route',visibility:'details'}),false,'Router internals stay hidden');
+assert.equal(usesVisible({id:'router',kind:'route',visibility:'primary'}),true,'Real router activity stays visible');
 assert.equal(usesVisible({id:'response-audit',kind:'test',visibility:'details'}),false,'Internal audit details stay hidden');
 
 const helper=section('function isPrivateActivityDetails(', 'function syncJdThoughts(');
 const isPrivate=new Function(helper+'\nreturn isPrivateActivityDetails;')();
 assert.equal(isPrivate({id:'provider-codecraft',kind:'provider'}),false,'Provider status must be retained in Thoughts and saved activity');
 assert.equal(isPrivate({id:'provider-codecraft',kind:'provider',visibility:'primary'}),false,'Visible provider rows must persist');
-assert.equal(isPrivate({id:'router',kind:'route'}),true,'Router details stay private');
+assert.equal(isPrivate({id:'router',kind:'route'}),false,'Real router activity stays in Thoughts and saved history');
 assert.equal(isPrivate({id:'response-audit',kind:'test',visibility:'details'}),true,'Other explicit details stay private');
 for(const marker of ['isPrivateActivityDetails({']){
   assert(section('function syncJdThoughts(){','function syncThoughtLineSteps(').includes(marker),'Thoughts should continue filtering only private rows');

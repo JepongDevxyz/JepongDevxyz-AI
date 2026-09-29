@@ -25,11 +25,16 @@ for(const event of [
   {id:'output-verification',label:'Checking generated code',kind:'test',state:'completed'}
 ]){
   const normalized=normalize(event);
-  assert.equal(normalized.visibility,'details',`Restore pre-Lattice visibility for ${event.id}`);
-  assert.equal(usesVisibleTimeline(normalized),false,`Internal status must stay out of the original user-facing rows: ${event.id}`);
+  if(event.kind==='provider'||['generation','response-audit','output-verification'].includes(event.id)){
+    assert.equal(normalized.visibility,'primary','All real provider/model milestones must be visible');
+    assert.equal(usesVisibleTimeline(normalized),true,`Real server milestone must be shown: ${event.id}`);
+  }else{
+    assert.equal(normalized.visibility,'details',`Internal details stay out of the original user-facing rows: ${event.id}`);
+    assert.equal(usesVisibleTimeline(normalized),false,`Internal status must stay hidden: ${event.id}`);
+  }
 }
-assert.equal(usesVisibleTimeline({id:'router',label:'Smart Router selected a model',kind:'route'}),false,
-  'Smart Router details must stay out of the original user-facing rows');
+assert.equal(usesVisibleTimeline({id:'router',label:'Smart Router selected a model',kind:'route'}),true,
+  'Real Smart Router selection must remain in the original user-facing rows');
 for(const event of [
   {id:'task-plan',label:'Planned the response',kind:'process',state:'completed'},
   {id:'planned-trace-0',label:'Drafted the requested response',kind:'process',state:'completed'},

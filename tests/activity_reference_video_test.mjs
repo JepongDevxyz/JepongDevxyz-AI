@@ -65,8 +65,7 @@ assert.equal(normalize({id:'live-progress-4',kind:'process',label:'fake schedule
 assert.equal(normalize({id:'task-context',kind:'process',state:'completed',label:'Checking requested design'}).label,'Checking requested design');
 assert.equal(normalize({id:'web-search',kind:'web',state:'running',label:'Searching live web'}).label,'Searching live web');
 assert.equal(normalize({id:'thinking',kind:'build',state:'running',label:'Preparing implementation'}).label,'Preparing implementation');
-assert.equal(normalize({id:'generation',kind:'generate',state:'running',label:'Generating response'}).visibility,undefined,
- 'The existing generation status must remain in the main Activity timeline');
+assert.equal(normalize({id:'generation',kind:'generate',state:'running',label:'Generating response'}).visibility,'primary');
 
 const append=between(html,'        function appendActivityEvent(evt = {}) {','        function finishAIIndicator(');
 assert(append.includes("if(id==='task-context')"),'Backend task-context must enter the reference-style timeline');
@@ -75,13 +74,15 @@ assert(append.includes("if(lead)lead.textContent=''"),
 assert(append.includes('syncJdThoughts();'),'New real events must reach an already-open Thoughts sheet');
 assert(append.includes('ChatGPT-style activity history: keep completed statuses visible in order.'));
 assert(append.includes("const detailsOnly = normalized.visibility==='details'"),
- 'Only statuses explicitly marked as internal details may be excluded from the primary surface');
+ 'Explicit internal details must stay excluded from the primary reference surface');
+assert(!append.includes("kind==='provider' || kind==='route'"),
+ 'Provider connection statuses must remain visible across providers and models');
 assert(append.includes("const iconless = id==='thinking'"),
  'Task-specific model work must use the no-icon reference row');
-assert(append.includes("toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image','video','document','github','plugin'])"),
- 'Real tool lifecycle transitions must include web, files, tests, GitHub, and plugins');
-assert(append.includes("['thinking','generation','router'].includes(id)"),
- 'Real tool lifecycle history must stay separate from model-internal stages');
+assert(append.includes('previousLabel!==nextLabel'),
+ 'Changed lifecycle labels must preserve both start and result statuses');
+assert(!append.includes('candidate.remove()')&&!append.includes('removable?.remove()'),
+ 'No real activity row may be removed for being a duplicate or older');
 assert(append.includes("row.dataset.activityId=id+'-history-'+Date.now()"),
  'A real running tool row must remain visible when its truthful completion milestone arrives');
 assert(append.includes("scrollToBottom(false)"),
@@ -94,9 +95,8 @@ assert(html.includes("startup.dataset.activityId='client-thinking'"),
  'Reference startup must show one plain Thinking row before the first server milestone');
 assert(append.includes("if(startup && id!=='client-thinking')startup.remove();"),
  'First real server milestone must replace the temporary Thinking row');
-assert(normalizer.includes("if(id==='response-audit')") &&
-       normalize({id:'response-audit',kind:'test',state:'running',label:'Checking the response'}).visibility===undefined,
- 'The real server audit status must remain visible in the primary frame-matched trace');
+assert(normalizer.includes("if(id==='response-audit')") && normalizer.includes("visibility:'primary'"),
+ 'A real final-response audit status must remain in the primary trace');
 assert(backend.includes("activity(emit,id,`Read attached"),'Real file events remain server-grounded');
 assert(backend.includes("activity(emit,'web-search'"),'Real web events remain server-grounded');
 assert(backend.includes("activity(emit,'fallback'"),'Real fallback events remain server-grounded');

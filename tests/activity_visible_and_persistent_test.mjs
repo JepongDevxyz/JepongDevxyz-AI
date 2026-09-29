@@ -81,7 +81,7 @@ assert.equal(received.at(-1).done,41600);
 
 const helper=between(html,'        function captureJdActivitySnapshot(allowLive=false){','        function loadChatSession(');
 assert(helper.includes("id:clean(row.dataset.activityId,64)"));
-assert(helper.includes('.slice(-12)'),'Saved activity must be size bounded');
+assert(!helper.includes('.slice(-12)'),'Saved activity must retain the full real status trail');
 assert(helper.includes("escapeHTML(String(value||'').slice(0,max))"),
  'Restored activity must escape model/provider strings before inserting HTML');
 const restored=between(html,'        function loadChatSession(','        function saveSessions(');
