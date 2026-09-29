@@ -43,8 +43,8 @@ assert(html.includes("if(id==='task-context')"));
 assert(html.includes("card.querySelector('#aiActivitySummary')"));
 assert(html.includes("card.classList.contains('collapsed')"));
 const finish=between(html,'        function finishAIIndicator(','        function removeAIIndicator(');
-assert(!finish.includes("card.classList.add('collapsed')"),
- 'Finishing used to hide all task-specific statuses at the moment the reply appeared');
+assert(finish.includes("if(isActivityAutoCollapseEnabled())card.classList.add('collapsed')"),
+ 'Finishing may auto-collapse only when the user enables the Settings option');
 assert(finish.includes("toggle?.setAttribute('aria-expanded',String(!card.classList.contains('collapsed')))"));
 assert(finish.includes("completeRunningActivityRows('',success?'completed':'warning')"));
 const append=between(html,'        function appendActivityEvent(','        function finishAIIndicator(');

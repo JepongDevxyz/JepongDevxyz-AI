@@ -137,8 +137,8 @@
    loader. Keep it readable and let the appearance transition carry the motion. */
 .ai-activity-row.ai-activity-enter{animation:jdActivityReferenceIn .18s ease-out both}
 @keyframes jdActivityReferenceIn{from{opacity:.16!important;transform:translateY(2px)}to{opacity:1!important;transform:none}}
-.ai-activity-row.running.ai-activity-current .ai-activity-label{color:color-mix(in srgb,var(--rb-ink) 72%,transparent)}
-.ai-activity-row.running.ai-activity-current .ai-activity-icon{color:color-mix(in srgb,var(--rb-ink) 68%,transparent)}
+.ai-activity-row.running.ai-activity-current .ai-activity-label{color:var(--rb-success)}
+.ai-activity-row.running.ai-activity-current .ai-activity-icon{color:var(--rb-success)}
 /* The reference marks only the current operation with a tiny breathing dot
    directly after its text. Completed history stays still and visually quieter. */
 .ai-activity-row.running.ai-activity-current .ai-activity-label::after{
@@ -161,6 +161,10 @@
 .ai-activity-row.completed .ai-activity-icon{color:var(--activity-muted)}
 .ai-activity-row[data-activity-id="thinking"]{margin-top:2px}
 .ai-activity-row[data-activity-id="thinking"] .ai-activity-label{color:var(--activity-muted-soft)}
+.ai-activity-row[data-activity-id="thinking"].running.ai-activity-current .ai-activity-label{color:var(--rb-success)}
+.ai-activity-row.completed.ai-activity-iconless{grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important}
+.ai-activity-row.completed.ai-activity-iconless .ai-activity-icon{display:grid!important;color:var(--activity-muted)}
+.ai-activity-row.completed.ai-activity-iconless .ai-activity-icon svg{width:18px;height:18px;stroke-width:1.8}
 
 /* Model-authored high-level work commentary sits flush with the same reading
    column, matching the white explanatory paragraphs in the supplied recording. */
@@ -966,7 +970,7 @@
   --ll-cell:6px;--ll-gap:2px;--ll-step:90ms;--ll-scale:1.2;--ll-cycle:864ms;
   --ll-ease-in-out:cubic-bezier(.77,0,.175,1);--ll-idle-opacity:.15;
   position:relative;display:inline-block;width:22px;height:22px;place-content:center;
-  color:var(--activity-muted);vertical-align:middle;flex:0 0 22px
+  color:var(--rb-success);vertical-align:middle;flex:0 0 22px
 }
 .lattice-loader__layer{
   position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,6px);grid-template-rows:repeat(3,6px);gap:2px;place-content:center
