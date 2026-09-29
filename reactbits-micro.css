@@ -866,7 +866,7 @@
 .voice-pill{
   --vp-accent:var(--rb-ink);--vp-icon:var(--rb-muted);--vp-bg:var(--rb-surface);
   --vp-size:28px;--vp-radius:14px;--vp-reach:8px;--vp-clock-w:40px;--vp-wave-w:54px;
-  --vp-extra:94px;--vp-slide:0px;--vp-cancel:0;--vp-open:200ms;--vp-press:.95;
+  --vp-extra:94px;--vp-slide:0px;--vp-cancel:0;--vp-open:120ms;--vp-press:.95;
   position:relative;display:inline-grid;place-items:center;isolation:isolate;width:var(--vp-size);height:var(--vp-size);
   margin:0;padding:0;border:0;border-radius:var(--vp-radius);background:transparent;color:var(--vp-icon);
   cursor:pointer;outline:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
@@ -918,10 +918,8 @@
 }
 .voice-pill__mic{display:inline-flex}.voice-pill__mic svg{width:15px;height:15px}
 .voice-pill__stop{width:9px;height:9px;border-radius:22%;background:currentColor;opacity:0;filter:blur(2px);transform:scale(.6)}
-.voice-pill[data-state="listening"] .voice-pill__mic,
-.voice-pill[data-state="starting"] .voice-pill__mic{opacity:0;filter:blur(2px);transform:scale(.7)}
-.voice-pill[data-state="listening"] .voice-pill__stop,
-.voice-pill[data-state="starting"] .voice-pill__stop{opacity:1;filter:blur(0);transform:scale(1)}
+.voice-pill[data-state="listening"] .voice-pill__mic{opacity:0;filter:blur(2px);transform:scale(.7)}
+.voice-pill[data-state="listening"] .voice-pill__stop{opacity:1;filter:blur(0);transform:scale(1)}
 
 .read-aloud-pill{
   position:fixed;z-index:2200;top:max(10px,env(safe-area-inset-top,0px));left:50%;

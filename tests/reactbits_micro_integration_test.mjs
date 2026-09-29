@@ -154,6 +154,12 @@ for (const token of ['voice-pill','voice-pill__capsule','voice-pill__wave','read
   assert(html.includes(token), 'VoicePill direct markup missing: '+token);
   assert(css.includes(token), 'VoicePill style missing: '+token);
 }
+const voiceStart=html.slice(html.indexOf('function startSpeechRecognition'),html.indexOf('function stopSpeechRecognition'));
+assert(!voiceStart.includes('ensureMicrophonePermission')&&!voiceStart.includes('getUserMedia'),
+ 'speech recognition must not wait for a redundant second microphone capture request');
+assert(!css.includes('.voice-pill[data-state="starting"] .voice-pill__mic'),
+ 'mic icon must remain visible while speech recognition is starting');
+assert.match(css,/--vp-open:120ms/,'VoicePill capsule must reveal promptly when tapped');
 assert(html.includes('function startSpeechRecognition'),'explicit microphone start behavior missing');
 assert(html.includes('function stopSpeechRecognition'),'explicit microphone stop behavior missing');
 assert(html.includes('function toggleSpeechRecognition'),'real microphone behavior must remain');
