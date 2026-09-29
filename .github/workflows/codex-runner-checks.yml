@@ -13,6 +13,8 @@ on:
       - 'codex-choice.css'
       - 'index.html'
       - 'package.json'
+      - 'package-lock.json'
+      - 'codex-runner/package-lock.json'
       - 'tests/codex_sandbox_tenant.test.mjs'
       - 'tests/codex_account_identity.test.mjs'
       - 'tests/codex_node_bridge.test.mjs'
@@ -27,6 +29,9 @@ on:
       - 'codex-choice.js'
       - 'codex-choice.css'
       - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'codex-runner/package-lock.json'
       - '.github/workflows/codex-runner-checks.yml'
 permissions:
   contents: read
@@ -42,12 +47,12 @@ jobs:
       - name: Install pinned Codex SDK and CLI
         run: |
           cd codex-runner
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           ./node_modules/.bin/codex --version
           node --input-type=module -e "import('@openai/codex-sdk').then(m=>{if(typeof m.Codex!=='function')process.exit(1)})"
       - name: Install Sandbox router dependencies and check per-user isolation
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           node --check api/_codex_sandbox.js
           node --check api/_codex_identity.js
           node --check api/_node_web_bridge.js
