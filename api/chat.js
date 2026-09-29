@@ -5178,7 +5178,17 @@ async function maybeRefineVisualUiResponse({first,provider,model,history,files,m
   return first;
 }
 
+function applyChatFeatureSettings(body={}){
+  const settings=body.personalization||{};
+  return {
+    ...body,
+    ...(settings.librarySearch===false?{files:[]}:{}),
+    ...(settings.connectorSearch===false?{plugins:{}}:{})
+  };
+}
+
 async function processChat(body, emit) {
+  body=applyChatFeatureSettings(body);
   let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone} = body;
   // Strict routing contract: fallback/router are opt-in only. Truthy strings,
   // missing fields, or stale client values must never silently enable them.
@@ -6828,6 +6838,7 @@ export default async function handler(req){
   if(!body||typeof body!=='object'||Array.isArray(body)){
     return json({error:'Request body must be a JSON object.'},400);
   }
+  if(!body.action||body.action==='chat')body=applyChatFeatureSettings(body);
   let bodyChars=0;
   try{bodyChars=JSON.stringify(body).length;}catch(_){}
   if(bodyChars>API_GUARD.maxBodyChars)return json({error:'Request is too large.'},413);
