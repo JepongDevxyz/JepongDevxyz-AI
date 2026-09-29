@@ -1,4 +1,102 @@
-YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éíÛßxN‹Z–‹­¦ëeŠw¬Õ¥µÁ½ÉÐíÉ•…‘¥±•Må¹ô™É½´€¹½‘”é™Ìœì)¥µÁ½ÉÐ…ÍÍ•ÉÐ™É½´€¹½‘”é…ÍÍ•ÉÐ½ÍÑÉ¥Ðœì()½¹ÍÐ¡Ñµ°õÉ•…‘¥±•Må¹Œ¡¹•ÜUI0 œ¸¸½¥¹‘•à¹¡Ñµ°œ±¥µÁ½ÉÐ¹µ•Ñ„¹ÕÉ°¤°ÕÑ˜àœ¤ì)½¹ÍÐÍÌõÉ•…‘¥±•Må¹Œ¡¹•ÜUI0 œ¸¸½É•…Ñ‰¥ÑÌµµ¥É¼¹ÍÌœ±¥µÁ½ÉÐ¹µ•Ñ„¹ÕÉ°¤°ÕÑ˜àœ¤ì)½¹ÍÐ‰…­•¹õÉ•…‘¥±•Må¹Œ¡¹•ÜUI0 œ¸¸½…Á¤½¡…Ð¹©Ìœ±¥µÁ½ÉÐ¹µ•Ñ„¹ÕÉ°¤°ÕÑ˜àœ¤ì)™Õ¹Ñ¥½¸‰•ÑÝ••¸¡Í½ÕÉ”±ÍÑ…ÉÐ±•¹¥ì(½¹ÍÐ„õÍ½ÕÉ”¹¥¹‘•á=˜¡ÍÑ…ÉÐ¤±ˆõÍ½ÕÉ”¹¥¹‘•á=˜¡•¹±„­ÍÑ…ÉÐ¹±•¹Ñ ¤ì(…ÍÍ•ÉÐ¡„øôÀ˜™ˆù„°5¥ÍÍ¥¹œÍ½ÕÉ”‰½Õ¹‘…Éäè€œ­ÍÑ…ÉÐ¤ì(É•ÑÕÉ¸Í½ÕÉ”¹Í±¥”¡„±ˆ¤ì)ô)…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì ‰¥¹‘¥…Ñ½È¹¥€ô€…Ñ¥Ù•¥%¹‘¥…Ñ½Èœˆ¤°Ñ¥Ù¥Ñä½¹Ñ…¥¹•ÈÍ¡½Õ±‰”É•…Ñ•™½È•Ù•ÉäÉ•ÅÕ•ÍÐœ¤ì)™½È¡½¹ÍÐ¥½˜l…¥Ñ¥Ù¥Ñå1¥ÍÐœ°…¥Ñ¥Ù¥ÑåMÕµµ…Éäœ°…¥Ñ¥Ù¥ÑåQ¥µ•Èœ°…¥Ñ¥Ù¥Ñå1…ÑÑ¥”œ°©‘Q¡½Õ¡ÑÍ=Ù•É±…äœ°©‘Q¡½Õ¡ÑÍ1¥ÍÐœ°©‘Q¡½Õ¡ÑÍM¡••Ðœ°©‘Q¡½Õ¡ÑÍQ¥Ñ±”t¥ì(…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì ¥ôˆœ­¥¬œˆœ¤°5¥ÍÍ¥¹œ…Ñ¥Ù¥Ñä•±•µ•¹Ðè€œ­¥¤ì)ô)…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì œñ±¥¹¬É•°ô‰ÍÑå±•Í¡••Ðˆ¡É•˜ôˆ½É•…Ñ‰¥ÑÌµµ¥É¼¹ÍÌýØôÈÀÈØÀäÈäµÑ¡½Õ¡Ðµ±¥¹”µÍÌµ™¥àˆøœ¤°(€…¹½¹¥…°Ñ¥Ù¥ÑäÍÑå±•Í¡••ÐµÕÍÐÉ•µ…¥¸±½…‘•œ¤ì)…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì ½¹±¥¬ô‰½Á•¹)‘Q¡½Õ¡ÑÌ¡Ñ¡¥Ì¤ˆœ¤¤ì)…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì ½¹±¥¬ô‰Ñ½±•Ñ¥Ù¥Ñå•Ñ…¥±Ì¡Ñ¡¥Ì¤ˆœ¤°=É¥¥¹…°¥¹±¥¹”½±±…ÁÍ”É•µ…¥¹ÌÕÍ…‰±”œ¤ì)…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì ‰¥˜¡•Ù•¹Ð¹Ñ…É•ÐôôõÑ¡¥Ì¥±½Í•)‘Q¡½Õ¡ÑÌ ¤ˆ¤¤ì)…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì ‰•Ù•¹Ð¹­•äôôôÍ…Á”œˆ¤°Q¡½Õ¡ÑÌ¹••‘Ì­•å‰½…É±½Í”œ¤ì)…ÍÍ•ÉÐ¡¡Ñµ°¹¥¹±Õ‘•Ì ©‘Q¡½Õ¡ÑÍÉ…MÑ…ÉÐœ¤°Q¡½Õ¡ÑÌÍ¡½Õ±…±±½ÜÍÝ¥Á”µ‘½Ý¸½¸¡…¹‘±”œ¤ì)…ÍÍ•ÉÐ¡ÍÌ¹¥¹±Õ‘•Ì œ¹…¤µ…Ñ¥Ù¥Ñäµ…É¹½±±…ÁÍ•€¹Ñ¡½Õ¡Ðµ±¥¹•}}ÑÉ…•í‘¥ÍÁ±‡_}âÚ$z{-®éÜj×ed');
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+
+const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const css=readFileSync(new URL('../reactbits-micro.css',import.meta.url),'utf8');
+const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+function between(source,start,end){
+ const a=source.indexOf(start),b=source.indexOf(end,a+start.length);
+ assert(a>=0&&b>a,'Missing source boundary: '+start);
+ return source.slice(a,b);
+}
+assert(html.includes("indicator.id = 'activeAiIndicator'"),'Activity container should be created for every request');
+for(const id of ['aiActivityList','aiActivitySummary','aiActivityTimer','aiActivityLattice','jdThoughtsOverlay','jdThoughtsList','jdThoughtsSheet','jdThoughtsTitle']){
+ assert(html.includes('id="'+id+'"'),'Missing activity element: '+id);
+}
+assert(html.includes('<link rel="stylesheet" href="/reactbits-micro.css?v=20260929-thought-line-css-fix">'),
+ 'Canonical Activity stylesheet must remain loaded');
+assert(html.includes('onclick="openJdThoughts(this)"'));
+assert(html.includes('onclick="toggleActivityDetails(this)"'),'Original inline collapse remains usable');
+assert(html.includes("if(event.target===this)closeJdThoughts()"));
+assert(html.includes("event.key==='Escape'"),'Thoughts needs keyboard close');
+assert(html.includes('jdThoughtsDragStart'),'Thoughts should allow swipe-down on handle');
+assert(css.includes('.ai-activity-card.collapsed .thought-line__trace{display:none}'),
+ 'ThoughtLine trace must collapse with the Activity card');
+assert(css.includes('.jd-thoughts-overlay.open{display:flex}'));
+assert(css.includes('.jd-thoughts-list'));
+assert(css.includes('.thought-line__head{'),
+ 'ThoughtLine header styling must replace the legacy summary row');
+assert(/\.ai-activity-card\.reference-work-flow \.ai-activity-header-actions\{[\s\S]*?display:flex!important;[\s\S]*?\}/.test(css),
+ 'Requested Lattice/Thought header must remain visible above the real Activity timeline');
+assert(html.includes('class="rb-lattice-loader"'),
+ 'Live and restored Activity must use the requested 3x3 Lattice loader');
+assert(css.includes('font-size:15.5px') && css.includes('font-size:16px'),
+ 'Reference status/commentary typography calibration missing');
+assert(css.includes('.ai-activity-row.ai-activity-iconless'),
+ 'Plain process rows must align like the supplied Work recording');
+assert.equal((html.match(/<lottie-player/g)||[]).length,6,'Preserve original welcome animations');
+assert(html.includes('<div class="welcome-title">JepongDevxyz AI</div>'));
+
+const functions=between(html,'        // The reference shows a live elapsed header','        function showAIIndicator(');
+assert(!functions.includes("appendActivityEvent({"),'Elapsed timers must not fabricate activity events');
+assert(functions.includes('target.replaceChildren(...content)'),'Thoughts must display existing DOM activity rows');
+assert(functions.includes("list?.querySelectorAll('.ai-activity-row').forEach(row=>"));
+assert(functions.includes('row.cloneNode(true)'),'The sheet must copy real SSE-derived rows, not script fake work');
+const formatterSource=between(functions,'function formatJdActivityElapsed(ms){','function stopJdActivityClock(){');
+const format=new Function(formatterSource+'\nreturn formatJdActivityElapsed;')();
+for(const [ms,label] of [[0,'0s'],[950,'0s'],[1000,'1s'],[59999,'59s'],[60000,'1m 0s'],[277000,'4m 37s']]){
+ assert.equal(format(ms),label,'Elapsed clock formatting '+ms);
+}
+const timer={textContent:''};
+const card={dataset:{startedAt:'100000',finalized:'false'},querySelector(selector){
+ return selector==='#aiActivityTimer'?timer:null;
+}};
+const tick=new Function('Date',formatterSource+'\nreturn tickJdActivityClock;')({now:()=>377000});
+tick(card);
+assert.equal(timer.textContent,'4m 37s');
+card.dataset.finalized='true';tick(card);
+assert.equal(timer.textContent,'4m 37s','Finished card must not restart the clock');
+
+const normalizer=between(html,'        function normalizeActivityEventForUI(','        function shouldShowAIActivity(');
+const normalize=new Function('sanitizeUiErrorMessage',normalizer+
+ '\nreturn normalizeActivityEventForUI;')(value=>String(value));
+assert.equal(normalize({id:'stream-open',kind:'process',label:'Streaming'}),null);
+assert.equal(normalize({id:'live-progress-4',kind:'process',label:'fake scheduled work'}),null);
+assert.equal(normalize({id:'task-context',kind:'process',state:'completed',label:'Checking requested design'}).label,'Checking requested design');
+assert.equal(normalize({id:'web-search',kind:'web',state:'running',label:'Searching live web'}).label,'Searching live web');
+assert.equal(normalize({id:'thinking',kind:'build',state:'running',label:'Preparing implementation'}).label,'Preparing implementation');
+assert.equal(normalize({id:'generation',kind:'generate',state:'running',label:'Generating response'}).visibility,'details');
+
+const append=between(html,'        function appendActivityEvent(evt = {}) {','        function finishAIIndicator(');
+assert(append.includes("if(id==='task-context')"),'Backend task-context must enter the reference-style timeline');
+assert(append.includes("if(lead)lead.textContent=''"),
+ 'Temporary client lead must clear as soon as the first truthful server milestone arrives');
+assert(append.includes('syncJdThoughts();'),'New real events must reach an already-open Thoughts sheet');
+assert(append.includes('ChatGPT-style activity history: keep completed statuses visible in order.'));
+assert(append.includes("const detailsOnly = normalized.visibility==='details'"),
+ 'Low-level provider/generation plumbing must be excluded from the primary reference surface');
+assert(append.includes("const iconless = id==='thinking'"),
+ 'Task-specific model work must use the no-icon reference row');
+assert(append.includes("toolLikeKinds=new Set(['web','search','research','file','test','deploy','api','image','video','document','github','plugin'])"),
+ 'Real tool lifecycle transitions must include web, files, tests, GitHub, and plugins');
+assert(append.includes("['thinking','generation','router'].includes(id)"),
+ 'Real tool lifecycle history must stay separate from model-internal stages');
+assert(append.includes("row.dataset.activityId=id+'-history-'+Date.now()"),
+ 'A real running tool row must remain visible when its truthful completion milestone arrives');
+assert(append.includes("scrollToBottom(false)"),
+ 'Reference activity growth must keep the newest status above the composer');
+assert(append.includes("card.dataset.taskSummary=String(normalized.label||'').slice(0,220)"),
+ 'Task-specific context must stay separate from provider/tool plumbing');
+assert(!append.includes("appendActivityEvent({"),
+ 'Activity renderer must not fabricate client-side plan events');
+assert(html.includes("startup.dataset.activityId='client-thinking'"),
+ 'Reference startup must show one plain Thinking row before the first server milestone');
+assert(append.includes("if(startup && id!=='client-thinking')startup.remove();"),
+ 'First real server milestone must replace the temporary Thinking row');
+assert(normalizer.includes("if(id==='response-audit')") && normalizer.includes("visibility:'details'"),
+ 'Server audit bookkeeping must stay out of the primary frame-matched trace');
+assert(backend.includes("activity(emit,id,`Read attached"),'Real file events remain server-grounded');
+assert(backend.includes("activity(emit,'web-search'"),'Real web events remain server-grounded');
 assert(backend.includes("activity(emit,'fallback'"),'Real fallback events remain server-grounded');
 const reveal=between(html,'                const revealFinalResponse = async (elapsedMs=null) => {','                if (contentType.includes(\'text/event-stream\')) {');
 assert(reveal.includes('await drainActivityPlayback();'),
