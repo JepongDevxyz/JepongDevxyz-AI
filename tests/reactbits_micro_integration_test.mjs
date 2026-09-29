@@ -98,10 +98,14 @@ assert.match(css, /\.rb-sling-wrap\{--sl-size:32px/,
  'Sling Button mobile face must be slightly larger than its prior 28px size');
 assert.match(css, /\.voice-pill\{--vp-size:32px;--vp-radius:16px\}\.rb-sling-wrap\{--sl-size:32px/,
  'mobile microphone and send faces must be enlarged evenly to 32px');
+assert.match(css, /--vp-bg:var\(--rb-surface\)/,
+ 'microphone capsule must use the active light/dark surface token');
 assert.match(css, /--sl-pad:var\(--pb-ink\)/, 'Sling pad colour must follow the current theme');
 assert.match(css, /--sl-icon:var\(--pb-bg\)/, 'Sling icon colour must follow the current theme');
 assert.match(js, /FINGER_MAX=3000/,'Sling Button must preserve the reference velocity cap');
 assert.match(js, /DOT_MS=300/,'Sling Button particles must keep the reference flight duration');
+assert.match(js, /var gap=size<=32\?-1:GAP,wellR=size\/2\+gap\+STROKE/,
+ 'mobile Sling SVG well must stay clear of the adjacent microphone face');
 assert.match(js, /function launchDots\(/, 'Sling Button must provide its 14-particle splash');
 assert.match(js, /else\{state\.power=0;state\.dotPending=true;state\.dotTimer=setTimeout\(launchDots,0\);\}/,
  'Sling Button ordinary send tap must trigger the particle splash');

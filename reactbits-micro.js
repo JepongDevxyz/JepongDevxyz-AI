@@ -283,7 +283,10 @@
     var MAX_PULL=160;
     var EASE_OUT='cubic-bezier(0.23, 1, 0.32, 1)';
     var reduce=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-    var size=wrap.getBoundingClientRect().width||56,wellR=size/2+GAP+STROKE,padR=size/2-STROKE/2;
+    var size=wrap.getBoundingClientRect().width||56;
+    // On the compact phone face, keep the landing well inside the row gap so it
+    // cannot paint over the adjacent microphone capsule.
+    var gap=size<=32?-1:GAP,wellR=size/2+gap+STROKE,padR=size/2-STROKE/2;
     var fx=wrap.querySelector('.rb-sling-fx'),tension=wrap.querySelector('.rb-sling-tension');
     var bands=wrap.querySelectorAll('.rb-sling-band'),hot=wrap.querySelector('.rb-sling-band--hot');
     var well=wrap.querySelector('.rb-sling-well'),arc=wrap.querySelector('.rb-sling-arc');
