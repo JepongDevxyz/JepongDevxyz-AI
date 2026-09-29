@@ -9434,6 +9434,46 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return text.length>180 ? text.slice(0,177)+'…' : text;
         }
 
+        async function waitForNetworkRecovery(signal, timeoutMs=45000){
+            const probe=async()=>{
+                if(signal?.aborted||!navigator.onLine)return false;
+                try{
+                    const response=await fetch(`/?_ping=${Date.now()}`,{
+                        method:'HEAD',cache:'no-store',signal
+                    });
+                    return response.ok;
+                }catch(_){return false;}
+            };
+            if(await probe())return true;
+            return new Promise(resolve=>{
+                let settled=false,checking=false;
+                let pollTimer=null,timeoutTimer=null;
+                const finish=recovered=>{
+                    if(settled)return;
+                    settled=true;
+                    if(pollTimer!==null)clearInterval(pollTimer);
+                    if(timeoutTimer!==null)clearTimeout(timeoutTimer);
+                    window.removeEventListener('online',check);
+                    signal?.removeEventListener('abort',onAbort);
+                    if(recovered)setReconnectVisible(false);
+                    resolve(recovered);
+                };
+                const onAbort=()=>finish(false);
+                const check=async()=>{
+                    if(settled||checking||signal?.aborted)return;
+                    checking=true;
+                    const recovered=await probe();
+                    checking=false;
+                    if(recovered)finish(true);
+                };
+                window.addEventListener('online',check);
+                signal?.addEventListener('abort',onAbort,{once:true});
+                pollTimer=setInterval(check,1200);
+                timeoutTimer=setTimeout(()=>finish(false),Math.max(0,Number(timeoutMs)||0));
+                if(signal?.aborted)onAbort();
+            });
+        }
+
         function setReconnectVisible(show){
             const card=document.getElementById('jdReconnectCard');if(!card)return;
             card.classList.toggle('open',!!show);if(show)refreshLucideIcons(card);
@@ -11638,7 +11678,7 @@ ${m.text || ''}
             catch (_) { return stripJdWorkNotes(String(text||'')); }
         };
 
-        async function executeAICall(promptText, currentFiles = [], isRegenerate = false, historyFiles = currentFiles) {
+        async function executeAICall(promptText, currentFiles = [], isRegenerate = false, historyFiles = currentFiles, recoveryAttempt = 0, studyToolForRequest = pendingStudyTool) {
             closeTransientSurfaces('');
             const requestController=new AbortController();
             activeAIAbortController=requestController;
@@ -11794,6 +11834,7 @@ ${m.text || ''}
             botMsgElem.style.display='none';
 
             const aiRequestStartedAt = performance.now();
+            let retryAfterRecovery=false;
             try {
                 // Install/configuration is shared across chats and independent of the selected AI provider.
                 await window.JDPlugins?.ready?.();
@@ -11812,7 +11853,7 @@ ${m.text || ''}
                         webSearch: isWebSearchEnabled,
                         autoFallback: autoProviderFallback,
                         smartRouter: smartModelRouter,
-                        studyTool: pendingStudyTool,
+                        studyTool: studyToolForRequest,
                         activityStream: true,
                         autoTools: true,
                         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
@@ -11981,6 +12022,20 @@ ${m.text || ''}
                     }
                     botMsgElem.style.removeProperty('display');
                 }else{
+                    const transportInterrupted=/failed to fetch|network\s*error|networkerror|load failed|err_connection|err_name_not_resolved|connection (?:closed|reset|terminated)|terminated|premature|stream/i.test(String(err?.message||''));
+                    if(transportInterrupted&&recoveryAttempt<1&&!requestController.signal.aborted){
+                        appendActivityEvent({id:'network-recovery',label:'Connection interrupted — waiting to retry your response',state:'warning',kind:'generate'});
+                        const recovered=await waitForNetworkRecovery(requestController.signal);
+                        if(recovered&&!requestController.signal.aborted){
+                            retryAfterRecovery=true;
+                            botMsgElem.remove();
+                            removeAIIndicator();
+                        }
+                    }
+                    if(retryAfterRecovery){
+                        // Discard the incomplete attempt. The same prompt, attachments,
+                        // selected model, and one-shot study action are sent once more.
+                    }else{
                     const browserOffline=!navigator.onLine || /err_internet_disconnected|the internet connection appears to be offline/i.test(String(err?.message||''));
                     if(browserOffline)setReconnectVisible(true);
                     const cleanError=sanitizeUiErrorMessage(err?.message || 'Request failed');
@@ -12001,6 +12056,7 @@ ${m.text || ''}
                     }else{
                         botMsgElem.innerHTML = `<span style="color: #ef4444;">⚠️ ${escapeHTML(cleanError)}</span>`;
                     }
+                    }
                 }
                 botMsgElem.style.removeProperty('display');
                 scrollToBottom(true);
@@ -12015,6 +12071,9 @@ ${m.text || ''}
                     // Normal completion/error paths above have now persisted the assistant turn.
                     clearActiveGenerationDraft();
                 }
+            }
+            if(retryAfterRecovery&&!requestController.signal.aborted){
+                void executeAICall(promptText,currentFiles,isRegenerate,historyFiles,recoveryAttempt+1,studyToolForRequest);
             }
         }
 
