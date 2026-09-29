@@ -87,10 +87,28 @@ assert(js.includes('function bindSling'),'Sling Button pointer runtime missing')
 assert(js.includes("window.handleMainAction==='function'"),'Sling Button must reuse the real send/stop handler');
 assert.match(css, /grid-template-columns:repeat\(3,6px\);grid-template-rows:repeat\(3,6px\);gap:2px/,
  'Lattice Loader must use ReactBits 6px cells and 2px seams');
-assert.match(css, /animation:rb-lattice-pulse \.81s/,
- 'Lattice Loader orbit must advance at ReactBits 90ms steps');
-assert.match(css, /rb-thought-shimmer 1\.8s/,
- 'Thought Line must keep its default working-label shimmer');
+assert.ok(html.includes('class="lattice-loader__layer lattice-loader__run"'),
+ 'Lattice Loader must use the reference animated orbit layer');
+assert.ok(html.includes('class="lattice-loader__layer lattice-loader__mark"'),
+ 'Lattice Loader must settle into the reference check/cross cell mark');
+assert.equal((html.match(/class="lattice-loader__cell/g)||[]).length,36,
+ 'Lattice Loader must render matching 3x3 running and settle grids');
+assert.ok(html.includes('class="lattice-loader__cell" data-hole'),
+ 'the default orbit must leave the center cell empty');
+assert.match(css,/--ll-cycle:864ms/,
+ 'default 3x3 orbit must use the ReactBits 90ms step × 1.2 scale cycle');
+assert.match(css,/animation:lattice-on var\(--ll-cycle\) var\(--ll-ease-in-out\) infinite/,
+ 'Lattice Loader must use ReactBits orbit easing and keyframe timing');
+assert.match(html,/class="thought-line__glyph"/,
+ 'Thought Line must include its reference sparkle glyph');
+assert.match(html,/class="thought-line__breath" data-shimmer/,
+ 'Thought Line must keep shimmer on the working label wrapper');
+assert.match(css,/animation:rb-thought-shimmer 1\.8s linear infinite/,
+ 'Thought Line must use the reference 1.8 second shimmer');
+assert.match(css,/rb-thought-breathe 1\.6s cubic-bezier\(\.77,0,\.175,1\) infinite/,
+ 'Thought Line glyph must follow the reference 1.6 second, 0.45 depth breath');
+assert.match(css,/@media\s*\(prefers-reduced-motion:reduce\)/,
+ 'ReactBits status effects must honor reduced-motion preference');
 assert.match(js, /var ARM_AT=48;/, 'Sling Button arm distance must match ReactBits default');
 assert.match(js, /var MAX_PULL=160;/, 'Sling Button max pull must match ReactBits default');
 assert.match(css, /--sl-size:56px/, 'Sling Button desktop size must match ReactBits default');

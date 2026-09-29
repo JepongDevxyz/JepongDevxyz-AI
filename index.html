@@ -9681,9 +9681,23 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <div class="thought-line" data-working="true">
                         <button type="button" class="thought-line__head" onclick="toggleActivityDetails(this)" aria-expanded="true">
                             <span class="rb-lattice-loader" id="aiActivityLattice" data-status="working" role="status" aria-label="Thinking">
-                                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                                <span class="lattice-loader__layer lattice-loader__run" aria-hidden="true">
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell" data-hole></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                </span>
+                                <span class="lattice-loader__layer lattice-loader__mark" aria-hidden="true">
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell" data-hole></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                </span>
                             </span>
-                            <span class="thought-line__label"><span class="thought-line__text" id="aiActivitySummary">Thinking</span></span>
+                            <span class="thought-line__label">
+                                <span class="thought-line__glyph" aria-hidden="true">✦</span>
+                                <span class="thought-line__breath" data-shimmer>
+                                    <span class="thought-line__text" id="aiActivitySummary">Thinking</span>
+                                </span>
+                            </span>
                             <span class="thought-line__timer" id="aiActivityTimer">0s</span>
                             <span class="thought-line__chevron"><i data-lucide="chevron-right"></i></span>
                         </button>
@@ -10669,9 +10683,23 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     <div class="thought-line" data-working="false">
                         <button type="button" class="thought-line__head" onclick="toggleActivityDetails(this)" aria-expanded="true">
                             <span class="rb-lattice-loader" data-status="done" role="status" aria-label="Done">
-                                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                                <span class="lattice-loader__layer lattice-loader__run" aria-hidden="true">
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell" data-hole></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                </span>
+                                <span class="lattice-loader__layer lattice-loader__mark" aria-hidden="true">
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell" data-hole></i><i class="lattice-loader__cell"></i>
+                                    <i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i><i class="lattice-loader__cell"></i>
+                                </span>
                             </span>
-                            <span class="thought-line__label"><span class="thought-line__text">${clean(saved.summary||'Worked on this response',75)}</span></span>
+                            <span class="thought-line__label">
+                                <span class="thought-line__glyph" aria-hidden="true">✦</span>
+                                <span class="thought-line__breath">
+                                    <span class="thought-line__text">${clean(saved.summary||'Worked on this response',75)}</span>
+                                </span>
+                            </span>
                             <span class="thought-line__chevron"><i data-lucide="chevron-right"></i></span>
                         </button>
                     </div>

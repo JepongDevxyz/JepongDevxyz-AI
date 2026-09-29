@@ -52,7 +52,7 @@ assert(ui.includes('function downloadSnippetFromButton'),'Code download handler 
 assert(ui.includes('container.dataset.filename = inferredFilename'),'Code blocks must preserve an inferred filename');
 
 assert(ui.includes('class="rb-lattice-loader"'),'Requested 3x3 Lattice activity status missing');
-assert(css.includes('.rb-lattice-loader>i'),'Lattice activity styling missing');
+assert(css.includes('.lattice-loader__run .lattice-loader__cell'),'Lattice activity styling missing');
 assert(!css.includes('.thought-line::after'),'Thought Line must not restore the unwanted horizontal divider');
 
 console.log('PASS: requested Lattice activity status plus durable code/ZIP artifact delivery contract.');
