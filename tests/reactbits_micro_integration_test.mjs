@@ -17,6 +17,8 @@ for (const token of ['rb-lattice-loader','thought-line','thought-line__trace']) 
 }
 assert(html.includes('id="aiActivityLattice"'),'Activity live status hook missing');
 assert(html.includes('id="aiActivityTimer"'),'ThoughtLine elapsed timer hook missing');
+assert.match(css,/\.thought-line\{[^}]*font-size:16px/,
+  'ThoughtLine label/timer must match the supplied mobile reference scale');
 assert(html.includes("if(summary && card.dataset.finalized!=='true')summary.textContent='Thinking';"),
  'ThoughtLine headline must remain stable while exact milestones stay in the activity trace');
 assert(html.includes("card.dataset.taskSummary=String(normalized.label||'').slice(0,220)"),

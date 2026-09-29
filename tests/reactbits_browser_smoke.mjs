@@ -119,6 +119,7 @@ const activity=JSON.parse(await evaluate(`(async()=>{
     marginLeft:cardStyle.marginLeft,
     marginRight:cardStyle.marginRight,
     labelFont:labelStyle.fontSize,
+    thoughtFont:getComputedStyle(card.querySelector('.thought-line')).fontSize,
     labelLine:labelStyle.lineHeight,
     noteFont:noteStyle.fontSize,
     webIconDisplay:getComputedStyle(web.querySelector('.ai-activity-icon')).display,
@@ -145,6 +146,7 @@ assert.deepEqual(activity.settled,{status:'done',label:'Done',working:'false'},'
 assert.equal(activity.marginLeft,'14px');
 assert.equal(activity.marginRight,'12px');
 assert.equal(activity.labelFont,'15.5px');
+assert.equal(activity.thoughtFont,'16px','ThoughtLine label and timer must match the supplied mobile reference scale');
 assert.equal(activity.noteFont,'16px');
 assert.notEqual(activity.webIconDisplay,'none','Tool/search row must keep its icon');
 assert.equal(activity.processIconless,true,'Plain work milestone must not reserve an icon lane');

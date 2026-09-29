@@ -54,7 +54,7 @@
 .ai-activity-card.reference-work-flow .thought-line__head{display:inline-flex;max-width:100%}
 .ai-activity-card.reference-work-flow .thought-line__trace{display:block}
 .ai-activity-header-actions{align-items:center;gap:6px;width:100%;min-width:0}
-.thought-line{min-width:0;flex:1 1 auto;color:var(--activity-muted);font-size:13px}
+.thought-line{min-width:0;flex:1 1 auto;color:var(--activity-muted);font-size:16px}
 .thought-line__head{
   min-width:0;display:inline-flex;align-items:center;gap:7px;margin:0;padding:4px 0 6px;
   border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none
