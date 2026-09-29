@@ -2702,6 +2702,15 @@ function contextualTaskMessage(message='', history=[]){
   if(!current)return current;
 
   const words=current.split(/\s+/).filter(Boolean);
+  const independentGreeting=/^(?:hi|hello|hey|yo|kumusta|kamusta|thanks|thank you|salamat)[!?.\s]*$/i.test(current);
+  const shortFollowUpFragment=/^(?:security|safe|working|gumagana|okay|ayos|fix|why|bakit|paano|how)[!?.\s]*$/i.test(current)||
+    (/^what about\b/i.test(current)&&words.length<=5);
+  const independentQuestion=current.includes('?')&&!looksReferential(current)&&!shortFollowUpFragment;
+  const independentRequest=/^(?:tell me|explain|define|calculate|write|translate|summari[sz]e|search|find|give me|make|create|build)\b/i.test(current)&&
+    words.length>=2&&!looksReferential(current);
+  // Short, complete turns start fresh. Only fragments and references inherit context.
+  if(independentGreeting||independentQuestion||independentRequest)return current;
+
   const vague=words.length<=9 || looksReferential(current) ||
     /^(?:ito|iyan|yan|yun|iyon|iyong|yung|ganito|ganyan|same|still|ulit|again|security|safe|working|gumagana|okay|ayos|fix|why|bakit|paano|how|what about|e kung|eh kung)\b/i.test(current);
   if(!vague)return current;
