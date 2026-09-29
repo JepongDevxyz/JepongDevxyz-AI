@@ -32,7 +32,7 @@ assert(!details.includes("id==='quality-orchestrator'"),
 
 assert(html.includes("startup.dataset.activityId='client-thinking'"),
   'Client must show only the reference-style temporary Thinking row before SSE arrives');
-assert(html.includes("reactbits-micro.css?v=20260927-activity-v9-frameplay"),
+assert(html.includes("reactbits-micro.css?v=20260929-thought-line-css-fix"),
   'Activity cache-bust must ship with the frame-playback lifecycle fix');
 
 console.log('PASS: reference Activity shows Thinking -> selected-model plan -> real tools/commentary -> aligned final generation.');
