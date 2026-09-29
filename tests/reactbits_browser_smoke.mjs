@@ -115,7 +115,7 @@ const activity=JSON.parse(await evaluate(`(async()=>{
   const before={
     reference:card.classList.contains('reference-work-flow'),
     headerDisplay:headerStyle.display,
-    latticeCells:card.querySelectorAll('#aiActivityLattice > i').length,
+    latticeCells:card.querySelectorAll('#aiActivityLattice .lattice-loader__run .lattice-loader__cell').length,
     marginLeft:cardStyle.marginLeft,
     marginRight:cardStyle.marginRight,
     labelFont:labelStyle.fontSize,
