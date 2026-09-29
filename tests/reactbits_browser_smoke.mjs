@@ -115,7 +115,7 @@ const activity=JSON.parse(await evaluate(`(async()=>{
   const before={
     reference:card.classList.contains('reference-work-flow'),
     headerDisplay:headerStyle.display,
-    latticeCells:card.querySelectorAll('#aiActivityLattice > i').length,
+    latticeCells:card.querySelectorAll('#aiActivityLattice .lattice-loader__run .lattice-loader__cell').length,
     marginLeft:cardStyle.marginLeft,
     marginRight:cardStyle.marginRight,
     labelFont:labelStyle.fontSize,
@@ -152,8 +152,8 @@ assert.notEqual(activity.webIconDisplay,'none','Tool/search row must keep its ic
 assert.equal(activity.processIconless,true,'Plain work milestone must not reserve an icon lane');
 assert.equal(activity.thinkingIconless,true,'Thinking must be a plain terminal row');
 assert.equal(activity.thinkingText,'Preparing implementation','Model-work row must preserve the task-specific activity label');
-assert.equal(activity.providerDisplay,'none','Provider plumbing must stay off the primary activity surface');
-assert.equal(activity.generationDisplay,'none','Generation plumbing must stay off the primary activity surface');
+assert.notEqual(activity.providerDisplay,'none','Provider connection status must remain visible in the primary activity timeline');
+assert.notEqual(activity.generationDisplay,'none','Generation status must remain visible in the primary activity timeline');
 assert.equal(activity.lead,'','Temporary client lead must clear after the truthful server timeline starts');
 assert(activity.primaryVisible.includes('task-context')&&activity.primaryVisible.includes('web-search')&&activity.primaryVisible.includes('process-step')&&activity.primaryVisible.includes('thinking'),
   'Primary chronological reference milestones are missing');

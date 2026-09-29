@@ -350,10 +350,15 @@
       }
       state.anim=requestAnimationFrame(tick);
     }
+    function suppressNextClick(){
+      state.skipClick=true;
+      clearTimeout(state.skipTimer);
+      state.skipTimer=setTimeout(function(){state.skipClick=false;},700);
+    }
     function sendFromRelease(){
       if(state.armed){state.power=clamp((Math.min(Math.hypot(state.x,state.y)/ARM_AT,POWER_CAP)-1)/(POWER_CAP-1),0,1);state.dotPending=true;state.dotTimer=setTimeout(launchDots,150);}
       else{state.power=0;state.dotPending=true;state.dotTimer=setTimeout(launchDots,0);}
-      state.skipClick=true;state.skipTimer=setTimeout(function(){state.skipClick=false;},700);
+      suppressNextClick();
       requestAnimationFrame(function(){if(typeof window.handleMainAction==='function')window.handleMainAction();});
     }
     action.addEventListener('pointerdown',function(e){
@@ -388,7 +393,9 @@
       else{
         var fire=state.armed&&!cancelled,launch=fire?LAUNCH_SPEED*Math.min(p,POWER_CAP):CANCEL*LAUNCH_SPEED*Math.min(p,1);
         var v0x=vx-ux*launch,v0y=vy-uy*launch,m=Math.hypot(v0x,v0y);if(m>HAND_MAX){v0x*=HAND_MAX/m;v0y*=HAND_MAX/m;}
-        if(fire&&!action.disabled&&!slingIsBusy(action))sendFromRelease();else relaxIcon();settle({x:v0x,y:v0y});
+        if(fire&&!action.disabled&&!slingIsBusy(action))sendFromRelease();
+        else{if(!cancelled)suppressNextClick();relaxIcon();}
+        settle({x:v0x,y:v0y});
       }
       state.armed=false;wrap.removeAttribute('data-loaded');schedulePaint();e.preventDefault();
     }
