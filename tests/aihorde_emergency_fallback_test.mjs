@@ -67,18 +67,22 @@ const last="  return {ok:false,status:first.status||500,error:first.error||'AI p
 const to=source.indexOf(last,from);
 assert(from>=0&&to>from,'Emergency fallback coordinator not found');
 const coordinator=source.slice(from,to+last.length);
-async function fallback({enabled=true,first=failed,registeredSuccess=false,anonymousSuccess=true,files=[]}={}){
+async function fallback({enabled=true,first=failed,registeredSuccess=false,anonymousSuccess=true,files=[],providerFallbackSuccess=false}={}){
  const calls=[];
  const success=(provider)=>({ok:true,response:{
    headers:{get:k=>({'x-ai-provider':provider,'x-ai-model':'verified-live-model'}[k]||null)}
  },finishState:{reason:'stop'}});
  const deps={
-   autoFallback:enabled,first,provider:'groq',model:'openai/gpt-oss-20b',
+   autoFallback:enabled,body:{autoFallback:enabled},first,provider:'groq',model:'openai/gpt-oss-20b',requestCustomKeys:[],customApiProfile:null,
    history:[],files,message:'Hi',systemInstruction:'Test',routedReason:'',emit:()=>{},startedAt:1,responseEffort:'Instant',
    taskWork:{label:'Working on: Hi',kind:'process'},
    taskGeneration:{label:'Generating the response for: Hi',kind:'generate'},
    isFallbackableProviderFailure:classifier,
-   activity:()=>{},providerLabel:x=>x,
+   runAvailableProviderFallback:async(...args)=>{
+     calls.push({kind:'provider-fallback',args});
+     return providerFallbackSuccess?success('gemini'):{ok:false,status:429,error:'all configured providers exhausted'};
+   },
+   activity:()=>{},providerLabel:x=>x,modelLabel:x=>x,
    runAIHorde:async args=>{calls.push({kind:'registered',args});return registeredSuccess?success('aihorde'):{ok:false,status:401,error:'invalid registered key'};},
    runAnonymousAIHordeFallback:async args=>{calls.push({kind:'anonymous',args});return anonymousSuccess?success('aihorde-public'):{ok:false,status:503,error:'no workers'};}
  };
@@ -87,25 +91,31 @@ async function fallback({enabled=true,first=failed,registeredSuccess=false,anony
 }
 const goodRegistered=await fallback({registeredSuccess:true});
 assert.equal(goodRegistered.result.ok,true);
-assert.deepEqual(goodRegistered.calls.map(x=>x.kind),['registered']);
+assert.deepEqual(goodRegistered.calls.map(x=>x.kind),['provider-fallback','registered']);
 assert.equal(goodRegistered.result.resolvedProvider,'aihorde');
-assert.equal(goodRegistered.calls[0].args.model,'auto');
+assert.equal(goodRegistered.calls[1].args.model,'auto');
+
+const goodProvider=await fallback({providerFallbackSuccess:true});
+assert.equal(goodProvider.result.ok,true);
+assert.deepEqual(goodProvider.calls.map(x=>x.kind),['provider-fallback'],
+ 'Configured provider/model fallbacks must be attempted before emergency Horde routes');
+assert.equal(goodProvider.result.resolvedProvider,'gemini');
 
 const badRegistered=await fallback();
 assert.equal(badRegistered.result.ok,true);
-assert.deepEqual(badRegistered.calls.map(x=>x.kind),['registered','anonymous']);
+assert.deepEqual(badRegistered.calls.map(x=>x.kind),['provider-fallback','registered','anonymous']);
 assert.equal(badRegistered.result.resolvedProvider,'aihorde-public');
 assert.equal(badRegistered.calls[1].args.model,'auto');
 
 const off=await fallback({enabled:false});
 assert.equal(off.result.ok,false);
-assert.deepEqual(off.calls,[],'OFF forbids both emergency routes even after all keys exhaust');
+assert.deepEqual(off.calls,[],'OFF forbids provider and emergency fallback after all selected keys exhaust');
 for(const status of [400,415,500,503]){
  const noRoute=await fallback({first:{ok:false,status,error:'Invalid request or temporary outage'}});
  assert.deepEqual(noRoute.calls,[], 'HTTP '+status+' must not trigger emergency quota fallback');
 }
 const vision=await fallback({files:[{mimeType:'image/png',data:'base64'}]});
-assert.deepEqual(vision.calls,[],'Text-only Horde must not silently consume image requests');
+assert.deepEqual(vision.calls.map(x=>x.kind),['provider-fallback'],'Image fallback may inspect configured vision providers, but must not silently route to text-only Horde');
 const none=await fallback({anonymousSuccess:false});
 assert.equal(none.result.ok,false);
 assert.match(none.result.error,/both AI Horde fallback routes are unavailable/i);

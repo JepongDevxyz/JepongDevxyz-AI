@@ -5002,6 +5002,60 @@ async function runBailucode(args){
   return anthropic.ok?anthropic:openai;
 }
 
+function fallbackProviderCandidates(selectedProvider,{
+  providers=PROVIDERS,isConfigured=configured,limit=API_GUARD.maxFallbackProviders,files=[]
+}={}){
+  const hasImage=Array.isArray(files)&&files.some(file=>String(file?.mimeType||'').startsWith('image/')&&file?.data);
+  const hasVideo=Array.isArray(files)&&files.some(file=>String(file?.mimeType||'').startsWith('video/')&&file?.data);
+  const order=['gemini','cloudflare','groq','openrouter','mistral','cohere','unorouter','nvidia','codecraft','agentrouter','hcnsec','bailucode','seekai'];
+  return order
+    .filter(provider=>provider!==selectedProvider&&providers[provider]&&isConfigured(provider))
+    .filter(provider=>!hasVideo||provider==='gemini')
+    .filter(provider=>!hasImage||provider==='gemini'||provider==='cloudflare')
+    .slice(0,Math.max(0,Number(limit)||0))
+    .map(provider=>({provider,model:providers[provider].defaultModel}));
+}
+
+async function runAvailableProviderFallback(selectedProvider,args,{
+  body={},files=args?.files||[],providers=PROVIDERS,limit=API_GUARD.maxFallbackProviders,runner=runProvider
+}={}){
+  if(args?.autoFallback!==true)return {ok:false,status:403,error:'Provider fallback is disabled.'};
+  const sameProviderModels=(providers[selectedProvider]?.models||[])
+    .filter(model=>model&&model!==args.model)
+    .slice(0,2);
+  let last={ok:false,status:503,error:'No other configured model provider is available.'};
+  for(const model of sameProviderModels){
+    const attempt=await runner(selectedProvider,{
+      ...args,
+      model,
+      customApiKeys:sanitizeCustomProviderKeys(body,selectedProvider),
+      autoFallback:true,
+      fallbackFrom:selectedProvider,
+      routedReason:'credit-model-fallback'
+    });
+    if(attempt?.ok)return {...attempt,fallbackProvider:selectedProvider,fallbackModel:model};
+    last=attempt||last;
+  }
+  const candidates=fallbackProviderCandidates(selectedProvider,{
+    providers,limit,files,
+    isConfigured:provider=>configured(provider)||sanitizeCustomProviderKeys(body,provider).length>0
+  });
+  for(const candidate of candidates){
+    const attempt=await runner(candidate.provider,{
+      ...args,
+      model:candidate.model,
+      customApiKeys:sanitizeCustomProviderKeys(body,candidate.provider),
+      customApiProfile:null,
+      autoFallback:true,
+      fallbackFrom:selectedProvider,
+      routedReason:'credit-exhaustion-fallback'
+    });
+    if(attempt?.ok)return {...attempt,fallbackProvider:candidate.provider,fallbackModel:candidate.model};
+    last=attempt||last;
+  }
+  return last;
+}
+
 async function runProvider(provider,args){
   if(provider==='custom-api' && args?.customApiProfile){
     return runGenericCustomApi(args.customApiProfile,{
@@ -5593,6 +5647,25 @@ async function processChat(body, emit) {
   // has already tried ALL of its configured keys (and any supported same-
   // provider model alternatives) before returning a quota/auth failure here.
   if(autoFallback&&fallbackable){
+    activity(emit,'fallback','Selected provider exhausted — checking other configured models','running','fallback');
+    const providerFallback=await runAvailableProviderFallback(provider,{
+      model,history,files,message,systemInstruction,emit,autoFallback:true,
+      responseEffort,customApiKeys:requestCustomKeys,customApiProfile
+    },{body,files});
+    if(providerFallback.ok){
+      const fallbackProvider=providerFallback.fallbackProvider||provider;
+      const fallbackModel=providerFallback.response?.headers.get('x-ai-model')||providerFallback.fallbackModel||model;
+      activity(emit,'fallback',`${providerLabel(fallbackProvider)} connected with ${modelLabel(fallbackModel)}`,'completed','fallback');
+      activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
+      return {
+        ok:true,response:providerFallback.response,
+        finishState:providerFallback.finishState||{reason:'unknown'},startedAt,
+        resolvedProvider:providerFallback.response?.headers.get('x-ai-provider')||fallbackProvider,
+        resolvedModel:fallbackModel,systemInstruction,
+        activityTaskLabel:'Thinking',activityTaskKind:'process'
+      };
+    }
+
     const hasImageForPublicFallback=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
     if(!hasImageForPublicFallback){
       activity(emit,'fallback','Selected provider exhausted — checking registered AI Horde','running','fallback');
@@ -5948,17 +6021,28 @@ function activityStreamResponse(body, requestSignal=null) {
               at:Date.now()
             });
 
-            const continuation=await runProvider(resolvedProvider,{
+            const continuationArgs={
               model:resolvedModel,
               history:buildContinuationHistory(body,generatedText),
-              files:sanitizeIncomingAttachments(body.files||[]).map(f=>({...f,data:''})),
+              files:sanitizeIncomingAttachments(body.files||[]),
               message:continuationPrompt(continuationCount),
               systemInstruction:continuationSystemInstruction,
               routedReason:'automatic-continuation',
               emit:null,
-              autoFallback:false,
+              autoFallback:body.autoFallback===true,
+              customApiKeys:sanitizeCustomProviderKeys(body,resolvedProvider),
+              customApiProfile:resolvedProvider==='custom-api'?sanitizeCustomApiProfile(body):null,
               responseEffort:normalizeResponseEffort(body?.personalization?.intelligence,body?.personalization?.fastAnswers)
-            });
+            };
+            let continuation=await runProvider(resolvedProvider,continuationArgs);
+            if(!continuation.ok&&body.autoFallback===true&&isFallbackableProviderFailure(continuation.status,continuation.error)){
+              send('activity',{
+                type:'activity',id:`auto-continue-${continuationCount}`,
+                label:'Continuation key exhausted — checking other configured models',
+                state:'warning',kind:'generate',at:Date.now()
+              });
+              continuation=await runAvailableProviderFallback(resolvedProvider,continuationArgs,{body,files:continuationArgs.files});
+            }
 
             if(!continuation.ok){
               send('activity',{
@@ -5970,13 +6054,21 @@ function activityStreamResponse(body, requestSignal=null) {
                 detail:String(continuation.error||'Provider unavailable').slice(0,180),
                 at:Date.now()
               });
-              break;
+              send('error',{
+                message:`The response could not continue because all available API keys${body.autoFallback===true?' and enabled fallback models':''} are exhausted or unavailable. The partial response is preserved. ${String(continuation.error||'').slice(0,140)}`,
+                status:continuation.status||503,
+                provider:resolvedProvider
+              });
+              clearInterval(keepAlive);
+              try{controller.close();}catch(_){}
+              return;
             }
 
             activeResponse=continuation.response;
             activeFinishState=continuation.finishState||{reason:'unknown'};
             resolvedProvider=activeResponse.headers.get('x-ai-provider')||resolvedProvider;
             resolvedModel=activeResponse.headers.get('x-ai-model')||resolvedModel;
+            send('meta',responseMeta(activeResponse));
 
             send('activity',{
               type:'activity',
