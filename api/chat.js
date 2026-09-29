@@ -5017,7 +5017,9 @@ function fallbackProviderCandidates(selectedProvider,{
 }
 
 async function runAvailableProviderFallback(selectedProvider,args,{
-  body={},files=args?.files||[],providers=PROVIDERS,limit=API_GUARD.maxFallbackProviders,runner=runProvider
+  body={},files=args?.files||[],providers=PROVIDERS,limit=API_GUARD.maxFallbackProviders,
+  runner=runProvider,includeEmergencyFallback=false,runRegistered=runAIHorde,
+  runAnonymous=runAnonymousAIHordeFallback
 }={}){
   if(args?.autoFallback!==true)return {ok:false,status:403,error:'Provider fallback is disabled.'};
   const sameProviderModels=(providers[selectedProvider]?.models||[])
@@ -5052,6 +5054,21 @@ async function runAvailableProviderFallback(selectedProvider,args,{
     });
     if(attempt?.ok)return {...attempt,fallbackProvider:candidate.provider,fallbackModel:candidate.model};
     last=attempt||last;
+  }
+  const hasUnsupportedMedia=Array.isArray(files)&&files.some(file=>
+    file?.data&&/^(?:image|video)\//i.test(String(file?.mimeType||''))
+  );
+  if(includeEmergencyFallback&&!hasUnsupportedMedia){
+    const emergencyArgs={
+      ...args,model:'auto',fallbackFrom:selectedProvider,
+      autoFallback:true,routedReason:'credit-continuation-emergency'
+    };
+    const registered=await runRegistered(emergencyArgs);
+    if(registered?.ok)return {...registered,fallbackProvider:'aihorde',fallbackModel:'auto'};
+    last=registered||last;
+    const anonymous=await runAnonymous(emergencyArgs);
+    if(anonymous?.ok)return {...anonymous,fallbackProvider:'aihorde-public',fallbackModel:'auto'};
+    last=anonymous||last;
   }
   return last;
 }
@@ -6041,7 +6058,9 @@ function activityStreamResponse(body, requestSignal=null) {
                 label:'Continuation key exhausted — checking other configured models',
                 state:'warning',kind:'generate',at:Date.now()
               });
-              continuation=await runAvailableProviderFallback(resolvedProvider,continuationArgs,{body,files:continuationArgs.files});
+              continuation=await runAvailableProviderFallback(resolvedProvider,continuationArgs,{
+                body,files:continuationArgs.files,includeEmergencyFallback:true
+              });
             }
 
             if(!continuation.ok){
