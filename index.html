@@ -4561,7 +4561,6 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <div class="settings-card-group">
             <div class="settings-toggle-row"><i data-lucide="globe-2"></i><span><strong>Live Web Search</strong><small>Use current web results when needed</small></span><label class="squish-switch-root" aria-label="Live Web Search"><input type="checkbox" id="settingsWebSearchToggle" onchange="setLiveWebSearchEnabled(this.checked)"><span class="squish-switch__track"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="volume-2"></i><span><strong>Response Speech</strong><small>Automatically speak AI responses</small></span><label class="squish-switch-root" aria-label="Response Speech"><input type="checkbox" id="responseSpeechToggle" onchange="toggleResponseSpeech(this.checked)"><span class="squish-switch__track"></span></label></div>
-            <div class="settings-toggle-row"><i data-lucide="list-checks"></i><span><strong>Auto-collapse activity</strong><small>Collapse activity steps after the response finishes</small></span><label class="squish-switch-root" aria-label="Auto-collapse activity"><input type="checkbox" id="jdAutoCollapseActivityToggle" onchange="setActivityAutoCollapse(this.checked)"><span class="squish-switch__track"></span></label></div>
             <div class="settings-toggle-row"><i data-lucide="wifi"></i><span><strong>Reconnect notice</strong><small>Show the network reconnect card above the message box</small></span><label class="squish-switch-root" aria-label="Reconnect notice"><input type="checkbox" id="jdReconnectCardToggle" onchange="setReconnectCardEnabled(this.checked)"><span class="squish-switch__track"></span></label></div>
             <button class="settings-nav-row jd-notify-settings-entry" type="button" onclick="openJdReplyNotifications()" aria-label="Reply Notifications settings"><i data-lucide="bell"></i><span><strong>Reply Notifications</strong><small id="jdReplyNotifyDescription" aria-live="polite">Notify when an AI reply finishes</small></span><i data-lucide="chevron-right"></i></button>
             <label class="settings-toggle-row"><i data-lucide="shuffle"></i><span><strong>Auto Provider Fallback</strong><small>All your configured keys are tried first. When exhausted, use registered then anonymous AI Horde if ON.</small></span><label class="squish-switch-root"><input id="autoFallbackToggle" type="checkbox" onchange="toggleAutoFallback(this.checked)"><span></span></label></label>
@@ -9380,15 +9379,14 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     // slot information is implementation detail.
                     safeDetail=safeDetail.replace(/credential\s+\d+\s*\/\s*\d+/gi,'configured API key').slice(0,110);
                 }
-                // Keep the original provider lifecycle status visible; credential
-                // slot data is removed above before it reaches the user.
-                return {...e,label:safeLabel,detail:safeDetail};
+                // Provider lifecycle diagnostics stay out of the user-facing task timeline.
+                return {...e,label:safeLabel,detail:safeDetail,visibility:'details'};
             }
             if(id==='thinking'){
                 return {...e,label:label||'Thinking',kind:kind||'process'};
             }
             if(id==='generation'){
-                return {...e,label:label||'Generating response',kind:'generate'};
+                return {...e,label:label||'Generating response',kind:'generate',visibility:'details'};
             }
 
             // Only real tool/context operations receive ChatGPT-style wording.
@@ -9398,10 +9396,10 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // Attachment labels are emitted from actual preprocessing; retain their details.
             if(id==='attachments') return {...e,kind:'file'};
             if(id==='response-audit'){
-                return {...e,label:label || 'Checking the response',kind:'test'};
+                return {...e,label:label || 'Checking the response',kind:'test',visibility:'details'};
             }
             if(id==='output-verification'){
-                return {...e,label:label || 'Checking generated code',kind:'test'};
+                return {...e,label:label || 'Checking generated code',kind:'test',visibility:'details'};
             }
             if(id==='fallback' && state==='running'){
                 return {...e,label:label||'Checking configured fallback',
@@ -9822,19 +9820,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             btn.setAttribute('aria-expanded', card.classList.contains('collapsed') ? 'false' : 'true');
         }
 
-        function isActivityAutoCollapseEnabled(){
-            try{return localStorage.getItem('jd_activity_auto_collapse')==='true';}
-            catch(_){return false;}
-        }
-        function setActivityAutoCollapse(enabled){
-            const checked=!!enabled;
-            try{localStorage.setItem('jd_activity_auto_collapse',JSON.stringify(checked));}catch(_){ }
-            const input=document.getElementById('jdAutoCollapseActivityToggle');
-            if(input)input.checked=checked;
-        }
-        const jdAutoCollapseActivityToggle=document.getElementById('jdAutoCollapseActivityToggle');
-        if(jdAutoCollapseActivityToggle)jdAutoCollapseActivityToggle.checked=isActivityAutoCollapseEnabled();
-
         // Frame-matched Activity playback.
         // Server/tool events remain the only source of truth; this queue only prevents
         // several genuine milestones that arrive in the same network tick from painting
@@ -9854,10 +9839,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         }
 
         function activityEventUsesVisibleTimeline(evt={}){
-            // Existing provider, router, attachment, generation, and verification
-            // milestones belong in the original timeline. Only an event explicitly
-            // classified as internal details may bypass the visible playback queue.
-            return evt.visibility!=='details';
+            const id=activityPlaybackId(evt);
+            const kind=String(evt.kind||'process').toLowerCase();
+            if(evt.visibility==='details'||kind==='provider'||kind==='route')return false;
+            if(/^attachment-media-(?:selected|bridge|cloudflare)$/.test(id))return false;
+            return true;
         }
 
         function resolveActivityPlaybackWaiters(){
@@ -10027,7 +10013,9 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(normalizedLabelKey) row.dataset.activityLabelKey=normalizedLabelKey;
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
-            const detailsOnly = normalized.visibility==='details';
+            const detailsOnly = normalized.visibility==='details' ||
+                kind==='provider' || kind==='route' ||
+                /^attachment-media-(?:selected|bridge|cloudflare)$/.test(id);
             const iconless = id==='thinking' || ['process','build','generate','deploy','api'].includes(String(kind).toLowerCase());
             // A new operation does NOT prove the previous one completed.
             // Only a matching backend completion event may mark it completed.
@@ -10130,7 +10118,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             refreshLucideIcons(card);
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
 
-            if(isActivityAutoCollapseEnabled())card.classList.add('collapsed');
             const toggle = card.querySelector('.thought-line__head');
             toggle?.setAttribute('aria-expanded',String(!card.classList.contains('collapsed')));
             setTimeout(() => {
