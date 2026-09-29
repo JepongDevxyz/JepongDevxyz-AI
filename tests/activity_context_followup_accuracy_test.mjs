@@ -47,6 +47,21 @@ const history=[
   {role:'assistant',text:'Sige.'},
   {role:'user',text:'Gawin mong katulad ng Grok at ChatGPT ang activity timeline.'}
 ];
+assert.equal(exported.contextualTaskMessage('Hello',history),'Hello',
+  'a greeting must remain the active task instead of inheriting the previous request');
+assert.equal(exported.contextualTaskMessage('What is photosynthesis?',history),'What is photosynthesis?',
+  'a self-contained question must not inherit an older task');
+const dynamicPlannerSource=between(api,'function shouldUseDynamicActivityPlanner(message=', '\nfunction shouldRunPlannedActivityResearch(');
+const shouldUseDynamicActivityPlanner=new Function(dynamicPlannerSource+'\nreturn shouldUseDynamicActivityPlanner;')();
+assert.equal(shouldUseDynamicActivityPlanner('Hello',[]),false,
+  'a greeting must not trigger a stale-task metadata call');
+
+const contextualQuestion=exported.contextualTaskMessage('Why is that still broken?',history);
+assert(contextualQuestion.includes('Follow-up: Why is that still broken?'),
+  'a genuinely referential question must still inherit recent task context');
+assert(exported.contextualTaskMessage('security?',history).includes('Follow-up: security?'),
+  'short follow-up fragments must still inherit recent task context');
+
 const contextual=exported.contextualTaskMessage('Yung latest ngayon ang gawin mo',history);
 assert(contextual.includes('Follow-up: Yung latest ngayon ang gawin mo'));
 assert(/status|activity|Grok|ChatGPT/i.test(contextual),'concrete prior task must be carried into vague follow-up');
@@ -56,6 +71,8 @@ assert.notEqual(profile.kind,'research','contextual latest follow-up must keep p
 assert.equal(profile.freshnessFollowUp,true,'vague freshness follow-up should be marked as continuation');
 assert(!/Yung latest ngayon ang gawin mo/i.test(profile.subject),
   'activity subject should use the concrete prior task instead of the vague follow-up');
+assert.equal(shouldUseDynamicActivityPlanner(contextual),true,
+  'a real coding follow-up must retain the dynamic task planner');
 
 assert.equal(exported.isAcknowledgementFollowUp('Sige'),true,
   'short acknowledgement follow-ups must be recognized');
