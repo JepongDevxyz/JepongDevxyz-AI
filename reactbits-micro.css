@@ -1044,7 +1044,7 @@ body.theme-light #promptBar .rb-sling-wrap[data-disabled] .rb-sling-face{opacity
 .rb-sling-dots{position:absolute;inset:0;pointer-events:none}
 .rb-sling-dot{position:absolute;top:50%;left:50%;width:var(--sl-dot);height:var(--sl-dot);margin:calc(var(--sl-dot)/-2) 0 0 calc(var(--sl-dot)/-2);border-radius:50%;background:var(--sl-accent);opacity:0;pointer-events:none}
 .rb-sling-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media(max-width:520px){.rb-sling-wrap{--sl-size:28px;--sl-svg:56px;--sl-dot:6px}}
+@media(max-width:520px){.voice-pill{--vp-size:32px;--vp-radius:16px}.rb-sling-wrap{--sl-size:32px;--sl-svg:60px;--sl-dot:6px}}
 @media(prefers-reduced-motion:reduce){
   .rb-lattice-loader>i,.thought-line__text{animation:none!important;background:none!important;color:inherit!important}
   .rb-sling-face{transform:none!important;transition:none!important}

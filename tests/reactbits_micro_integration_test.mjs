@@ -94,8 +94,10 @@ assert.match(css, /rb-thought-shimmer 1\.8s/,
 assert.match(js, /var ARM_AT=48;/, 'Sling Button arm distance must match ReactBits default');
 assert.match(js, /var MAX_PULL=160;/, 'Sling Button max pull must match ReactBits default');
 assert.match(css, /--sl-size:56px/, 'Sling Button desktop size must match ReactBits default');
-assert.match(css, /\.rb-sling-wrap\{--sl-size:28px/,
- 'Sling Button mobile face must match the prior 28px screenshot size');
+assert.match(css, /\.rb-sling-wrap\{--sl-size:32px/,
+ 'Sling Button mobile face must be slightly larger than its prior 28px size');
+assert.match(css, /\.voice-pill\{--vp-size:32px;--vp-radius:16px\}\.rb-sling-wrap\{--sl-size:32px/,
+ 'mobile microphone and send faces must be enlarged evenly to 32px');
 assert.match(css, /--sl-pad:var\(--pb-ink\)/, 'Sling pad colour must follow the current theme');
 assert.match(css, /--sl-icon:var\(--pb-bg\)/, 'Sling icon colour must follow the current theme');
 assert.match(js, /FINGER_MAX=3000/,'Sling Button must preserve the reference velocity cap');
