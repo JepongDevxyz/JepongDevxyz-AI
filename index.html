@@ -691,8 +691,8 @@
         .jd-message-menu-row{width:100%;border:0;background:transparent;color:var(--text-main);display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;text-align:left;font:inherit;cursor:pointer}
         .jd-message-menu-row:hover,.jd-message-menu-row:active{background:rgba(148,163,184,.10)}
         .jd-message-menu-row svg{width:18px;height:18px}.jd-message-menu-sep{height:1px;background:var(--border-color);margin:5px 4px}
-        .jd-reconnect-card{position:fixed;z-index:12000;left:50%;top:50%;transform:translate(-50%,-50%);width:min(650px,calc(100vw - 32px));border:1px solid var(--border-color);border-radius:24px;background:var(--modal-bg);box-shadow:0 20px 60px rgba(0,0,0,.38);padding:18px 24px;display:none;align-items:center;gap:18px;font-size:1.08rem}
-        .jd-reconnect-card.open{display:flex}.jd-reconnect-card svg{width:30px;height:30px;flex:0 0 30px}.jd-reconnect-spinner{margin-left:auto;width:42px;height:42px;border:5px solid rgba(148,163,184,.28);border-top-color:var(--text-main);border-radius:50%;animation:jdReconnectSpin .8s linear infinite}
+        .jd-reconnect-card{position:fixed;z-index:12000;left:50%;top:50%;transform:translate(-50%,-50%);width:min(650px,calc(100vw - 32px));border:1px solid var(--border-color);border-radius:24px;background:var(--modal-bg);color:var(--text-main);box-shadow:0 20px 60px rgba(0,0,0,.38);padding:18px 24px;display:none;align-items:center;gap:18px;font-size:1.08rem;line-height:1.5}
+        .jd-reconnect-card.open{display:flex}.jd-reconnect-icon{position:relative;width:34px;height:34px;flex:0 0 34px}.jd-reconnect-icon svg{position:absolute;inset:0;width:34px;height:34px}.jd-reconnect-icon svg.jd-reconnect-x{inset:auto;right:-2px;bottom:-2px;width:15px;height:15px;background:var(--modal-bg);stroke-width:3}.jd-reconnect-spinner{margin-left:auto;width:42px;height:42px;flex:0 0 42px;border:5px solid rgba(148,163,184,.28);border-top-color:var(--text-main);border-radius:50%;animation:jdReconnectSpin .8s linear infinite}
         @keyframes jdReconnectSpin{to{transform:rotate(360deg)}}
         .bot-disclaimer { font-size: .66rem; color: var(--text-muted); opacity: .68; margin: 4px 2px 0; }
 
@@ -5085,6 +5085,12 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
           <button type="button" class="app-alert-ok" onclick="closeModernConfirm(true)">Confirm</button>
         </div>
       </div>
+    </div>
+
+    <div class="jd-reconnect-card" id="jdReconnectCard" role="status" aria-live="assertive" aria-atomic="true">
+      <span class="jd-reconnect-icon" aria-hidden="true"><i data-lucide="globe-2"></i><i class="jd-reconnect-x" data-lucide="x"></i></span>
+      <span><strong>Network connection lost.</strong><br>Attempting to reconnect…</span>
+      <span class="jd-reconnect-spinner" aria-hidden="true"></span>
     </div>
 
     <div class="image-lightbox-overlay" id="imageLightbox" onclick="closeLightbox()"><img class="image-lightbox-content" id="lightboxImg" alt="Enlarged view"></div>
@@ -11052,7 +11058,7 @@ ${m.text || ''}
             if (/^(javascript|js)$/i.test(language)) {
                 const scriptCode = source.replace(new RegExp('</'+'script', 'gi'), '<\\/script');
                 const closeScript = '</' + 'script>';
-                return `<!DOCTYPE html><html><head>${head}<style>body{font-family:system-ui,sans-serif;padding:16px;color:#111;background:#fff}#out{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><pre id="out"></pre><script>const out=document.getElementById('out');const write=(...a)=>{out.textContent+=a.map(v=>typeof v==='string'?v:JSON.stringify(v,null,2)).join(' ')+'\\n'};console.log=write;console.warn=write;console.error=write;window.onerror=(m)=>write('Error:',m);try{${scriptCode}}catch(e){write('Error:',e?.stack||e?.message||String(e))}${closeScript}    <div class="jd-reconnect-card" id="jdReconnectCard" role="status" aria-live="assertive"><i data-lucide="globe-2"></i><span><strong>Network connection lost.</strong><br>Attempting to reconnect…</span><span class="jd-reconnect-spinner" aria-hidden="true"></span></div>
+                return `<!DOCTYPE html><html><head>${head}<style>body{font-family:system-ui,sans-serif;padding:16px;color:#111;background:#fff}#out{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body><pre id="out"></pre><script>const out=document.getElementById('out');const write=(...a)=>{out.textContent+=a.map(v=>typeof v==='string'?v:JSON.stringify(v,null,2)).join(' ')+'\\n'};console.log=write;console.warn=write;console.error=write;window.onerror=(m)=>write('Error:',m);try{${scriptCode}}catch(e){write('Error:',e?.stack||e?.message||String(e))}${closeScript}</body></html>`;
 </body></html>`;
             }
             if (/^css$/i.test(language)) {

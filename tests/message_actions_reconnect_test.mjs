@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';
 const h=fs.readFileSync('index.html','utf8');
 for(const x of ["shareAssistantMessage(this)","toggleMessageMore(this,event)","Branch in new chat","Use Thinking","Search the web","navigator.share","setResponseEffort('High'","setLiveWebSearchEnabled(true)","Network connection lost.","Attempting to reconnect","window.addEventListener('offline'","setReconnectVisible(true)"])assert(h.includes(x),x);
+const reconnectCard=h.indexOf('id="jdReconnectCard"');
+const runnablePreview=h.slice(h.indexOf('function buildRunnableSnippetDocument'),h.indexOf('function ',h.indexOf('function buildRunnableSnippetDocument')+10));
+assert(reconnectCard>=0&&reconnectCard< h.indexOf('<script>\n        function showModernAlert'), 'reconnect card must exist in the real app document outside generated previews');
+assert(!runnablePreview.includes('id="jdReconnectCard"'), 'reconnect card must not be injected into user JavaScript previews');
+assert(h.includes('.jd-reconnect-card.open{display:flex}'), 'reconnect card must have a visible online recovery state');
 const actions=h.slice(h.indexOf('function botActionsHTML'),h.indexOf('function assistantReadAloudButtonHTML'));
 for(const icon of ['copy','thumbs-up','thumbs-down','share-2','more-vertical'])assert(actions.includes(icon),icon);
 console.log('PASS: response toolbar/menu actions and reconnect UI are wired to real handlers.');
