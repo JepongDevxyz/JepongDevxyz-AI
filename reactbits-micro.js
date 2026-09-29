@@ -349,6 +349,7 @@
     }
     function sendFromRelease(){
       if(state.armed){state.power=clamp((Math.min(Math.hypot(state.x,state.y)/ARM_AT,POWER_CAP)-1)/(POWER_CAP-1),0,1);state.dotPending=true;state.dotTimer=setTimeout(launchDots,150);}
+      else{state.power=0;state.dotPending=true;state.dotTimer=setTimeout(launchDots,0);}
       state.skipClick=true;state.skipTimer=setTimeout(function(){state.skipClick=false;},700);
       requestAnimationFrame(function(){if(typeof window.handleMainAction==='function')window.handleMainAction();});
     }

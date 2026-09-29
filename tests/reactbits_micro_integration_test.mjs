@@ -94,11 +94,15 @@ assert.match(css, /rb-thought-shimmer 1\.8s/,
 assert.match(js, /var ARM_AT=48;/, 'Sling Button arm distance must match ReactBits default');
 assert.match(js, /var MAX_PULL=160;/, 'Sling Button max pull must match ReactBits default');
 assert.match(css, /--sl-size:56px/, 'Sling Button desktop size must match ReactBits default');
-assert.match(css, /--sl-size:44px/, 'Sling Button mobile size must be compact in the composer');
+assert.match(css, /\.rb-sling-wrap\{--sl-size:56px/,
+ 'Sling Button must return to the prior 56px mobile face size');
 assert.match(css, /--sl-pad:var\(--pb-ink\)/, 'Sling pad colour must follow the current theme');
 assert.match(css, /--sl-icon:var\(--pb-bg\)/, 'Sling icon colour must follow the current theme');
 assert.match(js, /FINGER_MAX=3000/,'Sling Button must preserve the reference velocity cap');
 assert.match(js, /DOT_MS=300/,'Sling Button particles must keep the reference flight duration');
+assert.match(js, /function launchDots\(/, 'Sling Button must provide its 14-particle splash');
+assert.match(js, /else\{state\.power=0;state\.dotPending=true;state\.dotTimer=setTimeout\(launchDots,0\);\}/,
+ 'Sling Button ordinary send tap must trigger the particle splash');
 assert(html.includes("lattice.setAttribute('aria-label',success ? 'Done' : 'Failed')"),
  'Lattice Loader accessible status must settle truthfully');
 assert(html.includes("thoughtLine?.setAttribute('data-working','false')"),
