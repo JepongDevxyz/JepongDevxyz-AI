@@ -9380,7 +9380,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                     safeDetail=safeDetail.replace(/credential\s+\d+\s*\/\s*\d+/gi,'configured API key').slice(0,110);
                 }
                 // Provider lifecycle diagnostics stay out of the user-facing task timeline.
-                return {...e,label:safeLabel,detail:safeDetail,visibility:'details'};
+                return {...e,label:safeLabel,detail:safeDetail,visibility:'primary'};
             }
             if(id==='thinking'){
                 return {...e,label:label||'Thinking',kind:kind||'process'};
@@ -9636,8 +9636,8 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const id=String(value.id||value.dataset?.activityId||'');
             const kind=String(value.kind||value.dataset?.activityKind||'').toLowerCase();
             const visibility=value.visibility||value.dataset?.activityVisibility||'';
-            return visibility==='details'||kind==='provider'||kind==='route'||
-                /^provider-/i.test(id)||/^attachment-media-(?:selected|bridge|cloudflare)$/i.test(id);
+            return visibility==='details'||kind==='route'||
+                (/^provider-/i.test(id)&&kind!=='provider')||/^attachment-media-(?:selected|bridge|cloudflare)$/i.test(id);
         }
         function syncJdThoughts(){
             const overlay=document.getElementById('jdThoughtsOverlay');
@@ -9849,7 +9849,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
         function activityEventUsesVisibleTimeline(evt={}){
             const id=activityPlaybackId(evt);
             const kind=String(evt.kind||'process').toLowerCase();
-            if(evt.visibility==='details'||kind==='provider'||kind==='route')return false;
+            if(evt.visibility==='details'||kind==='route')return false;
             if(/^attachment-media-(?:selected|bridge|cloudflare)$/.test(id))return false;
             return true;
         }
@@ -10022,7 +10022,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const state = normalized.state || 'running';
             const kind = normalized.kind || 'process';
             const detailsOnly = normalized.visibility==='details' ||
-                kind==='provider' || kind==='route' ||
+                kind==='route' ||
                 /^attachment-media-(?:selected|bridge|cloudflare)$/.test(id);
             const iconless = id==='thinking' || ['process','build','generate','deploy','api'].includes(String(kind).toLowerCase());
             // A new operation does NOT prove the previous one completed.

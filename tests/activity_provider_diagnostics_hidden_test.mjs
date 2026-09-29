@@ -7,28 +7,29 @@ const section=(start,end)=>{
   assert(a>=0&&b>a,`Missing source section: ${start}`);
   return html.slice(a,b);
 };
+const normalizer=section('function normalizeActivityEventForUI(evt = {}) {','function shouldShowAIActivity(');
+const normalize=new Function('sanitizeUiErrorMessage',normalizer+'\nreturn normalizeActivityEventForUI;')(value=>String(value||''));
+const visible=section('function activityEventUsesVisibleTimeline(evt={}){','function resolveActivityPlaybackWaiters(');
+const usesVisible=new Function('activityPlaybackId',visible+'\nreturn activityEventUsesVisibleTimeline;')(event=>String(event.id||'event').replace(/[^a-zA-Z0-9_-]/g,'-'));
+const provider=normalize({id:'provider-codecraft',kind:'provider',state:'running',label:'Connecting to CodeCraft API'});
+assert.equal(provider.label,'Connecting to CodeCraft API');
+assert.notEqual(provider.visibility,'details','Provider connection status must not be marked private');
+assert.equal(usesVisible(provider),true,'Provider connection status must be shown in the live activity timeline');
+assert.equal(usesVisible(normalize({id:'provider-codecraft',kind:'provider',state:'completed',label:'CodeCraft API connected'})),true,
+  'Provider connected status must remain visible');
+assert.equal(usesVisible({id:'router',kind:'route',visibility:'details'}),false,'Router internals stay hidden');
+assert.equal(usesVisible({id:'response-audit',kind:'test',visibility:'details'}),false,'Internal audit details stay hidden');
 
-const helperSource=section('function isPrivateActivityDetails(', 'function syncJdThoughts(');
-const isPrivate=new Function(helperSource+'\nreturn isPrivateActivityDetails;')();
-for(const row of [
-  {id:'provider-codecraft',kind:'provider',visibility:'details'},
-  {id:'router',kind:'route',visibility:'details'},
-  {id:'response-audit',kind:'test',visibility:'details'},
-  {id:'provider-codecraft',kind:'provider'}
-])assert.equal(isPrivate(row),true,`Internal connection diagnostic should stay hidden: ${row.id}`);
-for(const row of [
-  {id:'task-plan',kind:'process',visibility:'primary'},
-  {id:'web-search',kind:'web',visibility:'primary'}
-])assert.equal(isPrivate(row),false,`User-facing activity should stay visible: ${row.id}`);
-
-const thoughts=section('function syncJdThoughts(){','function syncThoughtLineSteps(');
-assert(thoughts.includes('isPrivateActivityDetails({'),
-  'Thoughts panel must not unhide internal connection diagnostics');
-const snapshot=section('function captureJdActivitySnapshot(allowLive=false){','function renderJdStoredActivity(');
-assert(snapshot.includes('isPrivateActivityDetails({'),
-  'Saved assistant activity snapshots must exclude internal connection diagnostics');
-const stored=section('function renderJdStoredActivity(saved){','recoverInterruptedGenerationDraft();');
-assert(stored.includes('isPrivateActivityDetails('),
-  'Previously saved conversations must filter legacy provider and router statuses');
-
-console.log('PASS: provider connection diagnostics stay hidden from live Thoughts and current/legacy saved activity.');
+const helper=section('function isPrivateActivityDetails(', 'function syncJdThoughts(');
+const isPrivate=new Function(helper+'\nreturn isPrivateActivityDetails;')();
+assert.equal(isPrivate({id:'provider-codecraft',kind:'provider'}),false,'Provider status must be retained in Thoughts and saved activity');
+assert.equal(isPrivate({id:'provider-codecraft',kind:'provider',visibility:'primary'}),false,'Visible provider rows must persist');
+assert.equal(isPrivate({id:'router',kind:'route'}),true,'Router details stay private');
+assert.equal(isPrivate({id:'response-audit',kind:'test',visibility:'details'}),true,'Other explicit details stay private');
+for(const marker of ['isPrivateActivityDetails({']){
+  assert(section('function syncJdThoughts(){','function syncThoughtLineSteps(').includes(marker),'Thoughts should continue filtering only private rows');
+  assert(section('function captureJdActivitySnapshot(allowLive=false){','function renderJdStoredActivity(').includes(marker),'Snapshots should continue filtering only private rows');
+}
+assert(section('function renderJdStoredActivity(saved){','recoverInterruptedGenerationDraft();').includes('isPrivateActivityDetails('),
+  'Saved sessions should filter private details but retain provider rows');
+console.log('PASS: provider connection and retry statuses are visible live and retained in Thoughts/saved activity; internal details remain hidden.');
