@@ -78,6 +78,10 @@ assert(js.includes('animatePromptGlyph'),'ReactBits send morph runtime missing')
 assert(js.includes('startPromptSparks'),'ReactBits max-effort spark runtime missing');
 assert(js.includes("bar.toggleAttribute('data-busy',busy)"),'ReactBits boolean busy attribute contract missing');
 assert(html.includes('id="mainActionSling"'),'Sling Button wrapper missing');
+assert.equal((html.match(/class="rb-sling-dot"/g)||[]).length,14,
+ 'Sling Button must render the exact default 14 particle burst');
+assert(html.includes('class="rb-sling-fx"') && html.includes('class="rb-sling-arc"'),
+ 'Sling Button must render the reference tension ring and loading arc');
 assert(css.includes('.rb-sling-band'),'Sling Button pull-band styling missing');
 assert(js.includes('function bindSling'),'Sling Button pointer runtime missing');
 assert(js.includes("window.handleMainAction==='function'"),'Sling Button must reuse the real send/stop handler');
@@ -89,7 +93,12 @@ assert.match(css, /rb-thought-shimmer 1\.8s/,
  'Thought Line must keep its default working-label shimmer');
 assert.match(js, /var ARM_AT=48;/, 'Sling Button arm distance must match ReactBits default');
 assert.match(js, /var MAX_PULL=160;/, 'Sling Button max pull must match ReactBits default');
-assert.match(css, /width:56px;height:56px/, 'Sling Button seat must match ReactBits default size');
+assert.match(css, /--sl-size:56px/, 'Sling Button desktop size must match ReactBits default');
+assert.match(css, /--sl-size:44px/, 'Sling Button mobile size must be compact in the composer');
+assert.match(css, /--sl-pad:var\(--pb-ink\)/, 'Sling pad colour must follow the current theme');
+assert.match(css, /--sl-icon:var\(--pb-bg\)/, 'Sling icon colour must follow the current theme');
+assert.match(js, /FINGER_MAX=3000/,'Sling Button must preserve the reference velocity cap');
+assert.match(js, /DOT_MS=300/,'Sling Button particles must keep the reference flight duration');
 assert(html.includes("lattice.setAttribute('aria-label',success ? 'Done' : 'Failed')"),
  'Lattice Loader accessible status must settle truthfully');
 assert(html.includes("thoughtLine?.setAttribute('data-working','false')"),

@@ -258,7 +258,9 @@ const sling=JSON.parse(await evaluate(`(async()=>{
     bubbles:true,cancelable:true,pointerId:id,clientX:x,clientY:100,button:0,isPrimary:true,pointerType:'touch'
   }));
   const click=()=>button.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}));
-  const size=getComputedStyle(button).width;
+  const size=button.getBoundingClientRect().width;
+  const dots=wrap.querySelectorAll('.rb-sling-dot').length;
+  const hasArc=!!wrap.querySelector('.rb-sling-arc')&&!!wrap.querySelector('.rb-sling-band--hot');
   fire('pointerdown',41,100);fire('pointerup',41,100);click();
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   const tapCount=calls.length;
@@ -267,7 +269,7 @@ const sling=JSON.parse(await evaluate(`(async()=>{
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   const shortPullCount=calls.length;
   calls.length=0;
-  fire('pointerdown',43,100);fire('pointermove',43,160);fire('pointerup',43,160);click();
+  fire('pointerdown',43,100);fire('pointermove',43,180);fire('pointerup',43,180);click();
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   const loadedPullCount=calls.length;
   calls.length=0;
@@ -277,9 +279,11 @@ const sling=JSON.parse(await evaluate(`(async()=>{
   const busyCalls=[...calls];
   updateGenerationActionButton(false,false);
   input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));
-  return JSON.stringify({size,tapCount,shortPullCount,loadedPullCount,busyCalls,band:wrap.querySelector('.rb-sling-band')?.style.width||''});
+  return JSON.stringify({size,dots,hasArc,tapCount,shortPullCount,loadedPullCount,busyCalls,band:wrap.querySelector('.rb-sling-band')?.getAttribute('d')||''});
 })()`));
-assert.equal(sling.size,'56px','Sling Button hit target must match the ReactBits default diameter');
+assert.equal(sling.size,56,'Desktop Sling Button hit target must match the ReactBits default diameter');
+assert.equal(sling.dots,14,'Sling Button must render the reference particle count');
+assert.equal(sling.hasArc,true,'Sling Button must include its tension arc and hot band');
 assert.equal(sling.tapCount,1,'Sling Button tap must send exactly once');
 assert.equal(sling.shortPullCount,0,'under-threshold drag must not send');
 assert.equal(sling.loadedPullCount,1,'loaded Sling Button release must send exactly once');

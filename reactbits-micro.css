@@ -1004,47 +1004,48 @@
 .ai-activity-card.complete .thought-line__text,.ai-activity-card.error .thought-line__text{animation:none;opacity:1}
 .thought-line[data-working="false"] .thought-line__text{animation:none;background:none;color:var(--activity-muted)}
 
-/* Compact but real Sling interaction: tap sends, pull past threshold and release sends,
-   under-threshold drags spring back, and busy/Stop remains a normal click target. */
+/* ReactBits Sling Button geometry, colors follow the active PromptBar theme. */
 .rb-sling-wrap{
-  --sling-x:0px;--sling-y:0px;--sling-distance:0px;--sling-angle:0deg;
-  position:relative;display:grid;place-items:center;flex:0 0 56px;width:56px;height:56px;
+  --sl-size:56px;--sl-svg:80px;--sl-pad:var(--pb-ink);--sl-icon:var(--pb-bg);
+  --sl-accent:var(--pb-ink);--sl-well:var(--pb-bg);--sl-band:color-mix(in srgb,var(--pb-ink) 32%,transparent);
+  --sl-stroke:3px;--sl-dot:8px;--sling-x:0px;--sling-y:0px;
+  position:relative;display:grid;place-items:center;flex:0 0 var(--sl-size);width:var(--sl-size);height:var(--sl-size);
   overflow:visible;isolation:isolate;z-index:4;touch-action:none
 }
-.rb-sling-band{
-  position:absolute;left:50%;top:50%;width:var(--sling-distance);height:3px;
-  transform-origin:0 50%;transform:rotate(var(--sling-angle));border-radius:999px;
-  background:color-mix(in srgb,var(--pb-ink) 46%,transparent);opacity:0;pointer-events:none;
-  transition:opacity .12s ease,background-color .12s ease
+.rb-sling-fx{
+  position:absolute;top:50%;left:50%;width:var(--sl-svg);height:var(--sl-svg);
+  margin:calc(var(--sl-svg)/-2) 0 0 calc(var(--sl-svg)/-2);
+  overflow:visible;pointer-events:none;shape-rendering:geometricPrecision
 }
-.rb-sling-wrap[data-dragging] .rb-sling-band{opacity:.8}
-.rb-sling-wrap[data-loaded] .rb-sling-band{background:var(--pb-ink);opacity:1}
+.rb-sling-well{fill:var(--sl-well);transition:fill 200ms ease}
+.rb-sling-wrap[data-sent] .rb-sling-well{fill:var(--sl-accent)}
+.rb-sling-band{fill:none;stroke:var(--sl-band);stroke-width:var(--sl-stroke);stroke-linecap:round;transition:stroke-width 160ms var(--rb-ease-out)}
+.rb-sling-band--hot{stroke:var(--sl-accent)}
+.rb-sling-wrap[data-loaded] .rb-sling-band,.rb-sling-wrap[data-loaded] .rb-sling-arc{stroke-width:calc(var(--sl-stroke)*1.5)}
+.rb-sling-arc{fill:none;stroke:var(--sl-accent);stroke-width:var(--sl-stroke);stroke-linecap:butt;transition:stroke-width 160ms var(--rb-ease-out)}
+.rb-sling-move{position:absolute;inset:0;transform:translate(var(--sling-x),var(--sling-y));will-change:transform}
 .prompt-bar__send.rb-sling-button{
-  position:absolute;left:50%;top:50%;overflow:visible;isolation:isolate;border-radius:999px;
-  width:56px;height:56px;background:var(--pb-ink);color:var(--pb-bg);
-  transform:translate(calc(-50% + var(--sling-x)),calc(-50% + var(--sling-y)));
-  transition:transform .26s cubic-bezier(.2,.9,.2,1),box-shadow .24s ease,background-color .2s ease;
-  will-change:transform;touch-action:none
+  position:relative;display:block;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:50%;
+  background:none;color:var(--sl-icon);cursor:grab;outline:none;touch-action:none;user-select:none;
+  -webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent
 }
-.rb-sling-wrap[data-dragging] .prompt-bar__send.rb-sling-button{transition:none}
-.rb-sling-wrap[data-loaded] .prompt-bar__send.rb-sling-button{box-shadow:0 0 0 4px color-mix(in srgb,var(--pb-ink) 12%,transparent)}
-.prompt-bar__send.rb-sling-button::before{
-  content:"";position:absolute;inset:-4px;border-radius:inherit;
-  border:1px solid color-mix(in srgb,var(--pb-ink) 24%,transparent);
-  opacity:0;transform:scale(.72);transition:opacity .18s ease,transform .28s cubic-bezier(.2,.8,.2,1);
-  pointer-events:none
-}
-.prompt-bar__send.rb-sling-button:hover::before,.prompt-bar__send.rb-sling-button:focus-visible::before{opacity:1;transform:scale(1)}
-.prompt-bar__send.rb-sling-button .prompt-bar__glyph{transition:transform .34s cubic-bezier(.2,.9,.2,1)}
-.prompt-bar__send.rb-sling-button:hover .prompt-bar__glyph{transform:translateY(-1px) rotate(-8deg) scale(1.06)}
-.rb-sling-wrap[data-loaded] .prompt-bar__glyph{transform:rotate(-12deg) scale(.94)}
-.rb-sling-flight{
-  position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;
-  border-radius:50%;background:var(--pb-ink);pointer-events:none;z-index:0
-}
-.rb-sling-wrap[data-busy] .rb-sling-band{display:none}
-.rb-sling-wrap:has(.prompt-bar__send:disabled){opacity:.72}
+.prompt-bar__send.rb-sling-button::after{content:"";position:absolute;inset:-6px;border-radius:50%}
+.prompt-bar__send.rb-sling-button[data-held]{cursor:grabbing}
+.rb-sling-face{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:var(--sl-pad);color:var(--sl-icon);transition:transform 160ms var(--rb-ease-out)}
+.prompt-bar__send.rb-sling-button[data-held] .rb-sling-face{transform:scale(.97)}
+.rb-sling-wrap[data-loaded] .rb-sling-face{transform:scale(1.04)}
+.rb-sling-wrap[data-disabled] .rb-sling-face{opacity:.5}
+.rb-sling-wrap[data-disabled]{--sl-pad:color-mix(in srgb,var(--pb-ink) 12%,var(--pb-bg));--sl-icon:color-mix(in srgb,var(--pb-ink) 55%,var(--pb-bg))}
+body.theme-light #promptBar .rb-sling-wrap[data-disabled]{--sl-pad:#ececf0;--sl-icon:#55555d}
+body.theme-light #promptBar .rb-sling-wrap[data-disabled] .rb-sling-face{opacity:1}
+.rb-sling-wrap[data-disabled] .rb-sling-button{cursor:not-allowed}
+@media(hover:hover) and (pointer:fine){.rb-sling-wrap:not([data-dragging]):not([data-disabled]) .rb-sling-button:hover .rb-sling-face{transform:scale(1.02)}}
+.rb-sling-button .prompt-bar__glyph{width:calc(var(--sl-size)*.4);height:calc(var(--sl-size)*.4);transition:transform 360ms var(--rb-ease-out)}
+.rb-sling-dots{position:absolute;inset:0;pointer-events:none}
+.rb-sling-dot{position:absolute;top:50%;left:50%;width:var(--sl-dot);height:var(--sl-dot);margin:calc(var(--sl-dot)/-2) 0 0 calc(var(--sl-dot)/-2);border-radius:50%;background:var(--sl-accent);opacity:0;pointer-events:none}
+.rb-sling-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media(max-width:520px){.rb-sling-wrap{--sl-size:44px;--sl-svg:68px;--sl-dot:6px}}
 @media(prefers-reduced-motion:reduce){
   .rb-lattice-loader>i,.thought-line__text{animation:none!important;background:none!important;color:inherit!important}
-  .prompt-bar__send.rb-sling-button,.prompt-bar__send.rb-sling-button::before,.prompt-bar__send.rb-sling-button .prompt-bar__glyph{transition:none!important}
+  .rb-sling-face{transform:none!important;transition:none!important}
 }
