@@ -9953,6 +9953,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             const list = card.querySelector('#aiActivityList');
             const summary = card.querySelector('#aiActivitySummary');
             const lattice = card.querySelector('#aiActivityLattice');
+            const thoughtLine = card.querySelector('.thought-line');
             const timer = card.querySelector('#aiActivityTimer');
             const elapsed = elapsedMs ?? Math.max(1, Date.now() - Number(card.dataset.startedAt || Date.now()));
             completeRunningActivityRows('',success?'completed':'warning');
@@ -9965,7 +9966,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if (summary) summary.textContent = success ? 'Thought for' : 'Stopped because of an error';
             if (timer) timer.textContent = formatJdActivityElapsed(elapsed);
             syncJdThoughts();
-            if (lattice) lattice.dataset.status = success ? 'done' : 'error';
+            if (lattice) {
+                lattice.dataset.status = success ? 'done' : 'error';
+                lattice.setAttribute('aria-label',success ? 'Done' : 'Failed');
+            }
+            thoughtLine?.setAttribute('data-working','false');
             refreshLucideIcons(card);
             if (typeof setLivePetWorking === 'function') setLivePetWorking(false);
 

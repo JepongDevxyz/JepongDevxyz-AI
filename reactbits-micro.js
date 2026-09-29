@@ -279,8 +279,9 @@
     action.dataset.rbSlingBound='1';
 
     var state={active:false,pointerId:null,startX:0,startY:0,dx:0,dy:0,distance:0,suppressClickUntil:0};
-    var ARM_AT=42;
-    var MAX_PULL=104;
+    // ReactBits Sling Button defaults: arm at 48px, give through 160px.
+    var ARM_AT=48;
+    var MAX_PULL=160;
     var TAP_LIMIT=9;
 
     function applyPull(dx,dy){
@@ -312,7 +313,7 @@
       wrap.appendChild(dot);
       var distance=Math.hypot(dx,dy)||1;
       var ux=dx/distance,uy=dy/distance;
-      var travel=Math.max(64,Math.min(120,distance*1.25));
+      var travel=120;
       if(dot.animate && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
         var anim=dot.animate([
           {transform:'translate(0px,0px) scale(.9)',opacity:1},

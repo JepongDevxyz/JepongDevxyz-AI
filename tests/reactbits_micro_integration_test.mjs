@@ -79,6 +79,19 @@ assert(html.includes('id="mainActionSling"'),'Sling Button wrapper missing');
 assert(css.includes('.rb-sling-band'),'Sling Button pull-band styling missing');
 assert(js.includes('function bindSling'),'Sling Button pointer runtime missing');
 assert(js.includes("window.handleMainAction==='function'"),'Sling Button must reuse the real send/stop handler');
+assert.match(css, /grid-template-columns:repeat\(3,6px\);grid-template-rows:repeat\(3,6px\);gap:2px/,
+ 'Lattice Loader must use ReactBits 6px cells and 2px seams');
+assert.match(css, /animation:rb-lattice-pulse \.81s/,
+ 'Lattice Loader orbit must advance at ReactBits 90ms steps');
+assert.match(css, /rb-thought-shimmer 1\.8s/,
+ 'Thought Line must keep its default working-label shimmer');
+assert.match(js, /var ARM_AT=48;/, 'Sling Button arm distance must match ReactBits default');
+assert.match(js, /var MAX_PULL=160;/, 'Sling Button max pull must match ReactBits default');
+assert.match(css, /width:56px;height:56px/, 'Sling Button seat must match ReactBits default size');
+assert(html.includes("lattice.setAttribute('aria-label',success ? 'Done' : 'Failed')"),
+ 'Lattice Loader accessible status must settle truthfully');
+assert(html.includes("thoughtLine?.setAttribute('data-working','false')"),
+ 'Thought Line working animation must settle with the activity');
 assert(!css.includes('.thought-line::after'),'Thought Line must not render the unwanted horizontal divider');
 assert(html.includes('function updateGenerationActionButton'),'send/stop state function must remain');
 assert(html.includes('function handleMainAction'),'send/stop handler must remain');

@@ -966,19 +966,24 @@
 /* Additive only: the existing real Activity/status timeline remains the source of truth. */
 .rb-lattice-loader{
   --rb-lattice:currentColor;position:relative;display:inline-grid;
-  grid-template-columns:repeat(3,4px);grid-template-rows:repeat(3,4px);gap:3px;
-  width:18px;height:18px;place-content:center;color:var(--activity-muted);
-  vertical-align:middle;flex:0 0 18px
+  grid-template-columns:repeat(3,6px);grid-template-rows:repeat(3,6px);gap:2px;
+  width:22px;height:22px;place-content:center;color:var(--activity-muted);
+  vertical-align:middle;flex:0 0 22px
 }
 .rb-lattice-loader>i{
-  width:4px;height:4px;border-radius:50%;background:var(--rb-lattice);
-  opacity:.15;animation:rb-lattice-pulse 1.08s ease-in-out infinite
+  width:6px;height:6px;border-radius:50%;background:var(--rb-lattice);
+  opacity:.15;animation:rb-lattice-pulse .81s ease-in-out infinite
 }
-.rb-lattice-loader>i:nth-child(2),.rb-lattice-loader>i:nth-child(4){animation-delay:.08s}
-.rb-lattice-loader>i:nth-child(3),.rb-lattice-loader>i:nth-child(5),.rb-lattice-loader>i:nth-child(7){animation-delay:.16s}
-.rb-lattice-loader>i:nth-child(6),.rb-lattice-loader>i:nth-child(8){animation-delay:.24s}
-.rb-lattice-loader>i:nth-child(9){animation-delay:.32s}
-@keyframes rb-lattice-pulse{0%,100%{opacity:.15;transform:scale(.68)}48%{opacity:1;transform:scale(1.06)}}
+.rb-lattice-loader>i:nth-child(1){animation-delay:0s}
+.rb-lattice-loader>i:nth-child(2){animation-delay:.09s}
+.rb-lattice-loader>i:nth-child(3){animation-delay:.18s}
+.rb-lattice-loader>i:nth-child(4){animation-delay:.63s}
+.rb-lattice-loader>i:nth-child(5){animation-delay:.36s}
+.rb-lattice-loader>i:nth-child(6){animation-delay:.27s}
+.rb-lattice-loader>i:nth-child(7){animation-delay:.54s}
+.rb-lattice-loader>i:nth-child(8){animation-delay:.45s}
+.rb-lattice-loader>i:nth-child(9){animation-delay:.72s}
+@keyframes rb-lattice-pulse{0%,100%{opacity:.15;transform:scale(.68)}38%{opacity:1;transform:scale(1)}65%{opacity:.15;transform:scale(.68)}}
 .rb-lattice-loader[data-status="done"]>i,.rb-lattice-loader[data-status="error"]>i{animation:none;opacity:0;transform:scale(.2)}
 .rb-lattice-loader[data-status="done"]::after,.rb-lattice-loader[data-status="error"]::after{
   position:absolute;inset:0;display:grid;place-items:center;font-size:16px;font-weight:700;line-height:1
@@ -988,19 +993,26 @@
 
 /* No horizontal separator under Thinking. Motion belongs to the ThoughtLine text itself. */
 .thought-line{position:relative}
-.thought-line[data-working="true"] .thought-line__text{animation:rb-thought-breathe 1.6s ease-in-out infinite}
+.thought-line[data-working="true"] .thought-line__text{
+  color:transparent;
+  background:linear-gradient(105deg,var(--activity-muted) 0%,var(--activity-muted) 38%,color-mix(in srgb,var(--activity-muted) 28%,transparent) 48%,var(--activity-muted) 58%,var(--activity-muted) 100%);
+  background-size:220% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;
+  animation:rb-thought-breathe 1.6s ease-in-out infinite,rb-thought-shimmer 1.8s linear infinite
+}
+@keyframes rb-thought-shimmer{to{background-position:-120% 0}}
 @keyframes rb-thought-breathe{0%,100%{opacity:.58}50%{opacity:1}}
 .ai-activity-card.complete .thought-line__text,.ai-activity-card.error .thought-line__text{animation:none;opacity:1}
+.thought-line[data-working="false"] .thought-line__text{animation:none;background:none;color:var(--activity-muted)}
 
 /* Compact but real Sling interaction: tap sends, pull past threshold and release sends,
    under-threshold drags spring back, and busy/Stop remains a normal click target. */
 .rb-sling-wrap{
   --sling-x:0px;--sling-y:0px;--sling-distance:0px;--sling-angle:0deg;
-  position:relative;display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;
+  position:relative;display:grid;place-items:center;flex:0 0 56px;width:56px;height:56px;
   overflow:visible;isolation:isolate;z-index:4;touch-action:none
 }
 .rb-sling-band{
-  position:absolute;left:50%;top:50%;width:var(--sling-distance);height:2px;
+  position:absolute;left:50%;top:50%;width:var(--sling-distance);height:3px;
   transform-origin:0 50%;transform:rotate(var(--sling-angle));border-radius:999px;
   background:color-mix(in srgb,var(--pb-ink) 46%,transparent);opacity:0;pointer-events:none;
   transition:opacity .12s ease,background-color .12s ease
@@ -1009,7 +1021,7 @@
 .rb-sling-wrap[data-loaded] .rb-sling-band{background:var(--pb-ink);opacity:1}
 .prompt-bar__send.rb-sling-button{
   position:absolute;left:50%;top:50%;overflow:visible;isolation:isolate;border-radius:999px;
-  width:32px;height:32px;background:var(--pb-ink);color:var(--pb-bg);
+  width:56px;height:56px;background:var(--pb-ink);color:var(--pb-bg);
   transform:translate(calc(-50% + var(--sling-x)),calc(-50% + var(--sling-y)));
   transition:transform .26s cubic-bezier(.2,.9,.2,1),box-shadow .24s ease,background-color .2s ease;
   will-change:transform;touch-action:none
@@ -1032,8 +1044,7 @@
 }
 .rb-sling-wrap[data-busy] .rb-sling-band{display:none}
 .rb-sling-wrap:has(.prompt-bar__send:disabled){opacity:.72}
-@media(max-width:420px){.rb-sling-wrap{flex-basis:36px;width:36px;height:36px}}
 @media(prefers-reduced-motion:reduce){
-  .rb-lattice-loader>i,.thought-line__text{animation:none!important}
+  .rb-lattice-loader>i,.thought-line__text{animation:none!important;background:none!important;color:inherit!important}
   .prompt-bar__send.rb-sling-button,.prompt-bar__send.rb-sling-button::before,.prompt-bar__send.rb-sling-button .prompt-bar__glyph{transition:none!important}
 }

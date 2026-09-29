@@ -131,11 +131,17 @@ const activity=JSON.parse(await evaluate(`(async()=>{
     primaryVisible:rows.filter(x=>getComputedStyle(x).display!=='none').map(x=>x.dataset.activityId)
   };
   finishAIIndicator(true,1200);
+  before.settled={
+    status:card.querySelector('#aiActivityLattice')?.dataset.status||'',
+    label:card.querySelector('#aiActivityLattice')?.getAttribute('aria-label')||'',
+    working:card.querySelector('.thought-line')?.dataset.working||''
+  };
   return JSON.stringify(before);
 })()`));
 assert.equal(activity.reference,true,'Reference Work class missing');
 assert.equal(activity.headerDisplay,'flex','Requested Lattice/Thought header must remain visible above the existing Activity timeline');
 assert.equal(activity.latticeCells,9,'Lattice Loader must render the full 3x3 grid');
+assert.deepEqual(activity.settled,{status:'done',label:'Done',working:'false'},'Lattice and Thought Line must settle with the activity result');
 assert.equal(activity.marginLeft,'14px');
 assert.equal(activity.marginRight,'12px');
 assert.equal(activity.labelFont,'15.5px');
@@ -237,6 +243,45 @@ assert.equal(prompt.effortLevels.slice(0,-1).some(x=>x.max),false,'Only Max may 
 assert(prompt.field&&prompt.controls&&prompt.chips,'ReactBits PromptBar hierarchy missing');
 assert.notEqual(prompt.stopPath,prompt.arrowBefore,'send glyph did not morph to stop');
 assert.equal(prompt.arrowAfter,prompt.arrowBefore,'send glyph did not morph back to arrow');
+
+// Sling Button follows the ReactBits defaults and routes each gesture once.
+const sling=JSON.parse(await evaluate(`(async()=>{
+  const input=document.getElementById('userInput');
+  const wrap=document.getElementById('mainActionSling');
+  const button=document.getElementById('mainActionBtn');
+  const calls=[];
+  input.value='sling smoke';input.dispatchEvent(new Event('input',{bubbles:true}));
+  window.handleMainAction=()=>calls.push(button.title||'Send');
+  const fire=(type,id,x)=>button.dispatchEvent(new PointerEvent(type,{
+    bubbles:true,cancelable:true,pointerId:id,clientX:x,clientY:100,button:0,isPrimary:true,pointerType:'touch'
+  }));
+  const click=()=>button.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}));
+  const size=getComputedStyle(button).width;
+  fire('pointerdown',41,100);fire('pointerup',41,100);click();
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  const tapCount=calls.length;
+  calls.length=0;
+  fire('pointerdown',42,100);fire('pointermove',42,130);fire('pointerup',42,130);click();
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  const shortPullCount=calls.length;
+  calls.length=0;
+  fire('pointerdown',43,100);fire('pointermove',43,160);fire('pointerup',43,160);click();
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  const loadedPullCount=calls.length;
+  calls.length=0;
+  updateGenerationActionButton(true,false);
+  fire('pointerdown',44,100);fire('pointermove',44,170);fire('pointerup',44,170);click();
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  const busyCalls=[...calls];
+  updateGenerationActionButton(false,false);
+  input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));
+  return JSON.stringify({size,tapCount,shortPullCount,loadedPullCount,busyCalls,band:wrap.querySelector('.rb-sling-band')?.style.width||''});
+})()`));
+assert.equal(sling.size,'56px','Sling Button hit target must match the ReactBits default diameter');
+assert.equal(sling.tapCount,1,'Sling Button tap must send exactly once');
+assert.equal(sling.shortPullCount,0,'under-threshold drag must not send');
+assert.equal(sling.loadedPullCount,1,'loaded Sling Button release must send exactly once');
+assert.deepEqual(sling.busyCalls,['Stop generating'],'busy Sling Button click must preserve the Stop handler');
 
 // Upload reference regression: selected files must stay visibly represented inside the PromptBar.
 const uploadChip=JSON.parse(await evaluate(`(()=>{
