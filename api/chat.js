@@ -1381,11 +1381,7 @@ function shouldUseDynamicActivityPlanner(message='', files=[]){
 
 function shouldRunPlannedActivityResearch(profile={},message='',webSearch=false,research=[]){
   if(!Array.isArray(research)||!research.length)return false;
-  if(webSearch===true)return true;
-  const kind=String(profile?.kind||'general');
-  const technical=['github','android','backend','deployment','web','app'].includes(kind);
-  if(!technical)return false;
-  return /\b(api|sdk|github|git|android|vercel|oauth|auth|authentication|library|framework|package|version|compatib|webhook|repository|commit|push|clone)\b/i.test(normalizeIntentText(message));
+  return webSearch===true;
 }
 
 function resultMatchesPlannedDomain(result={},domain=''){
@@ -1444,8 +1440,32 @@ async function runPlannedActivityResearch(blueprint={},emit,{profile={},message=
     activity(emit,id,domain?`Searching ${domain}`:'Searching the web','running','web',query.slice(0,120));
     const scopedQuery=domain?`${query} site:${domain}`:query;
     let results=[];
+    let usedPublicFallback=true;
+    let configuredAttempted=false;
     try{
-      results=await noKeyWebSearch(scopedQuery,null);
+      const outcome=await runConfiguredWebSearch(scopedQuery,{
+        env:process.env,fetchImpl:fetch,timeoutMs:7000,maxResults:5,isSafePublicUrl,relevantWebResults,
+        onProviderAttempt:({state,httpStatus,resultCount})=>{
+          if(state!=='unconfigured')configuredAttempted=true;
+          const label=state==='unconfigured'
+            ?'No configured Web Search API found • checking public sources'
+            :state==='completed'
+              ?`Found ${resultCount} relevant results`
+              :state==='warning'
+                ?`Web Search API unavailable or returned no relevant results${httpStatus?` • HTTP ${httpStatus}`:''} • trying another source`
+                :'Searching the web';
+          activity(emit,id,label,state==='unconfigured'?'running':state,'web',domain||query.slice(0,120));
+        }
+      });
+      results=outcome.results;
+      if(outcome.provider)usedPublicFallback=false;
+      if(!results.length){
+        const reason=configuredAttempted
+          ?'configured Web Search APIs returned no usable results'
+          :'no Web Search API is configured';
+        results=await noKeyWebSearch(scopedQuery,null,{fallbackReason:reason});
+        usedPublicFallback=true;
+      }
     }catch(_){results=[]}
     if(domain){
       const official=results.filter(result=>resultMatchesPlannedDomain(result,domain));
@@ -1458,7 +1478,7 @@ async function runPlannedActivityResearch(blueprint={},emit,{profile={},message=
     }catch(_){enriched=selected}
     const usable=enriched.length?enriched:selected;
     if(usable.length){
-      activity(emit,id,`Searched ${usable.length} website${usable.length===1?'':'s'}`,'completed','web',domain||query.slice(0,100));
+      activity(emit,id,`Searched ${usable.length} website${usable.length===1?'':'s'}${usedPublicFallback?' • public fallback':''}`,'completed','web',domain||query.slice(0,100));
       const ctx=buildLiveSourceContext(usable);
       if(ctx)contexts.push(ctx);
     }else{
@@ -1816,6 +1836,7 @@ function shouldAutoResearchCore(message=''){
 
   // Topics whose answer is inherently live/current.
   if(/\b(news|breaking|weather|panahon|forecast|outage|price|presyo|exchange rate|stock price|crypto price|schedule today|availability today|live score|score today|election result|polling)\b/i.test(t))return true;
+  if(/\b(what time is it|current time|time now|anong oras|anong time|oras ngayon|time zone|timezone)\b/i.test(t))return true;
 
   const currentYear=new Date().getUTCFullYear();
   const years=[...t.matchAll(/\b((?:19|20)\d{2})\b/g)].map(m=>Number(m[1]));
@@ -3734,71 +3755,58 @@ async function performVerification(message='', files=[], emit){
   return context;
 }
 
+function shouldRunLiveWebSearch(message='',enabled=false,force=false){
+  return enabled===true && (force===true || !isSimpleCasualMessage(message));
+}
+
+function extractWeatherLocation(message=''){
+  const text=String(message||'').normalize('NFKC').replace(/\s+/g,' ').trim();
+  if(!text)return '';
+  const locationPattern='([\\p{L}\\p{M}0-9][\\p{L}\\p{M}0-9 .,’\'-]{0,98}?)';
+  const endings='(?:\\s+(?:right now|now|today|tonight|tomorrow|ngayon|mamaya|bukas|forecast|weather|panahon|ulan|init|bagyo|temperatura)\\b.*|[?.!,;:]*$)';
+  const candidates=[];
+  const afterWeather=new RegExp('(?:weather|panahon|forecast|temperatura|ulan|init|bagyo)(?:\\s+(?:like|today|tonight|now|ngayon|today|right now))*\\s+(?:in|at|for|near|around|sa|ng|nang|para sa)\\s+'+locationPattern+endings,'iu').exec(text);
+  if(afterWeather)candidates.push(afterWeather[1]);
+  const beforeWeather=new RegExp('(?:^|\\s)(?:in|at|for|near|around|sa|ng|nang|para sa)\\s+'+locationPattern+'\\s+(?:weather|panahon|forecast|temperatura|ulan|init|bagyo)\\b','iu').exec(text);
+  if(beforeWeather)candidates.push(beforeWeather[1]);
+  const locationFirst=new RegExp('^(.+?)\\s+(?:weather|panahon|forecast)\\b','iu').exec(text);
+  if(locationFirst)candidates.push(locationFirst[1]);
+  const ignored=/^(?:(?:what(?: is|'s)?(?: the)?|how(?:'s| is)?(?: the)?|anong|ano ang|kumusta ang|the|weather|panahon|forecast|ngayon|today|tonight|now|dito|diyan|there|here)\s*)+$/iu;
+  for(const raw of candidates){
+    const location=String(raw||'').replace(/[?.!,;:]+$/g,'').replace(/\s+/g,' ').trim()
+      .replace(/\s+(?:right now|now|today|tonight|tomorrow|ngayon|mamaya|bukas)$/iu,'').trim();
+    if(!location||ignored.test(location))continue;
+    return location.slice(0,100);
+  }
+  return '';
+}
+
 async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   if(!message)return '';
 
   const fast=Boolean(options.fast);
+  const forceWebSearch=options.forceWebSearch===true;
   const contextMessage=String(options.contextMessage||'').trim();
-  const contextualParts=splitContextualTaskMessage(contextMessage);
   const vagueFreshFollowUp=isVagueFreshnessFollowUp(message);
-  const anchoredLive=vagueFreshFollowUp && contextualParts.anchor
-    ? shouldAutoResearchCore(contextualParts.anchor) &&
-      /\b(search|research|news|weather|panahon|forecast|price|presyo|outage|live score|verify online|check online|find online|look up|hanapin|maghanap|tingnan online)\b/i.test(normalizeIntentText(contextualParts.anchor))
-    : false;
-
-  const explicitLive=(!vagueFreshFollowUp&&shouldAutoResearch(message)) ||
-    extractPublicUrl(message).length>0 || anchoredLive;
-  // Web Search being enabled is permission, not an instruction. A bare
-  // "latest/current/ngayon" follow-up does not launch external research.
-  const explicitSearch=/\b(search|research|look up|find online|check online|verify online|hanapin|maghanap|tingnan online)\b/i.test(normalizeIntentText(message));
-  const wantsLive=(explicitLive || (Boolean(webSearch)&&explicitSearch)) && !isSimpleCasualMessage(message);
+  const wantsLive=shouldRunLiveWebSearch(message,webSearch,forceWebSearch);
   if(!wantsLive)return '';
 
   const useContextQuery=contextMessage && (looksReferential(message)||vagueFreshFollowUp||String(message).trim().split(/\s+/).length<=6);
   const searchQuery=buildLiveSearchQuery(useContextQuery?contextMessage:message);
-  if(!searchQuery || isVagueFreshnessFollowUp(searchQuery))return '';
-
-  // Current date/year questions are answered from the authoritative server clock
-  // injected into the system context; no network round trip is needed.
-  if(/^(?:what(?:'s| is)? (?:the )?(?:date|year)|anong (?:petsa|taon)|ano ang (?:petsa|taon))(?:\s+ngayon|\s+today)?[?.!\s]*$/i.test(normalizeIntentText(message))){
-    return '';
-  }
-
-  const isWeather=/(weather|panahon|ulan|init|bagyo|temperatura|forecast)/i.test(message);
-  if(isWeather){
-    activity(emit,'web-search','Checking live weather data','running','web');
-    try{
-      const match=message.match(/(?:sa|in|for|at)\s+([a-zA-Z\s,.-]+)/i);
-      const location=(match?match[1].trim():'Guimba').slice(0,100);
-      const res=await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`,{
-        headers:{'User-Agent':'JepongDevxyz-AI/1.0'},signal:AbortSignal.timeout(fast?4500:7000)
-      });
-      if(res.ok){
-        const d=await safeJsonResponse(res);
-        if(!d)throw new Error('Weather source returned invalid JSON');
-        const c=d.current_condition?.[0]||{};
-        const n=d.nearest_area?.[0]||{};
-        activity(emit,'web-search',`Live weather ready for ${n.areaName?.[0]?.value||location}`,'completed','web');
-        return `\n\n[REAL-TIME WEATHER — fetched ${new Date().toISOString()}]\nLocation: ${n.areaName?.[0]?.value||location}\nTemperature: ${c.temp_C||'N/A'}°C\nFeels like: ${c.FeelsLikeC||'N/A'}°C\nCondition: ${c.weatherDesc?.[0]?.value||'Unknown'}\nHumidity: ${c.humidity||'N/A'}%\nWind: ${c.windspeedKmph||'N/A'} km/h\nRain: ${c.precipMM||'N/A'} mm.\nState clearly that this is live fetched data.`;
-      }
-    }catch(_){}
-  }
+  if(!searchQuery || (isVagueFreshnessFollowUp(searchQuery)&&!forceWebSearch))return '';
 
   const sourcePages=fast?1:3;
-  const providerLabels={serpapi:'SerpAPI',tavily:'Tavily',firecrawl:'Firecrawl',google:'Google Search JSON',brave:'Brave Search'};
   let configuredSearchApiAttempted=false;
   const searchOutcome=await runConfiguredWebSearch(searchQuery,{
     env:process.env,fetchImpl:fetch,timeoutMs:fast?5000:8000,
     fast,maxResults:fast?3:5,isSafePublicUrl,relevantWebResults,
-    onProviderAttempt:({provider,keyIndex,keyCount,state,httpStatus,resultCount})=>{
+    onProviderAttempt:({state,httpStatus,resultCount})=>{
       if(state!=='unconfigured')configuredSearchApiAttempted=true;
-      const name=providerLabels[provider]||'Search provider';
-      const keyLabel=keyCount>1?` • key ${keyIndex+1}/${keyCount}`:'';
       const label=state==='completed'
-        ?`Found ${resultCount} relevant result${resultCount===1?'':'s'} • ${name}${keyLabel}`
+        ?`Found ${resultCount} relevant result${resultCount===1?'':'s'}`
         :state==='warning'
-          ?`${name} ${httpStatus?'unavailable':resultCount===0?'returned no relevant results':'search failed'}${httpStatus?` • HTTP ${httpStatus}`:''}${keyLabel} • trying next source`
-          :`Searching the web with ${name}${keyLabel}`;
+          ?`Web Search API ${httpStatus?'unavailable':resultCount===0?'returned no relevant results':'search failed'}${httpStatus?` • HTTP ${httpStatus}`:''} • trying another source`
+          :'Searching the web';
       activity(emit,'web-search',state==='unconfigured'
         ?'No configured Web Search API found • checking public sources'
         :label,state==='unconfigured'?'running':state,'web');
@@ -3808,8 +3816,35 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
     return buildLiveSourceContext(await enrichSearchResults(searchOutcome.results,emit,sourcePages));
   }
 
+  const attemptedSummary=configuredSearchApiAttempted
+    ?'configured Web Search APIs were tried'
+    :'no configured Web Search API is available';
+
+  // Weather has a dedicated live-data fallback, but only after configured
+  // Web Search APIs are tried and their actual provider status is emitted.
+  const isWeather=/(weather|panahon|ulan|init|bagyo|temperatura|forecast)/i.test(message);
+  if(isWeather){
+    const location=extractWeatherLocation(message);
+    if(location){
+    activity(emit,'web-search',`Configured Web Search APIs had no usable weather results • checking wttr.in for ${location}`,'running','web');
+      try{
+      const res=await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`,{
+        headers:{'User-Agent':'JepongDevxyz-AI/1.0'},signal:AbortSignal.timeout(fast?4500:7000)
+      });
+      if(res.ok){
+        const d=await safeJsonResponse(res);
+        if(!d)throw new Error('Weather source returned invalid JSON');
+        const c=d.current_condition?.[0]||{};
+        const n=d.nearest_area?.[0]||{};
+        activity(emit,'web-search',`Live weather ready for ${n.areaName?.[0]?.value||location} • wttr.in (${attemptedSummary})`,'completed','web');
+        return `\n\n[REAL-TIME WEATHER — fetched ${new Date().toISOString()}]\nLocation: ${n.areaName?.[0]?.value||location}\nTemperature: ${c.temp_C||'N/A'}°C\nFeels like: ${c.FeelsLikeC||'N/A'}°C\nCondition: ${c.weatherDesc?.[0]?.value||'Unknown'}\nHumidity: ${c.humidity||'N/A'}%\nWind: ${c.windspeedKmph||'N/A'} km/h\nRain: ${c.precipMM||'N/A'} mm.\nState clearly that this is live fetched data.`;
+      }
+      }catch(_){}
+    }
+  }
+
   const fallbackReason=configuredSearchApiAttempted
-    ?'configured APIs returned no usable results'
+    ?'configured Web Search APIs returned no usable results'
     :'no Web Search API is configured';
   const results=await noKeyWebSearch(searchQuery,emit,{fallbackReason});
   return buildLiveSourceContext(await enrichSearchResults(results,emit,sourcePages));
@@ -5468,7 +5503,7 @@ async function processChat(body, emit) {
   // accidentally launch an unrelated broad search.
   const liveWebContext=websiteSecurityTask
     ? ''
-    : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers,contextMessage:taskMessage});
+    : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers,contextMessage:taskMessage,forceWebSearch:body.forceWebSearch===true});
 
   // General security advice cannot establish whether a particular site is safe.
   // The context-aware task may contain a URL from the immediately preceding user turn.
