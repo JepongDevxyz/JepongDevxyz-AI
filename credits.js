@@ -74,14 +74,21 @@
         document.head.appendChild(s);
     }
 
-    // The "Usage & Limits" static row in Settings (has #geminiQueryCount).
+    // The "Usage & Limits" static row in Settings. Located by its label text
+    // (the old counters subtitle was removed 2026-09-30).
     function findStaticUsageRow() {
-        var q = document.getElementById('geminiQueryCount');
-        if (!q || !q.closest) return null;
-        return q.closest('.settings-static-row');
+        var strongs = document.querySelectorAll('.settings-static-row strong');
+        for (var i = 0; i < strongs.length; i++) {
+            if (strongs[i].textContent.trim() === 'Usage & Limits' && strongs[i].closest) {
+                return strongs[i].closest('.settings-static-row');
+            }
+        }
+        return null;
     }
 
     // Turn the static row into a clickable nav row with a chevron.
+    // The old "N words · M tokens · Q queries" subtitle is removed here —
+    // usage now lives in Supabase and is shown inside the detail panel.
     function convertUsageRow() {
         var row = findStaticUsageRow();
         if (!row) return;
@@ -91,6 +98,8 @@
         btn.setAttribute('onclick', 'openJdUsageLimits()');
         btn.setAttribute('aria-label', 'Usage & Limits details');
         while (row.firstChild) btn.appendChild(row.firstChild);
+        var small = btn.querySelector('small');
+        if (small) small.remove();
         var chev = document.createElement('i');
         chev.setAttribute('data-lucide', 'chevron-right');
         btn.appendChild(chev);
@@ -114,7 +123,7 @@
             '<p>Credits and usage for your account</p></div></div>' +
             '</header>' +
             '<div class="settings-home-scroll">' +
-            '<div class="settings-card-group"><div class="jd-usage-stats">' +
+            '<div class="settings-card-group" id="jdUsageStats"><div class="jd-usage-stats">' +
             '<div><b id="jdUsageWords">0</b><span>words</span></div>' +
             '<div><b id="jdUsageTokens">0</b><span>tokens</span></div>' +
             '<div><b id="jdUsageQueries">0</b><span>queries</span></div>' +
@@ -137,23 +146,91 @@
         if (topup) topup.addEventListener('click', function () { JDCredits.openTopup(); });
     }
 
-    // Snapshot the live usage numbers into the panel.
+    // Load the account's usage numbers from Supabase into the panel.
+    // Guests have no Supabase row, so the stats block stays hidden for them.
     function syncUsageStats() {
-        var pairs = [
-            ['geminiWordCount', 'jdUsageWords'],
-            ['geminiTokenCount', 'jdUsageTokens'],
-            ['geminiQueryCount', 'jdUsageQueries']
-        ];
-        for (var i = 0; i < pairs.length; i++) {
-            var src = document.getElementById(pairs[i][0]);
-            var dst = document.getElementById(pairs[i][1]);
-            if (src && dst) dst.textContent = src.textContent;
+        var wEl = document.getElementById('jdUsageWords');
+        var tEl = document.getElementById('jdUsageTokens');
+        var qEl = document.getElementById('jdUsageQueries');
+        var block = document.getElementById('jdUsageStats');
+        if (!wEl || !tEl || !qEl) return;
+        token().then(function (t) {
+            if (!t) { if (block) block.hidden = true; return; }
+            if (block) block.hidden = false;
+            return fetch('/api/usage-sync', {
+                headers: { 'Authorization': 'Bearer ' + t },
+                credentials: 'same-origin'
+            }).then(function (r) {
+                if (!r.ok) return null;
+                return r.json().catch(function () { return null; });
+            }).then(function (d) {
+                if (!d) return;
+                wEl.textContent = fmt(d.words || 0);
+                tEl.textContent = fmt(d.tokens || 0);
+                qEl.textContent = fmt(d.queries || 0);
+            }).catch(function () {});
+        }).catch(function () {});
+    }
+
+    // --- Supabase usage sync ---------------------------------------------
+    // Wraps the page's incrementCounters() (chat, image, Bible Scholar all
+    // funnel through it) so every generation also syncs its word/query
+    // deltas to the usage_stats table. Batched + fail-open: the original
+    // always runs first, and a failed sync never breaks the page.
+    var usageQueue = { words: 0, queries: 0 };
+    var usageFlushTimer = null;
+
+    function flushUsageDelta() {
+        usageFlushTimer = null;
+        var w = usageQueue.words, q = usageQueue.queries;
+        usageQueue.words = 0; usageQueue.queries = 0;
+        if ((!w && !q) || typeof fetch !== 'function') return;
+        token().then(function (t) {
+            if (!t) return; // guests: no Supabase row
+            return fetch('/api/usage-sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + t
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ words_delta: w, queries_delta: q })
+            }).catch(function () {});
+        }).catch(function () {});
+    }
+
+    function queueUsageDelta(words, queries) {
+        usageQueue.words += Math.max(0, words | 0);
+        usageQueue.queries += Math.max(0, queries | 0);
+        if (!usageFlushTimer) usageFlushTimer = setTimeout(flushUsageDelta, 5000);
+    }
+
+    function installUsageSync() {
+        if (typeof window.incrementCounters !== 'function') return;
+        if (window.incrementCounters.__jdUsageSynced) return;
+        var orig = window.incrementCounters;
+        var wrapped = function (text) {
+            var ret;
+            try { ret = orig.apply(this, arguments); }
+            catch (e) { ret = undefined; }
+            try {
+                var clean = String(text == null ? '' : text).trim();
+                var words = clean ? clean.split(/\s+/).filter(Boolean).length : 0;
+                queueUsageDelta(words, 1);
+            } catch (_) {}
+            return ret;
+        };
+        wrapped.__jdUsageSynced = true;
+        window.incrementCounters = wrapped;
+        if (typeof window.addEventListener === 'function') {
+            window.addEventListener('pagehide', flushUsageDelta);
         }
     }
 
     function ensureUsageStructure() {
         convertUsageRow();
         buildUsageModal();
+        installUsageSync();
     }
 
     function ensureUsagePanel() {
