@@ -88,3 +88,28 @@ ang totoong presyo ay laging galing sa server).
 - Ang webhook ay vine-verify via `Paymongo-Signature` (HMAC-SHA256) **bago** mag-parse.
 - Idempotent: kahit mag-retry ang PayMongo, isang beses lang madadagdagan ang credits.
 - Ang user identity ay vine-verify server-side via Supabase Auth API.
+
+## Credits system (2026-09-30)
+
+Bukod sa payment files, may credits system na rin:
+
+**Supabase:** patakbuhin ang `supabase/migrations/20260930_credits_v2.sql` PAGKATAPOS
+ng unang migration. Nagdadagdag ito ng `idempotency_key` sa `credit_ledger`
+(+ unique index) at ng `spend_credits()` SQL function (atomic, per-user locked).
+
+**API endpoints** (lahat naka-`webCompatible` bridge, Bearer auth tulad ng paymongo-*):
+- `GET /api/credits-balance` → `{ balance, welcome_claimed }`
+- `POST /api/credits-spend` body `{ action: "chat"|"image", idempotency_key }`
+  → `{ ok: true, balance }`, o 402 kung kulang. Costs ay server-side:
+  chat = 10, image = 50 (tingnan ang `COSTS` sa file).
+- `POST /api/credits-welcome` → one-time 500 free credits (`WELCOME_CREDITS`).
+
+**Frontend** (`credits.js` + 5 surgical insertions sa `index.html`):
+- Balance badge (⚡) sa header, click → top-up modal (`paymongo-topup.js`).
+- Bago mag-send: `ensure()` — kapag kulang ang credits, bubuksan ang top-up
+  modal at hindi itutuloy ang request. Kapag hindi naka-sign in, walang
+  pagbabago sa behavior (guest = kasalukuyang free experience).
+- Pagkatapos ng successful chat/image: `spend()` na idempotent
+  (`chat:<generationId>` / `img:<generationId>`).
+- Auto-claim ng welcome credits sa sign-in; auto-refresh ng balance
+  pagkatapos ng bayad (`jdpay:paid` event).
