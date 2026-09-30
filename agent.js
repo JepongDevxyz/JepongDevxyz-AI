@@ -161,7 +161,7 @@ window.JDCodingAgent=Object.freeze({open,close});
    (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
   if(document.querySelector('script[src="/credits.js"]'))return;
-  ['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js'].forEach(function(src){
+  ['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js'].forEach(function(src){
     var s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s);
   });
 }catch(e){}})();
