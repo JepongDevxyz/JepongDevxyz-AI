@@ -33,5 +33,12 @@ assert(html.includes("leftButton.disabled=currentProviderPage===0")&&html.includ
   'arrow controls must expose their disabled state at the first and last provider');
 assert(html.includes("document.addEventListener('touchcancel'"),
   'canceled mobile gestures must reset carousel swipe tracking');
+assert.match(html,/\.model-page-dot:hover::before/,'hover should highlight a provider dot');
+assert.match(html,/\.model-page-dot:focus-visible::before/,'keyboard focus should highlight a provider dot');
+assert.match(html,/\.model-page-dot:focus-visible\s*\{[^}]*outline/s,'keyboard focus should be visible');
+assert.match(html,/addEventListener\(['"]pointerover['"],event=>/,'hovering a provider dot should navigate immediately');
+assert.match(html,/event\.pointerType!=='mouse'/,'touch and pen pointers must not trigger hover navigation');
+assert.match(html,/setProviderPage\(index\)/,'hover should use the same real provider navigation handler as click');
+assert.match(html,/\.model-page-dot::after\s*\{[^}]*content:\s*attr\(aria-label\)/s,'dot hover should show the provider name');
 
-console.log('PASS: model carousel arrows stop at the ends, distant dots snap, and swipe cancellation resets state.');
+console.log('PASS: model carousel navigation, hover quick-jump, accessible focus, and swipe cancellation.');

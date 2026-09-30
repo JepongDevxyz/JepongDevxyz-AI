@@ -889,9 +889,14 @@
         .model-provider-page .option-info { min-width: 0; }
         .model-provider-page .option-name { font-size: .93rem; }
         .model-provider-page .option-desc { margin-top: 3px; line-height: 1.35; }
-        .model-page-dots { display: flex; justify-content: center; gap: 7px; padding: 4px 0 14px; }
-        .model-page-dot { width: 7px; height: 7px; border: 0; border-radius: 50%; background: var(--text-muted); opacity: .35; padding: 0; }
-        .model-page-dot.active { opacity: 1; background: #8b5cf6; box-shadow: 0 0 8px rgba(139,92,246,.55); }
+        .model-page-dots { display: flex; justify-content: center; gap: 1px; padding: 4px 0 14px; touch-action: pan-y; }
+        .model-page-dot { position: relative; display: grid; place-items: center; flex: 0 0 18px; width: 18px; height: 28px; border: 0; border-radius: 6px; background: transparent; padding: 0; cursor: pointer; }
+        .model-page-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); opacity: .35; transition: transform .16s ease, opacity .16s ease, background-color .16s ease, box-shadow .16s ease; }
+        .model-page-dot.active::before { opacity: 1; background: #8b5cf6; box-shadow: 0 0 8px rgba(139,92,246,.55); }
+        .model-page-dot:hover::before, .model-page-dot:focus-visible::before { transform: scale(1.55); opacity: 1; background: #a78bfa; }
+        .model-page-dot:focus-visible { outline: 2px solid #a78bfa; outline-offset: 1px; }
+        .model-page-dot::after { content: attr(aria-label); position: absolute; left: 50%; bottom: calc(100% + 3px); z-index: 2; transform: translate(-50%, 3px); padding: 4px 7px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--modal-bg); color: var(--text-main); font-size: 11px; font-weight: 600; line-height: 1.2; white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .12s ease, transform .12s ease, visibility .12s; }
+        .model-page-dot:hover::after, .model-page-dot:focus-visible::after { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
         .model-selected-provider { font-size: .66rem; color: var(--text-muted); font-weight: 600; margin-right: 4px; }
         .mode-label-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -12990,6 +12995,14 @@ ${m.text || ''}
         function changeProviderPage(direction){
             setProviderPage(nextProviderPageIndex(currentProviderPage,direction,PROVIDER_ORDER.length));
         }
+        const modelPageDots=document.querySelector('.model-page-dots');
+        modelPageDots?.addEventListener('pointerover',event=>{
+            if(event.pointerType!=='mouse') return;
+            const dot=event.target.closest('.model-page-dot');
+            if(!dot || !modelPageDots.contains(dot) || dot.contains(event.relatedTarget)) return;
+            const index=Array.prototype.indexOf.call(modelPageDots.children,dot);
+            if(index>=0) setProviderPage(index);
+        });
         function openModelPicker(){ currentProviderPage=currentSelectedMode==='imagen' ? PROVIDER_ORDER.indexOf('image') : Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); applyModelAvailability(); toggleModal('modelModalOverlay',true); syncProviderStatus(); refreshCustomApiModelPages(); }
         let modelSwipeStartX=0,modelSwipeStartY=0,modelSwipeActive=false;
         document.addEventListener('touchstart',e=>{const viewport=e.target.closest&&e.target.closest('#modelPagesViewport');if(!viewport||!document.getElementById('modelModalOverlay')?.classList.contains('open'))return;const t=e.touches[0];modelSwipeStartX=t.clientX;modelSwipeStartY=t.clientY;modelSwipeActive=true;e.stopPropagation();},{passive:true,capture:true});
