@@ -1,0 +1,45 @@
+/* ============================================================
+   JepongDevxyz AI — responsive tune (runtime patch, 2026-09-30)
+   Additive only: tunes layout per screen size, never removes or
+   redesigns existing UI. Loaded last via the agent.js bootstrap
+   so it wins ties in the cascade.
+   Audit: 2026-09-30, 6 viewports (360 / 390 / 768 / 1024 /
+   1440 / 1920) — no horizontal overflow anywhere; the fixes
+   below address the real findings:
+   - small phones: 3 icon buttons below 32px touch targets
+   - TV / ultrawide: chat column too narrow, settings rows
+     stretched edge-to-edge
+   ============================================================ */
+
+/* ---- Small phones (<=430px): comfortable touch targets ----
+   Measured on 360px viewport: notification close 26px,
+   composer attach 28px, composer mic 28px. WCAG suggests 44px,
+   but 32-34px keeps the compact design while being tappable. */
+@media (max-width: 430px) {
+  button.notify-permission-close {
+    min-width: 32px;
+    min-height: 32px;
+  }
+  #composerPlusBtn {
+    min-width: 34px;
+    min-height: 34px;
+  }
+  #micBtn {
+    min-width: 34px;
+    min-height: 34px;
+  }
+}
+
+/* ---- TV / very wide desktop (>=1600px): use the space ----
+   Chat column was capped at 1040px (lost in the middle of a
+   1920px TV); settings rows stretched across the full width. */
+@media (min-width: 1600px) {
+  div#chatBox.chat-box {
+    max-width: 1200px !important; /* app sets 1040px!important */
+  }
+  .settings-home {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
