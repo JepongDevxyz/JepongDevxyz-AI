@@ -7,6 +7,11 @@
    2. Handles: payment.paid -> grant credits (once, idempotent)
                payment.failed / qrph.expired -> mark row
    ============================================================ */
+import { webCompatible } from './_node_web_bridge.js';
+
+// Raw body required: PayMongo computes the signature over the exact raw bytes,
+// so Vercel must NOT pre-parse the JSON body.
+export const config = { api: { bodyParser: false } };
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const json = (status, obj) =>
@@ -85,7 +90,7 @@ export function intentIdOf(event) {
   return null;
 }
 
-export default async function handler(req) {
+async function handle(req) {
   const secret = process.env.PAYMONGO_WEBHOOK_SECRET;
   const sbUrl = process.env.SUPABASE_URL;
   const svc = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -123,3 +128,5 @@ export default async function handler(req) {
   }
   return json(200, { received: true });
 }
+
+export default (req, res) => webCompatible(req, res, handle);

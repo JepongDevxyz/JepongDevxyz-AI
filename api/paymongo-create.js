@@ -9,6 +9,7 @@
    The client can never set its own price.
    ============================================================ */
 
+import { webCompatible } from './_node_web_bridge.js';
 const PAYMONGO_API = 'https://api.paymongo.com/v1';
 
 /* ---- PLANS: edit prices/credits here. amount = centavos (₱1 = 100) ---- */
@@ -89,7 +90,7 @@ export async function sbInsert(table, row) {
   return arr[0] || null;
 }
 
-export default async function handler(req) {
+async function handle(req) {
   try {
     if (req.method !== 'POST') return json(405, { error: 'Method not allowed.' });
     const userId = await getUserId(req);
@@ -142,3 +143,5 @@ export default async function handler(req) {
     return json(e.status || 500, { error: e.message || 'Server error.' });
   }
 }
+
+export default (req, res) => webCompatible(req, res, handle);

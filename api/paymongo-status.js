@@ -4,12 +4,13 @@
    Auth: Authorization: Bearer <supabase access token>
    The user can only see their OWN payments.
    ============================================================ */
+import { webCompatible } from './_node_web_bridge.js';
 import { getUserId } from './paymongo-create.js';
 
 const json = (status, obj) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
 
-export default async function handler(req) {
+async function handle(req) {
   try {
     if (req.method !== 'GET') return json(405, { error: 'Method not allowed.' });
     const userId = await getUserId(req);
@@ -45,3 +46,5 @@ export default async function handler(req) {
     return json(e.status || 500, { error: e.message || 'Server error.' });
   }
 }
+
+export default (req, res) => webCompatible(req, res, handle);
