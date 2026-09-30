@@ -40,5 +40,10 @@ assert.match(html,/addEventListener\(['"]pointerover['"],event=>/,'hovering a pr
 assert.match(html,/event\.pointerType!=='mouse'/,'touch and pen pointers must not trigger hover navigation');
 assert.match(html,/setProviderPage\(index\)/,'hover should use the same real provider navigation handler as click');
 assert.match(html,/\.model-page-dot::after\s*\{[^}]*content:\s*attr\(aria-label\)/s,'dot hover should show the provider name');
+assert.match(html,/modelPageDots\?\.addEventListener\(['"]touchstart['"],event=>/,'touching a dot should start drag navigation');
+assert.match(html,/document\.addEventListener\(['"]touchmove['"],event=>/,'dragging across the dots should track the finger');
+assert.match(html,/document\.elementFromPoint\(touch\.clientX,touch\.clientY\)/,'drag navigation should identify the dot under the finger');
+assert.match(html,/suppressModelDotClick/,'drag navigation should prevent the release click from jumping back');
+assert.match(html,/modelDotTouchMoved/,'touch release should only suppress click after a drag');
 
-console.log('PASS: model carousel navigation, hover quick-jump, accessible focus, and swipe cancellation.');
+console.log('PASS: model carousel navigation, mouse hover, mobile drag-across dots, accessible focus, and swipe cancellation.');
