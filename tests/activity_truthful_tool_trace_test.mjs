@@ -34,8 +34,8 @@ assert(api.includes("activity(emit,'plugin-github-issues','Read current GitHub i
 
 assert(html.includes("github:'github'") && html.includes("plugin:'plug'"),
   'GitHub/plugin activity needs recognizable tool icons');
-assert(html.includes("if(row && normalized.state!=='running')")&&html.includes('previousLabel!==nextLabel'),
-  'Every real activity kind must preserve changed start-to-result lifecycle labels');
+assert(html.includes("if(row && normalized.state!=='running' && activityHistoryKeepsDistinctTransitions(normalized))")&&html.includes('previousLabel!==nextLabel'),
+  'Distinct tool operations preserve changed labels while provider/search lifecycle rows coalesce');
 assert(html.includes("if(id==='response-audit')")&&html.includes("if(id==='output-verification')"),
   'Audit/verification IDs must remain recognized as real operation milestones');
 assert(!html.includes("['thinking','generation','router','response-audit','output-verification'].includes(id)"),

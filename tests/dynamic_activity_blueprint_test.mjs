@@ -76,6 +76,26 @@ const translation=build.parseActivityBlueprintOutput(
   ].join('\n'),
   {kind:'writing',subtype:'translation',subject:'translate this'}
 );
+const malformedResearch=build.parseActivityBlueprintOutput(
+  [
+    'PLAN_START: Planning web research',
+    'PLAN_DONE: Planned web research',
+    'CONTEXT: Understanding the request',
+    'ANALYSIS: Organizing the requirements',
+    'APPROACH: Checking current sources',
+    'WORK: Searching relevant pages',
+    'CHECKPOINT: Chose the response structure',
+    'AUDIT: Checking the answer',
+    'RESEARCH_QUERY_1: RESEARCH_DOMAIN_2:',
+    'RESEARCH_DOMAIN_1: ',
+    'RESEARCH_QUERY_2: ',
+    'RESEARCH_DOMAIN_2: ',
+    'RESPONSE_CONTRACT: Answer the question with current sources.'
+  ].join('\n'),
+  {kind:'research',subject:'weather'}
+);
+assert.deepEqual(malformedResearch.research,[],
+  'Blueprint field labels must not be treated as web queries or shown in user-visible activity');
 assert.notEqual(snake.context,translation.context,'Different tasks must get different Activity labels');
 assert.notEqual(snake.work,translation.work,'Work labels must vary by request');
 assert.equal(build.shouldUseDynamicActivityPlanner('Gawan mo ako ng HTML snake game',[]),true);

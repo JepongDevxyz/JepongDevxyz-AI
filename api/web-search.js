@@ -68,7 +68,9 @@ export async function runConfiguredWebSearch(query,options={}){
   const {env=process.env,fetchImpl=fetch,signal,fast=false,maxResults=5,isSafePublicUrl=defaultSafeUrl,relevantWebResults=defaultRelevantResults,onProviderAttempt}=options;
   const normalizedQuery=String(query||'').trim().slice(0,500);
   if(!normalizedQuery)return {results:[],provider:'',keyIndex:-1,keyCount:0};
-  for(const provider of configuredProviders(env)){
+  const providers=configuredProviders(env);
+  if(!providers.length)onProviderAttempt?.({provider:'',state:'unconfigured'});
+  for(const provider of providers){
     const configuredKeys={
       serpapi:readKeys(env,'SERPAPI_API_KEYS','SERPAPI_API_KEY'),
       tavily:readKeys(env,'TAVILY_API_KEYS','TAVILY_API_KEY'),
@@ -100,6 +102,7 @@ export async function runConfiguredWebSearch(query,options={}){
         onProviderAttempt?.({provider,keyIndex,keyCount:keys.length,state:'completed',resultCount:relevant.length});
         return {results:relevant,provider,keyIndex,keyCount:keys.length};
       }
+      onProviderAttempt?.({provider,keyIndex,keyCount:keys.length,state:'warning',resultCount:0,reason:'no-relevant-results'});
       break;
      }catch(_){
        // Network/timeout errors also advance to the next key and provider.

@@ -50,10 +50,14 @@ assert.match(calls[nextStart+1].url,/api_key=serp-secret-1/,'then exhaust the re
 assert.equal(calls[nextStart+2].init.headers.Authorization,'Bearer tavily-secret-2','provider key order should rotate between searches too');
 
 const allCalls=[];
+const unconfiguredActivity=[];
 await runConfiguredWebSearch('topic',{
   env:{GOOGLE_SEARCH_API_KEYS:'key-without-cx'},
-  fetchImpl:async url=>{allCalls.push(String(url));return {ok:false,status:500,json:async()=>({})};}
+  fetchImpl:async url=>{allCalls.push(String(url));return {ok:false,status:500,json:async()=>({})};},
+  onProviderAttempt:event=>unconfiguredActivity.push(event)
 });
 assert.equal(allCalls.length,0,'Google must be skipped unless its cx search-engine ID is configured');
+assert.deepEqual(unconfiguredActivity,[{provider:'',state:'unconfigured'}],
+  'Activity must explicitly report when no search API is configured');
 
 console.log('PASS: configured search providers rotate keys, report real provider attempts, and require both Google CSE credentials.');

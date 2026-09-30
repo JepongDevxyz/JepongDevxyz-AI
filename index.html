@@ -9947,6 +9947,17 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             if(jdActivityPlaybackQueue.length||jdActivityPlaybackTimer!==null)flushActivityPlaybackNow();
         }
 
+        function activityHistoryKeepsDistinctTransitions(evt={}){
+            const id=String(evt.id||'');
+            const kind=String(evt.kind||'').toLowerCase();
+            // These rows describe one evolving operation. Keeping both its start
+            // and result as separate rows made provider retries and web searches
+            // look duplicated on small screens.
+            if(kind==='provider')return false;
+            if(kind==='web'&&(/^(?:web-search|web-search-alt|planned-web-\d+)$/.test(id)))return false;
+            return true;
+        }
+
         function appendActivityEvent(evt = {}) {
             const normalized=normalizeActivityEventForUI(evt);
             if(!normalized)return;
@@ -9997,7 +10008,7 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             // ChatGPT's Work timeline retains meaningful start→result transitions
             // from real tools (for example "Searching…" followed by "Searched…").
             // Keep both truthful milestones instead of rewriting the earlier row.
-            if(row && normalized.state!=='running'){
+            if(row && normalized.state!=='running' && activityHistoryKeepsDistinctTransitions(normalized)){
                 const previousLabel=String(row.querySelector('.ai-activity-label')?.textContent||'').replace(/\\s+/g,' ').trim();
                 const nextLabel=String(normalized.label||'').replace(/\\s+/g,' ').trim();
                 if(previousLabel && nextLabel && previousLabel!==nextLabel){

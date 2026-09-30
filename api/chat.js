@@ -1229,6 +1229,7 @@ function taskPlanningCopy(profile={}){
 function cleanPlannedResearchQuery(value=''){
   const t=String(value||'').replace(/\s+/g,' ').trim();
   if(!t||/^(?:none|n\/a|not needed|no search|-+)$/i.test(t))return '';
+  if(/^(?:RESEARCH_QUERY|RESEARCH_DOMAIN)_\d+\s*:/i.test(t))return '';
   return t.slice(0,240);
 }
 
@@ -2005,6 +2006,13 @@ function decodeDuckDuckGoHref(href=''){
   }catch(_){return htmlDecode(href);}
 }
 
+function publicSearchFallbackResultLabel({provider='public sources',resultCount=0,reason=''}={}){
+  const count=Math.max(0,Number(resultCount)||0);
+  const results=count===1?'1 relevant web result':`${count} relevant web results`;
+  const base=count?`Found ${results} • ${provider}`:`No relevant web results found • ${provider}`;
+  return reason?`${base} • public fallback (${reason})`:`${base} • public source`;
+}
+
 async function duckDuckGoHtmlSearch(query, emit){
   activity(emit,'web-search','Searching the live web','running','web',query.slice(0,120));
   try{
@@ -2110,13 +2118,15 @@ function isSimpleCasualMessage(message=''){
   return /^(hi|hello|hey|kumusta|kamusta|salamat|thanks|thank you|good morning|good afternoon|good evening|yo|sup)[!.? ]*$/i.test(t);
 }
 
-async function noKeyWebSearch(query, emit){
+async function noKeyWebSearch(query, emit,{fallbackReason=''}={}){
   const searchTopic=String(query||'').replace(/\s+/g,' ').trim().slice(0,100);
   const securityTopic=/\b(OWASP|website security|web security|security headers|Content Security Policy|HSTS|TLS|SSL)\b/i.test(searchTopic);
   const activityLabel=securityTopic
     ? 'Searching trusted website security guidance'
     : (searchTopic?`Searching for relevant sources: ${searchTopic}`:'Searching the web');
-  activity(emit,'web-search',activityLabel,'running','web');
+  activity(emit,'web-search',fallbackReason
+    ?`Checking public search sources • ${fallbackReason}`
+    :activityLabel,'running','web');
   const attempts=[
     ['Bing',()=>bingRssSearch(query)],
     ['DuckDuckGo',()=>duckDuckGoInstantSearch(query,null)],
@@ -2126,10 +2136,9 @@ async function noKeyWebSearch(query, emit){
     const results=await fn();
     const relevant=relevantWebResults(results,query);
     if(relevant.length){
-      activity(emit,'web-search',securityTopic
-        ? `Found ${relevant.length} relevant website security source${relevant.length===1?'':'s'} • ${label}`
-        : `Found ${relevant.length} relevant web result${relevant.length===1?'':'s'} • ${label}`,
-        'completed','web');
+      activity(emit,'web-search',publicSearchFallbackResultLabel({
+        provider:label,resultCount:relevant.length,reason:fallbackReason
+      }), 'completed','web');
       return relevant;
     }
   }
@@ -2142,7 +2151,9 @@ async function noKeyWebSearch(query, emit){
       return relevant;
     }
   }catch(_){}
-  activity(emit,'web-search','Live web search is temporarily unavailable','warning','web','No search source returned usable results.');
+  activity(emit,'web-search',publicSearchFallbackResultLabel({
+    provider:'public sources',resultCount:0,reason:fallbackReason||'all search sources failed'
+  }),'warning','web','No search source returned usable results.');
   return [];
 }
 
@@ -3775,25 +3786,32 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
 
   const sourcePages=fast?1:3;
   const providerLabels={serpapi:'SerpAPI',tavily:'Tavily',firecrawl:'Firecrawl',google:'Google Search JSON',brave:'Brave Search'};
+  let configuredSearchApiAttempted=false;
   const searchOutcome=await runConfiguredWebSearch(searchQuery,{
     env:process.env,fetchImpl:fetch,timeoutMs:fast?5000:8000,
     fast,maxResults:fast?3:5,isSafePublicUrl,relevantWebResults,
     onProviderAttempt:({provider,keyIndex,keyCount,state,httpStatus,resultCount})=>{
+      if(state!=='unconfigured')configuredSearchApiAttempted=true;
       const name=providerLabels[provider]||'Search provider';
       const keyLabel=keyCount>1?` • key ${keyIndex+1}/${keyCount}`:'';
       const label=state==='completed'
-        ?`Found ${resultCount} relevant result${resultCount===1?'':'s'} • ${name}`
+        ?`Found ${resultCount} relevant result${resultCount===1?'':'s'} • ${name}${keyLabel}`
         :state==='warning'
-          ?`${name} unavailable${httpStatus?` • HTTP ${httpStatus}`:''} • trying next key/provider`
+          ?`${name} ${httpStatus?'unavailable':resultCount===0?'returned no relevant results':'search failed'}${httpStatus?` • HTTP ${httpStatus}`:''}${keyLabel} • trying next source`
           :`Searching the web with ${name}${keyLabel}`;
-      activity(emit,'web-search',label,state,'web');
+      activity(emit,'web-search',state==='unconfigured'
+        ?'No configured Web Search API found • checking public sources'
+        :label,state==='unconfigured'?'running':state,'web');
     }
   });
   if(searchOutcome.results.length){
     return buildLiveSourceContext(await enrichSearchResults(searchOutcome.results,emit,sourcePages));
   }
 
-  const results=await noKeyWebSearch(searchQuery,emit);
+  const fallbackReason=configuredSearchApiAttempted
+    ?'configured APIs returned no usable results'
+    :'no Web Search API is configured';
+  const results=await noKeyWebSearch(searchQuery,emit,{fallbackReason});
   return buildLiveSourceContext(await enrichSearchResults(results,emit,sourcePages));
 }
 
