@@ -163,8 +163,8 @@ window.JDCodingAgent=Object.freeze({open,close});
   if(document.querySelector('script[src^="/credits.js"]'))return;
   /* Cache-buster: bump V on every push that changes the patches below,
      so phones never keep showing a stale cached patch. */
-  var V='?v=20261001c';
-  ['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js'].forEach(function(src){
+  var V='?v=20261001e';
+  ['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js'].forEach(function(src){
     var s=document.createElement('script');s.src=src+V;s.defer=true;document.head.appendChild(s);
   });
 }catch(e){}})();
@@ -172,5 +172,5 @@ window.JDCodingAgent=Object.freeze({open,close});
    Small-phone touch targets + TV/ultrawide layout. Additive. */
 (function(){try{
   if(document.querySelector('link[href^="/responsive-tune.css"]'))return;
-  var l=document.createElement('link');l.rel='stylesheet';l.href='/responsive-tune.css?v=20261001c';document.head.appendChild(l);
+  var l=document.createElement('link');l.rel='stylesheet';l.href='/responsive-tune.css?v=20261001d';document.head.appendChild(l);
 }catch(e){}})();
