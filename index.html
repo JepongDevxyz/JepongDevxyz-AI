@@ -874,11 +874,11 @@
         .model-provider-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 14px 0; }
         .model-provider-tab { border: 1px solid var(--border-color); background: rgba(255,255,255,.04); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: .74rem; font-weight: 700; cursor: pointer; }
         .model-provider-tab.active { color: var(--text-main); border-color: rgba(139,92,246,.5); background: rgba(139,92,246,.14); }
-        .model-pages-viewport { overflow: hidden; touch-action: pan-y; width: 100%; perspective: 1100px; }
-        .model-pages-track { display: flex; width: 100%; transition: transform .42s cubic-bezier(.22,.75,.2,1); will-change: transform; transform-style: preserve-3d; }
-        .model-provider-page { width: 100%; flex: 0 0 100%; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; transform-origin: center center; backface-visibility: hidden; transition: transform .42s cubic-bezier(.22,.75,.2,1), opacity .3s ease; }
-        .model-provider-page.carousel-away { transform: rotateY(22deg) scale(.96); opacity: .55; }
-        .model-provider-page.carousel-active { transform: rotateY(0deg) scale(1); opacity: 1; }
+        .model-pages-viewport { overflow: hidden; touch-action: pan-y; width: 100%; }
+        .model-pages-track { display: flex; width: 100%; transition: transform .42s cubic-bezier(.22,.75,.2,1); will-change: transform; }
+        .model-provider-page { width: 100%; flex: 0 0 100%; min-width: 0; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; transition: opacity .2s ease; }
+        .model-provider-page.carousel-away { opacity: .72; }
+        .model-provider-page.carousel-active { opacity: 1; }
         .provider-badge {
             display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
             padding: 5px 9px; border: 1px solid var(--border-color); border-radius: 999px;
@@ -12953,24 +12953,48 @@ ${m.text || ''}
         }
         sortCuratedModelsByCost();
 
-        function renderProviderPage(){
+        function nextProviderPageIndex(current,direction,total){
+            const last=Math.max(0,Number(total)||0)-1;
+            const step=Math.sign(Number(direction)||0);
+            return Math.max(0,Math.min(last,(Number(current)||0)+step));
+        }
+        function shouldAnimateProviderPageTransition(from,to){
+            return Math.abs(Number(to)-Number(from))===1;
+        }
+        function renderProviderPage({animate=true}={}){
             const track=document.getElementById('modelPagesTrack'); const title=document.getElementById('modelProviderTitle');
-            if(track) track.style.transform=`translateX(-${currentProviderPage*100}%)`;
+            if(track){
+                track.style.transition=animate?'':'none';
+                track.style.transform=`translate3d(-${currentProviderPage*100}%,0,0)`;
+                if(!animate){void track.offsetWidth;track.style.transition='';}
+            }
             if(title) title.textContent='JepongDevxyz AI';
             document.querySelectorAll('.model-page-dot').forEach((dot,i)=>dot.classList.toggle('active',i===currentProviderPage));
             document.querySelectorAll('.model-provider-tab').forEach((tab,i)=>tab.classList.toggle('active',i===currentProviderPage));
             document.querySelectorAll('#modelPagesTrack .model-provider-page').forEach((page,i)=>{page.classList.toggle('carousel-active',i===currentProviderPage);page.classList.toggle('carousel-away',i!==currentProviderPage);});
+            const leftButton=document.querySelector('#modelPickerModal .model-picker-header .model-nav-btn:first-child');
+            const rightButton=document.querySelector('#modelPickerModal .model-picker-header .model-nav-btn:last-child');
+            if(leftButton){leftButton.disabled=currentProviderPage===0;leftButton.setAttribute('aria-label','Previous provider');}
+            if(rightButton){rightButton.disabled=currentProviderPage===PROVIDER_ORDER.length-1;rightButton.setAttribute('aria-label','Next provider');}
             requestAnimationFrame(()=>{
                 const active=document.querySelector(`#modelPagesTrack .model-provider-page[data-provider="${PROVIDER_ORDER[currentProviderPage]}"]`);
                 if(active && !active.matches(':active')) active.scrollTop=0;
             });
         }
-        function setProviderPage(index){ currentProviderPage=Math.max(0,Math.min(PROVIDER_ORDER.length-1,index)); renderProviderPage(); }
-        function changeProviderPage(direction){ setProviderPage((currentProviderPage+direction+PROVIDER_ORDER.length)%PROVIDER_ORDER.length); }
+        function setProviderPage(index){
+            const nextPage=Math.max(0,Math.min(PROVIDER_ORDER.length-1,Number(index)||0));
+            const animate=shouldAnimateProviderPageTransition(currentProviderPage,nextPage);
+            currentProviderPage=nextPage;
+            renderProviderPage({animate});
+        }
+        function changeProviderPage(direction){
+            setProviderPage(nextProviderPageIndex(currentProviderPage,direction,PROVIDER_ORDER.length));
+        }
         function openModelPicker(){ currentProviderPage=currentSelectedMode==='imagen' ? PROVIDER_ORDER.indexOf('image') : Math.max(0,PROVIDER_ORDER.indexOf(currentSelectedProvider)); updateSelectedModelUI(); renderProviderPage(); applyModelAvailability(); toggleModal('modelModalOverlay',true); syncProviderStatus(); refreshCustomApiModelPages(); }
         let modelSwipeStartX=0,modelSwipeStartY=0,modelSwipeActive=false;
         document.addEventListener('touchstart',e=>{const viewport=e.target.closest&&e.target.closest('#modelPagesViewport');if(!viewport||!document.getElementById('modelModalOverlay')?.classList.contains('open'))return;const t=e.touches[0];modelSwipeStartX=t.clientX;modelSwipeStartY=t.clientY;modelSwipeActive=true;e.stopPropagation();},{passive:true,capture:true});
         document.addEventListener('touchend',e=>{if(!modelSwipeActive)return;modelSwipeActive=false;const t=e.changedTouches[0],dx=t.clientX-modelSwipeStartX,dy=t.clientY-modelSwipeStartY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)){changeProviderPage(dx<0?1:-1);e.stopPropagation();}},{passive:true,capture:true});
+        document.addEventListener('touchcancel',()=>{modelSwipeActive=false;},{passive:true,capture:true});
 
         const MAX_SELECTED_ATTACHMENTS = 10;
         const MAX_DOCUMENT_CHARS = 320000;
