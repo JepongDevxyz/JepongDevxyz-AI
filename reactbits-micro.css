@@ -148,10 +148,11 @@
    loader. Keep it readable and let the appearance transition carry the motion. */
 .ai-activity-row.ai-activity-enter{animation:jdActivityReferenceIn .18s ease-out both}
 @keyframes jdActivityReferenceIn{from{opacity:.16!important;transform:translateY(2px)}to{opacity:1!important;transform:none}}
-.ai-activity-row.running.ai-activity-current .ai-activity-label{color:var(--rb-success)}
+.ai-activity-row.running.ai-activity-current .ai-activity-label{color:var(--activity-muted)}
 .ai-activity-row.running.ai-activity-current .ai-activity-icon{color:var(--rb-success)}
 /* The reference marks only the current operation with a tiny breathing dot
-   directly after its text. Completed history stays still and visually quieter. */
+   directly after its text. Completed history stays still and visually quieter.
+   The dot breathes in amber/yellow; row text stays neutral (no green). */
 .ai-activity-row.running.ai-activity-current .ai-activity-label::after{
   content:"";
   display:inline-block;
@@ -160,7 +161,7 @@
   margin-left:8px;
   border-radius:50%;
   vertical-align:1px;
-  background:currentColor;
+  background:var(--sig-warn,#f59e0b);
   opacity:.72;
   animation:jdActivityCurrentDot 1.05s ease-in-out infinite
 }
@@ -174,7 +175,7 @@
 .ai-activity-row.error .ai-activity-icon{color:var(--rb-error)}
 .ai-activity-row[data-activity-id="thinking"]{margin-top:2px}
 .ai-activity-row[data-activity-id="thinking"] .ai-activity-label{color:var(--activity-muted-soft)}
-.ai-activity-row[data-activity-id="thinking"].running.ai-activity-current .ai-activity-label{color:var(--rb-success)}
+.ai-activity-row[data-activity-id="thinking"].running.ai-activity-current .ai-activity-label{color:var(--activity-muted-soft)}
 
 /* Model-authored high-level work commentary sits flush with the same reading
    column, matching the white explanatory paragraphs in the supplied recording. */

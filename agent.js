@@ -155,12 +155,13 @@ window.JDCodingAgent=Object.freeze({open,close});
 })();
 
 /* --- JepongDevxyz AI credits bootstrap (appended 2026-09-30) ---
-   Loads the QR Ph top-up modal (paymongo-topup.js) and the credits
-   module (credits.js), which gates /api/chat generations on credits
-   via a fetch wrapper. Pure addition: no existing code above changed. */
+   Loads the QR Ph top-up modal (paymongo-topup.js), the credits
+   module (credits.js, which gates /api/chat generations on credits
+   via a fetch wrapper), and the activity-status calmness fix
+   (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
   if(document.querySelector('script[src="/credits.js"]'))return;
-  ['/paymongo-topup.js','/credits.js'].forEach(function(src){
+  ['/paymongo-topup.js','/credits.js','/activity-fix.js'].forEach(function(src){
     var s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s);
   });
 }catch(e){}})();
