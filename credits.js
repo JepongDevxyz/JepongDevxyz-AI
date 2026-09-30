@@ -1,6 +1,8 @@
 /* ============================================================
    JepongDevxyz AI — credits frontend module
-   - Balance badge + top-up button (injected into .header-controls)
+   - Credits card injected into Settings > Usage & Limits
+     (NOT the header): balance, "% used" progress bar, Top up
+     button. Styled like the app's own usage cards.
    - ensure(kind): gate before an AI generation; opens the
      QR Ph top-up modal when the signed-in user's balance is
      insufficient. Guests (not signed in) keep current behavior.
@@ -20,9 +22,9 @@
     'use strict';
 
     var COSTS = { chat: 10, image: 50 };
-    var LOW_THRESHOLD = 50;
 
-    var balance = null;      // null = unknown / not signed in
+    var balance = null;       // null = unknown / not signed in
+    var totalCredited = 0;    // sum of all positive credit grants
     var refreshing = null;
 
     function token() {
@@ -38,51 +40,84 @@
         catch (_) { return String(n); }
     }
 
-    /* ---------- badge ---------- */
+    /* ---------- credits card (Settings > Usage & Limits) ---------- */
 
     function injectStyles() {
         if (document.getElementById('jdCreditsStyles')) return;
         var s = document.createElement('style');
         s.id = 'jdCreditsStyles';
         s.textContent =
-            '#jdCreditsBadge{display:none;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;' +
-            'border:1px solid var(--border-color,rgba(128,128,128,.35));background:var(--card-bg,rgba(128,128,128,.12));' +
-            'color:var(--text-color,inherit);font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}' +
-            '#jdCreditsBadge.show{display:inline-flex}' +
-            '#jdCreditsBadge:hover{filter:brightness(1.2)}' +
-            '#jdCreditsBadge .jd-bolt{color:#fbbf24;font-size:.9rem;line-height:1}' +
-            '#jdCreditsBadge.low{border-color:rgba(239,68,68,.65)}' +
-            '#jdCreditsBadge .jd-plus{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;' +
-            'border-radius:50%;background:#16a34a;color:#fff;font-size:.75rem;font-weight:800;line-height:1}';
+            '.jd-credits-card{margin:10px 0 0;padding:14px 16px;border-radius:16px;' +
+            'border:1px solid var(--border-color,rgba(128,128,128,.25));' +
+            'background:var(--card-bg,#1e1e22);color:var(--text-color,inherit);font-family:inherit}' +
+            '.jd-credits-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}' +
+            '.jd-credits-title{font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:6px}' +
+            '.jd-credits-title .jd-bolt{color:#fbbf24}' +
+            '.jd-credits-pct{font-size:1.05rem;font-weight:700}' +
+            '.jd-credits-bar{height:10px;border-radius:999px;background:rgba(128,128,128,.25);overflow:hidden}' +
+            '.jd-credits-fill{display:block;height:100%;width:0%;border-radius:999px;' +
+            'background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .4s ease}' +
+            '.jd-credits-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px}' +
+            '.jd-credits-bal{font-size:.85rem;opacity:.75}' +
+            '.jd-credits-topup{border:none;border-radius:999px;padding:8px 18px;background:#3b82f6;color:#fff;' +
+            'font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit}' +
+            '.jd-credits-topup:hover{filter:brightness(1.1)}';
         document.head.appendChild(s);
     }
 
-    function injectBadge() {
-        injectStyles();
-        if (document.getElementById('jdCreditsBadge')) return;
-        var host = document.querySelector('.header-controls');
-        if (!host) return;
-        var b = document.createElement('button');
-        b.id = 'jdCreditsBadge';
-        b.type = 'button';
-        b.title = 'Credits — tap to top up';
-        b.setAttribute('aria-label', 'Credits — tap to top up');
-        b.addEventListener('click', function () { JDCredits.openTopup(); });
-        host.appendChild(b);
-        renderBadge();
+    // The "Usage & Limits" static row in Settings (has #geminiQueryCount).
+    function findUsageRow() {
+        var q = document.getElementById('geminiQueryCount');
+        if (!q || !q.closest) return null;
+        return q.closest('.settings-static-row');
     }
 
-    function renderBadge() {
-        var b = document.getElementById('jdCreditsBadge');
-        if (!b) return;
-        if (balance === null) {
-            b.classList.remove('show');
-            return;
-        }
-        b.innerHTML = '<span class="jd-bolt">⚡</span><span>' + fmt(balance) + '</span>' +
-            '<span class="jd-plus">+</span>';
-        b.classList.toggle('low', balance < LOW_THRESHOLD);
-        b.classList.add('show');
+    function injectCreditsCard() {
+        injectStyles();
+        if (document.getElementById('jdCreditsCard')) return;
+        var row = findUsageRow();
+        if (!row || !row.parentNode) return;
+        var card = document.createElement('div');
+        card.id = 'jdCreditsCard';
+        card.className = 'jd-credits-card';
+        card.hidden = true;
+        card.innerHTML =
+            '<div class="jd-credits-head">' +
+            '<span class="jd-credits-title"><span class="jd-bolt">⚡</span> Credits</span>' +
+            '<span class="jd-credits-pct" id="jdCreditsPct">0% used</span>' +
+            '</div>' +
+            '<div class="jd-credits-bar"><span class="jd-credits-fill" id="jdCreditsFill"></span></div>' +
+            '<div class="jd-credits-foot">' +
+            '<span class="jd-credits-bal" id="jdCreditsBal"></span>' +
+            '<button type="button" class="jd-credits-topup" id="jdCreditsTopup">Top up</button>' +
+            '</div>';
+        card.querySelector('#jdCreditsTopup').addEventListener('click', function () {
+            JDCredits.openTopup();
+        });
+        row.parentNode.insertBefore(card, row.nextSibling);
+        renderCredits();
+    }
+
+    function renderCredits() {
+        var card = document.getElementById('jdCreditsCard');
+        if (!card) return;
+        if (balance === null) { card.hidden = true; return; }
+        card.hidden = false;
+        var total = totalCredited > 0 ? totalCredited : 0;
+        var used = Math.max(0, total - balance);
+        var pct = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+        card.querySelector('#jdCreditsPct').textContent = pct + '% used';
+        card.querySelector('#jdCreditsFill').style.width = pct + '%';
+        card.querySelector('#jdCreditsBal').innerHTML =
+            '<b>' + fmt(balance) + '</b> credits';
+    }
+
+    // Re-inject if the Settings panel is re-rendered.
+    function observeSettings() {
+        injectCreditsCard();
+        if (typeof MutationObserver !== 'function') return;
+        var mo = new MutationObserver(function () { injectCreditsCard(); });
+        mo.observe(document.documentElement, { childList: true, subtree: true });
     }
 
     /* ---------- api ---------- */
@@ -90,16 +125,17 @@
     function refresh() {
         if (refreshing) return refreshing;
         refreshing = token().then(function (t) {
-            if (!t) { balance = null; renderBadge(); return null; }
+            if (!t) { balance = null; renderCredits(); return null; }
             return fetch('/api/credits-balance', {
                 headers: { 'Authorization': 'Bearer ' + t },
                 credentials: 'same-origin'
             }).then(function (r) {
-                if (r.status === 401) { balance = null; renderBadge(); return null; }
+                if (r.status === 401) { balance = null; renderCredits(); return null; }
                 return r.json().catch(function () { return null; });
             }).then(function (d) {
                 if (d && typeof d.balance === 'number') balance = d.balance;
-                renderBadge();
+                if (d && typeof d.total_credited === 'number') totalCredited = d.total_credited;
+                renderCredits();
                 return balance;
             }).catch(function () { return balance; });
         }).finally(function () { refreshing = null; });
@@ -122,7 +158,7 @@
 
         refresh: refresh,
         openTopup: openTopup,
-        renderBadge: renderBadge,
+        renderCredits: renderCredits,
 
         // Gate: call BEFORE starting a generation. Returns true when the
         // send may proceed. Opens the top-up modal and returns false when
@@ -170,7 +206,7 @@
                         var d = pair.d;
                         if (d && typeof d.balance === 'number') {
                             balance = d.balance;
-                            renderBadge();
+                            renderCredits();
                         }
                         if (pair.r.status === 402) openTopup();
                     });
@@ -188,7 +224,7 @@
                     .then(function (d) {
                         if (d && typeof d.balance === 'number') {
                             balance = d.balance;
-                            renderBadge();
+                            renderCredits();
                         }
                         return d;
                     });
@@ -281,12 +317,12 @@
 
     function initAccount() {
         token().then(function (t) {
-            if (!t) { balance = null; renderBadge(); return; }
+            if (!t) { balance = null; renderCredits(); return; }
             JDCredits.claimWelcome().then(function () { refresh(); });
         });
     }
 
-    injectBadge();
+    observeSettings(); // credits card in Settings > Usage & Limits
     installFetchGate(); // gate /api/chat generations on credits
     initAccount(); // in case the initial auth event already fired
     window.addEventListener('jd:account-changed', initAccount);

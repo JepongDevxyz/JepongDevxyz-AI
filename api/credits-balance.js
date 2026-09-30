@@ -2,7 +2,7 @@
    JepongDevxyz AI — credit balance
    GET /api/credits-balance
    Auth: Authorization: Bearer <supabase access token>
-   Returns: { balance, welcome_claimed }
+   Returns: { balance, welcome_claimed, total_credited }
    Guests (no token) get 401; the frontend treats that as
    "not signed in" and keeps the current free behavior.
    ============================================================ */
@@ -62,6 +62,26 @@ function sbService() {
       const m = /\/(\d+)$/.exec(cr);
       return m ? parseInt(m[1], 10) : 0;
     },
+    async ledgerSumPositive(userId) {
+      const u = base + '/rest/v1/credit_ledger?select=delta&user_id=eq.' +
+        encodeURIComponent(userId) + '&delta=gt.0';
+      const r = await fetch(u, {
+        headers: {
+          apikey: key,
+          Authorization: 'Bearer ' + key,
+        },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!r.ok) {
+        const e = new Error('Database error.');
+        e.status = 502;
+        throw e;
+      }
+      let rows = [];
+      try { rows = await r.json(); } catch { rows = []; }
+      return (Array.isArray(rows) ? rows : [])
+        .reduce((sum, row) => sum + (Number(row.delta) || 0), 0);
+    },
   };
 }
 
@@ -69,13 +89,15 @@ async function handleBalance(req) {
   if (req.method !== 'GET') return json(405, { error: 'Method not allowed.' });
   const userId = await getUserId(req);
   const sb = sbService();
-  const [balance, welcomeCount] = await Promise.all([
+  const [balance, welcomeCount, totalCredited] = await Promise.all([
     sb.rpc('credit_balance', { uid: userId }),
     sb.ledgerCount(userId, 'welcome'),
+    sb.ledgerSumPositive(userId),
   ]);
   return json(200, {
     balance: typeof balance === 'number' ? balance : 0,
     welcome_claimed: welcomeCount > 0,
+    total_credited: totalCredited,
   });
 }
 

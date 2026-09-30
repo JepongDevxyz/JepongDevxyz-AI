@@ -15,6 +15,10 @@
  *    server's own `thinking` event ADDS a new "Thinking" row: a visible
  *    remove+add flicker; on fast sequences the status looks like it
  *    vanished ("nawawala agad").
+ * 3. INVISIBLE EFFORT — the six response-effort levels (Instant / Low /
+ *    Medium / High / Extra / Max) all work server-side (system instruction,
+ *    native reasoning knobs, token budgets, planner/preflight gates), but
+ *    nothing on screen tells which level is active, so they feel dead.
  *
  * Fixes (runtime patches; no existing code is edited):
  *  - Patch 1: after each render, strip `ai-activity-enter` from rows that
@@ -24,12 +28,64 @@
  *  - Patch 2: rename the startup row to id `thinking` right after the
  *    indicator is created, so the server's thinking event updates it in
  *    place instead of remove+add.
+ *  - Patch 3: show the active response-effort level as a small tag next
+ *    to the Thinking label (sibling of #aiActivitySummary, so server
+ *    textContent updates can't wipe it). Every level is now visibly
+ *    distinct per request; the tag is removed with the indicator.
  *
  * Guards: no-ops when the host functions are absent, idempotent when
  * loaded twice, and fail-open (any error leaves the original behavior).
  */
 (function(){
   'use strict';
+
+  // --- Patch 3 helpers: read the selected effort, render the tag. ---
+  function currentEffort(){
+    try{
+      if(typeof window.currentResponseEffort==='function'){
+        var viaFn=window.currentResponseEffort();
+        if(viaFn)return String(viaFn);
+      }
+    }catch(_){}
+    try{
+      if(typeof personalizationSettings!=='undefined'&&
+         personalizationSettings&&personalizationSettings.intelligence){
+        return String(personalizationSettings.intelligence);
+      }
+    }catch(_){}
+    return 'Instant';
+  }
+
+  function injectEffortTagStyles(){
+    if(document.getElementById('jdEffortTagCss'))return;
+    var s=document.createElement('style');
+    s.id='jdEffortTagCss';
+    s.textContent=
+      '.jd-effort-tag{display:inline-block;margin-left:8px;padding:2px 9px;'+
+      'border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.04em;'+
+      'line-height:1.6;vertical-align:1px;white-space:nowrap;'+
+      'color:#f59e0b;border:1px solid rgba(245,158,11,.45);'+
+      'background:rgba(245,158,11,.10)}';
+    document.head.appendChild(s);
+  }
+
+  function renderEffortTag(){
+    try{
+      injectEffortTagStyles();
+      var effort=currentEffort();
+      var summary=document.getElementById('aiActivitySummary');
+      if(!summary||!summary.parentNode)return;
+      var tag=document.getElementById('jdEffortTag');
+      if(!tag||!summary.parentNode.contains(tag)){
+        tag=document.createElement('span');
+        tag.id='jdEffortTag';
+        tag.className='jd-effort-tag';
+        summary.parentNode.insertBefore(tag,summary.nextSibling);
+      }
+      if(tag.textContent!==effort)tag.textContent=effort;
+      tag.setAttribute('aria-label','Response effort: '+effort);
+    }catch(_){}
+  }
 
   function patch(){
     try{
@@ -63,6 +119,8 @@
             var startup=document.querySelector('#activeAiIndicator [data-activity-id="client-thinking"]');
             if(startup)startup.dataset.activityId='thinking';
           }catch(_){}
+          // --- Patch 3: tag the Thinking line with the active effort level.
+          renderEffortTag();
           return out;
         };
         calmShow.__jdCalmPatched=true;

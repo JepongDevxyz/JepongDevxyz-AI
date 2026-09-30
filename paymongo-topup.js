@@ -44,8 +44,8 @@
   }
 
   var CSS = [
-    '.jdpay-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}',
-    '.jdpay-box{background:#14181f;color:#eef2f7;border:1px solid #2a3340;border-radius:16px;max-width:380px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5)}',
+    '.jdpay-ov{position:fixed;top:0;left:0;right:0;height:100vh;height:100dvh;background:rgba(0,0,0,.6);z-index:9999;display:flex;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch}',
+    '.jdpay-box{background:#14181f;color:#eef2f7;border:1px solid #2a3340;border-radius:16px;max-width:380px;width:100%;margin:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain}',
     '.jdpay-box h3{margin:0 0 4px;font-size:18px}',
     '.jdpay-box p.sub{margin:0 0 14px;color:#9aa7b8;font-size:13px}',
     '.jdpay-plan{display:flex;justify-content:space-between;align-items:center;width:100%;background:#1d242e;border:1px solid #2a3340;color:#eef2f7;border-radius:12px;padding:12px 14px;margin:8px 0;cursor:pointer;font-size:15px}',
