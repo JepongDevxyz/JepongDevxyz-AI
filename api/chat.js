@@ -11,6 +11,8 @@ export const config = { runtime: 'edge' };
    High-level execution activity only. No hidden reasoning is exposed.
 ========================================================= */
 
+import { runConfiguredWebSearch } from './web-search.js';
+
 const PROVIDERS = {
   gemini: {
     label: 'Gemini',
@@ -3772,29 +3774,23 @@ async function getEnhancedLiveWebContext(message, webSearch, emit, options={}){
   }
 
   const sourcePages=fast?1:3;
-  // Optional Brave Search API, if the owner configures it later.
-  const braveKey=(process.env.BRAVE_SEARCH_API_KEY||'').trim();
-  if(braveKey){
-    activity(emit,'web-search','Searching live web with Brave Search','running','web');
-    try{
-      const res=await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQuery)}&count=${fast?3:5}`,{
-        headers:{'Accept':'application/json','X-Subscription-Token':braveKey},
-        signal:AbortSignal.timeout(fast?5000:8000)
-      });
-      if(res.ok){
-        const d=await safeJsonResponse(res);
-        const basic=(d?.web?.results||[]).slice(0,fast?3:5).map(x=>({
-          title:String(x.title||'').slice(0,180),
-          url:String(x.url||''),
-          snippet:stripHtml(String(x.description||'')).slice(0,500)
-        })).filter(x=>x.title&&isSafePublicUrl(x.url));
-        const relevant=relevantWebResults(basic,searchQuery);
-        if(relevant.length){
-          activity(emit,'web-search',`Found ${relevant.length} relevant web results • Brave`,'completed','web');
-          return buildLiveSourceContext(await enrichSearchResults(relevant,emit,sourcePages));
-        }
-      }
-    }catch(_){}
+  const providerLabels={serpapi:'SerpAPI',tavily:'Tavily',firecrawl:'Firecrawl',google:'Google Search JSON',brave:'Brave Search'};
+  const searchOutcome=await runConfiguredWebSearch(searchQuery,{
+    env:process.env,fetchImpl:fetch,timeoutMs:fast?5000:8000,
+    fast,maxResults:fast?3:5,isSafePublicUrl,relevantWebResults,
+    onProviderAttempt:({provider,keyIndex,keyCount,state,httpStatus,resultCount})=>{
+      const name=providerLabels[provider]||'Search provider';
+      const keyLabel=keyCount>1?` • key ${keyIndex+1}/${keyCount}`:'';
+      const label=state==='completed'
+        ?`Found ${resultCount} relevant result${resultCount===1?'':'s'} • ${name}`
+        :state==='warning'
+          ?`${name} unavailable${httpStatus?` • HTTP ${httpStatus}`:''} • trying next key/provider`
+          :`Searching the web with ${name}${keyLabel}`;
+      activity(emit,'web-search',label,state,'web');
+    }
+  });
+  if(searchOutcome.results.length){
+    return buildLiveSourceContext(await enrichSearchResults(searchOutcome.results,emit,sourcePages));
   }
 
   const results=await noKeyWebSearch(searchQuery,emit);
