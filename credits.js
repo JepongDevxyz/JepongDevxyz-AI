@@ -1,8 +1,11 @@
 /* ============================================================
    JepongDevxyz AI — credits frontend module
-   - Credits card injected into Settings > Usage & Limits
-     (NOT the header): balance, "% used" progress bar, Top up
-     button. Styled like the app's own usage cards.
+   - The Settings "Usage & Limits" row is converted into a
+     clickable nav row (chevron). Tapping it opens a detail
+     panel that shows the usage stats plus the credits card:
+     balance, "% used" progress bar, Top up button. The card is
+     NOT inline in the Settings list — it only appears inside
+     the panel after the row is tapped.
    - ensure(kind): gate before an AI generation; opens the
      QR Ph top-up modal when the signed-in user's balance is
      insufficient. Guests (not signed in) keep current behavior.
@@ -24,6 +27,7 @@
     var COSTS = { chat: 10, image: 50 };
 
     var balance = null;       // null = unknown / not signed in
+    var signedIn = null;      // null = unknown, true/false once known
     var totalCredited = 0;    // sum of all positive credit grants
     var refreshing = null;
 
@@ -40,14 +44,18 @@
         catch (_) { return String(n); }
     }
 
-    /* ---------- credits card (Settings > Usage & Limits) ---------- */
+    /* ---------- Usage & Limits detail panel ---------- */
 
     function injectStyles() {
         if (document.getElementById('jdCreditsStyles')) return;
         var s = document.createElement('style');
         s.id = 'jdCreditsStyles';
         s.textContent =
-            '.jd-credits-card{margin:10px 0 0;padding:14px 16px;border-radius:16px;' +
+            '.jd-usage-stats{display:flex;gap:8px;padding:14px 16px}' +
+            '.jd-usage-stats>div{flex:1;text-align:center;min-width:0}' +
+            '.jd-usage-stats b{display:block;font-size:1.15rem;font-weight:700}' +
+            '.jd-usage-stats span{font-size:.72rem;opacity:.65}' +
+            '.jd-credits-card{margin:12px 0 0;padding:14px 16px;border-radius:16px;' +
             'border:1px solid var(--border-color,rgba(128,128,128,.25));' +
             'background:var(--card-bg,#1e1e22);color:var(--text-color,inherit);font-family:inherit}' +
             '.jd-credits-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}' +
@@ -61,62 +69,155 @@
             '.jd-credits-bal{font-size:.85rem;opacity:.75}' +
             '.jd-credits-topup{border:none;border-radius:999px;padding:8px 18px;background:#3b82f6;color:#fff;' +
             'font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit}' +
-            '.jd-credits-topup:hover{filter:brightness(1.1)}';
+            '.jd-credits-topup:hover{filter:brightness(1.1)}' +
+            '.jd-credits-guest{margin:12px 0 0;font-size:.85rem;opacity:.75;text-align:center;padding:0 8px}';
         document.head.appendChild(s);
     }
 
     // The "Usage & Limits" static row in Settings (has #geminiQueryCount).
-    function findUsageRow() {
+    function findStaticUsageRow() {
         var q = document.getElementById('geminiQueryCount');
         if (!q || !q.closest) return null;
         return q.closest('.settings-static-row');
     }
 
-    function injectCreditsCard() {
+    // Turn the static row into a clickable nav row with a chevron.
+    function convertUsageRow() {
+        var row = findStaticUsageRow();
+        if (!row) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'settings-nav-row';
+        btn.setAttribute('onclick', 'openJdUsageLimits()');
+        btn.setAttribute('aria-label', 'Usage & Limits details');
+        while (row.firstChild) btn.appendChild(row.firstChild);
+        var chev = document.createElement('i');
+        chev.setAttribute('data-lucide', 'chevron-right');
+        btn.appendChild(chev);
+        row.replaceWith(btn);
+        if (typeof refreshLucideIcons === 'function') refreshLucideIcons(btn);
+    }
+
+    // Detail panel opened by tapping the row. Built once, reused.
+    function buildUsageModal() {
+        if (document.getElementById('jdUsageModal')) return;
         injectStyles();
-        if (document.getElementById('jdCreditsCard')) return;
-        var row = findUsageRow();
-        if (!row || !row.parentNode) return;
-        var card = document.createElement('div');
-        card.id = 'jdCreditsCard';
-        card.className = 'jd-credits-card';
-        card.hidden = true;
-        card.innerHTML =
+        var ov = document.createElement('div');
+        ov.className = 'modal-overlay';
+        ov.id = 'jdUsageModal';
+        ov.setAttribute('onclick', 'if(event.target===this)closeJdUsageLimits()');
+        ov.innerHTML =
+            '<section class="settings-home" role="dialog" aria-modal="true" aria-labelledby="jdUsageTitle" style="max-width:560px">' +
+            '<header class="settings-home-header">' +
+            '<button class="settings-back" type="button" onclick="closeJdUsageLimits()" aria-label="Back"><i data-lucide="arrow-left"></i></button>' +
+            '<div class="settings-profile"><div><h2 id="jdUsageTitle">Usage &amp; Limits</h2>' +
+            '<p>Credits and usage for your account</p></div></div>' +
+            '</header>' +
+            '<div class="settings-home-scroll">' +
+            '<div class="settings-card-group"><div class="jd-usage-stats">' +
+            '<div><b id="jdUsageWords">0</b><span>words</span></div>' +
+            '<div><b id="jdUsageTokens">0</b><span>tokens</span></div>' +
+            '<div><b id="jdUsageQueries">0</b><span>queries</span></div>' +
+            '</div></div>' +
+            '<div class="jd-credits-card" id="jdCreditsCard" hidden>' +
             '<div class="jd-credits-head">' +
-            '<span class="jd-credits-title"><span class="jd-bolt">⚡</span> Credits</span>' +
+            '<span class="jd-credits-title"><span class="jd-bolt">\u26a1</span> Credits</span>' +
             '<span class="jd-credits-pct" id="jdCreditsPct">0% used</span>' +
             '</div>' +
             '<div class="jd-credits-bar"><span class="jd-credits-fill" id="jdCreditsFill"></span></div>' +
             '<div class="jd-credits-foot">' +
             '<span class="jd-credits-bal" id="jdCreditsBal"></span>' +
             '<button type="button" class="jd-credits-topup" id="jdCreditsTopup">Top up</button>' +
-            '</div>';
-        card.querySelector('#jdCreditsTopup').addEventListener('click', function () {
-            JDCredits.openTopup();
-        });
-        row.parentNode.insertBefore(card, row.nextSibling);
+            '</div></div>' +
+            '<p class="jd-credits-guest" id="jdCreditsGuest" hidden>' +
+            'Mag-sign in para makuha ang 500 free credits at makapag-top up gamit ang QR Ph.</p>' +
+            '</div></section>';
+        document.body.appendChild(ov);
+        var topup = ov.querySelector('#jdCreditsTopup');
+        if (topup) topup.addEventListener('click', function () { JDCredits.openTopup(); });
+    }
+
+    // Snapshot the live usage numbers into the panel.
+    function syncUsageStats() {
+        var pairs = [
+            ['geminiWordCount', 'jdUsageWords'],
+            ['geminiTokenCount', 'jdUsageTokens'],
+            ['geminiQueryCount', 'jdUsageQueries']
+        ];
+        for (var i = 0; i < pairs.length; i++) {
+            var src = document.getElementById(pairs[i][0]);
+            var dst = document.getElementById(pairs[i][1]);
+            if (src && dst) dst.textContent = src.textContent;
+        }
+    }
+
+    function ensureUsageStructure() {
+        convertUsageRow();
+        buildUsageModal();
+    }
+
+    function ensureUsagePanel() {
+        ensureUsageStructure();
         renderCredits();
     }
 
+    window.openJdUsageLimits = function () {
+        ensureUsagePanel();
+        syncUsageStats();
+        if (typeof closeTransientSurfaces === 'function') closeTransientSurfaces('jdUsageModal');
+        var m = document.getElementById('jdUsageModal');
+        if (m) {
+            m.classList.add('open');
+            if (typeof refreshLucideIcons === 'function') {
+                requestAnimationFrame(function () { refreshLucideIcons(m); });
+            }
+        }
+        JDCredits.refresh();
+    };
+
+    window.closeJdUsageLimits = function () {
+        var m = document.getElementById('jdUsageModal');
+        if (m) m.classList.remove('open');
+        if (typeof openSettingsModal === 'function') openSettingsModal();
+    };
+
+    // Rendered-values cache: renderCredits() is also reachable from the
+    // Settings MutationObserver, so it must NEVER write to the DOM when
+    // nothing changed — otherwise the observer would refire forever and
+    // freeze the page.
+    var lastRenderKey = '';
     function renderCredits() {
         var card = document.getElementById('jdCreditsCard');
+        var guest = document.getElementById('jdCreditsGuest');
         if (!card) return;
-        if (balance === null) { card.hidden = true; return; }
-        card.hidden = false;
+        var key;
+        if (balance === null) {
+            key = 'null:' + (signedIn === false ? 'guest' : 'unknown');
+            if (key === lastRenderKey) return;
+            lastRenderKey = key;
+            card.hidden = true;
+            if (guest) guest.hidden = !(signedIn === false);
+            return;
+        }
         var total = totalCredited > 0 ? totalCredited : 0;
         var used = Math.max(0, total - balance);
         var pct = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+        key = 'bal:' + balance + ':pct:' + pct;
+        if (key === lastRenderKey) return;
+        lastRenderKey = key;
+        card.hidden = false;
+        if (guest) guest.hidden = true;
         card.querySelector('#jdCreditsPct').textContent = pct + '% used';
         card.querySelector('#jdCreditsFill').style.width = pct + '%';
         card.querySelector('#jdCreditsBal').innerHTML =
             '<b>' + fmt(balance) + '</b> credits';
     }
 
-    // Re-inject if the Settings panel is re-rendered.
+    // Re-apply structure only (never re-render here) if Settings is re-rendered.
     function observeSettings() {
-        injectCreditsCard();
+        ensureUsagePanel();
         if (typeof MutationObserver !== 'function') return;
-        var mo = new MutationObserver(function () { injectCreditsCard(); });
+        var mo = new MutationObserver(function () { ensureUsageStructure(); });
         mo.observe(document.documentElement, { childList: true, subtree: true });
     }
 
@@ -125,7 +226,8 @@
     function refresh() {
         if (refreshing) return refreshing;
         refreshing = token().then(function (t) {
-            if (!t) { balance = null; renderCredits(); return null; }
+            if (!t) { signedIn = false; balance = null; renderCredits(); return null; }
+            signedIn = true;
             return fetch('/api/credits-balance', {
                 headers: { 'Authorization': 'Bearer ' + t },
                 credentials: 'same-origin'
@@ -317,12 +419,12 @@
 
     function initAccount() {
         token().then(function (t) {
-            if (!t) { balance = null; renderCredits(); return; }
+            if (!t) { signedIn = false; balance = null; renderCredits(); return; }
             JDCredits.claimWelcome().then(function () { refresh(); });
         });
     }
 
-    observeSettings(); // credits card in Settings > Usage & Limits
+    observeSettings(); // Usage & Limits row -> clickable + detail panel
     installFetchGate(); // gate /api/chat generations on credits
     initAccount(); // in case the initial auth event already fired
     window.addEventListener('jd:account-changed', initAccount);
