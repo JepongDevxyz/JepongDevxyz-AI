@@ -104,12 +104,24 @@ ng unang migration. Nagdadagdag ito ng `idempotency_key` sa `credit_ledger`
   chat = 10, image = 50 (tingnan ang `COSTS` sa file).
 - `POST /api/credits-welcome` → one-time 500 free credits (`WELCOME_CREDITS`).
 
-**Frontend** (`credits.js` + 5 surgical insertions sa `index.html`):
+**Frontend** (`credits.js` + bootstrap sa `agent.js`; walang binago sa `index.html`):
 - Balance badge (⚡) sa header, click → top-up modal (`paymongo-topup.js`).
-- Bago mag-send: `ensure()` — kapag kulang ang credits, bubuksan ang top-up
-  modal at hindi itutuloy ang request. Kapag hindi naka-sign in, walang
-  pagbabago sa behavior (guest = kasalukuyang free experience).
-- Pagkatapos ng successful chat/image: `spend()` na idempotent
-  (`chat:<generationId>` / `img:<generationId>`).
+- `agent.js` (append-only, 11 linya sa dulo): naglo-load ng
+  `/paymongo-topup.js` at `/credits.js` nang deferred. Walang existing
+  code ang ginalaw.
+- `credits.js` nag-i-install ng **fetch gate**: bawat `POST /api/chat`
+  ay chine-check ang credits bago tumuloy at nagse-spend nang isang
+  beses lang pag nagtagumpay. Na-verify laban sa lahat ng `/api/chat`
+  call sites: `generate-image`/`generate-pet-image` = 50 credits;
+  user-initiated chat (kasama ang Bible Scholar mode) = 10 credits;
+  hindi ginalaw ang control calls (`provider-status`, `provider-models`,
+  `custom-api-models`, `tts`) at background calls (auto-summary, AI
+  title, vision sub-step ng image gen, settings tester).
+- Kapag kulang ang credits: bubukas ang top-up modal + alert, at
+  hindi itutuloy ang request (synthetic 402 sa app).
+- Kapag hindi naka-sign in, walang pagbabago sa behavior (guest =
+  kasalukuyang free experience).
+- Idempotent spend keys (`chat:<ts>:<rand>` / `image:<ts>:<rand>`);
+  walang spend kapag nag-fail ang generation.
 - Auto-claim ng welcome credits sa sign-in; auto-refresh ng balance
   pagkatapos ng bayad (`jdpay:paid` event).
