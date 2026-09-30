@@ -160,14 +160,17 @@ window.JDCodingAgent=Object.freeze({open,close});
    via a fetch wrapper), and the activity-status calmness fix
    (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
-  if(document.querySelector('script[src="/credits.js"]'))return;
+  if(document.querySelector('script[src^="/credits.js"]'))return;
+  /* Cache-buster: bump V on every push that changes the patches below,
+     so phones never keep showing a stale cached patch. */
+  var V='?v=20261001c';
   ['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js'].forEach(function(src){
-    var s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s);
+    var s=document.createElement('script');s.src=src+V;s.defer=true;document.head.appendChild(s);
   });
 }catch(e){}})();
 /* --- responsive tune stylesheet (appended 2026-09-30) ---
    Small-phone touch targets + TV/ultrawide layout. Additive. */
 (function(){try{
-  if(document.querySelector('link[href="/responsive-tune.css"]'))return;
-  var l=document.createElement('link');l.rel='stylesheet';l.href='/responsive-tune.css';document.head.appendChild(l);
+  if(document.querySelector('link[href^="/responsive-tune.css"]'))return;
+  var l=document.createElement('link');l.rel='stylesheet';l.href='/responsive-tune.css?v=20261001c';document.head.appendChild(l);
 }catch(e){}})();
