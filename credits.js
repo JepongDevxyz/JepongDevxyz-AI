@@ -9,6 +9,12 @@
    - Claims the one-time welcome credits on sign-in.
    Depends on: window.JDCloudAuthToken (index.html),
                window.JdPay.open (paymongo-topup.js).
+   Fetch gate: wraps window.fetch so every POST to /api/chat is gated
+   on credits and spends exactly once per successful generation —
+   without touching index.html. Control calls (provider-status,
+   provider-models, custom-api-models, tts) and background calls
+   (auto-summary, AI title, vision sub-step, settings tester) pass
+   through untouched.
    ============================================================ */
 (function () {
     'use strict';
@@ -192,6 +198,85 @@
 
     window.JDCredits = JDCredits;
 
+    /* ---------- fetch gate ---------- */
+    /* Wraps window.fetch so POSTs to /api/chat are credit-gated and
+       spend exactly once per successful generation. This is the
+       no-index.html-edit alternative to surgical hooks: verified
+       against every /api/chat call site in index.html (2026-09-30).
+       - 'image': action generate-image / generate-pet-image (50)
+       - 'chat': user-initiated message calls incl. Bible Scholar mode (10)
+       - pass-through: provider-status, provider-models,
+         custom-api-models, tts, vision sub-step (covered by the image
+         charge), auto-summary, AI title, settings tester. */
+
+    var BG_PREFIXES = [
+        'Summarize this conversation for context preservation.',
+        'Create a concise 3 to 6 word chat title.',
+        'Look at the attached image carefully' // vision sub-step of image gen
+    ];
+
+    function classifyChatBody(body) {
+        if (!body || typeof body !== 'object') return null;
+        var action = body.action;
+        if (action === 'generate-image' || action === 'generate-pet-image') return 'image';
+        if (action) return null;
+        if (typeof body.message !== 'string') return null;
+        if (body.customApiProfile) return null; // settings tester call
+        for (var i = 0; i < BG_PREFIXES.length; i++) {
+            if (body.message.indexOf(BG_PREFIXES[i]) === 0) return null;
+        }
+        return 'chat';
+    }
+
+    function gatedChatFetch(kind, doFetch) {
+        return JDCredits.ensure(kind).then(function (ok) {
+            if (!ok) {
+                // Top-up modal is already open; return a synthetic 402 so
+                // the app's normal error UI shows instead of hanging.
+                if (typeof Response === 'function') {
+                    return new Response(JSON.stringify({ error: 'insufficient_credits' }), {
+                        status: 402,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+                return Promise.reject(new Error('insufficient_credits'));
+            }
+            return doFetch().then(function (res) {
+                if (res && res.ok) {
+                    var key = kind + ':' + Date.now().toString(36) + ':' +
+                        Math.random().toString(36).slice(2, 10);
+                    JDCredits.spend(kind, key);
+                }
+                return res;
+            });
+        });
+    }
+
+    function installFetchGate() {
+        if (typeof window.fetch !== 'function') return;
+        if (window.fetch.__jdCreditsGated) return;
+        var origFetch = window.fetch.bind(window);
+        var gated = function (input, init) {
+            try {
+                var url = typeof input === 'string' ? input :
+                    (input && input.url ? input.url : '');
+                var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+                if (url.indexOf('/api/chat') !== -1 && method === 'POST' &&
+                    init && typeof init.body === 'string') {
+                    var kind = null;
+                    try { kind = classifyChatBody(JSON.parse(init.body)); }
+                    catch (_) { kind = null; }
+                    if (kind) {
+                        return gatedChatFetch(kind, function () { return origFetch(input, init); });
+                    }
+                }
+            } catch (_) { /* fall through to the original fetch */ }
+            return origFetch(input, init);
+        };
+        gated.__jdCreditsGated = true;
+        window.fetch = gated;
+    }
+
     /* ---------- wiring ---------- */
 
     function initAccount() {
@@ -202,6 +287,7 @@
     }
 
     injectBadge();
+    installFetchGate(); // gate /api/chat generations on credits
     initAccount(); // in case the initial auth event already fired
     window.addEventListener('jd:account-changed', initAccount);
     window.addEventListener('jdpay:paid', function () { refresh(); });
