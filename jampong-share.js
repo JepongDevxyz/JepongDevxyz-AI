@@ -25,8 +25,8 @@
     '.jdas-track{display:flex;width:100%;height:100%;transition:transform .4s cubic-bezier(.25,.8,.25,1)}',
     '.jdas-card{flex:0 0 100%;display:flex;align-items:center;justify-content:center;padding:20px}',
     '.jdas-card-inner{width:min(85vw,340px);aspect-ratio:3/4;border-radius:24px;',
-    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
-    'box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative;overflow:hidden}',
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;',
+    'box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative;overflow:hidden;padding-top:20px}',
     '.jdas-card-inner img{width:70%;height:auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.2));',
     'animation:jdJampLive 4s ease-in-out infinite}',
     '.jdas-imgbox{background:#fff;border-radius:20px;padding:16px;margin:16px 16px 0;width:calc(100% - 32px)}',
@@ -208,6 +208,8 @@
   }
 
   function open() {
+    // Only open when Jampong toggle is ON
+    if (window.jdJampongIsOn && !window.jdJampongIsOn()) return;
     build();
     poses = window.jdJampongPoses || [];
     // Refresh images in case poses updated
