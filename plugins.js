@@ -177,6 +177,19 @@ function loadInstalled() {
   catch (_) { return []; }
 }
 function saveInstalled(a) { try { localStorage.setItem(LS, JSON.stringify(a)); } catch (_) {} }
+/* Migrate v2 installed state so previously-installed github/superpowers carry over */
+(function migrateV2() {
+  try {
+    if (localStorage.getItem(LS)) return;
+    var s = JSON.parse(localStorage.getItem('jepong_plugins_directory_v2') || 'null');
+    var ids = [];
+    if (s && s.installed) {
+      if (s.installed.github && byId.github) ids.push('github');
+      if (s.installed.superpowers && byId.superpowers) ids.push('superpowers');
+    }
+    if (ids.length) localStorage.setItem(LS, JSON.stringify(ids));
+  } catch (_) {}
+})();
 var installed = loadInstalled();
 function isInstalled(id) { return loadInstalled().indexOf(id) !== -1; }
 
@@ -509,7 +522,7 @@ function contextForChat() {
     plugins: ms.map(function (p) {
       return { id: p.id, name: p.name, skills: p.skills.map(function (s) { return { name: s.n, prompt: s.p }; }) };
     }),
-    superpowers: { enabled: false, phase: 'auto' },
+    superpowers: { enabled: isInstalled('superpowers'), phase: 'auto' },
     skills: [],
     autoUse: true,
     github: { enabled: false }
