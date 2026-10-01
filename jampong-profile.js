@@ -300,15 +300,11 @@
       '<button class="jdad-deny" data-appr="deny">Deny</button>' +
       '</div></div>' +
       '<div class="jdjp-today" style="margin-top:20px">Approvals history</div>' +
+      '<div id="jdApprovalsList">' +
       '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
-      '<div class="jdjp-item-body"><div class="jdjp-item-title">Perform this action on your GitHub account</div>' +
-      '<div class="jdjp-item-desc">Allowed - now</div></div></div>' +
-      '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
-      '<div class="jdjp-item-body"><div class="jdjp-item-title">Perform this action on your GitHub account</div>' +
-      '<div class="jdjp-item-desc">Allowed - 5m ago</div></div></div>' +
-      '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
-      '<div class="jdjp-item-body"><div class="jdjp-item-title">Perform this action on your GitHub account</div>' +
-      '<div class="jdjp-item-desc">Allowed - 10m ago</div></div></div>' +
+      '<div class="jdjp-item-body"><div class="jdjp-item-title">Loading...</div>' +
+      '<div class="jdjp-item-desc">Fetching from GitHub</div></div></div>' +
+      '</div>' +
       '</div>';
 
     document.body.appendChild(el);
@@ -563,6 +559,7 @@
     if (img && poses[0]) img.src = poses[0];
     document.getElementById('jdJampongProfile').classList.add('open');
     if (window.jdLogJampong) window.jdLogJampong('profile_open');
+    setTimeout(jdLoadApprovals, 400);
     document.body.style.overflow = 'hidden';
   }
 
@@ -618,11 +615,95 @@
     el.classList.add('open');
   }
 
+  // --- Real GitHub Approvals (like Muse app) ---
+  function jdTimeAgo(dateStr) {
+    if (!dateStr) return 'recently';
+    var diff = Date.now() - new Date(dateStr).getTime();
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return mins + 'm ago';
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+  }
+  function jdEscape(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function jdLoadApprovals() {
+    var listEl = document.getElementById('jdApprovalsList');
+    if (!listEl) return;
+    fetch('https://api.github.com/repos/JepongDevxyz/JepongDevxyz-AI/commits?per_page=20')
+      .then(function (r) { return r.json(); })
+      .then(function (commits) {
+        if (!Array.isArray(commits) || !commits.length) {
+          listEl.innerHTML = '<div class="jdjp-item"><div class="jdjp-item-body"><div class="jdjp-item-desc">No approvals yet</div></div></div>';
+          return;
+        }
+        window._jdCommits = commits;
+        listEl.innerHTML = commits.map(function (c, i) {
+          var msg = (c.commit && c.commit.message || 'Push').split('\n')[0];
+          var ago = jdTimeAgo(c.commit && c.commit.author && c.commit.author.date);
+          return '<div class="jdjp-item" data-commit="' + i + '">' +
+            '<div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
+            '<div class="jdjp-item-body">' +
+            '<div class="jdjp-item-title">Perform this action on your GitHub account</div>' +
+            '<div class="jdjp-item-desc">' + jdEscape(msg.substring(0, 48)) + '</div>' +
+            '<div class="jdjp-item-time">Allowed - ' + ago + '</div>' +
+            '</div></div>';
+        }).join('');
+      })
+      .catch(function () {
+        listEl.innerHTML = '<div class="jdjp-item"><div class="jdjp-item-body"><div class="jdjp-item-desc">Could not load</div></div></div>';
+      });
+  }
+  function jdOpenApproval(idx) {
+    var commits = window._jdCommits || [];
+    var c = commits[idx];
+    if (!c) return;
+    var msg = (c.commit && c.commit.message) || '';
+    var sha = c.sha ? c.sha.substring(0, 7) : '';
+    var ago = jdTimeAgo(c.commit && c.commit.author && c.commit.author.date);
+    fetch('https://api.github.com/repos/JepongDevxyz/JepongDevxyz-AI/commits/' + c.sha)
+      .then(function (r) { return r.json(); })
+      .then(function (d) { jdShowApproval(c, d, msg, sha, ago); })
+      .catch(function () { jdShowApproval(c, null, msg, sha, ago); });
+  }
+  function jdShowApproval(c, detail, msg, sha, ago) {
+    var el = document.getElementById('jdActDetail');
+    if (!el) { el = document.createElement('div'); el.id = 'jdActDetail'; document.body.appendChild(el); }
+    var files = (detail && detail.files) ? detail.files : [];
+    var filesHtml = files.slice(0, 8).map(function (f, i) {
+      return '<div class="jdad-detail-row"><span class="jdad-detail-key">File ' + (i + 1) + ':</span><span class="jdad-detail-val">' + jdEscape(f.filename || '') + '</span></div>';
+    }).join('');
+    el.innerHTML =
+      '<div class="jdad-header"><button class="jdad-back" data-ad="back">' + ICON_BACK + '</button></div>' +
+      '<div class="jdad-body">' +
+      '<div class="jdad-statusrow"><span class="jdad-badge allowed">Allowed</span><span class="jdad-time">' + ago + '</span></div>' +
+      '<div class="jdad-title">Perform this action on your GitHub account</div>' +
+      '<div class="jdad-desc">' + jdEscape(msg.split('\n')[0]) + '</div>' +
+      '<div class="jdad-section">DETAILS</div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Action:</span><span class="jdad-detail-val">Push files to GitHub</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Branch:</span><span class="jdad-detail-val">main</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Commit:</span><span class="jdad-detail-val">' + sha + '</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Repository:</span><span class="jdad-detail-val">JepongDevxyz-AI</span></div>' +
+      filesHtml +
+      '<div class="jdad-section">MESSAGE</div><div class="jdad-cmd">' + jdEscape(msg) + '</div>' +
+      '</div>';
+    el.querySelector('[data-ad="back"]').addEventListener('click', function () { el.classList.remove('open'); });
+    el.classList.add('open');
+  }
+
   // Make activity items clickable
   document.addEventListener('click', function (e) {
     var item = e.target.closest('.jdjp-item');
-    if (item && item.dataset.idx !== undefined && item.dataset.idx !== '') {
-      openActivityDetail(item.dataset.idx);
+    if (item) {
+      if (item.dataset.commit !== undefined && item.dataset.commit !== '') {
+        jdOpenApproval(parseInt(item.dataset.commit, 10));
+        return;
+      }
+      if (item.dataset.idx !== undefined && item.dataset.idx !== '') {
+        openActivityDetail(item.dataset.idx);
+      }
     }
     // Approval buttons
     var appr = e.target.closest('[data-appr]');
