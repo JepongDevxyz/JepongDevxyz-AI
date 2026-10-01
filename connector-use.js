@@ -288,18 +288,44 @@
     return body;
   }
 
-  /* ---------- Allow / Deny permission prompt (Muse-app style) ---------- */
+  /* ---------- Allow / Deny permission system (Muse-app style) ---------- */
   var PERM_CSS_ID = 'jdConnectorPermCss';
   var PERM_MODAL_ID = 'jdConnectorPermModal';
-  var ALWAYS_KEY_PREFIX = 'jdConnectorAlways.';
 
-  function alwaysAllowed(connector) {
-    try { return window.localStorage.getItem(ALWAYS_KEY_PREFIX + connector) === '1'; }
-    catch (_) { return false; }
+  /* Permission resolution order:
+     1. Per-connector override from Permissions settings (jdPermConnector.<id>)
+     2. Legacy always-allow checkbox (jdConnectorAlways.<id>)
+     3. Global connector default (jdPermDefaults.connector): ask_some | always_ask */
+  function resolvePermission(connector) {
+    try {
+      var per = window.localStorage.getItem('jdPermConnector.' + connector);
+      if (per === 'allow' || per === 'ask' || per === 'deny') return per;
+      if (window.localStorage.getItem('jdConnectorAlways.' + connector) === '1') return 'allow';
+      var def = window.localStorage.getItem('jdPermDefaults.connector') || 'ask_some';
+      if (def === 'always_ask') return 'ask';
+    } catch (_) {}
+    return 'ask'; // ask_some default: prompt (first use offers always-allow)
   }
   function setAlwaysAllowed(connector) {
-    try { window.localStorage.setItem(ALWAYS_KEY_PREFIX + connector, '1'); } catch (_) {}
+    try { window.localStorage.setItem('jdConnectorAlways.' + connector, '1'); } catch (_) {}
   }
+  /* Exposed for the Permissions settings page. */
+  window.jdConnectorPerm = {
+    get: resolvePermission,
+    setConnector: function (id, v) {
+      try {
+        if (v === 'inherit' || !v) window.localStorage.removeItem('jdPermConnector.' + id);
+        else window.localStorage.setItem('jdPermConnector.' + id, v);
+      } catch (_) {}
+    },
+    getDefault: function () {
+      try { return window.localStorage.getItem('jdPermDefaults.connector') || 'ask_some'; }
+      catch (_) { return 'ask_some'; }
+    },
+    setDefault: function (v) {
+      try { window.localStorage.setItem('jdPermDefaults.connector', v); } catch (_) {}
+    }
+  };
 
   function ensurePermCss() {
     try {
@@ -308,63 +334,105 @@
       st.id = PERM_CSS_ID;
       st.textContent =
         '#' + PERM_MODAL_ID + '{position:fixed!important;inset:0!important;z-index:99999!important;' +
-        'display:flex!important;align-items:center!important;justify-content:center!important;' +
-        'background:rgba(0,0,0,.6)!important;padding:20px!important;box-sizing:border-box!important}' +
-        '#' + PERM_MODAL_ID + '.hidden{display:none!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-card{background:#1c1c1e!important;border:1px solid rgba(255,255,255,.12)!important;' +
-        'border-radius:20px!important;padding:24px!important;max-width:380px!important;width:100%!important;' +
-        'box-shadow:0 20px 60px rgba(0,0,0,.5)!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-icon{width:48px!important;height:48px!important;border-radius:14px!important;' +
-        'background:rgba(245,158,11,.15)!important;display:flex!important;align-items:center!important;' +
-        'justify-content:center!important;margin-bottom:16px!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-icon svg{width:26px!important;height:26px!important;color:#f59e0b!important}' +
-        '#' + PERM_MODAL_ID + ' h3{margin:0 0 8px!important;font-size:17px!important;font-weight:600!important;color:#fff!important}' +
-        '#' + PERM_MODAL_ID + ' p{margin:0 0 16px!important;font-size:14px!important;line-height:1.5!important;color:#b5b5b5!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-always{display:flex!important;align-items:center!important;gap:8px!important;' +
-        'margin-bottom:18px!important;font-size:13px!important;color:#9a9a9a!important;cursor:pointer!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-always input{width:16px!important;height:16px!important;accent-color:#f59e0b!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-btns{display:flex!important;gap:10px!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-btn{flex:1!important;padding:12px!important;border-radius:12px!important;' +
-        'font-size:15px!important;font-weight:600!important;cursor:pointer!important;border:1px solid rgba(255,255,255,.14)!important;' +
-        'background:transparent!important;color:#fff!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-btn.allow{background:#f59e0b!important;border-color:#f59e0b!important;color:#000!important}';
+        'display:flex!important;align-items:flex-end!important;justify-content:center!important;' +
+        'background:rgba(0,0,0,.55)!important;padding:0!important;box-sizing:border-box!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-sheet{background:#1e1e20!important;border-radius:24px 24px 0 0!important;' +
+        'width:100%!important;max-width:520px!important;padding:22px 20px calc(20px + env(safe-area-inset-bottom))!important;' +
+        'box-shadow:0 -12px 48px rgba(0,0,0,.5)!important;box-sizing:border-box!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-head{display:flex!important;gap:14px!important;align-items:flex-start!important;margin-bottom:14px!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-icon{width:52px!important;height:52px!important;border-radius:14px!important;' +
+        'background:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;' +
+        'flex:0 0 52px!important;overflow:hidden!important;font-weight:700!important;font-size:22px!important;color:#111!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-icon svg{width:32px!important;height:32px!important}' +
+        '#' + PERM_MODAL_ID + ' h3{margin:2px 0 0!important;font-size:19px!important;font-weight:700!important;' +
+        'line-height:1.3!important;color:#fff!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-desc{margin:0 0 14px!important;font-size:15px!important;' +
+        'line-height:1.5!important;color:#d4d4d4!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-details{background:#2a2a2d!important;border-radius:16px!important;' +
+        'padding:16px!important;margin-bottom:18px!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-details div{font-size:14px!important;line-height:1.9!important;color:#d4d4d4!important;' +
+        'overflow-wrap:anywhere!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-details b{color:#fff!important;font-weight:600!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-always{display:flex!important;align-items:center!important;gap:9px!important;' +
+        'margin-bottom:16px!important;font-size:14px!important;color:#a1a1a1!important;cursor:pointer!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-always input{width:17px!important;height:17px!important;accent-color:#3b82f6!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-btn{width:100%!important;padding:15px!important;border-radius:16px!important;' +
+        'font-size:16px!important;font-weight:700!important;cursor:pointer!important;border:none!important;margin-bottom:10px!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-btn.allow{background:#3b82f6!important;color:#fff!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-btn.deny{background:#2a2a2d!important;color:#fff!important;margin-bottom:0!important}';
       document.head.appendChild(st);
     } catch (_) {}
   }
 
   var CONNECTOR_NAMES = {
-    gmail: 'Gmail', gcalendar: 'Google Calendar', gdrive: 'Google Drive', spotify: 'Spotify',
-    github: 'GitHub', notion: 'Notion', slack: 'Slack', dropbox: 'Dropbox', linear: 'Linear',
-    todoist: 'Todoist', figma: 'Figma', zoom: 'Zoom', vercel: 'Vercel', facebook: 'Facebook',
-    instagram: 'Instagram', messenger: 'Messenger', threads: 'Threads'
+    gmail: 'Gmail', gcalendar: 'Google Calendar', gcontacts: 'Google Contacts',
+    gdrive: 'Google Drive', gdocs: 'Google Docs', gsheets: 'Google Sheets',
+    gslides: 'Google Slides', gforms: 'Google Forms', gtasks: 'Google Tasks',
+    outlook_mail: 'Outlook Mail', outlook_calendar: 'Outlook Calendar',
+    outlook_contacts: 'Outlook Contacts', spotify: 'Spotify', github: 'GitHub',
+    facebook: 'Facebook', instagram: 'Instagram', instagram_msgs: 'Instagram Messages',
+    messenger: 'Messenger', threads: 'Threads', meta_biz: 'Meta Business',
+    meta_ads: 'Meta Ads', dropbox: 'Dropbox', box: 'Box', notion: 'Notion',
+    slack: 'Slack', figma: 'Figma', zoom: 'Zoom', linear: 'Linear',
+    todoist: 'Todoist', asana: 'Asana', canva: 'Canva', quickbooks: 'QuickBooks',
+    withings: 'Withings', vercel: 'Vercel', plaid: 'Bank accounts',
+    stripe: 'Stripe', shopify: 'Shopify', calendly: 'Calendly', klaviyo: 'Klaviyo',
+    highlevel: 'GoHighLevel', tessie: 'Tessie', tailscale: 'Tailscale',
+    printify: 'Printify', flightaware: 'FlightAware'
   };
   function connectorName(id) {
     return CONNECTOR_NAMES[id] || String(id).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
   }
+  /* Human-readable action description per op (for the details card). */
+  var OP_DESCRIPTIONS = {
+    unread: 'Read unread emails', upcoming: 'Read upcoming events', list: 'List items',
+    recent: 'Read recent files', tasks: 'Read tasks', playlists: 'Read playlists',
+    repos: 'List repositories', profile: 'Read profile', businesses: 'List businesses',
+    accounts: 'List ad accounts', files: 'List files', items: 'List items',
+    search: 'Search content', channels: 'List channels', me: 'Read account info',
+    meetings: 'List meetings', issues: 'List issues', company: 'Read company info',
+    devices: 'List devices', projects: 'List projects', balance: 'Read balance',
+    products: 'List products', events: 'List events', lists: 'List mailing lists',
+    vehicles: 'List vehicles', shops: 'List shops', track: 'Track flight',
+    'pr-files': 'Read PR files', 'create-issue': 'Create issue', 'create-pr': 'Create pull request',
+    merge: 'Merge pull request', branches: 'List branches', file: 'Read file',
+    commit: 'Commit file', review: 'Review pull request', comment: 'Post comment', prs: 'List pull requests'
+  };
+  function opDescription(op) { return OP_DESCRIPTIONS[op] || String(op); }
+  function connectorInitial(name) {
+    var w = String(name || '?').trim();
+    return w.charAt(0).toUpperCase();
+  }
 
   /* Returns a Promise<boolean>: true = allowed, false = denied. */
   function requestPermission(intent) {
-    if (alwaysAllowed(intent.connector)) return Promise.resolve(true);
+    var perm = resolvePermission(intent.connector);
+    if (perm === 'allow') return Promise.resolve(true);
+    if (perm === 'deny') return Promise.resolve(false);
     return new Promise(function (resolve) {
       try {
         ensurePermCss();
         var old = document.getElementById(PERM_MODAL_ID);
         if (old && old.parentNode) old.parentNode.removeChild(old);
         var name = connectorName(intent.connector);
+        var action = opDescription(intent.op);
         var ov = document.createElement('div');
         ov.id = PERM_MODAL_ID;
         ov.innerHTML =
-          '<div class="jd-perm-card" role="dialog" aria-modal="true" aria-label="Connector permission">' +
-          '<div class="jd-perm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-          '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>' +
-          '<h3>Payagan ang pag-access?</h3>' +
-          '<p>Gusto ng JepongDevxyz AI na gamitin ang <b style="color:#fff">' + name +
-          '</b> para sa request na ito (' + intent.label + ').</p>' +
-          '<label class="jd-perm-always"><input type="checkbox" id="jdPermAlways"> Palaging payagan ang ' + name + '</label>' +
-          '<div class="jd-perm-btns">' +
-          '<button class="jd-perm-btn" id="jdPermDeny" type="button">Deny</button>' +
+          '<div class="jd-perm-sheet" role="dialog" aria-modal="true" aria-label="Connector permission">' +
+          '<div class="jd-perm-head"><div class="jd-perm-icon">' + connectorInitial(name) + '</div>' +
+          '<h3>Allow JepongDevxyz AI to perform this action on your ' + name + ' account?</h3></div>' +
+          '<p class="jd-perm-desc">Your assistant wants to <b style="color:#fff">' + action.toLowerCase() +
+          '</b> on your ' + name + ' account.</p>' +
+          '<div class="jd-perm-details">' +
+          '<div><b>Action:</b> ' + action + '</div>' +
+          '<div><b>Connector:</b> ' + name + '</div>' +
+          '<div><b>Access:</b> Read-only for this request</div>' +
+          '</div>' +
+          '<label class="jd-perm-always"><input type="checkbox" id="jdPermAlways"> Always allow ' + name + '</label>' +
           '<button class="jd-perm-btn allow" id="jdPermAllow" type="button">Allow</button>' +
-          '</div></div>';
+          '<button class="jd-perm-btn deny" id="jdPermDeny" type="button">Deny</button>' +
+          '</div>';
         document.body.appendChild(ov);
         var done = function (allowed) {
           try {
