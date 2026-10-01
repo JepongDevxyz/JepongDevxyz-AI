@@ -148,6 +148,7 @@
   var ICON_DRIVE = '<svg viewBox="0 0 24 24"><path d="M7 18h10"/><path d="M4 14h16"/><path d="M6 10h12"/><path d="M8 6h8"/></svg>';
   var ICON_PDF = '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
   var ICON_NODES = '<svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M6.5 7.5 11 16"/><path d="M17.5 7.5 13 16"/><path d="M7 6h10"/></svg>';
+  var ICON_GITHUB = '<svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12c0 4.4 2.9 8.2 6.8 9.5.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.2-3.4-1.2-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.7.4-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.2-.4-1.3.1-2.6 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.4.1 2.6.6.7 1 1.6 1 2.7 0 3.8-2.4 4.7-4.6 4.9.4.3.8 1 .8 2v3c0 .3.2.6.7.5A10 10 0 0 0 22 12 10 10 0 0 0 12 2z"/></svg>';
   var ICON_BOT = '<svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/></svg>';
 
   var DEFAULT_SOUL = '# SOUL.md\n\n' +
@@ -198,23 +199,28 @@
     var ampm = h >= 12 ? 'pm' : 'am';
     h = h % 12 || 12;
     var timeStr = h + ':' + (m < 10 ? '0' + m : m) + ampm;
-    return [
-      { title: 'Add Soul and memory editor', desc: 'Implemented SOUL.md and MEMORY.md file editor cards', time: timeStr,
-        status: 'Allowed', duration: '00:07',
-        cmd: 'Running push_files --owner JepongDevxyz --repo JepongDevxyz-AI',
-        steps: [{ text: 'Built SOUL.md viewer', done: true }, { text: 'Built MEMORY.md viewer', done: true }, { text: 'Pushed to GitHub', done: true }] },
-      { title: 'Fix Jampong Profile', desc: 'Updated pill nav to 5 icons and added Soul and Memory cards', time: timeStr,
-        status: 'Allowed', duration: '00:05',
-        cmd: 'Running push_files --owner JepongDevxyz --repo JepongDevxyz-AI',
-        steps: [{ text: 'Updated pill to 5 icons', done: true }, { text: 'Added SOUL/MEMORY cards', done: true }] },
-      { title: 'Add avatar share cards', desc: 'Built swipeable avatar share carousel with social actions', time: timeStr,
-        status: 'Allowed', duration: '00:06',
-        cmd: 'Running push_files --owner JepongDevxyz --repo JepongDevxyz-AI',
-        steps: [{ text: 'Built carousel', done: true }, { text: 'Added share actions', done: true }] },
-      { title: 'Jampong Profile Screen', desc: 'Created Muse-style profile with activity feed', time: timeStr,
-        status: 'Completed', duration: '00:04',
-        steps: [{ text: 'Built profile modal', done: true }, { text: 'Added activity feed', done: true }] }
-    ];
+    return {
+      today: [
+        { title: 'Fix fingerprint screen UI', desc: 'Deploying updated UI to GitHub', time: '12:47am',
+          status: 'Pending', duration: '00:51',
+          cmd: 'Running /opt/hatch/bin/github call-tool --name push_files --arguments...',
+          steps: [{ text: 'Reacted with 👍 emoji', done: true }, { text: 'Updated jampong-profile.js card styles', done: true }, { text: 'Updated jampong-profile.js fingerprint button markup', done: true }, { text: 'Updated fingerprint click handler', done: true }, { text: 'Running: Editing jai/jampong-profile.js', done: false }, { text: 'Node syntax check passed', done: true }, { text: 'Running: push_files', done: false }] },
+        { title: 'Fix Profile Default + Tabs UI', desc: 'Shipped profile tabs, removed shield, and verified live', time: '12:43am',
+          status: 'Allowed', duration: '00:50',
+          steps: [{ text: 'Updated profile layout', done: true }, { text: 'Verified live deployment', done: true }] },
+        { title: 'Separate UI into Two Tabs', desc: 'Separated UI into SOUL and MEMORY tabs and deployed', time: '12:38am',
+          status: 'Allowed', duration: '00:45',
+          steps: [{ text: 'Created SOUL tab', done: true }, { text: 'Created MEMORY tab', done: true }, { text: 'Deployed', done: true }] }
+      ],
+      yesterday: [
+        { title: 'Verify Pixel-Perfect Match', desc: 'Pushed layout changes and verified the live deployment', time: '12:32am',
+          status: 'Allowed', duration: '00:40',
+          steps: [{ text: 'Pushed changes', done: true }, { text: 'Verified live', done: true }] },
+        { title: 'Verify Jampong toggle logic', desc: 'Verified Jampong toggle guards and exports', time: '12:29am',
+          status: 'Allowed', duration: '00:35',
+          steps: [{ text: 'Checked toggle logic', done: true }] }
+      ]
+    };
   }
 
   function build() {
@@ -227,15 +233,21 @@
     var el = document.createElement('div');
     el.id = 'jdJampongProfile';
 
-    var activityHtml = getActivity().map(function (a, idx) {
-      return '<div class="jdjp-item" data-idx="' + idx + '">' +
-        '<div class="jdjp-item-icon">' + ICON_NODES + '</div>' +
-        '<div class="jdjp-item-body">' +
-        '<div class="jdjp-item-title">' + a.title + '</div>' +
-        '<div class="jdjp-item-desc">' + a.desc + '</div>' +
-        '<div class="jdjp-item-time">' + a.time + '</div>' +
-        '</div></div>';
-    }).join('');
+    var act = getActivity();
+    var renderItems = function (items, prefix) {
+      return items.map(function (a, idx) {
+        return '<div class="jdjp-item" data-idx="' + prefix + idx + '">' +
+          '<div class="jdjp-item-icon">' + ICON_NODES + '</div>' +
+          '<div class="jdjp-item-body">' +
+          '<div class="jdjp-item-title">' + a.title + '</div>' +
+          '<div class="jdjp-item-desc">' + a.desc + '</div>' +
+          '<div class="jdjp-item-time">' + a.time + '</div>' +
+          '</div></div>';
+      }).join('');
+    };
+    var activityHtml =
+      '<div class="jdjp-today">Today</div>' + renderItems(act.today, 't') +
+      '<div class="jdjp-today" style="margin-top:16px">Yesterday</div>' + renderItems(act.yesterday, 'y');
 
     el.innerHTML =
       '<div class="jdjp-header">' +
@@ -250,6 +262,9 @@
       '<div class="jdjp-status">online</div>' +
       '<div class="jdjp-pill">' +
       '<button data-act="menu">' + ICON_MENU + '</button>' +
+      '<button data-act="shield">' + ICON_SHIELD + '</button>' +
+      '<button data-act="monitor">' + ICON_MONITOR + '</button>' +
+      '<button data-act="clock">' + ICON_CLOCK + '</button>' +
       '<button data-act="finger">' + ICON_FINGER + '</button>' +
       '</div>' +
       '<div class="jdjp-files" id="jdFilesView">' +
@@ -266,7 +281,29 @@
       '</div>' +
       '</div>' +
       '</div>' +
-      '<div class="jdjp-activity" id="jdActivityView"><div class="jdjp-today">Today</div>' + activityHtml + '</div>';
+      '<div class="jdjp-activity" id="jdActivityView">' + activityHtml +
+      '<div class="jdjp-today" style="margin-top:20px">Needs review</div>' +
+      '<div class="jdad-approve">' +
+      '<div class="jdad-approve-title">Allow Jampong to perform this action on your GitHub account?</div>' +
+      '<div class="jdad-approve-desc">Your assistant wants to update GitHub repository content so the SOUL/MEMORY viewer opens when you tap the fingerprint icon.</div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Action:</span><span class="jdad-detail-val">Push files to GitHub</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Branch:</span><span class="jdad-detail-val">main</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files:</span><span class="jdad-detail-val">agent.js, patch-version.txt, jampong-profile.js</span></div>' +
+      '<div class="jdad-approve-btns" style="margin-top:12px">' +
+      '<button class="jdad-allow" data-appr="allow">Allow</button>' +
+      '<button class="jdad-deny" data-appr="deny">Deny</button>' +
+      '</div></div>' +
+      '<div class="jdjp-today" style="margin-top:20px">Approvals history</div>' +
+      '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
+      '<div class="jdjp-item-body"><div class="jdjp-item-title">Perform this action on your GitHub account</div>' +
+      '<div class="jdjp-item-desc">Allowed - now</div></div></div>' +
+      '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
+      '<div class="jdjp-item-body"><div class="jdjp-item-title">Perform this action on your GitHub account</div>' +
+      '<div class="jdjp-item-desc">Allowed - 5m ago</div></div></div>' +
+      '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
+      '<div class="jdjp-item-body"><div class="jdjp-item-title">Perform this action on your GitHub account</div>' +
+      '<div class="jdjp-item-desc">Allowed - 10m ago</div></div></div>' +
+      '</div>';
 
     document.body.appendChild(el);
 
@@ -281,6 +318,19 @@
     el.querySelector('[data-act="menu"]').addEventListener('click', function () {
       if (typeof window.openMenuFromBrandIcon === 'function') window.openMenuFromBrandIcon();
       close();
+    });
+    el.querySelector('[data-act="shield"]').addEventListener('click', function () {
+      // Show approvals section
+      var actView = el.querySelector('#jdActivityView');
+      if (actView) actView.scrollIntoView({ behavior: 'smooth' });
+      if (typeof window.jdToast === 'function') window.jdToast('Approvals');
+    });
+    el.querySelector('[data-act="monitor"]').addEventListener('click', function () {
+      if (typeof window.jdToast === 'function') window.jdToast('Browser task');
+    });
+    el.querySelector('[data-act="clock"]').addEventListener('click', function () {
+      var actView = el.querySelector('#jdActivityView');
+      if (actView) actView.scrollIntoView({ behavior: 'smooth' });
     });
     el.querySelector('[data-act="finger"]').addEventListener('click', function () {
       var filesView = el.querySelector('#jdFilesView');
@@ -514,9 +564,14 @@
     document.body.style.overflow = '';
   }
 
-  function openActivityDetail(idx) {
-    var activities = getActivity();
-    var a = activities[idx];
+  function openActivityDetail(idxStr) {
+    var act = getActivity();
+    var a;
+    if (idxStr.charAt(0) === 't') {
+      a = act.today[parseInt(idxStr.substring(1), 10)];
+    } else if (idxStr.charAt(0) === 'y') {
+      a = act.yesterday[parseInt(idxStr.substring(1), 10)];
+    }
     if (!a) return;
 
     var el = document.getElementById('jdActDetail');
@@ -558,8 +613,19 @@
   // Make activity items clickable
   document.addEventListener('click', function (e) {
     var item = e.target.closest('.jdjp-item');
-    if (item && item.dataset.idx !== undefined) {
-      openActivityDetail(parseInt(item.dataset.idx, 10));
+    if (item && item.dataset.idx !== undefined && item.dataset.idx !== '') {
+      openActivityDetail(item.dataset.idx);
+    }
+    // Approval buttons
+    var appr = e.target.closest('[data-appr]');
+    if (appr) {
+      var action = appr.dataset.appr;
+      if (typeof window.jdToast === 'function') {
+        window.jdToast(action === 'allow' ? 'Allowed' : 'Denied');
+      }
+      // Hide the needs review section after action
+      var approveEl = appr.closest('.jdad-approve');
+      if (approveEl) approveEl.style.display = 'none';
     }
   });
 

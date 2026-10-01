@@ -40,7 +40,8 @@
     '.jdas-dots{display:flex;justify-content:center;gap:8px;padding:16px}',
     '.jdas-dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);transition:all .3s}',
     '.jdas-dots span.active{background:#fff;transform:scale(1.3)}',
-    '.jdas-actions{display:flex;align-items:center;justify-content:center;gap:16px;padding:20px}',
+    '.jdas-actions{display:flex;align-items:flex-start;gap:16px;padding:20px;overflow-x:auto;justify-content:flex-start}',
+    '.jdas-action-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;min-width:64px}',
     '.jdas-actions button{width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;',
     'background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center}',
     '.jdas-actions button:active{transform:scale(.9)}',
@@ -56,6 +57,10 @@
   var ICON_IG = '<svg viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="#fff"/></svg>';
   var ICON_WA = '<svg viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9 11c.5 2 2.5 4 4.5 4.5l1.5-1.5 2 1c-.5 1.5-1.5 2-3 1.5-3-1-6-4-7-7-.5-1.5 0-2.5 1.5-3l1 2L9 11z"/></svg>';
   var ICON_MSG = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  var ICON_MESSENGER = '<svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.4 5.4 3.5 7.1V22l3.2-1.8c.9.2 1.8.4 2.8.4h.5c5.5 0 10-4.1 10-9.2S17.5 2 12 2z"/></svg>';
+  var ICON_THREADS = '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zm-1 3v6l5 3 1-1.7-4-2.3V7z"/></svg>';
+  var ICON_X = '<svg viewBox="0 0 24 24"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.3L1.2 2h6.4l4.4 5.9zm-1.1 18h1.7L7.1 3.9H5.3z"/></svg>';
+  var ICON_SMS = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 12h5"/></svg>';
   var ICON_DL = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>';
 
   var currentIdx = 0;
@@ -104,6 +109,10 @@
       '<div class="jdas-action-wrap"><button data-act="ig" aria-label="Instagram story">' + ICON_IG + '</button><span class="jdas-action-label">Instagram story</span></div>' +
       '<div class="jdas-action-wrap"><button data-act="wa" aria-label="WhatsApp">' + ICON_WA + '</button><span class="jdas-action-label">WhatsApp</span></div>' +
       '<div class="jdas-action-wrap"><button data-act="msg" aria-label="Instagram message">' + ICON_MSG + '</button><span class="jdas-action-label">Instagram message</span></div>' +
+      '<div class="jdas-action-wrap"><button data-act="messenger" aria-label="Messenger">' + ICON_MESSENGER + '</button><span class="jdas-action-label">Messenger</span></div>' +
+      '<div class="jdas-action-wrap"><button data-act="threads" aria-label="Threads">' + ICON_THREADS + '</button><span class="jdas-action-label">Threads</span></div>' +
+      '<div class="jdas-action-wrap"><button data-act="x" aria-label="X">' + ICON_X + '</button><span class="jdas-action-label">X</span></div>' +
+      '<div class="jdas-action-wrap"><button data-act="sms" aria-label="Messages">' + ICON_SMS + '</button><span class="jdas-action-label">Messages</span></div>' +
       '</div>';
 
     document.body.appendChild(el);
@@ -138,6 +147,28 @@
       } else {
         downloadCurrent('jampong-avatar.png');
       }
+    });
+
+    // Messenger
+    el.querySelector('[data-act="messenger"]').addEventListener('click', function () {
+      shareCurrent();
+    });
+
+    // Threads
+    el.querySelector('[data-act="threads"]').addEventListener('click', function () {
+      shareCurrent();
+    });
+
+    // X
+    el.querySelector('[data-act="x"]').addEventListener('click', function () {
+      var text = encodeURIComponent("Hi, I'm Jampong, Jepong's personal AI agent. Join JepongDevxyz AI and create your own agent today.");
+      window.open('https://twitter.com/intent/tweet?text=' + text, '_blank');
+    });
+
+    // Messages (SMS)
+    el.querySelector('[data-act="sms"]').addEventListener('click', function () {
+      var text = encodeURIComponent("Hi, I'm Jampong, Jepong's personal AI agent. Join JepongDevxyz AI and create your own agent today.");
+      window.location.href = 'sms:?body=' + text;
     });
 
     // Swipe
