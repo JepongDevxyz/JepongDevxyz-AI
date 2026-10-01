@@ -11,7 +11,16 @@
    - Context menus: Chat / Manage / Uninstall
    REAL FUNCTION:
    - Install/uninstall persists to localStorage
-   - "Try in chat" / "Chat" inserts @PluginName into chat input
+   - Detail page: white "Install plugin" button (not installed) opens the
+     "Connect [Name]" bottom sheet; "Try in chat" (installed). Tapping an
+     example card or skill when not installed opens the sheet first —
+     install-first: nothing works until installed.
+   - "Connect [Name]" sheet (frame-by-frame ChatGPT): "Continue without
+     account" installs in skill-guidance mode; "Connect [Name]" runs real
+     OAuth through the matching Connector (popup + jd-connector-connected
+     message) for plugins with a conn:{provider,connector} mapping
+     (gmail, gdrive, gcal, slack, notion, figma, dropbox, canva,
+     outlook mail/calendar, vercel, spotify).
    - contextForChat() detects @mentions and injects that
      plugin's skills into the AI request (real capability)
    - plugins-inject.js (runtime patch) appends mentioned plugins'
@@ -32,6 +41,7 @@ gmail: '<svg viewBox="0 0 48 48"><path fill="#EA4335" d="M8 12l16 12 16-12v-2H8z
 github: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>',
 gdrive: '<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M16 8h16l8 14H24z"/><path fill="#34A853" d="M8 22h16l8 14H16z"/><path fill="#4285F4" d="M32 8l8 14H24z"/></svg>',
 slack: '<svg viewBox="0 0 48 48"><path fill="#36C5F0" d="M18 4a4 4 0 014 4v8h-8a4 4 0 010-8h4z"/><path fill="#2EB67D" d="M44 18a4 4 0 01-4 4h-8v-8a4 4 0 018 0z"/><path fill="#ECB22E" d="M30 44a4 4 0 01-4-4v-8h8a4 4 0 010 8h-4z"/><path fill="#E01E5A" d="M4 30a4 4 0 014-4h8v8a4 4 0 01-8 0z"/></svg>',
+spotify: '<svg viewBox="0 0 24 24" fill="#191414"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-7.36-1.82-10.96-.48-.4.2-.8.08-1.021-.24-.24-.4-.08-.8.24-1.021 3.6-1.34 8.4-1.26 11.52.48.4.16.8.48 1.04.08zm1.681-4.36c-.281.38-.78.5-1.14.22-3.18-1.94-8.04-2.56-11.8-1.4-.5.16-1.02-.1-1.18-.6-.16-.5.1-1.02.6-1.18 4.26-1.3 9.62-.58 13.26 1.6.38.22.5.76.22 1.14zm.16-4.56C15.24 6.68 8.84 6.48 5.4 7.5c-.6.18-1.24-.16-1.42-.76-.18-.6.16-1.24.76-1.42 4.02-1.22 11.02-1.02 15.36 1.62.56.34.74 1.06.4 1.62-.34.56-1.08.72-1.64.4z"/></svg>',
 figma: '<svg viewBox="0 0 24 24"><path fill="#F24E1E" d="M8.5 2h3.5v7H8.5a3.5 3.5 0 010-7z"/><path fill="#FF7262" d="M12 2h3.5a3.5 3.5 0 010 7H12z"/><path fill="#A259FF" d="M8.5 9H12v7H8.5a3.5 3.5 0 010-7z"/><circle cx="15.5" cy="12.5" r="3.5" fill="#1ABCFE"/><path fill="#0ACF83" d="M8.5 16H12v5.5a3.5 3.5 0 01-3.5-3.5z"/></svg>',
 notion: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M17.5 3h-11C4.6 3 3 4.6 3 6.5v11C3 19.4 4.6 21 6.5 21h11c1.9 0 3.5-1.6 3.5-3.5v-11C21 4.6 19.4 3 17.5 3zM8.2 16.6L6.6 15l-.2-1.3V8.9l.3-.5 4.5-.1.2.3-.3 1.4 2.1 5.4 2-5.3-.4-1.5.2-.3 2-.1.2.3-2.8 7.2-.4.2-.4-.2-2.4-6.1-2.1 6.1-.4.2z"/></svg>',
 dropbox: '<svg viewBox="0 0 48 48"><path fill="#0061FF" d="M24 4l14 8-14 8-14-8z"/><path fill="#0061FF" d="M10 16l14 8v12l-14-8z"/><path fill="#0061FF" d="M38 16l-14 8v12l14-8z"/></svg>',
@@ -55,6 +65,7 @@ remotedesktop: '<svg viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fi
 /* ---------------- Plugin catalog ---------------- */
 var CATALOG = [
 {id:'gmail',name:'Gmail',tagline:'Read and manage Gmail',icon:'gmail',bg:'#1a1a1a',cat:'Popular',
+ conn:{provider:'google',connector:'gmail'},
  desc:'Use Gmail with JepongDevxyz AI to read, search, draft and manage your email.',
  skills:[{n:'Read inbox',p:'Summarize my latest unread emails: sender, subject, and one-line gist each.'},{n:'Search email',p:'Search my email for: '},{n:'Draft email',p:'Draft a polite email about: '}],
  examples:['@Gmail summarize my unread emails','@Gmail find emails from my boss'],
@@ -65,6 +76,7 @@ var CATALOG = [
  examples:['@Health how active was I this week'],
  info:{cap:'Interactive and Read',dev:'JepongDevxyz',web:'jepong-devxyz-ai.vercel.app',ver:'1.0.0'}},
 {id:'gdrive',name:'Google Drive',tagline:'Drive, Docs, Sheets or Slides',icon:'gdrive',bg:'#1a1a1a',cat:'Popular',
+ conn:{provider:'google',connector:'gdrive'},
  desc:'Work with your Drive files — summarize docs, analyze sheets, and find anything fast.',
  skills:[{n:'Summarize doc',p:'Summarize this Google Doc: '},{n:'Analyze sheet',p:'Analyze this spreadsheet and highlight key numbers: '}],
  examples:['@Google Drive summarize my project doc'],
@@ -81,41 +93,49 @@ var CATALOG = [
  examples:['@tldraw diagram my app flow'],
  info:{cap:'Interactive',dev:'tldraw',web:'tldraw.dev',ver:'1.2.0'}},
 {id:'canva',name:'Canva',tagline:'Create, review, edit designs',icon:'canva',bg:'#1a1a1a',cat:'New & Noteworthy',
+ conn:{provider:'canva',connector:'canva'},
  desc:'Create, review, and edit designs with Canva through JepongDevxyz AI.',
  skills:[{n:'Design brief',p:'Write a design brief for: '}],
  examples:['@Canva design a thumbnail for my video'],
  info:{cap:'Interactive',dev:'Canva',web:'canva.com',ver:'1.8.0'}},
 {id:'figma',name:'Figma',tagline:'Create designs, ship to code',icon:'figma',bg:'#1a1a1a',cat:'New & Noteworthy',
+ conn:{provider:'figma',connector:'figma'},
  desc:'Create designs and ship them to code with Figma.',
  skills:[{n:'Design review',p:'Review this UI design: '}],
  examples:['@Figma turn this into a component'],
  info:{cap:'Interactive, Read, and Write',dev:'Figma',web:'figma.com',ver:'2.0.0'}},
 {id:'notion',name:'Notion',tagline:'Notion docs and workflows',icon:'notion',bg:'#1a1a1a',cat:'Productivity',
+ conn:{provider:'notion',connector:'notion'},
  desc:'Bring your Notion docs and workflows into chat — summarize, search and organize.',
  skills:[{n:'Summarize page',p:'Summarize this Notion page: '},{n:'Find doc',p:'Find my Notion doc about: '}],
  examples:['@Notion summarize my meeting notes'],
  info:{cap:'Interactive, Read, and Write',dev:'Notion',web:'notion.so',ver:'1.9.0'}},
 {id:'gcal',name:'Google Calendar',tagline:'Manage Google Calendar eve…',icon:'gcal',bg:'#1a1a1a',cat:'Productivity',
+ conn:{provider:'google',connector:'gcalendar'},
  desc:'Manage your Google Calendar events — schedule, reschedule and get briefings.',
  skills:[{n:'Day briefing',p:'What is on my calendar today?'},{n:'Schedule',p:'Schedule a meeting: '}],
  examples:['@Google Calendar what is on today'],
  info:{cap:'Interactive, Read, and Write',dev:'Google',web:'calendar.google.com',ver:'2.1.0'}},
 {id:'dropbox',name:'Dropbox',tagline:'Find, create, and take action',icon:'dropbox',bg:'#1a1a1a',cat:'Productivity',
+ conn:{provider:'dropbox',connector:'dropbox'},
  desc:'Find, create, and take action on your Dropbox files.',
  skills:[{n:'Find file',p:'Find this file in my Dropbox: '}],
  examples:['@Dropbox find my contract PDF'],
  info:{cap:'Interactive, Read, and Write',dev:'Dropbox',web:'dropbox.com',ver:'1.7.0'}},
 {id:'outlookcal',name:'Outlook Calendar',tagline:'Manage Outlook schedules',icon:'outlook',bg:'#1a1a1a',cat:'Productivity',
+ conn:{provider:'microsoft',connector:'outlook_calendar'},
  desc:'Manage your Outlook calendar schedules from chat.',
  skills:[{n:'Check schedule',p:'Check my Outlook schedule for: '}],
  examples:['@Outlook Calendar am I free Friday'],
  info:{cap:'Interactive and Read',dev:'Microsoft',web:'outlook.com',ver:'1.5.0'}},
 {id:'outlookmail',name:'Outlook Email',tagline:'Triage Outlook inboxes',icon:'outlook',bg:'#1a1a1a',cat:'Communication',
+ conn:{provider:'microsoft',connector:'outlook_mail'},
  desc:'Triage your Outlook inboxes with AI help.',
  skills:[{n:'Triage inbox',p:'Triage my Outlook inbox.'}],
  examples:['@Outlook Email triage my inbox'],
  info:{cap:'Interactive, Read, and Write',dev:'Microsoft',web:'outlook.com',ver:'1.5.0'}},
 {id:'slack',name:'Slack',tagline:'Read and manage Slack',icon:'slack',bg:'#1a1a1a',cat:'Communication',
+ conn:{provider:'slack',connector:'slack'},
  desc:'Read and manage Slack — catch up on channels and draft replies.',
  skills:[{n:'Catch up',p:'Summarize what I missed in: '},{n:'Draft reply',p:'Draft a Slack reply to: '}],
  examples:['@Slack catch me up on #general'],
@@ -140,7 +160,14 @@ var CATALOG = [
  skills:[{n:'Image prompt',p:'Write an image prompt for: '}],
  examples:['@Higgsfield generate a sunset scene'],
  info:{cap:'Interactive',dev:'Higgsfield',web:'higgsfield.ai',ver:'1.0.0'}},
+{id:'spotify',name:'Spotify',tagline:'Music and podcasts for you',icon:'spotify',bg:'#1DB954',cat:'Entertainment',
+ conn:{provider:'spotify',connector:'spotify'},
+ desc:'Explore a new way to discover music, podcasts and audiobooks, with recommendations picked just for you.',
+ skills:[{n:'Find music',p:'Find music for this mood or activity: '},{n:'Build playlist',p:'Build me a playlist for: '},{n:'Podcast picks',p:'Recommend podcast episodes about: '}],
+ examples:['Recommend episodes with best film pics for the awards','@Spotify build me a workout playlist'],
+ info:{cap:'Interactive and Read',dev:'Spotify',web:'open.spotify.com',ver:'4.1.0'}},
 {id:'vercel',name:'Vercel',tagline:'Build and deploy web apps a…',icon:'vercel',bg:'#1a1a1a',cat:'Developer Tools',
+ conn:{provider:'vercel',connector:'vercel'},
  desc:'Build and deploy web apps and agents with Vercel from chat.',
  skills:[{n:'Deploy help',p:'Help me deploy: '},{n:'Debug deploy',p:'Debug this deployment error: '}],
  examples:['@Vercel deploy my Next.js app'],
@@ -168,7 +195,7 @@ var CATALOG = [
 ];
 var byId = {};
 CATALOG.forEach(function (p) { byId[p.id] = p; });
-var SECTIONS = ['Popular', 'New & Noteworthy', 'Productivity', 'Communication', 'Creativity', 'Developer Tools'];
+var SECTIONS = ['Popular', 'New & Noteworthy', 'Productivity', 'Communication', 'Creativity', 'Entertainment', 'Developer Tools'];
 
 /* ---------------- State ---------------- */
 var LS = 'jd_plugins_v3_installed';
@@ -260,6 +287,25 @@ function injectCss() {
   '.jdpg-info{margin:6px 0}' +
   '.jdpg-irow{display:flex;justify-content:space-between;gap:16px;padding:9px 0;font-size:14.5px}' +
   '.jdpg-irow b{color:#8e8e93;font-weight:400;flex-shrink:0}' +
+  /* Connect sheet (frame-by-frame: ChatGPT "Connect X" bottom sheet) */
+  '.jdpg-conn-ov{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:60;display:flex;align-items:flex-end;justify-content:center;animation:jdpgFade .18s ease-out}' +
+  '@keyframes jdpgFade{from{opacity:0}}' +
+  '.jdpg-conn-sheet{width:100%;max-width:520px;background:#1c1c1e;border-radius:20px 20px 0 0;padding:10px 22px calc(22px + env(safe-area-inset-bottom));max-height:88%;overflow-y:auto;animation:jdpgUp .22s ease-out}' +
+  '@keyframes jdpgUp{from{transform:translateY(40px);opacity:.6}}' +
+  '.jdpg-conn-grip{width:44px;height:5px;border-radius:3px;background:#48484a;margin:2px auto 18px}' +
+  '.jdpg-conn-logos{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px}' +
+  '.jdpg-conn-app{width:54px;height:54px;border-radius:50%;background:#2c2c2e;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
+  '.jdpg-conn-app svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}' +
+  '.jdpg-conn-mid{color:#8e8e93;font-size:20px;letter-spacing:3px}' +
+  '.jdpg-conn-plug{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}' +
+  '.jdpg-conn-plug svg{width:34px;height:34px}' +
+  '.jdpg-conn-title{text-align:center;font-size:22px;font-weight:700;color:#fff;margin:0 0 16px}' +
+  '.jdpg-conn-body p{color:#d7d7db;font-size:14.5px;line-height:1.6;margin:0 0 14px}' +
+  '.jdpg-conn-body b{color:#fff}' +
+  '.jdpg-conn-body u{color:#d7d7db;text-decoration:underline}' +
+  '.jdpg-conn-skip{display:block;width:100%;background:none;border:none;color:#fff;font-size:16px;font-weight:600;padding:15px;cursor:pointer}' +
+  '.jdpg-conn-go{display:block;width:100%;height:54px;border-radius:27px;background:#fff;color:#000;font-size:17px;font-weight:600;border:none;cursor:pointer;margin-top:4px}' +
+  '.jdpg-conn-go:disabled{opacity:.55}' +
   '.jdpg-irow span{text-align:right}' +
   '.jdpg-irow a{color:#0a84ff;text-decoration:none}' +
   '.jdpg-try{position:absolute;left:16px;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));height:54px;border-radius:27px;background:#fff;color:#000;font-size:17px;font-weight:600;border:none;cursor:pointer}' +
@@ -275,6 +321,8 @@ var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 var CHEVD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>';
 var SEARCHIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
 var CUBE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>';
+/* JepongDevxyz AI app mark for the Connect sheet logo row (lucide "bot") */
+var APPMARK = '<svg viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>';
 
 /* ---------------- Panel ---------------- */
 var panel = null, view = 'dir', detailId = null, searchQ = '';
@@ -294,6 +342,7 @@ function open() {
 
 function close() {
   closeMenu();
+  closeConnSheet();
   if (panel) panel.style.display = 'none';
 }
 
@@ -379,7 +428,7 @@ function renderDetail(id) {
     '<div class="jdpg-dico" style="background:' + p.bg + '">' + IC[p.icon] + '</div>' +
     '<div class="jdpg-dname">' + esc(p.name) + '</div><div class="jdpg-dkind">Plugin</div></div>';
   (p.examples || []).forEach(function (ex) {
-    h += '<div class="jdpg-ex" data-act="trychat" data-id="' + p.id + '" data-ex="' + esc(ex) + '"><p>' + esc(ex) + '</p><div class="jdpg-exgo"><span>→</span></div></div>';
+    h += '<div class="jdpg-ex" data-act="exflow" data-id="' + p.id + '" data-ex="' + esc(ex) + '"><p>' + esc(ex) + '</p><div class="jdpg-exgo"><span>→</span></div></div>';
   });
   h += '<p class="jdpg-ddesc">' + esc(p.desc) + ' <button class="jdpg-more-link" data-act="noop">More</button></p>';
   if (p.skills && p.skills.length) {
@@ -396,7 +445,7 @@ function renderDetail(id) {
     irow('Privacy Policy', '<a href="#" data-act="noop">' + esc(p.info.web) + '</a>') +
     irow('Terms of Service', '<a href="#" data-act="noop">' + esc(p.info.web) + '</a>') +
     '</div></div>' +
-    '<button class="jdpg-try" data-act="trychat" data-id="' + p.id + '">Try in chat</button>';
+    '<button class="jdpg-try" data-act="' + (isInstalled(p.id) ? 'trychat' : 'installflow') + '" data-id="' + p.id + '">' + (isInstalled(p.id) ? 'Try in chat' : 'Install plugin') + '</button>';
   panel.innerHTML = h;
   bind();
 }
@@ -418,7 +467,9 @@ function bind() {
       else if (act === 'menu') openMenu(el, id, false);
       else if (act === 'dmenu') openMenu(el, id, true);
       else if (act === 'trychat') tryInChat(id, el.getAttribute('data-ex'));
-      else if (act === 'skill') useSkill(id, parseInt(el.getAttribute('data-i'), 10));
+      else if (act === 'installflow') installFlow(id);
+      else if (act === 'exflow') exFlow(id, el.getAttribute('data-ex'));
+      else if (act === 'skill') skillFlow(id, parseInt(el.getAttribute('data-i'), 10));
     });
   });
 }
@@ -433,9 +484,140 @@ function install(id) {
 function uninstall(id) {
   var a = loadInstalled().filter(function (x) { return x !== id; });
   saveInstalled(a); installed = a;
+  var c = loadConnected(); if (c[id]) { delete c[id]; saveConnected(c); }
   toast('Uninstalled ' + (byId[id] ? byId[id].name : 'plugin'));
   closeMenu();
   refresh();
+}
+
+/* ---------------- Install-first: "Connect X" bottom sheet ----------------
+   Frame-by-frame from the ChatGPT app: tapping "Install plugin" opens a
+   "Connect [Name]" sheet (app mark ... plugin logo, You're in control,
+   elevated-risk notice, data-shared notice, "Continue without account",
+   white "Connect [Name]" button). Nothing works until installed:
+   @mention skill injection (plugins-inject.js + contextForChat) only
+   fires for installed plugin ids. */
+var connOv = null, pendingAfterInstall = null, pendingConnPlugin = null, connMsgBound = false;
+var CONN_KEY = 'jd_plugins_v3_connected';
+
+function loadConnected() {
+  try { return JSON.parse(localStorage.getItem(CONN_KEY) || '{}') || {}; } catch (_) { return {}; }
+}
+function saveConnected(o) { try { localStorage.setItem(CONN_KEY, JSON.stringify(o)); } catch (_) {} }
+function isConnected(id) { return !!loadConnected()[id]; }
+function markConnected(id, provider) {
+  var c = loadConnected(); c[id] = provider || true; saveConnected(c);
+}
+
+/* Bottom "Install plugin" button / gated entry points */
+function installFlow(id) {
+  if (!byId[id]) return;
+  if (isInstalled(id)) { tryInChat(id); return; }
+  openConnectSheet(id, null);
+}
+function exFlow(id, ex) {
+  if (!byId[id]) return;
+  if (isInstalled(id)) { tryInChat(id, ex); return; }
+  openConnectSheet(id, function () { tryInChat(id, ex); });
+}
+function skillFlow(id, i) {
+  var p = byId[id]; if (!p || !p.skills || !p.skills[i]) return;
+  var text = '@' + p.name + ' ' + p.skills[i].p;
+  if (isInstalled(id)) { tryInChat(id, text); return; }
+  openConnectSheet(id, function () { tryInChat(id, text); });
+}
+
+function openConnectSheet(id, after) {
+  var p = byId[id]; if (!p || !panel) return;
+  closeConnSheet();
+  closeMenu();
+  pendingAfterInstall = (typeof after === 'function') ? after : null;
+  var ov = document.createElement('div');
+  ov.className = 'jdpg-conn-ov';
+  ov.innerHTML =
+    '<div class="jdpg-conn-sheet" role="dialog" aria-label="Connect ' + esc(p.name) + '">' +
+    '<div class="jdpg-conn-grip"></div>' +
+    '<div class="jdpg-conn-logos"><div class="jdpg-conn-app">' + APPMARK + '</div>' +
+    '<div class="jdpg-conn-mid">···</div>' +
+    '<div class="jdpg-conn-plug" style="background:' + p.bg + '">' + IC[p.icon] + '</div></div>' +
+    '<div class="jdpg-conn-title">Connect ' + esc(p.name) + '</div>' +
+    '<div class="jdpg-conn-body">' +
+    '<p><b>You\'re in control.</b> JepongDevxyz AI always respects your training data preferences, and is limited to permissions you\'ve explicitly set.</p>' +
+    '<p><b>Apps may introduce elevated risk.</b> JepongDevxyz AI is built to protect your data, but attackers may attempt to use JepongDevxyz AI to access your data in the app, or use the app to attempt to access your data in JepongDevxyz AI.</p>' +
+    '<p><b>Data shared with this app.</b> By adding this app, you allow it to access: (1) basic information typically shared when you visit a website, such as your IP address and approximate location (<u>learn more</u>), and (2) a summary of your recent context and intent within JepongDevxyz AI. Our policies require that apps only access relevant content to respond to your requests. This data will be used as described in the app <u>Terms of Use</u> and <u>Privacy Notice</u>.</p>' +
+    '</div>' +
+    '<button class="jdpg-conn-skip" data-cact="skip">Continue without account</button>' +
+    '<button class="jdpg-conn-go" data-cact="connect">Connect ' + esc(p.name) + '</button>' +
+    '</div>';
+  ov.addEventListener('click', function (e) {
+    if (e.target === ov) closeConnSheet();
+    var b = e.target.closest ? e.target.closest('[data-cact]') : null;
+    if (!b) return;
+    var act = b.getAttribute('data-cact');
+    if (act === 'skip') skipConnect(id);
+    else if (act === 'connect') connectPluginAccount(id, b);
+  });
+  panel.appendChild(ov);
+  connOv = ov;
+}
+function closeConnSheet() {
+  if (connOv && connOv.parentNode) connOv.parentNode.removeChild(connOv);
+  connOv = null; pendingConnPlugin = null;
+}
+function runAfterInstall() {
+  var f = pendingAfterInstall; pendingAfterInstall = null;
+  if (f) { try { f(); } catch (_) {} }
+}
+/* "Continue without account": install in skill-guidance mode (no real login). */
+function skipConnect(id) {
+  install(id);
+  closeConnSheet();
+  runAfterInstall();
+}
+/* "Connect [Name]": real OAuth via the matching Connector (popup). */
+function connectPluginAccount(id, btn) {
+  var p = byId[id]; if (!p) return;
+  if (!p.conn) { toast('Walang account connection para sa plugin na ito.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  var url = '/api/connectors/auth-url?provider=' + encodeURIComponent(p.conn.provider) +
+    '&connector=' + encodeURIComponent(p.conn.connector);
+  fetch(url, { credentials: 'same-origin' })
+    .then(function (r) { return r.json().catch(function () { return null; }).then(function (d) { return { ok: r.ok, data: d }; }); })
+    .then(function (res) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Connect ' + p.name; }
+      var d = (res.data && res.data.data) ? res.data.data : res.data;
+      if (!res.ok || !d) { toast('Could not start sign-in.'); return; }
+      if (d.configured === false) { toast('Hindi pa naka-setup ang login nito. Buksan ang Settings → Connectors.'); return; }
+      if (!d.url) { toast('Could not start sign-in.'); return; }
+      pendingConnPlugin = id;
+      bindConnMessage();
+      var pop = null;
+      try { pop = window.open(d.url, 'jd_oauth', 'width=520,height=680,menubar=no,toolbar=no'); } catch (_) {}
+      var t = setInterval(function () {
+        try { if (pop && pop.closed) { clearInterval(t); pendingConnPlugin = null; } }
+        catch (_) { clearInterval(t); }
+      }, 800);
+    })
+    .catch(function () {
+      if (btn) { btn.disabled = false; btn.textContent = 'Connect ' + p.name; }
+      toast('Could not start sign-in.');
+    });
+}
+function bindConnMessage() {
+  if (connMsgBound) return; connMsgBound = true;
+  window.addEventListener('message', function (e) {
+    try {
+      if (e && e.data && e.data.type === 'jd-connector-connected' && pendingConnPlugin && byId[pendingConnPlugin]) {
+        var id = pendingConnPlugin, p = byId[id];
+        pendingConnPlugin = null;
+        markConnected(id, p.conn && p.conn.provider);
+        install(id);
+        closeConnSheet();
+        toast(p.name + ' connected!');
+        runAfterInstall();
+      }
+    } catch (_) {}
+  });
 }
 function refresh() {
   if (view === 'dir') renderDir();
@@ -462,11 +644,6 @@ function tryInChat(id, ex) {
     } catch (_) {}
   }, 60);
 }
-function useSkill(id, i) {
-  var p = byId[id]; if (!p || !p.skills || !p.skills[i]) return;
-  tryInChat(id, '@' + p.name + ' ' + p.skills[i].p);
-}
-
 /* Context menu */
 function closeMenu() {
   ['jdpgMask', 'jdpgMenu'].forEach(function (x) { var e = document.getElementById(x); if (e && e.parentNode) e.parentNode.removeChild(e); });
@@ -543,6 +720,8 @@ window.JDPlugins = Object.freeze({
   stageAgentFiles: function () { return false; },
   stageChange: function () {},
   contextForChat: contextForChat,
+  isInstalled: isInstalled,
+  isConnected: isConnected,
   /* Exposed for plugins-inject.js (skill injection across all models). */
   getCatalog: function () { return CATALOG; }
 });
