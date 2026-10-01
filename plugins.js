@@ -14,8 +14,12 @@
    - "Try in chat" / "Chat" inserts @PluginName into chat input
    - contextForChat() detects @mentions and injects that
      plugin's skills into the AI request (real capability)
+   - plugins-inject.js (runtime patch) appends mentioned plugins'
+     skills to personalization.customInstructions, which the server
+     adds to the system prompt for EVERY model/provider
+   - GitHub is not listed here: it lives in Connectors (2026-10-01)
    API kept: window.JDPlugins.{open,close,ready,openAgent,
-     stageAgentFiles,stageChange,contextForChat}
+     stageAgentFiles,stageChange,contextForChat,getCatalog}
    ============================================================ */
 (function () {
 'use strict';
@@ -65,11 +69,7 @@ var CATALOG = [
  skills:[{n:'Summarize doc',p:'Summarize this Google Doc: '},{n:'Analyze sheet',p:'Analyze this spreadsheet and highlight key numbers: '}],
  examples:['@Google Drive summarize my project doc'],
  info:{cap:'Interactive and Read',dev:'Google',web:'drive.google.com',ver:'2.1.0'}},
-{id:'github',name:'GitHub',tagline:'Triage PRs, issues, CI, and pu…',icon:'github',bg:'#1a1a1a',cat:'Popular',
- desc:'Use GitHub with JepongDevxyz AI to inspect repositories, triage PRs and issues, check CI, and draft code changes.',
- skills:[{n:'Triage PRs',p:'List the open PRs I should review and summarize each.'},{n:'Review code',p:'Review this code for bugs and improvements: '},{n:'Explain repo',p:'Explain the structure of this repository: '}],
- examples:['@GitHub triage my open PRs','@GitHub review this code'],
- info:{cap:'Interactive, Read, and Write',dev:'GitHub',web:'github.com',ver:'3.0.0'}},
+/* GitHub removed from Plugins (2026-10-01): GitHub lives in Connectors now. */
 {id:'adobe',name:'Adobe',tagline:'Design, combine, and edit',icon:'adobe',bg:'#1a1a1a',cat:'New & Noteworthy',
  desc:'Design, combine, and edit images with Adobe tools through chat.',
  skills:[{n:'Edit image',p:'Describe how to edit this image: '}],
@@ -177,17 +177,22 @@ function loadInstalled() {
   catch (_) { return []; }
 }
 function saveInstalled(a) { try { localStorage.setItem(LS, JSON.stringify(a)); } catch (_) {} }
-/* Migrate v2 installed state so previously-installed github/superpowers carry over */
+/* Migrate v2 installed state (jepong_plugins_directory_v2 -> jd_plugins_v3_installed).
+   GitHub is NOT migrated: it was removed from Plugins and lives in Connectors now. */
 (function migrateV2() {
   try {
-    if (localStorage.getItem(LS)) return;
-    var s = JSON.parse(localStorage.getItem('jepong_plugins_directory_v2') || 'null');
-    var ids = [];
-    if (s && s.installed) {
-      if (s.installed.github && byId.github) ids.push('github');
-      if (s.installed.superpowers && byId.superpowers) ids.push('superpowers');
+    var cleaned = [];
+    try {
+      var cur = JSON.parse(localStorage.getItem(LS) || '[]');
+      if (Array.isArray(cur)) cleaned = cur.filter(function (id) { return id !== 'github' && !!byId[id]; });
+    } catch (_) { cleaned = []; }
+    if (!localStorage.getItem(LS)) {
+      var s = JSON.parse(localStorage.getItem('jepong_plugins_directory_v2') || 'null');
+      if (s && s.installed && s.installed.superpowers && byId.superpowers && cleaned.indexOf('superpowers') === -1) {
+        cleaned.push('superpowers');
+      }
     }
-    if (ids.length) localStorage.setItem(LS, JSON.stringify(ids));
+    localStorage.setItem(LS, JSON.stringify(cleaned));
   } catch (_) {}
 })();
 var installed = loadInstalled();
@@ -537,6 +542,8 @@ window.JDPlugins = Object.freeze({
   openAgent: function () { open(); },
   stageAgentFiles: function () { return false; },
   stageChange: function () {},
-  contextForChat: contextForChat
+  contextForChat: contextForChat,
+  /* Exposed for plugins-inject.js (skill injection across all models). */
+  getCatalog: function () { return CATALOG; }
 });
 })();

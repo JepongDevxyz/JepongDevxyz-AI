@@ -55,6 +55,14 @@
       re: /\boutlook\s*contacts\b/i },
     { connector: 'spotify', op: 'playlists', label: 'Checking Spotify',
       re: /\bspotify\b/i },
+    { connector: 'github', op: 'prs', label: 'Checking pull requests', needsRepo: true,
+      re: /\bgithub\b.*\bprs?\b|\bprs?\b.*\bgithub\b|\bgithub\b.*\bpull\s*requests?\b|\bpull\s*requests?\b.*\bgithub\b/i },
+    { connector: 'github', op: 'issues', label: 'Checking issues', needsRepo: true,
+      re: /\bgithub\b.*\bissues?\b|\bissues?\b.*\bgithub\b/i },
+    { connector: 'github', op: 'branches', label: 'Listing branches', needsRepo: true,
+      re: /\bgithub\b.*\bbranches\b|\bbranches\b.*\bgithub\b/i },
+    { connector: 'github', op: 'commits', label: 'Checking recent commits', needsRepo: true,
+      re: /\bgithub\b.*\bcommits?\b|\bcommits?\b.*\bgithub\b/i },
     { connector: 'github', op: 'repos', label: 'Accessing GitHub',
       re: /\bgithub\b/i },
     { connector: 'facebook', op: 'profile', label: 'Checking Facebook',
@@ -403,7 +411,9 @@
     vehicles: 'List vehicles', shops: 'List shops', track: 'Track flight',
     'pr-files': 'Read PR files', 'create-issue': 'Create issue', 'create-pr': 'Create pull request',
     merge: 'Merge pull request', branches: 'List branches', file: 'Read file',
-    commit: 'Commit file', review: 'Review pull request', comment: 'Post comment', prs: 'List pull requests'
+    commit: 'Commit file', review: 'Review pull request', comment: 'Post comment', prs: 'List pull requests',
+    pr: 'Read pull request', issue: 'Read issue', 'issue-state': 'Change issue state',
+    'create-branch': 'Create branch', commits: 'List commits', 'delete-file': 'Delete file'
   };
   function opDescription(op) { return OP_DESCRIPTIONS[op] || String(op); }
   function connectorInitial(name) {
@@ -474,6 +484,34 @@
     });
   }
 
+  /* Resolve the target repo for GitHub ops that need one:
+     1. "owner/name" written in the message wins;
+     2. else the connector's repo list is fetched and a single repo is used;
+     3. else null -> the bridge falls back to the repos list so the AI can ask. */
+  function validRepoStr(s) {
+    if (!/^[A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100}$/.test(s)) return false;
+    var p = s.split('/');
+    return p[0] !== '.' && p[0] !== '..' && p[1] !== '.' && p[1] !== '..';
+  }
+  async function resolveGithubRepo(message, fetchFn) {
+    try {
+      var m = String(message || '').match(/\b([A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100})\b/);
+      if (m && validRepoStr(m[1])) return m[1];
+      var res = await fetchFn('/api/connectors/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connector: 'github', op: 'repos' })
+      });
+      if (!res || !res.ok) return null;
+      var payload = await res.json().catch(function () { return null; });
+      var repos = payload && payload.data;
+      if (Array.isArray(repos) && repos.length === 1 && repos[0] && validRepoStr(repos[0].name)) {
+        return repos[0].name;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   function installBridge() {
     if (typeof window.fetch !== 'function') return;
     if (window.fetch.__jdConnectorBridge) return;
@@ -497,12 +535,23 @@
               return (async function () {
                 var allowed = await requestPermission(intent);
                 if (!allowed) return origFetch(input, init); // Deny: send as-is
+                var proxyBody = { connector: intent.connector, op: intent.op };
+                if (intent.needsRepo) {
+                  var repo = await resolveGithubRepo(body.message, origFetch);
+                  if (repo) {
+                    proxyBody.repo = repo;
+                  } else {
+                    /* No repo pinned down: list repos instead so the AI can ask. */
+                    proxyBody.op = 'repos';
+                    intent = { connector: 'github', op: 'repos', label: 'Accessing GitHub' };
+                  }
+                }
                 var actId = showActivity(intent.label);
                 try {
                   var res = await origFetch('/api/connectors/proxy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ connector: intent.connector, op: intent.op })
+                    body: JSON.stringify(proxyBody)
                   });
                   if (res && res.ok) {
                     var payload = await res.json().catch(function () { return null; });
