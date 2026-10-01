@@ -1,9 +1,9 @@
 /* ============================================================
    JepongDevxyz AI — connector visibility filter (runtime, 2026-10-01)
    Jepong: "Alisin na natin yung iba, ito lang itira mo muna —
-   GitHub at Vercel. Tsaka na ulit natin ayusin kapag naayos ko na."
+   GitHub at Vercel (+ Browser/Web, builtin, no setup needed)."
 
-   Hides every connector card except `github` and `vercel` in the
+   Hides every connector card except `github`, `vercel` and `browser` in the
    Connectors panel. Client-side only (server registry untouched), so
    restoring the rest later is just deleting this file + agent.js entry.
    Additive only; fail-open; idempotent.
@@ -13,7 +13,7 @@
   if (window.__jdConnFilter) return;
   window.__jdConnFilter = true;
 
-  var KEEP = { github: 1, vercel: 1 };
+  var KEEP = { github: 1, vercel: 1, browser: 1 };
 
   function applyFilter(root) {
     try {
