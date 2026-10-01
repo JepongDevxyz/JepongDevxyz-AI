@@ -130,7 +130,9 @@
   setInterval(cyclePose, 6000);
   window.jdJampongCycle = cyclePose;
   window.jdJampongPoses = POSES;
+  window.jdJampongIsOn = isOn;
   window.jdJampongOpenShare = function () {
+    if (!isOn()) return;
     if (window.jdOpenAvatarShare) window.jdOpenAvatarShare();
   };
 
