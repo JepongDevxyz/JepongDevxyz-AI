@@ -286,7 +286,7 @@
       '<button data-act="share">' + ICON_SHARE + '</button>' +
       '</div>' +
       '<div class="jdjp-name">Jampong</div>' +
-      '<div class="jdjp-status">online</div>' +
+      '<div class="jdjp-status" id="jdJampongStatus">online</div>' +
       '<div class="jdjp-pill">' +
       '<button data-act="menu">' + ICON_MENU + '</button>' +
       '<button data-act="shield">' + ICON_SHIELD + '</button>' +
@@ -623,9 +623,79 @@
     if (window.jdLogJampong) window.jdLogJampong('profile_open');
     setTimeout(jdLoadApprovals, 400);
     document.body.style.overflow = 'hidden';
+    // Start real-time status updater (like Muse app)
+    startStatusPoller();
+  }
+
+  var statusPoller = null;
+  function startStatusPoller() {
+    stopStatusPoller();
+    updateJampongStatus(); // Update immediately
+    statusPoller = setInterval(function () {
+      var el = document.getElementById('jdJampongProfile');
+      if (!el || !el.classList.contains('open')) {
+        stopStatusPoller();
+        return;
+      }
+      updateJampongStatus();
+      // Also refresh activity feed
+      refreshActivityFeed();
+    }, 2000); // Every 2 seconds, like Muse app
+  }
+
+  function stopStatusPoller() {
+    if (statusPoller) {
+      clearInterval(statusPoller);
+      statusPoller = null;
+    }
+  }
+
+  function updateJampongStatus() {
+    var statusEl = document.getElementById('jdJampongStatus');
+    if (!statusEl) return;
+    // Get latest activity from the logger
+    var activities = [];
+    if (window.jdGetActivity) {
+      var grouped = window.jdGetActivity();
+      if (grouped.today && grouped.today.length > 0) {
+        activities = grouped.today;
+      }
+    }
+    if (activities.length > 0) {
+      var latest = activities[0];
+      // Show emoji + status like Muse app (🎬 Editing file)
+      var emoji = '🎬';
+      var title = latest.title || '';
+      if (title.toLowerCase().indexOf('push') >= 0) emoji = '📤';
+      else if (title.toLowerCase().indexOf('deploy') >= 0) emoji = '🚀';
+      else if (title.toLowerCase().indexOf('fix') >= 0) emoji = '🔧';
+      else if (title.toLowerCase().indexOf('implement') >= 0) emoji = '⚙️';
+      else if (title.toLowerCase().indexOf('build') >= 0) emoji = '🏗️';
+      statusEl.textContent = emoji + ' ' + title;
+    } else {
+      statusEl.textContent = 'online';
+    }
+  }
+
+  function refreshActivityFeed() {
+    var view = document.getElementById('jdViewActivity');
+    if (!view) return;
+    // Only refresh if activity view is visible
+    if (!view.classList.contains('jdjp-vactive')) return;
+    var act = getActivity();
+    view.innerHTML =
+      '<div class="jdjp-today">Today</div>' + renderItems(act.today, 't') +
+      '<div class="jdjp-today" style="margin-top:16px">Yesterday</div>' + renderItems(act.yesterday, 'y');
+    // Re-attach click handlers
+    view.querySelectorAll('[data-act-idx]').forEach(function (item) {
+      item.addEventListener('click', function () {
+        openActivityDetail(item.getAttribute('data-act-idx'));
+      });
+    });
   }
 
   function close() {
+    stopStatusPoller();
     var el = document.getElementById('jdJampongProfile');
     if (el) el.classList.remove('open');
     document.body.style.overflow = '';
