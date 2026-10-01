@@ -1,1 +1,119 @@
-{"$schema": "https://openapi.vercel.sh/vercel.json", "functions": {"api/chat.js": {"maxDuration": 300}, "api/codex.js": {"includeFiles": "codex-runner/**", "maxDuration": 60}}, "rewrites": [{"destination": "/api/connectors?route=:route", "source": "/api/connectors/:route"}, {"destination": "/api/credits?route=balance", "source": "/api/credits-balance"}, {"destination": "/api/credits?route=spend", "source": "/api/credits-spend"}, {"destination": "/api/credits?route=welcome", "source": "/api/credits-welcome"}, {"destination": "/api/codex?route=account", "source": "/api/codex-account"}, {"destination": "/api/account?route=delete", "source": "/api/delete-account"}, {"destination": "/api/account?route=usage", "source": "/api/usage-sync"}, {"destination": "/api/account?route=ping", "source": "/api/ping"}, {"destination": "/api/paymongo?route=create", "source": "/api/paymongo-create"}, {"destination": "/api/paymongo?route=status", "source": "/api/paymongo-status"}, {"destination": "/api/paymongo?route=webhook", "source": "/api/paymongo-webhook"}, {"destination": "/api/plugins?route=proposals", "source": "/api/plugin-proposals"}, {"destination": "/api/plugins?route=batch", "source": "/api/plugin-batch-proposals"}, {"destination": "/api/plugins?route=execute", "source": "/api/plugin-execute"}, {"destination": "/api/plugins?route=workspace", "source": "/api/plugin-workspace"}, {"destination": "/api/github?route=app-install", "source": "/api/github-app-install"}, {"destination": "/api/github?route=app-setup", "source": "/api/github-app-setup"}, {"destination": "/api/github?route=app-status", "source": "/api/github-app-status"}, {"destination": "/api/github?route=oauth-start", "source": "/api/github-oauth-start"}, {"destination": "/api/github?route=oauth-session", "source": "/api/github-oauth-session"}, {"destination": "/api/github?route=oauth-callback", "source": "/api/github-oauth-callback"}], "headers": [{"source": "/agent.js", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]}, {"source": "/patch-version.txt", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]}]}
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "node scripts/decode-assets.js",
+  "functions": {
+    "api/chat.js": {
+      "maxDuration": 300
+    },
+    "api/codex.js": {
+      "includeFiles": "codex-runner/**",
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "destination": "/api/connectors?route=:route",
+      "source": "/api/connectors/:route"
+    },
+    {
+      "destination": "/api/credits?route=balance",
+      "source": "/api/credits-balance"
+    },
+    {
+      "destination": "/api/credits?route=spend",
+      "source": "/api/credits-spend"
+    },
+    {
+      "destination": "/api/credits?route=welcome",
+      "source": "/api/credits-welcome"
+    },
+    {
+      "destination": "/api/codex?route=account",
+      "source": "/api/codex-account"
+    },
+    {
+      "destination": "/api/account?route=delete",
+      "source": "/api/delete-account"
+    },
+    {
+      "destination": "/api/account?route=usage",
+      "source": "/api/usage-sync"
+    },
+    {
+      "destination": "/api/account?route=ping",
+      "source": "/api/ping"
+    },
+    {
+      "destination": "/api/paymongo?route=create",
+      "source": "/api/paymongo-create"
+    },
+    {
+      "destination": "/api/paymongo?route=status",
+      "source": "/api/paymongo-status"
+    },
+    {
+      "destination": "/api/paymongo?route=webhook",
+      "source": "/api/paymongo-webhook"
+    },
+    {
+      "destination": "/api/plugins?route=proposals",
+      "source": "/api/plugin-proposals"
+    },
+    {
+      "destination": "/api/plugins?route=batch",
+      "source": "/api/plugin-batch-proposals"
+    },
+    {
+      "destination": "/api/plugins?route=execute",
+      "source": "/api/plugin-execute"
+    },
+    {
+      "destination": "/api/plugins?route=workspace",
+      "source": "/api/plugin-workspace"
+    },
+    {
+      "destination": "/api/github?route=app-install",
+      "source": "/api/github-app-install"
+    },
+    {
+      "destination": "/api/github?route=app-setup",
+      "source": "/api/github-app-setup"
+    },
+    {
+      "destination": "/api/github?route=app-status",
+      "source": "/api/github-app-status"
+    },
+    {
+      "destination": "/api/github?route=oauth-start",
+      "source": "/api/github-oauth-start"
+    },
+    {
+      "destination": "/api/github?route=oauth-session",
+      "source": "/api/github-oauth-session"
+    },
+    {
+      "destination": "/api/github?route=oauth-callback",
+      "source": "/api/github-oauth-callback"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/agent.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/patch-version.txt",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
