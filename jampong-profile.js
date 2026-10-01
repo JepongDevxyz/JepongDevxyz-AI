@@ -35,6 +35,22 @@
     '.jdjp-pill button svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.8}',
     '.jdjp-activity{flex:1;overflow-y:auto;padding:24px 20px 20px}',
     '.jdjp-today{color:#fff;font-size:1.2rem;font-weight:700;margin-bottom:16px}',
+    '.jdjp-label{color:#fff;font-size:1rem;margin:16px 24px 8px}',
+    '.jdjp-editbtn{display:flex;align-items:center;justify-content:center;gap:8px;',
+    'background:#2c2c2e;color:#fff;border:none;border-radius:12px;padding:14px;margin:0 24px;',
+    'font-size:1rem;cursor:pointer}',
+    '.jdjp-editbtn:active{transform:scale(.98);background:#3a3a3c}',
+    '.jdjp-editbtn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2}',
+    '.jdjp-cards{display:flex;gap:12px;margin:16px 24px 0}',
+    '.jdjp-card{flex:1;border-radius:16px;padding:16px 14px;min-height:120px;',
+    'display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}',
+    '.jdjp-card.soul{background:linear-gradient(135deg,#8b6f5c,#6b5443)}',
+    '.jdjp-card.memory{background:linear-gradient(135deg,#2d8a4e,#1a5c32)}',
+    '.jdjp-card-title{color:#fff;font-size:.85rem;font-weight:700;letter-spacing:.5px}',
+    '.jdjp-card-sub{color:rgba(255,255,255,.8);font-size:.65rem;letter-spacing:.3px;margin-top:2px}',
+    '.jdjp-card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px}',
+    '.jdjp-card-date{color:rgba(255,255,255,.9);font-size:.75rem}',
+    '.jdjp-card-foot svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.8}',
     '.jdjp-item{display:flex;gap:14px;padding:12px 0;align-items:flex-start}',
     '.jdjp-item-icon{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.12);',
     'display:flex;align-items:center;justify-content:center;flex:0 0 auto}',
@@ -60,6 +76,9 @@
     st.textContent = CSS;
     document.head.appendChild(st);
   }
+
+  var ICON_HEART = '<svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
+  var ICON_CHAT = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
 
   function getActivity() {
     // Try to get real activity from the app, fallback to defaults
@@ -113,6 +132,18 @@
       '<button data-act="menu" aria-label="Menu">' + ICON_MENU + '</button>' +
       '<button data-act="finger" aria-label="Biometric">' + ICON_FINGER + '</button>' +
       '</div>' +
+      '<div class="jdjp-label">Jampong</div>' +
+      '<button class="jdjp-editbtn" data-act="edit2">' + ICON_PENCIL + ' Edit</button>' +
+      '<div class="jdjp-cards">' +
+      '<div class="jdjp-card soul" data-act="soul">' +
+      '<div><div class="jdjp-card-title">SOUL</div><div class="jdjp-card-sub">ACCESS WITH CARE</div></div>' +
+      '<div class="jdjp-card-foot"><span class="jdjp-card-date">10/2/26</span>' + ICON_HEART + '</div>' +
+      '</div>' +
+      '<div class="jdjp-card memory" data-act="memory">' +
+      '<div><div class="jdjp-card-title">MEMORY</div><div class="jdjp-card-sub">ACCESS WITH CARE</div></div>' +
+      '<div class="jdjp-card-foot"><span class="jdjp-card-date">10/2/26</span>' + ICON_CHAT + '</div>' +
+      '</div>' +
+      '</div>' +
       '<div class="jdjp-activity">' +
       '<div class="jdjp-today">Today</div>' +
       activityHtml +
@@ -126,6 +157,18 @@
     });
     el.querySelector('[data-act="edit"]').addEventListener('click', function () {
       if (window.jdOpenAvatarShare) window.jdOpenAvatarShare();
+    });
+    var edit2 = el.querySelector('[data-act="edit2"]');
+    if (edit2) edit2.addEventListener('click', function () {
+      if (typeof window.jdToast === 'function') window.jdToast('Edit profile');
+    });
+    var soul = el.querySelector('[data-act="soul"]');
+    if (soul) soul.addEventListener('click', function () {
+      if (typeof window.jdToast === 'function') window.jdToast('Soul');
+    });
+    var mem = el.querySelector('[data-act="memory"]');
+    if (mem) mem.addEventListener('click', function () {
+      if (typeof window.jdToast === 'function') window.jdToast('Memory');
     });
     el.querySelector('[data-act="menu"]').addEventListener('click', function () {
       if (typeof window.openMenuFromBrandIcon === 'function') window.openMenuFromBrandIcon();

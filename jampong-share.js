@@ -29,6 +29,12 @@
     'box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative;overflow:hidden}',
     '.jdas-card-inner img{width:70%;height:auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.2));',
     'animation:jdJampLive 4s ease-in-out infinite}',
+    '.jdas-imgbox{background:#fff;border-radius:20px;padding:16px;margin:16px 16px 0;width:calc(100% - 32px)}',
+    '.jdas-imgbox img{width:100%;height:auto;border-radius:12px}',
+    '.jdas-bubble{background:#fff;border-radius:16px;padding:14px 16px;margin:12px 24px 20px;',
+    'font-size:.85rem;line-height:1.4;color:#333;position:relative}',
+    '.jdas-bubble:after{content:"";position:absolute;top:-8px;left:32px;width:16px;height:16px;',
+    'background:#fff;transform:rotate(45deg)}',
     '.jdas-card-label{position:absolute;bottom:20px;color:rgba(255,255,255,.9);',
     'font-size:.9rem;font-weight:500}',
     '.jdas-dots{display:flex;justify-content:center;gap:8px;padding:16px}',
@@ -39,6 +45,8 @@
     'background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center}',
     '.jdas-actions button:active{transform:scale(.9)}',
     '.jdas-actions button svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.8}',
+    '.jdas-action-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}',
+    '.jdas-action-label{color:#fff;font-size:.7rem}',
     '.jdas-share-main{background:#fff!important}',
     '.jdas-share-main svg{stroke:#000!important}'
   ].join('\n');
@@ -73,7 +81,10 @@
     var cardsHtml = CARD_COLORS.map(function (color, i) {
       var img = poses[i] ? '<img src="' + poses[i] + '" alt="Jampong" />' : '';
       return '<div class="jdas-card"><div class="jdas-card-inner" style="background:' + color + '">' +
-        img + '<div class="jdas-card-label">' + CARD_LABELS[i] + '</div></div></div>';
+        '<div class="jdas-imgbox">' + img + '</div>' +
+        '<div class="jdas-bubble">Hi, I\'m Jampong, Jepong\'s personal AI agent. ' +
+        'Join JepongDevxyz AI and create your own agent today.</div>' +
+        '</div></div>';
     }).join('');
 
     var dotsHtml = CARD_COLORS.map(function (_, i) {
@@ -89,10 +100,10 @@
       '<div class="jdas-carousel"><div class="jdas-track">' + cardsHtml + '</div></div>' +
       '<div class="jdas-dots">' + dotsHtml + '</div>' +
       '<div class="jdas-actions">' +
-      '<button data-act="ig" aria-label="Instagram story">' + ICON_IG + '</button>' +
-      '<button data-act="wa" aria-label="WhatsApp">' + ICON_WA + '</button>' +
-      '<button data-act="dl" aria-label="Download" class="jdas-share-main">' + ICON_DL + '</button>' +
-      '<button data-act="msg" aria-label="Message">' + ICON_MSG + '</button>' +
+      '<div class="jdas-action-wrap"><button data-act="share" aria-label="Share">' + ICON_SHARE + '</button><span class="jdas-action-label">Share</span></div>' +
+      '<div class="jdas-action-wrap"><button data-act="ig" aria-label="Instagram story">' + ICON_IG + '</button><span class="jdas-action-label">Instagram story</span></div>' +
+      '<div class="jdas-action-wrap"><button data-act="wa" aria-label="WhatsApp">' + ICON_WA + '</button><span class="jdas-action-label">WhatsApp</span></div>' +
+      '<div class="jdas-action-wrap"><button data-act="msg" aria-label="Instagram message">' + ICON_MSG + '</button><span class="jdas-action-label">Instagram message</span></div>' +
       '</div>';
 
     document.body.appendChild(el);
@@ -117,10 +128,8 @@
       window.open(url, '_blank');
     });
 
-    // Download
-    el.querySelector('[data-act="dl"]').addEventListener('click', function () {
-      downloadCurrent('jampong-avatar.png');
-    });
+    // Download (via Share button long-press or use share)
+    // Share uses native share sheet which includes save/download
 
     // Message
     el.querySelector('[data-act="msg"]').addEventListener('click', function () {
