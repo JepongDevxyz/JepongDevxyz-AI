@@ -145,11 +145,13 @@
     var groupsHtml = GROUPS.map(function (group) {
       var rows = group.map(function (r) {
         var right = I.chev;
+        var tag = 'button';
         if (r.toggle) {
+          tag = 'div'; // div (not button) to avoid nested-button layout break
           right = '<button class="jdset-toggle" data-toggle="' + r.toggle + '" aria-label="' + r.label + '"></button>';
         }
-        return '<button class="jdset-row" data-fn="' + (r.fn || '') + '" data-toggle-key="' + (r.toggle || '') + '">' +
-          I[r.icon] + '<span class="jdset-label">' + r.label + '</span>' + right + '</button>';
+        return '<' + tag + ' class="jdset-row" data-fn="' + (r.fn || '') + '" data-toggle-key="' + (r.toggle || '') + '">' +
+          I[r.icon] + '<span class="jdset-label">' + r.label + '</span>' + right + '</' + tag + '>';
       }).join('');
       return '<div class="jdset-group">' + rows + '</div>';
     }).join('');
