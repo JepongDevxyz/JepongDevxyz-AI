@@ -190,9 +190,15 @@
   function saveContent(type, text) {
     var key = type === 'soul' ? 'jd_jampong_soul' : 'jd_jampong_memory';
     localStorage.setItem(key, text);
+    if (window.jdLogJampong) window.jdLogJampong(type === 'soul' ? 'soul_save' : 'memory_save');
   }
 
   function getActivity() {
+    // Use real-time logger if available, else fallback to defaults
+    if (window.jdGetActivity) {
+      var real = window.jdGetActivity();
+      if (real.today.length > 0 || real.yesterday.length > 0) return real;
+    }
     var now = new Date();
     var h = now.getHours();
     var m = now.getMinutes();
@@ -497,6 +503,7 @@
     el.querySelector('.jdfv-content').style.display = 'block';
     el.querySelector('.jdfv-note').style.display = 'block';
     el.classList.add('open');
+    if (window.jdLogJampong) window.jdLogJampong(type === 'soul' ? 'soul_view' : 'memory_view');
   }
 
   function refreshViewer() {
@@ -555,6 +562,7 @@
     var img = document.querySelector('#jdJampongProfile .jdjp-avatar img');
     if (img && poses[0]) img.src = poses[0];
     document.getElementById('jdJampongProfile').classList.add('open');
+    if (window.jdLogJampong) window.jdLogJampong('profile_open');
     document.body.style.overflow = 'hidden';
   }
 
