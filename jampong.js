@@ -61,8 +61,13 @@
     ensureCSS();
     var el = document.createElement('div');
     el.id = 'jdJampong';
-    el.innerHTML = '<img src="' + IMG + '" alt="Jampong" />' +
+    el.innerHTML = '<img src="' + IMG + '" alt="Jampong" style="pointer-events:auto;cursor:pointer" />' +
       '<div class="jdj-label">Jampong</div>';
+    // Tap Jampong → open Share-my-avatar screen (like Muse app)
+    el.querySelector('img').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (window.jdJampongOpenShare) window.jdJampongOpenShare();
+    });
     document.body.appendChild(el);
     sync();
   }
@@ -124,6 +129,10 @@
   // Cycle poses every 6 seconds (like Muse avatar carousel)
   setInterval(cyclePose, 6000);
   window.jdJampongCycle = cyclePose;
+  window.jdJampongPoses = POSES;
+  window.jdJampongOpenShare = function () {
+    if (window.jdOpenAvatarShare) window.jdOpenAvatarShare();
+  };
 
   }
 
