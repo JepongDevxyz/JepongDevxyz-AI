@@ -49,8 +49,10 @@
     '.jd-vm-ctl.off{background:rgba(229,72,77,.25);border-color:rgba(229,72,77,.6)}',
     '.jd-vm-end{background:#e5484d;border-color:#e5484d;width:64px;height:64px}',
     '.jd-vm-hint{flex:0 0 auto;font-size:12px;color:rgba(255,255,255,.45);padding:6px 0 calc(20px + env(safe-area-inset-bottom))}',
-    '.jd-vm-entry{width:42px;height:42px;flex:0 0 auto;border-radius:50%;border:1px solid rgba(127,127,127,.25);background:rgba(127,127,127,.1);color:inherit;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:8px}',
+    '.jd-vm-entry{width:56px;height:56px;flex:0 0 auto;border-radius:50%;border:1px solid rgba(127,127,127,.25);background:rgba(127,127,127,.1);color:inherit;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:8px}',
     '.jd-vm-entry:active{transform:scale(.93)}',
+    '@media(max-width:520px){.jd-vm-entry{width:32px;height:32px}}',
+    '.jd-vm-entry svg{width:40%;height:40%}',
     '@media (prefers-reduced-motion:reduce){.jd-vm-orb,.jd-vm-orb::before{animation:none}.jd-vm[data-state="listening"] .jd-vm-ring{animation:none}}'
   ].join('\n');
 
