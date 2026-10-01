@@ -38,16 +38,6 @@
     'font-size:1rem;cursor:pointer}',
     '.jdjp-editbtn:active{transform:scale(.98);background:#3a3a3c}',
     '.jdjp-editbtn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2}',
-    '.jdjp-cards{display:flex;gap:12px;margin:16px 24px 0}',
-    '.jdjp-card{flex:1;border-radius:16px;padding:16px 14px;min-height:120px;',
-    'display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}',
-    '.jdjp-card.soul{background:linear-gradient(135deg,#8b6f5c,#6b5443)}',
-    '.jdjp-card.memory{background:linear-gradient(135deg,#2d8a4e,#1a5c32)}',
-    '.jdjp-card-title{color:#fff;font-size:.85rem;font-weight:700;letter-spacing:.5px}',
-    '.jdjp-card-sub{color:rgba(255,255,255,.8);font-size:.65rem;letter-spacing:.3px;margin-top:2px}',
-    '.jdjp-card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px}',
-    '.jdjp-card-date{color:rgba(255,255,255,.9);font-size:.75rem}',
-    '.jdjp-card-foot svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.8}',
     '.jdjp-activity{flex:1;overflow-y:auto;padding:24px 20px 20px}',
     '.jdjp-today{color:#fff;font-size:1.2rem;font-weight:700;margin-bottom:16px}',
     '.jdjp-item{display:flex;gap:14px;padding:12px 0;align-items:flex-start;cursor:pointer}',
@@ -69,6 +59,10 @@
     'background:transparent;display:flex;align-items:center;justify-content:center}',
     '.jdfv-back svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2}',
     '.jdfv-title{color:#fff;font-size:1.1rem;font-weight:600}',
+    '.jdfv-tabs{display:flex;gap:8px;padding:0 16px 12px}',
+    '.jdfv-tab{flex:1;padding:12px;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;',
+    'background:#1c1c1e;color:#888;font-weight:600}',
+    '.jdfv-tab.active{background:#2c2c2e;color:#fff}',
     '.jdfv-right{display:flex;gap:8px}',
     '.jdfv-iconbtn{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;',
     'background:transparent;display:flex;align-items:center;justify-content:center}',
@@ -245,16 +239,6 @@
       '</div>' +
       '<div class="jdjp-label">Jampong</div>' +
       '<button class="jdjp-editbtn" data-act="edit2">' + ICON_PENCIL + ' Edit</button>' +
-      '<div class="jdjp-cards">' +
-      '<div class="jdjp-card soul" data-act="soul">' +
-      '<div><div class="jdjp-card-title">SOUL</div><div class="jdjp-card-sub">ACCESS WITH CARE</div></div>' +
-      '<div class="jdjp-card-foot"><span class="jdjp-card-date">10/2/26</span>' + ICON_HEART + '</div>' +
-      '</div>' +
-      '<div class="jdjp-card memory" data-act="memory">' +
-      '<div><div class="jdjp-card-title">MEMORY</div><div class="jdjp-card-sub">ACCESS WITH CARE</div></div>' +
-      '<div class="jdjp-card-foot"><span class="jdjp-card-date">10/2/26</span>' + ICON_CHAT + '</div>' +
-      '</div>' +
-      '</div>' +
       '<div class="jdjp-activity"><div class="jdjp-today">Today</div>' + activityHtml + '</div>';
 
     document.body.appendChild(el);
@@ -287,13 +271,7 @@
       if (typeof window.jdToast === 'function') window.jdToast(on ? 'Biometric lock OFF' : 'Biometric lock ON');
     });
     el.querySelector('[data-act="edit2"]').addEventListener('click', function () {
-      if (typeof window.jdToast === 'function') window.jdToast('Edit profile');
-    });
-    el.querySelector('[data-act="soul"]').addEventListener('click', function () {
       openFileViewer('soul');
-    });
-    el.querySelector('[data-act="memory"]').addEventListener('click', function () {
-      openFileViewer('memory');
     });
 
     buildFileViewer();
@@ -315,6 +293,10 @@
       '</div>' +
       '</div>' +
       '<div class="jdfv-note">About this file. These files are yours to shape — how I act, what I remember, and how I show up.</div>' +
+      '<div class="jdfv-tabs">' +
+      '<button class="jdfv-tab" data-fv="tabsoul">SOUL</button>' +
+      '<button class="jdfv-tab" data-fv="tabmemory">MEMORY</button>' +
+      '</div>' +
       '<div class="jdfv-content"></div>' +
       '<div class="jdfv-editor"><textarea class="jdfv-textarea"></textarea></div>' +
       '<div class="jdfv-editbar" style="display:none">' +
@@ -332,6 +314,12 @@
     document.body.appendChild(el);
 
     el.querySelector('[data-fv="back"]').addEventListener('click', closeFileViewer);
+    el.querySelector('[data-fv="tabsoul"]').addEventListener('click', function () {
+      switchFileTab('soul');
+    });
+    el.querySelector('[data-fv="tabmemory"]').addEventListener('click', function () {
+      switchFileTab('memory');
+    });
     el.querySelector('[data-fv="edit"]').addEventListener('click', startEdit);
     el.querySelector('[data-fv="menu"]').addEventListener('click', function () {
       el.querySelector('.jdfv-menu').classList.add('open');
@@ -400,11 +388,28 @@
     if (typeof window.jdToast === 'function') window.jdToast('Downloaded!');
   }
 
+  function switchFileTab(type) {
+    currentFile = type;
+    var el = document.getElementById('jdFileViewer');
+    if (!el) return;
+    el.querySelector('.jdfv-title').textContent = type === 'soul' ? 'SOUL.md' : 'MEMORY.md';
+    el.querySelector('[data-fv="tabsoul"]').classList.toggle('active', type === 'soul');
+    el.querySelector('[data-fv="tabmemory"]').classList.toggle('active', type === 'memory');
+    // Exit edit mode when switching tabs
+    el.querySelector('.jdfv-editor').classList.remove('open');
+    el.querySelector('.jdfv-editbar').style.display = 'none';
+    el.querySelector('.jdfv-content').style.display = 'block';
+    el.querySelector('.jdfv-note').style.display = 'block';
+    refreshViewer();
+  }
+
   function openFileViewer(type) {
     currentFile = type;
     buildFileViewer();
     var el = document.getElementById('jdFileViewer');
     el.querySelector('.jdfv-title').textContent = type === 'soul' ? 'SOUL.md' : 'MEMORY.md';
+    el.querySelector('[data-fv="tabsoul"]').classList.toggle('active', type === 'soul');
+    el.querySelector('[data-fv="tabmemory"]').classList.toggle('active', type === 'memory');
     refreshViewer();
     // Exit edit mode
     el.querySelector('.jdfv-editor').classList.remove('open');
