@@ -103,8 +103,8 @@
     var st = document.createElement('style');
     st.id = 'jdBrowseCss';
     st.textContent =
-      '#' + MODAL_ID + ' .jd-browse, #' + MODAL_ID + ' .jd-addcustom{position:absolute;inset:0;background:#0a0a0c;' +
-      'display:flex;flex-direction:column;z-index:40}' +
+      '#' + MODAL_ID + ' .jd-browse, #' + MODAL_ID + ' .jd-addcustom{background:#0a0a0c;' +
+      'display:flex;flex-direction:column;min-height:52dvh}' +
       '#' + MODAL_ID + ' .jd-br-head{display:flex;align-items:center;gap:8px;padding:14px 12px 6px}' +
       '#' + MODAL_ID + ' .jd-br-back{width:36px;height:36px;border-radius:50%;border:0;background:none;color:#fff;' +
       'font-size:20px;cursor:pointer}' +
