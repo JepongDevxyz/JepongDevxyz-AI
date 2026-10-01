@@ -235,7 +235,16 @@
         'font-size:15px!important;cursor:pointer!important}' +
         '#' + MODAL_ID + ' .jd-pp-empty{padding:16px!important;color:#8e8e93!important;font-size:14px!important}' +
         '#' + MODAL_ID + ' .jd-pp-view{display:none}' +
-        '#' + MODAL_ID + ' .jd-pp-view.active{display:block}';
+        '#' + MODAL_ID + ' .jd-pp-view.active{display:block}' +
+        /* Light-mode theme overrides (2026-10-01). */
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-card{background:#ffffff!important}' +
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-head h2{color:#111!important}' +
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-opt b{color:#111!important}' +
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-connname{color:#111!important}' +
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-permname{color:#111!important}' +
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-check{color:#111!important}' +
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-menu button{color:#111!important}' +
+        'body.theme-light #' + MODAL_ID + ' .jd-pp-menu button:active{background:rgba(0,0,0,.08)!important}';
       document.head.appendChild(st);
     } catch (_) {}
   }

@@ -157,7 +157,27 @@
       '#' + MODAL_ID + ' .jd-ac-row2 select{flex:0 0 44%;background:#1c1c1e;border:1px solid rgba(255,255,255,.1);' +
       'border-radius:12px;padding:13px 10px;color:#fff;font-size:.85rem;outline:0}' +
       '#' + MODAL_ID + ' .jd-conn-modal{position:relative}' +
-      '#' + MODAL_ID + ' .jd-conn-setup[data-setup="custom-new"]{display:none!important}';
+      '#' + MODAL_ID + ' .jd-conn-setup[data-setup="custom-new"]{display:none!important}' +
+      /* Light-mode theme overrides (2026-10-01): modal follows the light theme. */
+      'body.theme-light #' + MODAL_ID + ' .jd-browse,body.theme-light #' + MODAL_ID + ' .jd-addcustom{background:#ffffff}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-back,body.theme-light #' + MODAL_ID + ' .jd-br-filter{color:#111}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-title{color:#111}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-search{background:#f0f0f2}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-search input{color:#111}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-search input::placeholder{color:rgba(0,0,0,.4)}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-search .jd-br-x{color:rgba(0,0,0,.6)}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-cat{border-color:rgba(0,0,0,.14);color:#111}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-cat.on{background:#111;color:#fff;border-color:#111}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-row{border-bottom-color:rgba(0,0,0,.06)}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-ic{background:#f0f0f2}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-name{color:#111}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-sub{color:rgba(0,0,0,.55)}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-desc{color:rgba(0,0,0,.65)}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-connect{background:#111;color:#fff}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-br-empty{color:rgba(0,0,0,.5)}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-ac-continue{background:#e0e0e2;color:#111}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-ac-continue.ready{background:#111;color:#fff}' +
+      'body.theme-light #' + MODAL_ID + ' .jd-ac-row2 select{background:#f0f0f2;border-color:rgba(0,0,0,.1);color:#111}';
     document.head.appendChild(st);
   }
 
