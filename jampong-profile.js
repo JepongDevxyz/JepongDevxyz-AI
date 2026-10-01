@@ -31,6 +31,12 @@
     '.jdjp-pill button{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;',
     'background:#2c2c2e;display:flex;align-items:center;justify-content:center}',
     '.jdjp-pill button:active{transform:scale(.9);background:#3a3a3c}',
+    '.jdjp-pill button.jdjp-active{background:#3a3a3c;box-shadow:0 0 0 2px #555}',
+    '.jdjp-view{display:none}',
+    '.jdjp-view.jdjp-vactive{display:block}',
+    '.jdjp-browser-card{background:#e8f4fd;border-radius:16px;margin:16px 24px;padding:20px;position:relative;min-height:120px}',
+    '.jdjp-browser-title{color:#1c1c1e;font-size:1rem;font-weight:600;margin-bottom:8px}',
+    '.jdjp-open-browser{background:#1c1c1e;color:#fff;border:none;border-radius:999px;padding:12px 20px;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:8px;margin-top:12px}',
     '.jdjp-pill button svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.8}',
     '.jdjp-label{color:#fff;font-size:1rem;margin:16px 24px 8px}',
     '.jdjp-editbtn{display:flex;align-items:center;justify-content:center;gap:8px;',
@@ -127,7 +133,21 @@
     '.jdad-cmd{background:#1c1c1e;border-radius:10px;padding:12px 14px;color:#e0e0e0;',
     'font-size:.85rem;font-family:monospace;margin-bottom:8px;overflow-x:auto}',
     '.jdad-step{display:flex;align-items:center;gap:10px;padding:8px 0;color:#aaa;font-size:.9rem}',
-    '.jdad-step .check{color:#4ade80}'
+    '.jdad-step .check{color:#4ade80}',
+    '.jdad-approve{background:#1c1c1e;border-radius:16px;padding:20px;margin:0 0 16px}',
+    '.jdad-approve-icon{width:48px;height:48px;border-radius:50%;background:#2c2c2e;display:flex;align-items:center;justify-content:center;margin-bottom:12px}',
+    '.jdad-approve-icon svg{width:28px;height:28px;fill:#fff}',
+    '.jdad-approve-title{color:#fff;font-size:1.1rem;font-weight:700;margin-bottom:8px;line-height:1.4}',
+    '.jdad-approve-desc{color:#aaa;font-size:.9rem;line-height:1.5;margin-bottom:16px}',
+    '.jdad-approve-details{background:#2c2c2e;border-radius:12px;padding:14px 16px;margin-bottom:16px}',
+    '.jdad-detail-row{display:flex;gap:8px;padding:4px 0;font-size:.85rem}',
+    '.jdad-detail-key{color:#888;min-width:90px}',
+    '.jdad-detail-val{color:#e0e0e0;flex:1}',
+    '.jdad-approve-btns{display:flex;flex-direction:column;gap:10px}',
+    '.jdad-allow{background:#2563eb;color:#fff;border:none;border-radius:999px;padding:16px;font-size:1rem;font-weight:600;cursor:pointer}',
+    '.jdad-allow:active{transform:scale(.98);background:#1d4ed8}',
+    '.jdad-deny{background:#2c2c2e;color:#fff;border:none;border-radius:999px;padding:16px;font-size:1rem;font-weight:600;cursor:pointer}',
+    '.jdad-deny:active{transform:scale(.98);background:#3a3a3c}',
   ].join('\n');
 
   var ICON_X = '<svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
@@ -149,6 +169,7 @@
   var ICON_PDF = '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
   var ICON_NODES = '<svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M6.5 7.5 11 16"/><path d="M17.5 7.5 13 16"/><path d="M7 6h10"/></svg>';
   var ICON_GITHUB = '<svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12c0 4.4 2.9 8.2 6.8 9.5.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.2-3.4-1.2-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.7.4-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.2-.4-1.3.1-2.6 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.4.1 2.6.6.7 1 1.6 1 2.7 0 3.8-2.4 4.7-4.6 4.9.4.3.8 1 .8 2v3c0 .3.2.6.7.5A10 10 0 0 0 22 12 10 10 0 0 0 12 2z"/></svg>';
+  var ICON_CAL = '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
   var ICON_BOT = '<svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/></svg>';
 
   var DEFAULT_SOUL = '# SOUL.md\n\n' +
@@ -287,15 +308,24 @@
       '</div>' +
       '</div>' +
       '</div>' +
-      '<div class="jdjp-activity" id="jdActivityView">' + activityHtml +
-      '<div class="jdjp-today" style="margin-top:20px">Needs review</div>' +
+      // VIEW: Activity (default)
+      '<div class="jdjp-activity jdjp-view jdjp-vactive" id="jdViewActivity">' + activityHtml + '</div>' +
+      // VIEW: Approvals (shield)
+      '<div class="jdjp-activity jdjp-view" id="jdViewApprovals">' +
+      '<div class="jdjp-today">Needs review</div>' +
       '<div class="jdad-approve">' +
+      '<div class="jdad-approve-icon">' + ICON_GITHUB + '</div>' +
       '<div class="jdad-approve-title">Allow Jampong to perform this action on your GitHub account?</div>' +
       '<div class="jdad-approve-desc">Your assistant wants to update GitHub repository content so the SOUL/MEMORY viewer opens when you tap the fingerprint icon.</div>' +
+      '<div class="jdad-approve-details">' +
       '<div class="jdad-detail-row"><span class="jdad-detail-key">Action:</span><span class="jdad-detail-val">Push files to GitHub</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Branch:</span><span class="jdad-detail-val">main</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files:</span><span class="jdad-detail-val">agent.js, patch-version.txt, jampong-profile.js</span></div>' +
-      '<div class="jdad-approve-btns" style="margin-top:12px">' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Branch or ref:</span><span class="jdad-detail-val">main</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files · 1:</span><span class="jdad-detail-val">File path: agent.js</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files · 2:</span><span class="jdad-detail-val">File path: patch-version.txt</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files · 3:</span><span class="jdad-detail-val">File path: jampong-profile.js</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Repository owner:</span><span class="jdad-detail-val">JepongDevxyz</span></div>' +
+      '</div>' +
+      '<div class="jdad-approve-btns">' +
       '<button class="jdad-allow" data-appr="allow">Allow</button>' +
       '<button class="jdad-deny" data-appr="deny">Deny</button>' +
       '</div></div>' +
@@ -305,6 +335,24 @@
       '<div class="jdjp-item-body"><div class="jdjp-item-title">Loading...</div>' +
       '<div class="jdjp-item-desc">Fetching from GitHub</div></div></div>' +
       '</div>' +
+      '</div>' +
+      // VIEW: Browser (monitor)
+      '<div class="jdjp-activity jdjp-view" id="jdViewBrowser">' +
+      '<div class="jdjp-today">Browser task</div>' +
+      '<div class="jdjp-browser-card">' +
+      '<div class="jdjp-browser-title">No active browser task</div>' +
+      '<div style="color:#666;font-size:0.9rem">Open a browser to view web content</div>' +
+      '<button class="jdjp-open-browser" data-act="openbrowser">Open browser ↗</button>' +
+      '</div>' +
+      '</div>' +
+      // VIEW: Daily (clock)
+      '<div class="jdjp-activity jdjp-view" id="jdViewDaily">' +
+      '<div class="jdjp-today">Daily</div>' +
+      '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_CAL + '</div>' +
+      '<div class="jdjp-item-body"><div class="jdjp-item-title">Agentic feature tour</div>' +
+      '<div class="jdjp-item-desc">task</div>' +
+      '<div class="jdjp-item-time">11:18 AM</div></div>' +
+      '<div style="color:#666">›</div></div>' +
       '</div>';
 
     document.body.appendChild(el);
@@ -317,34 +365,48 @@
     el.querySelector('[data-act="edit"]').addEventListener('click', function () {
       if (window.jdOpenAvatarShare) window.jdOpenAvatarShare();
     });
+    // Tab switching function
+    function switchView(viewId, btnAct) {
+      // Hide all views
+      el.querySelectorAll('.jdjp-view').forEach(function (v) { v.classList.remove('jdjp-vactive'); });
+      // Hide files view
+      var filesView = el.querySelector('#jdFilesView');
+      if (filesView) filesView.style.display = 'none';
+      // Show selected view
+      var target = el.querySelector('#' + viewId);
+      if (target) target.classList.add('jdjp-vactive');
+      // Update active button
+      el.querySelectorAll('.jdjp-pill button').forEach(function (b) { b.classList.remove('jdjp-active'); });
+      var btn = el.querySelector('[data-act="' + btnAct + '"]');
+      if (btn) btn.classList.add('jdjp-active');
+      // Load approvals when shield tapped
+      if (viewId === 'jdViewApprovals') setTimeout(jdLoadApprovals, 300);
+    }
+
     el.querySelector('[data-act="menu"]').addEventListener('click', function () {
-      if (typeof window.openMenuFromBrandIcon === 'function') window.openMenuFromBrandIcon();
-      close();
+      switchView('jdViewActivity', 'menu');
     });
     el.querySelector('[data-act="shield"]').addEventListener('click', function () {
-      // Show approvals section
-      var actView = el.querySelector('#jdActivityView');
-      if (actView) actView.scrollIntoView({ behavior: 'smooth' });
-      if (typeof window.jdToast === 'function') window.jdToast('Approvals');
+      switchView('jdViewApprovals', 'shield');
     });
     el.querySelector('[data-act="monitor"]').addEventListener('click', function () {
-      if (typeof window.jdToast === 'function') window.jdToast('Browser task');
+      switchView('jdViewBrowser', 'monitor');
     });
     el.querySelector('[data-act="clock"]').addEventListener('click', function () {
-      var actView = el.querySelector('#jdActivityView');
-      if (actView) actView.scrollIntoView({ behavior: 'smooth' });
+      switchView('jdViewDaily', 'clock');
     });
     el.querySelector('[data-act="finger"]').addEventListener('click', function () {
+      // Hide all tab views
+      el.querySelectorAll('.jdjp-view').forEach(function (v) { v.classList.remove('jdjp-vactive'); });
+      // Show files view
       var filesView = el.querySelector('#jdFilesView');
-      var activityView = el.querySelector('#jdActivityView');
-      var showing = filesView.classList.contains('show');
-      if (showing) {
-        filesView.classList.remove('show');
-        activityView.classList.remove('hide');
-      } else {
+      if (filesView) {
+        filesView.style.display = 'block';
         filesView.classList.add('show');
-        activityView.classList.add('hide');
       }
+      // Update active button
+      el.querySelectorAll('.jdjp-pill button').forEach(function (b) { b.classList.remove('jdjp-active'); });
+      el.querySelector('[data-act="finger"]').classList.add('jdjp-active');
     });
     el.querySelector('[data-act="edit2"]').addEventListener('click', function () {
       openFileViewer('soul');
