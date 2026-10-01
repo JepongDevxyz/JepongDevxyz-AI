@@ -53,6 +53,9 @@
     '.jd-vm-entry:active{transform:scale(.93)}',
     '@media(max-width:520px){.jd-vm-entry{width:32px;height:32px}}',
     '.jd-vm-entry svg{width:40%;height:40%}',
+    /* Theme-uniform send button (2026-10-01): dark mode = dark button, light mode = light button. */
+    'body:not(.theme-light) #mainActionBtn.prompt-bar__send,body:not(.theme-light) #mainActionBtn.prompt-bar__send[data-armed]{background:#2b2b30!important;color:#e8e8e8!important}',
+    'body.theme-light #mainActionBtn.prompt-bar__send,body.theme-light #mainActionBtn.prompt-bar__send[data-armed]{background:#ececf0!important;color:#55555d!important}',
     '@media (prefers-reduced-motion:reduce){.jd-vm-orb,.jd-vm-orb::before{animation:none}.jd-vm[data-state="listening"] .jd-vm-ring{animation:none}}'
   ].join('\n');
 
