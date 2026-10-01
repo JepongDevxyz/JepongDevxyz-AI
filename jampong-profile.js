@@ -672,8 +672,14 @@
     var el = document.getElementById('jdActDetail');
     if (!el) { el = document.createElement('div'); el.id = 'jdActDetail'; document.body.appendChild(el); }
     var files = (detail && detail.files) ? detail.files : [];
-    var filesHtml = files.slice(0, 8).map(function (f, i) {
-      return '<div class="jdad-detail-row"><span class="jdad-detail-key">File ' + (i + 1) + ':</span><span class="jdad-detail-val">' + jdEscape(f.filename || '') + '</span></div>';
+    var filesHtml = files.slice(0, 10).map(function (f, i) {
+      var patchHtml = '';
+      if (f.patch) {
+        // Show first 15 lines of the diff
+        var lines = f.patch.split('\n').slice(0, 15).join('\n');
+        patchHtml = '<div class="jdad-cmd" style="margin-top:6px;font-size:11px;max-height:120px;overflow:hidden">' + jdEscape(lines) + '</div>';
+      }
+      return '<div class="jdad-detail-row"><span class="jdad-detail-key">Files · ' + (i + 1) + ':</span><span class="jdad-detail-val">File path: ' + jdEscape(f.filename || '') + '</span></div>' + patchHtml;
     }).join('');
     el.innerHTML =
       '<div class="jdad-header"><button class="jdad-back" data-ad="back">' + ICON_BACK + '</button></div>' +
@@ -684,8 +690,9 @@
       '<div class="jdad-section">DETAILS</div>' +
       '<div class="jdad-detail-row"><span class="jdad-detail-key">Action:</span><span class="jdad-detail-val">Push files to GitHub</span></div>' +
       '<div class="jdad-detail-row"><span class="jdad-detail-key">Branch:</span><span class="jdad-detail-val">main</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Commit:</span><span class="jdad-detail-val">' + sha + '</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Repository owner:</span><span class="jdad-detail-val">JepongDevxyz</span></div>' +
       '<div class="jdad-detail-row"><span class="jdad-detail-key">Repository:</span><span class="jdad-detail-val">JepongDevxyz-AI</span></div>' +
+      '<div class="jdad-detail-row"><span class="jdad-detail-key">Commit:</span><span class="jdad-detail-val">' + sha + '</span></div>' +
       filesHtml +
       '<div class="jdad-section">MESSAGE</div><div class="jdad-cmd">' + jdEscape(msg) + '</div>' +
       '</div>';
