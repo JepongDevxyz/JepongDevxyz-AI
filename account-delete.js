@@ -58,11 +58,28 @@
         document.head.appendChild(s);
     }
 
+    // FIX (2026-10-01, Jepong: "Ayusin mo naman to" -> Sign out):
+    // The stock "Sign out" button has class `jd-auth-signout` with NO CSS,
+    // so it renders as plain floating text while Edit profile / Sync now /
+    // Delete account are proper rounded buttons. Restyle it to match:
+    // same `auth-provider jd-auth-choice` button + log-out icon.
+    // Keeps the original onclick="cloudSignOut()". Idempotent.
+    function fixSignoutButton() {
+        var signedIn = document.getElementById('cloudSignedIn');
+        if (!signedIn) return;
+        var so = signedIn.querySelector('.jd-auth-signout');
+        if (!so || so.dataset.jdFixed === '1') return;
+        so.dataset.jdFixed = '1';
+        so.className = 'auth-provider jd-auth-choice';
+        so.innerHTML = '<i data-lucide="log-out"></i><span>Sign out</span>';
+        refreshIcons(so);
+    }
+
     // Inject the Delete account button inside the signed-in Account
     // modal (#cloudSignedIn), right after the Sign out button.
     // The signed-in view is hidden for guests, so no extra gating needed.
     function ensureDeleteInAccount() {
-        if (document.getElementById('jdDeleteAccountBtn')) return;
+        if (document.getElementById('jdDeleteAccountBtn')) { fixSignoutButton(); return; }
         var signedIn = document.getElementById('cloudSignedIn');
         if (!signedIn) return;
         injectStyles();
@@ -80,6 +97,7 @@
             signedIn.appendChild(btn);
         }
         refreshIcons(btn);
+        fixSignoutButton();
     }
 
     // Remove any legacy Danger-zone section from Settings home
