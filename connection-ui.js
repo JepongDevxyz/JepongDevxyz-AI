@@ -55,7 +55,7 @@
       var nav = (navigator.language || 'en').toLowerCase();
       if (nav.indexOf('fil') === 0 || nav.indexOf('tl') === 0) return 'fil';
     } catch (e2) {}
-    return 'fil'; /* default: Filipino (user's primary language) */
+    return 'en'; /* default: English */
   }
 
   var STR = {

@@ -160,24 +160,12 @@ window.JDCodingAgent=Object.freeze({open,close});
    via a fetch wrapper), and the activity-status calmness fix
    (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
-  /* Critical CSS (2026-10-01): hide the header pills synchronously.
-     They were moved to Settings; without this, every refresh flashes
-     the old layout until patch-version.txt resolves and the deferred
-     model-settings.js loads. Version-independent, safe to run early. */
-  try{
-    if(!document.getElementById('jd-critical-css')){
-      var __jc=document.createElement('style');
-      __jc.id='jd-critical-css';
-      __jc.textContent='.header-controls .selector-wrapper{display:none!important}';
-      document.head.appendChild(__jc);
-    }
-  }catch(__jce){}
   if(document.querySelector('script[src^="/credits.js"]'))return;
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001ai';
-  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js'];
+  var V='?v=20261001as';
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/settings-muse.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/jampong.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
       var sc=document.createElement('script');sc.src=src+ver;sc.defer=true;document.head.appendChild(sc);
