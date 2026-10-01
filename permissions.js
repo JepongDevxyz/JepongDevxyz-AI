@@ -185,8 +185,10 @@
         'padding:14px 16px 6px!important}' +
         '#' + MODAL_ID + ' .jd-pp-head h2{margin:0!important;font-size:17px!important;font-weight:600!important;color:#fff!important}' +
         '#' + MODAL_ID + ' .jd-pp-label{font-size:13px!important;color:#8e8e93!important;margin:16px 20px 8px!important}' +
-        '#' + MODAL_ID + ' .jd-pp-card{background:#1e1e20!important;border-radius:14px!important;overflow:hidden!important;' +
-        'margin:0 16px!important}' +
+        '#' + MODAL_ID + ' .jd-pp-card{background:#1e1e20!important;border-radius:14px!important;' +
+        'margin:0 16px!important;position:relative!important}' +
+        '#' + MODAL_ID + ' .jd-pp-card > :first-child{border-top-left-radius:14px!important;border-top-right-radius:14px!important}' +
+        '#' + MODAL_ID + ' .jd-pp-card > :last-child{border-bottom-left-radius:14px!important;border-bottom-right-radius:14px!important}' +
         '#' + MODAL_ID + ' .jd-pp-opt{width:100%!important;display:flex!important;align-items:center!important;' +
         'justify-content:space-between!important;gap:12px!important;padding:13px 16px!important;background:transparent!important;' +
         'border:none!important;cursor:pointer!important;text-align:left!important}' +
@@ -220,8 +222,9 @@
         'background:transparent!important;border:none!important;color:#8e8e93!important;font-size:14px!important;' +
         'cursor:pointer!important;padding:6px 2px!important}' +
         '#' + MODAL_ID + ' .jd-pp-menu{position:absolute!important;right:0!important;top:calc(100% + 4px)!important;' +
-        'background:#2c2c2e!important;border-radius:12px!important;min-width:100px!important;z-index:20!important;' +
-        'box-shadow:0 8px 24px rgba(0,0,0,.5)!important;display:none!important;overflow:hidden!important}' +
+        'background:#2c2c2e!important;border-radius:12px!important;min-width:110px!important;z-index:50!important;' +
+        'box-shadow:0 12px 32px rgba(0,0,0,.65)!important;display:none!important;overflow:hidden!important;' +
+        'border:1px solid rgba(255,255,255,.1)!important}' +
         '#' + MODAL_ID + ' .jd-pp-dd.open .jd-pp-menu{display:block!important}' +
         '#' + MODAL_ID + ' .jd-pp-menu button{display:block!important;width:100%!important;text-align:left!important;' +
         'padding:11px 14px!important;background:transparent!important;border:none!important;color:#fff!important;' +
