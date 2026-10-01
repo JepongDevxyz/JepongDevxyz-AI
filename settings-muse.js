@@ -97,7 +97,14 @@
     book: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>',
     key: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
     plug: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>',
-    history: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>'
+    history: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+    heart: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+    zap: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>',
+    message: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    cpu: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>',
+    layers: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>',
+    folder: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+    test: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'
   };
 
   /* Settings structure: groups of rows. */
@@ -113,10 +120,16 @@
     [
       { icon: 'user', label: 'Personalization', fn: 'openPersonalizationSettings' },
       { icon: 'database', label: 'Memory', fn: 'openSettingsMemory' },
-      { icon: 'bell', label: 'Reply Notifications', toggle: 'replyNotifications' },
-      { icon: 'palette', label: 'Appearance', fn: 'openAppearance' }
+      { icon: 'bell', label: 'Reply Notifications', fn: 'openJdReplyNotifications' },
+      { icon: 'palette', label: 'Appearance', fn: 'openJdAppearance' },
+      { icon: 'heart', label: 'Pet', fn: 'openPetPicker' },
+      { icon: 'zap', label: 'Haptics', fn: 'openJdHaptics' },
+      { icon: 'message', label: 'Thoughts', fn: 'openJdThoughts' }
     ],
     [
+      { icon: 'cpu', label: 'Model', fn: 'openModelPicker' },
+      { icon: 'layers', label: 'Presets', fn: 'openPresetsModal' },
+      { icon: 'folder', label: 'Library', fn: 'openLibrary' },
       { icon: 'chat', label: 'Web Search', toggle: 'webSearch' },
       { icon: 'star', label: 'Smart Model Router', toggle: 'smartRouter' },
       { icon: 'shieldcheck', label: 'Auto Provider Fallback', toggle: 'autoFallback' }
@@ -125,7 +138,8 @@
       { icon: 'book', label: 'Guide', fn: 'jdOpenGuide' },
       { icon: 'history', label: 'Chat History', fn: 'openChatHistory' },
       { icon: 'help', label: 'Help & support', fn: 'openHelp' },
-      { icon: 'info', label: 'Legal info', fn: 'openLegal' }
+      { icon: 'info', label: 'Legal info', fn: 'openLegal' },
+      { icon: 'test', label: 'API Tester', fn: 'openCustomApiTester' }
     ]
   ];
 
