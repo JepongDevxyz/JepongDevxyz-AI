@@ -391,15 +391,17 @@
             return;
         }
         var total = totalCredited > 0 ? totalCredited : 0;
-        var used = Math.max(0, total - balance);
-        var pct = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
-        key = 'bal:' + balance + ':pct:' + pct;
+        // Bar + label show REMAINING credits (not "used"): at 0 balance the
+        // bar is empty and the label reads "0% left" — a full bar next to
+        // "0 credits" looked like a bug (2026-10-01).
+        var pctLeft = total > 0 ? Math.max(0, Math.min(100, Math.round(balance / total * 100))) : 0;
+        key = 'bal:' + balance + ':pctLeft:' + pctLeft;
         if (key === lastRenderKey) return;
         lastRenderKey = key;
         card.hidden = false;
         if (guest) guest.hidden = true;
-        card.querySelector('#jdCreditsPct').textContent = pct + '% used';
-        card.querySelector('#jdCreditsFill').style.width = pct + '%';
+        card.querySelector('#jdCreditsPct').textContent = pctLeft + '% left';
+        card.querySelector('#jdCreditsFill').style.width = pctLeft + '%';
         card.querySelector('#jdCreditsBal').innerHTML =
             '<b>' + fmt(balance) + '</b> credits';
     }
