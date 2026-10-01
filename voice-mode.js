@@ -295,6 +295,19 @@
       }
     } catch (e) {}
     jdSyncSendVoice();
+    /* Late re-sync: the app may apply data-disabled to the send button AFTER our
+       init — reading too early copies the enabled (light) color. Also re-match
+       whenever the wrapper's disabled state changes. */
+    try {
+      var sendEl = document.getElementById('mainActionBtn');
+      var wrapEl = sendEl && sendEl.closest ? sendEl.closest('.rb-sling-wrap') : null;
+      if (wrapEl && typeof MutationObserver !== 'undefined') {
+        new MutationObserver(function () { try { jdSyncSendVoice(); } catch (e) {} })
+          .observe(wrapEl, { attributes: true, attributeFilter: ['data-disabled'] });
+      }
+    } catch (e) {}
+    setTimeout(function () { try { jdSyncSendVoice(); } catch (e) {} }, 1500);
+    setTimeout(function () { try { jdSyncSendVoice(); } catch (e) {} }, 4000);
   }
 
   function setState(state) {
