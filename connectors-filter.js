@@ -2,8 +2,11 @@
    JepongDevxyz AI — connector visibility filter (runtime, 2026-10-01)
    Jepong: "Alisin na natin yung iba, ito lang itira mo muna —
    GitHub at Vercel (+ Browser/Web, builtin, no setup needed)."
+   2026-10-01: Google trio added (gmail, gcalendar, gdrive) so the
+   owner can enter the Google OAuth client ID/secret in-app
+   (Settings → Connectors → Google setup) for plugin "Connect".
 
-   Hides every connector card except `github`, `vercel` and `browser` in the
+   Hides every connector card except the KEEP list in the
    Connectors panel. Client-side only (server registry untouched), so
    restoring the rest later is just deleting this file + agent.js entry.
    Additive only; fail-open; idempotent.
@@ -13,7 +16,7 @@
   if (window.__jdConnFilter) return;
   window.__jdConnFilter = true;
 
-  var KEEP = { github: 1, vercel: 1, browser: 1 };
+  var KEEP = { github: 1, vercel: 1, browser: 1, gmail: 1, gcalendar: 1, gdrive: 1 };
   window.__jdConnVisible = KEEP;
 
   function applyFilter(root) {
