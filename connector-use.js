@@ -411,9 +411,29 @@
     return w.charAt(0).toUpperCase();
   }
 
+  /* Effective read permission for the bridge: detail-level (from the
+     connector's detail page) wins, then connector-level, then default. */
+  function effectiveReadPerm(connector) {
+    try {
+      var d = window.jdConnectorPermDetail;
+      if (d && typeof d.get === 'function' && typeof d.firstReadKey === 'function') {
+        var key = d.firstReadKey(connector);
+        var v = d.get(connector, key);
+        /* A stored detail value always wins over connector-level. */
+        try {
+          var stored = window.localStorage.getItem('jdPermDetail.' + connector + '.' + key);
+          if (stored === 'allow' || stored === 'ask' || stored === 'deny') return stored;
+        } catch (_) {}
+        if (v === 'deny') return 'deny';
+        if (v === 'allow') return 'allow';
+      }
+    } catch (_) {}
+    return resolvePermission(connector);
+  }
+
   /* Returns a Promise<boolean>: true = allowed, false = denied. */
   function requestPermission(intent) {
-    var perm = resolvePermission(intent.connector);
+    var perm = effectiveReadPerm(intent.connector);
     if (perm === 'allow') return Promise.resolve(true);
     if (perm === 'deny') return Promise.resolve(false);
     return new Promise(function (resolve) {
