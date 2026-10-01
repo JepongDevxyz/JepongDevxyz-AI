@@ -12,6 +12,8 @@
    - Connection check: uses window.__jdConnectorStatus cache from
      connectors.js; skips silently when unknown/disconnected.
    - Activity: own #jdConnectorActivity rows AFTER #activeAiIndicator (video style).
+   - Permission: Allow/Deny prompt (like the Muse app) before first use
+     of each connector per session, with an "Always allow" option.
      Mode is respected automatically — body.jd-pure-mode hides
      #activeAiIndicator via CSS, and we also skip DOM work when
      window.jdPureModeOn() is true.
@@ -286,6 +288,97 @@
     return body;
   }
 
+  /* ---------- Allow / Deny permission prompt (Muse-app style) ---------- */
+  var PERM_CSS_ID = 'jdConnectorPermCss';
+  var PERM_MODAL_ID = 'jdConnectorPermModal';
+  var ALWAYS_KEY_PREFIX = 'jdConnectorAlways.';
+
+  function alwaysAllowed(connector) {
+    try { return window.localStorage.getItem(ALWAYS_KEY_PREFIX + connector) === '1'; }
+    catch (_) { return false; }
+  }
+  function setAlwaysAllowed(connector) {
+    try { window.localStorage.setItem(ALWAYS_KEY_PREFIX + connector, '1'); } catch (_) {}
+  }
+
+  function ensurePermCss() {
+    try {
+      if (document.getElementById(PERM_CSS_ID)) return;
+      var st = document.createElement('style');
+      st.id = PERM_CSS_ID;
+      st.textContent =
+        '#' + PERM_MODAL_ID + '{position:fixed!important;inset:0!important;z-index:99999!important;' +
+        'display:flex!important;align-items:center!important;justify-content:center!important;' +
+        'background:rgba(0,0,0,.6)!important;padding:20px!important;box-sizing:border-box!important}' +
+        '#' + PERM_MODAL_ID + '.hidden{display:none!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-card{background:#1c1c1e!important;border:1px solid rgba(255,255,255,.12)!important;' +
+        'border-radius:20px!important;padding:24px!important;max-width:380px!important;width:100%!important;' +
+        'box-shadow:0 20px 60px rgba(0,0,0,.5)!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-icon{width:48px!important;height:48px!important;border-radius:14px!important;' +
+        'background:rgba(245,158,11,.15)!important;display:flex!important;align-items:center!important;' +
+        'justify-content:center!important;margin-bottom:16px!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-icon svg{width:26px!important;height:26px!important;color:#f59e0b!important}' +
+        '#' + PERM_MODAL_ID + ' h3{margin:0 0 8px!important;font-size:17px!important;font-weight:600!important;color:#fff!important}' +
+        '#' + PERM_MODAL_ID + ' p{margin:0 0 16px!important;font-size:14px!important;line-height:1.5!important;color:#b5b5b5!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-always{display:flex!important;align-items:center!important;gap:8px!important;' +
+        'margin-bottom:18px!important;font-size:13px!important;color:#9a9a9a!important;cursor:pointer!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-always input{width:16px!important;height:16px!important;accent-color:#f59e0b!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-btns{display:flex!important;gap:10px!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-btn{flex:1!important;padding:12px!important;border-radius:12px!important;' +
+        'font-size:15px!important;font-weight:600!important;cursor:pointer!important;border:1px solid rgba(255,255,255,.14)!important;' +
+        'background:transparent!important;color:#fff!important}' +
+        '#' + PERM_MODAL_ID + ' .jd-perm-btn.allow{background:#f59e0b!important;border-color:#f59e0b!important;color:#000!important}';
+      document.head.appendChild(st);
+    } catch (_) {}
+  }
+
+  var CONNECTOR_NAMES = {
+    gmail: 'Gmail', gcalendar: 'Google Calendar', gdrive: 'Google Drive', spotify: 'Spotify',
+    github: 'GitHub', notion: 'Notion', slack: 'Slack', dropbox: 'Dropbox', linear: 'Linear',
+    todoist: 'Todoist', figma: 'Figma', zoom: 'Zoom', vercel: 'Vercel', facebook: 'Facebook',
+    instagram: 'Instagram', messenger: 'Messenger', threads: 'Threads'
+  };
+  function connectorName(id) {
+    return CONNECTOR_NAMES[id] || String(id).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  /* Returns a Promise<boolean>: true = allowed, false = denied. */
+  function requestPermission(intent) {
+    if (alwaysAllowed(intent.connector)) return Promise.resolve(true);
+    return new Promise(function (resolve) {
+      try {
+        ensurePermCss();
+        var old = document.getElementById(PERM_MODAL_ID);
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+        var name = connectorName(intent.connector);
+        var ov = document.createElement('div');
+        ov.id = PERM_MODAL_ID;
+        ov.innerHTML =
+          '<div class="jd-perm-card" role="dialog" aria-modal="true" aria-label="Connector permission">' +
+          '<div class="jd-perm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+          '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>' +
+          '<h3>Payagan ang pag-access?</h3>' +
+          '<p>Gusto ng JepongDevxyz AI na gamitin ang <b style="color:#fff">' + name +
+          '</b> para sa request na ito (' + intent.label + ').</p>' +
+          '<label class="jd-perm-always"><input type="checkbox" id="jdPermAlways"> Palaging payagan ang ' + name + '</label>' +
+          '<div class="jd-perm-btns">' +
+          '<button class="jd-perm-btn" id="jdPermDeny" type="button">Deny</button>' +
+          '<button class="jd-perm-btn allow" id="jdPermAllow" type="button">Allow</button>' +
+          '</div></div>';
+        document.body.appendChild(ov);
+        var done = function (allowed) {
+          try {
+            if (allowed && ov.querySelector('#jdPermAlways').checked) setAlwaysAllowed(intent.connector);
+          } catch (_) {}
+          try { if (ov.parentNode) ov.parentNode.removeChild(ov); } catch (_) {}
+          resolve(allowed);
+        };
+        ov.querySelector('#jdPermAllow').addEventListener('click', function () { done(true); });
+        ov.querySelector('#jdPermDeny').addEventListener('click', function () { done(false); });
+      } catch (_) { resolve(false); }
+    });
+  }
+
   function installBridge() {
     if (typeof window.fetch !== 'function') return;
     if (window.fetch.__jdConnectorBridge) return;
@@ -304,8 +397,11 @@
               !body.customApiProfile && !isBackground(body.message)) {
             var intent = detectIntent(body.message);
             if (intent && isConnected(intent.connector)) {
-              // Async: fetch connector data, show activity, inject, then send.
+              // Async: ask Allow/Deny first (Muse-app style), then fetch,
+              // show activity, inject, and send.
               return (async function () {
+                var allowed = await requestPermission(intent);
+                if (!allowed) return origFetch(input, init); // Deny: send as-is
                 var actId = showActivity(intent.label);
                 try {
                   var res = await origFetch('/api/connectors/proxy', {
