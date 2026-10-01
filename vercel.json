@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node scripts/decode-assets.js",
   "functions": {
     "api/chat.js": {
       "maxDuration": 300
@@ -94,6 +93,14 @@
     {
       "destination": "/api/github?route=oauth-callback",
       "source": "/api/github-oauth-callback"
+    },
+    {
+      "source": "/logo-192.jpg",
+      "destination": "/api/logo?size=192"
+    },
+    {
+      "source": "/logo-512.jpg",
+      "destination": "/api/logo?size=512"
     }
   ],
   "headers": [
