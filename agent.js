@@ -161,12 +161,25 @@ window.JDCodingAgent=Object.freeze({open,close});
    (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
   if(document.querySelector('script[src^="/credits.js"]'))return;
-  /* Cache-buster: bump V on every push that changes the patches below,
-     so phones never keep showing a stale cached patch. */
-  var V='?v=20261001s';
-  ['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js'].forEach(function(src){
-    var s=document.createElement('script');s.src=src+V;s.defer=true;document.head.appendChild(s);
-  });
+  /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
+     fetch the current patch version with no-cache and load the patches
+     with it. Bump patch-version.txt on every push that changes patches. */
+  var V='?v=20261001t';
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js'];
+  function loadPatches(ver){
+    FILES.forEach(function(src){
+      var sc=document.createElement('script');sc.src=src+ver;sc.defer=true;document.head.appendChild(sc);
+    });
+  }
+  var done=false;
+  function go(ver){ if(!done){ done=true; loadPatches(ver); } }
+  try{
+    fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
+      .then(function(r){ return r.ok?r.text():''; })
+      .then(function(t){ t=(t||'').trim(); go(/^20\d{6}[a-z]$/.test(t)?('?v='+t):V); })
+      .catch(function(){ go(V); });
+    setTimeout(function(){ go(V); },3000);
+  }catch(e){ go(V); }
 }catch(e){}})();
 /* --- responsive tune stylesheet (appended 2026-09-30) ---
    Small-phone touch targets + TV/ultrawide layout. Additive. */
