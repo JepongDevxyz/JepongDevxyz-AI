@@ -27,6 +27,10 @@
       "source": "/api/credits-welcome"
     },
     {
+      "source": "/api/guest-credits",
+      "destination": "/api/credits?route=guest"
+    },
+    {
       "destination": "/api/codex?route=account",
       "source": "/api/codex-account"
     },

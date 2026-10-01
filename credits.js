@@ -8,7 +8,10 @@
      the panel after the row is tapped.
    - ensure(kind): gate before an AI generation; opens the
      QR Ph top-up modal when the signed-in user's balance is
-     insufficient. Guests (not signed in) keep current behavior.
+     insufficient. Guests (not signed in) get 100 free credits per
+     UTC day, enforced SERVER-side per IP hash — clearing phone
+     data cannot reset the quota. The phone only mirrors the
+     remaining balance for instant display.
    - spend(kind, idempotencyKey): deduct after a successful
      generation (fire-and-forget, idempotent server-side).
    - Claims the one-time welcome credits on sign-in.
@@ -30,6 +33,109 @@
     var signedIn = null;      // null = unknown, true/false once known
     var totalCredited = 0;    // sum of all positive credit grants
     var refreshing = null;
+
+    /* ---------- guest credits (100/day, server-enforced) ---------- */
+    var guestBalance = null;  // remaining guest credits today (server is source of truth)
+    var pendingGuestRefund = 0; // cost reserved for the in-flight guest request
+    var GUEST_MIRROR = 'jd_guest_credit_mirror'; // phone-side mirror for instant display only
+
+    function utcDay() {
+        try { return new Date().toISOString().slice(0, 10); }
+        catch (_) { return ''; }
+    }
+    function loadGuestMirror() {
+        try {
+            var m = JSON.parse(localStorage.getItem(GUEST_MIRROR) || 'null');
+            if (m && m.day === utcDay() && typeof m.balance === 'number') {
+                guestBalance = m.balance;
+            } else if (m && m.day !== utcDay()) {
+                guestBalance = null; // new day: re-fetch from server
+            }
+        } catch (_) {}
+    }
+    function saveGuestMirror() {
+        try {
+            localStorage.setItem(GUEST_MIRROR, JSON.stringify({ day: utcDay(), balance: guestBalance }));
+        } catch (_) {}
+    }
+    // Calls the server guest-credits endpoint. Never throws.
+    function guestApi(action, kind) {
+        var body = { action: action };
+        if (kind) body.kind = kind;
+        return fetch('/api/guest-credits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(body)
+        }).then(function (r) {
+            return r.json().catch(function () { return null; }).then(function (d) {
+                return { status: r.status, d: d };
+            });
+        });
+    }
+    function showGuestExhausted() {
+        var msg = 'Naubos na ang 100 free credits mo ngayong araw. Mag-sign in para makakuha ng 500 credits at makapag-top up.';
+        if (window.showModernAlert) window.showModernAlert(msg, 'Guest limit reached');
+        else { try { alert(msg); } catch (_) {} }
+    }
+    // Refresh the guest balance from the server (source of truth).
+    function guestStatusRefresh() {
+        loadGuestMirror();
+        renderCredits();
+        guestApi('status').then(function (res) {
+            var d = res.d;
+            if (d && typeof d.balance === 'number' && !d.unenforced) {
+                guestBalance = d.balance;
+                saveGuestMirror();
+                renderCredits();
+            }
+        }).catch(function () {});
+    }
+    // Guest gate: reserve credits on the server BEFORE the AI request.
+    // Returns a promise of true when the send may proceed.
+    function guestEnsure(kind) {
+        loadGuestMirror();
+        var cost = COSTS[kind] || COSTS.chat;
+        // Fast-fail from the phone mirror; the server re-checks authoritatively.
+        if (guestBalance !== null && guestBalance < cost) {
+            renderCredits();
+            showGuestExhausted();
+            return Promise.resolve(false);
+        }
+        return guestApi('spend', kind).then(function (res) {
+            var d = res.d;
+            if (res.status === 402 || (d && d.error === 'insufficient')) {
+                guestBalance = 0;
+                saveGuestMirror();
+                renderCredits();
+                showGuestExhausted();
+                return false;
+            }
+            if (d && d.ok === true && typeof d.balance === 'number' && !d.unenforced) {
+                guestBalance = d.balance;
+                saveGuestMirror();
+                renderCredits();
+                pendingGuestRefund = cost; // refund if the AI request itself fails
+                return true;
+            }
+            pendingGuestRefund = 0;
+            return true; // fail open: server not ready yet -> keep current behavior
+        }).catch(function () {
+            pendingGuestRefund = 0;
+            return true; // fail open, never brick the app
+        });
+    }
+    function guestRefund(kind, cost) {
+        if (!cost) return;
+        guestApi('refund', kind).then(function (res) {
+            var d = res.d;
+            if (d && typeof d.balance === 'number' && !d.unenforced) {
+                guestBalance = d.balance;
+                saveGuestMirror();
+                renderCredits();
+            }
+        }).catch(function () {});
+    }
 
     function token() {
         try {
@@ -269,11 +375,19 @@
         if (!card) return;
         var key;
         if (balance === null) {
-            key = 'null:' + (signedIn === false ? 'guest' : 'unknown');
+            key = 'null:' + (signedIn === false ? 'guest' : 'unknown') + ':gb:' + guestBalance;
             if (key === lastRenderKey) return;
             lastRenderKey = key;
             card.hidden = true;
-            if (guest) guest.hidden = !(signedIn === false);
+            if (guest) {
+                guest.hidden = !(signedIn === false);
+                if (signedIn === false) {
+                    var rem = guestBalance === null ? '\u2026' : fmt(guestBalance);
+                    guest.innerHTML =
+                        'Guest mode: <b>' + rem + '</b> / 100 free credits ngayong araw.<br>' +
+                        'Mag-sign in para makuha ang 500 free credits at makapag-top up gamit ang QR Ph.';
+                }
+            }
             return;
         }
         var total = totalCredited > 0 ? totalCredited : 0;
@@ -345,7 +459,7 @@
         ensure: function (kind) {
             var cost = COSTS[kind] || COSTS.chat;
             return token().then(function (t) {
-                if (!t) return true; // guest: keep current behavior
+                if (!t) return guestEnsure(kind); // guest: server-side daily quota
                 var check = function (bal) {
                     if (bal !== null && bal >= cost) return true;
                     // Local copy may be stale (e.g. paid in another tab) — refresh once.
@@ -444,6 +558,7 @@
     }
 
     function gatedChatFetch(kind, doFetch) {
+        pendingGuestRefund = 0;
         return JDCredits.ensure(kind).then(function (ok) {
             if (!ok) {
                 // Top-up modal is already open; return a synthetic 402 so
@@ -456,13 +571,26 @@
                 }
                 return Promise.reject(new Error('insufficient_credits'));
             }
+            // Guest credits were reserved server-side in ensure(); refund
+            // them if the AI request itself fails. Signed-in users spend
+            // after success via JDCredits.spend (unchanged).
+            var refundCost = pendingGuestRefund;
+            pendingGuestRefund = 0;
+            var doRefund = function () { guestRefund(kind, refundCost); };
             return doFetch().then(function (res) {
                 if (res && res.ok) {
-                    var key = kind + ':' + Date.now().toString(36) + ':' +
-                        Math.random().toString(36).slice(2, 10);
-                    JDCredits.spend(kind, key);
+                    if (!refundCost) {
+                        var key = kind + ':' + Date.now().toString(36) + ':' +
+                            Math.random().toString(36).slice(2, 10);
+                        JDCredits.spend(kind, key);
+                    }
+                } else {
+                    doRefund();
                 }
                 return res;
+            }, function (err) {
+                doRefund();
+                throw err;
             });
         });
     }
@@ -496,7 +624,7 @@
 
     function initAccount() {
         token().then(function (t) {
-            if (!t) { signedIn = false; balance = null; renderCredits(); return; }
+            if (!t) { signedIn = false; balance = null; guestStatusRefresh(); return; }
             JDCredits.claimWelcome().then(function () { refresh(); });
         });
     }
