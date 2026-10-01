@@ -213,59 +213,71 @@
       }
     });
 
-    /* composer entry button (addition only, after the dictation mic) */
-    var mic = $('micBtn');
-    if (mic && !$('jdVmEntry') && mic.parentNode) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.id = 'jdVmEntry';
-      b.className = 'jd-vm-entry';
-      b.title = t('entryTitle');
-      b.setAttribute('aria-label', t('entryAria'));
-      b.innerHTML = icon('audio-lines', 20);
-      b.addEventListener('click', function () { open(); });
-      mic.parentNode.insertBefore(b, mic.nextSibling);
-      refreshIcons(b);
-    }
-  }
-
-  /* Copy the send button's ACTUAL rendered face (background + icon color) so the
-     voice button is pixel-identical in any theme or state — no color formulas. */
-  function jdMatchSendStyle() {
-    try {
-      var entry = $('jdVmEntry');
-      var send = document.getElementById('mainActionBtn');
-      if (!entry || !send) return;
-      var face = send.querySelector('.rb-sling-face') || send;
-      var cs = getComputedStyle(face);
-      if (cs.background && cs.background.indexOf('rgba(0, 0, 0, 0)') !== 0) entry.style.background = cs.background;
-      if (cs.color) entry.style.color = cs.color;
-    } catch (e) {}
+    /* The send button itself is the voice entry (see jdSyncSendVoice) —
+       no separate composer button needed. */
   }
 
   /* ---------- ChatGPT-style send/voice swap (2026-10-01) ----------
-     Empty composer -> the voice button sits in the send slot (rightmost).
-     Typing text, attaching a file, or generating -> the send button takes
-     its place and the voice button hides. Exactly like the reference video:
-     the swap happens on any input, and the voice button only returns when
-     the composer is fully empty and idle. */
+     The SEND BUTTON ITSELF becomes the voice button when the composer is
+     empty: we swap its icon to audio-lines and its click to open voice mode.
+     This guarantees pixel-perfect position/style — it is literally the same
+     button, same DOM node, same CSS. Typing text, attaching a file, or
+     generating restores the normal send/stop button. The app owns the button
+     during generation; we never fight it. */
+  var jdOrigSendFaceHTML = null;
+  var jdOrigSendClick = null;
+
+  function jdVoiceSlotClick(e) {
+    if (e) { try { e.preventDefault(); e.stopPropagation(); } catch (err) {} }
+    open();
+  }
+
   function jdSyncSendVoice() {
-    var entry = $('jdVmEntry');
     var send = document.getElementById('mainActionBtn');
-    if (!entry || !send) return;
+    if (!send) return;
+    var face = send.querySelector('.rb-sling-face');
+    if (!face) return;
+    /* Retire the separate entry button — the send slot IS the voice button now. */
+    var retired = $('jdVmEntry');
+    if (retired) retired.style.display = 'none';
+    /* During generation the app owns this button (stop icon) — hands off. */
     var generating = false;
     try { generating = !!isAIGenerating; } catch (e) {}
     try { if (window.__jdBibleAbort) generating = true; } catch (e) {}
+    if (generating) {
+      if (send.__jdVoiceSwapped) {
+        send.__jdVoiceSwapped = false;
+        if (jdOrigSendFaceHTML !== null) face.innerHTML = jdOrigSendFaceHTML;
+        if (jdOrigSendClick) send.onclick = jdOrigSendClick;
+        send.setAttribute('aria-label', 'Send');
+      }
+      return;
+    }
     var inp = $('userInput');
     var hasText = !!(inp && inp.value.trim());
     var fc = document.getElementById('filePreviewContainer');
     var hasFiles = !!(fc && !fc.hidden && fc.querySelector('.jd-upload-chip'));
-    var showSend = generating || hasText || hasFiles;
-    entry.style.display = showSend ? 'none' : '';
-    if (!showSend) jdMatchSendStyle();
-    /* Never fight the app's own busy styling — only toggle visibility. */
-    if (send.style.display === 'none' && showSend) send.style.display = '';
-    else if (send.style.display !== 'none' && !showSend) send.style.display = 'none';
+    var showVoice = !hasText && !hasFiles;
+    if (showVoice) {
+      if (jdOrigSendFaceHTML === null) {
+        jdOrigSendFaceHTML = face.innerHTML;
+        jdOrigSendClick = send.onclick;
+      }
+      if (!send.__jdVoiceSwapped) {
+        send.__jdVoiceSwapped = true;
+        face.innerHTML = icon('audio-lines', 20);
+        refreshIcons(face);
+        send.onclick = jdVoiceSlotClick;
+        send.setAttribute('aria-label', t('entryAria'));
+        send.title = t('entryTitle');
+      }
+    } else if (send.__jdVoiceSwapped) {
+      send.__jdVoiceSwapped = false;
+      if (jdOrigSendFaceHTML !== null) face.innerHTML = jdOrigSendFaceHTML;
+      if (jdOrigSendClick) send.onclick = jdOrigSendClick;
+      send.setAttribute('aria-label', 'Send');
+      send.title = 'Send';
+    }
   }
 
   function jdInitSendVoiceSwap() {
@@ -295,19 +307,6 @@
       }
     } catch (e) {}
     jdSyncSendVoice();
-    /* Late re-sync: the app may apply data-disabled to the send button AFTER our
-       init — reading too early copies the enabled (light) color. Also re-match
-       whenever the wrapper's disabled state changes. */
-    try {
-      var sendEl = document.getElementById('mainActionBtn');
-      var wrapEl = sendEl && sendEl.closest ? sendEl.closest('.rb-sling-wrap') : null;
-      if (wrapEl && typeof MutationObserver !== 'undefined') {
-        new MutationObserver(function () { try { jdSyncSendVoice(); } catch (e) {} })
-          .observe(wrapEl, { attributes: true, attributeFilter: ['data-disabled'] });
-      }
-    } catch (e) {}
-    setTimeout(function () { try { jdSyncSendVoice(); } catch (e) {} }, 1500);
-    setTimeout(function () { try { jdSyncSendVoice(); } catch (e) {} }, 4000);
   }
 
   function setState(state) {
