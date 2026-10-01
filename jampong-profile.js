@@ -1,6 +1,6 @@
 /* JepongDevxyz AI — Jampong Profile Screen (2026-10-02)
    Pixel-perfect replica of Muse app's profile screen.
-   5-icon pill: menu, shield, monitor, clock, fingerprint.
+   2-icon pill: menu, fingerprint (fingerprint opens SOUL/MEMORY).
    SOUL/MEMORY cards open real file viewers with edit.
    100% functional. Pure addition. Idempotent. */
 (function () {
@@ -28,10 +28,10 @@
     'align-items:center;justify-content:center;gap:6px}',
     '.jdjp-pill{display:flex;align-items:center;justify-content:space-between;',
     'background:#1c1c1e;border-radius:999px;padding:10px 14px;margin:20px 16px 0}',
-    '.jdjp-pill button{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;',
+    '.jdjp-pill button{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;',
     'background:#2c2c2e;display:flex;align-items:center;justify-content:center}',
     '.jdjp-pill button:active{transform:scale(.9);background:#3a3a3c}',
-    '.jdjp-pill button svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.8}',
+    '.jdjp-pill button svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.8}',
     '.jdjp-label{color:#fff;font-size:1rem;margin:16px 24px 8px}',
     '.jdjp-editbtn{display:flex;align-items:center;justify-content:center;gap:8px;',
     'background:#2c2c2e;color:#fff;border:none;border-radius:12px;padding:14px;margin:0 24px;',
@@ -232,13 +232,8 @@
       '<div class="jdjp-status">online</div>' +
       '<div class="jdjp-pill">' +
       '<button data-act="menu">' + ICON_MENU + '</button>' +
-      '<button data-act="shield">' + ICON_SHIELD + '</button>' +
-      '<button data-act="monitor">' + ICON_MONITOR + '</button>' +
-      '<button data-act="clock">' + ICON_CLOCK + '</button>' +
       '<button data-act="finger">' + ICON_FINGER + '</button>' +
       '</div>' +
-      '<div class="jdjp-label">Jampong</div>' +
-      '<button class="jdjp-editbtn" data-act="edit2">' + ICON_PENCIL + ' Edit</button>' +
       '<div class="jdjp-activity"><div class="jdjp-today">Today</div>' + activityHtml + '</div>';
 
     document.body.appendChild(el);
@@ -255,22 +250,7 @@
       if (typeof window.openMenuFromBrandIcon === 'function') window.openMenuFromBrandIcon();
       close();
     });
-    el.querySelector('[data-act="shield"]').addEventListener('click', function () {
-      if (typeof window.jdToast === 'function') window.jdToast('Privacy & Security');
-    });
-    el.querySelector('[data-act="monitor"]').addEventListener('click', function () {
-      if (typeof window.jdToast === 'function') window.jdToast('Display settings');
-    });
-    el.querySelector('[data-act="clock"]').addEventListener('click', function () {
-      if (typeof window.jdToast === 'function') window.jdToast('Activity history');
-    });
     el.querySelector('[data-act="finger"]').addEventListener('click', function () {
-      var key = 'jd_biometric_lock';
-      var on = localStorage.getItem(key) === '1';
-      localStorage.setItem(key, on ? '0' : '1');
-      if (typeof window.jdToast === 'function') window.jdToast(on ? 'Biometric lock OFF' : 'Biometric lock ON');
-    });
-    el.querySelector('[data-act="edit2"]').addEventListener('click', function () {
       openFileViewer('soul');
     });
 
@@ -465,7 +445,7 @@
     if (window.jdJampongIsOn && !window.jdJampongIsOn()) return;
     // Remove old version if exists
     var old = document.getElementById('jdJampongProfile');
-    if (old && !old.querySelector('[data-act="shield"]')) {
+    if (old && !old.querySelector('[data-act="finger"]')) {
       old.remove();
       // Clear the guard so build() runs again
       // (we use a different guard now, so old element removal is enough)
