@@ -350,7 +350,7 @@
     } else if (c.kind === 'customsuggest') {
       btn = '<button type="button" class="jd-conn-btn primary" data-act="cs-setup" data-id="' + c.id + '">Set up</button>';
     } else if (c.kind === 'oauth') {
-      if (prov && !prov.configured) {
+      if (!prov || !prov.configured) {
         btn = '<button type="button" class="jd-conn-btn" data-act="setup" data-id="' + c.id + '">Set up</button>';
         extra = setupGuideHtml(c.provider);
       } else {
@@ -555,10 +555,10 @@
       .then(function (r) {
         btn.disabled = false;
         btn.textContent = old;
-        if (!r.ok || !r.data) { toast('Could not start sign-in.'); return; }
+        if (!r.ok || !r.data) { toast((r.data && r.data.error) || 'Could not start sign-in.'); return; }
         if (r.data.configured === false) { toggleSetup(c.provider); loadStatus(true); return; }
         if (r.data.url) trackPopup(window.open(r.data.url, 'jd_oauth', 'width=520,height=680,menubar=no,toolbar=no'));
-        else toast('Could not start sign-in.');
+        else toast((r.data && r.data.error) || 'Could not start sign-in.');
       });
   }
 
