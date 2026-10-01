@@ -227,6 +227,59 @@
     }
   }
 
+  /* ---------- ChatGPT-style send/voice swap (2026-10-01) ----------
+     Empty composer -> the voice button sits in the send slot (rightmost).
+     Typing text, attaching a file, or generating -> the send button takes
+     its place and the voice button hides. Exactly like the reference video:
+     the swap happens on any input, and the voice button only returns when
+     the composer is fully empty and idle. */
+  function jdSyncSendVoice() {
+    var entry = $('jdVmEntry');
+    var send = document.getElementById('mainActionBtn');
+    if (!entry || !send) return;
+    var generating = false;
+    try { generating = !!isAIGenerating; } catch (e) {}
+    try { if (window.__jdBibleAbort) generating = true; } catch (e) {}
+    var inp = $('userInput');
+    var hasText = !!(inp && inp.value.trim());
+    var fc = document.getElementById('filePreviewContainer');
+    var hasFiles = !!(fc && !fc.hidden && fc.querySelector('.jd-upload-chip'));
+    var showSend = generating || hasText || hasFiles;
+    entry.style.display = showSend ? 'none' : '';
+    /* Never fight the app's own busy styling — only toggle visibility. */
+    if (send.style.display === 'none' && showSend) send.style.display = '';
+    else if (send.style.display !== 'none' && !showSend) send.style.display = 'none';
+  }
+
+  function jdInitSendVoiceSwap() {
+    var inp = $('userInput');
+    if (inp && !inp.__jdSwapHooked) {
+      inp.__jdSwapHooked = true;
+      inp.addEventListener('input', jdSyncSendVoice);
+    }
+    var fc = document.getElementById('filePreviewContainer');
+    if (fc && !fc.__jdSwapHooked && typeof MutationObserver !== 'undefined') {
+      fc.__jdSwapHooked = true;
+      new MutationObserver(jdSyncSendVoice).observe(fc, { childList: true, attributes: true, attributeFilter: ['hidden'] });
+    }
+    /* Generation start/stop funnels through updateGenerationActionButton —
+       chain-wrap it (same pattern as stopgen-fix) so the stop button always wins. */
+    try {
+      if (typeof window.updateGenerationActionButton === 'function' && !window.updateGenerationActionButton.__jdSwapWrapped) {
+        var orig = window.updateGenerationActionButton;
+        var wrapped = function () {
+          var r = orig.apply(this, arguments);
+          try { jdSyncSendVoice(); } catch (e) {}
+          return r;
+        };
+        wrapped.__jdSwapWrapped = true;
+        try { Object.defineProperty(wrapped, 'name', { value: 'updateGenerationActionButton' }); } catch (e) {}
+        window.updateGenerationActionButton = wrapped;
+      }
+    } catch (e) {}
+    jdSyncSendVoice();
+  }
+
   function setState(state) {
     S.state = state;
     var ov = $('jdVoiceMode');
@@ -486,6 +539,7 @@
   function init() {
     injectCSS();
     buildUI();
+    jdInitSendVoiceSwap();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
