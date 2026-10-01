@@ -517,3 +517,9 @@ body.theme-light .squish-switch-root>input:checked+span:last-child{
     gap:12px!important;
   }
 }
+
+/* CRITICAL (2026-10-01): header pills moved to Settings — hide from first paint.
+   This file is render-blocking in <head>, so unlike the deferred patches this
+   rule applies during progressive parsing: the old pills can never flash on
+   refresh. (agent.js also injects it as a fallback.) */
+.header-controls .selector-wrapper{display:none!important}
