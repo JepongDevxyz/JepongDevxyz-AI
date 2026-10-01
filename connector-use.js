@@ -374,7 +374,13 @@
         '#' + PERM_MODAL_ID + ' .jd-perm-btn{width:100%!important;padding:15px!important;border-radius:16px!important;' +
         'font-size:16px!important;font-weight:700!important;cursor:pointer!important;border:none!important;margin-bottom:10px!important}' +
         '#' + PERM_MODAL_ID + ' .jd-perm-btn.allow{background:#3b82f6!important;color:#fff!important}' +
-        '#' + PERM_MODAL_ID + ' .jd-perm-btn.deny{background:#2a2a2d!important;color:#fff!important;margin-bottom:0!important}';
+        '#' + PERM_MODAL_ID + ' .jd-perm-btn.deny{background:#2a2a2d!important;color:#fff!important;margin-bottom:0!important}' +
+        /* Light-mode theme overrides (2026-10-01). */
+        'body.theme-light #' + PERM_MODAL_ID + ' .jd-perm-sheet{background:#ffffff!important}' +
+        'body.theme-light #' + PERM_MODAL_ID + ' .jd-perm-details{background:#f0f0f2!important}' +
+        'body.theme-light #' + PERM_MODAL_ID + ' .jd-perm-details div{color:#333!important}' +
+        'body.theme-light #' + PERM_MODAL_ID + ' .jd-perm-details b{color:#111!important}' +
+        'body.theme-light #' + PERM_MODAL_ID + ' .jd-perm-btn.deny{background:#e8e8ea!important;color:#111!important}';
       document.head.appendChild(st);
     } catch (_) {}
   }

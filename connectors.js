@@ -267,7 +267,8 @@
       '.jd-conn-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);' +
       'background:#222;color:#fff;padding:10px 18px;border-radius:999px;font-size:.85rem;opacity:0;' +
       'transition:all .3s;z-index:99999;pointer-events:none;max-width:90vw;text-align:center}' +
-      '.jd-conn-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}';
+      '.jd-conn-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}' +
+      'body.theme-light .jd-conn-toast{background:#fff;color:#111;box-shadow:0 4px 16px rgba(0,0,0,.15)}';
     document.head.appendChild(s);
   }
 
