@@ -103,15 +103,6 @@
     var st = document.createElement('style');
     st.id = 'jdBrowseCss';
     st.textContent =
-      '#' + MODAL_ID + ' .jd-conn-plus{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.16);' +
-      'background:rgba(255,255,255,.06);color:#fff;font-size:20px;line-height:1;cursor:pointer;flex:0 0 auto}' +
-      '#' + MODAL_ID + ' .jd-plus-menu{position:absolute;top:52px;right:14px;z-index:60;background:#1c1c1e;' +
-      'border:1px solid rgba(255,255,255,.12);border-radius:14px;min-width:220px;overflow:hidden;' +
-      'box-shadow:0 12px 32px rgba(0,0,0,.6)}' +
-      '#' + MODAL_ID + ' .jd-plus-menu button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;' +
-      'background:none;border:0;color:#fff;font-size:.92rem;cursor:pointer;text-align:left}' +
-      '#' + MODAL_ID + ' .jd-plus-menu button:active{background:rgba(255,255,255,.08)}' +
-      '#' + MODAL_ID + ' .jd-plus-menu button svg{width:18px;height:18px;opacity:.85}' +
       '#' + MODAL_ID + ' .jd-browse, #' + MODAL_ID + ' .jd-addcustom{position:absolute;inset:0;background:#0a0a0c;' +
       'display:flex;flex-direction:column;z-index:40}' +
       '#' + MODAL_ID + ' .jd-br-head{display:flex;align-items:center;gap:8px;padding:14px 12px 6px}' +
@@ -165,7 +156,8 @@
       '#' + MODAL_ID + ' .jd-ac-row2{display:flex;gap:8px}' +
       '#' + MODAL_ID + ' .jd-ac-row2 select{flex:0 0 44%;background:#1c1c1e;border:1px solid rgba(255,255,255,.1);' +
       'border-radius:12px;padding:13px 10px;color:#fff;font-size:.85rem;outline:0}' +
-      '#' + MODAL_ID + ' .jd-conn-modal{position:relative}';
+      '#' + MODAL_ID + ' .jd-conn-modal{position:relative}' +
+      '#' + MODAL_ID + ' .jd-conn-setup[data-setup="custom-new"]{display:none!important}';
     document.head.appendChild(st);
   }
 
@@ -350,49 +342,17 @@
     });
   }
 
-  /* ---------------- + button + menu ---------------- */
-  function ensurePlus() {
-    var m = modal(); if (!m) return;
-    var head = m.querySelector('.jd-conn-head');
-    if (!head || head.querySelector('.jd-conn-plus')) return;
-    var plus = document.createElement('button');
-    plus.type = 'button'; plus.className = 'jd-conn-plus';
-    plus.setAttribute('aria-label', 'Add connector');
-    plus.textContent = '+';
-    var x = head.querySelector('.jd-conn-x');
-    if (x) head.insertBefore(plus, x); else head.appendChild(plus);
-    plus.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var old = m.querySelector('.jd-plus-menu');
-      if (old) { old.remove(); return; }
-      ensureCss();
-      var menu = document.createElement('div');
-      menu.className = 'jd-plus-menu';
-      menu.innerHTML =
-        '<button type="button" data-m="browse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Browse connectors</button>' +
-        '<button type="button" data-m="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0V8zM12 18v4"/></svg>Add custom connector</button>';
-      m.querySelector('.jd-conn-modal').appendChild(menu);
-      menu.addEventListener('click', function (ev) {
-        var b = ev.target.closest('[data-m]'); if (!b) return;
-        menu.remove();
-        if (b.getAttribute('data-m') === 'browse') showBrowse(); else showAddCustom();
-      });
-      setTimeout(function () {
-        document.addEventListener('click', function h(ev) {
-          if (!menu.isConnected) { document.removeEventListener('click', h); return; }
-          if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', h); }
-        });
-      }, 30);
-    });
-  }
-
-  /* Watch for the modal being built, then attach the + button. */
+  /* Jepong: bottom "+ Add custom connector" opens the Claude-style
+     view instead of the old inline form. Capture-phase so it runs
+     before connectors.js onCardClick. */
   try {
-    var obs = new MutationObserver(function () {
-      if (modal()) ensurePlus();
-    });
-    obs.observe(document.documentElement, { childList: true, subtree: true });
-    if (modal()) ensurePlus();
+    document.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('[data-act="custom-new"]') : null;
+      if (!b) return;
+      if (!modal() || !modal().contains(b)) return;
+      e.preventDefault(); e.stopPropagation();
+      showAddCustom();
+    }, true);
   } catch (_) {}
 
   window.__jdConnBrowseApi = { showBrowse: showBrowse, showAddCustom: showAddCustom, showMain: showMain };

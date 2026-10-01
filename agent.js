@@ -163,7 +163,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   if(document.querySelector('script[src^="/credits.js"]'))return;
   /* Cache-buster: bump V on every push that changes the patches below,
      so phones never keep showing a stale cached patch. */
-  var V='?v=20261001r';
+  var V='?v=20261001s';
   ['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js'].forEach(function(src){
     var s=document.createElement('script');s.src=src+V;s.defer=true;document.head.appendChild(s);
   });
