@@ -309,13 +309,8 @@
       '<div class="jd-ac-org">Adding to your JepongDevxyz AI account</div>' +
       '<input type="text" class="jd-ac-field" id="jdAcName" placeholder="Name" maxlength="60">' +
       '<div class="jd-ac-hint">Shown in the connectors list.</div>' +
-      '<input type="text" class="jd-ac-field" id="jdAcUrl" placeholder="Server URL" autocomplete="off">' +
-      '<div class="jd-ac-hint">The HTTPS address of your API, for example https://api.example.com</div>' +
-      '<div class="jd-ac-row2" style="margin-bottom:14px"><select id="jdAcAuth">' +
-      '<option value="bearer">Bearer token</option><option value="xapikey">x-api-key</option>' +
-      '<option value="header">Custom header</option><option value="query">Query param</option>' +
-      '<option value="basic">Basic (user:pass)</option><option value="none">No auth</option></select>' +
-      '<input type="text" class="jd-ac-field" id="jdAcToken" placeholder="Token / key" autocomplete="off" style="flex:1"></div>' +
+      '<input type="text" class="jd-ac-field" id="jdAcUrl" placeholder="MCP server URL" autocomplete="off">' +
+      '<div class="jd-ac-hint">The HTTPS address where the server accepts MCP requests, for example https://mcp.example.com/mcp.</div>' +
       '<div class="jd-ac-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>' +
       '<span>Only use connectors from developers you trust. JepongDevxyz AI does not control which tools developers make available and cannot verify that they will work as intended or that they won\'t change.</span></div>' +
       '<button type="button" class="jd-ac-continue" id="jdAcGo" disabled>Continue</button>' +
@@ -336,8 +331,8 @@
       api('/api/connectors/custom', { method: 'POST', body: {
         name: nameEl.value.trim(), description: '',
         base_url: urlEl.value.trim(),
-        auth_type: wrap.querySelector('#jdAcAuth').value,
-        auth_header: '', auth_value: wrap.querySelector('#jdAcToken').value.trim(),
+        auth_type: 'none',
+        auth_header: '', auth_value: '',
         test_path: '/'
       } }).then(function (r) {
         if (r.ok) {
