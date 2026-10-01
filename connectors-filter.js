@@ -14,6 +14,7 @@
   window.__jdConnFilter = true;
 
   var KEEP = { github: 1, vercel: 1, browser: 1 };
+  window.__jdConnVisible = KEEP;
 
   function applyFilter(root) {
     try {

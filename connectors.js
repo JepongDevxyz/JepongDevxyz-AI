@@ -519,7 +519,20 @@
     if (ov) ov.classList.remove('open');
   }
 
-  window.__jdConnectors = { open: open, close: close, refresh: function () { loadStatus(true); } };
+  window.__jdConnectors = { open: open, close: close, refresh: function () { loadStatus(true); },
+    registry: REGISTRY,
+    /* Trigger the same connect flow the card buttons use (for the Browse view). */
+    connect: function (id) {
+      var c = REGISTRY.find(function (x) { return x.id === id; });
+      if (!c) return false;
+      var fakeBtn = { disabled: false, textContent: 'Connect' };
+      if (c.kind === 'oauth') { doOAuth(id, fakeBtn); return true; }
+      if (c.kind === 'github') { doGithubOAuth(fakeBtn); return true; }
+      if (c.kind === 'apikey') { close(); open(); toggleSetup('key-' + id); return true; }
+      if (c.kind === 'customsuggest') { doCustomSuggest(id); return true; }
+      if (c.kind === 'builtin') return true;
+      return false;
+    } };
 
   /* ---------------- actions ---------------- */
 
