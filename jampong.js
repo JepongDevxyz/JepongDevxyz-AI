@@ -17,13 +17,21 @@
     /* Floating + breathing animation (like Muse app) */
     '#jdJampong img{width:72px;height:72px;border-radius:50%;object-fit:cover;',
     'box-shadow:0 4px 16px rgba(0,0,0,.3);background:#fff;',
-    'animation:jdJampFloat 3s ease-in-out infinite, jdJampBreathe 4s ease-in-out infinite}',
-    '@keyframes jdJampFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}',
-    '@keyframes jdJampBreathe{0%,100%{scale:1}50%{scale:1.05}}',
+    'animation:jdJampLive 4s ease-in-out infinite}',
+    /* Lively jelly-like animation: bob + squash/stretch + wobble (like Muse app) */
+    '@keyframes jdJampLive{',
+    '0%,100%{transform:translateY(0) rotate(0deg) scale(1,1)}',
+    '15%{transform:translateY(-6px) rotate(-2deg) scale(1.03,.97)}',
+    '30%{transform:translateY(-10px) rotate(0deg) scale(.97,1.05)}',
+    '45%{transform:translateY(-6px) rotate(2deg) scale(1.03,.97)}',
+    '60%{transform:translateY(0) rotate(0deg) scale(1.05,.93)}',
+    '75%{transform:translateY(-3px) rotate(-1deg) scale(.98,1.02)}',
+    '90%{transform:translateY(0) rotate(0deg) scale(1,1)}',
+    '}',
     '@media (prefers-reduced-motion: reduce){#jdJampong img{animation:none}}',
     '#jdJampong .jdj-label{margin-top:-8px;background:rgba(0,0,0,.7);color:#fff;',
     'font-size:.78rem;font-weight:500;padding:4px 14px;border-radius:12px;backdrop-filter:blur(8px);',
-    'animation:jdJampFloat 3s ease-in-out infinite}',
+    'animation:jdJampLive 4s ease-in-out infinite}',
     'body.theme-light #jdJampong .jdj-label{background:rgba(255,255,255,.85);color:#111;box-shadow:0 2px 8px rgba(0,0,0,.1)}'
   ].join('\n');
 
