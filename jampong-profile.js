@@ -37,7 +37,25 @@
     'background:#2c2c2e;color:#fff;border:none;border-radius:12px;padding:14px;margin:0 24px;',
     'font-size:1rem;cursor:pointer}',
     '.jdjp-editbtn:active{transform:scale(.98);background:#3a3a3c}',
+    '.jdjp-label{color:#fff;font-size:1rem;font-weight:600;margin:20px 24px 12px}',
+    '.jdjp-editbtn{display:flex;align-items:center;justify-content:center;gap:8px;',
+    'width:calc(100% - 48px);margin:0 24px;padding:16px;border:none;border-radius:12px;',
+    'background:#2c2c2e;color:#fff;font-size:1rem;cursor:pointer}',
+    '.jdjp-editbtn:active{background:#3a3a3c}',
     '.jdjp-editbtn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2}',
+    '.jdjp-files{display:none}',
+    '.jdjp-files.show{display:block}',
+    '.jdjp-activity.hide{display:none}',
+    '.jdjp-cards{display:flex;gap:12px;margin:16px 24px 0}',
+    '.jdjp-card{flex:1;border-radius:16px;padding:16px 14px;min-height:120px;',
+    'display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}',
+    '.jdjp-card.soul{background:linear-gradient(135deg,#8b6f5c,#6b5443)}',
+    '.jdjp-card.memory{background:linear-gradient(135deg,#2d8a4e,#1a5c32)}',
+    '.jdjp-card-title{color:#fff;font-size:.85rem;font-weight:700;letter-spacing:.5px}',
+    '.jdjp-card-sub{color:rgba(255,255,255,.8);font-size:.65rem;letter-spacing:.3px;margin-top:2px}',
+    '.jdjp-card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px}',
+    '.jdjp-card-date{color:rgba(255,255,255,.9);font-size:.75rem}',
+    '.jdjp-card-foot svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.8}',
     '.jdjp-activity{flex:1;overflow-y:auto;padding:24px 20px 20px}',
     '.jdjp-today{color:#fff;font-size:1.2rem;font-weight:700;margin-bottom:16px}',
     '.jdjp-item{display:flex;gap:14px;padding:12px 0;align-items:flex-start;cursor:pointer}',
@@ -234,7 +252,21 @@
       '<button data-act="menu">' + ICON_MENU + '</button>' +
       '<button data-act="finger">' + ICON_FINGER + '</button>' +
       '</div>' +
-      '<div class="jdjp-activity"><div class="jdjp-today">Today</div>' + activityHtml + '</div>';
+      '<div class="jdjp-files" id="jdFilesView">' +
+      '<div class="jdjp-label">Jampong</div>' +
+      '<button class="jdjp-editbtn" data-act="edit2">' + ICON_PENCIL + ' Edit</button>' +
+      '<div class="jdjp-cards">' +
+      '<div class="jdjp-card soul" data-act="soul">' +
+      '<div><div class="jdjp-card-title">SOUL</div><div class="jdjp-card-sub">ACCESS WITH CARE</div></div>' +
+      '<div class="jdjp-card-foot"><span class="jdjp-card-date">10/2/26</span>' + ICON_HEART + '</div>' +
+      '</div>' +
+      '<div class="jdjp-card memory" data-act="memory">' +
+      '<div><div class="jdjp-card-title">MEMORY</div><div class="jdjp-card-sub">ACCESS WITH CARE</div></div>' +
+      '<div class="jdjp-card-foot"><span class="jdjp-card-date">10/2/26</span>' + ICON_CHAT + '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="jdjp-activity" id="jdActivityView"><div class="jdjp-today">Today</div>' + activityHtml + '</div>';
 
     document.body.appendChild(el);
 
@@ -251,7 +283,25 @@
       close();
     });
     el.querySelector('[data-act="finger"]').addEventListener('click', function () {
+      var filesView = el.querySelector('#jdFilesView');
+      var activityView = el.querySelector('#jdActivityView');
+      var showing = filesView.classList.contains('show');
+      if (showing) {
+        filesView.classList.remove('show');
+        activityView.classList.remove('hide');
+      } else {
+        filesView.classList.add('show');
+        activityView.classList.add('hide');
+      }
+    });
+    el.querySelector('[data-act="edit2"]').addEventListener('click', function () {
       openFileViewer('soul');
+    });
+    el.querySelector('[data-act="soul"]').addEventListener('click', function () {
+      openFileViewer('soul');
+    });
+    el.querySelector('[data-act="memory"]').addEventListener('click', function () {
+      openFileViewer('memory');
     });
 
     buildFileViewer();
