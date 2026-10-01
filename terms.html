@@ -12,14 +12,14 @@
   header { margin-bottom:30px; }
   header .brand { font-weight:800; font-size:1.4rem; letter-spacing:-.02em; }
   header .brand span { background:linear-gradient(135deg,#6366f1 0%,#a855f7 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  h1 { font-size:2rem; letter-spacing:-.02em; margin:.4em 0 .2em; }
-  .updated { color:var(--muted); font-size:.9rem; margin-bottom:26px; }
-  h2 { font-size:1.15rem; margin:1.9em 0 .5em; letter-spacing:-.01em; color:#fff; }
+  .kicker { color:var(--muted); font-size:.9rem; margin-bottom:6px; }
+  h1 { font-size:2rem; letter-spacing:-.02em; margin:.2em 0 .6em; }
+  h3 { font-size:1.1rem; margin:1.8em 0 .4em; color:#fff; letter-spacing:-.01em; }
   p, li { font-size:.97rem; color:#cbd5e1; }
   ul { padding-left:22px; }
   li { margin:.4em 0; }
   strong { color:#fff; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin:1.1em 0; }
+  .callout { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin:1.4em 0; }
   a { color:var(--accent); }
   footer { margin-top:52px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:.85rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
   footer a { color:var(--muted); }
@@ -29,74 +29,40 @@
 <div class="wrap">
   <header>
     <div class="brand">JepongDevxyz <span>AI</span></div>
-    <h1>Terms of Service</h1>
-    <div class="updated">Effective: October 1, 2026</div>
   </header>
+  <p class="kicker">Last updated: October 1, 2026</p>
+  <h1>Terms of Service</h1>
+  <p>These Terms govern your use of JepongDevxyz AI. By using the service, you agree to use it responsibly and in accordance with applicable laws and the rules of any connected AI provider, plugin, or third-party service.</p>
 
-  <p>These Terms of Service ("Terms") govern your use of JepongDevxyz AI, an AI chat assistant offering access to multiple AI models (including xAI Grok, OpenAI GPT, Anthropic Claude, and Google Gemini), service connectors, and related features. By using the service, you agree to these Terms.</p>
+  <h3>1. AI-generated content</h3>
+  <p>JepongDevxyz AI can route requests to different AI models and tools. AI outputs may be incomplete, outdated, or incorrect. You are responsible for reviewing outputs before relying on them or using them in important decisions.</p>
 
-  <h2>1. Your account</h2>
+  <h3>2. Your content</h3>
+  <p>You are responsible for the prompts, files, links, API credentials, and other content you choose to provide. Do not submit content that you do not have the right to use or that violates applicable law.</p>
+
+  <h3>3. Third-party providers and plugins</h3>
+  <p>When you select or connect a third-party AI provider, search service, plugin, account, or API, relevant request data may be sent to that service so it can perform the requested function. Those services may have their own terms and usage limits.</p>
+
+  <h3>4. API keys and accounts</h3>
+  <p>You are responsible for credentials you add to JepongDevxyz AI and for any usage, charges, quotas, or restrictions imposed by the corresponding provider. Never share credentials you do not own or have permission to use.</p>
+
+  <h3>5. Acceptable use</h3>
   <ul>
-    <li>You must provide accurate information when signing in and keep your account credentials confidential.</li>
-    <li>You are responsible for all activity under your account.</li>
-    <li>You must be at least 13 years old to use the service.</li>
+    <li>Do not use the service to break laws, compromise accounts or systems, or bypass another service's access controls.</li>
+    <li>Do not intentionally upload malware or use JepongDevxyz AI to harm other people or services.</li>
+    <li>Respect intellectual property, privacy, and the rights of others.</li>
   </ul>
 
-  <h2>2. The service</h2>
-  <ul>
-    <li><strong>AI chat.</strong> You can converse with different AI models, attach files and images, and keep a persistent chat history.</li>
-    <li><strong>Connectors.</strong> You may link third-party services (such as Gmail, Google Drive, Google Calendar, Spotify, GitHub, or Vercel). Actions run only when you request them and are subject to each provider's own terms.</li>
-    <li><strong>Plugins.</strong> Optional plugins add skills and guidance the AI can use in your chats.</li>
-  </ul>
+  <h3>6. Credits and payments</h3>
+  <p>New accounts receive 500 free welcome credits, and using AI features consumes credits. When your balance runs out, you can top up through our payment provider (PayMongo). Top-ups are final and non-refundable except where required by law.</p>
 
-  <h2>3. Credits and payments</h2>
-  <ul>
-    <li>New accounts receive <strong>500 free welcome credits</strong>.</li>
-    <li>Using AI features consumes credits. When your balance runs out, you can top up through our payment provider (PayMongo).</li>
-    <li>Top-ups are final and non-refundable except where required by law.</li>
-    <li>We may adjust credit costs or plan pricing with reasonable notice in the app.</li>
-  </ul>
+  <h3>7. Availability and changes</h3>
+  <p>Features, models, providers, limits, and integrations may change or become unavailable. JepongDevxyz AI may update these Terms when the service changes. If a new legal version requires acceptance, the app can ask you to review it again.</p>
 
-  <h2>4. Acceptable use</h2>
-  <p>You agree not to:</p>
-  <ul>
-    <li>Use the service for unlawful, harmful, or abusive purposes.</li>
-    <li>Attempt to disrupt, overload, or gain unauthorized access to the service.</li>
-    <li>Circumvent usage limits, credits, or access controls.</li>
-    <li>Misrepresent AI-generated content as human-created where it matters, or use it to deceive others.</li>
-    <li>Upload content you have no right to share.</li>
-  </ul>
+  <h3>8. No warranty</h3>
+  <p>The service is provided on an "as available" basis. Do not treat AI output as a substitute for qualified professional advice where expert judgment is required.</p>
 
-  <h2>5. AI-generated content</h2>
-  <div class="card">AI responses may be inaccurate, incomplete, or outdated. They are provided for general information only and are <strong>not</strong> professional advice (medical, legal, financial, or otherwise). Always verify important information independently.</div>
-
-  <h2>6. Connected services</h2>
-  <ul>
-    <li>Connecting a service authorizes us to access it within the permissions you approve on the provider's consent screen.</li>
-    <li>You can revoke access anytime in Settings → Connectors.</li>
-    <li>We are not responsible for the availability, accuracy, or policies of third-party services.</li>
-  </ul>
-
-  <h2>7. Intellectual property</h2>
-  <ul>
-    <li>The app, its design, and branding are owned by JepongDevxyz. You may not copy or redistribute them except as allowed by law.</li>
-    <li>You keep ownership of the content you submit. You grant us a license to process it solely to operate the service (for example, sending your message to the AI model you selected).</li>
-  </ul>
-
-  <h2>8. Termination</h2>
-  <ul>
-    <li>You may stop using the service at any time and delete your account in Settings → Account → Delete account.</li>
-    <li>We may suspend or terminate accounts that violate these Terms or abuse the service.</li>
-  </ul>
-
-  <h2>9. Disclaimers and liability</h2>
-  <p>The service is provided "as is" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect or consequential damages arising from your use of the service. Our total liability is limited to the amount you paid us in the 12 months before the claim.</p>
-
-  <h2>10. Changes to these Terms</h2>
-  <p>We may update these Terms from time to time. Significant changes will be announced in the app, and continued use after they take effect means you accept them.</p>
-
-  <h2>11. Contact</h2>
-  <p>Questions about these Terms? Email us at <a href="mailto:keisha.lopez.dev@gmail.com">keisha.lopez.dev@gmail.com</a>.</p>
+  <div class="callout"><p>For questions about these Terms, email us at <a href="mailto:keisha.lopez.dev@gmail.com">keisha.lopez.dev@gmail.com</a>.</p></div>
 
   <footer>
     <span>© 2026 JepongDevxyz AI · <a href="/privacy.html">Privacy Policy</a></span>
