@@ -58,6 +58,14 @@
         '#' + MODAL_ID + ' .jd-pp-conn-perm{display:flex!important;align-items:center!important;gap:6px!important;' +
         'font-size:14px!important;color:#8e8e93!important;background:transparent!important;border:none!important;' +
         'cursor:pointer!important;padding:6px 4px!important}' +
+        '#' + MODAL_ID + ' .jd-pp-menu{position:absolute!important;right:0!important;top:calc(100% + 4px)!important;' +
+        'background:#2c2c2e!important;border-radius:12px!important;overflow:hidden!important;min-width:110px!important;' +
+        'box-shadow:0 8px 24px rgba(0,0,0,.5)!important;display:none!important;z-index:10!important}' +
+        '#' + MODAL_ID + ' .jd-pp-dd.open .jd-pp-menu{display:block!important}' +
+        '#' + MODAL_ID + ' .jd-pp-menu button{display:block!important;width:100%!important;text-align:left!important;' +
+        'padding:11px 14px!important;background:transparent!important;border:none!important;color:#fff!important;' +
+        'font-size:14px!important;cursor:pointer!important}' +
+        '#' + MODAL_ID + ' .jd-pp-menu button:active{background:rgba(255,255,255,.1)!important}' +
         '#' + MODAL_ID + ' .jd-pp-view{display:none}' +
         '#' + MODAL_ID + ' .jd-pp-view.active{display:block}';
       document.head.appendChild(st);
@@ -107,6 +115,13 @@
       },
       setDefault: function (v) {
         try { localStorage.setItem('jdPermDefaults.connector', v); } catch (_) {}
+      },
+      getWebDefault: function () {
+        try { return localStorage.getItem('jdPermDefaults.web') || 'ask_some'; }
+        catch (_) { return 'ask_some'; }
+      },
+      setWebDefault: function (v) {
+        try { localStorage.setItem('jdPermDefaults.web', v); } catch (_) {}
       }
     };
   }
@@ -134,6 +149,7 @@
   function renderDefaults() {
     var api = permApi();
     var def = api.getDefault();
+    var wdef = api.getWebDefault();
     return '<div class="jd-pp-label">Connector defaults</div>' +
       '<div class="jd-pp-card">' +
       '<button type="button" class="jd-pp-opt' + (def === 'ask_some' ? ' sel' : '') +
@@ -145,10 +161,24 @@
       '<small>Before any action</small></span>' +
       '<span class="jd-pp-check">\u2713</span></button>' +
       '</div>' +
+      '<div class="jd-pp-label">Web access defaults</div>' +
+      '<div class="jd-pp-card">' +
+      '<button type="button" class="jd-pp-opt' + (wdef === 'ask_some' ? ' sel' : '') +
+      '" data-wdef="ask_some"><span><b>Ask for some actions</b>' +
+      '<small>Before actions that may share your information or make important changes</small></span>' +
+      '<span class="jd-pp-check">\u2713</span></button>' +
+      '<button type="button" class="jd-pp-opt' + (wdef === 'always_ask' ? ' sel' : '') +
+      '" data-wdef="always_ask"><span><b>Always ask</b>' +
+      '<small>Before any action</small></span>' +
+      '<span class="jd-pp-check">\u2713</span></button>' +
+      '</div>' +
       '<div class="jd-pp-label">Manage permissions</div>' +
       '<div class="jd-pp-card">' +
       '<button type="button" class="jd-pp-row" id="jdPpOpenConns"><span>Connectors</span>' +
       '<span><span class="jd-pp-count" id="jdPpConnCount"></span><span class="jd-pp-chev">\u203A</span></span></button>' +
+      '<button type="button" class="jd-pp-row" id="jdPpOpenArtifacts" style="border-top:1px solid rgba(255,255,255,.08)">' +
+      '<span>Artifacts and scheduled tasks</span>' +
+      '<span><span class="jd-pp-chev">\u203A</span></span></button>' +
       '</div>';
   }
 
@@ -159,7 +189,6 @@
   }
 
   function renderConnList() {
-    var api = permApi();
     var ids = connectedIds();
     var html = '<div class="jd-pp-label">Connectors</div><div class="jd-pp-card">';
     if (!ids.length) {
@@ -173,12 +202,18 @@
         try {
           cur = localStorage.getItem('jdPermConnector.' + id) || 'inherit';
         } catch (_) {}
+        var label = cur === 'inherit' ? 'Ask' : permLabel(cur);
         html += '<div class="jd-pp-conn" data-conn="' + esc(id) + '">' +
           '<div class="jd-pp-conn-ic">' + esc(name.charAt(0).toUpperCase()) + '</div>' +
           '<div class="jd-pp-conn-name">' + esc(name) + '</div>' +
+          '<div class="jd-pp-dd" style="position:relative">' +
           '<button type="button" class="jd-pp-conn-perm" data-cur="' + esc(cur) + '">' +
-          '<span>' + esc(cur === 'inherit' ? 'Ask' : permLabel(cur)) + '</span><span>\u203A</span></button>' +
-          '</div>';
+          '<span>' + esc(label) + '</span><span style="font-size:11px">\u25BE</span></button>' +
+          '<div class="jd-pp-menu">' +
+          '<button type="button" data-v="allow">Allow</button>' +
+          '<button type="button" data-v="ask">Ask</button>' +
+          '<button type="button" data-v="deny">Deny</button>' +
+          '</div></div></div>';
       }
     }
     html += '</div>';
@@ -191,12 +226,27 @@
       if (!m) return;
       var views = m.querySelectorAll('.jd-pp-view');
       for (var i = 0; i < views.length; i++) views[i].classList.remove('active');
-      var v = m.querySelector(which === 'list' ? '#jdPpViewList' : '#jdPpViewMain');
+      var sel = which === 'list' ? '#jdPpViewList' : (which === 'artifacts' ? '#jdPpViewArtifacts' : '#jdPpViewMain');
+      var v = m.querySelector(sel);
       if (v) v.classList.add('active');
       var title = m.querySelector('#jdPpTitle');
-      if (title) title.textContent = which === 'list' ? 'Connectors' : 'Permissions';
+      if (title) title.textContent = which === 'list' ? 'Connectors' :
+        (which === 'artifacts' ? 'Artifacts and scheduled tasks' : 'Permissions');
       var back = m.querySelector('#jdPpBack');
-      if (back) back.setAttribute('onclick', which === 'list' ? 'jdPpGoMain()' : 'closeJdPermissions()');
+      if (back) back.setAttribute('onclick', which === 'main' ? 'closeJdPermissions()' : 'jdPpGoMain()');
+    } catch (_) {}
+  }
+
+  function refreshArtifacts() {
+    try {
+      var m = document.getElementById(MODAL_ID);
+      if (!m) return;
+      var el = m.querySelector('#jdPpViewArtifacts');
+      if (el) el.innerHTML =
+        '<div class="jd-pp-label">Artifacts and scheduled tasks</div>' +
+        '<div class="jd-pp-card"><div class="jd-pp-conn">' +
+        '<span class="jd-pp-conn-name" style="color:#8e8e93">No artifacts or scheduled tasks yet.</span>' +
+        '</div></div>';
     } catch (_) {}
   }
 
@@ -235,37 +285,70 @@
           });
         })(opts[i]);
       }
+      var wopts = m.querySelectorAll('.jd-pp-opt[data-wdef]');
+      for (var j = 0; j < wopts.length; j++) {
+        (function (btn) {
+          btn.addEventListener('click', function () {
+            api.setWebDefault(btn.getAttribute('data-wdef'));
+            refreshMain();
+          });
+        })(wopts[j]);
+      }
       var open = m.querySelector('#jdPpOpenConns');
       if (open) open.addEventListener('click', function () {
         refreshList();
         showView('list');
       });
+      var openArt = m.querySelector('#jdPpOpenArtifacts');
+      if (openArt) openArt.addEventListener('click', function () {
+        refreshArtifacts();
+        showView('artifacts');
+      });
     } catch (_) {}
-  }
-
-  function cyclePerm(id, cur, labelEl) {
-    /* inherit -> allow -> deny -> inherit */
-    var next = cur === 'inherit' ? 'allow' : (cur === 'allow' ? 'deny' : 'inherit');
-    permApi().setConnector(id, next);
-    if (labelEl) {
-      labelEl.querySelector('span').textContent = next === 'inherit' ? 'Ask' : permLabel(next);
-      labelEl.setAttribute('data-cur', next);
-    }
   }
 
   function wireList(m) {
     try {
+      /* Toggle dropdown */
       var btns = m.querySelectorAll('.jd-pp-conn-perm');
       for (var i = 0; i < btns.length; i++) {
         (function (btn) {
-          btn.addEventListener('click', function () {
-            var row = btn.closest('.jd-pp-conn');
-            var id = row && row.getAttribute('data-conn');
-            if (!id) return;
-            cyclePerm(id, btn.getAttribute('data-cur') || 'inherit', btn);
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var dd = btn.closest('.jd-pp-dd');
+            var wasOpen = dd.classList.contains('open');
+            var all = m.querySelectorAll('.jd-pp-dd.open');
+            for (var k = 0; k < all.length; k++) all[k].classList.remove('open');
+            if (!wasOpen) dd.classList.add('open');
           });
         })(btns[i]);
       }
+      /* Pick an option */
+      var opts = m.querySelectorAll('.jd-pp-menu button');
+      for (var j = 0; j < opts.length; j++) {
+        (function (opt) {
+          opt.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var dd = opt.closest('.jd-pp-dd');
+            var row = opt.closest('.jd-pp-conn');
+            var id = row && row.getAttribute('data-conn');
+            var v = opt.getAttribute('data-v');
+            if (id && v) {
+              /* 'ask' == inherit (follow global default) */
+              permApi().setConnector(id, v === 'ask' ? 'inherit' : v);
+              var btn = dd.querySelector('.jd-pp-conn-perm');
+              btn.querySelector('span').textContent = permLabel(v);
+              btn.setAttribute('data-cur', v === 'ask' ? 'inherit' : v);
+            }
+            dd.classList.remove('open');
+          });
+        })(opts[j]);
+      }
+      /* Close dropdowns when tapping elsewhere in the modal */
+      m.addEventListener('click', function () {
+        var all = m.querySelectorAll('.jd-pp-dd.open');
+        for (var k = 0; k < all.length; k++) all[k].classList.remove('open');
+      });
     } catch (_) {}
   }
 
@@ -287,6 +370,7 @@
       '<div class="settings-home-scroll">' +
       '<div class="jd-pp-view active" id="jdPpViewMain"></div>' +
       '<div class="jd-pp-view" id="jdPpViewList"></div>' +
+      '<div class="jd-pp-view" id="jdPpViewArtifacts"></div>' +
       '</div></section>';
     document.body.appendChild(ov);
     if (typeof refreshLucideIcons === 'function') { try { refreshLucideIcons(ov); } catch (_) {} }

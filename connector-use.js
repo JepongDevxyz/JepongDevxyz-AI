@@ -324,6 +324,13 @@
     },
     setDefault: function (v) {
       try { window.localStorage.setItem('jdPermDefaults.connector', v); } catch (_) {}
+    },
+    getWebDefault: function () {
+      try { return window.localStorage.getItem('jdPermDefaults.web') || 'ask_some'; }
+      catch (_) { return 'ask_some'; }
+    },
+    setWebDefault: function (v) {
+      try { window.localStorage.setItem('jdPermDefaults.web', v); } catch (_) {}
     }
   };
 
