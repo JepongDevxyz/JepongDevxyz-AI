@@ -229,6 +229,20 @@
     }
   }
 
+  /* Copy the send button's ACTUAL rendered face (background + icon color) so the
+     voice button is pixel-identical in any theme or state — no color formulas. */
+  function jdMatchSendStyle() {
+    try {
+      var entry = $('jdVmEntry');
+      var send = document.getElementById('mainActionBtn');
+      if (!entry || !send) return;
+      var face = send.querySelector('.rb-sling-face') || send;
+      var cs = getComputedStyle(face);
+      if (cs.background && cs.background.indexOf('rgba(0, 0, 0, 0)') !== 0) entry.style.background = cs.background;
+      if (cs.color) entry.style.color = cs.color;
+    } catch (e) {}
+  }
+
   /* ---------- ChatGPT-style send/voice swap (2026-10-01) ----------
      Empty composer -> the voice button sits in the send slot (rightmost).
      Typing text, attaching a file, or generating -> the send button takes
@@ -248,6 +262,7 @@
     var hasFiles = !!(fc && !fc.hidden && fc.querySelector('.jd-upload-chip'));
     var showSend = generating || hasText || hasFiles;
     entry.style.display = showSend ? 'none' : '';
+    if (!showSend) jdMatchSendStyle();
     /* Never fight the app's own busy styling — only toggle visibility. */
     if (send.style.display === 'none' && showSend) send.style.display = '';
     else if (send.style.display !== 'none' && !showSend) send.style.display = 'none';
