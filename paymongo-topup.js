@@ -59,6 +59,14 @@
     '.jdpay-ok{text-align:center;padding:12px 0}.jdpay-ok .big{font-size:44px}.jdpay-ok h3{margin:8px 0 4px}',
     '.jdpay-err{color:#f87171;font-size:13px;text-align:center;margin-top:8px}',
     '.jdpay-spin{text-align:center;padding:24px;color:#9aa7b8;font-size:14px}',
+    /* Light mode overrides (2026-10-02) */
+    'body.theme-light .jdpay-box{background:#ffffff;color:#1a1a1a;border-color:#e0e0e0}',
+    'body.theme-light .jdpay-box p.sub{color:#666}',
+    'body.theme-light .jdpay-plan{background:#f5f5f5;border-color:#e0e0e0;color:#1a1a1a}',
+    'body.theme-light .jdpay-plan span{color:#666}',
+    'body.theme-light .jdpay-close{border-color:#e0e0e0;color:#666}',
+    'body.theme-light .jdpay-note{color:#666}',
+    'body.theme-light .jdpay-spin{color:#666}',
   ].join('');
 
   var overlay = null, pollTimer = null, countdownTimer = null;
