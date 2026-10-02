@@ -23,11 +23,22 @@
     '#jdJampong[hidden]{display:none!important}',
     /* 3D stage for lifelike animation */
     '#jdJampong .jdj-stage{position:relative;width:72px;height:72px;transform-style:preserve-3d}',
-    /* 3D floating avatar like Muse app - real depth with rotateX/rotateY */
+    /* Pixel-perfect Muse app avatar: calm, gentle floating - slow and premium */
     '#jdJampong .jdj-stage img{width:72px;height:72px;border-radius:50%;object-fit:cover;',
     'background:#fff;transform-style:preserve-3d;will-change:transform;display:block;',
-    'box-shadow:0 8px 24px rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.25),inset 0 2px 4px rgba(255,255,255,.3);',
-    'animation:jdJamp3D 5s ease-in-out infinite}',
+    'box-shadow:0 6px 20px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.2);',
+    'animation:jdJampFloat 6s ease-in-out infinite}',
+    /* Gentle float like Muse avatar: slow bob + subtle breathe, minimal rotation */
+    '@keyframes jdJampFloat{',
+    '0%,100%{transform:translateY(0) scale(1);',
+    'box-shadow:0 6px 20px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.2)}',
+    '25%{transform:translateY(-4px) scale(1.015);',
+    'box-shadow:0 10px 24px rgba(0,0,0,.32),0 3px 8px rgba(0,0,0,.22)}',
+    '50%{transform:translateY(-6px) scale(1.02);',
+    'box-shadow:0 12px 28px rgba(0,0,0,.35),0 4px 10px rgba(0,0,0,.25)}',
+    '75%{transform:translateY(-3px) scale(1.01);',
+    'box-shadow:0 8px 22px rgba(0,0,0,.31),0 2px 7px rgba(0,0,0,.21)}',
+    '}',
     /* Blink overlays - closed eyelids that appear briefly (like a real blink) */
     '#jdJampong .jdj-blink{position:absolute;top:38%;width:14px;height:8px;opacity:0;pointer-events:none;z-index:2;}',
     '#jdJampong .jdj-blink-l{left:24%}',
@@ -44,39 +55,18 @@
     '95%{opacity:1;transform:scaleY(1)}',
     '97%,100%{opacity:0;transform:scaleY(0.3)}',
     '}',
-    /* Breathing + look-around: subtle lifelike micro-movement on the stage */
-    '#jdJampong .jdj-stage{animation:jdBreathe 4s ease-in-out infinite}',
-    '@keyframes jdBreathe{',
-    '0%,100%{transform:translateX(0) scale(1)}',
-    '25%{transform:translateX(1.5px) scale(1.015)}',
-    '50%{transform:translateX(0) scale(1.03)}',
-    '75%{transform:translateX(-1.5px) scale(1.015)}',
-    '}',
-    /* 3D animation: float + tilt in 3D space + subtle depth shift (like Muse app) */
-    '@keyframes jdJamp3D{',
-    '0%,100%{transform:translateY(0) translateZ(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);',
-    'box-shadow:0 8px 24px rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.25),inset 0 2px 4px rgba(255,255,255,.3)}',
-    '20%{transform:translateY(-8px) translateZ(12px) rotateX(8deg) rotateY(-10deg) rotateZ(-2deg);',
-    'box-shadow:-6px 14px 28px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,255,255,.4)}',
-    '40%{transform:translateY(-12px) translateZ(20px) rotateX(-5deg) rotateY(12deg) rotateZ(2deg);',
-    'box-shadow:6px 16px 32px rgba(0,0,0,.45),0 6px 16px rgba(0,0,0,.35),inset 0 3px 8px rgba(255,255,255,.5)}',
-    '60%{transform:translateY(-8px) translateZ(12px) rotateX(10deg) rotateY(8deg) rotateZ(-3deg);',
-    'box-shadow:4px 14px 28px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,255,255,.4)}',
-    '80%{transform:translateY(-4px) translateZ(6px) rotateX(-8deg) rotateY(-12deg) rotateZ(2deg);',
-    'box-shadow:-4px 10px 24px rgba(0,0,0,.38),0 3px 10px rgba(0,0,0,.28),inset 0 2px 5px rgba(255,255,255,.35)}',
-    '}',
-    '@media (prefers-reduced-motion: reduce){#jdJampong .jdj-stage img,#jdJampong .jdj-blink{animation:none}}',
+    /* Label follows gently with the float */
     '#jdJampong .jdj-label{margin-top:-6px;background:rgba(0,0,0,.7);color:#fff;',
     'font-size:.78rem;font-weight:500;padding:4px 14px;border-radius:12px;backdrop-filter:blur(8px);',
-    'transform-style:preserve-3d;animation:jdJampLabel3D 5s ease-in-out infinite}',
-    /* Label follows the 3D motion with slight delay for depth */
-    '@keyframes jdJampLabel3D{',
-    '0%,100%{transform:translateY(0) translateZ(-10px) rotateX(0deg)}',
-    '20%{transform:translateY(-6px) translateZ(-6px) rotateX(5deg)}',
-    '40%{transform:translateY(-10px) translateZ(0px) rotateX(-3deg)}',
-    '60%{transform:translateY(-6px) translateZ(-6px) rotateX(6deg)}',
-    '80%{transform:translateY(-3px) translateZ(-12px) rotateX(-5deg)}',
+    'animation:jdJampLabelFloat 6s ease-in-out infinite}',
+    /* Label gently follows the float (same timing as avatar) */
+    '@keyframes jdJampLabelFloat{',
+    '0%,100%{transform:translateY(0)}',
+    '25%{transform:translateY(-3px)}',
+    '50%{transform:translateY(-5px)}',
+    '75%{transform:translateY(-2px)}',
     '}',
+    '@media (prefers-reduced-motion: reduce){#jdJampong .jdj-stage img,#jdJampong .jdj-blink,#jdJampong .jdj-label{animation:none}}',
     'body.theme-light #jdJampong .jdj-label{background:rgba(255,255,255,.85);color:#111;box-shadow:0 2px 8px rgba(0,0,0,.1)}'
   ].join('\n');
 
