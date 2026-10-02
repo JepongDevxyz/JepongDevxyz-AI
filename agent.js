@@ -161,10 +161,57 @@ window.JDCodingAgent=Object.freeze({open,close});
    (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
   if(document.querySelector('script[src^="/credits.js"]'))return;
+  /* INITIAL SKELETON LOADER: Show FIRST before anything else (2026-10-02)
+     Full-screen skeleton that appears immediately on page load, hides when app is ready */
+  (function(){
+    if(document.getElementById('jdInitSkeleton'))return;
+    var st=document.createElement('style');
+    st.id='jdInitSkeletonCss';
+    st.textContent=[
+      '#jdInitSkeleton{position:fixed;inset:0;z-index:99999;background:#0b0f19;',
+      'display:flex;flex-direction:column;padding:16px;transition:opacity .4s}',
+      '#jdInitSkeleton.hide{opacity:0;pointer-events:none}',
+      'body.theme-light #jdInitSkeleton{background:#ffffff}',
+      '.jdisk-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}',
+      '.jdisk-tabs{display:flex;gap:16px;justify-content:center;margin-bottom:32px}',
+      '.jdisk-bar{height:16px;border-radius:8px;margin-bottom:14px;}',
+      '.jdisk-bar.short{width:40%}.jdisk-bar.med{width:70%}.jdisk-bar.long{width:92%}',
+      '.jdisk-input{margin-top:auto;height:56px;border-radius:16px}',
+      '@keyframes jdIskShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}',
+      '.jdisk{background:linear-gradient(90deg,rgba(128,128,128,.12) 25%,rgba(128,128,128,.25) 37%,rgba(128,128,128,.12) 63%);',
+      'background-size:800px 100%;animation:jdIskShimmer 1.3s ease-in-out infinite}',
+      'body.theme-light .jdisk{background:linear-gradient(90deg,rgba(0,0,0,.06) 25%,rgba(0,0,0,.14) 37%,rgba(0,0,0,.06) 63%);background-size:800px 100%}'
+    ].join('\n');
+    document.head.appendChild(st);
+    var sk=document.createElement('div');
+    sk.id='jdInitSkeleton';
+    sk.innerHTML=
+      '<div class="jdisk-top"><div class="jdisk" style="width:40px;height:40px;border-radius:50%"></div>'+
+      '<div class="jdisk" style="width:120px;height:20px;border-radius:10px"></div></div>'+
+      '<div class="jdisk-tabs"><div class="jdisk" style="width:60px;height:24px;border-radius:12px"></div>'+
+      '<div class="jdisk" style="width:60px;height:24px;border-radius:12px"></div>'+
+      '<div class="jdisk" style="width:60px;height:24px;border-radius:12px"></div></div>'+
+      '<div class="jdisk jdisk-bar long"></div><div class="jdisk jdisk-bar med"></div>'+
+      '<div class="jdisk jdisk-bar long"></div><div class="jdisk jdisk-bar short"></div>'+
+      '<div class="jdisk jdisk-bar med"></div><div class="jdisk jdisk-bar long"></div>'+
+      '<div class="jdisk jdisk-input"></div>';
+    document.body.appendChild(sk);
+    // Hide when app is ready: after patches load + short delay, or max 5s
+    var hidden=false;
+    function hide(){ if(hidden)return; hidden=true; sk.classList.add('hide'); setTimeout(function(){ sk.remove(); },500); }
+    window.__jdHideInitSkeleton=hide;
+    // Auto-hide when main content appears
+    var obs=new MutationObserver(function(){
+      var content=document.querySelector('.welcome-screen, #chatContainer, .chat-container, main');
+      if(content && content.children.length>2) { obs.disconnect(); setTimeout(hide,800); }
+    });
+    obs.observe(document.body,{childList:true,subtree:true});
+    setTimeout(hide,5000); // Max 5s fallback
+  })();
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001d2';
+  var V='?v=20261001d3';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -198,7 +245,13 @@ window.JDCodingAgent=Object.freeze({open,close});
     loadedVer = ver;
     loadPatches(ver);
   }
-  function go(ver){ loadPatchesVer(ver); }
+  function go(ver){
+    loadPatchesVer(ver);
+    // Hide initial skeleton after patches start loading (app is coming up)
+    setTimeout(function(){
+      if(window.__jdHideInitSkeleton) window.__jdHideInitSkeleton();
+    },1500);
+  }
   try{
     var fetchDone = false;
     fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
@@ -206,7 +259,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001d2)
+        // Allow letters+numbers in version (e.g. 20261001d3)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
