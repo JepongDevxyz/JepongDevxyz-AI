@@ -96,8 +96,14 @@
   }
 
   function buildAvatar() {
-    if (document.getElementById('jdJampong')) return;
     ensureCSS();
+    var existing = document.getElementById('jdJampong');
+    if (existing) {
+      // Upgrade existing avatar to lifelike version (add stage + blink overlays)
+      upgradeAvatar(existing);
+      sync();
+      return;
+    }
     var el = document.createElement('div');
     el.id = 'jdJampong';
     // Wrap img in a 3D stage with blink overlays (closed eyelids) for lifelike animation
@@ -114,6 +120,30 @@
     });
     document.body.appendChild(el);
     sync();
+  }
+
+  function upgradeAvatar(el) {
+    // If already has the stage, nothing to do
+    if (el.querySelector('.jdj-stage')) return;
+    var img = el.querySelector('img');
+    var label = el.querySelector('.jdj-label');
+    if (!img) return;
+    // Wrap img in stage with blink overlays
+    var stage = document.createElement('div');
+    stage.className = 'jdj-stage';
+    img.parentNode.insertBefore(stage, img);
+    stage.appendChild(img);
+    var blinkL = document.createElement('div');
+    blinkL.className = 'jdj-blink jdj-blink-l';
+    var blinkR = document.createElement('div');
+    blinkR.className = 'jdj-blink jdj-blink-r';
+    stage.appendChild(blinkL);
+    stage.appendChild(blinkR);
+    // Re-attach click handler (img was moved)
+    img.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (window.jdJampongOpenShare) window.jdJampongOpenShare();
+    });
   }
 
   function sync() {
