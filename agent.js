@@ -186,21 +186,39 @@ window.JDCodingAgent=Object.freeze({open,close});
       '.jdisk-input{margin-top:auto;height:56px;border-radius:16px}',
       '@keyframes jdIskShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}',
       '.jdisk{background:linear-gradient(90deg,'+(isLight?'rgba(0,0,0,.06) 25%,rgba(0,0,0,.14) 37%,rgba(0,0,0,.06) 63%':'rgba(128,128,128,.12) 25%,rgba(128,128,128,.25) 37%,rgba(128,128,128,.12) 63%')+');',
-      'background-size:800px 100%;animation:jdIskShimmer 1.3s ease-in-out infinite}'
+      'background-size:800px 100%;animation:jdIskShimmer 1.3s ease-in-out infinite}',
+      /* Homepage layout: header / welcome / input bar (2026-10-02) */
+      '.jdisk-hp-head{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;margin-bottom:8px}',
+      '.jdisk-hp-tabs{display:flex;gap:10px;justify-content:center}',
+      '.jdisk-hp-welcome{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0}',
+      '.jdisk-hp-input{display:flex;align-items:center;background:'+(isLight?'rgba(0,0,0,.04)':'rgba(255,255,255,.06)')+';border-radius:24px;padding:10px 12px;margin-top:auto}'
     ].join('\n');
     document.head.appendChild(st);
     var sk=document.createElement('div');
     sk.id='jdInitSkeleton';
+    /* Homepage-layout skeleton: mirrors actual UI (header/tabs/welcome/input bar) */
     sk.innerHTML=
-      '<div class="jdisk-top"><div class="jdisk" style="width:40px;height:40px;border-radius:50%"></div>'+
-      '<div class="jdisk" style="width:120px;height:20px;border-radius:10px"></div></div>'+
-      '<div class="jdisk-tabs"><div class="jdisk" style="width:60px;height:24px;border-radius:12px"></div>'+
-      '<div class="jdisk" style="width:60px;height:24px;border-radius:12px"></div>'+
-      '<div class="jdisk" style="width:60px;height:24px;border-radius:12px"></div></div>'+
-      '<div class="jdisk jdisk-bar long"></div><div class="jdisk jdisk-bar med"></div>'+
-      '<div class="jdisk jdisk-bar long"></div><div class="jdisk jdisk-bar short"></div>'+
-      '<div class="jdisk jdisk-bar med"></div><div class="jdisk jdisk-bar long"></div>'+
-      '<div class="jdisk jdisk-input"></div>';
+      '<div class="jdisk-hp-head">'+
+        '<div class="jdisk" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div>'+
+        '<div class="jdisk-hp-tabs">'+
+          '<div class="jdisk" style="width:52px;height:28px;border-radius:14px"></div>'+
+          '<div class="jdisk" style="width:68px;height:28px;border-radius:14px"></div>'+
+          '<div class="jdisk" style="width:48px;height:28px;border-radius:14px"></div>'+
+        '</div>'+
+        '<div class="jdisk" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div>'+
+      '</div>'+
+      '<div class="jdisk-hp-welcome">'+
+        '<div class="jdisk" style="width:180px;height:32px;border-radius:16px;margin:0 auto 12px"></div>'+
+        '<div class="jdisk" style="width:240px;height:28px;border-radius:14px;margin:0 auto 12px"></div>'+
+        '<div class="jdisk" style="width:120px;height:28px;border-radius:14px;margin:0 auto"></div>'+
+      '</div>'+
+      '<div class="jdisk-hp-input">'+
+        '<div class="jdisk" style="width:40px;height:40px;border-radius:50%;flex-shrink:0"></div>'+
+        '<div class="jdisk" style="flex:1;height:22px;border-radius:11px;margin:0 10px"></div>'+
+        '<div class="jdisk" style="width:52px;height:28px;border-radius:14px;flex-shrink:0"></div>'+
+        '<div class="jdisk" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin-left:8px"></div>'+
+        '<div class="jdisk" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin-left:8px"></div>'+
+      '</div>';
     document.body.appendChild(sk);
     // Hide old UI while skeleton is active
     document.body.classList.add('jd-sk-active');
@@ -221,7 +239,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001e3';
+  var V='?v=20261001e4';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -266,7 +284,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001e3)
+        // Allow letters+numbers in version (e.g. 20261001e4)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
