@@ -165,9 +165,20 @@ window.JDCodingAgent=Object.freeze({open,close});
      Full-screen skeleton that appears immediately on page load, hides when app is ready */
   (function(){
     if(document.getElementById('jdInitSkeleton'))return;
-    /* Detect active theme from localStorage BEFORE showing skeleton (2026-10-02) */
+    /* Detect active theme from multiple sources BEFORE showing skeleton (2026-10-02) */
     var isLight=false;
-    try{ isLight=(localStorage.getItem('jepong_theme')==='theme-light'); }catch(e){}
+    try{
+      // Check localStorage first
+      if(localStorage.getItem('jepong_theme')==='theme-light') isLight=true;
+      // Check data-theme attribute (site uses data-theme="dark"/"light")
+      else{
+        var dt=document.documentElement.getAttribute('data-theme');
+        if(dt==='light') isLight=true;
+        else if(dt==='dark') isLight=false;
+        // Check theme-light class
+        else if(document.body.classList.contains('theme-light')||document.documentElement.classList.contains('theme-light')) isLight=true;
+      }
+    }catch(e){}
     /* Apply theme class IMMEDIATELY (2026-10-02): sync all theme-dependent styles from the start
        Prevents light-in-dark or dark-in-light flashes */
     try{
@@ -186,6 +197,13 @@ window.JDCodingAgent=Object.freeze({open,close});
       /* Aggressive: hide all descendants, not just direct children */
       'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){display:none!important}',
       'body.jd-sk-active #jdInitSkeleton{display:flex!important}',
+      /* Dynamic theme: skeleton follows data-theme attribute (2026-10-02) */
+      'html[data-theme="light"] #jdInitSkeleton{background:#ffffff!important}',
+      'html[data-theme="dark"] #jdInitSkeleton{background:#0a0a0c!important}',
+      'html[data-theme="light"]{background:#ffffff!important}html[data-theme="dark"]{background:#0a0a0c!important}',
+      /* Send button theme sync: simple data-theme based (2026-10-02) */
+      'html[data-theme="dark"] #mainActionBtn{background:#2b2b30!important;color:#e8e8e8!important}',
+      'html[data-theme="light"] #mainActionBtn{background:#ececf0!important;color:#55555d!important}',
       'body.theme-light #jdInitSkeleton{background:#ffffff}',
       '.jdisk-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}',
       '.jdisk-tabs{display:flex;gap:16px;justify-content:center;margin-bottom:32px}',
@@ -301,7 +319,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001g1';
+  var V='?v=20261001g2';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -346,7 +364,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001g1)
+        // Allow letters+numbers in version (e.g. 20261001g2)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
