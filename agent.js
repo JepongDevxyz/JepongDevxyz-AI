@@ -204,6 +204,9 @@ window.JDCodingAgent=Object.freeze({open,close});
       /* Send button theme sync: simple data-theme based (2026-10-02) */
       'html[data-theme="dark"] #mainActionBtn{background:#2b2b30!important;color:#e8e8e8!important}',
       'html[data-theme="light"] #mainActionBtn{background:#ececf0!important;color:#55555d!important}',
+      /* Armed state (when text is typed): keep theme colors */
+      'html[data-theme="dark"] #mainActionBtn[data-armed]{background:#2b2b30!important;color:#e8e8e8!important}',
+      'html[data-theme="light"] #mainActionBtn[data-armed]{background:#ececf0!important;color:#55555d!important}',
       'body.theme-light #jdInitSkeleton{background:#ffffff}',
       '.jdisk-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}',
       '.jdisk-tabs{display:flex;gap:16px;justify-content:center;margin-bottom:32px}',
@@ -319,7 +322,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001g2';
+  var V='?v=20261001g3';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -364,7 +367,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001g2)
+        // Allow letters+numbers in version (e.g. 20261001g3)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
