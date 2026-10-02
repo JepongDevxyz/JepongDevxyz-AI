@@ -15,6 +15,9 @@
   /* Views are elements that act as screens: modals, overlays, sheets. */
   var VIEW_SELECTORS = [
     '#settingsModal',
+    /* Settings subpages are below their modal pickers in the view stack. */
+    '#jdModeSettingsPage',
+    '#jdModelsSettingsPage',
     '#personalizationModalOverlay',
     '#accountModal',
     '#providerKeysModal',
@@ -95,14 +98,19 @@
     // Re-check after a tick (some views animate)
     setTimeout(function () {
       suppressObserver = false;
-      if (!isVisible(el)) onViewClosed(el);
-      else {
+      if (!isVisible(el)) {
+        // A closed child may synchronously reopen its parent from the
+        // jd-back-close event. Discover that parent before removing the child
+        // so the history stack never becomes empty and falls through to home.
+        scanViews();
+        onViewClosed(el);
+      } else {
         // Still visible — force hide as last resort
         try { el.style.display = 'none'; } catch (e2) {}
+        scanViews();
         onViewClosed(el);
         setTimeout(function () { try { el.style.display = ''; } catch (e3) {} }, 50);
       }
-      scanViews();
     }, 60);
     return true;
   }
