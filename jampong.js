@@ -25,10 +25,10 @@
     '#jdJampong .jdj-stage{position:relative;width:72px;height:72px;transform-style:preserve-3d}',
     /* Pixel-perfect Muse app avatar: calm, gentle floating - slow and premium */
     '#jdJampong .jdj-stage img{width:72px;height:72px;border-radius:50%;object-fit:cover;',
-    'background:#fff;transform-style:preserve-3d;will-change:transform;display:block;',
+    'background:#fff;will-change:transform;display:block;',
     'box-shadow:0 6px 20px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.2);',
     'animation:jdJampFloat 6s ease-in-out infinite}',
-    /* Gentle float like Muse avatar: slow bob + subtle breathe, minimal rotation */
+    /* Gentle float like Muse avatar: slow bob + subtle breathe */
     '@keyframes jdJampFloat{',
     '0%,100%{transform:translateY(0) scale(1);',
     'box-shadow:0 6px 20px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.2)}',
@@ -39,21 +39,14 @@
     '75%{transform:translateY(-3px) scale(1.01);',
     'box-shadow:0 8px 22px rgba(0,0,0,.31),0 2px 7px rgba(0,0,0,.21)}',
     '}',
-    /* Blink overlays - closed eyelids that appear briefly (like a real blink) */
-    '#jdJampong .jdj-blink{position:absolute;top:38%;width:14px;height:8px;opacity:0;pointer-events:none;z-index:2;}',
-    '#jdJampong .jdj-blink-l{left:24%}',
-    '#jdJampong .jdj-blink-r{right:24%}',
-    /* Closed eye = curved line (like ∪) in dark brown */
-    '#jdJampong .jdj-blink::after{content:"";position:absolute;inset:0;',
-    'border-bottom:2.5px solid #4a3728;border-radius:0 0 12px 12px;}',
-    /* Lifelike blink: every 5s, eyes close for 0.15s (with occasional double-blink) */
-    '#jdJampong .jdj-blink-l{animation:jdBlink 5s ease-in-out infinite}',
-    '#jdJampong .jdj-blink-r{animation:jdBlink 5s ease-in-out infinite}',
-    '@keyframes jdBlink{',
-    '0%,91%{opacity:0;transform:scaleY(0.3)}',
-    '93%{opacity:1;transform:scaleY(1)}',
-    '95%{opacity:1;transform:scaleY(1)}',
-    '97%,100%{opacity:0;transform:scaleY(0.3)}',
+    /* Real blink on the STAGE (separate from float): the CHARACTER squashes at eye level */
+    /* Like cartoon animation - the actual eyes in the picture close, not fake lines! */
+    '#jdJampong .jdj-stage{transform-origin:50% 38%;animation:jdJampBlink 5s ease-in-out infinite}',
+    '@keyframes jdJampBlink{',
+    '0%,92%{transform:scaleY(1)}',
+    '93.5%{transform:scaleY(0.85)}',
+    '95%{transform:scaleY(0.85)}',
+    '96.5%,100%{transform:scaleY(1)}',
     '}',
     /* Label follows gently with the float */
     '#jdJampong .jdj-label{margin-top:-6px;background:rgba(0,0,0,.7);color:#fff;',
@@ -66,7 +59,7 @@
     '50%{transform:translateY(-5px)}',
     '75%{transform:translateY(-2px)}',
     '}',
-    '@media (prefers-reduced-motion: reduce){#jdJampong .jdj-stage img,#jdJampong .jdj-blink,#jdJampong .jdj-label{animation:none}}',
+    '@media (prefers-reduced-motion: reduce){#jdJampong .jdj-stage,#jdJampong .jdj-stage img,#jdJampong .jdj-label{animation:none}}',
     'body.theme-light #jdJampong .jdj-label{background:rgba(255,255,255,.85);color:#111;box-shadow:0 2px 8px rgba(0,0,0,.1)}'
   ].join('\n');
 
@@ -99,8 +92,6 @@
     // Wrap img in a 3D stage with blink overlays (closed eyelids) for lifelike animation
     el.innerHTML = '<div class="jdj-stage">' +
       '<img src="' + IMG + '" alt="Jampong" style="pointer-events:auto;cursor:pointer" />' +
-      '<div class="jdj-blink jdj-blink-l"></div>' +
-      '<div class="jdj-blink jdj-blink-r"></div>' +
       '</div>' +
       '<div class="jdj-label">Jampong</div>';
     // Tap Jampong → open Share-my-avatar screen (like Muse app)
@@ -123,12 +114,8 @@
     stage.className = 'jdj-stage';
     img.parentNode.insertBefore(stage, img);
     stage.appendChild(img);
-    var blinkL = document.createElement('div');
-    blinkL.className = 'jdj-blink jdj-blink-l';
-    var blinkR = document.createElement('div');
-    blinkR.className = 'jdj-blink jdj-blink-r';
-    stage.appendChild(blinkL);
-    stage.appendChild(blinkR);
+    // Remove old fake blink overlays if they exist
+    el.querySelectorAll('.jdj-blink').forEach(function(b){ b.remove(); });
     // Re-attach click handler (img was moved)
     img.addEventListener('click', function (e) {
       e.stopPropagation();
