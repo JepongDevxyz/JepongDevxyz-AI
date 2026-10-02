@@ -21,11 +21,37 @@
     'display:flex;flex-direction:column;align-items:center;pointer-events:none;transition:opacity .3s;',
     'perspective:400px}',
     '#jdJampong[hidden]{display:none!important}',
+    /* 3D stage for lifelike animation */
+    '#jdJampong .jdj-stage{position:relative;width:72px;height:72px;transform-style:preserve-3d}',
     /* 3D floating avatar like Muse app - real depth with rotateX/rotateY */
-    '#jdJampong img{width:72px;height:72px;border-radius:50%;object-fit:cover;',
-    'background:#fff;transform-style:preserve-3d;will-change:transform;',
+    '#jdJampong .jdj-stage img{width:72px;height:72px;border-radius:50%;object-fit:cover;',
+    'background:#fff;transform-style:preserve-3d;will-change:transform;display:block;',
     'box-shadow:0 8px 24px rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.25),inset 0 2px 4px rgba(255,255,255,.3);',
     'animation:jdJamp3D 5s ease-in-out infinite}',
+    /* Blink overlays - closed eyelids that appear briefly (like a real blink) */
+    '#jdJampong .jdj-blink{position:absolute;top:38%;width:14px;height:8px;opacity:0;pointer-events:none;z-index:2;}',
+    '#jdJampong .jdj-blink-l{left:24%}',
+    '#jdJampong .jdj-blink-r{right:24%}',
+    /* Closed eye = curved line (like ∪) in dark brown */
+    '#jdJampong .jdj-blink::after{content:"";position:absolute;inset:0;',
+    'border-bottom:2.5px solid #4a3728;border-radius:0 0 12px 12px;}',
+    /* Lifelike blink: every 5s, eyes close for 0.15s (with occasional double-blink) */
+    '#jdJampong .jdj-blink-l{animation:jdBlink 5s ease-in-out infinite}',
+    '#jdJampong .jdj-blink-r{animation:jdBlink 5s ease-in-out infinite}',
+    '@keyframes jdBlink{',
+    '0%,91%{opacity:0;transform:scaleY(0.3)}',
+    '93%{opacity:1;transform:scaleY(1)}',
+    '95%{opacity:1;transform:scaleY(1)}',
+    '97%,100%{opacity:0;transform:scaleY(0.3)}',
+    '}',
+    /* Breathing + look-around: subtle lifelike micro-movement on the stage */
+    '#jdJampong .jdj-stage{animation:jdBreathe 4s ease-in-out infinite}',
+    '@keyframes jdBreathe{',
+    '0%,100%{transform:translateX(0) scale(1)}',
+    '25%{transform:translateX(1.5px) scale(1.015)}',
+    '50%{transform:translateX(0) scale(1.03)}',
+    '75%{transform:translateX(-1.5px) scale(1.015)}',
+    '}',
     /* 3D animation: float + tilt in 3D space + subtle depth shift (like Muse app) */
     '@keyframes jdJamp3D{',
     '0%,100%{transform:translateY(0) translateZ(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);',
@@ -39,7 +65,7 @@
     '80%{transform:translateY(-4px) translateZ(6px) rotateX(-8deg) rotateY(-12deg) rotateZ(2deg);',
     'box-shadow:-4px 10px 24px rgba(0,0,0,.38),0 3px 10px rgba(0,0,0,.28),inset 0 2px 5px rgba(255,255,255,.35)}',
     '}',
-    '@media (prefers-reduced-motion: reduce){#jdJampong img{animation:none}}',
+    '@media (prefers-reduced-motion: reduce){#jdJampong .jdj-stage img,#jdJampong .jdj-blink{animation:none}}',
     '#jdJampong .jdj-label{margin-top:-6px;background:rgba(0,0,0,.7);color:#fff;',
     'font-size:.78rem;font-weight:500;padding:4px 14px;border-radius:12px;backdrop-filter:blur(8px);',
     'transform-style:preserve-3d;animation:jdJampLabel3D 5s ease-in-out infinite}',
@@ -74,7 +100,12 @@
     ensureCSS();
     var el = document.createElement('div');
     el.id = 'jdJampong';
-    el.innerHTML = '<img src="' + IMG + '" alt="Jampong" style="pointer-events:auto;cursor:pointer" />' +
+    // Wrap img in a 3D stage with blink overlays (closed eyelids) for lifelike animation
+    el.innerHTML = '<div class="jdj-stage">' +
+      '<img src="' + IMG + '" alt="Jampong" style="pointer-events:auto;cursor:pointer" />' +
+      '<div class="jdj-blink jdj-blink-l"></div>' +
+      '<div class="jdj-blink jdj-blink-r"></div>' +
+      '</div>' +
       '<div class="jdj-label">Jampong</div>';
     // Tap Jampong → open Share-my-avatar screen (like Muse app)
     el.querySelector('img').addEventListener('click', function (e) {

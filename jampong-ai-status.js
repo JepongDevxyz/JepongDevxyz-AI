@@ -170,7 +170,7 @@
     var st = document.createElement('style');
     st.id = 'jdJampongStatusCss';
     st.textContent = [
-      '#jdJampong.jdj-working img{',
+      '#jdJampong.jdj-working .jdj-stage img{',
       'box-shadow:0 0 0 3px #f59e0b,0 0 24px rgba(245,158,11,.7),0 8px 24px rgba(0,0,0,.4)!important;',
       'animation:jdJampWork3D 1.2s ease-in-out infinite!important}',
       '@keyframes jdJampWork3D{',
