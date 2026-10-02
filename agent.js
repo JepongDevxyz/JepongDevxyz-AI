@@ -164,15 +164,58 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001b9';
+  var V='?v=20261001c0';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/jampong.js','/profile-pill.js','/jampong-share.js','/jampong-profile.js','/jampong-activity.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
-      var sc=document.createElement('script');sc.src=src+ver;sc.defer=true;document.head.appendChild(sc);
+      var sc=document.createElement('script');
+      sc.src=src+ver;
+      sc.defer=true;
+      // Retry on failure - ensures patches load on first try
+      sc.onerror=function(){
+        setTimeout(function(){
+          if(!document.querySelector('script[src="'+src+ver+'"]')){
+            var retry=document.createElement('script');
+            retry.src=src+ver+'&retry=1';
+            retry.defer=true;
+            document.head.appendChild(retry);
+          }
+        },1000);
+      };
+      document.head.appendChild(sc);
     });
   }
   var done=false;
   function go(ver){ if(!done){ done=true; loadPatches(ver); } }
+  // EARLY TAP QUEUE: Capture Jampong avatar taps before patches load
+  // This ensures ONE refresh is enough - taps are queued until profile is ready
+  var pendingJampongTap = false;
+  document.addEventListener('click', function (e) {
+    if (window.jdOpenJampongProfile) return; // Already loaded, patch handles it
+    var avatar = e.target.closest('img');
+    if (avatar) {
+      var src = avatar.src || '';
+      var alt = avatar.alt || '';
+      if (src.indexOf('jampong') >= 0 || alt.toLowerCase().indexOf('jampong') >= 0) {
+        pendingJampongTap = true;
+        // Wait for profile to load, then open it
+        var tries = 0;
+        var waiter = setInterval(function () {
+          tries++;
+          if (window.jdOpenJampongProfile) {
+            clearInterval(waiter);
+            if (pendingJampongTap) {
+              pendingJampongTap = false;
+              window.jdOpenJampongProfile();
+            }
+          } else if (tries > 50) { // 5 seconds timeout
+            clearInterval(waiter);
+            pendingJampongTap = false;
+          }
+        }, 100);
+      }
+    }
+  }, true);
   try{
     fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
       .then(function(r){ return r.ok?r.text():''; })

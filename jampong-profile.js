@@ -861,4 +861,46 @@
   window.jdCloseJampongProfile = close;
   window.jdJampongOpenShare = open;
   window.jdOpenJampongFile = openFileViewer;
+
+  // ROBUST TRIGGER: Open profile when tapping Jampong avatar
+  // Uses event delegation + polling so it works on FIRST load, no refresh needed
+  function attachJampongTrigger() {
+    // Event delegation on document - catches taps even if avatar loads later
+    document.addEventListener('click', function (e) {
+      // Don't trigger if profile is already open
+      var profile = document.getElementById('jdJampongProfile');
+      if (profile && profile.classList.contains('open')) return;
+      // Don't trigger if clicking inside the profile
+      if (e.target.closest('#jdJampongProfile')) return;
+      // Check if tapped element is the Jampong avatar
+      // The avatar is typically an img in the header/welcome area
+      var avatar = e.target.closest('img');
+      if (avatar) {
+        var src = avatar.src || '';
+        var alt = avatar.alt || '';
+        // Match Jampong avatar by common patterns
+        if (src.indexOf('jampong') >= 0 || src.indexOf('jampong') >= 0 ||
+            alt.toLowerCase().indexOf('jampong') >= 0 ||
+            avatar.closest('[data-jampong-avatar]')) {
+          e.preventDefault();
+          e.stopPropagation();
+          open();
+          return;
+        }
+      }
+      // Also check for elements with jampong avatar data attribute
+      var jampongEl = e.target.closest('[data-jampong-avatar]');
+      if (jampongEl) {
+        e.preventDefault();
+        e.stopPropagation();
+        open();
+      }
+    }, true); // Use capture phase to catch it early
+  }
+
+  // Attach immediately and also after DOM is ready
+  attachJampongTrigger();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachJampongTrigger);
+  }
 })();
