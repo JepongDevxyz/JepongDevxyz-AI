@@ -92,7 +92,9 @@
                   { status: 'Allowed' }
                 );
               }
-              updateProfileStatus('online');
+              // Show "✅ Done" briefly on avatar, then back to normal (like Muse app)
+              updateProfileStatus('✅ Done');
+              setTimeout(function () { updateProfileStatus('online'); }, 2000);
               activeRequest = null;
               return;
             }
@@ -136,7 +138,52 @@
   function updateProfileStatus(text) {
     var el = document.getElementById('jdJampongStatus');
     if (el) el.textContent = text;
+    // ALSO update the floating Jampong avatar label (like Muse app status)
+    updateAvatarStatus(text);
   }
+
+  // Real-time avatar status - like Muse app's live status indicator
+  function updateAvatarStatus(text) {
+    var avatar = document.getElementById('jdJampong');
+    if (!avatar) return;
+    // Only show when Jampong is ON
+    if (avatar.hasAttribute('hidden')) return;
+    var label = avatar.querySelector('.jdj-label');
+    if (!label) return;
+
+    if (text === 'online' || text === 'Jampong') {
+      // Back to normal
+      label.textContent = 'Jampong';
+      label.classList.remove('jdj-working');
+      avatar.classList.remove('jdj-working');
+    } else {
+      // Show real-time activity (like Muse app)
+      label.textContent = text;
+      label.classList.add('jdj-working');
+      avatar.classList.add('jdj-working');
+    }
+  }
+
+  // Add working-state CSS for the avatar (pulsing glow like Muse app)
+  function ensureAvatarStatusCSS() {
+    if (document.getElementById('jdJampongStatusCss')) return;
+    var st = document.createElement('style');
+    st.id = 'jdJampongStatusCss';
+    st.textContent = [
+      '#jdJampong.jdj-working img{',
+      'box-shadow:0 0 0 3px #f59e0b,0 0 20px rgba(245,158,11,.6)!important;',
+      'animation:jdJampWork 1s ease-in-out infinite!important}',
+      '@keyframes jdJampWork{',
+      '0%,100%{transform:scale(1)}',
+      '50%{transform:scale(1.08)}}',
+      '#jdJampong .jdj-label.jdj-working{',
+      'background:rgba(245,158,11,.9)!important;color:#000!important;',
+      'font-weight:700!important;max-width:200px;white-space:nowrap;',
+      'overflow:hidden;text-overflow:ellipsis}'
+    ].join('\n');
+    document.head.appendChild(st);
+  }
+  ensureAvatarStatusCSS();
 
   // Reset detected actions on new request
   var origLog = window.jdLogActivity;
