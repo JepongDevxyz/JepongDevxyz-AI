@@ -338,24 +338,7 @@
       '<div class="jdjp-activity jdjp-view jdjp-vactive" id="jdViewActivity">' + activityHtml + '</div>' +
       // VIEW: Approvals (shield)
       '<div class="jdjp-activity jdjp-view" id="jdViewApprovals">' +
-      '<div class="jdjp-today">Needs review</div>' +
-      '<div class="jdad-approve">' +
-      '<div class="jdad-approve-icon">' + ICON_GITHUB + '</div>' +
-      '<div class="jdad-approve-title">Allow Jampong to perform this action on your GitHub account?</div>' +
-      '<div class="jdad-approve-desc">Your assistant wants to update GitHub repository content so the SOUL/MEMORY viewer opens when you tap the fingerprint icon.</div>' +
-      '<div class="jdad-approve-details">' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Action:</span><span class="jdad-detail-val">Push files to GitHub</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Branch or ref:</span><span class="jdad-detail-val">main</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files · 1:</span><span class="jdad-detail-val">File path: agent.js</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files · 2:</span><span class="jdad-detail-val">File path: patch-version.txt</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Files · 3:</span><span class="jdad-detail-val">File path: jampong-profile.js</span></div>' +
-      '<div class="jdad-detail-row"><span class="jdad-detail-key">Repository owner:</span><span class="jdad-detail-val">JepongDevxyz</span></div>' +
-      '</div>' +
-      '<div class="jdad-approve-btns">' +
-      '<button class="jdad-allow" data-appr="allow">Allow</button>' +
-      '<button class="jdad-deny" data-appr="deny">Deny</button>' +
-      '</div></div>' +
-      '<div class="jdjp-today" style="margin-top:20px">Approvals history</div>' +
+      '<div class="jdjp-today">Approvals history</div>' +
       '<div id="jdApprovalsList">' +
       '<div class="jdjp-item"><div class="jdjp-item-icon">' + ICON_GITHUB + '</div>' +
       '<div class="jdjp-item-body"><div class="jdjp-item-title">Loading...</div>' +
@@ -868,17 +851,6 @@
       if (item.dataset.idx !== undefined && item.dataset.idx !== '') {
         openActivityDetail(item.dataset.idx);
       }
-    }
-    // Approval buttons
-    var appr = e.target.closest('[data-appr]');
-    if (appr) {
-      var action = appr.dataset.appr;
-      if (typeof window.jdToast === 'function') {
-        window.jdToast(action === 'allow' ? 'Allowed' : 'Denied');
-      }
-      // Hide the needs review section after action
-      var approveEl = appr.closest('.jdad-approve');
-      if (approveEl) approveEl.style.display = 'none';
     }
   });
 
