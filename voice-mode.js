@@ -270,25 +270,9 @@
         send.__jdVoiceSwapped = true;
         face.innerHTML = icon('audio-lines', 20);
         refreshIcons(face);
+        send.onclick = jdVoiceSlotClick;
         send.setAttribute('aria-label', t('entryAria'));
         send.title = t('entryTitle');
-      }
-      /* Always ensure voice handler is set (2026-10-02): fixes unclickable button */
-      if (send.onclick !== jdVoiceSlotClick) {
-        send.onclick = jdVoiceSlotClick;
-      }
-      /* Backup: addEventListener as fallback (2026-10-02) */
-      if (!send.__jdVoiceListener) {
-        send.__jdVoiceListener = true;
-        send.addEventListener('click', function(e){
-          var inp = $('userInput');
-          var hasText = !!(inp && inp.value.trim());
-          if (!hasText && send.__jdVoiceSwapped) {
-            e.preventDefault();
-            e.stopPropagation();
-            jdVoiceSlotClick(e);
-          }
-        }, true);
       }
     } else if (send.__jdVoiceSwapped) {
       send.__jdVoiceSwapped = false;
@@ -588,38 +572,6 @@
     injectCSS();
     buildUI();
     jdInitSendVoiceSwap();
-    jdFixSendButtonTheme();
-  }
-
-  /* Send button theme fix (2026-10-02): ensure it follows dark/light mode
-     Runs in patch (fresh via version query) as backup to agent.js fix */
-  function jdFixSendButtonTheme(){
-    try{
-      var getTheme=function(){
-        try{
-          if(document.body.classList.contains('theme-light')||document.documentElement.classList.contains('theme-light'))return true;
-          return localStorage.getItem('jepong_theme')==='theme-light';
-        }catch(e){return false;}
-      };
-      var apply=function(){
-        var isLight=getTheme();
-        var bg=isLight?'#ececf0':'#2b2b30';
-        var fg=isLight?'#55555d':'#e8e8e8';
-        var btn=document.getElementById('mainActionBtn');
-        if(btn){
-          btn.style.setProperty('background',bg,'important');
-          btn.style.setProperty('background-color',bg,'important');
-          btn.style.setProperty('color',fg,'important');
-          btn.style.setProperty('border-color',bg,'important');
-          btn.style.setProperty('box-shadow','none','important');
-          /* Ensure button is clickable (2026-10-02) */
-          btn.style.setProperty('pointer-events','auto','important');
-          btn.style.setProperty('cursor','pointer','important');
-        }
-      };
-      apply();
-      setInterval(apply,2000);
-    }catch(e){}
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

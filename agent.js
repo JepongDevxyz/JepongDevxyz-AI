@@ -174,62 +174,18 @@ window.JDCodingAgent=Object.freeze({open,close});
       if(isLight){document.documentElement.classList.add('theme-light');document.body.classList.add('theme-light');}
       else{document.documentElement.classList.remove('theme-light');document.body.classList.remove('theme-light');}
     }catch(e){}
-    /* Direct button theme fix (2026-10-02): ensure send button follows theme via JS
-       (bypasses CSS specificity issues) */
-    (function fixSendButtonTheme(){
-      try{
-        var getTheme=function(){
-          try{
-            // Dynamic check: read current theme from DOM and localStorage
-            if(document.body.classList.contains('theme-light')||document.documentElement.classList.contains('theme-light'))return true;
-            return localStorage.getItem('jepong_theme')==='theme-light';
-          }catch(e){return false;}
-        };
-        var apply=function(){
-          var isL=getTheme();
-          var bg=isL?'#ececf0':'#2b2b30';
-          var fg=isL?'#55555d':'#e8e8e8';
-          var btn=document.getElementById('mainActionBtn');
-          if(btn){
-            btn.style.setProperty('background',bg,'important');
-            btn.style.setProperty('background-color',bg,'important');
-            btn.style.setProperty('color',fg,'important');
-            btn.style.setProperty('border-color',bg,'important');
-            btn.style.setProperty('box-shadow','none','important');
-            var svg=btn.querySelector('svg');
-            if(svg){svg.style.setProperty('color',fg,'important');}
-          }
-        };
-        apply();
-        var obs=new MutationObserver(apply);
-        obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
-        setInterval(apply,2000);
-      }catch(e){}
-    })();
     var st=document.createElement('style');
     st.id='jdInitSkeletonCss';
     st.textContent=[
-      /* Dynamic theme: uses CSS classes, not baked-in values (2026-10-02)
-         This ensures the skeleton updates if the theme changes after creation */
-      'html{background:#0a0a0c}body{background:#0a0a0c}',
-      'html.theme-light{background:#ffffff}body.theme-light{background:#ffffff}',
-      'html.theme-light body{background:#ffffff}',
-      '#jdInitSkeleton{position:fixed;inset:0;z-index:2147483647;background:#0a0a0c;',
+      /* Prevent white flash: match active theme from the very start */
+      'html{background:'+(isLight?'#ffffff':'#0a0a0c')+'}body{background:'+(isLight?'#ffffff':'#0a0a0c')+'}',
+      '#jdInitSkeleton{position:fixed;inset:0;z-index:2147483647;background:'+(isLight?'#ffffff':'#0a0a0c')+';',
       'display:flex;flex-direction:column;padding:16px}',
-      'body.theme-light #jdInitSkeleton{background:#ffffff}',
-      'html.theme-light #jdInitSkeleton{background:#ffffff}',
       '#jdInitSkeleton.hide{display:none!important}',
       /* Hide ALL old UI while skeleton is active (prevents stale flashes) */
-      /* Use visibility (not display:none) so patches can still initialize buttons */
-      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){visibility:hidden!important}',
-      'body.jd-sk-active #jdInitSkeleton{visibility:visible!important}',
+      /* Aggressive: hide all descendants, not just direct children */
+      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){display:none!important}',
       'body.jd-sk-active #jdInitSkeleton{display:flex!important}',
-      /* Send button theme sync (2026-10-02): ensure it follows dark/light mode immediately */
-      /* Maximum specificity to override app styles */
-      'html body:not(.theme-light) #mainActionBtn.prompt-bar__send,html body:not(.theme-light) button#mainActionBtn,body:not(.theme-light) #mainActionBtn{background:#2b2b30!important;background-color:#2b2b30!important;color:#e8e8e8!important;border-color:#2b2b30!important;box-shadow:none!important}',
-      'html body:not(.theme-light) #mainActionBtn *,body:not(.theme-light) #mainActionBtn svg{color:#e8e8e8!important;fill:#e8e8e8!important}',
-      /* Light mode: light button */
-      'html body.theme-light #mainActionBtn.prompt-bar__send,html body.theme-light button#mainActionBtn,body.theme-light #mainActionBtn{background:#ececf0!important;background-color:#ececf0!important;color:#55555d!important;border-color:#ececf0!important;box-shadow:none!important}',
       'body.theme-light #jdInitSkeleton{background:#ffffff}',
       '.jdisk-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}',
       '.jdisk-tabs{display:flex;gap:16px;justify-content:center;margin-bottom:32px}',
@@ -237,21 +193,13 @@ window.JDCodingAgent=Object.freeze({open,close});
       '.jdisk-bar.short{width:40%}.jdisk-bar.med{width:70%}.jdisk-bar.long{width:92%}',
       '.jdisk-input{margin-top:auto;height:56px;border-radius:16px}',
       '@keyframes jdIskShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}',
-      '.jdisk{background:linear-gradient(90deg,rgba(128,128,128,.12) 25%,rgba(128,128,128,.25) 37%,rgba(128,128,128,.12) 63%);',
+      '.jdisk{background:linear-gradient(90deg,'+(isLight?'rgba(0,0,0,.06) 25%,rgba(0,0,0,.14) 37%,rgba(0,0,0,.06) 63%':'rgba(128,128,128,.12) 25%,rgba(128,128,128,.25) 37%,rgba(128,128,128,.12) 63%')+');',
       'background-size:800px 100%;animation:jdIskShimmer 1.3s ease-in-out infinite}',
-      'body.theme-light .jdisk{background:linear-gradient(90deg,rgba(0,0,0,.06) 25%,rgba(0,0,0,.14) 37%,rgba(0,0,0,.06) 63%);background-size:800px 100%}',
-      'html.theme-light .jdisk{background:linear-gradient(90deg,rgba(0,0,0,.06) 25%,rgba(0,0,0,.14) 37%,rgba(0,0,0,.06) 63%);background-size:800px 100%}',
       /* Homepage layout: header / welcome / input bar (2026-10-02) */
       '.jdisk-hp-head{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;margin-bottom:8px}',
       '.jdisk-hp-tabs{display:flex;gap:10px;justify-content:center}',
       '.jdisk-hp-welcome{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0}',
-      '.jdisk-hp-input{display:flex;align-items:center;background:rgba(255,255,255,.06);border-radius:24px;padding:10px 12px;margin-top:auto}',
-      'body.theme-light .jdisk-hp-input{background:rgba(0,0,0,.04)}',
-      'html.theme-light .jdisk-hp-input{background:rgba(0,0,0,.04)}',
-      /* ULTRA aggressive send button theme (2026-10-02) */
-      'html body:not(.theme-light) #mainActionBtn,html body:not(.theme-light) #mainActionBtn *{background:#2b2b30!important;background-color:#2b2b30!important}',
-      'html body:not(.theme-light) #mainActionBtn{color:#e8e8e8!important;border-color:#2b2b30!important;box-shadow:none!important}',
-      'html body.theme-light #mainActionBtn,html body.theme-light #mainActionBtn *{background:#ececf0!important;background-color:#ececf0!important;color:#55555d!important}'
+      '.jdisk-hp-input{display:flex;align-items:center;background:'+(isLight?'rgba(0,0,0,.04)':'rgba(255,255,255,.06)')+';border-radius:24px;padding:10px 12px;margin-top:auto}'
     ].join('\n');
     document.head.appendChild(st);
     var sk=document.createElement('div');
@@ -315,22 +263,9 @@ window.JDCodingAgent=Object.freeze({open,close});
     var hidden=false;
     function hide(){
       if(hidden)return; hidden=true;
-      try{
-        document.body.classList.remove('jd-sk-active');
-        document.documentElement.classList.remove('jd-sk-active');
-      }catch(e){}
-      try{
-        if(sk){
-          sk.style.display='none';
-          sk.style.pointerEvents='none';
-          sk.classList.add('hide');
-          if(sk.parentNode)sk.parentNode.removeChild(sk);
-        }
-        // Safety: remove any leftover skeleton elements
-        document.querySelectorAll('#jdInitSkeleton').forEach(function(el){
-          if(el.parentNode)el.parentNode.removeChild(el);
-        });
-      }catch(e){}
+      document.body.classList.remove('jd-sk-active');
+      sk.classList.add('hide');
+      if(sk.parentNode) sk.remove();
     }
     window.__jdHideInitSkeleton=hide;
     // Smart hide (2026-10-02): wait until the final design is present
@@ -366,7 +301,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001f9';
+  var V='?v=20261001g1';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -411,7 +346,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001f9)
+        // Allow letters+numbers in version (e.g. 20261001g1)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
