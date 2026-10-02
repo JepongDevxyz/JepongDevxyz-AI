@@ -297,6 +297,8 @@
         if (jdOrigSendClick) send.onclick = jdOrigSendClick;
         send.setAttribute('aria-label', 'Send');
       }
+      var sling = document.getElementById('mainActionSling');
+      if (sling) sling.toggleAttribute('data-voice-entry', !!send.__jdVoiceSwapped);
       jdRefreshVoiceSlotState();
       return;
     }
@@ -325,6 +327,8 @@
       send.setAttribute('aria-label', 'Send');
       send.title = 'Send';
     }
+    var sling = document.getElementById('mainActionSling');
+    if (sling) sling.toggleAttribute('data-voice-entry', !!send.__jdVoiceSwapped);
     jdRefreshVoiceSlotState();
   }
 

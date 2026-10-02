@@ -505,6 +505,7 @@
 }
 
 .prompt-bar__bar {
+  --jd-composer-action-size:28px;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -880,7 +881,7 @@
 /* ---------- 6. VoicePill: microphone + read aloud ---------- */
 .voice-pill{
   --vp-accent:var(--rb-ink);--vp-icon:var(--rb-muted);--vp-bg:var(--rb-surface);
-  --vp-size:28px;--vp-radius:14px;--vp-reach:8px;--vp-clock-w:40px;--vp-wave-w:54px;
+  --vp-size:var(--jd-composer-action-size,28px);--vp-radius:calc(var(--vp-size)/2);--vp-reach:8px;--vp-clock-w:40px;--vp-wave-w:54px;
   --vp-extra:94px;--vp-slide:0px;--vp-cancel:0;--vp-open:120ms;--vp-press:.95;
   position:relative;display:inline-grid;place-items:center;isolation:isolate;width:var(--vp-size);height:var(--vp-size);
   margin:0;padding:0;border:0;border-radius:var(--vp-radius);background:transparent;color:var(--vp-icon);
@@ -1060,6 +1061,10 @@
 .prompt-bar__send.rb-sling-button::after{content:"";position:absolute;inset:-6px;border-radius:50%}
 .prompt-bar__send.rb-sling-button[data-held]{cursor:grabbing}
 .rb-sling-face{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:var(--sl-pad);color:var(--sl-icon);transition:transform 160ms var(--rb-ease-out)}
+.rb-sling-wrap[data-voice-entry]{--sl-size:var(--jd-composer-action-size,28px)!important;--sl-svg:60px;--sl-pad:var(--rb-surface)!important;--sl-icon:var(--rb-muted)!important}
+.rb-sling-wrap[data-voice-entry] .rb-sling-face{box-shadow:inset 0 0 0 1px var(--rb-edge)}
+@media(hover:hover) and (pointer:fine){.rb-sling-wrap[data-voice-entry]:not([data-dragging]) .rb-sling-button:hover .rb-sling-face{background:var(--jd-surface-hover,var(--rb-surface-2))}}
+.rb-sling-wrap[data-voice-entry] .rb-sling-button:focus-visible .rb-sling-face{outline:2px solid var(--jd-focus,#a78bfa);outline-offset:3px}
 .prompt-bar__send.rb-sling-button[data-held] .rb-sling-face{transform:scale(.97)}
 .rb-sling-wrap[data-loaded] .rb-sling-face{transform:scale(1.04)}
 .rb-sling-wrap[data-disabled] .rb-sling-face{opacity:.5}
@@ -1072,7 +1077,7 @@ body.theme-light #promptBar .rb-sling-wrap[data-disabled] .rb-sling-face{opacity
 .rb-sling-dots{position:absolute;inset:0;pointer-events:none}
 .rb-sling-dot{position:absolute;top:50%;left:50%;width:var(--sl-dot);height:var(--sl-dot);margin:calc(var(--sl-dot)/-2) 0 0 calc(var(--sl-dot)/-2);border-radius:50%;background:var(--sl-accent);opacity:0;pointer-events:none}
 .rb-sling-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media(max-width:520px){.voice-pill{--vp-size:32px;--vp-radius:16px}.rb-sling-wrap{--sl-size:32px;--sl-svg:60px;--sl-dot:6px}}
+@media(max-width:520px){.prompt-bar__bar{--jd-composer-action-size:32px}.rb-sling-wrap{--sl-size:32px;--sl-svg:60px;--sl-dot:6px}}
 @media(prefers-reduced-motion:reduce){
   .lattice-loader__run .lattice-loader__cell{animation-duration:2.4s;animation-delay:0ms!important}
   .lattice-loader__run .lattice-loader__cell:not([data-hole]){--ll-idle-opacity:.12}

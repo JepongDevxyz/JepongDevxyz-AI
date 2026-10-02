@@ -5,8 +5,13 @@ const voice = fs.readFileSync('voice-mode.js', 'utf8');
 const micro = fs.readFileSync('reactbits-micro.js', 'utf8');
 const app = fs.readFileSync('index.html', 'utf8');
 const api = fs.readFileSync('api/chat.js', 'utf8');
+const css = fs.readFileSync('reactbits-micro.css', 'utf8');
 
 assert(app.includes('/reactbits-micro.js?v=20261002a9'), 'voice-slot state fix must ship with a fresh ReactBits cache version');
+assert(app.includes('/reactbits-micro.css?v=20261003a10'), 'voice button sizing and theme styles must ship with a fresh stylesheet cache version');
+assert(css.includes('.prompt-bar__bar {\n  --jd-composer-action-size:28px;') && css.includes('--vp-size:var(--jd-composer-action-size,28px)') && css.includes('.rb-sling-wrap[data-voice-entry]{--sl-size:var(--jd-composer-action-size,28px)!important;'), 'the mic and voice entry button must use the same shared size token');
+assert(css.includes('@media(max-width:520px){.prompt-bar__bar{--jd-composer-action-size:32px}') && css.includes('--sl-pad:var(--rb-surface)!important;--sl-icon:var(--rb-muted)!important'), 'mobile button sizing and voice entry colors must follow responsive and theme tokens');
+assert(voice.includes("sling.toggleAttribute('data-voice-entry', !!send.__jdVoiceSwapped)"), 'voice slot must expose its active state to theme-aware styles');
 assert(voice.includes("speak('Hello, I\\'m JepongDevxyz AI. How can I help you today?', 'en-US')"), 'voice mode must speak the requested opening greeting in English');
 assert(voice.includes('scheduleIdleNudge();'), 'voice mode must schedule a spoken prompt when the user is quiet');
 assert(voice.includes('stopRec();\n      speak(followups'), 'voice nudges must pause recognition to avoid echo feedback');

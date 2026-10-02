@@ -114,8 +114,12 @@ assert.match(js, /var MAX_PULL=160;/, 'Sling Button max pull must match ReactBit
 assert.match(css, /--sl-size:56px/, 'Sling Button desktop size must match ReactBits default');
 assert.match(css, /\.rb-sling-wrap\{--sl-size:32px/,
  'Sling Button mobile face must be slightly larger than its prior 28px size');
-assert.match(css, /\.voice-pill\{--vp-size:32px;--vp-radius:16px\}\.rb-sling-wrap\{--sl-size:32px/,
- 'mobile microphone and send faces must be enlarged evenly to 32px');
+assert.match(css, /--vp-size:var\(--jd-composer-action-size,28px\)/,
+ 'microphone size must follow the shared composer action size token');
+assert.match(css, /@media\(max-width:520px\)\{\.prompt-bar__bar\{--jd-composer-action-size:32px\}\.rb-sling-wrap\{--sl-size:32px/,
+ 'mobile microphone and voice entry faces must be enlarged evenly to 32px while the ordinary send face remains intact');
+assert.match(css, /\.rb-sling-wrap\[data-voice-entry\]\{--sl-size:var\(--jd-composer-action-size,28px\)!important/,
+ 'the voice entry face must match microphone sizing without resizing the ordinary send button');
 assert.match(css, /--vp-bg:var\(--rb-surface\)/,
  'microphone capsule must use the active light/dark surface token');
 assert.match(css, /--sl-pad:var\(--pb-ink\)/, 'Sling pad colour must follow the current theme');
