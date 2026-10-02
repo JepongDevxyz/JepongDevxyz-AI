@@ -238,7 +238,8 @@
     var hasText=!!String(input.value||'').trim();
     var preview=doc.getElementById('filePreviewContainer');
     var hasFiles=!!preview?.children?.length;
-    var armed=busy||hasText||hasFiles;
+    var voiceEntry=!busy&&!!action.__jdVoiceSwapped;
+    var armed=busy||hasText||hasFiles||voiceEntry;
     var plus=doc.getElementById('composerPlusBtn');
     var effort=doc.getElementById('responseEffortBtn');
     var effortLabel=doc.getElementById('responseEffortLabel');

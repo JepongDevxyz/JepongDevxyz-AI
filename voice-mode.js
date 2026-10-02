@@ -274,6 +274,10 @@
     open();
   }
 
+  function jdRefreshVoiceSlotState() {
+    try { window.JDReactBits?.syncPrompt?.(); } catch (e) {}
+  }
+
   function jdSyncSendVoice() {
     var send = document.getElementById('mainActionBtn');
     if (!send) return;
@@ -293,6 +297,7 @@
         if (jdOrigSendClick) send.onclick = jdOrigSendClick;
         send.setAttribute('aria-label', 'Send');
       }
+      jdRefreshVoiceSlotState();
       return;
     }
     var inp = $('userInput');
@@ -320,6 +325,7 @@
       send.setAttribute('aria-label', 'Send');
       send.title = 'Send';
     }
+    jdRefreshVoiceSlotState();
   }
 
   function jdInitSendVoiceSwap() {

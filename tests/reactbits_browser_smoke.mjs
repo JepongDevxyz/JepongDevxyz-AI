@@ -89,6 +89,21 @@ assert(initial.bell,'BellToggle did not render');
 assert(initial.squish>=3,'SquishSwitch controls did not render');
 assert.equal(initial.old,0,'legacy component markup still rendered');
 
+for(let i=0;i<80;i++){
+  const ready=await evaluate(`!!window.JDVoiceMode&&!!document.getElementById('mainActionBtn')?.__jdVoiceSwapped`);
+  if(ready)break;
+  if(i===79)throw new Error('Voice mode did not attach to the empty composer action');
+  await sleep(100);
+}
+const voiceEntryState=JSON.parse(await evaluate(`JSON.stringify((()=>{
+  const action=document.getElementById('mainActionBtn');
+  return {swapped:!!action?.__jdVoiceSwapped,disabled:!!action?.disabled,armed:action?.hasAttribute('data-armed'),slingDisabled:action?.closest('.rb-sling-wrap')?.hasAttribute('data-disabled')};
+})())`));
+assert(voiceEntryState.swapped,'empty composer must display the voice action');
+assert.equal(voiceEntryState.disabled,false,'visible voice action must remain tappable when the composer is empty');
+assert.equal(voiceEntryState.armed,true,'voice action must enter the Sling quick-tap path');
+assert.equal(voiceEntryState.slingDisabled,false,'Sling wrapper must not suppress the voice action');
+
 // 1/6: frame-match the supplied Work Activity recording.
 const activity=JSON.parse(await evaluate(`(async()=>{
   showAIIndicator('Build the requested dashboard',[]);
@@ -566,6 +581,23 @@ assert.deepEqual(voice.afterToggle,['start','stop:tap'],'tap while listening sho
 assert.deepEqual(voice.afterHold.slice(-2),['start','stop:release'],'hold must stop on release');
 assert.deepEqual(voice.afterCancel.slice(-2),['start','stop:cancel'],'slide-left must cancel');
 assert.equal(voice.reading,'listening');assert.equal(voice.stopped,'idle');
+
+const voiceEntryTap=JSON.parse(await evaluate(`(async()=>{
+  const action=document.getElementById('mainActionBtn');
+  const oldSpeak=window.speakSmartVoice;
+  const oldSR=window.SpeechRecognition,oldWebkitSR=window.webkitSpeechRecognition;
+  window.speakSmartVoice=()=>{};
+  window.SpeechRecognition=function(){this.start=()=>{};this.abort=()=>{};this.stop=()=>{};};
+  action.click();
+  await new Promise(r=>setTimeout(r,30));
+  const opened=!!window.JDVoiceMode?.isOpen()&&!document.getElementById('jdVoiceMode')?.hasAttribute('hidden');
+  window.JDVoiceMode?.close();
+  window.speakSmartVoice=oldSpeak;
+  if(oldSR===undefined)delete window.SpeechRecognition;else window.SpeechRecognition=oldSR;
+  if(oldWebkitSR===undefined)delete window.webkitSpeechRecognition;else window.webkitSpeechRecognition=oldWebkitSR;
+  return JSON.stringify({opened});
+})()`));
+assert.equal(voiceEntryTap.opened,true,'tapping the waveform voice action must open voice mode');
 
 await sleep(250);
 assert.deepEqual(runtimeErrors,[],'browser runtime exceptions: '+runtimeErrors.join(' | '));
