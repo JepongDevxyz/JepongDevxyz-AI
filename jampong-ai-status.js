@@ -171,13 +171,15 @@
     st.id = 'jdJampongStatusCss';
     st.textContent = [
       '#jdJampong.jdj-working img{',
-      'box-shadow:0 0 0 3px #f59e0b,0 0 20px rgba(245,158,11,.6)!important;',
-      'animation:jdJampWork 1s ease-in-out infinite!important}',
-      '@keyframes jdJampWork{',
-      '0%,100%{transform:scale(1)}',
-      '50%{transform:scale(1.08)}}',
+      'box-shadow:0 0 0 3px #f59e0b,0 0 24px rgba(245,158,11,.7),0 8px 24px rgba(0,0,0,.4)!important;',
+      'animation:jdJampWork3D 1.2s ease-in-out infinite!important}',
+      '@keyframes jdJampWork3D{',
+      '0%,100%{transform:translateY(0) translateZ(0) rotateX(0deg) rotateY(0deg) scale(1)}',
+      '25%{transform:translateY(-6px) translateZ(15px) rotateX(10deg) rotateY(-12deg) scale(1.06)}',
+      '50%{transform:translateY(-10px) translateZ(25px) rotateX(-8deg) rotateY(10deg) scale(1.1)}',
+      '75%{transform:translateY(-6px) translateZ(15px) rotateX(8deg) rotateY(12deg) scale(1.06)}}',
       '#jdJampong .jdj-label.jdj-working{',
-      'background:rgba(245,158,11,.9)!important;color:#000!important;',
+      'background:rgba(245,158,11,.92)!important;color:#000!important;',
       'font-weight:700!important;max-width:200px;white-space:nowrap;',
       'overflow:hidden;text-overflow:ellipsis}'
     ].join('\n');
