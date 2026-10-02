@@ -277,6 +277,19 @@
       if (send.onclick !== jdVoiceSlotClick) {
         send.onclick = jdVoiceSlotClick;
       }
+      /* Backup: addEventListener as fallback (2026-10-02) */
+      if (!send.__jdVoiceListener) {
+        send.__jdVoiceListener = true;
+        send.addEventListener('click', function(e){
+          var inp = $('userInput');
+          var hasText = !!(inp && inp.value.trim());
+          if (!hasText && send.__jdVoiceSwapped) {
+            e.preventDefault();
+            e.stopPropagation();
+            jdVoiceSlotClick(e);
+          }
+        }, true);
+      }
     } else if (send.__jdVoiceSwapped) {
       send.__jdVoiceSwapped = false;
       if (jdOrigSendFaceHTML !== null) face.innerHTML = jdOrigSendFaceHTML;

@@ -247,7 +247,11 @@ window.JDCodingAgent=Object.freeze({open,close});
       '.jdisk-hp-welcome{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0}',
       '.jdisk-hp-input{display:flex;align-items:center;background:rgba(255,255,255,.06);border-radius:24px;padding:10px 12px;margin-top:auto}',
       'body.theme-light .jdisk-hp-input{background:rgba(0,0,0,.04)}',
-      'html.theme-light .jdisk-hp-input{background:rgba(0,0,0,.04)}'
+      'html.theme-light .jdisk-hp-input{background:rgba(0,0,0,.04)}',
+      /* ULTRA aggressive send button theme (2026-10-02) */
+      'html body:not(.theme-light) #mainActionBtn,html body:not(.theme-light) #mainActionBtn *{background:#2b2b30!important;background-color:#2b2b30!important}',
+      'html body:not(.theme-light) #mainActionBtn{color:#e8e8e8!important;border-color:#2b2b30!important;box-shadow:none!important}',
+      'html body.theme-light #mainActionBtn,html body.theme-light #mainActionBtn *{background:#ececf0!important;background-color:#ececf0!important;color:#55555d!important}'
     ].join('\n');
     document.head.appendChild(st);
     var sk=document.createElement('div');
@@ -362,7 +366,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001f8';
+  var V='?v=20261001f9';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -407,7 +411,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001f8)
+        // Allow letters+numbers in version (e.g. 20261001f9)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
