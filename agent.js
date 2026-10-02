@@ -183,8 +183,9 @@ window.JDCodingAgent=Object.freeze({open,close});
       'display:flex;flex-direction:column;padding:16px}',
       '#jdInitSkeleton.hide{display:none!important}',
       /* Hide ALL old UI while skeleton is active (prevents stale flashes) */
-      /* Aggressive: hide all descendants, not just direct children */
-      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){display:none!important}',
+      /* Use visibility (not display:none) so patches can still initialize buttons */
+      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){visibility:hidden!important;pointer-events:none!important}',
+      'body.jd-sk-active #jdInitSkeleton{visibility:visible!important;pointer-events:auto!important}',
       'body.jd-sk-active #jdInitSkeleton{display:flex!important}',
       /* Send button theme sync (2026-10-02): ensure it follows dark/light mode immediately */
       /* Dark mode: dark button */
@@ -268,9 +269,22 @@ window.JDCodingAgent=Object.freeze({open,close});
     var hidden=false;
     function hide(){
       if(hidden)return; hidden=true;
-      document.body.classList.remove('jd-sk-active');
-      sk.classList.add('hide');
-      if(sk.parentNode) sk.remove();
+      try{
+        document.body.classList.remove('jd-sk-active');
+        document.documentElement.classList.remove('jd-sk-active');
+      }catch(e){}
+      try{
+        if(sk){
+          sk.style.display='none';
+          sk.style.pointerEvents='none';
+          sk.classList.add('hide');
+          if(sk.parentNode)sk.parentNode.removeChild(sk);
+        }
+        // Safety: remove any leftover skeleton elements
+        document.querySelectorAll('#jdInitSkeleton').forEach(function(el){
+          if(el.parentNode)el.parentNode.removeChild(el);
+        });
+      }catch(e){}
     }
     window.__jdHideInitSkeleton=hide;
     // Smart hide (2026-10-02): wait until the final design is present
@@ -306,7 +320,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001f2';
+  var V='?v=20261001f3';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -351,7 +365,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001f2)
+        // Allow letters+numbers in version (e.g. 20261001f3)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
