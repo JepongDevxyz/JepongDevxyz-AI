@@ -270,9 +270,12 @@
         send.__jdVoiceSwapped = true;
         face.innerHTML = icon('audio-lines', 20);
         refreshIcons(face);
-        send.onclick = jdVoiceSlotClick;
         send.setAttribute('aria-label', t('entryAria'));
         send.title = t('entryTitle');
+      }
+      /* Always ensure voice handler is set (2026-10-02): fixes unclickable button */
+      if (send.onclick !== jdVoiceSlotClick) {
+        send.onclick = jdVoiceSlotClick;
       }
     } else if (send.__jdVoiceSwapped) {
       send.__jdVoiceSwapped = false;
@@ -596,6 +599,9 @@
           btn.style.setProperty('color',fg,'important');
           btn.style.setProperty('border-color',bg,'important');
           btn.style.setProperty('box-shadow','none','important');
+          /* Ensure button is clickable (2026-10-02) */
+          btn.style.setProperty('pointer-events','auto','important');
+          btn.style.setProperty('cursor','pointer','important');
         }
       };
       apply();
