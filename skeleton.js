@@ -233,8 +233,8 @@
 
   function init() {
     ensureCSS();
-    // Show page skeleton IMMEDIATELY (on refresh)
-    showPageSkeleton();
+    // Page skeleton DISABLED (2026-10-02): agent.js initial skeleton is the ONLY page skeleton now
+    // showPageSkeleton(); // <-- disabled per user request
     watchChat();
     watchContainers();
     // Hide when app is ready
@@ -242,6 +242,7 @@
     var hideTimer = setInterval(function () {
       hideAttempts++;
       // App is ready when chat box exists and has content, or after 5s max
+      // (page skeleton hide logic kept for safety but showPageSkeleton is disabled above)
       var chatBox = document.getElementById('chatBox') || document.querySelector('.chat-box');
       var ready = (chatBox && chatBox.children.length > 0) || hideAttempts >= 25;
       if (ready) {
