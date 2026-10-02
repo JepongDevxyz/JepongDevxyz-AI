@@ -224,6 +224,35 @@ window.JDCodingAgent=Object.freeze({open,close});
     document.body.appendChild(sk);
     // Hide old UI while skeleton is active
     document.body.classList.add('jd-sk-active');
+    /* Proactively fix the effort badge (2026-10-02): update "Instant" to saved value
+       BEFORE the skeleton hides, so the old default never shows */
+    (function fixEffortBadge(){
+      try{
+        var saved=null;
+        try{
+          var p=JSON.parse(localStorage.getItem('jepong_personalization')||'{}');
+          saved=p.intelligence||null;
+        }catch(e){}
+        if(!saved||saved==='Instant')return;
+        // Watch for the badge element and update it as soon as it appears
+        var obs=new MutationObserver(function(){
+          var badge=document.querySelector('.prompt-bar__effort-label, [data-effort-label]');
+          if(badge&&badge.textContent.trim()==='Instant'){
+            badge.textContent=saved;
+          }
+          // Also check all elements containing just "Instant" in the prompt bar
+          document.querySelectorAll('.prompt-bar').forEach(function(bar){
+            bar.querySelectorAll('span,small,badge').forEach(function(el){
+              if(el.textContent.trim()==='Instant'&&el.children.length===0){
+                el.textContent=saved;
+              }
+            });
+          });
+        });
+        obs.observe(document.body,{childList:true,subtree:true});
+        setTimeout(function(){obs.disconnect();},10000);
+      }catch(e){}
+    })();
     // Hide ONLY when page is truly ready (not on DOM presence which causes flicker)
     var hidden=false;
     function hide(){
@@ -242,7 +271,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001e7';
+  var V='?v=20261001e8';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -287,7 +316,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001e7)
+        // Allow letters+numbers in version (e.g. 20261001e8)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
