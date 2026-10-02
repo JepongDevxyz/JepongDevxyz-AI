@@ -51,7 +51,8 @@ const gated=featureGate({message:'hello',files:[{name:'private.txt'}],plugins:{g
 assert.deepEqual(gated.files,[],'API must not pass attachments while File search is OFF');
 assert.equal(gated.plugins.github,undefined,'API must not query connectors while Connector search is OFF');
 const internalPlugins={superpowers:{enabled:true},skills:['tdd'],autoUse:true};
-assert.deepEqual(featureGate({plugins:{...internalPlugins,github:{enabled:true}},personalization:{connectorSearch:false}}).plugins,internalPlugins,'Connector OFF must preserve internal skill workflows');
+const frontendPluginContext={...internalPlugins,plugins:[{id:'gmail',name:'Gmail'}],github:{enabled:true,repo:'owner/repo'}};
+assert.deepEqual(featureGate({plugins:frontendPluginContext,personalization:{connectorSearch:false}}).plugins,{...internalPlugins,plugins:[]},'Connector OFF must preserve internal skills but strip connected-plugin mentions and connector context');
 const enabled=featureGate({message:'hello',files:[{name:'private.txt'}],plugins:{github:{enabled:true}},personalization:{librarySearch:true,connectorSearch:true}});
 assert.equal(enabled.files.length,1,'File search ON must preserve attachments');
 assert.equal(enabled.plugins.github.enabled,true,'Connector search ON must preserve connected-service context');

@@ -66,8 +66,8 @@ global.fetch = async (url, opts = {}) => {
   throw new Error('unexpected fetch: ' + u);
 };
 
-const { default: createHandler, PLANS } = await import('../api/paymongo-create.js');
-const { default: webhookHandler, verifySignature, intentIdOf } = await import('../api/paymongo-webhook.js');
+const { handle: createHandler, PLANS } = await import('../lib/paymongo/create.js');
+const { handle: webhookHandler, verifySignature, intentIdOf } = await import('../lib/paymongo/webhook.js');
 
 let n = 0;
 const req = (method, headers, body) => ({
@@ -148,7 +148,7 @@ const req = (method, headers, body) => ({
 }
 // --- 6. Status endpoint: only own payments visible ---
 {
-  const { default: statusHandler } = await import('../api/paymongo-status.js');
+  const { handle: statusHandler } = await import('../lib/paymongo/status.js');
   const r = await statusHandler(req('GET', { authorization: 'Bearer tok12345678901234567890' }, ''));
   assert.strictEqual(r.status, 200);
   const j = JSON.parse(await r.text());

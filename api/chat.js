@@ -1726,7 +1726,7 @@ Current year: ${currentYear}
 Treat this server instant as authoritative for words such as today, now, current, this week, this month, and this year. If the user explicitly names a different year, answer for that requested year instead of silently substituting ${currentYear}. For claims that can change over time (news, prices, current office-holders, releases, availability, schedules, scores, outages, or service status), use live research context when available and do not present stale model knowledge as current fact.`;
 }
 
-function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='', history=[], files=[]) {
+function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='', history=[], files=[], voiceResponseLanguage='') {
   let text =
     'You are JepongDevxyz AI, a capable general-purpose conversational assistant created by Jepong Devxyz (Jay-Ar Lee Espiritu). ' +
     'Your job is to answer the user directly, understand what they are actually trying to accomplish, and help them reach that goal efficiently. ' +
@@ -1785,6 +1785,18 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   else if (mode === 'tagalog') text += ' Reply naturally in Filipino/Tagalog unless technical English terms are clearer.';
   else if (mode === 'affiliate') text += ' Act as a digital marketing writing assistant for safe, age-appropriate products and content.';
   else if (mode === 'custom' && customPrompt) text += ` ${customPrompt}`;
+
+  const supportedVoiceLanguages=new Set([
+    'Filipino/Tagalog','English','Spanish','Japanese','Korean','Arabic','Bengali','Cebuano','Chinese',
+    'Danish','Dutch','Finnish','French','German','Greek','Gujarati','Hebrew','Hindi','Hungarian',
+    'Indonesian','Italian','Kannada','Kazakh','Latvian','Lithuanian','Macedonian','Malay','Malayalam',
+    'Marathi','Mongolian','Nepali','Norwegian','Persian','Polish','Portuguese','Punjabi','Romanian',
+    'Russian','Serbian','Slovak','Slovenian','Swahili','Swedish','Tamil','Telugu','Thai','Turkish',
+    'Ukrainian','Urdu','Vietnamese'
+  ]);
+  if (typeof voiceResponseLanguage === 'string' && supportedVoiceLanguages.has(voiceResponseLanguage.trim())) {
+    text += ` In this voice conversation, respond naturally in ${voiceResponseLanguage.trim()} to match the language of the user's latest spoken message. If they switch languages, follow the new language.`;
+  }
 
   if (studyTool === 'quiz') text += ' STUDY TOOL: Create a short quiz from the current topic. Ask questions first and do not reveal all answers immediately.';
   else if (studyTool === 'reviewer') text += ' STUDY TOOL: Produce a structured reviewer with headings, key ideas, definitions, examples, and a quick recap.';
@@ -5283,7 +5295,7 @@ function applyChatFeatureSettings(body={}){
 
 async function processChat(body, emit) {
   body=applyChatFeatureSettings(body);
-  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone,bailuRoute} = body;
+  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone,bailuRoute,voiceResponseLanguage} = body;
   bailuRoute=bailuRoute==='anthropic'?'anthropic':'normal';
   // Strict routing contract: fallback/router are opt-in only. Truthy strings,
   // missing fields, or stale client values must never silently enable them.
@@ -5522,7 +5534,7 @@ async function processChat(body, emit) {
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
   const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${plannedResearchContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
-  let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files);
+  let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files,voiceResponseLanguage);
 
   // Installed skill plugins are explicit, bounded behavior profiles. They do not
   // grant tools or execution rights: real GitHub, CI, deployment, browser, render,

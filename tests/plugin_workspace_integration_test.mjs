@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import handler from '../api/plugin-workspace.js';
+import {handler} from '../lib/plugins/workspace.js';
 import {sealSession} from '../api/_github_oauth.js';
 process.env.GITHUB_SESSION_SECRET='workspace-test-secret-0123456789abcdefghijklmnopqrstuvwxyz';
 const token='gho_mock_workspace';

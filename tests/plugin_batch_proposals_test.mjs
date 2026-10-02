@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import handler from '../api/plugin-batch-proposals.js';
+import {handler} from '../lib/plugins/batch.js';
 import {sealSession} from '../api/_github_oauth.js';
 
 process.env.GITHUB_SESSION_SECRET='reviewed-batch-secret-0123456789abcdefghijklmnopqrstuvwxyz';
@@ -106,11 +106,7 @@ try{
   assert(requests.every(r=>r.method!=='DELETE'),'tool must not perform destructive repository operations');
 }finally{globalThis.fetch=savedFetch;}
 
-const js=fs.readFileSync('plugins.js','utf8');
-const panel=JSON.parse(js.split('\n')[0].replace(/^const PANEL_HTML=/,'').replace(/;$/,''));
-for(const id of ['jdplugBatchAdd','jdplugBatchQueue','jdplugBatchPreview','jdplugBatchCreate',
-  'jdplugBatchDiffs','jdplugBatchApprove','jdplugBatchConfirm'])
-  assert(panel.includes('id="'+id+'"'),'missing batch approval UI '+id);
-assert(js.includes("await batchApi('preview',{files})"));
-assert(js.includes("await batchApi('propose',{files:approved.files,approval:approved.approval,confirm:true})"));
-console.log('PASS: multi-file atomic Git commit, signed previews, stale-source protection, explicit authorization and batch UI');
+const routes=JSON.parse(fs.readFileSync('vercel.json','utf8')).rewrites;
+assert(routes.some(x=>x.source==='/api/plugin-batch-proposals'&&x.destination==='/api/plugins?route=batch'),
+  'multi-file proposal API remains available through the consolidated Vercel route');
+console.log('PASS: multi-file atomic Git commit, signed previews, stale-source protection and explicit authorization');

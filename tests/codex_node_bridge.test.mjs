@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
-import account from '../api/codex-account.js';
+import { handler as account } from '../lib/codex/account.js';
 import gateway from '../api/codex.js';
 
 async function incoming(handler,path,method='GET',body=''){

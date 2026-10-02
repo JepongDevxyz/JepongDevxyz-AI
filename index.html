@@ -7,6 +7,46 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6366f1">
     <title>JepongDevxyz AI</title>
+    <style id="jdPrePaintSkeletonStyle">
+      html.jd-boot-pending{background:#0b0f19}
+      html.jd-boot-pending::before{content:"";position:fixed;inset:0;z-index:2147483647;pointer-events:none;background-color:#0b0f19;
+        background-image:
+          radial-gradient(circle at center,rgba(148,163,184,.18) 0 99%,transparent 100%),
+          radial-gradient(circle at center,rgba(148,163,184,.18) 0 99%,transparent 100%),
+          linear-gradient(rgba(148,163,184,.18),rgba(148,163,184,.18)),linear-gradient(rgba(148,163,184,.18),rgba(148,163,184,.18)),linear-gradient(rgba(148,163,184,.18),rgba(148,163,184,.18)),
+          linear-gradient(rgba(148,163,184,.15),rgba(148,163,184,.15)),linear-gradient(rgba(148,163,184,.15),rgba(148,163,184,.15)),linear-gradient(rgba(148,163,184,.15),rgba(148,163,184,.15)),
+          linear-gradient(rgba(148,163,184,.11),rgba(148,163,184,.11)),linear-gradient(rgba(148,163,184,.11),rgba(148,163,184,.11)),
+          linear-gradient(rgba(148,163,184,.15),rgba(148,163,184,.15)),linear-gradient(rgba(148,163,184,.15),rgba(148,163,184,.15)),linear-gradient(rgba(148,163,184,.15),rgba(148,163,184,.15)),
+          linear-gradient(rgba(148,163,184,.12),rgba(148,163,184,.12));
+        background-repeat:no-repeat;
+        background-size:40px 40px,40px 40px,48px 16px,68px 16px,50px 16px,220px 34px,300px 31px,130px 28px,calc(100% - 24px) 112px,40px 40px,64px 20px,40px 40px,40px 40px,42% 18px;
+        background-position:12px 12px,calc(100% - 52px) 12px,calc(50% - 84px) 22px,50% 22px,calc(50% + 84px) 22px,center 44%,center 50%,center 55%,center calc(100% - 12px),24px calc(100% - 84px),76px calc(100% - 74px),calc(100% - 100px) calc(100% - 84px),calc(100% - 52px) calc(100% - 84px),24px calc(100% - 94px)}
+      html.jd-boot-pending::after{content:"";position:fixed;inset:0;z-index:2147483647;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.055) 48%,transparent 66%);background-size:220% 100%;animation:jdPrePaintSweep 1.4s linear infinite}
+      @keyframes jdPrePaintSweep{to{background-position:-220% 0}}
+      html.theme-light.jd-boot-pending{background:#fff}
+      html.theme-light.jd-boot-pending::before{background-color:#fff;background-image:
+        radial-gradient(circle at center,rgba(15,23,42,.11) 0 99%,transparent 100%),radial-gradient(circle at center,rgba(15,23,42,.11) 0 99%,transparent 100%),
+        linear-gradient(rgba(15,23,42,.11),rgba(15,23,42,.11)),linear-gradient(rgba(15,23,42,.11),rgba(15,23,42,.11)),linear-gradient(rgba(15,23,42,.11),rgba(15,23,42,.11)),
+        linear-gradient(rgba(15,23,42,.09),rgba(15,23,42,.09)),linear-gradient(rgba(15,23,42,.09),rgba(15,23,42,.09)),linear-gradient(rgba(15,23,42,.09),rgba(15,23,42,.09)),
+        linear-gradient(rgba(15,23,42,.06),rgba(15,23,42,.06)),linear-gradient(rgba(15,23,42,.06),rgba(15,23,42,.06)),
+        linear-gradient(rgba(15,23,42,.09),rgba(15,23,42,.09)),linear-gradient(rgba(15,23,42,.09),rgba(15,23,42,.09)),linear-gradient(rgba(15,23,42,.09),rgba(15,23,42,.09)),
+        linear-gradient(rgba(15,23,42,.07),rgba(15,23,42,.07))}
+      html.theme-light.jd-boot-pending::after{background:linear-gradient(105deg,transparent 30%,rgba(15,23,42,.045) 48%,transparent 66%);background-size:220% 100%}
+      html.theme-neon.jd-boot-pending::before{background-color:#050505}
+      html.theme-sunset.jd-boot-pending::before{background-color:#1a0b2e}
+      @media(max-width:520px){html.jd-boot-pending::before{background-size:36px 36px,36px 36px,42px 16px,58px 16px,44px 16px,180px 34px,240px 31px,120px 28px,calc(100% - 24px) 112px,36px 36px,64px 20px,36px 36px,36px 36px,42% 18px;background-position:12px 12px,calc(100% - 48px) 12px,calc(50% - 72px) 22px,50% 22px,calc(50% + 72px) 22px,center 44%,center 50%,center 55%,center calc(100% - 12px),24px calc(100% - 76px),68px calc(100% - 68px),calc(100% - 92px) calc(100% - 76px),calc(100% - 48px) calc(100% - 76px),24px calc(100% - 94px)}}
+      @media(prefers-reduced-motion:reduce){html.jd-boot-pending::after{animation:none}}
+    </style>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        root.classList.add('jd-boot-pending');
+        try {
+          var savedTheme = localStorage.getItem('jepong_theme');
+          if (savedTheme === 'theme-light' || savedTheme === 'theme-neon' || savedTheme === 'theme-sunset') root.classList.add(savedTheme);
+        } catch (_) {}
+      })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -3997,8 +4037,51 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
       }
     </style>
     <link rel="stylesheet" href="/motion-ux.css?v=20260927-three-reference-v2">
+    <style id="jdBootSkeletonStyle">
+      #jdBootSkeleton{position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;min-height:100dvh;padding:env(safe-area-inset-top) max(14px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(14px,env(safe-area-inset-left));overflow:hidden;background:var(--bg-color,#0b0f19);color:var(--text-main,#f8fafc);transition:opacity .24s ease,visibility .24s ease;pointer-events:auto}
+      html[data-theme="light"] #jdBootSkeleton,body.theme-light #jdBootSkeleton{background:#fff;color:#17171b}
+      #jdBootSkeleton.hide{opacity:0;visibility:hidden;pointer-events:none}
+      .jd-boot-header{height:54px;flex:0 0 54px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:10px}
+      .jd-boot-tabs{display:flex;justify-content:center;align-items:center;gap:clamp(14px,4vw,28px)}
+      .jd-boot-shape{position:relative;overflow:hidden;border-radius:12px;background:linear-gradient(100deg,rgba(148,163,184,.11) 20%,rgba(148,163,184,.24) 42%,rgba(148,163,184,.11) 64%);background-size:220% 100%;animation:jdBootShimmer 1.45s ease-in-out infinite}
+      html[data-theme="light"] .jd-boot-shape,body.theme-light .jd-boot-shape{background:linear-gradient(100deg,rgba(15,23,42,.055) 20%,rgba(15,23,42,.12) 42%,rgba(15,23,42,.055) 64%);background-size:220% 100%}
+      @keyframes jdBootShimmer{to{background-position:-220% 0}}
+      .jd-boot-circle{width:40px;height:40px;border-radius:50%}
+      .jd-boot-tab{height:17px;border-radius:9px}
+      .jd-boot-center{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px 0 24px}
+      .jd-boot-welcome{width:min(220px,54vw);height:34px;border-radius:18px}
+      .jd-boot-brand{width:min(300px,74vw);height:31px;border-radius:16px}
+      .jd-boot-hello{width:min(130px,34vw);height:28px;border-radius:14px}
+      .jd-boot-composer{width:min(100%,820px);min-height:122px;flex:0 0 auto;align-self:center;padding:16px;border:1px solid rgba(148,163,184,.10);border-radius:26px;background:rgba(148,163,184,.07);display:flex;flex-direction:column;justify-content:space-between;gap:14px;margin-bottom:2px}
+      html[data-theme="light"] .jd-boot-composer,body.theme-light .jd-boot-composer{background:rgba(15,23,42,.035);border-color:rgba(15,23,42,.09)}
+      .jd-boot-prompt{height:18px;width:42%;border-radius:9px}
+      .jd-boot-tools{display:flex;align-items:center;gap:10px}
+      .jd-boot-tool{width:40px;height:40px;border-radius:50%;flex:0 0 auto}
+      .jd-boot-effort{width:64px;height:20px;border-radius:10px;margin-left:4px}
+      .jd-boot-spacer{flex:1}
+      @media(max-width:520px){#jdBootSkeleton{padding-left:12px;padding-right:12px}.jd-boot-header{grid-template-columns:40px 1fr 40px;gap:5px}.jd-boot-circle{width:36px;height:36px}.jd-boot-tabs{gap:clamp(10px,4vw,18px)}.jd-boot-tab:nth-child(1){width:42px!important}.jd-boot-tab:nth-child(2){width:58px!important}.jd-boot-tab:nth-child(3){width:44px!important}.jd-boot-composer{min-height:112px;padding:13px 12px;border-radius:24px}.jd-boot-tool{width:36px;height:36px}}
+      @media(prefers-reduced-motion:reduce){.jd-boot-shape{animation:none}}
+    </style>
 </head>
 <body>
+    <script>
+      (function () { try {
+        var jdBootTheme = localStorage.getItem('jepong_theme');
+        if (jdBootTheme === 'theme-light' || document.documentElement.getAttribute('data-theme') === 'light') {
+          document.body.classList.add('theme-light');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (_) {} })();
+    </script>
+    <div id="jdBootSkeleton" data-jd-boot="true" role="status" aria-label="Loading JepongDevxyz AI">
+      <div class="jd-boot-header" aria-hidden="true">
+        <div class="jd-boot-shape jd-boot-circle"></div>
+        <div class="jd-boot-tabs"><div class="jd-boot-shape jd-boot-tab" style="width:48px"></div><div class="jd-boot-shape jd-boot-tab" style="width:68px"></div><div class="jd-boot-shape jd-boot-tab" style="width:50px"></div></div>
+        <div class="jd-boot-shape jd-boot-circle"></div>
+      </div>
+      <div class="jd-boot-center" aria-hidden="true"><div class="jd-boot-shape jd-boot-welcome"></div><div class="jd-boot-shape jd-boot-brand"></div><div class="jd-boot-shape jd-boot-hello"></div></div>
+      <div class="jd-boot-composer" aria-hidden="true"><div class="jd-boot-shape jd-boot-prompt"></div><div class="jd-boot-tools"><div class="jd-boot-shape jd-boot-tool"></div><div class="jd-boot-shape jd-boot-effort"></div><div class="jd-boot-spacer"></div><div class="jd-boot-shape jd-boot-tool"></div><div class="jd-boot-shape jd-boot-tool"></div></div></div>
+    </div>
 
     <!-- First-run welcome and legal consent. Shown only until the current legal
          version has been accepted on this device. -->
@@ -11961,6 +12044,7 @@ ${m.text || ''}
                         autoFallback: autoProviderFallback,
                         smartRouter: smartModelRouter,
                         studyTool: studyToolForRequest,
+                        voiceResponseLanguage: window.__jdVoiceResponseLanguage || undefined,
                         activityStream: true,
                         autoTools: true,
                         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',

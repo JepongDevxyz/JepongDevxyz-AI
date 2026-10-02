@@ -50,6 +50,18 @@ for (const file of allFiles.filter(file => /\.(?:js|mjs)$/i.test(file))) {
   for (const match of text.matchAll(/\bimport\s*['"]([^'"]+)['"]/g)) specs.add(match[1]);
   for (const spec of specs) {
     if (!spec.startsWith('.')) continue;
+    // The API was consolidated into shared handler modules in the October 1
+    // deployment-count reduction. Legacy /api/* URLs are Vercel rewrites and
+    // tests should import the handler modules under lib/ directly.
+    const legacyApiImport = file.startsWith(path.join(root, 'tests')) &&
+      /^\.\.\/api\/(?:codex-account|credits-(?:balance|spend|welcome)|guest-credits|paymongo-(?:create|status|webhook)|plugin-(?:proposals|batch-proposals|execute|workspace)|github-(?:app-(?:install|setup|status)|oauth-(?:start|session|callback)))\.js$/.test(spec);
+    if (legacyApiImport) {
+      const apiRoute = spec.replace(/^\.\.\/api\//, '').replace(/\.js$/, '');
+      const vercel = JSON.parse(readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+      assert(vercel.rewrites.some(rewrite => rewrite.source === `/api/${apiRoute}`),
+        `Legacy API test import has no deployed Vercel route: ${spec}`);
+      continue;
+    }
     assert(
       resolvesRelativeImport(file, spec),
       `Missing relative import target ${spec} from ${path.relative(root, file)}`

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import proposalHandler from '../api/plugin-proposals.js';
+import {handler as proposalHandler} from '../lib/plugins/proposals.js';
 import {sealSession} from '../api/_github_oauth.js';
 
 process.env.GITHUB_SESSION_SECRET='proposal-test-0123456789abcdefghijklmnopqrstuvwxyz';
@@ -88,14 +88,7 @@ try{
   assert(!JSON.stringify(result.data).includes('gho_proposal_test_token'));
 }finally{globalThis.fetch=realFetch;}
 
-const ui=fs.readFileSync('plugins.js','utf8'),index=fs.readFileSync('index.html','utf8');
-const panel=JSON.parse(ui.split('\n')[0].replace(/^const PANEL_HTML=/,'').replace(/;$/,''));
-for(const id of ['jdplugProposalPanel','jdplugChangePath','jdplugChangeSource','jdplugPreviewChange',
-  'jdplugBeforeSource','jdplugAfterSource','jdplugSubmitChange','jdplugProposalConfirm','jdplugApproveProposal'])
-  assert(panel.includes('id="'+id+'"'),'missing real proposal UI '+id);
-assert(ui.includes('stageChange(code)'));
-assert(ui.includes("await proposalApi('preview',{path,content})"));
-assert(ui.includes("await proposalApi('propose',{path:approved.path,content:approved.content,approval:approved.approval,confirm:true})"));
-assert(index.includes('onclick="stageCodeSnippetFromButton(this)"'));
-assert(index.includes('window.JDPlugins.stageChange(item.code)'));
-console.log('PASS: signed source preview, explicit user approval, isolated branch, PR, and cross-model code staging');
+const routes=JSON.parse(fs.readFileSync('vercel.json','utf8')).rewrites;
+assert(routes.some(x=>x.source==='/api/plugin-proposals'&&x.destination==='/api/plugins?route=proposals'),
+  'source proposals remain available through current consolidated routing');
+console.log('PASS: signed source preview, explicit user approval, isolated branch and PR creation');

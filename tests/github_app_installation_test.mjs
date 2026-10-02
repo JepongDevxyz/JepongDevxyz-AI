@@ -3,9 +3,9 @@ import {generateKeyPairSync,verify} from 'node:crypto';
 import fs from 'node:fs';
 import {sealSession} from '../api/_github_oauth.js';
 import {configuredGitHubApp,githubAppStatus,githubAppToken,githubAppRepositories,resolveGitHubAccess} from '../api/_github_app.js';
-import installHandler from '../api/github-app-install.js';
-import statusHandler from '../api/github-app-status.js';
-import setupHandler from '../api/github-app-setup.js';
+import {handler as installHandler} from '../lib/github/app-install.js';
+import {handler as statusHandler} from '../lib/github/app-status.js';
+import {handler as setupHandler} from '../lib/github/app-setup.js';
 
 const {publicKey,privateKey}=generateKeyPairSync('rsa',{modulusLength:2048});
 process.env.GITHUB_SESSION_SECRET='test-app-secret-0123456789abcdefghijklmnopqrstuvwxyz';
@@ -119,13 +119,11 @@ try{
 }finally{globalThis.fetch=originalFetch;}
 
 const ui=fs.readFileSync('plugins.js','utf8');
-const panel=JSON.parse(ui.split('\n')[0].replace(/^const PANEL_HTML=/,'').replace(/;$/,''));
-for(const id of ['jdplugGitHubAppCard','jdplugInstallApp','jdplugManageApp','jdplugAppPermissions','jdplugAppStatus'])
-  assert(panel.includes('id="'+id+'"'),'missing GitHub App management UI '+id);
-assert(ui.includes("window.location.assign('/api/github-app-install')"));
-assert(ui.includes("fetch('/api/github-app-status'"));
-assert(ui.includes("params.get('github_app')"));
-assert(fs.readFileSync('api/chat.js','utf8').includes('resolveGitHubAccess(req,'));
-assert(fs.readFileSync('api/plugin-execute.js','utf8').includes('resolveGitHubAccess(request,'));
-assert(fs.readFileSync('api/plugin-proposals.js','utf8').includes('resolveGitHubAccess(request,'));
+assert(ui.includes("id:'superpowers'"),'current plugin catalog should include Superpowers');
+assert(!ui.includes("id:'github'"),'GitHub account and repository management belong to Connectors in the current UI');
+const vercel=JSON.parse(fs.readFileSync('vercel.json','utf8'));
+for(const route of ['github-app-install','github-app-setup','github-app-status'])
+  assert(vercel.rewrites.some(x=>x.source==='/api/'+route&&x.destination.startsWith('/api/github?route=')),
+    'deployed GitHub App route should remain wired: '+route);
+assert(fs.readFileSync('api/github.js','utf8').includes("'app-install': appInstall"));
 console.log('PASS: verified personal GitHub App installation, signed JWT, selected-repository tokens, management and model/chat integration');

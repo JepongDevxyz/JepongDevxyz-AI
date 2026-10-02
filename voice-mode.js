@@ -122,14 +122,53 @@
     return pack[key] != null ? pack[key] : (STATUS_STR.en[key] || key);
   }
   function recogLang() {
-    try { if (typeof preferredLanguageCode === 'function') return preferredLanguageCode() || 'fil-PH'; } catch (e) {}
-    return 'fil-PH';
+    if (S.lastSpokenLanguage) return S.lastSpokenLanguage;
+    try { if (typeof preferredLanguageCode === 'function') { var preferred = preferredLanguageCode(); if (preferred) return preferred; } } catch (e) {}
+    return navigator.language || 'en-US';
+  }
+
+  function detectUserLanguage(text) {
+    var value = String(text || '');
+    if (/[\u3040-\u30ff]/.test(value)) return 'ja-JP';
+    if (/[\uac00-\ud7af]/.test(value)) return 'ko-KR';
+    if (/[\u4e00-\u9fff]/.test(value)) return 'zh-CN';
+    if (/\b(ang|mga|ako|ikaw|siya|kami|tayo|sila|ito|salamat|kumusta|paano|bakit|hindi|oo|po|opo|gusto|kasi|naman|yung|iyan|iyon)\b/i.test(value)) return 'fil-PH';
+    if (/\b(hola|gracias|cómo|quiero|ayuda|por favor)\b/i.test(value)) return 'es-ES';
+    if (/\b(bonjour|merci|comment|vous|avec)\b/i.test(value)) return 'fr-FR';
+    if (/\b(hallo|danke|bitte|ich|nicht)\b/i.test(value)) return 'de-DE';
+    if (/\b(ciao|grazie|sono|questo|perché)\b/i.test(value)) return 'it-IT';
+    if (/\b(olá|obrigado|obrigada|você|não)\b/i.test(value)) return 'pt-BR';
+    if (/\b(hai|halo|saya|kamu|terima kasih|tidak|bisa)\b/i.test(value)) return 'id-ID';
+    if (/\b(helo|saya|anda|terima kasih|tidak|boleh)\b/i.test(value)) return 'ms-MY';
+    if (/\b(xin chào|cảm ơn|tôi|bạn|không|được)\b/i.test(value)) return 'vi-VN';
+    try {
+      var setting = (typeof personalizationSettings !== 'undefined' && personalizationSettings.language) || '';
+      if ((!setting || setting === 'Auto-detect') && typeof detectSpeechLanguage === 'function') return detectSpeechLanguage(value) || 'en-US';
+      if (setting && typeof preferredLanguageCode === 'function') return preferredLanguageCode() || 'en-US';
+    } catch (e) {}
+    return navigator.language || 'en-US';
+  }
+
+  function languageNameFor(code) {
+    var names = {
+      'fil-PH':'Filipino/Tagalog','en-US':'English','es-ES':'Spanish','fr-FR':'French','de-DE':'German',
+      'it-IT':'Italian','pt-BR':'Portuguese','ja-JP':'Japanese','ko-KR':'Korean','zh-CN':'Chinese',
+      'ar-SA':'Arabic','bn-BD':'Bengali','ceb-PH':'Cebuano','da-DK':'Danish','nl-NL':'Dutch',
+      'fi-FI':'Finnish','el-GR':'Greek','gu-IN':'Gujarati','he-IL':'Hebrew','hi-IN':'Hindi',
+      'hu-HU':'Hungarian','id-ID':'Indonesian','kn-IN':'Kannada','kk-KZ':'Kazakh','lv-LV':'Latvian',
+      'lt-LT':'Lithuanian','mk-MK':'Macedonian','ms-MY':'Malay','ml-IN':'Malayalam','mr-IN':'Marathi',
+      'mn-MN':'Mongolian','ne-NP':'Nepali','nb-NO':'Norwegian','fa-IR':'Persian','pl-PL':'Polish',
+      'pa-IN':'Punjabi','ro-RO':'Romanian','ru-RU':'Russian','sr-RS':'Serbian','sk-SK':'Slovak',
+      'sl-SI':'Slovenian','sw-KE':'Swahili','sv-SE':'Swedish','ta-IN':'Tamil','te-IN':'Telugu',
+      'th-TH':'Thai','tr-TR':'Turkish','uk-UA':'Ukrainian','ur-PK':'Urdu','vi-VN':'Vietnamese'
+    };
+    return names[code] || 'English';
   }
 
   var S = {
     open: false, state: 'idle', rec: null, recToken: 0, restarts: 0,
     stream: null, actx: null, analyser: null, raf: 0,
-    poll: 0, muted: false, speaker: true
+    poll: 0, muted: false, speaker: true, lastSpokenLanguage: '', idlePromptTimer: 0
   };
 
   function $(id) { return document.getElementById(id); }
@@ -310,6 +349,19 @@
       }
     } catch (e) {}
     jdSyncSendVoice();
+    /* The ReactBits Sling button binds its own click listener and calls
+       handleMainAction directly, so swapping the element's onclick property
+       alone cannot open voice mode. Intercept the click before that listener. */
+    var send = $('mainActionBtn');
+    if (send && !send.__jdVoiceClickCaptureBound) {
+      send.__jdVoiceClickCaptureBound = true;
+      send.addEventListener('click', function (event) {
+        if (!send.__jdVoiceSwapped) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        open();
+      }, true);
+    }
   }
 
   function setState(state) {
@@ -434,7 +486,7 @@
       if (S.state !== 'listening') return;
       if (++S.restarts > 10) {
         setState('idle');
-        toast(t('errStopped'));
+        scheduleIdleNudge();
         return;
       }
       setTimeout(function () {
@@ -443,6 +495,7 @@
     };
     try { rec.start(); }
     catch (e) { /* will retry via onend or next cycle */ }
+    scheduleIdleNudge();
   }
 
   /* ---------- send through the real chat pipeline ---------- */
@@ -450,6 +503,8 @@
     text = (text || '').trim();
     if (!text || !S.open) { if (S.open) startListening(); return; }
     setTranscript('user', text);
+    S.lastSpokenLanguage = detectUserLanguage(text);
+    clearTimeout(S.idlePromptTimer);
     var generating = false;
     try { generating = !!isAIGenerating; } catch (e) {}
     if (generating) {
@@ -464,8 +519,11 @@
       if (!input || typeof sendMessage !== 'function') throw new Error('no-pipeline');
       input.value = text;
       input.dispatchEvent(new Event('input', { bubbles: true }));
+      var previousVoiceLanguage = window.__jdVoiceResponseLanguage;
+      window.__jdVoiceResponseLanguage = languageNameFor(S.lastSpokenLanguage);
       var r = sendMessage();
-      if (r && typeof r.catch === 'function') r.catch(function () {});
+      if (r && typeof r.finally === 'function') r.finally(function () { window.__jdVoiceResponseLanguage = previousVoiceLanguage; });
+      else window.__jdVoiceResponseLanguage = previousVoiceLanguage;
     } catch (e) {
       toast(t('errSend'));
       setState('listening');
@@ -506,11 +564,25 @@
     speak(text);
   }
 
-  function speak(text) {
+  function scheduleIdleNudge() {
+    clearTimeout(S.idlePromptTimer);
+    if (!S.open || S.muted || !S.speaker) return;
+    S.idlePromptTimer = setTimeout(function () {
+      if (!S.open || S.state === 'speaking' || S.state === 'thinking' || S.muted) return;
+      var followups = /^fil|^tl/i.test(S.lastSpokenLanguage)
+        ? ['Nandito lang ako. Sabihin mo lang kung paano kita matutulungan.', 'Handa akong makinig. Ano ang gusto mong itanong?', 'Pwede ka nang magsalita kapag handa ka na.']
+        : ['I’m here. Just tell me how I can help.', 'I’m listening. What would you like to ask?', 'Whenever you’re ready, you can speak.'];
+      stopRec();
+      speak(followups[Math.min(S.idleNudges++, followups.length - 1)]);
+    }, 12000);
+  }
+
+  function speak(text, languageOverride) {
     if (!S.open) return;
     setState('speaking');
     try {
       speakSmartVoice(text, {
+        languageOverride: languageOverride || S.lastSpokenLanguage || undefined,
         onend: function () {
           if (!S.open) return;
           if (S.state === 'speaking') { setState('listening'); startListening(); }
@@ -543,19 +615,25 @@
     try { if (typeof stopAllSpeech === 'function') stopAllSpeech(); } catch (e) {}
     S.open = true;
     S.muted = false;
+    S.lastSpokenLanguage = '';
+    S.idleNudges = 0;
+    window.__jdVoiceResponseLanguage = '';
     var m = $('jdVmMute');
     if (m) { m.classList.remove('off'); m.innerHTML = icon('mic', 22); refreshIcons(m); }
     var ov = $('jdVoiceMode');
     ov.removeAttribute('hidden');
     document.body.classList.add('jd-vm-open');
-    setState('listening');
+    setState('speaking');
     startMicLevel();
-    startListening();
+    setTranscript('ai', 'Hello, I\'m JepongDevxyz AI. How can I help you today?');
+    speak('Hello, I\'m JepongDevxyz AI. How can I help you today?', 'en-US');
   }
 
   function close() {
     if (!S.open) return;
     S.open = false;
+    clearTimeout(S.idlePromptTimer);
+    window.__jdVoiceResponseLanguage = '';
     S.recToken++;
     stopRec();
     try { clearInterval(S.poll); } catch (e) {}

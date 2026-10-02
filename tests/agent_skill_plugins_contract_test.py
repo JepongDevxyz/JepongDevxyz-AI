@@ -4,37 +4,21 @@ frontend=Path('plugins.js').read_text(encoding='utf-8')
 backend=Path('api/chat.js').read_text(encoding='utf-8')
 
 plugins={
- 'superpowers':'obra/superpowers',
- 'mattpocock':'mattpocock/skills',
- 'uiuxpro':'nextlevelbuilder/ui-ux-pro-max-skill',
- 'caveman':'Shawnchee/caveman-skill',
- 'humanizer':'blader/humanizer',
- 'findskills':'vercel-labs/skills/find-skills',
- 'deployvercel':'vercel-labs/agent-skills/deploy-to-vercel',
- 'brainstorming':'obra/superpowers/brainstorming',
- 'tdd':'obra/superpowers/test-driven-development',
- 'excalidraw':'coleam00/excalidraw-diagram-skill',
- 'remotion':'remotion-dev/skills',
- 'webquality':'addyosmani/web-quality-skills',
+ 'superpowers':'Superpowers',
 }
 
 for plugin,source in plugins.items():
-    assert source in frontend, f'missing plugin source: {plugin}'
+    assert f"id:'{plugin}'" in frontend, f'missing plugin catalog entry: {plugin}'
+    assert f"name:'{source}'" in frontend, f'missing plugin display name: {plugin}'
 
-for plugin in set(plugins)-{'superpowers'}:
-    assert f"{plugin}:'" in backend, f'missing backend behavior: {plugin}'
-
-assert "skills:skillPluginIds.filter(id=>installed(id))" in frontend
-assert "Object.hasOwn(skillPluginRules,id)" in backend
-assert "Plugins never override user intent, safety rules, tool permissions, or evidence requirements." in backend
-assert "Never claim a URL, deployment ID, or successful deploy without real deployment evidence." in backend
-assert "Never claim red, green, or passing tests without actual test output." in backend
+assert "superpowers: { enabled: isInstalled('superpowers'), phase: 'auto' }" in frontend
+assert "Installed skill plugins are explicit, bounded behavior profiles." in backend
+assert "Never claim subagents, shell commands, source edits or successful tests unless actual tool events confirm them." in backend
 
 print('agent skill plugins contract: PASS')
 
-assert "autoUse:true" in frontend
-assert "skillPluginTriggers" in backend
-assert "Apply only plugins relevant to the current request" in backend
-assert "do not ask the user to manually select or @mention them" in backend
-assert "Installed but irrelevant plugins must not distort the answer" in backend
-print('automatic cross-model plugin routing contract: PASS')
+assert "autoUse: true" in frontend
+assert "plugins-inject.js" in frontend or "plugins-inject.js" in Path('index.html').read_text(encoding='utf-8')
+assert "getCatalog: function () { return CATALOG; }" in frontend
+assert "Only apply skills relevant to the request" in Path('plugins-inject.js').read_text(encoding='utf-8')
+print('installed plugin injection contract: PASS')

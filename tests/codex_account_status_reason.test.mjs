@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { accountAvailability, settings } from '../api/_codex_sandbox.js';
-import accountHandler from '../api/codex-account.js';
+import { handler as accountHandler } from '../lib/codex/account.js';
 
 const secret='local-test-secret-which-is-over-32-characters';
 const uid='11111111-1111-4111-8111-111111111111';

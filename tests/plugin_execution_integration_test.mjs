@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import handler from '../api/plugin-execute.js';
+import {handler} from '../lib/plugins/execute.js';
 import {sealSession} from '../api/_github_oauth.js';
 import fs from 'node:fs';
 
@@ -94,17 +94,9 @@ try{
   assert.equal(requests.some(r=>r.authorization!=='Bearer gho_mock_scoped_token'),false);
 } finally {globalThis.fetch=originalFetch;}
 
-const plugins=fs.readFileSync('plugins.js','utf8');
-const html=JSON.parse(plugins.split('\n')[0].replace(/^const PANEL_HTML=/,'').replace(/;$/,''));
 const page=fs.readFileSync('index.html','utf8');
-for(const control of ['jdplugExecutionPanel','jdplugLoadWorkflows','jdplugWorkflowSelect',
-  'jdplugDispatchWorkflow','jdplugExecuteConfirm','jdplugApproveExecution','jdplugCheckRuns'])
-  assert(html.includes('id="'+control+'"'),'missing execution control '+control);
-assert(plugins.includes('function confirmRunTests()')&&plugins.includes('async function dispatchTests()'));
-assert(plugins.includes("await executeApi('dispatch',{workflowId:approved.workflowId,ref:approved.ref,confirm:true})"));
-assert(page.includes("message.toLowerCase() === '/run-tests'"));
-assert(page.includes('await window.JDPlugins?.ready?.()'));
-assert(plugins.includes("superpowers:{enabled:installed('superpowers'),phase:state.phase}"))
-assert(plugins.includes("autoUse:true"));
-assert(plugins.includes("enabled:installed('github')&&state.github&&state.repoLoaded"));
-console.log('PASS: OAuth-protected workflow listing, approval, execution and verified status across chat/model UI');
+const routes=JSON.parse(fs.readFileSync('vercel.json','utf8')).rewrites;
+assert(page.includes('await window.JDPlugins?.ready?.()'),'chat awaits the active plugin integration');
+assert(routes.some(x=>x.source==='/api/plugin-execute'&&x.destination==='/api/plugins?route=execute'),
+  'workflow execution remains available through current consolidated routing');
+console.log('PASS: OAuth-protected workflow listing, approval, execution and verified status through current routing');

@@ -39,15 +39,18 @@ globalThis.fetch = async (url, opts = {}) => {
       headers: { 'content-range': `0-${Math.max(0, n - 1)}/${n}` },
     });
   }
+  if (u.includes('/rest/v1/credit_ledger?select=delta')) {
+    return new Response(JSON.stringify([{ delta: 500 }, { delta: -10 }]), { status: 200 });
+  }
   if (u.includes('/rest/v1/credit_ledger') && (opts.method || 'GET') === 'POST') {
     return new Response('', { status: mock.welcomeInsertStatus });
   }
   throw new Error('unexpected fetch: ' + u);
 };
 
-const balanceMod = await import('../api/credits-balance.js');
-const spendMod = await import('../api/credits-spend.js');
-const welcomeMod = await import('../api/credits-welcome.js');
+const balanceMod = await import('../lib/credits/balance.js');
+const spendMod = await import('../lib/credits/spend.js');
+const welcomeMod = await import('../lib/credits/welcome.js');
 
 const req = (path, { method = 'GET', token = 'good-token-1234567890abcdef', body = null } = {}) => {
   const headers = {};
@@ -69,7 +72,7 @@ async function t(name, fn) {
 
 // ---------- balance ----------
 await t('balance returns balance + welcome flag', async () => {
-  const res = await balanceMod.default(req('/api/credits-balance'));
+  const res = await balanceMod.handler(req('/api/credits-balance'));
   assert.equal(res.status, 200);
   const d = await res.json();
   assert.equal(d.balance, 1240);
@@ -77,19 +80,19 @@ await t('balance returns balance + welcome flag', async () => {
 });
 
 await t('balance without token -> 401', async () => {
-  const res = await balanceMod.default(req('/api/credits-balance', { token: null }));
+  const res = await balanceMod.handler(req('/api/credits-balance', { token: null }));
   assert.equal(res.status, 401);
 });
 
 await t('balance wrong method -> 405', async () => {
-  const res = await balanceMod.default(req('/api/credits-balance', { method: 'POST' }));
+  const res = await balanceMod.handler(req('/api/credits-balance', { method: 'POST' }));
   assert.equal(res.status, 405);
 });
 
 // ---------- spend ----------
 await t('spend chat deducts server-side cost', async () => {
   mock.spendResult = 90;
-  const res = await spendMod.default(
+  const res = await spendMod.handler(
     req('/api/credits-spend', { method: 'POST', body: { action: 'chat', idempotency_key: 'k1' } })
   );
   assert.equal(res.status, 200);
@@ -102,7 +105,7 @@ await t('spend chat deducts server-side cost', async () => {
 
 await t('spend insufficient -> 402 Tagalog', async () => {
   mock.spendResult = -1;
-  const res = await spendMod.default(
+  const res = await spendMod.handler(
     req('/api/credits-spend', { method: 'POST', body: { action: 'chat', idempotency_key: 'k2' } })
   );
   assert.equal(res.status, 402);
@@ -111,21 +114,21 @@ await t('spend insufficient -> 402 Tagalog', async () => {
 });
 
 await t('spend unknown action -> 400', async () => {
-  const res = await spendMod.default(
+  const res = await spendMod.handler(
     req('/api/credits-spend', { method: 'POST', body: { action: 'hack', idempotency_key: 'k3' } })
   );
   assert.equal(res.status, 400);
 });
 
 await t('spend missing key -> 400', async () => {
-  const res = await spendMod.default(
+  const res = await spendMod.handler(
     req('/api/credits-spend', { method: 'POST', body: { action: 'chat' } })
   );
   assert.equal(res.status, 400);
 });
 
 await t('spend without token -> 401', async () => {
-  const res = await spendMod.default(
+  const res = await spendMod.handler(
     req('/api/credits-spend', { method: 'POST', token: null, body: { action: 'chat', idempotency_key: 'k4' } })
   );
   assert.equal(res.status, 401);
@@ -135,7 +138,7 @@ await t('spend without token -> 401', async () => {
 await t('welcome grants once', async () => {
   mock.welcomeInsertStatus = 201;
   mock.balance = 500;
-  const res = await welcomeMod.default(req('/api/credits-welcome', { method: 'POST' }));
+  const res = await welcomeMod.handler(req('/api/credits-welcome', { method: 'POST' }));
   assert.equal(res.status, 200);
   const d = await res.json();
   assert.equal(d.granted, true);
@@ -145,7 +148,7 @@ await t('welcome grants once', async () => {
 
 await t('welcome repeat -> already claimed', async () => {
   mock.welcomeInsertStatus = 409;
-  const res = await welcomeMod.default(req('/api/credits-welcome', { method: 'POST' }));
+  const res = await welcomeMod.handler(req('/api/credits-welcome', { method: 'POST' }));
   assert.equal(res.status, 200);
   const d = await res.json();
   assert.equal(d.granted, false);

@@ -164,92 +164,9 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* INITIAL SKELETON LOADER: Show FIRST before anything else (2026-10-02)
      Full-screen skeleton that appears immediately on page load, hides when app is ready */
   (function(){
-    if(document.getElementById('jdInitSkeleton'))return;
-    /* Detect active theme from multiple sources BEFORE showing skeleton (2026-10-02) */
-    var isLight=false;
-    try{
-      // Check localStorage first
-      if(localStorage.getItem('jepong_theme')==='theme-light') isLight=true;
-      // Check data-theme attribute (site uses data-theme="dark"/"light")
-      else{
-        var dt=document.documentElement.getAttribute('data-theme');
-        if(dt==='light') isLight=true;
-        else if(dt==='dark') isLight=false;
-        // Check theme-light class
-        else if(document.body.classList.contains('theme-light')||document.documentElement.classList.contains('theme-light')) isLight=true;
-      }
-    }catch(e){}
-    /* Apply theme class IMMEDIATELY (2026-10-02): sync all theme-dependent styles from the start
-       Prevents light-in-dark or dark-in-light flashes */
-    try{
-      if(isLight){document.documentElement.classList.add('theme-light');document.body.classList.add('theme-light');}
-      else{document.documentElement.classList.remove('theme-light');document.body.classList.remove('theme-light');}
-    }catch(e){}
-    var st=document.createElement('style');
-    st.id='jdInitSkeletonCss';
-    st.textContent=[
-      /* Prevent white flash: match active theme from the very start */
-      'html{background:'+(isLight?'#ffffff':'#0a0a0c')+'}body{background:'+(isLight?'#ffffff':'#0a0a0c')+'}',
-      '#jdInitSkeleton{position:fixed;inset:0;z-index:2147483647;background:'+(isLight?'#ffffff':'#0a0a0c')+';',
-      'display:flex;flex-direction:column;padding:16px}',
-      '#jdInitSkeleton.hide{display:none!important}',
-      /* Hide ALL old UI while skeleton is active (prevents stale flashes) */
-      /* Aggressive: hide all descendants, not just direct children */
-      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){display:none!important}',
-      'body.jd-sk-active #jdInitSkeleton{display:flex!important}',
-      /* Dynamic theme: skeleton follows data-theme attribute (2026-10-02) */
-      'html[data-theme="light"] #jdInitSkeleton{background:#ffffff!important}',
-      'html[data-theme="dark"] #jdInitSkeleton{background:#0a0a0c!important}',
-      'html[data-theme="light"]{background:#ffffff!important}html[data-theme="dark"]{background:#0a0a0c!important}',
-      /* Send button theme sync: simple data-theme based (2026-10-02) */
-      'html[data-theme="dark"] #mainActionBtn{background:#2b2b30!important;color:#e8e8e8!important}',
-      'html[data-theme="light"] #mainActionBtn{background:#ececf0!important;color:#55555d!important}',
-      /* Armed state (when text is typed): keep theme colors */
-      'html[data-theme="dark"] #mainActionBtn[data-armed]{background:#2b2b30!important;color:#e8e8e8!important}',
-      'html[data-theme="light"] #mainActionBtn[data-armed]{background:#ececf0!important;color:#55555d!important}',
-      'body.theme-light #jdInitSkeleton{background:#ffffff}',
-      '.jdisk-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}',
-      '.jdisk-tabs{display:flex;gap:16px;justify-content:center;margin-bottom:32px}',
-      '.jdisk-bar{height:16px;border-radius:8px;margin-bottom:14px;}',
-      '.jdisk-bar.short{width:40%}.jdisk-bar.med{width:70%}.jdisk-bar.long{width:92%}',
-      '.jdisk-input{margin-top:auto;height:56px;border-radius:16px}',
-      '@keyframes jdIskShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}',
-      '.jdisk{background:linear-gradient(90deg,'+(isLight?'rgba(0,0,0,.06) 25%,rgba(0,0,0,.14) 37%,rgba(0,0,0,.06) 63%':'rgba(128,128,128,.12) 25%,rgba(128,128,128,.25) 37%,rgba(128,128,128,.12) 63%')+');',
-      'background-size:800px 100%;animation:jdIskShimmer 1.3s ease-in-out infinite}',
-      /* Homepage layout: header / welcome / input bar (2026-10-02) */
-      '.jdisk-hp-head{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;margin-bottom:8px}',
-      '.jdisk-hp-tabs{display:flex;gap:10px;justify-content:center}',
-      '.jdisk-hp-welcome{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0}',
-      '.jdisk-hp-input{display:flex;align-items:center;background:'+(isLight?'rgba(0,0,0,.04)':'rgba(255,255,255,.06)')+';border-radius:24px;padding:10px 12px;margin-top:auto}'
-    ].join('\n');
-    document.head.appendChild(st);
-    var sk=document.createElement('div');
-    sk.id='jdInitSkeleton';
-    /* Homepage-layout skeleton: mirrors actual UI (header/tabs/welcome/input bar) */
-    sk.innerHTML=
-      '<div class="jdisk-hp-head">'+
-        '<div class="jdisk" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div>'+
-        '<div class="jdisk-hp-tabs">'+
-          '<div class="jdisk" style="width:52px;height:28px;border-radius:14px"></div>'+
-          '<div class="jdisk" style="width:68px;height:28px;border-radius:14px"></div>'+
-          '<div class="jdisk" style="width:48px;height:28px;border-radius:14px"></div>'+
-        '</div>'+
-        '<div class="jdisk" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div>'+
-      '</div>'+
-      '<div class="jdisk-hp-welcome">'+
-        '<div class="jdisk" style="width:180px;height:32px;border-radius:16px;margin:0 auto 12px"></div>'+
-        '<div class="jdisk" style="width:240px;height:28px;border-radius:14px;margin:0 auto 12px"></div>'+
-        '<div class="jdisk" style="width:120px;height:28px;border-radius:14px;margin:0 auto"></div>'+
-      '</div>'+
-      '<div class="jdisk-hp-input">'+
-        '<div class="jdisk" style="width:40px;height:40px;border-radius:50%;flex-shrink:0"></div>'+
-        '<div class="jdisk" style="flex:1;height:22px;border-radius:11px;margin:0 10px"></div>'+
-        '<div class="jdisk" style="width:52px;height:28px;border-radius:14px;flex-shrink:0"></div>'+
-        '<div class="jdisk" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin-left:8px"></div>'+
-        '<div class="jdisk" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;margin-left:8px"></div>'+
-      '</div>';
-    document.body.appendChild(sk);
-    // Hide old UI while skeleton is active
+    var sk=document.getElementById('jdBootSkeleton');
+    if(!sk)return;
+    /* Use the static first-paint shell in index.html; this script manages its lifecycle. */
     document.body.classList.add('jd-sk-active');
     /* Proactively fix the effort badge (2026-10-02): update "Instant" to saved value
        BEFORE the skeleton hides, so the old default never shows */
@@ -285,8 +202,9 @@ window.JDCodingAgent=Object.freeze({open,close});
     function hide(){
       if(hidden)return; hidden=true;
       document.body.classList.remove('jd-sk-active');
+      document.documentElement.classList.remove('jd-boot-pending');
       sk.classList.add('hide');
-      if(sk.parentNode) sk.remove();
+      setTimeout(function(){if(sk.parentNode)sk.remove();},260);
     }
     window.__jdHideInitSkeleton=hide;
     // Smart hide (2026-10-02): wait until the final design is present
@@ -322,7 +240,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001g3';
+  var V='?v=20261002a2';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){

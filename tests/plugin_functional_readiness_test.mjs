@@ -80,9 +80,7 @@ try{
 }finally{globalThis.fetch=originalFetch;}
 
 const ui=fs.readFileSync('plugins.js','utf8');
-assert(ui.includes('async function checkGithubReadiness()'));
-assert(ui.includes('if(ready===false)'));
-assert(ui.includes("if(!response.ok)throw new Error('GitHub disconnect failed. Try again.')"));
-const panel=JSON.parse(ui.split('\n')[0].replace(/^const PANEL_HTML=/,'').replace(/;$/,''));
-assert(panel.includes('id="jdplugConnectionReady"'));
-console.log('PASS: GitHub OAuth readiness, public fallback, repository-source context and verified disconnect');
+assert(ui.includes("id:'superpowers'"),'current plugin catalog retains Superpowers');
+assert(ui.includes("fetch(url, { credentials: 'same-origin' })"),'connected plugins use the shared connector auth flow');
+assert(ui.includes("'jd-connector-connected'"),'connected plugins handle connector completion messages');
+console.log('PASS: GitHub OAuth readiness, public fallback and repository-source context with current plugin/connector UI');

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { codexAccountActor } from '../api/_codex_identity.js';
-import accountHandler from '../api/codex-account.js';
+import { handler as accountHandler } from '../lib/codex/account.js';
 const secret='test-codex-session-secret-longer-than-32-bytes';
 const userA='11111111-1111-4111-8111-111111111111';
 const userB='22222222-2222-4222-8222-222222222222';

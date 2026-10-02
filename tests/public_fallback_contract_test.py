@@ -48,15 +48,15 @@ def main():
     require('function puterConversation' not in INDEX, 'Puter conversation helper still present')
     require('function tryPuterPublicFallback' not in INDEX, 'Puter execution fallback still present')
 
-    # The model picker uses a viewport-width flex carousel. Each provider page is
-    # exactly one viewport wide and renderProviderPage advances by one page (100%).
-    # This remains correct as PROVIDER_ORDER grows; do not hard-code a provider count.
-    require('.model-pages-track { display: flex; width: 100%' in INDEX,
-            'model picker track is not using viewport-width flex geometry')
-    require('.model-provider-page { width: 100%; flex: 0 0 100%' in INDEX,
-            'model picker page is not exactly one viewport wide')
-    require('currentProviderPage*100' in INDEX,
-            'model picker transform is not synchronized to viewport-width pages')
+    # Each provider page is positioned relative to its own viewport width so
+    # long track geometry and rapid mobile swipes cannot stack page content.
+    require('.model-pages-track { position: relative; width: 100%; height: 100%' in INDEX,
+            'model picker track must be a bounded positioning viewport')
+    require('.model-provider-page { position: absolute; inset: 0; width: 100%; height: 100%' in INDEX,
+            'each model picker page must occupy the same viewport')
+    require('providerPagePosition(index,currentProviderPage)' in INDEX and
+            'page.style.transform=`translate3d(${position.offset*100}%,0,0)`' in INDEX,
+            'provider pages must move by their own width and hide distant slides')
 
     # Only after primary quota/key exhaustion, call registered Horde before anonymous.
     gate = CHAT.index("if(autoFallback&&fallbackable)")

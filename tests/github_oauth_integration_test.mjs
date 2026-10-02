@@ -7,9 +7,9 @@ process.env.GITHUB_OAUTH_CALLBACK_URL='https://example.test/api/github-oauth-cal
 process.env.GITHUB_OAUTH_SCOPES='read:user user:email';
 
 const helper=await import('../api/_github_oauth.js');
-const start=(await import('../api/github-oauth-start.js')).default;
-const callback=(await import('../api/github-oauth-callback.js')).default;
-const sessionHandler=(await import('../api/github-oauth-session.js')).default;
+const start=(await import('../lib/github/oauth-start.js')).handler;
+const callback=(await import('../lib/github/oauth-callback.js')).handler;
+const sessionHandler=(await import('../lib/github/oauth-session.js')).handler;
 
 assert.equal(helper.sanitizeReturnPath('/chat?x=1'),'/chat?x=1');
 assert.equal(helper.sanitizeReturnPath('https://evil.test/'),'/');
