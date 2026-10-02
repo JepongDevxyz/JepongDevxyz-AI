@@ -12985,6 +12985,7 @@ ${m.text || ''}
         function renderProviderPage({animate=true}={}){
             const track=document.getElementById('modelPagesTrack'); const title=document.getElementById('modelProviderTitle');
             const pages=[...document.querySelectorAll('#modelPagesTrack .model-provider-page')];
+            if(track){track.dataset.jdPerPageLayout='true';window.__jdDisableModelCube?.();}
             pages.forEach((page,index)=>{
                 const position=providerPagePosition(index,currentProviderPage);
                 page.style.transition=animate?'':'none';

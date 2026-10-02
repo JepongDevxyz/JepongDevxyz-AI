@@ -99,7 +99,12 @@
   function setupCube() {
     var viewport = document.getElementById('modelPagesViewport');
     var track = document.getElementById('modelPagesTrack');
-    if (!viewport || !track || track.__jdCube) return;
+    if (!viewport || !track) return;
+    // The picker now positions each provider page inside a single viewport.
+    // The legacy cube transforms each page as a 3D face and makes both
+    // providers visible side-by-side during mobile swipes, so do not apply it.
+    if (track.dataset.jdPerPageLayout === 'true') return;
+    if (track.__jdCube) return;
     track.__jdCube = true;
 
     if (!document.getElementById('jdCubeCss')) {
@@ -161,6 +166,20 @@
     track.style.transform = 'translateZ(-' + ((track.parentElement.offsetWidth || 300) / 2) + 'px) rotateY(' + (-pageIdx * 90) + 'deg)';
     setTimeout(function () { track.__jdCubeRotating = false; }, 600);
   }
+
+  window.__jdDisableModelCube = function () {
+    var track = document.getElementById('modelPagesTrack');
+    if (!track || !track.__jdCube) return;
+    cubeActive = false;
+    currentCubePage = 0;
+    track.classList.remove('jd-cube');
+    track.style.transform = '';
+    track.style.transition = '';
+    track.style.transformStyle = '';
+    track.querySelectorAll('.model-provider-page').forEach(function (page) {
+      page.style.backfaceVisibility = '';
+    });
+  };
 
   function init() {
     upgradeModeUI();
