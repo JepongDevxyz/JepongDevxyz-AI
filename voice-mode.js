@@ -362,6 +362,25 @@
         open();
       }, true);
     }
+    /* Sling dispatches handleMainAction() directly from pointerup before a
+       native click exists. Route that path through the same voice/send state
+       check so both touch and mouse gestures open Voice mode when empty. */
+    try {
+      var currentAction = window.handleMainAction;
+      if (typeof currentAction === 'function' && !currentAction.__jdVoiceModeWrapped) {
+        var wrappedHandleMainAction = function () {
+          var currentSend = $('mainActionBtn');
+          if (currentSend && currentSend.__jdVoiceSwapped) {
+            open();
+            return;
+          }
+          return currentAction.apply(this, arguments);
+        };
+        wrappedHandleMainAction.__jdVoiceModeWrapped = true;
+        try { Object.defineProperty(wrappedHandleMainAction, 'name', { value: 'handleMainAction' }); } catch (e) {}
+        window.handleMainAction = wrappedHandleMainAction;
+      }
+    } catch (e) {}
   }
 
   function setState(state) {

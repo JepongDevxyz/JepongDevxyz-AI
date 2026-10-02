@@ -11,6 +11,7 @@ assert(voice.includes('stopRec();\n      speak(followups'), 'voice nudges must p
 assert(voice.includes("S.lastSpokenLanguage = detectUserLanguage(text)"), 'voice mode must detect the language from each user utterance');
 assert(voice.includes("send.addEventListener('click'") && voice.includes("}, true);"), 'voice action must intercept the Sling button click in capture phase');
 assert(voice.includes('event.stopImmediatePropagation();') && voice.includes('if (!send.__jdVoiceSwapped) return;'), 'voice click must stop the Sling send handler only while the composer is in voice mode');
+assert(voice.includes('window.handleMainAction = wrappedHandleMainAction;') && voice.includes('if (send.__jdVoiceSwapped) {'), 'the voice swap must intercept Sling pointer-release calls that invoke handleMainAction directly without a click event');
 assert(voice.includes("send.setAttribute('aria-label', t('entryAria'))"), 'voice state must update the real composer action accessibility label');
 assert(!voice.includes("mic.addEventListener('click'"), 'voice mode must preserve the microphone button dictation gesture');
 assert(app.includes('voiceResponseLanguage: window.__jdVoiceResponseLanguage || undefined'), 'voice requests must pass their detected response language to the chat API');
