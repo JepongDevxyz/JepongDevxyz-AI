@@ -187,6 +187,10 @@ window.JDCodingAgent=Object.freeze({open,close});
             btn.style.setProperty('background-color',bg,'important');
             btn.style.setProperty('color',fg,'important');
             btn.style.setProperty('border-color',bg,'important');
+            btn.style.setProperty('box-shadow','none','important');
+            // Also fix any child SVG/icon that might be white
+            var svg=btn.querySelector('svg');
+            if(svg){svg.style.setProperty('color',fg,'important');svg.style.setProperty('fill',fg,'important');}
           }
         };
         apply();
@@ -207,8 +211,8 @@ window.JDCodingAgent=Object.freeze({open,close});
       '#jdInitSkeleton.hide{display:none!important}',
       /* Hide ALL old UI while skeleton is active (prevents stale flashes) */
       /* Use visibility (not display:none) so patches can still initialize buttons */
-      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){visibility:hidden!important;pointer-events:none!important}',
-      'body.jd-sk-active #jdInitSkeleton{visibility:visible!important;pointer-events:auto!important}',
+      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){visibility:hidden!important}',
+      'body.jd-sk-active #jdInitSkeleton{visibility:visible!important}',
       'body.jd-sk-active #jdInitSkeleton{display:flex!important}',
       /* Send button theme sync (2026-10-02): ensure it follows dark/light mode immediately */
       /* Dark mode: dark button */
@@ -343,7 +347,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001f5';
+  var V='?v=20261001f6';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -388,7 +392,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001f5)
+        // Allow letters+numbers in version (e.g. 20261001f6)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });

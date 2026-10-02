@@ -572,6 +572,30 @@
     injectCSS();
     buildUI();
     jdInitSendVoiceSwap();
+    jdFixSendButtonTheme();
+  }
+
+  /* Send button theme fix (2026-10-02): ensure it follows dark/light mode
+     Runs in patch (fresh via version query) as backup to agent.js fix */
+  function jdFixSendButtonTheme(){
+    try{
+      var isLight=false;
+      try{isLight=(localStorage.getItem('jepong_theme')==='theme-light');}catch(e){}
+      var bg=isLight?'#ececf0':'#2b2b30';
+      var fg=isLight?'#55555d':'#e8e8e8';
+      var apply=function(){
+        var btn=document.getElementById('mainActionBtn');
+        if(btn){
+          btn.style.setProperty('background',bg,'important');
+          btn.style.setProperty('background-color',bg,'important');
+          btn.style.setProperty('color',fg,'important');
+          btn.style.setProperty('border-color',bg,'important');
+          btn.style.setProperty('box-shadow','none','important');
+        }
+      };
+      apply();
+      setInterval(apply,2000);
+    }catch(e){}
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
