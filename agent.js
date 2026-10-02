@@ -174,6 +174,26 @@ window.JDCodingAgent=Object.freeze({open,close});
       if(isLight){document.documentElement.classList.add('theme-light');document.body.classList.add('theme-light');}
       else{document.documentElement.classList.remove('theme-light');document.body.classList.remove('theme-light');}
     }catch(e){}
+    /* Direct button theme fix (2026-10-02): ensure send button follows theme via JS
+       (bypasses CSS specificity issues) */
+    (function fixSendButtonTheme(){
+      try{
+        var bg=isLight?'#ececf0':'#2b2b30';
+        var fg=isLight?'#55555d':'#e8e8e8';
+        var apply=function(){
+          var btn=document.getElementById('mainActionBtn');
+          if(btn){
+            btn.style.setProperty('background',bg,'important');
+            btn.style.setProperty('color',fg,'important');
+          }
+        };
+        apply();
+        // Re-apply when button appears or changes (MutationObserver)
+        var obs=new MutationObserver(apply);
+        obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+        setTimeout(function(){obs.disconnect();},15000);
+      }catch(e){}
+    })();
     var st=document.createElement('style');
     st.id='jdInitSkeletonCss';
     st.textContent=[
@@ -320,7 +340,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001f3';
+  var V='?v=20261001f4';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -365,7 +385,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001f3)
+        // Allow letters+numbers in version (e.g. 20261001f4)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
