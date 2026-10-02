@@ -262,16 +262,40 @@ window.JDCodingAgent=Object.freeze({open,close});
       if(sk.parentNode) sk.remove();
     }
     window.__jdHideInitSkeleton=hide;
-    // Hide when window fully loads + 3s for patches and app init (was 1s, too early)
-    // The old UI must be fully replaced by patches before we reveal the page
-    if(document.readyState==='complete'){ setTimeout(hide,3000); }
-    else{ window.addEventListener('load',function(){ setTimeout(hide,3000); }); }
-    setTimeout(hide,12000); // Max 12s fallback (was 8s)
+    // Smart hide (2026-10-02): wait until the final design is present
+    // Check if the effort badge shows the saved value (not the old "Instant" default)
+    function isDesignReady(){
+      try{
+        var p=JSON.parse(localStorage.getItem('jepong_personalization')||'{}');
+        var expected=p.intelligence||null;
+        if(!expected||expected==='Instant')return true; // No saved value, nothing to wait for
+        // Look for the badge - if it still says "Instant", design isn't ready
+        var found=false, ready=true;
+        document.querySelectorAll('.prompt-bar').forEach(function(bar){
+          bar.querySelectorAll('span,small').forEach(function(el){
+            var t=el.textContent.trim();
+            if(t==='Instant'||t===expected){
+              found=true;
+              if(t==='Instant')ready=false;
+            }
+          });
+        });
+        return !found||ready;
+      }catch(e){return true;}
+    }
+    function tryHide(){
+      if(isDesignReady()){hide();}
+      else{setTimeout(tryHide,500);} // Check again in 500ms
+    }
+    // Hide when window fully loads + 3s, but only if design is ready
+    if(document.readyState==='complete'){ setTimeout(tryHide,3000); }
+    else{ window.addEventListener('load',function(){ setTimeout(tryHide,3000); }); }
+    setTimeout(hide,15000); // Max 15s fallback (was 12s)
   })();
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001e8';
+  var V='?v=20261001e9';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -316,7 +340,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001e8)
+        // Allow letters+numbers in version (e.g. 20261001e9)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
