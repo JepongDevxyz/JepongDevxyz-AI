@@ -168,9 +168,11 @@ window.JDCodingAgent=Object.freeze({open,close});
     var st=document.createElement('style');
     st.id='jdInitSkeletonCss';
     st.textContent=[
-      '#jdInitSkeleton{position:fixed;inset:0;z-index:99999;background:#0b0f19;',
+      '#jdInitSkeleton{position:fixed;inset:0;z-index:2147483647;background:#0b0f19;',
       'display:flex;flex-direction:column;padding:16px;transition:opacity .4s}',
       '#jdInitSkeleton.hide{opacity:0;pointer-events:none}',
+      /* Hide ALL old UI while skeleton is active (prevents stale flashes) */
+      'body.jd-sk-active > *:not(#jdInitSkeleton):not(script):not(style):not(link){visibility:hidden!important}',
       'body.theme-light #jdInitSkeleton{background:#ffffff}',
       '.jdisk-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}',
       '.jdisk-tabs{display:flex;gap:16px;justify-content:center;margin-bottom:32px}',
@@ -196,9 +198,11 @@ window.JDCodingAgent=Object.freeze({open,close});
       '<div class="jdisk jdisk-bar med"></div><div class="jdisk jdisk-bar long"></div>'+
       '<div class="jdisk jdisk-input"></div>';
     document.body.appendChild(sk);
+    // Hide old UI while skeleton is active
+    document.body.classList.add('jd-sk-active');
     // Hide ONLY when page is truly ready (not on DOM presence which causes flicker)
     var hidden=false;
-    function hide(){ if(hidden)return; hidden=true; sk.classList.add('hide'); setTimeout(function(){ if(sk.parentNode) sk.remove(); },500); }
+    function hide(){ if(hidden)return; hidden=true; document.body.classList.remove('jd-sk-active'); sk.classList.add('hide'); setTimeout(function(){ if(sk.parentNode) sk.remove(); },500); }
     window.__jdHideInitSkeleton=hide;
     // Hide when window fully loads (all resources done) + 1s for app init
     if(document.readyState==='complete'){ setTimeout(hide,1000); }
@@ -208,7 +212,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001d5';
+  var V='?v=20261001d6';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -253,7 +257,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001d5)
+        // Allow letters+numbers in version (e.g. 20261001d6)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
