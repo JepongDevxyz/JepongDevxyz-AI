@@ -5082,6 +5082,12 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
 }
 
 async function runBailucode(args){
+  if(args.bailuRoute==='anthropic'){
+    const anthropic=await runBailuAnthropic(args);
+    if(anthropic.ok||args.autoFallback!==true)return anthropic;
+    const openai=await runOpenAICompatible('bailucode',args);
+    return openai.ok?openai:anthropic;
+  }
   const openai=await runOpenAICompatible('bailucode',args);
   if(openai.ok||args.autoFallback!==true)return openai;
   const anthropic=await runBailuAnthropic(args);
@@ -5271,13 +5277,14 @@ function applyChatFeatureSettings(body={}){
   return {
     ...body,
     ...(settings.librarySearch===false?{files:[]}:{}),
-    ...(settings.connectorSearch===false?{plugins:{superpowers,skills,autoUse}}:{})
+    ...(settings.connectorSearch===false?{plugins:{superpowers,skills,autoUse,plugins:[]}}:{})
   };
 }
 
 async function processChat(body, emit) {
   body=applyChatFeatureSettings(body);
-  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone} = body;
+  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone,bailuRoute} = body;
+  bailuRoute=bailuRoute==='anthropic'?'anthropic':'normal';
   // Strict routing contract: fallback/router are opt-in only. Truthy strings,
   // missing fields, or stale client values must never silently enable them.
   autoFallback = body.autoFallback === true;
@@ -5736,7 +5743,7 @@ async function processChat(body, emit) {
   const taskGeneration=taskGenerationActivity(contextPlan);
   if(activityTrace.length)advanceActivityTrace('completed');
   activity(emit,'thinking','Thinking','running','process','');
-  let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort});
+  let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort,bailuRoute});
   if(first.ok){
     first=await maybeRefineVisualUiResponse({
       first,provider,model,history,files,message,systemInstruction,routedReason,emit,
