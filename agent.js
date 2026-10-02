@@ -165,7 +165,7 @@ window.JDCodingAgent=Object.freeze({open,close});
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
   var V='?v=20261001d1';
-  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/jampong.js','/profile-pill.js','/jampong-share.js','/jampong-profile.js','/jampong-activity.js','/jampong-ai-status.js','/jampong-bounce.js'];
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
       var sc=document.createElement('script');
@@ -199,35 +199,6 @@ window.JDCodingAgent=Object.freeze({open,close});
     loadPatches(ver);
   }
   function go(ver){ loadPatchesVer(ver); }
-  // EARLY TAP QUEUE: Capture Jampong avatar taps before patches load
-  // This ensures ONE refresh is enough - taps are queued until profile is ready
-  var pendingJampongTap = false;
-  document.addEventListener('click', function (e) {
-    if (window.jdOpenJampongProfile) return; // Already loaded, patch handles it
-    var avatar = e.target.closest('img');
-    if (avatar) {
-      var src = avatar.src || '';
-      var alt = avatar.alt || '';
-      if (src.indexOf('jampong') >= 0 || alt.toLowerCase().indexOf('jampong') >= 0) {
-        pendingJampongTap = true;
-        // Wait for profile to load, then open it
-        var tries = 0;
-        var waiter = setInterval(function () {
-          tries++;
-          if (window.jdOpenJampongProfile) {
-            clearInterval(waiter);
-            if (pendingJampongTap) {
-              pendingJampongTap = false;
-              window.jdOpenJampongProfile();
-            }
-          } else if (tries > 50) { // 5 seconds timeout
-            clearInterval(waiter);
-            pendingJampongTap = false;
-          }
-        }, 100);
-      }
-    }
-  }, true);
   try{
     var fetchDone = false;
     fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
@@ -235,7 +206,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001d0)
+        // Allow letters+numbers in version (e.g. 20261001d1)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
@@ -243,6 +214,19 @@ window.JDCodingAgent=Object.freeze({open,close});
     // If fetch completes later with a NEWER version, it will override via loadPatchesVer
     setTimeout(function(){ if(!fetchDone){ fetchDone=true; go(V); } },8000);
   }catch(e){ go(V); }
+}catch(e){}})();
+/* --- Jampong removed (2026-10-02 per user request) ---
+   Cleanup any stale Jampong elements from cached versions */
+(function(){try{
+  ['jdJampong','jdJampongProfile','jdAvatarShare'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.remove();
+  });
+  // Remove stale Jampong styles
+  ['jdJampongCss','jdJampongStatusCss'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.remove();
+  });
 }catch(e){}})();
 /* --- responsive tune stylesheet (appended 2026-09-30) ---
    Small-phone touch targets + TV/ultrawide layout. Additive. */
