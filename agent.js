@@ -196,22 +196,19 @@ window.JDCodingAgent=Object.freeze({open,close});
       '<div class="jdisk jdisk-bar med"></div><div class="jdisk jdisk-bar long"></div>'+
       '<div class="jdisk jdisk-input"></div>';
     document.body.appendChild(sk);
-    // Hide when app is ready: after patches load + short delay, or max 5s
+    // Hide ONLY when page is truly ready (not on DOM presence which causes flicker)
     var hidden=false;
-    function hide(){ if(hidden)return; hidden=true; sk.classList.add('hide'); setTimeout(function(){ sk.remove(); },500); }
+    function hide(){ if(hidden)return; hidden=true; sk.classList.add('hide'); setTimeout(function(){ if(sk.parentNode) sk.remove(); },500); }
     window.__jdHideInitSkeleton=hide;
-    // Auto-hide when main content appears
-    var obs=new MutationObserver(function(){
-      var content=document.querySelector('.welcome-screen, #chatContainer, .chat-container, main');
-      if(content && content.children.length>2) { obs.disconnect(); setTimeout(hide,800); }
-    });
-    obs.observe(document.body,{childList:true,subtree:true});
-    setTimeout(hide,5000); // Max 5s fallback
+    // Hide when window fully loads (all resources done) + 1s for app init
+    if(document.readyState==='complete'){ setTimeout(hide,1000); }
+    else{ window.addEventListener('load',function(){ setTimeout(hide,1000); }); }
+    setTimeout(hide,8000); // Max 8s fallback
   })();
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001d4';
+  var V='?v=20261001d5';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -247,10 +244,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   }
   function go(ver){
     loadPatchesVer(ver);
-    // Hide initial skeleton after patches start loading (app is coming up)
-    setTimeout(function(){
-      if(window.__jdHideInitSkeleton) window.__jdHideInitSkeleton();
-    },1500);
+    // Skeleton hides on window.load (not here) to avoid flicker
   }
   try{
     var fetchDone = false;
@@ -259,7 +253,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001d4)
+        // Allow letters+numbers in version (e.g. 20261001d5)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
