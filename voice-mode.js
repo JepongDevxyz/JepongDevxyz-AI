@@ -579,11 +579,16 @@
      Runs in patch (fresh via version query) as backup to agent.js fix */
   function jdFixSendButtonTheme(){
     try{
-      var isLight=false;
-      try{isLight=(localStorage.getItem('jepong_theme')==='theme-light');}catch(e){}
-      var bg=isLight?'#ececf0':'#2b2b30';
-      var fg=isLight?'#55555d':'#e8e8e8';
+      var getTheme=function(){
+        try{
+          if(document.body.classList.contains('theme-light')||document.documentElement.classList.contains('theme-light'))return true;
+          return localStorage.getItem('jepong_theme')==='theme-light';
+        }catch(e){return false;}
+      };
       var apply=function(){
+        var isLight=getTheme();
+        var bg=isLight?'#ececf0':'#2b2b30';
+        var fg=isLight?'#55555d':'#e8e8e8';
         var btn=document.getElementById('mainActionBtn');
         if(btn){
           btn.style.setProperty('background',bg,'important');
