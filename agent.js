@@ -184,14 +184,17 @@ window.JDCodingAgent=Object.freeze({open,close});
           var btn=document.getElementById('mainActionBtn');
           if(btn){
             btn.style.setProperty('background',bg,'important');
+            btn.style.setProperty('background-color',bg,'important');
             btn.style.setProperty('color',fg,'important');
+            btn.style.setProperty('border-color',bg,'important');
           }
         };
         apply();
-        // Re-apply when button appears or changes (MutationObserver)
+        // Re-apply continuously (no timeout) - ensures theme sticks
         var obs=new MutationObserver(apply);
         obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
-        setTimeout(function(){obs.disconnect();},15000);
+        // Also re-apply every 2s as safety net
+        setInterval(apply,2000);
       }catch(e){}
     })();
     var st=document.createElement('style');
@@ -209,9 +212,9 @@ window.JDCodingAgent=Object.freeze({open,close});
       'body.jd-sk-active #jdInitSkeleton{display:flex!important}',
       /* Send button theme sync (2026-10-02): ensure it follows dark/light mode immediately */
       /* Dark mode: dark button */
-      'body:not(.theme-light) #mainActionBtn.prompt-bar__send{background:#2b2b30!important;color:#e8e8e8!important}',
+      'html body:not(.theme-light) #mainActionBtn.prompt-bar__send,html body:not(.theme-light) button#mainActionBtn{background:#2b2b30!important;color:#e8e8e8!important;border-color:#2b2b30!important}',
       /* Light mode: light button */
-      'body.theme-light #mainActionBtn.prompt-bar__send{background:#ececf0!important;color:#55555d!important}',
+      'html body.theme-light #mainActionBtn.prompt-bar__send,html body.theme-light button#mainActionBtn{background:#ececf0!important;color:#55555d!important;border-color:#ececf0!important}',
       'body.theme-light #jdInitSkeleton{background:#ffffff}',
       '.jdisk-top{display:flex;align-items:center;gap:12px;margin-bottom:24px}',
       '.jdisk-tabs{display:flex;gap:16px;justify-content:center;margin-bottom:32px}',
@@ -340,7 +343,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001f4';
+  var V='?v=20261001f5';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -385,7 +388,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001f4)
+        // Allow letters+numbers in version (e.g. 20261001f5)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
