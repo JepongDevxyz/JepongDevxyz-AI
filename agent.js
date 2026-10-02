@@ -164,13 +164,14 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001c7';
+  var V='?v=20261001c8';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/jampong.js','/profile-pill.js','/jampong-share.js','/jampong-profile.js','/jampong-activity.js','/jampong-ai-status.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
       var sc=document.createElement('script');
       sc.src=src+ver;
       sc.defer=true;
+      sc.setAttribute('data-jd-patch', '1');
       // Retry on failure - ensures patches load on first try
       sc.onerror=function(){
         setTimeout(function(){
@@ -178,6 +179,7 @@ window.JDCodingAgent=Object.freeze({open,close});
             var retry=document.createElement('script');
             retry.src=src+ver+'&retry=1';
             retry.defer=true;
+            retry.setAttribute('data-jd-patch', '1');
             document.head.appendChild(retry);
           }
         },1000);
@@ -185,8 +187,18 @@ window.JDCodingAgent=Object.freeze({open,close});
       document.head.appendChild(sc);
     });
   }
-  var done=false;
-  function go(ver){ if(!done){ done=true; loadPatches(ver); } }
+  var loadedVer = null;
+  function loadPatchesVer(ver) {
+    // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
+    if (loadedVer === ver) return;
+    // Remove old patch scripts before loading new version
+    if (loadedVer !== null) {
+      document.querySelectorAll('script[data-jd-patch]').forEach(function (s) { s.remove(); });
+    }
+    loadedVer = ver;
+    loadPatches(ver);
+  }
+  function go(ver){ loadPatchesVer(ver); }
   // EARLY TAP QUEUE: Capture Jampong avatar taps before patches load
   // This ensures ONE refresh is enough - taps are queued until profile is ready
   var pendingJampongTap = false;
@@ -217,11 +229,19 @@ window.JDCodingAgent=Object.freeze({open,close});
     }
   }, true);
   try{
+    var fetchDone = false;
     fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
       .then(function(r){ return r.ok?r.text():''; })
-      .then(function(t){ t=(t||'').trim(); go(/^20\d{6}[a-z]$/.test(t)?('?v='+t):V); })
-      .catch(function(){ go(V); });
-    setTimeout(function(){ go(V); },3000);
+      .then(function(t){
+        fetchDone = true;
+        t=(t||'').trim();
+        // Allow letters+numbers in version (e.g. 20261001c8)
+        go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
+      })
+      .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
+    // Fallback: 8 seconds for slow networks (was 3s - too short for DITO mobile)
+    // If fetch completes later with a NEWER version, it will override via loadPatchesVer
+    setTimeout(function(){ if(!fetchDone){ fetchDone=true; go(V); } },8000);
   }catch(e){ go(V); }
 }catch(e){}})();
 /* --- responsive tune stylesheet (appended 2026-09-30) ---
