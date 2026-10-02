@@ -172,8 +172,8 @@ window.JDCodingAgent=Object.freeze({open,close});
     st.id='jdInitSkeletonCss';
     st.textContent=[
       /* Prevent white flash: match active theme from the very start */
-      'html{background:'+(isLight?'#ffffff':'#0b0f19')+'}body{background:'+(isLight?'#ffffff':'#0b0f19')+'}',
-      '#jdInitSkeleton{position:fixed;inset:0;z-index:2147483647;background:'+(isLight?'#ffffff':'#0b0f19')+';',
+      'html{background:'+(isLight?'#ffffff':'#0a0a0c')+'}body{background:'+(isLight?'#ffffff':'#0a0a0c')+'}',
+      '#jdInitSkeleton{position:fixed;inset:0;z-index:2147483647;background:'+(isLight?'#ffffff':'#0a0a0c')+';',
       'display:flex;flex-direction:column;padding:16px;transition:opacity .4s}',
       '#jdInitSkeleton.hide{opacity:0;pointer-events:none}',
       /* Hide ALL old UI while skeleton is active (prevents stale flashes) */
@@ -209,10 +209,6 @@ window.JDCodingAgent=Object.freeze({open,close});
     function hide(){
       if(hidden)return; hidden=true;
       document.body.classList.remove('jd-sk-active');
-      // REMOVE old welcome UI from DOM (not just hide) - user ordered removal
-      ['.welcome-screen','.welcome-title','.welcome-lottie-top','.welcome-lottie-bottom','#jdFirstRunWelcome'].forEach(function(sel){
-        document.querySelectorAll(sel).forEach(function(el){ el.remove(); });
-      });
       sk.classList.add('hide');
       setTimeout(function(){ if(sk.parentNode) sk.remove(); },500);
     }
@@ -225,7 +221,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261001e1';
+  var V='?v=20261001e2';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -270,7 +266,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
-        // Allow letters+numbers in version (e.g. 20261001e1)
+        // Allow letters+numbers in version (e.g. 20261001e2)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
