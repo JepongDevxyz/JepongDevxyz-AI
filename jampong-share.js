@@ -251,7 +251,6 @@
     goTo(0);
     document.getElementById('jdAvatarShare').classList.add('open');
     document.body.style.overflow = 'hidden';
-    if (window.jdLogJampong) window.jdLogJampong('share_open');
   }
 
   function close() {

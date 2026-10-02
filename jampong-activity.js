@@ -173,10 +173,7 @@
   // Log key Jampong actions
   window.jdLogJampong = function (action) {
     var map = {
-      'profile_open': ['Opened Jampong Profile', 'Viewed profile screen'],
-      'share_open': ['Opened Share Avatar', 'Viewed avatar share cards'],
-      'soul_view': ['Viewed SOUL.md', 'Opened SOUL file viewer'],
-      'memory_view': ['Viewed MEMORY.md', 'Opened MEMORY file viewer'],
+      // Only log REAL actions, not UI navigation (useless noise)
       'soul_save': ['Saved SOUL.md', 'Updated SOUL file content'],
       'memory_save': ['Saved MEMORY.md', 'Updated MEMORY file content']
     };

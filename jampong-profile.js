@@ -214,40 +214,66 @@
     if (window.jdLogJampong) window.jdLogJampong(type === 'soul' ? 'soul_save' : 'memory_save');
   }
 
+  // Cache for real GitHub activities
+  var githubActivityCache = null;
+  var githubActivityLoading = false;
+
   function getActivity() {
-    // Use real-time logger if available, else fallback to defaults
-    if (window.jdGetActivity) {
-      var real = window.jdGetActivity();
-      if (real.today.length > 0 || real.yesterday.length > 0) return real;
+    // Use real GitHub commits as activities (like Muse app shows real work)
+    if (githubActivityCache) return githubActivityCache;
+    // Start loading in background
+    if (!githubActivityLoading) {
+      githubActivityLoading = true;
+      loadGithubActivities();
     }
-    var now = new Date();
-    var h = now.getHours();
-    var m = now.getMinutes();
-    var ampm = h >= 12 ? 'pm' : 'am';
-    h = h % 12 || 12;
-    var timeStr = h + ':' + (m < 10 ? '0' + m : m) + ampm;
-    return {
-      today: [
-        { title: 'Fix fingerprint screen UI', desc: 'Deploying updated UI to GitHub', time: '12:47am',
-          status: 'Pending', duration: '00:51',
-          cmd: 'Running /opt/hatch/bin/github call-tool --name push_files --arguments...',
-          steps: [{ text: 'Reacted with 👍 emoji', done: true }, { text: 'Updated jampong-profile.js card styles', done: true }, { text: 'Updated jampong-profile.js fingerprint button markup', done: true }, { text: 'Updated fingerprint click handler', done: true }, { text: 'Running: Editing jai/jampong-profile.js', done: false }, { text: 'Node syntax check passed', done: true }, { text: 'Running: push_files', done: false }] },
-        { title: 'Fix Profile Default + Tabs UI', desc: 'Shipped profile tabs, removed shield, and verified live', time: '12:43am',
-          status: 'Allowed', duration: '00:50',
-          steps: [{ text: 'Updated profile layout', done: true }, { text: 'Verified live deployment', done: true }] },
-        { title: 'Separate UI into Two Tabs', desc: 'Separated UI into SOUL and MEMORY tabs and deployed', time: '12:38am',
-          status: 'Allowed', duration: '00:45',
-          steps: [{ text: 'Created SOUL tab', done: true }, { text: 'Created MEMORY tab', done: true }, { text: 'Deployed', done: true }] }
-      ],
-      yesterday: [
-        { title: 'Verify Pixel-Perfect Match', desc: 'Pushed layout changes and verified the live deployment', time: '12:32am',
-          status: 'Allowed', duration: '00:40',
-          steps: [{ text: 'Pushed changes', done: true }, { text: 'Verified live', done: true }] },
-        { title: 'Verify Jampong toggle logic', desc: 'Verified Jampong toggle guards and exports', time: '12:29am',
-          status: 'Allowed', duration: '00:35',
-          steps: [{ text: 'Checked toggle logic', done: true }] }
-      ]
-    };
+    // Return loading state
+    return { today: [], yesterday: [] };
+  }
+
+  function loadGithubActivities() {
+    fetch('https://api.github.com/repos/JepongDevxyz/JepongDevxyz-AI/commits?per_page=30')
+      .then(function (r) { return r.json(); })
+      .then(function (commits) {
+        var today = [];
+        var yesterday = [];
+        var now = new Date();
+        var todayStr = now.toDateString();
+        var yestStr = new Date(now - 86400000).toDateString();
+        (commits || []).forEach(function (c) {
+          if (!c.commit) return;
+          var msg = c.commit.message || '';
+          var title = msg.split('\n')[0];
+          var desc = msg.split('\n').slice(1).join(' ').trim() || 'Pushed to GitHub';
+          if (desc.length > 80) desc = desc.substring(0, 80) + '...';
+          var date = new Date(c.commit.author.date);
+          var dStr = date.toDateString();
+          // Format time like "12:47am"
+          var h = date.getHours();
+          var m = date.getMinutes();
+          var ampm = h >= 12 ? 'pm' : 'am';
+          h = h % 12 || 12;
+          var timeStr = h + ':' + (m < 10 ? '0' + m : m) + ampm;
+          var item = {
+            title: title,
+            desc: desc,
+            time: timeStr,
+            status: 'Allowed',
+            duration: '',
+            sha: c.sha.substring(0, 7),
+            fullSha: c.sha,
+            steps: [{ text: 'Pushed to GitHub', done: true }, { text: 'Deployed to Vercel', done: true }]
+          };
+          if (dStr === todayStr) today.push(item);
+          else if (dStr === yestStr) yesterday.push(item);
+        });
+        githubActivityCache = { today: today, yesterday: yesterday };
+        // Refresh the view if it's open
+        refreshActivityFeed();
+        updateJampongStatus();
+      })
+      .catch(function () {
+        githubActivityLoading = false;
+      });
   }
 
   function build() {
@@ -561,7 +587,6 @@
     el.querySelector('.jdfv-content').style.display = 'block';
     el.querySelector('.jdfv-note').style.display = 'block';
     el.classList.add('open');
-    if (window.jdLogJampong) window.jdLogJampong(type === 'soul' ? 'soul_view' : 'memory_view');
   }
 
   function refreshViewer() {
@@ -620,7 +645,6 @@
     var img = document.querySelector('#jdJampongProfile .jdjp-avatar img');
     if (img && poses[0]) img.src = poses[0];
     document.getElementById('jdJampongProfile').classList.add('open');
-    if (window.jdLogJampong) window.jdLogJampong('profile_open');
     setTimeout(jdLoadApprovals, 400);
     document.body.style.overflow = 'hidden';
     // Start real-time status updater (like Muse app)
@@ -653,24 +677,25 @@
   function updateJampongStatus() {
     var statusEl = document.getElementById('jdJampongStatus');
     if (!statusEl) return;
-    // Get latest activity from the logger
-    var activities = [];
-    if (window.jdGetActivity) {
-      var grouped = window.jdGetActivity();
-      if (grouped.today && grouped.today.length > 0) {
-        activities = grouped.today;
-      }
-    }
+    // Get latest REAL activity from GitHub commits (like Muse app)
+    var act = getActivity();
+    var activities = (act.today && act.today.length > 0) ? act.today : [];
     if (activities.length > 0) {
       var latest = activities[0];
       // Show emoji + status like Muse app (🎬 Editing file)
       var emoji = '🎬';
       var title = latest.title || '';
-      if (title.toLowerCase().indexOf('push') >= 0) emoji = '📤';
-      else if (title.toLowerCase().indexOf('deploy') >= 0) emoji = '🚀';
-      else if (title.toLowerCase().indexOf('fix') >= 0) emoji = '🔧';
-      else if (title.toLowerCase().indexOf('implement') >= 0) emoji = '⚙️';
-      else if (title.toLowerCase().indexOf('build') >= 0) emoji = '🏗️';
+      var low = title.toLowerCase();
+      if (low.indexOf('push') >= 0) emoji = '📤';
+      else if (low.indexOf('deploy') >= 0) emoji = '🚀';
+      else if (low.indexOf('fix') >= 0) emoji = '🔧';
+      else if (low.indexOf('implement') >= 0) emoji = '⚙️';
+      else if (low.indexOf('build') >= 0) emoji = '🏗️';
+      else if (low.indexOf('real-time') >= 0 || low.indexOf('realtime') >= 0) emoji = '⚡';
+      else if (low.indexOf('one-refresh') >= 0 || low.indexOf('refresh') >= 0) emoji = '🔄';
+      else if (low.indexOf('approval') >= 0) emoji = '✅';
+      // Truncate long titles
+      if (title.length > 40) title = title.substring(0, 40) + '...';
       statusEl.textContent = emoji + ' ' + title;
     } else {
       statusEl.textContent = 'online';
