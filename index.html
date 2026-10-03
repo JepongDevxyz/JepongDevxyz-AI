@@ -4317,7 +4317,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
 
             <div class="chat-search-bar" id="chatSearchBar">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" class="chat-search-input" id="inChatSearchInput" placeholder="Find in this chat..." oninput="executeInChatSearch(this.value)">
+                <input type="text" class="chat-search-input" id="inChatSearchInput" placeholder="Find in this chat..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" oninput="executeInChatSearch(this.value)">
                 <span class="chat-search-count" id="inChatSearchCount">0/0</span>
                 <button class="header-btn" onclick="navigateInChatSearch(-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg></button>
                 <button class="header-btn" onclick="navigateInChatSearch(1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
