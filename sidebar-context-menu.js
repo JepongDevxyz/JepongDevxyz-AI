@@ -185,11 +185,33 @@
     } catch (e) {}
   }
 
-  /* Long-press wiring on the sidebar history list */
+  /* Long-press wiring on the sidebar history list.
+     Also wires the ⋮ (three-dots) trigger button on each item to open
+     the same Muse-style menu. */
   var lpTimer = null, lpPos = null;
   function clearLp() {
     if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
     lpPos = null;
+  }
+  function wireDots() {
+    try {
+      var list = document.getElementById('chatHistoryList');
+      if (!list) return;
+      list.querySelectorAll('.jd-history-actions-trigger').forEach(function (btn) {
+        if (btn.__jdMenuWired) return;
+        btn.__jdMenuWired = true;
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          var item = btn.closest('.history-item');
+          var sid = item && item.getAttribute('data-session-id');
+          if (sid) {
+            var r = btn.getBoundingClientRect();
+            showMenu(r.left - 200, r.bottom + 6, sid);
+          }
+        });
+      });
+    } catch (e) {}
   }
   function wire() {
     var list = document.getElementById('chatHistoryList');
@@ -239,11 +261,12 @@
   var tries = 0;
   var iv = setInterval(function () {
     wire();
+    wireDots();
     orderPinnedFirst();
     if (++tries > 40) clearInterval(iv);
   }, 500);
   try {
-    new MutationObserver(function () { orderPinnedFirst(); })
+    new MutationObserver(function () { wireDots(); orderPinnedFirst(); })
       .observe(document.documentElement, { childList: true, subtree: true });
   } catch (e) {}
 
