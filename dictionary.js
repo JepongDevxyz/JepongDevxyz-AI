@@ -245,6 +245,15 @@
   }
   function open(initialWord) {
     close();
+    // Force-close the composer (+) sheet — it must not stay open
+    // behind the Dictionary (bug reported 2026-10-03).
+    try {
+      var sheet = document.getElementById('composerToolSheet');
+      if (sheet) sheet.hidden = true;
+      var plus = document.getElementById('composerPlusBtn');
+      if (plus) { plus.removeAttribute('data-on'); plus.setAttribute('aria-expanded', 'false'); }
+      if (typeof window.closeComposerTools === 'function') window.closeComposerTools();
+    } catch (e) {}
     injectCSS();
     var bd = document.createElement('div');
     bd.className = 'jd-mw-backdrop';

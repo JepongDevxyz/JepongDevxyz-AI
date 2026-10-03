@@ -313,6 +313,12 @@
   function openDictionary(word) {
     closeMenu();
     closeDictionary();
+    // Force-close the composer (+) sheet too (same bug as Dictionary).
+    try {
+      var csheet = document.getElementById('composerToolSheet');
+      if (csheet) csheet.hidden = true;
+      if (typeof window.closeComposerTools === 'function') window.closeComposerTools();
+    } catch (e) {}
     dictState = { word: word, audioUrl: '' };
     var bd = document.createElement('div');
     bd.className = 'jd-dict-backdrop';
