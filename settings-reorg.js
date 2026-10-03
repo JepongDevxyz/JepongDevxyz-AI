@@ -43,10 +43,13 @@
   // Desired order for My AI section
   var MY_AI_ORDER = ['Account', 'Personalization', 'Library', 'Memory', 'Pet', 'Voice'];
 
-  // Desired order for AI & Tools section (existing items)
+  // Desired order for AI & Tools section (existing + added items)
+  // Per user's corrected list (2026-10-03 19:46 PST)
   var AI_TOOLS_ORDER = [
-    'Reply Notifications', 'Custom API Keys', 'Web Search', 'Response Speech',
-    'Reconnect notice', 'Auto Provider Fallback', 'Smart Model Router', 'Plugins'
+    'Mode', 'Models', 'Reply Notifications', 'Permissions',
+    'Connectors', 'Custom API Keys', 'Web Search', 'Auto Temper', 'Pure Mode',
+    'Response Speech', 'Reconnect notice', 'Auto Provider Fallback',
+    'Smart Model Router', 'Plugins'
   ];
 
   function getTitle(btn) {
