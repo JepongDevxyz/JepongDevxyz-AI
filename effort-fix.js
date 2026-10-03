@@ -12,6 +12,11 @@
    - High: Deliberate, thorough reasoning
    - Extra: Deep analysis and verification
    - Max: Maximum deliberation, most thorough
+
+   SPECIAL RULES (per user request 2026-10-03):
+   - Pure Mode ON: Everything is FAST even on Max (speed prioritized)
+   - Instant + Fast Answer ON: REALLY fast (maximum speed mode)
+   - Activity Status: effort instructions sync with activity display
    ========================================================= */
 (function () {
   'use strict';
@@ -74,6 +79,75 @@
     } catch (e) { return 'instant'; }
   }
 
+  function isPureModeOn() {
+    try {
+      if (typeof window.isPureMode !== 'undefined') return !!window.isPureMode;
+      try {
+        var v = localStorage.getItem('jepong_pure_mode');
+        if (v !== null) return v === 'true' || v === '1';
+      } catch (e) {}
+      // Check via personalizationSettings
+      if (typeof personalizationSettings !== 'undefined' && personalizationSettings) {
+        if (typeof personalizationSettings.pureMode !== 'undefined') {
+          return !!personalizationSettings.pureMode;
+        }
+      }
+      return false;
+    } catch (e) { return false; }
+  }
+
+  function isFastAnswerOn() {
+    try {
+      if (typeof personalizationSettings !== 'undefined' && personalizationSettings) {
+        return !!personalizationSettings.fastAnswers;
+      }
+      return false;
+    } catch (e) { return false; }
+  }
+
+  function isActivityStatusOn() {
+    try {
+      // Activity status shows thinking process; sync effort with it
+      if (typeof window.jdActivityStatusEnabled !== 'undefined') {
+        return !!window.jdActivityStatusEnabled;
+      }
+      try {
+        var v = localStorage.getItem('jepong_activity_status');
+        if (v !== null) return v === 'true' || v === '1';
+      } catch (e) {}
+      return true; // Default: assume on (most users have it on)
+    } catch (e) { return true; }
+  }
+
+  function getEffortInstruction() {
+    var effort = getEffortLevel();
+    var pureMode = isPureModeOn();
+    var fastAnswer = isFastAnswerOn();
+
+    // RULE 1: Pure Mode ON = everything FAST even on Max
+    if (pureMode) {
+      return [
+        'EFFORT OVERRIDE: PURE MODE IS ON.',
+        'Prioritize SPEED above all else, even on higher effort levels.',
+        'Give direct, concise answers. Skip lengthy reasoning.',
+        'Be fast and efficient. Quality matters but speed comes first in Pure Mode.'
+      ].join(' ');
+    }
+
+    // RULE 2: Instant + Fast Answer = REALLY fast
+    if (effort === 'instant' && fastAnswer) {
+      return [
+        'EFFORT LEVEL: INSTANT + FAST ANSWER (maximum speed mode).',
+        'Respond AS FAST AS HUMANLY POSSIBLE.',
+        'Absolute minimum reasoning. Direct answer only.',
+        'No preamble, no fluff. Just the answer, immediately.'
+      ].join(' ');
+    }
+
+    // Normal effort instructions
+    return EFFORT_INSTRUCTIONS[effort] || EFFORT_INSTRUCTIONS['instant'];
+  }
+
   // Patch fetch to inject effort instructions
   var origFetch = window.fetch;
   window.fetch = function (url, opts) {
@@ -85,10 +159,9 @@
         if (body && typeof body === 'object') {
           body.personalization = body.personalization || {};
           var existing = body.personalization.customInstructions || '';
-          var effort = getEffortLevel();
-          var effortInstr = EFFORT_INSTRUCTIONS[effort] || EFFORT_INSTRUCTIONS['instant'];
+          var effortInstr = getEffortInstruction();
           // Append effort instruction if not already present
-          if (existing.indexOf('EFFORT LEVEL:') === -1) {
+          if (existing.indexOf('EFFORT LEVEL:') === -1 && existing.indexOf('EFFORT OVERRIDE:') === -1) {
             body.personalization.customInstructions =
               (existing ? existing + '\n\n' : '') + effortInstr;
             opts.body = JSON.stringify(body);
