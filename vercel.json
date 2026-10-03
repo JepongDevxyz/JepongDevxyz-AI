@@ -2,7 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/chat.js": {
-      "maxDuration": 300
+      "runtime": "nodejs22.x",
+      "maxDuration": 60,
+      "memory": 1024
     },
     "api/codex.js": {
       "includeFiles": "codex-runner/**",
