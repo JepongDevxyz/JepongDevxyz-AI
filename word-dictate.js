@@ -4,11 +4,13 @@
 
    1) Tap-and-hold a WORD in an AI response -> floating menu:
       Reply | Copy | Select | Dictate (+ emoji reaction row).
-      [DISABLED 2026-10-03 per user request — no more popup.]
-   2) Dictate -> dictionary bottom sheet (free dictionaryapi.dev,
-      no key) with phonetic + definition, and it READS the word
-      aloud so the user learns the correct pronunciation
-      (API audio when available, app TTS as fallback).
+      Native text selection is suppressed (user-select:none) so
+      only OUR menu appears — no Android system popup.
+   2) Dictate -> dictionary bottom sheet (Merriam-Webster via
+      server proxy, free dictionaryapi.dev fallback) with phonetic
+      + definition, and it READS the word aloud so the user learns
+      the correct pronunciation (API audio when available, app
+      TTS as fallback).
    3) Message reactions like the Muse app: pick an emoji, it
       sticks to the message as a chip; tap the chip to remove.
       Persisted per session in localStorage.
@@ -62,7 +64,8 @@
 
   /* ---------------- styles ---------------- */
   var CSS = [
-    '.msg.bot{position:relative;-webkit-touch-callout:none}',
+    '.msg.bot{position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}',
+    '.msg.bot.jd-allow-select,.msg.bot.jd-allow-select *{user-select:text!important;-webkit-user-select:text!important}',
     '.jd-wordmenu{position:fixed;z-index:9999;min-width:210px;max-width:250px;background:#232328;color:#f5f5f5;border-radius:18px;box-shadow:0 18px 45px -12px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.2);padding:8px;animation:jdWordMenuPop .16s ease-out}',
     '@keyframes jdWordMenuPop{from{opacity:0;transform:scale(.94) translateY(4px)}}',
     '.jd-wordmenu__reacts{display:flex;gap:2px;justify-content:space-between;padding:4px 2px 8px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:4px}',
@@ -285,7 +288,10 @@
         toast('Replying to "' + word + '"');
       }
     } else if (act === 'select' && ctx.node) {
+      // User explicitly asked to select: temporarily allow native selection.
+      var msgEl = ctx.msgEl;
       try {
+        if (msgEl && msgEl.classList) msgEl.classList.add('jd-allow-select');
         var sel = window.getSelection();
         sel.removeAllRanges();
         var r = document.createRange();
@@ -293,6 +299,10 @@
         r.setEnd(ctx.node, ctx.end);
         sel.addRange(r);
       } catch (e) {}
+      // Re-suppress after a few seconds so the system popup stays away.
+      setTimeout(function () {
+        try { if (msgEl && msgEl.classList) msgEl.classList.remove('jd-allow-select'); } catch (e2) {}
+      }, 4000);
     } else if (act === 'dictate' && word) {
       openDictionary(word);
     }
@@ -419,29 +429,68 @@
   }
 
   /* ---------------- long-press wiring ----------------
-     REMOVED 2026-10-03 per user request ("Alisin mo nga rin yan
-     nag pop up na yan"): the tap-and-hold word popup no longer
-     appears. Reactions now live in the message action bar
-     (reactions-v2.js); the dictionary stays available via
-     window.__jdWordDictate.openDictionary(word). */
+     RESTORED 2026-10-03: the tap-and-hold word popup is back per
+     user correction — the system "Tap to see search results" bar
+     (arrow) is suppressed via user-select:none, so only our menu
+     appears. */
   var lpTimer = null, lpStart = null;
   function findChatBox() { return document.getElementById('chatBox'); }
+  function clearLp() {
+    if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+    lpStart = null;
+  }
   function onPressStart(x, y, msgEl) {
-    var hit = wordAtPoint(x, y);
-    showMenu(x, y, {
-      msgEl: msgEl,
-      word: hit ? hit.word : '',
-      node: hit ? hit.node : null,
-      start: hit ? hit.start : 0,
-      end: hit ? hit.end : 0
-    });
+    clearLp();
+    lpStart = { x: x, y: y, msgEl: msgEl };
+    lpTimer = setTimeout(function () {
+      lpTimer = null;
+      var s = lpStart; lpStart = null;
+      if (!s) return;
+      var hit = wordAtPoint(s.x, s.y);
+      showMenu(s.x, s.y, {
+        msgEl: s.msgEl,
+        word: hit ? hit.word : '',
+        node: hit ? hit.node : null,
+        start: hit ? hit.start : 0,
+        end: hit ? hit.end : 0
+      });
+    }, 450);
+  }
+  function onPressMove(x, y) {
+    if (lpStart && lpTimer) {
+      var dx = x - lpStart.x, dy = y - lpStart.y;
+      if (dx * dx + dy * dy > 144) clearLp(); // moved >12px: it's a scroll
+    }
   }
   function wire() {
     var chatBox = findChatBox();
     if (!chatBox || chatBox.__jdWordDictateWired) return;
     chatBox.__jdWordDictateWired = true;
-    // NOTE: long-press (touchstart/touchmove/touchend) and desktop
-    // contextmenu triggers removed — no more word popup.
+    // Long-press on touch + right-click/long-press on desktop.
+    chatBox.addEventListener('touchstart', function (e) {
+      var t = (e.touches && e.touches[0]) || null;
+      var msgEl = e.target && e.target.closest ? e.target.closest('.msg.bot') : null;
+      if (t && msgEl) onPressStart(t.clientX, t.clientY, msgEl);
+    }, { passive: true });
+    chatBox.addEventListener('touchmove', function (e) {
+      var t = (e.touches && e.touches[0]) || null;
+      if (t) onPressMove(t.clientX, t.clientY);
+    }, { passive: true });
+    chatBox.addEventListener('touchend', clearLp, { passive: true });
+    chatBox.addEventListener('touchcancel', clearLp, { passive: true });
+    chatBox.addEventListener('contextmenu', function (e) {
+      var msgEl = e.target && e.target.closest ? e.target.closest('.msg.bot') : null;
+      if (!msgEl) return;
+      e.preventDefault();
+      var hit = wordAtPoint(e.clientX, e.clientY);
+      showMenu(e.clientX, e.clientY, {
+        msgEl: msgEl,
+        word: hit ? hit.word : '',
+        node: hit ? hit.node : null,
+        start: hit ? hit.start : 0,
+        end: hit ? hit.end : 0
+      });
+    });
     // Re-apply saved reactions whenever messages render.
     try {
       new MutationObserver(function (muts) {
