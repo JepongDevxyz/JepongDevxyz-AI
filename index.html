@@ -4400,6 +4400,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                         <span class="prompt-bar__row-name">Vision prompt</span>
                         <span class="prompt-bar__row-desc">Create or refine an image prompt</span>
                     </button>
+                    <button type="button" class="prompt-bar__row" role="option" onmousedown="event.preventDefault()" data-prompt-source="dictionary" onclick="composerToolAction('dictionary')">
+                        <span class="prompt-bar__row-icon"><i data-lucide="book-open"></i></span>
+                        <span class="prompt-bar__row-name">Dictionary</span>
+                        <span class="prompt-bar__row-desc">Merriam-Webster definitions</span>
+                    </button>
                 </div>
 
                 <div class="prompt-bar__menu" id="responseEffortMenu" role="dialog" aria-label="Effort" data-kind="effort" hidden>
@@ -5992,6 +5997,12 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if(action==='vision'){
                 closeComposerTools();
                 openDolaModal();
+                return;
+            }
+            if(action==='dictionary'){
+                closeComposerTools();
+                if(window.__jdDictionary) window.__jdDictionary.open();
+                else if(window.showModernToast) window.showModernToast('Dictionary is loading…');
                 return;
             }
         }
