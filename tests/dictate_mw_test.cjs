@@ -15,6 +15,10 @@ const mwResponse = [{
 let lastUrl = '';
 window.fetch = async (url) => {
   lastUrl = String(url);
+  // Server proxy wraps MW data as {source, data}
+  if (lastUrl.startsWith('/api/dictionary')) {
+    return { ok: true, json: async () => ({ source: 'mw', data: mwResponse }) };
+  }
   return { ok: true, json: async () => mwResponse };
 };
 window.Audio = function () { this.play = async () => {}; };
@@ -26,8 +30,29 @@ function assert(c, n) { if (c) { pass++; console.log('  ok:', n); } else { fail+
 dom.window.eval(fs.readFileSync('/tmp/jai-react2/word-dictate.js', 'utf8'));
 const WD = window.__jdWordDictate;
 
-// With MW key
-window.localStorage.setItem('jd_mw_api_key', 'my-mw-key');
+// Server proxy first (has key on server)
+window.fetch = async (url) => {
+  lastUrl = String(url);
+  if (lastUrl.startsWith('/api/dictionary')) {
+    return { ok: true, json: async () => ({ source: 'mw', data: mwResponse }) };
+  }
+  return { ok: true, json: async () => mwResponse };
+};
+WD.openDictionary('test');
+setTimeout(() => {
+  assert(lastUrl.startsWith('/api/dictionary?word=test'), 'dictate tries server proxy first');
+  assert(document.getElementById('jdDictBody').textContent.includes('a procedure for evaluation'), 'server MW definition shown');
+  WD.closeDictionary();
+
+  // With MW key — server proxy fails, so localStorage key -> direct MW is used
+  window.localStorage.setItem('jd_mw_api_key', 'my-mw-key');
+window.fetch = async (url) => {
+  lastUrl = String(url);
+  if (lastUrl.startsWith('/api/dictionary')) {
+    return { ok: false, status: 501, json: async () => ({}) }; // no server key
+  }
+  return { ok: true, json: async () => mwResponse };
+};
 WD.openDictionary('test');
 setTimeout(() => {
   assert(lastUrl.includes('dictionaryapi.com/api/v3/references/collegiate/json/test?key=my-mw-key'), 'dictate uses MW API with key');
@@ -37,10 +62,13 @@ setTimeout(() => {
   assert(document.getElementById('jdDictPhon').textContent === 'ˈtest', 'MW phonetic shown');
   WD.closeDictionary();
 
-  // Without key -> fallback
+  // Without key -> fallback (server proxy fails, no local key)
   window.localStorage.removeItem('jd_mw_api_key');
   window.fetch = async (url) => {
     lastUrl = String(url);
+    if (lastUrl.startsWith('/api/dictionary')) {
+      return { ok: false, status: 501, json: async () => ({}) };
+    }
     return { ok: true, json: async () => [{ word: 'test', phonetic: 'test', phonetics: [], meanings: [{ partOfSpeech: 'noun', definitions: [{ definition: 'free def' }] }] }] };
   };
   WD.openDictionary('test');
@@ -51,4 +79,5 @@ setTimeout(() => {
     console.log(`\n${pass} passed, ${fail} failed`);
     process.exit(fail ? 1 : 0);
   }, 300);
+}, 300);
 }, 300);

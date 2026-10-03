@@ -240,8 +240,8 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261003a12';
-  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js'];
+  var V='?v=20261003a16';
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
       var sc=document.createElement('script');
@@ -264,6 +264,18 @@ window.JDCodingAgent=Object.freeze({open,close});
     });
   }
   var loadedVer = null;
+  /* Keep versioned stylesheets fresh too: index.html pins
+     ?v= on reactbits-micro.css, so bump it to the live patch
+     version — otherwise the slim sheet etc. stay cached. */
+  function bustCssCache(ver) {
+    try {
+      document.querySelectorAll('link[href*="reactbits-micro.css"]').forEach(function (l) {
+        var base = (l.getAttribute('href') || '').split('?')[0];
+        var next = base + ver;
+        if (l.getAttribute('href') !== next) l.setAttribute('href', next);
+      });
+    } catch (e) {}
+  }
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
     if (loadedVer === ver) return;
@@ -276,6 +288,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   }
   function go(ver){
     loadPatchesVer(ver);
+    bustCssCache(ver);
     // Skeleton hides on window.load (not here) to avoid flicker
   }
   try{

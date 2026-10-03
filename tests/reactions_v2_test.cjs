@@ -55,19 +55,13 @@ assert(!!R, 'reactions-v2 hook exposed');
 assert(!!WD, 'word-dictate hook exposed');
 
 setTimeout(() => {
-  console.log('\n-- word popup removed --');
-  // The trigger listeners were removed from wire(); dispatching
-  // touchstart/contextmenu must NOT produce a menu.
-  const botPara = document.querySelector('.msg.bot[data-message-index="1"] p');
-  botPara.dispatchEvent(new window.Event('touchstart', { bubbles: true }));
-  setTimeout(() => {
-    assert(!document.querySelector('.jd-wordmenu'), 'NO popup on touchstart (removed)');
-    botPara.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true }));
-    assert(!document.querySelector('.jd-wordmenu'), 'NO popup on right-click (removed)');
-    // Confirm the trigger code is gone from the source
-    const src = fs.readFileSync('/tmp/jai-react2/word-dictate.js', 'utf8');
-    assert(!src.includes("addEventListener('touchstart'"), 'touchstart trigger removed from source');
-    assert(!src.includes("addEventListener('contextmenu'"), 'contextmenu trigger removed from source');
+  console.log('\n-- word popup restored (tap-and-hold) --');
+  // The trigger listeners are BACK in wire(); system popup is
+  // suppressed via user-select:none on .msg.bot.
+  const src = fs.readFileSync('/tmp/jai-react2/word-dictate.js', 'utf8');
+  assert(src.includes("addEventListener('touchstart'"), 'touchstart trigger present in source');
+  assert(src.includes("addEventListener('contextmenu'"), 'contextmenu trigger present in source');
+  assert(src.includes('user-select:none'), 'system popup suppressed via user-select:none');
     // store still works (needed by reactions-v2)
     const bot1 = document.querySelector('.msg.bot[data-message-index="1"]');
     WD.toggleReaction(bot1, '👍');
@@ -110,5 +104,4 @@ setTimeout(() => {
       console.log(`\n${pass} passed, ${fail} failed`);
       process.exit(fail ? 1 : 0);
     })();
-  }, 700);
 }, 300);

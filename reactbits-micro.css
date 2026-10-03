@@ -1088,37 +1088,68 @@ body.theme-light #promptBar .rb-sling-wrap[data-disabled] .rb-sling-face{opacity
 /* =========================================================
    Muse-app-style attachment sheet (2026-10-03, slimmed)
    The composer (+) tool sheet mirrors the Muse app's
-   attachment picker: slim single-line icon rows on a
-   floating card. Scoped to #composerToolSheet only so the
-   model-picker and effort menus keep their compact style.
-   All entries stay — Camera, Photos, Files, Library,
+   attachment picker EXACTLY (per user screenshot 2026-10-03):
+   floating dark popup above the input, left-aligned, ~230px
+   wide, icon + label rows, no descriptions. Scoped to
+   #composerToolSheet only so the model-picker and effort menus
+   keep their compact style.
+   All entries stay — Camera, Photos, Videos, Files, Library,
    Plugins, Vision prompt, Dictionary — same actions.
    ========================================================= */
 #composerToolSheet{
-  padding:6px;
-  border-radius:18px;
+  left:0;
+  right:auto;
+  width:232px;
+  padding:8px;
+  border-radius:20px;
+  background:#2c2c31;
+  border:1px solid rgba(255,255,255,.08);
   box-shadow:
-    0 18px 45px -12px rgba(0,0,0,.45),
-    0 2px 6px rgba(0,0,0,.12);
+    0 24px 60px -12px rgba(0,0,0,.6),
+    0 4px 12px rgba(0,0,0,.25);
+}
+body.theme-light #composerToolSheet{
+  background:#ffffff;
+  border-color:rgba(0,0,0,.08);
+  box-shadow:
+    0 24px 60px -12px rgba(20,20,40,.25),
+    0 4px 12px rgba(0,0,0,.1);
 }
 #composerToolSheet .prompt-bar__row{
-  height:46px;
-  padding:0 12px;
-  gap:12px;
-  border-radius:12px;
+  height:56px;
+  padding:0 16px;
+  gap:16px;
+  border-radius:14px;
+}
+#composerToolSheet .prompt-bar__row:active{
+  background:rgba(255,255,255,.09);
+}
+body.theme-light #composerToolSheet .prompt-bar__row:active{
+  background:rgba(0,0,0,.06);
 }
 #composerToolSheet .prompt-bar__row-icon{
-  width:22px;
+  width:24px;
+  color:#fff;
+}
+body.theme-light #composerToolSheet .prompt-bar__row-icon{
+  color:#18181b;
 }
 #composerToolSheet .prompt-bar__row-icon svg{
-  width:20px;
-  height:20px;
+  width:24px;
+  height:24px;
 }
 #composerToolSheet .prompt-bar__row-name{
-  font-size:14px;
+  font-size:16px;
   font-weight:500;
+  color:#fff;
   white-space:nowrap;
 }
+body.theme-light #composerToolSheet .prompt-bar__row-name{
+  color:#18181b;
+}
 #composerToolSheet .prompt-bar__row-desc{
+  display:none;
+}
+#composerToolSheet .prompt-bar__glow{
   display:none;
 }
