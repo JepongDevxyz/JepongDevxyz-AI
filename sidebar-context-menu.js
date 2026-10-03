@@ -5,12 +5,12 @@
    Long-press (or right-click) a conversation in the sidebar
    to show a Muse-app-style context menu:
    - Timestamp header (e.g. "October 3, 2026 at 5:16 PM")
-   - Rename | Pin/Unpin | Archive | Delete (red)
+   - Rename | Pin/Unpin | Delete (red)
 
    Uses the app's existing renameChatSession / togglePinSession /
-   deleteChatSession. Archive is implemented via a session.archived
-   flag (filtered from the list). The ping-ms and words indicators
-   are untouched.
+   deleteChatSession. Pin moves the conversation to the top with
+   a pin indicator, like the Muse app. The ping-ms and words
+   indicators are untouched.
    ========================================================= */
 (function () {
   'use strict';
@@ -40,7 +40,6 @@
   var ICONS = {
     rename: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
     pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>',
-    archive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>',
     del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>'
   };
 
@@ -85,7 +84,6 @@
       '<div class="jd-side-menu__time">' + formatTime(ts) + '</div>' +
       '<button type="button" class="jd-side-menu__row" data-act="rename">' + ICONS.rename + '<span>Rename</span></button>' +
       '<button type="button" class="jd-side-menu__row" data-act="pin">' + ICONS.pin + '<span>' + (isPinned ? 'Unpin' : 'Pin') + '</span></button>' +
-      '<button type="button" class="jd-side-menu__row" data-act="archive">' + ICONS.archive + '<span>Archive</span></button>' +
       '<button type="button" class="jd-side-menu__row danger" data-act="delete">' + ICONS.del + '<span>Delete</span></button>';
     document.body.appendChild(menu);
 
@@ -110,143 +108,80 @@
     try {
       if (act === 'rename' && typeof window.renameChatSession === 'function') {
         window.renameChatSession(sessionId, null);
-      } else if (act === 'pin' && typeof window.togglePinSession === 'function') {
-        window.togglePinSession(sessionId, null);
-      } else if (act === 'archive') {
-        archiveSession(sessionId);
+      } else if (act === 'pin') {
+        togglePinAndRefresh(sessionId);
       } else if (act === 'delete' && typeof window.deleteChatSession === 'function') {
         window.deleteChatSession(sessionId, null);
       }
     } catch (e) {}
   }
 
-  function archiveSession(sessionId) {
+  /* Pin like the Muse app: toggle the flag, persist, then re-render
+     the sidebar so pinned items jump to the top with a pin badge. */
+  function togglePinAndRefresh(sessionId) {
     try {
-      var session = getSession(sessionId);
-      if (!session) return;
-      session.archived = true;
-      // Persist via the app's own functions.
-      if (typeof window.saveSessions === 'function') window.saveSessions();
-      else {
-        try {
-          var all = window.chatSessions || {};
-          localStorage.setItem('jepong_ai_chats', JSON.stringify(all));
-        } catch (e2) {}
+      if (typeof window.togglePinSession === 'function') {
+        window.togglePinSession(sessionId, null);
+      } else {
+        var s = getSession(sessionId);
+        if (s) {
+          s.pinned = !s.pinned;
+          if (typeof window.saveSessions === 'function') window.saveSessions();
+        }
       }
-      // Remove from the visible list immediately.
-      try {
-        var list = document.getElementById('chatHistoryList');
-        var item = list && list.querySelector('[data-session-id="' + sessionId + '"]');
-        if (item) item.remove();
-      } catch (e3) {}
-      if (typeof window.showModernToast === 'function') window.showModernToast('Conversation archived');
+      refreshSidebarList();
+      var session = getSession(sessionId);
+      if (typeof window.showModernToast === 'function') {
+        window.showModernToast(session && session.pinned ? 'Pinned to top' : 'Unpinned');
+      }
     } catch (e) {}
   }
 
-  /* Hide archived sessions whenever the list renders. */
-  function hideArchived() {
+  /* Re-render the sidebar list with pinned items on top. */
+  function refreshSidebarList() {
+    try {
+      if (typeof window.renderSidebarHistory === 'function') {
+        window.renderSidebarHistory();
+      } else if (typeof window.renderChatHistory === 'function') {
+        window.renderChatHistory();
+      }
+      // Ensure pinned-first ordering even if the app's renderer doesn't do it.
+      setTimeout(orderPinnedFirst, 50);
+    } catch (e) {}
+  }
+
+  function orderPinnedFirst() {
     try {
       var list = document.getElementById('chatHistoryList');
       if (!list) return;
-      list.querySelectorAll('.history-item').forEach(function (item) {
+      var items = Array.prototype.slice.call(list.querySelectorAll('.history-item'));
+      if (!items.length) return;
+      var pinned = [], rest = [];
+      items.forEach(function (item) {
         var sid = item.getAttribute('data-session-id');
         var s = getSession(sid);
-        if (s && s.archived) item.style.display = 'none';
+        if (s && s.pinned) pinned.push(item);
+        else rest.push(item);
       });
-    } catch (e) {}
-  }
-
-  /* Archive view toggle: Muse app has a box icon next to "Side chats"
-     to view archived conversations. We add the same next to the
-     "Conversations" header. */
-  var showingArchived = false;
-  function addArchiveButton() {
-    try {
-      var heading = document.getElementById('jdSidebarConversationsToggle');
-      if (!heading || document.getElementById('jdArchiveViewBtn')) return;
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.id = 'jdArchiveViewBtn';
-      btn.title = 'View archived conversations';
-      btn.setAttribute('aria-label', 'View archived conversations');
-      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>';
-      btn.style.cssText = 'background:none;border:0;color:inherit;opacity:.6;cursor:pointer;padding:6px;border-radius:8px;margin-left:auto';
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        toggleArchiveView();
+      if (!pinned.length) return;
+      pinned.concat(rest).forEach(function (item) { list.appendChild(item); });
+      // Add a pin badge to pinned items.
+      pinned.forEach(function (item) {
+        if (!item.querySelector('.jd-pin-badge')) {
+          var badge = document.createElement('span');
+          badge.className = 'jd-pin-badge';
+          badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>';
+          badge.style.cssText = 'margin-left:6px;opacity:.6;flex:none;display:inline-flex';
+          var text = item.querySelector('.history-item-text');
+          if (text) text.appendChild(badge);
+          else item.appendChild(badge);
+        }
       });
-      // Place it right after the heading button, aligned to the right.
-      heading.style.display = 'flex';
-      heading.style.alignItems = 'center';
-      heading.style.width = '100%';
-      heading.after(btn);
-      // Wrap both in a flex row for proper alignment.
-      var wrapper = document.createElement('div');
-      wrapper.style.cssText = 'display:flex;align-items:center;gap:4px';
-      heading.before(wrapper);
-      wrapper.appendChild(heading);
-      wrapper.appendChild(btn);
-    } catch (e) {}
-  }
-
-  function toggleArchiveView() {
-    showingArchived = !showingArchived;
-    try {
-      var btn = document.getElementById('jdArchiveViewBtn');
-      if (btn) {
-        btn.style.opacity = showingArchived ? '1' : '.6';
-        btn.title = showingArchived ? 'Back to conversations' : 'View archived conversations';
-      }
-      var heading = document.getElementById('jdSidebarConversationsToggle');
-      if (heading) {
-        var span = heading.querySelector('span');
-        if (span) span.textContent = showingArchived ? 'Archived' : 'Conversations';
-      }
-      renderArchiveList();
-    } catch (e) {}
-  }
-
-  function renderArchiveList() {
-    try {
-      var list = document.getElementById('chatHistoryList');
-      if (!list) return;
-      if (!showingArchived) {
-        // Back to normal: re-render via the app.
-        if (typeof window.renderSidebarHistory === 'function') window.renderSidebarHistory();
-        return;
-      }
-      // Show archived sessions.
-      list.innerHTML = '';
-      var sessions = window.chatSessions || {};
-      var archived = Object.values(sessions).filter(function (s) { return s && s.archived; });
-      if (!archived.length) {
-        list.innerHTML = '<div style="padding:16px;text-align:center;opacity:.5;font-size:13px">No archived conversations</div>';
-        return;
-      }
-      archived.forEach(function (session) {
-        var item = document.createElement('div');
-        item.className = 'history-item';
-        item.dataset.sessionId = session.id;
-        item.innerHTML = '<span class="history-item-text">' + escapeHtml(session.title || 'Untitled') + '</span>';
-        item.addEventListener('click', function () {
-          unarchiveSession(session.id);
-        });
-        list.appendChild(item);
+      // Remove badges from unpinned items.
+      rest.forEach(function (item) {
+        var b = item.querySelector('.jd-pin-badge');
+        if (b) b.remove();
       });
-    } catch (e) {}
-  }
-
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function unarchiveSession(sessionId) {
-    try {
-      var s = getSession(sessionId);
-      if (s) delete s.archived;
-      if (typeof window.saveSessions === 'function') window.saveSessions();
-      toggleArchiveView(); // back to normal list
-      if (typeof window.showModernToast === 'function') window.showModernToast('Conversation restored');
     } catch (e) {}
   }
 
@@ -300,16 +235,15 @@
   } else {
     wire();
   }
-  // The list re-renders; re-wire when it appears and hide archived.
+  // The list re-renders; re-wire when it appears and keep pinned on top.
   var tries = 0;
   var iv = setInterval(function () {
     wire();
-    addArchiveButton();
-    if (!showingArchived) hideArchived();
+    orderPinnedFirst();
     if (++tries > 40) clearInterval(iv);
   }, 500);
   try {
-    new MutationObserver(function () { hideArchived(); })
+    new MutationObserver(function () { orderPinnedFirst(); })
       .observe(document.documentElement, { childList: true, subtree: true });
   } catch (e) {}
 
