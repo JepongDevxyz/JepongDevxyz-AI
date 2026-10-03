@@ -52,22 +52,16 @@
 
   function scanForMaps() {
     try {
-      // Find all links in bot messages - use broader selectors
-      var selectors = [
-        '.msg.bot a[href]',
-        '.msg a[href]',
-        '[class*="bot"] a[href]',
-        '.chat-message a[href]'
-      ];
-      var links = [];
-      selectors.forEach(function (sel) {
+      // Search ALL links on the page (not just in bot messages)
+      // The map links might be in a different container structure
+      var allLinks = document.querySelectorAll('a[href]');
+      allLinks.forEach(function (link) {
         try {
-          document.querySelectorAll(sel).forEach(function (a) {
-            if (links.indexOf(a) === -1) links.push(a);
-          });
+          if (isMapUrl(link.href)) {
+            embedMap(link);
+          }
         } catch (e) {}
       });
-      links.forEach(embedMap);
     } catch (e) {}
   }
 
