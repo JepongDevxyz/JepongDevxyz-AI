@@ -12,6 +12,15 @@ export const config = { runtime: 'edge' };
 ========================================================= */
 
 import { runConfiguredWebSearch } from './web-search.js';
+import {
+  buildLocationMapLinks,
+  buildRouteMapAppendix,
+  buildWeatherMapAppendix,
+  detectLocationWeatherIntent,
+  extractRouteRequest,
+  fetchLiveWeather,
+  normalizeClientLocation
+} from './location-tools.js';
 import { uploadSharedFile } from '../lib/share-file/upload.js';
 import {
   UNIFIED_TOOLS,
@@ -5620,7 +5629,60 @@ async function processChat(body, emit) {
   // inherited history text. Short follow-ups can still use carried-forward URLs
   // through inspectProvidedLinks()/GitHub inspection above, but they must not
   // accidentally launch an unrelated broad search.
-  const liveWebContext=websiteSecurityTask
+  const locationWeatherIntent=detectLocationWeatherIntent(message);
+  const locationFix=locationWeatherIntent.currentLocation?normalizeClientLocation(body.currentLocation):null;
+  const locationError=['permission-denied','timeout','unsupported','unavailable'].includes(String(body.currentLocationError||''))
+    ?String(body.currentLocationError):'';
+  const routeRequest=extractRouteRequest(message);
+  let locationToolContext='';
+  let locationToolAppendix='';
+
+  if(locationWeatherIntent.weather){
+    if(locationWeatherIntent.currentLocation&&!locationFix){
+      const reason=locationError==='permission-denied'
+        ?'The user denied browser geolocation permission.'
+        :locationError==='unsupported'
+          ?'This browser does not provide geolocation.'
+          :'A fresh, sufficiently accurate browser GPS fix was not received.';
+      locationToolContext=`\n\n[CURRENT-LOCATION WEATHER TOOL — unavailable]\n${reason} Do not guess the user's location from IP, chat history, or browser locale. Do not invent current conditions. Ask the user to allow location access or provide a city/town name.\n`;
+      activity(emit,'location-weather','Current-location weather needs a fresh browser GPS fix','warning','web');
+    }else{
+      const place=locationWeatherIntent.currentLocation?'':extractWeatherLocation(message);
+      activity(emit,'location-weather','Fetching live weather for the requested location','running','web',locationFix?'browser GPS coordinates':place||'named location');
+      try{
+        const liveWeather=await fetchLiveWeather({location:locationFix,place,timeoutMs:fastAnswers?4500:6500});
+        if(!liveWeather)throw new Error('No location could be resolved from the request.');
+        const mapCenter=locationFix||(
+          Number.isFinite(liveWeather.nearestLatitude)&&Number.isFinite(liveWeather.nearestLongitude)
+            ?{latitude:liveWeather.nearestLatitude,longitude:liveWeather.nearestLongitude}
+            :null
+        );
+        const fixDescription=locationFix
+          ?`Device GPS fix: ${locationFix.latitude.toFixed(6)}, ${locationFix.longitude.toFixed(6)} (reported accuracy ±${Math.round(locationFix.accuracyMeters)} m). Weather provider resolves its nearest reporting area: ${liveWeather.locationName}.`
+          :`Weather provider matched the named place to ${liveWeather.locationName}${mapCenter?` at ${mapCenter.latitude.toFixed(5)}, ${mapCenter.longitude.toFixed(5)}`:''}.`;
+        locationToolContext=`\n\n[VERIFIED LIVE WEATHER DATA]\nFetched at: ${liveWeather.fetchedAt}\nResolved weather area: ${liveWeather.locationName}\n${fixDescription}\nCurrent condition: ${liveWeather.condition}\nTemperature: ${liveWeather.temperatureC}°C${liveWeather.feelsLikeC===null?'':` (feels like ${liveWeather.feelsLikeC}°C)`}\nHumidity: ${liveWeather.humidityPercent===null?'not reported':`${liveWeather.humidityPercent}%`}\nWind: ${liveWeather.windKph===null?'not reported':`${liveWeather.windKph} km/h`}\nPrecipitation: ${liveWeather.precipitationMm===null?'not reported':`${liveWeather.precipitationMm} mm`}\n${liveWeather.chanceOfRainPercent===null?'':'Maximum rain chance among returned forecast slots: '+liveWeather.chanceOfRainPercent+'%\n'}Provider observation time: ${liveWeather.observationTime||'not supplied'}\nSource: wttr.in. These are live provider values for its resolved reporting area, not a guarantee of weather at every point inside the GPS accuracy radius. State the area and fetch time; never upgrade the provider's spatial resolution or freshness claims.\n`;
+        if(mapCenter){
+          locationToolAppendix=buildWeatherMapAppendix({location:mapCenter,weather:liveWeather});
+          activity(emit,'location-weather-maps','Prepared exact-location radar and Himawari satellite map links','completed','web');
+        }
+        activity(emit,'location-weather','Live weather data received from wttr.in','completed','web',liveWeather.locationName);
+      }catch(error){
+        const detail=String(error?.message||'Weather source unavailable.').slice(0,180);
+        locationToolContext=`\n\n[CURRENT WEATHER TOOL — unavailable]\nThe live weather request failed (${detail}). Do not invent current temperature, rain, radar conditions, or satellite observations. Tell the user the live weather source did not respond and offer a retry.\n`;
+        if(locationFix)locationToolAppendix=buildWeatherMapAppendix({location:locationFix,weather:null,weatherError:'The live weather source did not return a usable observation.'});
+        activity(emit,'location-weather','Live weather source did not return usable data','warning','web');
+      }
+    }
+  }
+
+  if(routeRequest){
+    locationToolAppendix=[locationToolAppendix,buildRouteMapAppendix(routeRequest)].filter(Boolean).join('\n\n');
+    const routeLinks=buildLocationMapLinks(null,routeRequest);
+    locationToolContext+=`\n\n[REAL MAP DIRECTIONS LINK]\nOrigin: ${routeRequest.origin}\nDestination: ${routeRequest.destination}\nTravel mode: ${routeRequest.travelMode}\nGoogle Maps directions URL: ${routeLinks.routeUrl}\nA map link was created; no road route, distance, traffic, or travel time was calculated by this server. Tell the user the link opens Google Maps, which calculates directions for the selected mode. Never invent distance or ETA.\n`;
+    activity(emit,'route-map','Prepared a Google Maps directions link','completed','web',`${routeRequest.origin} → ${routeRequest.destination}`);
+  }
+
+  const liveWebContext=websiteSecurityTask||locationWeatherIntent.weather
     ? ''
     : await getEnhancedLiveWebContext(message,webSearch,emit,{fast:fastAnswers,contextMessage:taskMessage,forceWebSearch:body.forceWebSearch===true});
 
@@ -5633,7 +5695,7 @@ async function processChat(body, emit) {
     ? '\n\n[WEBSITE SAFETY SCOPE] No specific site or source was provided for testing in this request. Do not claim to have checked the user’s website, its live configuration, vulnerabilities, or safety. Offer general security guidance only and request an exact site URL for a site-specific assessment.'
     : '';
   const currentDateContext=buildCurrentDateContext({clientTimeZone});
-  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${plannedResearchContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
+  const combinedToolContext=`${currentDateContext}${attachmentSourceContext||''}${projectInspectionContext||''}${mediaAnalysisContext||''}${githubContext||''}${pluginGithubContext||''}${githubExecutionContext||''}${githubIssuesContext||''}${providedLinkContext||''}${plannedResearchContext||''}${locationToolContext||''}${liveWebContext||''}${verificationContext||''}${websiteScopeContext}`;
   let systemInstruction=buildSystemInstruction(mode,customPrompt,combinedToolContext,studyTool,personalization,message,history,files,voiceResponseLanguage);
 
   // Installed skill plugins are explicit, bounded behavior profiles. They do not
@@ -5872,7 +5934,8 @@ async function processChat(body, emit) {
       systemInstruction,
       activityTaskLabel:'Thinking',
       activityTaskKind:'process',
-      activityBlueprint:contextPlan.activityBlueprint||activityBlueprint
+      activityBlueprint:contextPlan.activityBlueprint||activityBlueprint,
+      locationToolAppendix
     };
   }
 
@@ -5896,7 +5959,7 @@ async function processChat(body, emit) {
         finishState:providerFallback.finishState||{reason:'unknown'},startedAt,
         resolvedProvider:providerFallback.response?.headers.get('x-ai-provider')||fallbackProvider,
         resolvedModel:fallbackModel,systemInstruction,
-        activityTaskLabel:'Thinking',activityTaskKind:'process'
+        activityTaskLabel:'Thinking',activityTaskKind:'process',locationToolAppendix
       };
     }
 
@@ -5916,7 +5979,7 @@ async function processChat(body, emit) {
           resolvedProvider:registeredHorde.response.headers.get('x-ai-provider')||'aihorde',
           resolvedModel:registeredHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
           activityTaskLabel:'Thinking',
-          activityTaskKind:'process'
+          activityTaskKind:'process',locationToolAppendix
         };
       }
       activity(emit,'fallback','Registered AI Horde unavailable — trying anonymous AI Horde','running','fallback');
@@ -5933,7 +5996,7 @@ async function processChat(body, emit) {
           resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
           resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
           activityTaskLabel:'Thinking',
-          activityTaskKind:'process'
+          activityTaskKind:'process',locationToolAppendix
         };
       }
       activity(emit,'fallback','Both emergency AI Horde routes are unavailable','error','fallback');
@@ -6557,6 +6620,12 @@ function activityStreamResponse(body, requestSignal=null) {
             at:Date.now()
           });
           send('activity',{type:'activity',id:'generation',label:`Response complete in ${(elapsedMs/1000).toFixed(elapsedMs>=1000?1:2)}s`,state:'completed',kind:'generate',at:Date.now()});
+          const locationToolAppendix=String(result.locationToolAppendix||'').trim();
+          if(locationToolAppendix){
+            const addition='\n\n'+locationToolAppendix;
+            generatedText+=addition;
+            send('text',{text:addition});
+          }
           send('done',{elapsedMs,autoContinuations:continuationCount,...meta});
           clearInterval(keepAlive);
           controller.close();
