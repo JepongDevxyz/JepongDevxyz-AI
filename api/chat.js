@@ -4,7 +4,6 @@ import { resolveGitHubAccess } from './_github_app.js';
 import { fetchGitHubRunContext } from './_plugin_execution_context.js';
 import { fetchGitHubIssuesContext,shouldReadGitHubIssues } from './_plugin_issues_context.js';
 
-export const config = { runtime: 'edge' };
 
 /* =========================================================
    JEPONGDEVXYZ AI — MULTI PROVIDER / MULTI KEY / ACTIVITY SSE
