@@ -4,6 +4,7 @@
 
    1) Tap-and-hold a WORD in an AI response -> floating menu:
       Reply | Copy | Select | Dictate (+ emoji reaction row).
+      [DISABLED 2026-10-03 per user request — no more popup.]
    2) Dictate -> dictionary bottom sheet (free dictionaryapi.dev,
       no key) with phonetic + definition, and it READS the word
       aloud so the user learns the correct pronunciation
@@ -331,45 +332,98 @@
     if (bd) bd.remove();
     try { window.speechSynthesis.cancel(); } catch (e) {}
   }
+  /* Merriam-Webster support (shared key with dictionary.js: jd_mw_api_key).
+     Uses MW Collegiate API when a key is saved, otherwise falls back
+     to the free dictionaryapi.dev — same as the Dictionary sheet. */
+  function mwAudioSubdir(filename) {
+    if (/^bix/i.test(filename)) return 'bix';
+    if (/^gg/i.test(filename)) return 'gg';
+    if (/^[^a-z]/i.test(filename)) return 'number';
+    return filename.charAt(0).toLowerCase();
+  }
   function lookupWord(word) {
-    var url = 'https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(String(word).toLowerCase());
-    fetch(url).then(function (r) {
-      if (!r.ok) throw new Error('not found');
+    var w = String(word || '').toLowerCase();
+    // 1) Server proxy (Vercel MW_API_KEY) -> 2) localStorage key -> direct MW
+    // -> 3) free dictionaryapi.dev. Shared with dictionary.js.
+    fetch('/api/dictionary?word=' + encodeURIComponent(w)).then(function (r) {
+      if (!r.ok) throw new Error('server-' + r.status);
       return r.json();
-    }).then(function (arr) {
-      var entry = Array.isArray(arr) ? arr[0] : null;
-      if (!entry) throw new Error('empty');
-      var phon = entry.phonetic || '';
-      var audio = '';
-      (entry.phonetics || []).forEach(function (p) {
-        if (!phon && p.text) phon = p.text;
-        if (!audio && p.audio) audio = p.audio;
-      });
-      var meaning = (entry.meanings || [])[0] || {};
-      var def = ((meaning.definitions || [])[0] || {}).definition || '';
-      var pos = meaning.partOfSpeech || '';
-      dictState.audioUrl = audio;
-      var phonEl = document.getElementById('jdDictPhon');
-      if (phonEl) phonEl.textContent = phon || '';
-      var body = document.getElementById('jdDictBody');
-      if (body) {
-        body.innerHTML =
-          (pos ? '<div class="jd-dict-pos">' + esc(pos) + '</div>' : '') +
-          (def ? '<div class="jd-dict-def">' + esc(def) + '</div>'
-               : '<div class="jd-dict-def" style="opacity:.6">Walang nahanap na definition.</div>');
-      }
-      // Read it aloud so the user learns the correct pronunciation.
-      speakWord(dictState.word, audio);
+    }).then(function (j) {
+      renderDictateMW(j && j.data);
     }).catch(function () {
-      var body = document.getElementById('jdDictBody');
-      if (body) body.innerHTML = '<div class="jd-dict-def" style="opacity:.6">Walang English definition para sa salitang ito — pakinggan pa rin ang pronunciation.</div>';
-      var phonEl = document.getElementById('jdDictPhon');
-      if (phonEl) phonEl.textContent = '';
-      speakWord(dictState.word, '');
+      var mwKey = '';
+      try { mwKey = (localStorage.getItem('jd_mw_api_key') || '').trim(); } catch (e) {}
+      var url = mwKey
+        ? 'https://www.dictionaryapi.com/api/v3/references/collegiate/json/' + encodeURIComponent(w) + '?key=' + encodeURIComponent(mwKey)
+        : 'https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(w);
+      fetch(url).then(function (r2) {
+        if (!r2.ok) throw new Error('not found');
+        return r2.json();
+      }).then(function (data) {
+        if (mwKey) renderDictateMW(data);
+        else renderDictateFree(data);
+      }).catch(function () {
+        renderDictateError();
+      });
     });
   }
+  function renderDictateMW(data) {
+    var arr = Array.isArray(data) ? data : [];
+    var e = null;
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] && typeof arr[i] === 'object') { e = arr[i]; break; }
+    }
+    if (!e) { renderDictateError(); return; }
+    var prs = (((e.hwi || {}).prs) || [])[0] || {};
+    var phon = prs.mw || '';
+    var snd = ((prs.sound || {}).audio) || '';
+    var audio = snd ? 'https://media.merriam-webster.com/audio/prons/en/us/mp3/' + mwAudioSubdir(snd) + '/' + snd + '.mp3' : '';
+    var pos = e.fl || '';
+    var def = ((e.shortdef || [])[0]) || '';
+    renderDictateResult(phon, audio, pos, def);
+  }
+  function renderDictateFree(data) {
+    var entry = Array.isArray(data) ? data[0] : null;
+    if (!entry) { renderDictateError(); return; }
+    var phon = entry.phonetic || '';
+    var audio = '';
+    (entry.phonetics || []).forEach(function (p) {
+      if (!phon && p.text) phon = p.text;
+      if (!audio && p.audio) audio = p.audio;
+    });
+    var meaning = (entry.meanings || [])[0] || {};
+    var def = ((meaning.definitions || [])[0] || {}).definition || '';
+    var pos = meaning.partOfSpeech || '';
+    renderDictateResult(phon, audio, pos, def);
+  }
+  function renderDictateResult(phon, audio, pos, def) {
+    dictState.audioUrl = audio;
+    var phonEl = document.getElementById('jdDictPhon');
+    if (phonEl) phonEl.textContent = phon || '';
+    var body = document.getElementById('jdDictBody');
+    if (body) {
+      body.innerHTML =
+        (pos ? '<div class="jd-dict-pos">' + esc(pos) + '</div>' : '') +
+        (def ? '<div class="jd-dict-def">' + esc(def) + '</div>'
+             : '<div class="jd-dict-def" style="opacity:.6">Walang nahanap na definition.</div>');
+    }
+    // Read it aloud so the user learns the correct pronunciation.
+    speakWord(dictState.word, audio);
+  }
+  function renderDictateError() {
+    var body = document.getElementById('jdDictBody');
+    if (body) body.innerHTML = '<div class="jd-dict-def" style="opacity:.6">Walang English definition para sa salitang ito — pakinggan pa rin ang pronunciation.</div>';
+    var phonEl = document.getElementById('jdDictPhon');
+    if (phonEl) phonEl.textContent = '';
+    speakWord(dictState.word, '');
+  }
 
-  /* ---------------- long-press wiring ---------------- */
+  /* ---------------- long-press wiring ----------------
+     REMOVED 2026-10-03 per user request ("Alisin mo nga rin yan
+     nag pop up na yan"): the tap-and-hold word popup no longer
+     appears. Reactions now live in the message action bar
+     (reactions-v2.js); the dictionary stays available via
+     window.__jdWordDictate.openDictionary(word). */
   var lpTimer = null, lpStart = null;
   function findChatBox() { return document.getElementById('chatBox'); }
   function onPressStart(x, y, msgEl) {
@@ -386,37 +440,8 @@
     var chatBox = findChatBox();
     if (!chatBox || chatBox.__jdWordDictateWired) return;
     chatBox.__jdWordDictateWired = true;
-    chatBox.addEventListener('touchstart', function (e) {
-      if (e.touches.length !== 1) return;
-      var msgEl = e.target.closest ? e.target.closest('.msg.bot') : null;
-      if (!msgEl || (e.target.closest && e.target.closest('.bot-actions,button,a'))) return;
-      var t = e.touches[0];
-      lpStart = { x: t.clientX, y: t.clientY, msgEl: msgEl };
-      clearTimeout(lpTimer);
-      lpTimer = setTimeout(function () {
-        lpTimer = null;
-        if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e2) {} }
-        onPressStart(lpStart.x, lpStart.y, lpStart.msgEl);
-      }, 550);
-    }, { passive: true });
-    chatBox.addEventListener('touchmove', function (e) {
-      if (!lpTimer || !lpStart || e.touches.length !== 1) return;
-      var t = e.touches[0];
-      if (Math.hypot(t.clientX - lpStart.x, t.clientY - lpStart.y) > 12) {
-        clearTimeout(lpTimer); lpTimer = null;
-      }
-    }, { passive: true });
-    var cancel = function () { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
-    chatBox.addEventListener('touchend', cancel);
-    chatBox.addEventListener('touchcancel', cancel);
-    chatBox.addEventListener('scroll', closeMenu, { passive: true });
-    // Desktop: right-click a word shows the same menu.
-    chatBox.addEventListener('contextmenu', function (e) {
-      var msgEl = e.target.closest ? e.target.closest('.msg.bot') : null;
-      if (!msgEl || (e.target.closest && e.target.closest('.bot-actions,button,a'))) return;
-      e.preventDefault();
-      onPressStart(e.clientX, e.clientY, msgEl);
-    });
+    // NOTE: long-press (touchstart/touchmove/touchend) and desktop
+    // contextmenu triggers removed — no more word popup.
     // Re-apply saved reactions whenever messages render.
     try {
       new MutationObserver(function (muts) {
