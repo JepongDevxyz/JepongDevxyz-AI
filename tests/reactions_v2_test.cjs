@@ -101,6 +101,7 @@ setTimeout(() => {
       });
       const ci = (capturedBody.personalization.customInstructions || '');
       assert(ci.includes('[USER_REACTION:X]'), 'REACTION instruction injected');
+      assert(ci.includes('TASK COMPLETION'), 'TASK instruction injected');
       console.log(`\n${pass} passed, ${fail} failed`);
       process.exit(fail ? 1 : 0);
     })();

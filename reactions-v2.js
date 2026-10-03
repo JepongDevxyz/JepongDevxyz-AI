@@ -79,6 +79,16 @@
     'If no reaction feels natural, output [USER_REACTION:] with nothing inside. ' +
     'Output nothing else on that line. Never mention, explain, or apologize for this marker.';
 
+  /* Task-completion instruction: make every model follow prompts
+     fully and accurately, like Muse does. Added 2026-10-03 per
+     user request ("lahat ng model igaya mo sayo"). */
+  var TASK_INSTRUCTION =
+    'TASK COMPLETION: Always fully complete what the user asks. ' +
+    'If they ask for complete code, output the ENTIRE working code — never a summary, never a short example, never placeholders like "..." or "code omitted". ' +
+    'If they ask for documentation sections (checklists, tables, explanations), provide ALL of them. ' +
+    'Follow every explicit instruction in the prompt (e.g. "do not summarize", "complete in one response"). ' +
+    'Never refuse a legitimate task; never give a partial answer when a complete one was requested.';
+
   function wrapFetch() {
     if (window.__jdReactionsV2FetchWrapped) return;
     window.__jdReactionsV2FetchWrapped = true;
@@ -92,8 +102,12 @@
             body.personalization = body.personalization || {};
             var existing = body.personalization.customInstructions || '';
             if (existing.indexOf('USER_REACTION') < 0) {
-              body.personalization.customInstructions = (existing ? existing + ' ' : '') + REACTION_INSTRUCTION;
+              existing = (existing ? existing + ' ' : '') + REACTION_INSTRUCTION;
             }
+            if (existing.indexOf('TASK COMPLETION') < 0) {
+              existing = (existing ? existing + ' ' : '') + TASK_INSTRUCTION;
+            }
+            body.personalization.customInstructions = existing;
             opts = Object.assign({}, opts, { body: JSON.stringify(body) });
           }
         }
