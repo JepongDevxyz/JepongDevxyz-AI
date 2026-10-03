@@ -1086,36 +1086,36 @@ body.theme-light #promptBar .rb-sling-wrap[data-disabled] .rb-sling-face{opacity
   .rb-sling-face{transform:none!important;transition:none!important}
 }
 /* =========================================================
-   Muse-app-style attachment sheet (2026-10-03)
-   The composer (+) tool sheet now mirrors the Muse app's
-   attachment picker: roomy single-line icon rows on a
+   Muse-app-style attachment sheet (2026-10-03, slimmed)
+   The composer (+) tool sheet mirrors the Muse app's
+   attachment picker: slim single-line icon rows on a
    floating card. Scoped to #composerToolSheet only so the
    model-picker and effort menus keep their compact style.
-   All six entries stay — Camera, Photos, Files, Library,
-   Plugins, Vision prompt — same actions, cleaner look.
+   All entries stay — Camera, Photos, Files, Library,
+   Plugins, Vision prompt, Dictionary — same actions.
    ========================================================= */
 #composerToolSheet{
-  padding:8px;
-  border-radius:20px;
+  padding:6px;
+  border-radius:18px;
   box-shadow:
     0 18px 45px -12px rgba(0,0,0,.45),
     0 2px 6px rgba(0,0,0,.12);
 }
 #composerToolSheet .prompt-bar__row{
-  height:52px;
+  height:46px;
   padding:0 12px;
-  gap:14px;
-  border-radius:14px;
+  gap:12px;
+  border-radius:12px;
 }
 #composerToolSheet .prompt-bar__row-icon{
-  width:24px;
+  width:22px;
 }
 #composerToolSheet .prompt-bar__row-icon svg{
-  width:22px;
-  height:22px;
+  width:20px;
+  height:20px;
 }
 #composerToolSheet .prompt-bar__row-name{
-  font-size:15px;
+  font-size:14px;
   font-weight:500;
   white-space:nowrap;
 }
