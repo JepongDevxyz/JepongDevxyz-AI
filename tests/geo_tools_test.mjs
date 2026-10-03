@@ -69,6 +69,9 @@ const radarHtml = buildRadarMapHtml({
   radarTileUrl: radar, lat: 15.66, lon: 120.77,
 });
 assert.ok(radarHtml.includes('tilecache.rainviewer.com'), 'radar overlay');
+assert.ok(radarHtml.includes('Himawari_AHI_Band13_Clean_Infrared'), 'satellite layer is available inside the map');
+assert.ok(radarHtml.includes('L.control.layers'), 'map offers an in-place radar/satellite layer switch');
+assert.ok(radarHtml.includes('jd-map-document'), 'generated map is marked for safe in-chat embedding');
 assert.ok(radarHtml.includes('28.4°C'), 'temp shown');
 
 // escaping

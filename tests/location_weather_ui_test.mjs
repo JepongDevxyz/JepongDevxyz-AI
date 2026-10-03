@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const mapEmbed=readFileSync(new URL('../map-autoembed.js',import.meta.url),'utf8');
 const promptStart=html.indexOf('function isCurrentLocationWeatherPrompt(');
 const promptEnd=html.indexOf('\n        function requestPreciseLocationForWeather(',promptStart);
 const geoStart=promptEnd;
@@ -27,7 +28,14 @@ assert.match(api,/detectLocationWeatherIntent\(message\)/);
 assert.match(api,/fetchLiveWeather\(\{location:locationFix,place,timeoutMs:fastAnswers\?4500:6500\}\)/);
 assert.match(api,/normalizeClientLocation\(body\.currentLocation\)/);
 assert.match(api,/\[CURRENT-LOCATION WEATHER TOOL — unavailable\]/);
-assert.match(api,/A map link was created; no road route, distance, traffic, or travel time was calculated by this server/);
+assert.match(api,/A route was calculated by the routing service and an interactive route map was generated/);
+assert.match(api,/The interactive route service did not return a route/);
 assert.match(api,/const locationToolAppendix=String\(result\.locationToolAppendix\|\|''\)\.trim\(\)/);
+assert.match(api,/buildRouteMapHtml\(/);
+assert.match(api,/buildRadarMapHtml\(/);
+assert.match(api,/uploadInlineMapPage\(/);
+assert.match(html,/safeDataMap/);
+assert.match(mapEmbed,/setAttribute\('sandbox',\s*'allow-scripts'\)/);
+assert.match(mapEmbed,/jd-map-document/);
 
 console.log('PASS: user-triggered GPS permission, no coordinate persistence, and model-neutral location/map context');

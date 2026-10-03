@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   buildLocationMapLinks,
+  buildRouteMapAppendix,
   buildWeatherMapAppendix,
   detectLocationWeatherIntent,
   extractRouteRequest,
@@ -39,6 +40,8 @@ const links=buildLocationMapLinks({latitude:15.6678,longitude:120.7562},{origin:
 assert.match(links.routeUrl,/google\.com\/maps\/dir/);
 assert.match(links.routeUrl,/origin=Guimba/);
 assert.match(links.routeUrl,/destination=Baguio/);
+const routeCard=buildRouteMapAppendix({origin:'Guimba',destination:'Baguio',travelMode:'driving'},'https://maps.example/route-guimba-to-baguio.html');
+assert.match(routeCard,/\[View route map inside the chat\]\(https:\/\/maps\.example\/route-guimba-to-baguio\.html\)/);
 assert.match(links.radarUrl,/rainviewer\.com\/weather-radar-map-live\.html\?loc=15\.6678%2C120\.7562%2C8/);
 const satellite=new URL(links.satelliteUrl);
 assert.equal(satellite.hostname,'worldview.earthdata.nasa.gov');
@@ -69,13 +72,14 @@ assert.equal(weather.chanceOfRainPercent,45);
 assert.deepEqual(weather.requestedFix,fix);
 
 const appendix=buildWeatherMapAppendix({
-  location:fix,weather,
+  location:fix,weather,mapUrl:'https://maps.example/weather-guimba.html',
   now:new Date('2026-10-03T16:00:00.000Z')
 });
 assert.match(appendix,/29°C/);
 assert.match(appendix,/±18 m/);
 assert.match(appendix,/Open live radar map/);
 assert.match(appendix,/Open Himawari satellite cloud view/);
+assert.match(appendix,/\[View radar and satellite map inside the chat\]\(https:\/\/maps\.example\/weather-guimba\.html\)/);
 assert.match(appendix,/rainviewer\.com/);
 assert.match(appendix,/worldview\.earthdata\.nasa\.gov/);
 

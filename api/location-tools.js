@@ -150,7 +150,7 @@ function displayNumber(value,digits=0){
   return number===null?'not available':`${Number(number.toFixed(digits))}`;
 }
 
-export function buildRouteMapAppendix(route){
+export function buildRouteMapAppendix(route,mapUrl=''){
   if(!route?.origin||!route?.destination)return '';
   const links=buildLocationMapLinks(null,route);
   const title=`${escapeMarkdown(route.origin)} → ${escapeMarkdown(route.destination)}`;
@@ -158,12 +158,14 @@ export function buildRouteMapAppendix(route){
   return [
     '> [!STATUS info|Route map]',
     `> ### ${title}`,
-    `> Open the ${mode} route in Google Maps to see the live map and current directions.`,
-    `> [Open ${mode} map and directions](${links.routeUrl})`
+    mapUrl
+      ?`> [View route map inside the chat](${mapUrl})`
+      :`> Open the ${mode} route in Google Maps to see the live map and current directions.`,
+    `> [Open ${mode} directions in Google Maps](${links.routeUrl})`
   ].join('\n');
 }
 
-export function buildWeatherMapAppendix({location=null,weather=null,weatherError='',now=new Date()}={}){
+export function buildWeatherMapAppendix({location=null,weather=null,weatherError='',mapUrl='',now=new Date()}={}){
   const links=buildLocationMapLinks(location,null,now);
   if(!links.radarUrl||!links.satelliteUrl)return '';
   const locationName=weather?.locationName||'your device location';
@@ -178,6 +180,7 @@ export function buildWeatherMapAppendix({location=null,weather=null,weatherError
   }else{
     lines.push(`> Current weather data could not be retrieved${weatherError?`: ${escapeMarkdown(weatherError)}`:''}. The following links still open at the device coordinates.`);
   }
+  if(mapUrl)lines.push(`> [View radar and satellite map inside the chat](${mapUrl})`);
   if(location?.accuracyMeters!==null&&location?.accuracyMeters!==undefined){
     lines.push(`> Map center uses the device GPS fix (reported accuracy ±${displayNumber(location.accuracyMeters)} m); the weather reading is from the nearest provider reporting area.`);
   }else{

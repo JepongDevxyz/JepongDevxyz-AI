@@ -19,6 +19,7 @@ function loadDetector(source) {
     .replace(/^import \{ fetchGitHubIssuesContext,shouldReadGitHubIssues \} from '\.\/_plugin_issues_context\.js';\s*/m, '')
     .replace(/^import \{ runConfiguredWebSearch \} from '\.\/web-search\.js';\s*/m, '')
     .replace(/^import \{[\s\S]*?\} from '\.\/location-tools\.js';\s*/m, '')
+    .replace(/^import \{[\s\S]*?\} from '\.\.\/lib\/tools\/geo\.js';\s*/m, '')
     .replace(/^import \{ uploadSharedFile \} from '\.\.\/lib\/share-file\/upload\.js';\s*/m, '')
     .replace(/^import \{[^}]*\} from '\.\.\/lib\/tools\/index\.js';\s*/m, '')
     .replace(/^export const config/m, 'const config')

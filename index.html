@@ -11096,6 +11096,7 @@ ${m.text || ''}
             const allowedHrefProtocols = new Set(['http:','https:','mailto:','tel:']);
             const allowedSrcProtocols = new Set(['http:','https:']);
             const safeDataImage = /^data:image\/(?:png|jpe?g|gif|webp);base64,/i;
+            const safeDataMap = /^data:text\/html;base64,/i;
 
             root.querySelectorAll('*').forEach(el => {
                 if (blockedTags.has(el.tagName)) {
@@ -11106,6 +11107,14 @@ ${m.text || ''}
                     const name = attr.name.toLowerCase();
                     const value = String(attr.value || '').trim();
                     if (name.startsWith('on') || name === 'srcdoc' || name === 'formaction' || name === 'xlink:href' || name === 'style') {
+                        el.removeAttribute(attr.name);
+                        return;
+                    }
+                    if (name === 'href' && safeDataMap.test(value)) {
+                        try {
+                            const mapDocument=atob(value.slice(value.indexOf(',')+1));
+                            if (mapDocument.length<=150000&&mapDocument.includes('<meta name="jd-map-document" content="v1">')) return;
+                        } catch (_) {}
                         el.removeAttribute(attr.name);
                         return;
                     }

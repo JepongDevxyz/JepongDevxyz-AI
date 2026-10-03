@@ -21,6 +21,15 @@ import {
   fetchLiveWeather,
   normalizeClientLocation
 } from './location-tools.js';
+import {
+  buildRadarMapHtml,
+  buildRouteMapHtml,
+  geocodePlace,
+  getRadarTileUrl,
+  getRoute,
+  shortPlace,
+  slugify
+} from '../lib/tools/geo.js';
 import { uploadSharedFile } from '../lib/share-file/upload.js';
 import {
   UNIFIED_TOOLS,
@@ -36,6 +45,21 @@ import {
   buildToolFollowUp,
   executeUnifiedTool,
 } from '../lib/tools/index.js';
+
+async function uploadInlineMapPage(filename,html){
+  const uploadPromise=uploadSharedFile({filename,bytes:html,mimeType:'text/html'}).catch(()=>null);
+  const timeoutPromise=new Promise(resolve=>setTimeout(()=>resolve(null),7000));
+  const uploaded=await Promise.race([uploadPromise,timeoutPromise]);
+  if(uploaded?.ok&&uploaded.url)return uploaded.url;
+  try{
+    const bytes=new TextEncoder().encode(String(html||''));
+    if(bytes.length>110000)return '';
+    let binary='';
+    for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+    const encoded='data:text/html;base64,'+btoa(binary);
+    return encoded.length<=150000?encoded:'';
+  }catch(_){return '';}
+}
 
 const PROVIDERS = {
   gemini: {
@@ -5662,8 +5686,18 @@ async function processChat(body, emit) {
           :`Weather provider matched the named place to ${liveWeather.locationName}${mapCenter?` at ${mapCenter.latitude.toFixed(5)}, ${mapCenter.longitude.toFixed(5)}`:''}.`;
         locationToolContext=`\n\n[VERIFIED LIVE WEATHER DATA]\nFetched at: ${liveWeather.fetchedAt}\nResolved weather area: ${liveWeather.locationName}\n${fixDescription}\nCurrent condition: ${liveWeather.condition}\nTemperature: ${liveWeather.temperatureC}°C${liveWeather.feelsLikeC===null?'':` (feels like ${liveWeather.feelsLikeC}°C)`}\nHumidity: ${liveWeather.humidityPercent===null?'not reported':`${liveWeather.humidityPercent}%`}\nWind: ${liveWeather.windKph===null?'not reported':`${liveWeather.windKph} km/h`}\nPrecipitation: ${liveWeather.precipitationMm===null?'not reported':`${liveWeather.precipitationMm} mm`}\n${liveWeather.chanceOfRainPercent===null?'':'Maximum rain chance among returned forecast slots: '+liveWeather.chanceOfRainPercent+'%\n'}Provider observation time: ${liveWeather.observationTime||'not supplied'}\nSource: wttr.in. These are live provider values for its resolved reporting area, not a guarantee of weather at every point inside the GPS accuracy radius. State the area and fetch time; never upgrade the provider's spatial resolution or freshness claims.\n`;
         if(mapCenter){
-          locationToolAppendix=buildWeatherMapAppendix({location:mapCenter,weather:liveWeather});
-          activity(emit,'location-weather-maps','Prepared exact-location radar and Himawari satellite map links','completed','web');
+          const [radarTileUrl]=await Promise.all([getRadarTileUrl().catch(()=>null)]);
+          const mapHtml=buildRadarMapHtml({
+            placeName:liveWeather.locationName,
+            condition:liveWeather.condition,
+            temperatureC:liveWeather.temperatureC,
+            radarTileUrl,
+            lat:mapCenter.latitude,
+            lon:mapCenter.longitude
+          });
+          const mapUrl=await uploadInlineMapPage('weather-'+slugify(liveWeather.locationName)+'.html',mapHtml);
+          locationToolAppendix=buildWeatherMapAppendix({location:mapCenter,weather:liveWeather,mapUrl});
+          activity(emit,'location-weather-maps',mapUrl?'Prepared an in-chat radar and Himawari satellite map':'Prepared radar and satellite map links','completed','web');
         }
         activity(emit,'location-weather','Live weather data received from wttr.in','completed','web',liveWeather.locationName);
       }catch(error){
@@ -5676,10 +5710,31 @@ async function processChat(body, emit) {
   }
 
   if(routeRequest){
-    locationToolAppendix=[locationToolAppendix,buildRouteMapAppendix(routeRequest)].filter(Boolean).join('\n\n');
+    let routeMapUrl='';
+    let calculatedRoute=null;
+    try{
+      const originPromise=geocodePlace(routeRequest.origin);
+      await new Promise(resolve=>setTimeout(resolve,300));
+      const destinationPromise=geocodePlace(routeRequest.destination);
+      const [origin,destination]=await Promise.all([originPromise,destinationPromise]);
+      if(origin&&destination){
+        calculatedRoute=await getRoute(origin,destination);
+        if(calculatedRoute){
+          const mapHtml=buildRouteMapHtml({
+            fromName:shortPlace(origin.name),toName:shortPlace(destination.name),
+            distanceKm:calculatedRoute.distanceKm,durationText:calculatedRoute.durationText,
+            geometry:calculatedRoute.geometry
+          });
+          routeMapUrl=await uploadInlineMapPage('route-'+slugify(routeRequest.origin)+'-to-'+slugify(routeRequest.destination)+'.html',mapHtml);
+        }
+      }
+    }catch(_){}
+    locationToolAppendix=[locationToolAppendix,buildRouteMapAppendix(routeRequest,routeMapUrl)].filter(Boolean).join('\n\n');
     const routeLinks=buildLocationMapLinks(null,routeRequest);
-    locationToolContext+=`\n\n[REAL MAP DIRECTIONS LINK]\nOrigin: ${routeRequest.origin}\nDestination: ${routeRequest.destination}\nTravel mode: ${routeRequest.travelMode}\nGoogle Maps directions URL: ${routeLinks.routeUrl}\nA map link was created; no road route, distance, traffic, or travel time was calculated by this server. Tell the user the link opens Google Maps, which calculates directions for the selected mode. Never invent distance or ETA.\n`;
-    activity(emit,'route-map','Prepared a Google Maps directions link','completed','web',`${routeRequest.origin} → ${routeRequest.destination}`);
+    locationToolContext+=calculatedRoute
+      ?`\n\n[VERIFIED MAP ROUTE]\nOrigin: ${routeRequest.origin}\nDestination: ${routeRequest.destination}\nDriving distance: ${calculatedRoute.distanceKm} km\nEstimated drive time from the routing service: ${calculatedRoute.durationText}\nGoogle Maps directions URL: ${routeLinks.routeUrl}\nA route was calculated by the routing service and an interactive route map was generated. Traffic delays are not included.\n`
+      :`\n\n[REAL MAP DIRECTIONS LINK]\nOrigin: ${routeRequest.origin}\nDestination: ${routeRequest.destination}\nGoogle Maps directions URL: ${routeLinks.routeUrl}\nThe interactive route service did not return a route. Do not invent distance or ETA; the Google Maps link can still calculate directions.\n`;
+    activity(emit,'route-map',routeMapUrl?'Prepared an in-chat route map':'Prepared a Google Maps directions link',routeMapUrl?'completed':'warning','web',`${routeRequest.origin} → ${routeRequest.destination}`);
   }
 
   const liveWebContext=websiteSecurityTask||locationWeatherIntent.weather
