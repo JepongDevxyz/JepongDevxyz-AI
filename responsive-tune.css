@@ -30,7 +30,39 @@
   }
 }
 
-/* ---- TV / very wide desktop (>=1600px): use the space ----
+/* ---- Floating / minimized window (ultra-narrow, <=360px) ----
+   Samsung popup view / Android freeform windows can be ~250-350px
+   wide. The app must look exactly like the full-screen version,
+   just narrower — no misalignment, no overflow. */
+@media (max-width: 360px) {
+  /* Composer (+) sheet: fit inside the narrow window */
+  #composerToolSheet{
+    width:auto !important;
+    max-width:232px;
+    left:8px !important;
+    right:8px !important;
+  }
+  #composerToolSheet .prompt-bar__row{
+    height:52px;
+  }
+  /* Kill any horizontal overflow at the root */
+  html, body{
+    overflow-x:hidden !important;
+  }
+  .app-container{
+    min-width:0 !important;
+    overflow-x:hidden !important;
+  }
+  /* Chat messages: never force a min-width */
+  .msg, .message, .chat-message{
+    min-width:0 !important;
+    max-width:100% !important;
+  }
+  /* Composer input row: keep everything on one line */
+  .input-container, .composer, .prompt-bar{
+    min-width:0 !important;
+  }
+}
    Chat column was capped at 1040px (lost in the middle of a
    1920px TV); settings rows stretched across the full width. */
 @media (min-width: 1600px) {
