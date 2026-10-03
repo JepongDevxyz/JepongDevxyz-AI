@@ -18,6 +18,8 @@ function loadDetector(source) {
     .replace(/^import \{ resolveGitHubAccess \} from '\.\/_github_app\.js';\s*/m, '')
     .replace(/^import \{ fetchGitHubIssuesContext,shouldReadGitHubIssues \} from '\.\/_plugin_issues_context\.js';\s*/m, '')
     .replace(/^import \{ runConfiguredWebSearch \} from '\.\/web-search\.js';\s*/m, '')
+    .replace(/^import \{ uploadSharedFile \} from '\.\.\/lib\/share-file\/upload\.js';\s*/m, '')
+    .replace(/^import \{[^}]*\} from '\.\.\/lib\/tools\/index\.js';\s*/m, '')
     .replace(/^export const config/m, 'const config')
     .replace(/^export default async function handler/m, 'async function handler');
   s += '\n;globalThis.__detectArtifactRequest = detectArtifactRequest;';

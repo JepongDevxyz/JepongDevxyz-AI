@@ -45,7 +45,10 @@ function primary({statuses=[429,200],keys=['key-one','key-two'],fallback=false}=
    providerLabel:x=>x,
    modelLabel:x=>x,
    chatCompletionsUrl:()=>'',
-   chatUpstreamTimeoutMs:()=>60000
+   chatUpstreamTimeoutMs:()=>60000,
+   // Unified tools: stubbed out for this fallback test (no tools requested).
+   TOOL_FAMILY_OPENAI:'openai',
+   toolsForFamily:()=>null
  };
  const runner=new Function(...Object.keys(deps),providerRunner+'\nreturn runOpenAICompatible;')(...Object.values(deps));
  return {attempts,execute:()=>runner('groq',{model:'openai/gpt-oss-20b',history:[],message:'Hi',autoFallback:fallback})};
@@ -82,6 +85,7 @@ async function fallback({enabled=true,first=failed,registeredSuccess=false,anony
      calls.push({kind:'provider-fallback',args});
      return providerFallbackSuccess?success('gemini'):{ok:false,status:429,error:'all configured providers exhausted'};
    },
+   UNIFIED_TOOLS:[],
    activity:()=>{},providerLabel:x=>x,modelLabel:x=>x,
    runAIHorde:async args=>{calls.push({kind:'registered',args});return registeredSuccess?success('aihorde'):{ok:false,status:401,error:'invalid registered key'};},
    runAnonymousAIHordeFallback:async args=>{calls.push({kind:'anonymous',args});return anonymousSuccess?success('aihorde-public'):{ok:false,status:503,error:'no workers'};}
