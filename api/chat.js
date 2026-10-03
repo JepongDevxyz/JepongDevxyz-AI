@@ -12,6 +12,21 @@ export const config = { runtime: 'edge' };
 ========================================================= */
 
 import { runConfiguredWebSearch } from './web-search.js';
+import { uploadSharedFile } from '../lib/share-file/upload.js';
+import {
+  UNIFIED_TOOLS,
+  TOOL_FAMILY_OPENAI,
+  TOOL_FAMILY_GEMINI,
+  TOOL_FAMILY_ANTHROPIC,
+  MAX_TOOL_ROUNDS,
+  toolsForFamily,
+  accumulateOpenAIToolDeltas,
+  recordGeminiFunctionCall,
+  accumulateAnthropicEvent,
+  finalizeToolCalls,
+  buildToolFollowUp,
+  executeUnifiedTool,
+} from '../lib/tools/index.js';
 
 const PROVIDERS = {
   gemini: {
@@ -481,7 +496,7 @@ function detectArtifactRequest(message='', files=[]) {
 
   const deliveryVerb=/\b(?:download|downloadable|i-download|idownload|export|save(?:\s+as)?|send(?:\s+me)?|pa[ -]?send|paki[ -]?send|bigay|ibigay|bigyan)\b/i.test(text);
   const createVerb=/\b(?:gawan|gumawa|create|generate)\b/i.test(text);
-  const artifactNoun=/\b(?:file|zip|pdf|document|doc|archive|download|code|source|project)\b/i.test(text);
+  const artifactNoun=/\b(?:file|zip|pdf|document|doc|docs|report|summary|summaries|ulat|archive|download|code|source|project)\b/i.test(text);
   const typedFile=/\b(?:html|javascript|js|css|python|json|markdown|text|txt|csv|xml|svg|sql|typescript|tsx|jsx|php|java|c\+\+|cpp|c#|yaml|yml|shell|bash)\s+(?:file|document|code)\b/i.test(text);
   const directType=/(?:^|\s)\.(?:zip|pdf|txt|md|html|js|css|py|json|csv|xml|svg|sql|ts|tsx|jsx|php|java|cpp|cs|yaml|yml|sh)\b/i.test(text) ||
     /\b(?:zip file|pdf file|downloadable file|download file)\b/i.test(text);
@@ -572,6 +587,59 @@ function artifactInstruction(message='', files=[]) {
 }
 
 function utf8Bytes(text=''){ return new TextEncoder().encode(String(text)); }
+
+/* =========================================================
+   MODEL TOOLS — share_file + create_session
+   The chat API invokes these server-side (artifact pipeline),
+   so they work uniformly across every provider. The model only
+   needs to follow the ask-first protocol and the marker format.
+   ========================================================= */
+/* Server-side implementations behind the unified web_search / fetch_webpage
+   tools. Read-only, bounded, and safe: URLs are validated the same way as
+   the existing link-inspection pipeline. */
+async function toolWebSearch(query, maxResults = 5) {
+  try {
+    const r = await runConfiguredWebSearch(query, {
+      maxResults: Math.min(8, Math.max(1, Number(maxResults) || 5)),
+      fast: true,
+    });
+    const results = Array.isArray(r?.results) ? r.results.slice(0, 8) : [];
+    return results.map((x) => ({
+      title: String(x?.title || x?.name || '').slice(0, 120),
+      url: String(x?.url || x?.link || ''),
+      snippet: String(x?.snippet || x?.description || '').slice(0, 300),
+    })).filter((x) => x.url);
+  } catch (_) {
+    return [];
+  }
+}
+
+async function toolFetchWebpage(url) {
+  try {
+    if (!isSafePublicUrl(url)) return { ok: false, error: 'That URL is not allowed.' };
+    const res = await safePublicFetch(url, {}, 2);
+    if (!res.ok) return { ok: false, error: 'Fetch failed with status ' + res.status + '.' };
+    const html = await res.text();
+    const text = stripHtml(htmlDecode(String(html || ''))).replace(/\s+/g, ' ').trim().slice(0, 6000);
+    if (!text) return { ok: false, error: 'No readable text found on that page.' };
+    return { ok: true, url: String(url), text };
+  } catch (e) {
+    return { ok: false, error: String(e?.message || e).slice(0, 160) };
+  }
+}
+
+function modelToolsInstruction(){
+  return (
+    ' MODEL TOOLS. You have native function-calling tools, the same on every model:' +
+    ' (1) share_file — when the user asks for something downloadable (report, document, code file, HTML page, CSV, markdown), CALL share_file with the COMPLETE file content (parameters: filename, content, mimeType). You will receive a public download URL back as the tool result; paste that exact URL in your reply so the user can tap it, like handing them a link. Never invent or print a download URL yourself. If tools are unavailable, generate the complete file content in a fenced code block instead and the server will attach a public download link below your reply automatically.' +
+    ' (2) create_session — when the user asks you to create/open a new chat session, you MUST ask for permission first in your reply (e.g. \'Gagawa ako ng bagong session na "<title>". Payag ka ba?\'). NEVER call it without the user explicitly agreeing. Only after they agree, CALL create_session with the title (max 60 chars).' +
+    ' (3) web_search — CALL it when you need current or external information to answer well (recent events, facts you are unsure of). Cite the returned titles/URLs.' +
+    ' (4) fetch_webpage — CALL it to read the text of a public web page the user shared or that a search returned.' +
+    ' (5) generate_image — CALL it with a detailed prompt to create an image; share the returned image URL in your reply as a Markdown image.' +
+    ' (6) get_directions — CALL it when the user asks for the way / directions between two places (e.g. "anong daan papunta sa Baguio to Guimba"). After the result, summarize in the user\'s language (e.g. "Ito ang tamang daan papunta sa Guimba — mga 4 h 12 min ang biyahe, 185 km.") and share the map_url so they can open the interactive map with the exact route drawn. Works for any places in the world.' +
+    ' (7) get_weather — CALL it when the user asks about the weather anywhere (e.g. "may bagyo ba sa Guimba"). Answer honestly from the returned data only — say "Oo" only when the data shows rain/storm (stormy=true or malakas na pag-ulan), otherwise say the real condition. Then share the radar_map_url so they can see the live satellite/radar map. Never invent a storm that is not in the data.'
+  );
+}
 
 function bytesToBase64(bytes){
   let binary='';
@@ -1811,6 +1879,7 @@ function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, p
   text += responseQualityInstruction(userMessage);
   text += languageQualityInstruction(userMessage, personalization);
   text += artifactInstruction(userMessage, files);
+  text += modelToolsInstruction();
   text += ' When tool results are supplied in bracketed LIVE/VERIFICATION/PROVIDED LINK sections, use them only when relevant to the user request and distinguish actual fetched/tested results from inference. Never say you searched, tested, ran, compiled, inspected an environment, or opened a website unless the supplied tool context confirms that action. For code, report static verification as static verification—not successful execution. Keep the final answer tightly aligned to the user\'s actual task, attached files, provided URLs, and requested output.';
   text += ' When reporting a concrete VERIFIED software/project result (for example CI passed, deployment status, PR status, build verification, or repository work), you may use at most two compact status cards. A card must be a Markdown blockquote whose first line is exactly > [!STATUS success|Badge text], > [!STATUS info|Badge text], > [!STATUS warning|Badge text], or > [!STATUS error|Badge text]. Put a short heading, optional metadata such as Repository:/Commit:/Branch:, a concise checklist, and at most one normal Markdown link inside the same blockquote. Use success only for facts actually verified by tool context. Do not use status cards for ordinary chat, explanations, guesses, or unverified claims.';
 
@@ -3998,6 +4067,11 @@ function openAIStreamToText(body, finishState={reason:''}) {
           const p=JSON.parse(s);
           if(p?.error){captureProviderStreamError(finishState,p.error);continue;}
           const choice=p.choices?.[0];
+          // Unified tools: capture native tool calls without disturbing text.
+          if(choice?.delta?.tool_calls) accumulateOpenAIToolDeltas(finishState,choice.delta.tool_calls);
+          if(Array.isArray(choice?.message?.tool_calls)&&choice.message.tool_calls.length){
+            accumulateOpenAIToolDeltas(finishState,choice.message.tool_calls.map((tc,i)=>({index:i,id:tc.id,function:tc.function})));
+          }
           const rawText=choice?.delta?.content ?? choice?.message?.content;
           const text=typeof rawText==='string'
             ? rawText
@@ -4050,7 +4124,7 @@ function retryLabel(provider, status, hasNext) {
   return `${providerLabel(provider)} request failed${hasNext ? ' — retrying' : ''}`;
 }
 
-async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'}) {
+async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant',unifiedTools=null,toolContents=null}) {
   const keys = providerCredentials(getProviderKeys('gemini',autoFallback),autoFallback);
   if (!keys.length) return {ok:false,status:500,error:'Gemini API key is not configured.'};
   const target = PROVIDERS.gemini.models.includes(model) ? model : PROVIDERS.gemini.defaultModel;
@@ -4074,7 +4148,10 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
   }
   if(currentParts.length && contents.at(-1)?.role==='user') contents.pop();
   if(currentParts.length) contents.push({role:'user',parts:currentParts});
-  if(!contents.length) return {ok:false,status:400,error:'No prompt provided.'};
+  const requestContents=toolContents||contents;
+  if(!requestContents.length) return {ok:false,status:400,error:'No prompt provided.'};
+  // Unified tools: same canonical tools, translated to Gemini functionDeclarations.
+  const nativeTools=unifiedTools?toolsForFamily(TOOL_FAMILY_GEMINI,unifiedTools):null;
 
   const generationConfig={
     maxOutputTokens:effortOutputBudgetFor(message,responseEffort),
@@ -4090,8 +4167,10 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
       attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
     });
     try {
+      const geminiBody={system_instruction:{parts:[{text:systemInstruction}]},contents:requestContents,generationConfig};
+      if(nativeTools) geminiBody.tools=nativeTools;
       let res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig}),signal:AbortSignal.timeout(90000)
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(geminiBody),signal:AbortSignal.timeout(90000)
       });
       // Current Gemini 3 models support thinkingLevel. If a future alias/model
       // rejects the native knob, keep the selected Jepong effort via the shared
@@ -4099,8 +4178,10 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
       if(!res.ok && [400,422].includes(res.status) && generationConfig.thinkingConfig){
         const compatibleConfig={...generationConfig};
         delete compatibleConfig.thinkingConfig;
+        const retryBody={system_instruction:{parts:[{text:systemInstruction}]},contents:requestContents,generationConfig:compatibleConfig};
+        if(nativeTools) retryBody.tools=nativeTools;
         res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
-          method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:systemInstruction}]},contents,generationConfig:compatibleConfig}),signal:AbortSignal.timeout(90000)
+          method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(retryBody),signal:AbortSignal.timeout(90000)
         });
       }
       if(res.ok) {
@@ -4109,7 +4190,7 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
           attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
         });
         const decoder=new TextDecoder(), encoder=new TextEncoder();
-        const finishState={reason:''};
+        const finishState={reason:'',toolFamily:TOOL_FAMILY_GEMINI,nativeMessages:requestContents};
         const stream=res.body.pipeThrough(new TransformStream({
           start(){this.buffer='';},
           transform(chunk,controller){
@@ -4122,7 +4203,11 @@ async function runGemini({model,history,files,message,systemInstruction,fallback
                 if(p?.error){captureProviderStreamError(finishState,p.error);continue;}
                 const candidate=p.candidates?.[0];
                 if(candidate?.finishReason) finishState.reason=String(candidate.finishReason).toLowerCase();
-                for(const part of candidate?.content?.parts||[]) if(part.text) controller.enqueue(encoder.encode(part.text));
+                for(const part of candidate?.content?.parts||[]){
+                  if(part.text) controller.enqueue(encoder.encode(part.text));
+                  // Unified tools: capture native function calls.
+                  if(part.functionCall) recordGeminiFunctionCall(finishState,part.functionCall);
+                }
               }catch(_){}
             }
           },
@@ -4322,7 +4407,7 @@ async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='
   return {ok:false,status,error:last};
 }
 
-async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false,responseEffort='Instant'}) {
+async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false,responseEffort='Instant',unifiedTools=null,toolMessages=null}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
@@ -4344,9 +4429,14 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
   const requested=(DYNAMIC_MODEL_PROVIDERS.has(provider) && suppliedModel)
     ? suppliedModel
     : (PROVIDERS[provider].models.includes(suppliedModel)?suppliedModel:PROVIDERS[provider].defaultModel);
-  const messages=visionPayload
-    ?buildOpenAIVisionMessages(history,message,systemInstruction,files)
-    :buildOpenAIMessages(history,message,systemInstruction);
+  const messages=toolMessages
+    ?toolMessages
+    :(visionPayload
+      ?buildOpenAIVisionMessages(history,message,systemInstruction,files)
+      :buildOpenAIMessages(history,message,systemInstruction));
+  // Unified tools: same canonical tools on every model, translated to the
+  // provider's native function-calling format.
+  const nativeTools=unifiedTools?toolsForFamily(TOOL_FAMILY_OPENAI,unifiedTools):null;
   let modelCandidates=[requested];
 
   // Compatible model substitution is allowed only when the user enabled fallback.
@@ -4413,6 +4503,7 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
           temperature:temperatureFor(message,files),
           ...nativeEffortFields(provider,target,responseEffort)
         };
+        if(nativeTools) payload.tools=nativeTools;
         if(provider==='groq' && /^(?:openai\/gpt-oss-(?:20b|120b)|qwen\/qwen3\.8-27b)$/i.test(target)){
           payload.max_completion_tokens=payload.max_tokens;
           delete payload.max_tokens;
@@ -4429,13 +4520,15 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
         });
 
         const nativeFields=nativeEffortFields(provider,target,responseEffort);
-        if(!res.ok && [400,422].includes(res.status) && Object.keys(nativeFields).length){
+        if(!res.ok && [400,422].includes(res.status) && (Object.keys(nativeFields).length||payload.tools)){
           // Some OpenAI-compatible gateways do not expose their upstream model's
-          // native reasoning fields. Retry without only those optional fields;
-          // the six-level Jepong effort still remains active through the shared
-          // system instruction and effort-scaled generation budget.
+          // native reasoning fields, or reject the tools parameter. Retry without
+          // only those optional fields; the six-level Jepong effort still remains
+          // active through the shared system instruction and effort-scaled
+          // generation budget. Tool-less models keep working via the pipeline.
           const compatiblePayload={...payload};
           for(const key of Object.keys(nativeFields))delete compatiblePayload[key];
+          delete compatiblePayload.tools;
           res=await fetch(cfg.url,{
             method:'POST',
             headers,
@@ -4450,7 +4543,7 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
             attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential',
             fallbackModel:substituted?target:''
           });
-          const finishState={reason:''};
+          const finishState={reason:'',toolFamily:TOOL_FAMILY_OPENAI,nativeMessages:messages};
           return {
             ok:true,
             response:new Response(
@@ -4979,6 +5072,8 @@ function anthropicStreamToText(body,finishState={reason:''}){
         try{
           const p=JSON.parse(raw);
           if(p?.error||p?.type==='error'){captureProviderStreamError(finishState,p.error||p);continue;}
+          // Unified tools: capture native tool_use blocks.
+          accumulateAnthropicEvent(finishState,p);
           const text=p?.delta?.text ?? p?.content_block?.text;
           const reason=p?.delta?.stop_reason ?? p?.message?.stop_reason;
           if(reason)finishState.reason=String(reason).toLowerCase();
@@ -5063,7 +5158,7 @@ async function runAgentRouter({model,history,message,systemInstruction,emit,auto
   return {ok:false,status,error:last};
 }
 
-async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant'}){
+async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant',unifiedTools=null,toolMessages=null}){
   const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys(autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
   const target=model||PROVIDERS.bailucode.defaultModel;
@@ -5073,17 +5168,22 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
     const text=String(h.text||'').trim();if(text)messages.push({role,content:text});
   }
   if(String(message||'').trim())messages.push({role:'user',content:String(message).trim()});
+  const requestMessages=toolMessages||messages;
+  // Unified tools: same canonical tools, translated to Anthropic format.
+  const nativeTools=unifiedTools?toolsForFamily(TOOL_FAMILY_ANTHROPIC,unifiedTools):null;
   let last='',status=500;
   for(let i=0;i<keys.length;i++){
     try{
+      const anthropicBody={model:target,max_tokens:effortOutputBudgetFor(message,responseEffort),system:systemInstruction,messages:requestMessages,stream:true};
+      if(nativeTools) anthropicBody.tools=nativeTools;
       const res=await fetch('https://bailucode.com/openapi/v1/messages',{
         method:'POST',
         headers:{'x-api-key':keys[i],Authorization:'Bearer '+keys[i],'anthropic-version':'2023-06-01','content-type':'application/json','accept':'text/event-stream'},
-        body:JSON.stringify({model:target,max_tokens:effortOutputBudgetFor(message,responseEffort),system:systemInstruction,messages,stream:true}),
+        body:JSON.stringify(anthropicBody),
         signal:AbortSignal.timeout(chatUpstreamTimeoutMs('generic'))
       });
       if(res.ok){
-        const finishState={reason:''};
+        const finishState={reason:'',toolFamily:TOOL_FAMILY_ANTHROPIC,nativeMessages:requestMessages};
         return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'bailucode',target,fallbackFrom,routedReason||'bailu-anthropic',i,keys.length)}),finishState};
       }
       status=res.status;last=cleanUpstreamError(await res.text().catch(()=>''),status,'bailucode',target);
@@ -5755,7 +5855,7 @@ async function processChat(body, emit) {
   const taskGeneration=taskGenerationActivity(contextPlan);
   if(activityTrace.length)advanceActivityTrace('completed');
   activity(emit,'thinking','Thinking','running','process','');
-  let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort,bailuRoute});
+  let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort,unifiedTools:UNIFIED_TOOLS,bailuRoute});
   if(first.ok){
     first=await maybeRefineVisualUiResponse({
       first,provider,model,history,files,message,systemInstruction,routedReason,emit,
@@ -5784,7 +5884,7 @@ async function processChat(body, emit) {
     activity(emit,'fallback','Selected provider exhausted — checking other configured models','running','fallback');
     const providerFallback=await runAvailableProviderFallback(provider,{
       model,history,files,message,systemInstruction,emit,autoFallback:true,
-      responseEffort,customApiKeys:requestCustomKeys,customApiProfile
+      responseEffort,customApiKeys:requestCustomKeys,customApiProfile,unifiedTools:UNIFIED_TOOLS
     },{body,files});
     if(providerFallback.ok){
       const fallbackProvider=providerFallback.fallbackProvider||provider;
@@ -6235,11 +6335,103 @@ function activityStreamResponse(body, requestSignal=null) {
             });
           }
 
+          // Unified native tool loop: every model gets the same tools
+          // ("itulad mo sayo lahat ng models"). Turn 1 may end with native
+          // tool calls; they are executed server-side and the follow-up turn
+          // is streamed. Bounded to MAX_TOOL_ROUNDS. Providers without native
+          // function calling keep working through the pipeline below.
+          let pendingSessionTitle='';
+          let sharedViaNativeTool=false;
+          let toolRounds=0;
+          while(!cancelled && toolRounds<MAX_TOOL_ROUNDS){
+            const toolFamily=activeFinishState?.toolFamily||null;
+            const toolCalls=finalizeToolCalls(toolFamily,activeFinishState);
+            if(!toolCalls.length) break;
+            toolRounds++;
+            const toolResults=[];
+            for(const call of toolCalls){
+              const toolLabel=call.name==='share_file'?'Creating downloadable file'
+                :call.name==='create_session'?'Creating new chat session'
+                :call.name==='web_search'?'Searching the live web'
+                :call.name==='fetch_webpage'?'Reading web page'
+                :call.name==='generate_image'?'Generating image'
+                :call.name==='get_directions'?'Getting directions'
+                :call.name==='get_weather'?'Checking the weather'
+                :('Using tool '+call.name);
+              send('activity',{type:'activity',id:'tool-'+call.name+'-'+toolRounds,label:toolLabel,state:'running',kind:'tool',at:Date.now()});
+              const toolResult=await executeUnifiedTool(call,{
+                uploadSharedFile,
+                webSearch:toolWebSearch,
+                fetchWebpage:toolFetchWebpage,
+                onShared:()=>{ sharedViaNativeTool=true; },
+                onCreateSession:(title)=>{ pendingSessionTitle=title; },
+              });
+              toolResults.push({call,result:toolResult});
+              send('activity',{type:'activity',id:'tool-'+call.name+'-'+toolRounds,
+                label:toolResult.ok?toolLabel+' — done':toolLabel+' — failed',
+                state:toolResult.ok?'completed':'warning',kind:'tool',
+                detail:String(toolResult.url||toolResult.error||'').slice(0,180),at:Date.now()});
+            }
+            const followUp=buildToolFollowUp(toolFamily,activeFinishState?.nativeMessages,toolCalls,toolResults);
+            if(!followUp) break;
+            const toolArgs={
+              model:resolvedModel,
+              history:[],
+              files:[],
+              message:'',
+              systemInstruction:result.systemInstruction,
+              routedReason:'unified-tool-followup',
+              emit:null,
+              autoFallback:false,
+              customApiKeys:sanitizeCustomProviderKeys(body,resolvedProvider),
+              customApiProfile:resolvedProvider==='custom-api'?sanitizeCustomApiProfile(body):null,
+              responseEffort:normalizeResponseEffort(body?.personalization?.intelligence,body?.personalization?.fastAnswers),
+              unifiedTools:UNIFIED_TOOLS,
+              ...(toolFamily===TOOL_FAMILY_GEMINI?{toolContents:followUp.contents}:{toolMessages:followUp.messages}),
+            };
+            let next=null;
+            try{ next=await runProvider(resolvedProvider,toolArgs); }
+            catch(e){ next={ok:false,error:String(e?.message||e)}; }
+            if(!next||!next.ok){
+              send('activity',{type:'activity',id:'tool-followup-'+toolRounds,label:'Tool follow-up unavailable — keeping generated response',state:'warning',kind:'tool',at:Date.now()});
+              break;
+            }
+            activeResponse=next.response;
+            activeFinishState=next.finishState||{reason:'unknown'};
+            resolvedProvider=activeResponse.headers.get('x-ai-provider')||resolvedProvider;
+            resolvedModel=activeResponse.headers.get('x-ai-model')||resolvedModel;
+            try{
+              const toolReader=activeResponse.body.getReader();
+              activeReader=toolReader;
+              const toolDecoder=new TextDecoder();
+              while(!cancelled){
+                const {done,value}=await toolReader.read();
+                if(done) break;
+                const text=toolDecoder.decode(value,{stream:true});
+                if(text){ generatedText+=text; send('text',{text}); }
+              }
+              const tail=toolDecoder.decode();
+              if(tail){ generatedText+=tail; send('text',{text:tail}); }
+            }catch(_){ break; }
+          }
+
           if(finishReasonNeedsContinuation(activeFinishState?.reason)&&generatedText.trim()){
             send('activity',{type:'activity',id:'provider-output-limit',label:'Provider output limit reached — partial answer preserved',state:'warning',kind:'generate',at:Date.now()});
           }
 
           generatedText=sanitizeAssistantOutput(generatedText);
+
+          // create_session tool (pipeline fallback): the model must ask permission
+          // first and only emit [CREATE_SESSION: <title>] after the user agrees.
+          // Strip the marker so it never shows as prose; the client creates the
+          // new session from the SSE event below.
+          {
+            const sessionMark=String(generatedText).match(/\[CREATE_SESSION\s*:\s*([^\]\n]{1,80})\]/i);
+            if(sessionMark){
+              pendingSessionTitle=String(sessionMark[1]).trim().slice(0,60);
+              generatedText=String(generatedText).replace(/\s*\[CREATE_SESSION\s*:\s*[^\]\n]{1,80}\]\s*/gi,'').trim();
+            }
+          }
 
           if(cancelled){
             clearInterval(keepAlive);
@@ -6311,17 +6503,48 @@ function activityStreamResponse(body, requestSignal=null) {
           }
 
           const artifactReq=detectArtifactRequest(body.message||'',body.files||[]);
-          if(artifactReq){
+          if(artifactReq && !sharedViaNativeTool){
             send('activity',{type:'activity',id:'artifact',label:artifactReq.kind==='zip'?'Packaging updated code into a ZIP':'Preparing requested download file',state:'running',kind:'file',at:Date.now()});
           }
-          const artifact=buildGeneratedArtifact(body.message||'',generatedText,body.files||[]);
+          // If the native share_file tool already handled this turn, skip the
+          // pipeline artifact: the model pasted the public URL itself and there
+          // is no file content left in the text to package.
+          const artifact=sharedViaNativeTool?null:buildGeneratedArtifact(body.message||'',generatedText,body.files||[]);
           if(artifact){
             if(artifact.error){
               send('activity',{type:'activity',id:'artifact',label:artifact.error,state:'warning',kind:'file',at:Date.now()});
             }else{
+              // share_file tool: upload the generated file to the project's
+              // own Vercel Blob store for a public download link in chat.
+              // Never breaks the chat: on any failure the local download
+              // card still works exactly as before. Overlay ZIPs are skipped
+              // because the complete file is merged locally in the browser.
+              if(!artifact.overlay && artifact.base64){
+                try{
+                  send('activity',{type:'activity',id:'artifact-upload',label:`Uploading ${artifact.filename} for a public link`,state:'running',kind:'file',at:Date.now()});
+                  const bin=atob(String(artifact.base64));
+                  const bytes=new Uint8Array(bin.length);
+                  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+                  const shared=await uploadSharedFile({filename:artifact.filename,bytes,mimeType:artifact.mimeType});
+                  if(shared && shared.ok && shared.url){
+                    artifact.url=shared.url;
+                    send('activity',{type:'activity',id:'artifact-upload',label:'Public download link ready',state:'completed',kind:'file',at:Date.now()});
+                  }else{
+                    send('activity',{type:'activity',id:'artifact-upload',label:'Public link unavailable — download card still works',state:'warning',kind:'file',at:Date.now()});
+                  }
+                }catch(_){
+                  send('activity',{type:'activity',id:'artifact-upload',label:'Public link unavailable — download card still works',state:'warning',kind:'file',at:Date.now()});
+                }
+              }
               send('activity',{type:'activity',id:'artifact',label:`Generated ${artifact.filename}`,state:'completed',kind:'file',at:Date.now()});
               send('artifact',artifact);
             }
+          }
+
+          // create_session tool: the model asked permission first and the user
+          // agreed (marker above). The client creates the new session.
+          if(pendingSessionTitle){
+            send('create_session',{title:pendingSessionTitle,at:Date.now()});
           }
 
           const elapsedMs=Math.max(1,Date.now()-result.startedAt);
