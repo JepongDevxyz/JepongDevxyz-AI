@@ -200,6 +200,9 @@
       list.querySelectorAll('.jd-history-actions-trigger').forEach(function (btn) {
         if (btn.__jdMenuWired) return;
         btn.__jdMenuWired = true;
+        // Kill the old inline handler so the old action deck never opens.
+        btn.removeAttribute('onclick');
+        btn.onclick = null;
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
           e.preventDefault();
@@ -207,7 +210,7 @@
           var sid = item && item.getAttribute('data-session-id');
           if (sid) {
             var r = btn.getBoundingClientRect();
-            showMenu(r.left - 200, r.bottom + 6, sid);
+            showMenu(Math.max(10, r.left - 200), r.bottom + 6, sid);
           }
         });
       });
