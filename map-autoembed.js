@@ -17,13 +17,16 @@
   function isMapUrl(url) {
     if (!url) return false;
     var u = String(url).toLowerCase();
-    // Match route/weather map HTML files from Blob storage
-    return (
-      u.indexOf('route-') !== -1 && u.indexOf('.html') !== -1 ||
-      u.indexOf('weather-') !== -1 && u.indexOf('.html') !== -1 ||
-      // Also match if the link text mentions map/route
-      u.indexOf('/map') !== -1 && u.indexOf('.html') !== -1
-    );
+    // Match Vercel Blob storage URLs with HTML files
+    // (route maps, weather/radar maps are uploaded as .html)
+    if (u.indexOf('blob.vercel-storage.com') !== -1 && u.indexOf('.html') !== -1) {
+      return true;
+    }
+    // Match by filename patterns
+    if ((u.indexOf('route-') !== -1 || u.indexOf('weather-') !== -1) && u.indexOf('.html') !== -1) {
+      return true;
+    }
+    return false;
   }
 
   function embedMap(link) {
@@ -49,12 +52,22 @@
 
   function scanForMaps() {
     try {
-      // Find all links in bot messages
-      var links = document.querySelectorAll('.msg.bot a[href], .message.bot a[href], [data-role="assistant"] a[href]');
+      // Find all links in bot messages - use broader selectors
+      var selectors = [
+        '.msg.bot a[href]',
+        '.msg a[href]',
+        '[class*="bot"] a[href]',
+        '.chat-message a[href]'
+      ];
+      var links = [];
+      selectors.forEach(function (sel) {
+        try {
+          document.querySelectorAll(sel).forEach(function (a) {
+            if (links.indexOf(a) === -1) links.push(a);
+          });
+        } catch (e) {}
+      });
       links.forEach(embedMap);
-
-      // Also check for plain text URLs that look like map links
-      // (in case the AI outputs the URL as text, not a link)
     } catch (e) {}
   }
 
