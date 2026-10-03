@@ -17,6 +17,10 @@
   function isMapUrl(url) {
     if (!url) return false;
     var u = String(url).toLowerCase();
+    // Data URLs (fallback when upload fails on slow networks)
+    if (u.indexOf('data:text/html') === 0) {
+      return true;
+    }
     // Match Vercel Blob storage URLs with HTML files
     // (route maps, weather/radar maps are uploaded as .html)
     if (u.indexOf('blob.vercel-storage.com') !== -1 && u.indexOf('.html') !== -1) {

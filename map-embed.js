@@ -17,18 +17,15 @@
   var MAP_INSTRUCTIONS = [
     'MAP DISPLAY RULE (very important):',
     'When you use the get_directions tool and receive a map_url,',
-    'you MUST embed the map directly in your response using an iframe.',
-    'Do NOT just provide a text link like "Pindutin dito".',
-    '',
-    'Use this exact HTML format:',
-    '<iframe src="MAP_URL_HERE" width="100%" height="400" style="border:0;border-radius:12px" loading="lazy"></iframe>',
-    '',
+    'you MUST include it in your response as a Markdown link.',
+    'Use this exact format: [Pindutin dito para sa live map](MAP_URL_HERE)',
     'Replace MAP_URL_HERE with the actual map_url from the tool result.',
-    'The map must be visible immediately without tapping any link.',
+    'Do NOT use iframe HTML — just the Markdown link. The app will automatically',
+    'convert it to an embedded visible map.',
     '',
     'Same rule for get_weather: when you receive radar_map_url,',
-    'embed it directly with an iframe using the same format.',
-    'For satellite views, embed them the same way.'
+    'include it as: [Pindutin dito para sa radar map](RADAR_URL_HERE).',
+    'For satellite views, use: [Pindutin dito para sa satellite map](SAT_URL_HERE).'
   ].join(' ');
 
   // Patch fetch to inject map instructions
