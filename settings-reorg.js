@@ -38,7 +38,7 @@
   }
 
   // Items to REMOVE (hide)
-  var REMOVE_TITLES = ['Codex', 'Prompt Presets', 'Chat History'];
+  var REMOVE_TITLES = ['Codex', 'ChatGPT & Codex', 'Prompt Presets', 'Chat History'];
 
   // Desired order for My AI section
   var MY_AI_ORDER = ['Account', 'Personalization', 'Library', 'Memory', 'Pet', 'Voice'];
@@ -137,34 +137,42 @@
 
   function addMissingToolsItems(section) {
     try {
-      // Check if our custom items already exist
-      if (section.querySelector('[data-jd-custom-tool]')) return;
+      // Remove any duplicates first (in case of multiple runs)
+      var seen = {};
+      section.querySelectorAll('[data-jd-custom-tool]').forEach(function (el) {
+        var title = getTitle(el);
+        if (seen[title]) {
+          el.remove();
+        } else {
+          seen[title] = true;
+        }
+      });
+      // Check if our custom items already exist (after dedup)
+      if (section.querySelector('[data-jd-custom-tool="mode"]')) return;
 
       var items = [
-        { title: 'Mode', icon: 'sliders-horizontal', onclick: "toggleModal('modeModalOverlay', true)" },
-        { title: 'Models', icon: 'cpu', onclick: "openModelPicker()" },
-        { title: 'Permissions', icon: 'shield-check', onclick: "if(window.openJdPermissions)window.openJdPermissions()" },
-        { title: 'Connectors', icon: 'plug', onclick: "if(window.openJdConnectors)window.openJdConnectors()" }
+        { key: 'mode', title: 'Mode', icon: 'sliders-horizontal', onclick: "toggleModal('modeModalOverlay', true)" },
+        { key: 'models', title: 'Models', icon: 'cpu', onclick: "openModelPicker()" },
+        { key: 'permissions', title: 'Permissions', icon: 'shield-check', onclick: "if(window.openJdPermissions)window.openJdPermissions()" },
+        { key: 'connectors', title: 'Connectors', icon: 'plug', onclick: "if(window.openJdConnectors)window.openJdConnectors()" }
       ];
 
-      // Insert at the beginning (Mode, Models first, then Permissions, Connectors)
-      // We'll insert them in reverse order at the top
-      var insertOrder = [
-        { title: 'Connectors', icon: 'plug', onclick: "if(window.openJdConnectors)window.openJdConnectors()" },
-        { title: 'Permissions', icon: 'shield-check', onclick: "if(window.openJdPermissions)window.openJdPermissions()" },
-        { title: 'Models', icon: 'cpu', onclick: "openModelPicker()" },
-        { title: 'Mode', icon: 'sliders-horizontal', onclick: "toggleModal('modeModalOverlay', true)" }
-      ];
-
-      insertOrder.forEach(function (cfg) {
+      // Insert in reverse order at the top so final order is Mode, Models, Permissions, Connectors
+      for (var i = items.length - 1; i >= 0; i--) {
+        var cfg = items[i];
+        // Skip if already exists
+        if (section.querySelector('[data-jd-custom-tool="' + cfg.key + '"]')) continue;
         var btn = document.createElement('button');
         btn.className = 'settings-nav-row';
         btn.type = 'button';
-        btn.setAttribute('data-jd-custom-tool', '1');
+        btn.setAttribute('data-jd-custom-tool', cfg.key);
         btn.setAttribute('onclick', cfg.onclick);
         btn.innerHTML = '<i data-lucide="' + cfg.icon + '"></i><span><strong>' + cfg.title + '</strong></span><i data-lucide="chevron-right"></i>';
         section.insertBefore(btn, section.firstChild);
-      });
+      }
+
+      // Move Auto Temper and Pure Mode from My AI to AI & Tools if found there
+      moveTogglesToTools();
 
       // Refresh Lucide icons
       if (window.refreshLucideIcons) {
@@ -172,6 +180,38 @@
       } else if (window.lucide && window.lucide.createIcons) {
         try { window.lucide.createIcons(); } catch (e) {}
       }
+    } catch (e) {}
+  }
+
+  function moveTogglesToTools() {
+    try {
+      // Find the AI & Tools section
+      var toolsSection = null;
+      document.querySelectorAll('.settings-card-group').forEach(function (section) {
+        var label = section.previousElementSibling;
+        if (label && label.classList.contains('settings-section-label')) {
+          var name = label.textContent.trim();
+          if (name === 'AI & tools' || name === 'AI & Tools') toolsSection = section;
+        }
+      });
+      if (!toolsSection) return;
+
+      // Find Auto Temper and Pure Mode in My AI section and move them
+      document.querySelectorAll('.settings-card-group').forEach(function (section) {
+        var label = section.previousElementSibling;
+        if (label && label.classList.contains('settings-section-label')) {
+          var name = label.textContent.trim();
+          if (name === 'My AI') {
+            section.querySelectorAll('.settings-nav-row, .settings-toggle-row').forEach(function (item) {
+              var title = getTitle(item);
+              if (title === 'Auto Temper' || title === 'Pure Mode') {
+                // Move to tools section (will be reordered by reorderSection)
+                toolsSection.appendChild(item);
+              }
+            });
+          }
+        }
+      });
     } catch (e) {}
   }
 
