@@ -156,6 +156,100 @@
     } catch (e) {}
   }
 
+  /* Archive view toggle: Muse app has a box icon next to "Side chats"
+     to view archived conversations. We add the same next to the
+     "Conversations" header. */
+  var showingArchived = false;
+  function addArchiveButton() {
+    try {
+      var heading = document.getElementById('jdSidebarConversationsToggle');
+      if (!heading || document.getElementById('jdArchiveViewBtn')) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'jdArchiveViewBtn';
+      btn.title = 'View archived conversations';
+      btn.setAttribute('aria-label', 'View archived conversations');
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>';
+      btn.style.cssText = 'background:none;border:0;color:inherit;opacity:.6;cursor:pointer;padding:6px;border-radius:8px;margin-left:auto';
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleArchiveView();
+      });
+      // Place it right after the heading button, aligned to the right.
+      heading.style.display = 'flex';
+      heading.style.alignItems = 'center';
+      heading.style.width = '100%';
+      heading.after(btn);
+      // Wrap both in a flex row for proper alignment.
+      var wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:flex;align-items:center;gap:4px';
+      heading.before(wrapper);
+      wrapper.appendChild(heading);
+      wrapper.appendChild(btn);
+    } catch (e) {}
+  }
+
+  function toggleArchiveView() {
+    showingArchived = !showingArchived;
+    try {
+      var btn = document.getElementById('jdArchiveViewBtn');
+      if (btn) {
+        btn.style.opacity = showingArchived ? '1' : '.6';
+        btn.title = showingArchived ? 'Back to conversations' : 'View archived conversations';
+      }
+      var heading = document.getElementById('jdSidebarConversationsToggle');
+      if (heading) {
+        var span = heading.querySelector('span');
+        if (span) span.textContent = showingArchived ? 'Archived' : 'Conversations';
+      }
+      renderArchiveList();
+    } catch (e) {}
+  }
+
+  function renderArchiveList() {
+    try {
+      var list = document.getElementById('chatHistoryList');
+      if (!list) return;
+      if (!showingArchived) {
+        // Back to normal: re-render via the app.
+        if (typeof window.renderSidebarHistory === 'function') window.renderSidebarHistory();
+        return;
+      }
+      // Show archived sessions.
+      list.innerHTML = '';
+      var sessions = window.chatSessions || {};
+      var archived = Object.values(sessions).filter(function (s) { return s && s.archived; });
+      if (!archived.length) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;opacity:.5;font-size:13px">No archived conversations</div>';
+        return;
+      }
+      archived.forEach(function (session) {
+        var item = document.createElement('div');
+        item.className = 'history-item';
+        item.dataset.sessionId = session.id;
+        item.innerHTML = '<span class="history-item-text">' + escapeHtml(session.title || 'Untitled') + '</span>';
+        item.addEventListener('click', function () {
+          unarchiveSession(session.id);
+        });
+        list.appendChild(item);
+      });
+    } catch (e) {}
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function unarchiveSession(sessionId) {
+    try {
+      var s = getSession(sessionId);
+      if (s) delete s.archived;
+      if (typeof window.saveSessions === 'function') window.saveSessions();
+      toggleArchiveView(); // back to normal list
+      if (typeof window.showModernToast === 'function') window.showModernToast('Conversation restored');
+    } catch (e) {}
+  }
+
   /* Long-press wiring on the sidebar history list */
   var lpTimer = null, lpPos = null;
   function clearLp() {
@@ -210,7 +304,8 @@
   var tries = 0;
   var iv = setInterval(function () {
     wire();
-    hideArchived();
+    addArchiveButton();
+    if (!showingArchived) hideArchived();
     if (++tries > 40) clearInterval(iv);
   }, 500);
   try {

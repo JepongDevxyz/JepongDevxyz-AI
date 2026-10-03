@@ -1,6 +1,7 @@
 const { JSDOM } = require('/tmp/node_modules/jsdom');
 const fs = require('fs');
 const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body>
+<button class="jd-sidebar-section-heading" id="jdSidebarConversationsToggle"><span>Conversations</span></button>
 <div class="chat-history-list" id="chatHistoryList">
   <div class="history-item" data-session-id="s1"><span class="history-item-text">Test Chat</span></div>
 </div>
@@ -24,6 +25,10 @@ function assert(c, n) { if (c) { pass++; console.log('  ok:', n); } else { fail+
 dom.window.eval(fs.readFileSync('/tmp/jai-react2/sidebar-context-menu.js', 'utf8'));
 
 setTimeout(() => {
+  // Archive view button should be added
+  const archiveBtn = document.getElementById('jdArchiveViewBtn');
+  assert(!!archiveBtn, 'archive view button added next to Conversations');
+
   // Trigger via the exposed API
   window.__jdSideMenu.show(100, 100, 's1');
   setTimeout(() => {
