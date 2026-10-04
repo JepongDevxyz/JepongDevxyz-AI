@@ -45,12 +45,12 @@
     var node = link;
     while (node && node !== document.body) {
       try {
-        if ((node.matches && node.matches('.msg.bot')) ||
-            (node.classList && node.classList.contains('msg') && node.classList.contains('bot'))) {
+        if ((node.matches && (node.matches('.msg.bot') || node.matches('.msg.user'))) ||
+            (node.classList && node.classList.contains('msg') && (node.classList.contains('bot') || node.classList.contains('user')))) {
           return node;
         }
         var classes = typeof node.className === 'string' ? node.className.split(/\s+/) : [];
-        if (classes.indexOf('msg') !== -1 && classes.indexOf('bot') !== -1) return node;
+        if (classes.indexOf('msg') !== -1 && (classes.indexOf('bot') !== -1 || classes.indexOf('user') !== -1)) return node;
       } catch (_) {}
       node = node.parentNode;
     }
