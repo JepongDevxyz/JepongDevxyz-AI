@@ -125,12 +125,13 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          personalization: { customInstructions: '[jd-ideas-gen]\nRespond with ONLY the JSON array. No explanations.' }
+          message: '[jd-ideas-gen] Respond with ONLY the JSON array. No explanations.\n\n' + prompt,
+          history: [],
+          files: [],
+          mode: 'general'
         })
       });
-      var data = await res.json();
-      var text = typeof data === 'string' ? data : (data.text || data.content || data.message || '');
+      var text = await res.text();
       var ideas = parseIdeas(text);
       if (ideas.length) {
         ideas = ideas.map(function (x, i) {

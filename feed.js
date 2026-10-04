@@ -225,14 +225,13 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          personalization: { customInstructions: '[jd-feed-gen]\nRespond with ONLY the JSON array. No explanations.' }
+          message: '[jd-feed-gen] Respond with ONLY the JSON array. No explanations.\n\n' + prompt,
+          history: [],
+          files: [],
+          mode: 'general'
         })
       });
-      var data = await res.json();
-      var text = '';
-      if (typeof data === 'string') text = data;
-      else text = data.text || data.content || data.message || JSON.stringify(data);
+      var text = await res.text();
       var posts = parsePosts(text);
       if (posts.length) {
         var now = Date.now();
