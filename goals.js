@@ -145,6 +145,7 @@
     '.jdg-menu-item:active{background:rgba(255,255,255,.06)}',
     '.jdg-menu-check{color:#fff;font-weight:700}',
     '.jdg-menu-label{font-size:.75rem;color:#888;padding:10px 16px 2px;text-transform:none}',
+    '.jdg-menu-item.jdg-danger span{color:#ff453a}',
     /* Blue Let's do it button (video-exact) */
     '.jdg-intake-btn{width:100%;background:#0a84ff;color:#fff;border:none;border-radius:16px;padding:14px;',
     'font-size:.92rem;font-weight:700;cursor:pointer}',
@@ -449,6 +450,12 @@
     box.querySelectorAll('.jdg-track-item').forEach(function (el) {
       el.addEventListener('click', function () { openDetail(el.getAttribute('data-id')); });
     });
+    box.querySelectorAll('.jdg-track-opts').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openTrackItemMenu(btn.getAttribute('data-id'), list, targetBox);
+      });
+    });
     box.querySelectorAll('.jdg-card').forEach(function (el) {
       el.addEventListener('click', function () { openDetail(el.getAttribute('data-id')); });
     });
@@ -456,6 +463,50 @@
       el.addEventListener('click', function (e) {
         e.stopPropagation();
         openIntakeSheet(el.getAttribute('data-cat'));
+      });
+    });
+  }
+
+  /* ---------- Per-item ⋮ menu (Muse-app parity: Complete, Add subgoal, Rename, Delete) ---------- */
+  function openTrackItemMenu(id, list, targetBox) {
+    var g = (window.__jdGoalsList || []).find(function (x) { return x.id === id; });
+    if (!g) return;
+    var sh = document.getElementById('jdgSheet');
+    if (!sh) {
+      sh = document.createElement('div');
+      sh.id = 'jdgSheet';
+      document.body.appendChild(sh);
+    }
+    sh.innerHTML =
+      '<div class="jdg-sheet-bg" id="jdgItemMenuBg"></div>' +
+      '<div class="jdg-sheet-body jdg-menu-body">' +
+      '<button class="jdg-menu-item" data-act="complete"><span>✓&nbsp;&nbsp;Complete</span></button>' +
+      '<button class="jdg-menu-item" data-act="subgoal"><span>＋&nbsp;&nbsp;Add a subgoal</span></button>' +
+      '<button class="jdg-menu-item" data-act="rename"><span>✎&nbsp;&nbsp;Rename</span></button>' +
+      '<button class="jdg-menu-item jdg-danger" data-act="delete"><span>🗑&nbsp;&nbsp;Delete</span></button>' +
+      '</div>';
+    sh.classList.add('open');
+    document.getElementById('jdgItemMenuBg').addEventListener('click', function () { sh.classList.remove('open'); });
+    sh.querySelectorAll('.jdg-menu-item').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var act = b.getAttribute('data-act');
+        sh.classList.remove('open');
+        if (act === 'complete') {
+          if (window.JDGoals && window.JDGoals.aiSetProgress) window.JDGoals.aiSetProgress(id, 100);
+          setTimeout(function () { renderList(list, targetBox); }, 400);
+        } else if (act === 'subgoal') {
+          openDetail(id);
+          setTimeout(function () {
+            var ab = document.getElementById('jdgAddSub');
+            if (ab) ab.click();
+          }, 400);
+        } else if (act === 'rename') {
+          openDetail(id);
+        } else if (act === 'delete') {
+          if (confirm('Delete "' + g.title + '"?')) {
+            removeGoal(id).then(function () { renderList(list, targetBox); refresh(); });
+          }
+        }
       });
     });
   }
@@ -539,20 +590,19 @@
   }
 
   function startChatIntake(cat) {
+    try { if (window.JDExplore) window.JDExplore.close(); } catch (e) {}
     var gp = document.getElementById('jdGoalsPage');
     if (gp) gp.hidden = true;
-    try { if (window.JDMainChat) window.JDMainChat.open(); } catch (e) {}
-    setTimeout(function () {
-      try {
-        var input = document.querySelector('textarea[jd-composer], #jdComposerInput, textarea[placeholder*="Message"]');
-        if (input) {
-          var names = { health: 'health', relationships: 'relationships', finance: 'finance', career: 'career', interests: 'interests', productivity: 'productivity' };
-          var c = names[cat] ? ' for ' + names[cat] : '';
-          input.value = 'I want to create a new goal' + c + '. Help me refine it.';
-          input.focus();
-        }
-      } catch (e) {}
-    }, 600);
+    var names = { health: 'health', relationships: 'relationships', finance: 'finance', career: 'career', interests: 'interests', productivity: 'productivity' };
+    var c = names[cat] ? ' for ' + names[cat] : '';
+    var msg = 'I want to create a new goal' + c + '. Help me refine it — ask me what I want to achieve, why it matters, and suggest a target date.';
+    try {
+      if (window.JDMainChat && window.JDMainChat.sendAsUser) {
+        window.JDMainChat.sendAsUser(msg);
+      } else if (window.JDMainChat) {
+        window.JDMainChat.open();
+      }
+    } catch (e) {}
   }
   async function refresh() {
     var list = await loadGoals();

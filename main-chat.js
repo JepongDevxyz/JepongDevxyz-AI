@@ -177,6 +177,32 @@
     id: MAIN_ID,
     markUnread: markUnread,
     markRead: markRead,
+    sendAsUser: function (text) {
+      /* Programmatically send a user message in the main chat (e.g. from Goals "Let's do it") */
+      try {
+        openMainChat();
+        setTimeout(function () {
+          try {
+            var input = document.querySelector('textarea[jd-composer], #jdComposerInput, textarea[placeholder*="Message"], textarea');
+            var sendBtn = document.querySelector('[jd-send], #jdSendBtn, button[aria-label*="Send"], button[aria-label*="send"]');
+            if (input) {
+              input.value = text;
+              /* trigger input event so the app picks up the value */
+              try {
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+              } catch (e) {}
+              /* fallback: click send button */
+              setTimeout(function () {
+                try {
+                  if (sendBtn && input.value) sendBtn.click();
+                } catch (e) {}
+              }, 300);
+            }
+          } catch (e) {}
+        }, 800);
+      } catch (e) {}
+    },
     notifyInChat: function (title, body) {
       /* append a system note to the main chat so notifications have a home */
       try {
