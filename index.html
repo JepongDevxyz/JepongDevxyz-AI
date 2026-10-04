@@ -3,7 +3,7 @@
 <!-- Jay-Ar Lee Espiritu & JepongDevxyz AI -->
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6366f1">
     <title>JepongDevxyz AI</title>
@@ -3467,6 +3467,7 @@
 
         /* ===== OFFICIAL MOBILE VIEWPORT + PET VISIBILITY FIX ===== */
         :root{--jepong-vh:100dvh;--jepong-vv-top:0px}
+        #userInput{font-size:16px!important}
         @media(max-width:767px){
             html,body{height:100dvh!important;min-height:0!important}
             .app-container{height:var(--jepong-vh)!important;max-height:var(--jepong-vh)!important;min-height:0!important;transform-origin:top left}
@@ -5848,6 +5849,7 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             if (document.body && document.body.scrollTop) document.body.scrollTop = 0;
         }
 
+        let jepongStableViewportHeight = 0;
         function syncVisualViewport() {
             const vv = window.visualViewport;
             // Floating/minimized Android windows can be shorter than a phone's
@@ -5858,7 +5860,15 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             const width = Math.max(1, Math.round(vv?.width || layoutWidth));
             const offsetTop = Math.max(0, Math.round(vv?.offsetTop || 0));
             const offsetLeft = Math.max(0, Math.round(vv?.offsetLeft || 0));
-            const keyboardOpen = (layoutHeight - height) > 120;
+            const activeElement = document.activeElement;
+            const editingText = !!activeElement && /^(INPUT|TEXTAREA)$/.test(String(activeElement.tagName||'').toUpperCase()) &&
+                !activeElement.disabled && !activeElement.readOnly;
+            // Android can resize both layout and visual viewports for the IME, so
+            // compare against the last keyboard-free size instead of innerHeight.
+            if (!editingText || !jepongStableViewportHeight || height >= jepongStableViewportHeight - 80) {
+                jepongStableViewportHeight = height;
+            }
+            const keyboardOpen = editingText && (jepongStableViewportHeight - height) > 120;
             document.documentElement.style.setProperty('--jepong-vh', `${height}px`);
             document.documentElement.style.setProperty('--jepong-vv-top', `${offsetTop}px`);
             document.documentElement.classList.toggle('keyboard-open', keyboardOpen);
