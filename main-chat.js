@@ -86,12 +86,30 @@
     try { localStorage.setItem('jd_main_chat_unread', '1'); } catch (e) {}
   }
 
+  function currentId() {
+    /* currentSessionId is also a `let` binding, not a window property */
+    try {
+      if (typeof currentSessionId !== 'undefined') return currentSessionId || null;
+    } catch (e) {}
+    try { return window.currentSessionId || null; } catch (e) {}
+    return null;
+  }
+
   function updateActive() {
     var btn = document.getElementById('jdMainChatBtn');
     if (!btn) return;
+    btn.classList.toggle('jd-active', currentId() === MAIN_ID);
+  }
+
+  /* Default landing: fresh page loads open the main chat (like Muse's app).
+     Respects deep links (#main-chat handled separately, other hashes left alone). */
+  function defaultToMain() {
     try {
-      var cur = window.currentSessionId;
-      btn.classList.toggle('jd-active', cur === MAIN_ID);
+      if (location.hash && location.hash.length > 1) return;
+      ensureMainSession();
+      if (currentId() !== MAIN_ID && typeof window.loadChatSession === 'function') {
+        window.loadChatSession(MAIN_ID);
+      }
     } catch (e) {}
   }
 
@@ -131,6 +149,8 @@
   function init() {
     ensureCSS();
     ensureMainSession();
+    /* default landing first, so the switch happens ASAP */
+    defaultToMain();
     if (!replaceMenuItem()) {
       var iv = setInterval(function () {
         if (replaceMenuItem()) clearInterval(iv);
