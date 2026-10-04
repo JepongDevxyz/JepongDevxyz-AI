@@ -18,6 +18,7 @@
   var LS_BRIEF = 'jd_feed_brief_v1';
   var LS_POSTS = 'jd_feed_posts_v1';
   var LS_GEN = 'jd_feed_generated_at_v1';
+  var CACHE_VER = 'v3-images'; /* bump when post schema changes */
   var DEFAULT_BRIEF = 'Make me a feed about my interests. Keep the tone clear and direct. Ensure it is quick to skim. Try to avoid clickbait.';
 
   var CSS = [
@@ -125,7 +126,16 @@
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
   function getBrief() { return lsGet(briefKey(), DEFAULT_BRIEF) || DEFAULT_BRIEF; }
-  function getPosts() { return lsGet(postsKey(), []); }
+  function getPosts() {
+    var posts = lsGet(postsKey(), []);
+    if (!posts.length) return posts;
+    /* migrate: old cached posts lack hero images → force regeneration */
+    if (!posts[0].image) return [];
+    var cv = null;
+    try { cv = localStorage.getItem(postsKey() + ':cver'); } catch (e) {}
+    if (cv !== CACHE_VER) return [];
+    return posts;
+  }
 
   /* Per-account scoping: every cache key is namespaced by the signed-in
      account (Supabase cloudUser.id). Guests fall back to a device id.
@@ -230,6 +240,7 @@
           };
         });
         lsSet(postsKey(), posts);
+        try { localStorage.setItem(postsKey() + ':cver', CACHE_VER); } catch (e) {}
         lsSet(genKey(), now);
       }
     } catch (e) {}
@@ -450,7 +461,7 @@
     if (p) p.hidden = true;
   }
 
-  var PATCH_VER = '20261004a67';
+  var PATCH_VER = '20261004a68';
 
   function addSidebarEntry() {
     /* In Explore mode, the unified Explore button replaces individual entries */
