@@ -118,6 +118,27 @@
     '#jdgToast small{display:block;text-align:center;font-size:.65rem;color:#888;margin-top:2px}',
     /* Light mode */
     'body.theme-light #jdGoalsPage{background:#f2f2f5;color:#111}',
+    /* Create-a-goal category picker (Muse-app parity) */
+    '.jdg-create-sec{margin:14px 4px 6px}',
+    '.jdg-create-title{font-size:.95rem;font-weight:700;margin-bottom:10px}',
+    '.jdg-cat-row{display:flex;align-items:center;gap:12px;padding:11px 4px;cursor:pointer;border-radius:12px}',
+    '.jdg-cat-row:active{background:rgba(255,255,255,.06)}',
+    '.jdg-cat-ico{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.08);display:flex;',
+    'align-items:center;justify-content:center;font-size:1.15rem;flex:0 0 auto}',
+    '.jdg-cat-name{font-size:.92rem;flex:1}',
+    '.jdg-cat-plus{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.2);color:#bbb;',
+    'background:transparent;font-size:1rem;line-height:1;cursor:pointer;flex:0 0 auto}',
+    '.jdg-cat-plus:active{transform:scale(.9)}',
+    '.jdg-intake-title{font-size:1.05rem;font-weight:800;margin-bottom:10px}',
+    '.jdg-intake-desc{font-size:.86rem;color:#b0b0b5;line-height:1.55;margin-bottom:20px}',
+    '.jdg-intake-btn{width:100%;background:#fff;color:#000;border:none;border-radius:16px;padding:14px;',
+    'font-size:.92rem;font-weight:700;cursor:pointer}',
+    '.jdg-intake-btn:active{transform:scale(.98)}',
+    'body.theme-light .jdg-cat-row:active{background:rgba(0,0,0,.05)}',
+    'body.theme-light .jdg-cat-ico{background:rgba(0,0,0,.05)}',
+    'body.theme-light .jdg-cat-plus{border-color:rgba(0,0,0,.2);color:#666}',
+    'body.theme-light .jdg-intake-desc{color:#666}',
+    'body.theme-light .jdg-intake-btn{background:#111;color:#fff}',
     'body.theme-light .jdg-back{color:#111}',
     'body.theme-light .jdg-add{background:rgba(0,0,0,.06);color:#111}',
     'body.theme-light .jdg-card,body.theme-light .jdg-why,body.theme-light .jdg-entry{background:#fff;color:#111;box-shadow:0 1px 6px rgba(0,0,0,.07)}',
@@ -297,31 +318,99 @@
     var box = document.getElementById('jdgList');
     if (!box) return;
     var tops = list.filter(function (g) { return !g.parent_goal_id; });
+
+    /* Create-a-goal category picker (matches the Muse app flow) */
+    var cats = [
+      ['health', '❤️', 'Health'],
+      ['relationships', '👥', 'Relationships'],
+      ['finance', '💲', 'Finance'],
+      ['career', '🏢', 'Career'],
+      ['interests', '🎨', 'Interests'],
+      ['productivity', '💻', 'Productivity'],
+      ['other', '⭕', 'Something else']
+    ];
+    var createHtml = '<div class="jdg-create-sec"><div class="jdg-create-title">Create a goal</div>' +
+      cats.map(function (c) {
+        return '<div class="jdg-cat-row" data-cat="' + c[0] + '">' +
+          '<span class="jdg-cat-ico">' + c[1] + '</span>' +
+          '<span class="jdg-cat-name">' + c[2] + '</span>' +
+          '<button class="jdg-cat-plus" data-cat="' + c[0] + '" aria-label="Create ' + c[2] + ' goal">+</button></div>';
+      }).join('') + '</div>';
+
     if (!tops.length) {
-      box.innerHTML = '<div class="jdg-empty">' + I.target + '<div>No goals yet.<br>Tap + to create your first goal.</div></div>';
-      return;
+      box.innerHTML = createHtml +
+        '<div class="jdg-empty">' + I.target + '<div>No goals yet.<br>Pick a category above to create your first goal.</div></div>';
+    } else {
+      var cards = (function () {
+        function card(g, isSub) {
+          var bell = g.reminder_time ? ' 🔔' : '';
+          var subs = list.filter(function (x) { return x.parent_goal_id === g.id; });
+          return '<div class="jdg-card' + (isSub ? ' sub' : '') + '" data-id="' + esc(g.id) + '">' +
+            '<div class="jdg-card-top"><div style="display:flex;flex:1;min-width:0">' +
+            '<span class="jdg-emoji">' + esc(g.emoji || '🎯') + '</span>' +
+            '<div style="flex:1;min-width:0"><div class="jdg-card-title">' + esc(g.title) + esc(bell) + '</div>' +
+            (g.current_state ? '<div class="jdg-card-state">' + esc(g.current_state) + '</div>' : '') +
+            '</div></div>' +
+            '<span class="jdg-badge ' + g.status + '">' + (g.status === 'completed' ? 'Done' : 'Active') + '</span></div>' +
+            '<div class="jdg-bar"><div class="jdg-bar-fill" style="width:' + (g.progress || 0) + '%"></div></div>' +
+            '<div class="jdg-meta"><span class="pct">' + (g.progress || 0) + '%</span>' +
+            '<span>' + (g.category ? '<span class="jdg-cat">' + esc(catLabel(g.category)) + '</span> · ' : '') +
+            (g.target_date ? '🎯 ' + esc(fmtDate(g.target_date)) : '') + '</span></div>' +
+            '</div>' +
+            subs.map(function (s) { return card(s, true); }).join('');
+        }
+        return tops.map(function (g) { return card(g, false); }).join('');
+      })();
+      box.innerHTML = cards + createHtml;
     }
-    function card(g, isSub) {
-      var bell = g.reminder_time ? ' 🔔' : '';
-      var subs = list.filter(function (x) { return x.parent_goal_id === g.id; });
-      return '<div class="jdg-card' + (isSub ? ' sub' : '') + '" data-id="' + esc(g.id) + '">' +
-        '<div class="jdg-card-top"><div style="display:flex;flex:1;min-width:0">' +
-        '<span class="jdg-emoji">' + esc(g.emoji || '🎯') + '</span>' +
-        '<div style="flex:1;min-width:0"><div class="jdg-card-title">' + esc(g.title) + esc(bell) + '</div>' +
-        (g.current_state ? '<div class="jdg-card-state">' + esc(g.current_state) + '</div>' : '') +
-        '</div></div>' +
-        '<span class="jdg-badge ' + g.status + '">' + (g.status === 'completed' ? 'Done' : 'Active') + '</span></div>' +
-        '<div class="jdg-bar"><div class="jdg-bar-fill" style="width:' + (g.progress || 0) + '%"></div></div>' +
-        '<div class="jdg-meta"><span class="pct">' + (g.progress || 0) + '%</span>' +
-        '<span>' + (g.category ? '<span class="jdg-cat">' + esc(catLabel(g.category)) + '</span> · ' : '') +
-        (g.target_date ? '🎯 ' + esc(fmtDate(g.target_date)) : '') + '</span></div>' +
-        '</div>' +
-        subs.map(function (s) { return card(s, true); }).join('');
-    }
-    box.innerHTML = tops.map(function (g) { return card(g, false); }).join('');
     box.querySelectorAll('.jdg-card').forEach(function (el) {
       el.addEventListener('click', function () { openDetail(el.getAttribute('data-id')); });
     });
+    box.querySelectorAll('.jdg-cat-row, .jdg-cat-plus').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openIntakeSheet(el.getAttribute('data-cat'));
+      });
+    });
+  }
+
+  /* ---------- Category intake sheet (chat-based refinement, like the Muse app) ---------- */
+  function openIntakeSheet(cat) {
+    var names = { health: 'health', relationships: 'relationships', finance: 'finance', career: 'career', interests: 'interests', productivity: 'productivity', other: '' };
+    var label = names[cat] || '';
+    var sh = document.getElementById('jdgSheet');
+    sh.innerHTML =
+      '<div class="jdg-sheet-bg" id="jdgIntakeBg"></div>' +
+      '<div class="jdg-sheet-body">' +
+      '<div class="jdg-intake-title">Create a' + (label ? ' ' + esc(label) : '') + ' goal</div>' +
+      '<div class="jdg-intake-desc">First, we\'ll refine the goal together in chat. ' +
+      'I\'ll ask a few questions to clarify exactly what you\'re after.<br><br>' +
+      'Once it\'s set I\'ll track your progress here.</div>' +
+      '<button class="jdg-intake-btn" id="jdgIntakeGo">Let\'s do it</button>' +
+      '</div>';
+    sh.classList.add('open');
+    document.getElementById('jdgIntakeBg').addEventListener('click', function () { sh.classList.remove('open'); });
+    document.getElementById('jdgIntakeGo').addEventListener('click', function () {
+      sh.classList.remove('open');
+      startChatIntake(cat);
+    });
+  }
+
+  function startChatIntake(cat) {
+    var gp = document.getElementById('jdGoalsPage');
+    if (gp) gp.hidden = true;
+    try { if (window.JDMainChat) window.JDMainChat.open(); } catch (e) {}
+    setTimeout(function () {
+      try {
+        var input = document.querySelector('textarea[jd-composer], #jdComposerInput, textarea[placeholder*="Message"]');
+        if (input) {
+          var names = { health: 'health', relationships: 'relationships', finance: 'finance', career: 'career', interests: 'interests', productivity: 'productivity' };
+          var c = names[cat] ? ' for ' + names[cat] : '';
+          input.value = 'I want to create a new goal' + c + '. Help me refine it.';
+          input.focus();
+        }
+      } catch (e) {}
+    }, 600);
   }
   async function refresh() {
     var list = await loadGoals();
