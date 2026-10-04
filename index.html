@@ -11202,10 +11202,10 @@ ${m.text || ''}
 
         function suppressEmbeddedRouteMapCta(text) {
             const value=String(text||'');
-            if(!/^\\s*>?\\s*\\[!STATUS info\\|Route map\\]/im.test(value))return value;
-            return value.split('\\n').filter(line=>
+            if(!/^\s*>?\s*\[!STATUS info\|Route map\]/im.test(value))return value;
+            return value.split('\n').filter(line=>
                 !/(?:pindutin dito para sa live map|click here (?:for|to) (?:the )?(?:live )?map|view the (?:live )?map here)/i.test(line)
-            ).join('\\n').replace(/\\n{3,}/g,'\\n\\n').trim();
+            ).join('\n').replace(/\n{3,}/g,'\n\n').trim();
         }
 
         function renderCustomMarkdown(rawMarkdown) {
