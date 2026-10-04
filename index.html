@@ -3,7 +3,7 @@
 <!-- Jay-Ar Lee Espiritu & JepongDevxyz AI -->
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#6366f1">
     <title>JepongDevxyz AI</title>
@@ -5865,26 +5865,41 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 !activeElement.disabled && !activeElement.readOnly;
             // Android can resize both layout and visual viewports for the IME, so
             // compare against the last keyboard-free size instead of innerHeight.
-            if (!editingText || !jepongStableViewportHeight || height >= jepongStableViewportHeight - 80) {
+            const keyboardThreshold = Math.min(120,Math.max(28,jepongStableViewportHeight*.16));
+            const keyboardOpen = editingText && (jepongStableViewportHeight - height) > keyboardThreshold;
+            if (!editingText || !jepongStableViewportHeight || (!keyboardOpen && height >= jepongStableViewportHeight - 80)) {
                 jepongStableViewportHeight = height;
+                jepongStableViewportWidth = width;
             }
-            const keyboardOpen = editingText && (jepongStableViewportHeight - height) > 120;
-            document.documentElement.style.setProperty('--jepong-vh', `${height}px`);
+            const screenWidth = Number(window.screen?.width)||0;
+            const screenHeight = Number(window.screen?.height)||0;
+            const outerWidth = Number(window.outerWidth)||layoutWidth;
+            const outerHeight = Number(window.outerHeight)||layoutHeight;
+            const floatingBrowserWindow = (screenWidth>0 && outerWidth<screenWidth*.92) ||
+                (screenHeight>0 && outerHeight<screenHeight*.82);
+            const keepFloatingWindowGeometry = floatingBrowserWindow && editingText && keyboardOpen;
+            const appHeight = keepFloatingWindowGeometry ? Math.max(1,jepongStableViewportHeight) : height;
+            const appWidth = keepFloatingWindowGeometry ? Math.max(1,jepongStableViewportWidth||layoutWidth) : width;
+            const appTop = keepFloatingWindowGeometry ? 0 : offsetTop;
+            const appLeft = keepFloatingWindowGeometry ? 0 : offsetLeft;
+            // Mobile CSS marks the app height !important, so publish the chosen size through its variable.
+            document.documentElement.style.setProperty('--jepong-vh', `${appHeight}px`);
             document.documentElement.style.setProperty('--jepong-vv-top', `${offsetTop}px`);
             document.documentElement.classList.toggle('keyboard-open', keyboardOpen);
             const app = document.getElementById('appContainer');
-            if (app && window.matchMedia('(max-width: 767px)').matches) {
-                // Chrome Android can PAN the visual viewport while keeping a focused textarea visible.
-                // Anchor the app to the visual viewport itself so the UI does not jump/flash into a blank area.
+            const touchViewport = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches;
+            if (app && touchViewport) {
+                // Follow the keyboard-safe viewport on phones/tablets, but preserve
+                // the actual app-window bounds when a floating window sits above the IME.
                 app.style.position = 'fixed';
-                app.style.left = `${offsetLeft}px`;
+                app.style.left = `${appLeft}px`;
                 app.style.right = 'auto';
                 app.style.bottom = 'auto';
-                app.style.top = `${offsetTop}px`;
-                app.style.width = `${width}px`;
-                app.style.maxWidth = `${width}px`;
-                app.style.height = `${height}px`;
-                app.style.maxHeight = `${height}px`;
+                app.style.top = `${appTop}px`;
+                app.style.width = `${appWidth}px`;
+                app.style.maxWidth = `${appWidth}px`;
+                app.style.height = `${appHeight}px`;
+                app.style.maxHeight = `${appHeight}px`;
                 app.style.transform = '';
                 app.style.transition = 'none';
             }
