@@ -106,15 +106,32 @@
   function lsGet(k, fb) { try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? fb : v; } catch (e) { return fb; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  function getBrief() { return lsGet(LS_BRIEF, DEFAULT_BRIEF) || DEFAULT_BRIEF; }
-  function getPosts() { return lsGet(LS_POSTS, []); }
-  function userKey() {
-    /* per-user scoping: tie cache to the signed-in account when known */
+  function getBrief() { return lsGet(briefKey(), DEFAULT_BRIEF) || DEFAULT_BRIEF; }
+  function getPosts() { return lsGet(postsKey(), []); }
+
+  /* Per-account scoping: every cache key is namespaced by the signed-in
+     account (Supabase cloudUser.id). Guests fall back to a device id.
+     When the account changes, keys change too — no cross-account leaks. */
+  function accountId() {
     try {
-      var em = localStorage.getItem('jepong_user_email') || localStorage.getItem('jd_user_email') || '';
-      return em ? 'u:' + em : 'u:guest';
-    } catch (e) { return 'u:guest'; }
+      if (typeof cloudUser !== 'undefined' && cloudUser && cloudUser.id) return 'a:' + cloudUser.id;
+    } catch (e) {}
+    try {
+      if (window.__jdCloudUser && window.__jdCloudUser.id) return 'a:' + window.__jdCloudUser.id;
+    } catch (e) {}
+    try {
+      var d = localStorage.getItem('jd_device_id_v1');
+      if (!d) {
+        d = 'd:' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('jd_device_id_v1', d);
+      }
+      return d;
+    } catch (e) { return 'd:guest'; }
   }
+  function briefKey() { return LS_BRIEF + ':' + accountId(); }
+  function postsKey() { return LS_POSTS + ':' + accountId(); }
+  function genKey() { return LS_GEN + ':' + accountId(); }
+  function userKey() { return accountId(); } /* compat */
 
   function userContext() {
     var parts = [];
@@ -177,9 +194,8 @@
             at: now - i * 3600000
           };
         });
-        lsSet(LS_POSTS, posts);
-        lsSet(LS_GEN, now);
-        lsSet(LS_POSTS + '_' + userKey(), posts);
+        lsSet(postsKey(), posts);
+        lsSet(genKey(), now);
       }
     } catch (e) {}
     generating = false;
@@ -204,7 +220,7 @@
   }
 
   function needsRefresh() {
-    var gen = lsGet(LS_GEN, 0);
+    var gen = lsGet(genKey(), 0);
     return (Date.now() - gen) > 20 * 3600000; /* ~20h */
   }
 
@@ -286,7 +302,7 @@
     document.getElementById('jdfBsCancel').addEventListener('click', closeBriefSheet);
     document.getElementById('jdfBsSave').addEventListener('click', function () {
       var v = document.getElementById('jdfBsText').value.trim() || DEFAULT_BRIEF;
-      lsSet(LS_BRIEF, v);
+      lsSet(briefKey(), v);
       closeBriefSheet();
       generatePosts(); /* regenerate with the new brief */
     });
@@ -354,6 +370,18 @@
   }
 
   window.JDFeed = { open: openFeed, close: closeFeed, render: renderPosts, regenerate: generatePosts };
+
+  /* On account switch, the per-account keys change automatically; if the
+     feed page is open, re-render so the new account sees their own feed. */
+  try {
+    window.addEventListener('jd:account-changed', function () {
+      var p = document.getElementById('jdFeedPage');
+      if (p && !p.hidden) {
+        if (!getPosts().length) generatePosts();
+        else renderPosts();
+      }
+    });
+  } catch (e) {}
 
   ensureCSS();
   buildPage();

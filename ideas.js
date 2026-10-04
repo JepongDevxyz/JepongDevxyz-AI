@@ -77,8 +77,29 @@
   function lsGet(k, fb) { try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? fb : v; } catch (e) { return fb; } }
   function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  function getIdeas() { return lsGet(LS_IDEAS, []); }
-  function getDismissed() { return lsGet(LS_DISMISSED, []); }
+  function getIdeas() { return lsGet(ideasKey(), []); }
+  function getDismissed() { return lsGet(dismissedKey(), []); }
+
+  /* Per-account scoping — same scheme as the Feed. */
+  function accountId() {
+    try {
+      if (typeof cloudUser !== 'undefined' && cloudUser && cloudUser.id) return 'a:' + cloudUser.id;
+    } catch (e) {}
+    try {
+      if (window.__jdCloudUser && window.__jdCloudUser.id) return 'a:' + window.__jdCloudUser.id;
+    } catch (e) {}
+    try {
+      var d = localStorage.getItem('jd_device_id_v1');
+      if (!d) {
+        d = 'd:' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('jd_device_id_v1', d);
+      }
+      return d;
+    } catch (e) { return 'd:guest'; }
+  }
+  function ideasKey() { return LS_IDEAS + ':' + accountId(); }
+  function dismissedKey() { return LS_DISMISSED + ':' + accountId(); }
+  function genKey() { return LS_GEN + ':' + accountId(); }
 
   function userContext() {
     var parts = [];
@@ -123,9 +144,9 @@
             description: String(x.description || '').slice(0, 400)
           };
         });
-        lsSet(LS_IDEAS, ideas);
-        lsSet(LS_GEN, Date.now());
-        lsSet(LS_DISMISSED, []);
+        lsSet(ideasKey(), ideas);
+        lsSet(genKey(), Date.now());
+        lsSet(dismissedKey(), []);
       }
     } catch (e) {}
     generating = false;
@@ -176,7 +197,7 @@
         e.stopPropagation();
         var d = getDismissed();
         d.push(b.getAttribute('data-id'));
-        lsSet(LS_DISMISSED, d);
+        lsSet(dismissedKey(), d);
         renderIdeas();
       });
     });
@@ -255,6 +276,16 @@
   }
 
   window.JDIdeas = { open: openIdeas, close: closeIdeas, regenerate: generateIdeas };
+
+  try {
+    window.addEventListener('jd:account-changed', function () {
+      var p = document.getElementById('jdIdeasPage');
+      if (p && !p.hidden) {
+        if (!getIdeas().length) generateIdeas();
+        else renderIdeas();
+      }
+    });
+  } catch (e) {}
 
   ensureCSS();
   buildPage();
