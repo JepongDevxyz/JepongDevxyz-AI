@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {buildInlineMapDataUrl} from '../api/location-tools.js';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
@@ -33,7 +34,13 @@ assert.match(api,/The interactive route service did not return a route/);
 assert.match(api,/const locationToolAppendix=String\(result\.locationToolAppendix\|\|''\)\.trim\(\)/);
 assert.match(api,/buildRouteMapHtml\(/);
 assert.match(api,/buildRadarMapHtml\(/);
-assert.match(api,/uploadInlineMapPage\(/);
+assert.match(api,/inlineMapPageUrl\(mapHtml\)/);
+assert.doesNotMatch(api,/uploadInlineMapPage\(/,'generated map pages must not be served from Vercel Blob');
+const generatedMap='<!doctype html><meta name="jd-map-document" content="v1"><div id="map"></div>';
+const inlineMap=buildInlineMapDataUrl(generatedMap);
+assert.match(inlineMap,/^data:text\\/html;base64,/);
+assert.equal(Buffer.from(inlineMap.split(',')[1],'base64').toString(),generatedMap);
+assert.equal(buildInlineMapDataUrl('x'.repeat(110001)),'','oversized documents must fail closed rather than produce a blank embed');
 assert.match(html,/safeDataMap/);
 assert.match(mapEmbed,/setAttribute\('sandbox',\s*'allow-scripts'\)/);
 assert.match(mapEmbed,/jd-map-document/);
