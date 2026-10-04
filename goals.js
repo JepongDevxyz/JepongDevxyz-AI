@@ -35,7 +35,7 @@
   var EMOJIS = ['🎯', '🏃', '📚', '💰', '❤️', '💼', '🎨', '⚡', '🌱', '🏆', '✈️', '🎵', '💪', '🧠', '🌙', '☀️'];
 
   var CSS = [
-    '#jdGoalsPage{position:fixed;inset:0;z-index:24500;background:#0a0a0c;color:#fff;',
+    '#jdGoalsPage{position:fixed;inset:0;z-index:24500;background:#000;color:#fff;',
     'display:flex;flex-direction:column;font-family:inherit}',
     '#jdGoalsPage[hidden]{display:none!important}',
     '.jdg-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex:0 0 auto}',
@@ -118,17 +118,16 @@
     '#jdgToast small{display:block;text-align:center;font-size:.65rem;color:#888;margin-top:2px}',
     /* Light mode */
     'body.theme-light #jdGoalsPage{background:#f2f2f5;color:#111}',
-    /* Create-a-goal category picker (Muse-app parity) */
+    /* Create-a-goal category picker (Muse-app parity: flat rows, outline icons) */
     '.jdg-create-sec{margin:14px 4px 6px}',
-    '.jdg-create-title{font-size:.95rem;font-weight:700;margin-bottom:10px}',
-    '.jdg-cat-row{display:flex;align-items:center;gap:12px;padding:11px 4px;cursor:pointer;border-radius:12px}',
-    '.jdg-cat-row:active{background:rgba(255,255,255,.06)}',
-    '.jdg-cat-ico{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.08);display:flex;',
-    'align-items:center;justify-content:center;font-size:1.15rem;flex:0 0 auto}',
-    '.jdg-cat-name{font-size:.92rem;flex:1}',
-    '.jdg-cat-plus{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.2);color:#bbb;',
-    'background:transparent;font-size:1rem;line-height:1;cursor:pointer;flex:0 0 auto}',
-    '.jdg-cat-plus:active{transform:scale(.9)}',
+    '.jdg-create-title{font-size:1.05rem;font-weight:700;margin-bottom:6px;padding:0 12px}',
+    '.jdg-cat-row{display:flex;align-items:center;gap:16px;padding:13px 12px;cursor:pointer}',
+    '.jdg-cat-row:active{background:rgba(255,255,255,.04)}',
+    '.jdg-cat-ico{width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#888}',
+    '.jdg-cat-ico svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}',
+    '.jdg-cat-name{font-size:1rem;flex:1;color:#fff}',
+    '.jdg-cat-plus{font-size:1.5rem;color:#888;font-weight:300;flex:0 0 auto;padding:0 4px;cursor:pointer;line-height:1}',
+    '.jdg-cat-plus:active{transform:scale(.9);color:#fff}',
     '.jdg-intake-title{font-size:1.05rem;font-weight:800;margin-bottom:10px}',
     '.jdg-intake-desc{font-size:.86rem;color:#b0b0b5;line-height:1.55;margin-bottom:20px}',
     '.jdg-intake-btn{width:100%;background:#fff;color:#000;border:none;border-radius:16px;padding:14px;',
@@ -319,22 +318,31 @@
     if (!box) return;
     var tops = list.filter(function (g) { return !g.parent_goal_id; });
 
-    /* Create-a-goal category picker (matches the Muse app flow) */
+    /* Create-a-goal category picker — outline Lucide icons (Muse-app pixel parity) */
+    var CAT_ICONS = {
+      health: '<svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+      relationships: '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      finance: '<svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+      career: '<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/><path d="M12 14h.01"/></svg>',
+      interests: '<svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.26-.29-.43-.68-.43-1.12A1.68 1.68 0 0 1 14.46 16h2.07A5.47 5.47 0 0 0 22 10.5C22 5.8 17.5 2 12 2z"/></svg>',
+      productivity: '<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>',
+      other: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>'
+    };
     var cats = [
-      ['health', '❤️', 'Health'],
-      ['relationships', '👥', 'Relationships'],
-      ['finance', '💲', 'Finance'],
-      ['career', '🏢', 'Career'],
-      ['interests', '🎨', 'Interests'],
-      ['productivity', '💻', 'Productivity'],
-      ['other', '⭕', 'Something else']
+      ['health', 'Health'],
+      ['relationships', 'Relationships'],
+      ['finance', 'Finance'],
+      ['career', 'Career'],
+      ['interests', 'Interests'],
+      ['productivity', 'Productivity'],
+      ['other', 'Something else']
     ];
     var createHtml = '<div class="jdg-create-sec"><div class="jdg-create-title">Create a goal</div>' +
       cats.map(function (c) {
         return '<div class="jdg-cat-row" data-cat="' + c[0] + '">' +
-          '<span class="jdg-cat-ico">' + c[1] + '</span>' +
-          '<span class="jdg-cat-name">' + c[2] + '</span>' +
-          '<button class="jdg-cat-plus" data-cat="' + c[0] + '" aria-label="Create ' + c[2] + ' goal">+</button></div>';
+          '<span class="jdg-cat-ico">' + CAT_ICONS[c[0]] + '</span>' +
+          '<span class="jdg-cat-name">' + c[1] + '</span>' +
+          '<span class="jdg-cat-plus" data-cat="' + c[0] + '" aria-label="Create ' + c[1] + ' goal">+</span></div>';
       }).join('') + '</div>';
 
     if (!tops.length) {

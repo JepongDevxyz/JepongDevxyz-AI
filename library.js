@@ -15,7 +15,7 @@
   var sortBy = 'modified'; /* modified | name */
 
   var CSS = [
-    '#jdLibPage{position:fixed;inset:0;z-index:24500;background:#0a0a0c;color:#fff;',
+    '#jdLibPage{position:fixed;inset:0;z-index:24500;background:#000;color:#fff;',
     'display:flex;flex-direction:column;font-family:inherit}',
     '#jdLibPage[hidden]{display:none!important}',
     '.jdl-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex:0 0 auto}',
@@ -30,7 +30,7 @@
     '.jdl-tab:active{transform:scale(.98)}',
     '.jdl-scroll{flex:1;overflow-y:auto;padding:4px 16px 100px;-webkit-overflow-scrolling:touch}',
     /* Artifact list */
-    '.jdl-file{display:flex;align-items:center;gap:14px;padding:13px 6px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}',
+    '.jdl-file{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer}',
     '.jdl-file:active{background:rgba(255,255,255,.04)}',
     '.jdl-file-ico{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.08);display:flex;',
     'align-items:center;justify-content:center;flex:0 0 auto}',
