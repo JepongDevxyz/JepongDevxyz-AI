@@ -11,12 +11,16 @@ const html=buildRouteMapHtml({
 
 assert.match(html,/class="route-summary"/,
   'route metadata should occupy a dedicated flexible summary column');
-assert.match(html,/grid-template-columns:minmax\(0,1fr\)/,
-  'narrow maps should move attribution onto its own row');
+assert.match(html,/\.bar\{[^}]*flex-direction:column/,
+  'route details and attribution should stack into independent rows');
 assert.match(html,/\.bar\{[^}]*height:auto/,
   'the map header must grow to fit wrapped route details instead of clipping them');
 assert.match(html,/\.brand\{[^}]*line-height:/,
   'attribution text needs its own line spacing');
+assert.match(html,/class="route-names"/,
+  'origin and destination should wrap independently from route metadata');
+assert.match(html,/class="route-meta"/,
+  'distance and duration should occupy a separate flex row');
 assert.doesNotMatch(html,/Open driving directions in Google Maps/,
   'the map page should not reintroduce the removed duplicate directions link');
 
