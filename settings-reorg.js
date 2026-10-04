@@ -55,7 +55,21 @@
   function getTitle(btn) {
     try {
       var strong = btn.querySelector('strong');
-      return strong ? strong.textContent.trim() : '';
+      if (strong) return strong.textContent.trim();
+      // Fallback: some rows (e.g. permissions.js) use <span> instead of <strong>
+      var span = btn.querySelector('span');
+      if (span) {
+        // Get direct text, not from nested elements
+        var text = '';
+        for (var i = 0; i < span.childNodes.length; i++) {
+          var n = span.childNodes[i];
+          if (n.nodeType === 3) text += n.textContent;
+        }
+        text = text.trim();
+        if (text) return text;
+        return span.textContent.trim().split('\n')[0].trim();
+      }
+      return '';
     } catch (e) { return ''; }
   }
 
