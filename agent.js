@@ -240,7 +240,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261004a52';
+  var V='?v=20261004a53';
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js'];
   function loadPatches(ver){
     FILES.forEach(function(src){
@@ -263,7 +263,13 @@ window.JDCodingAgent=Object.freeze({open,close});
       document.head.appendChild(sc);
     });
   }
-  var loadedVer = null;
+  // Share patch-loader state across repeated evaluations of agent.js so the
+  // same version cannot append duplicate UI patch scripts.
+  var patchLoaderState = window.__JD_PATCH_LOADER_STATE__;
+  if (!patchLoaderState || typeof patchLoaderState !== 'object') {
+    patchLoaderState = window.__JD_PATCH_LOADER_STATE__ = { version: null };
+  }
+  var loadedVer = patchLoaderState.version;
   /* Keep versioned stylesheets fresh too: index.html pins
      ?v= on reactbits-micro.css, so bump it to the live patch
      version â otherwise the slim sheet etc. stay cached. */
@@ -278,12 +284,13 @@ window.JDCodingAgent=Object.freeze({open,close});
   }
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
-    if (loadedVer === ver) return;
+    if (patchLoaderState.version === ver) return;
     // Remove old patch scripts before loading new version
     if (loadedVer !== null) {
       document.querySelectorAll('script[data-jd-patch]').forEach(function (s) { s.remove(); });
     }
     loadedVer = ver;
+    patchLoaderState.version = ver;
     loadPatches(ver);
   }
   function go(ver){

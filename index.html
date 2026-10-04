@@ -212,7 +212,10 @@
             .web-search-toggle-btn span { display: none; }
             .web-search-toggle-btn { justify-content: center; }
         }
-        .custom-prompt-input { flex: 1; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; min-width: 100%; display: none; margin-top: 4px; }
+        .custom-persona-field{display:grid;gap:5px;width:100%;margin-top:8px}
+        .custom-persona-field[hidden]{display:none!important}
+        .custom-persona-field>label{font-size:.72rem;font-weight:600;color:var(--text-muted)}
+        .custom-prompt-input{display:block;width:100%;min-width:0;min-height:76px;resize:vertical;background:rgba(30,41,59,.5);color:var(--text-main);border:1px solid var(--border-color);padding:9px 10px;border-radius:10px;font:inherit;font-size:.82rem;line-height:1.4;}
         
         .selector-wrapper { position: relative; flex: 1; min-width: 0; }
         .dropdown-btn { width: 100%; background: rgba(30, 41, 59, 0.5); color: var(--text-main); border: 1px solid var(--border-color); padding: 7px 10px; border-radius: 8px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; gap: 4px; }
@@ -4334,6 +4337,10 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                         </span>
                         <span>▼</span>
                     </button>
+                    <div class="custom-persona-field" id="customPromptField" hidden>
+                        <label for="customPromptInput">Custom persona instructions</label>
+                        <textarea id="customPromptInput" class="custom-prompt-input" rows="3" maxlength="4000" placeholder="Type custom persona instructions here..." autocomplete="off"></textarea>
+                    </div>
                 </div>
 
                 <div class="selector-wrapper">
@@ -4342,7 +4349,6 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                         <span>▼</span>
                     </button>
                 </div>
-                <input type="text" id="customPromptInput" class="custom-prompt-input" placeholder="Type custom persona instructions here...">
             </div>
         </div>
 
@@ -12994,7 +13000,8 @@ ${m.text || ''}
                 if (btn.getAttribute('onclick').includes(key)) btn.classList.add('active');
             });
 
-            document.getElementById('customPromptInput').style.display = key === 'custom' ? 'block' : 'none';
+            const customPromptField = document.getElementById('customPromptField');
+            if (customPromptField) customPromptField.hidden = key !== 'custom';
             renderPromptSuggestions();
             toggleModal('modeModalOverlay', false);
             syncJdNavigation();
