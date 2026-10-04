@@ -162,6 +162,24 @@
     } catch (e) {}
     /* Also hide on interval as backup */
     setInterval(hideFromSidebar, 2000);
+    /* Strip visible goal markers and map badges from rendered messages */
+    setInterval(cleanupRenderedMessages, 1500);
+  }
+
+  function cleanupRenderedMessages() {
+    try {
+      document.querySelectorAll('.msg.bot, .msg.user, [class*="message"]').forEach(function (el) {
+        var html = el.innerHTML;
+        if (html.indexOf('[[JD_GOAL_') !== -1) {
+          el.innerHTML = html.replace(/\[\[JD_GOAL_(CREATE|ENTRY|PROGRESS)\|([^\]]*)\]\]/g, '');
+        }
+        /* Remove Route map badges from goal-related messages */
+        var text = el.textContent || '';
+        if (text.toLowerCase().indexOf('goal') !== -1) {
+          el.querySelectorAll('[class*="route-map"], [class*="routemap"]').forEach(function (b) { b.remove(); });
+        }
+      });
+    } catch (e) {}
   }
 
   window.JDMainChat = {

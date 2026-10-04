@@ -595,7 +595,7 @@
     if (gp) gp.hidden = true;
     var names = { health: 'health', relationships: 'relationships', finance: 'finance', career: 'career', interests: 'interests', productivity: 'productivity' };
     var c = names[cat] ? ' for ' + names[cat] : '';
-    var msg = 'I want to create a new goal' + c + '. Help me refine it — ask me what I want to achieve, why it matters, and suggest a target date.';
+    var msg = 'Help me create a new goal' + c + '. Ask me what I want to achieve, why it matters, and suggest a target date.';
     try {
       if (window.JDMainChat && window.JDMainChat.sendAsUser) {
         window.JDMainChat.sendAsUser(msg);
