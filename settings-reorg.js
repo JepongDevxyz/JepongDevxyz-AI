@@ -47,7 +47,7 @@
   // Per user's corrected list (2026-10-03 19:46 PST)
   var AI_TOOLS_ORDER = [
     'Mode', 'Models', 'Reply Notifications', 'Permissions',
-    'Connectors', 'Custom API Keys', 'Web Search', 'Auto Temper', 'Pure Mode',
+    'Connectors', 'Custom API Keys', 'Import Memory', 'Web Search', 'Auto Temper', 'Pure Mode',
     'Response Speech', 'Reconnect notice', 'Auto Provider Fallback',
     'Smart Model Router', 'Plugins'
   ];
@@ -95,6 +95,19 @@
             var t = strong.textContent.trim();
             if (t === 'Pet & Luna') strong.textContent = 'Pet';
             if (t === 'Voice & Read Aloud') strong.textContent = 'Voice';
+          }
+        });
+
+        // Remove duplicate titles within this section (keep first visible)
+        var seenTitles = Object.create(null);
+        items.forEach(function (item) {
+          if (item.style.display === 'none') return;
+          var title = normalizeTitle(getTitle(item));
+          if (!title) return;
+          if (seenTitles[title]) {
+            item.remove();
+          } else {
+            seenTitles[title] = item;
           }
         });
 
