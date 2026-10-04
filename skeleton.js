@@ -161,14 +161,25 @@
 
   /* 1. Chat: show skeleton bubble when AI starts generating */
   var chatSkEl = null;
-  function keepActivityBeforeSkeleton(chatBox) {
+  function keepLoadingOrder(chatBox) {
     try {
       var activeIndicator = document.getElementById('activeAiIndicator');
       var skeleton = chatBox && chatBox.querySelector('.jd-sk-msg[data-jd-sk="1"]');
-      if (!activeIndicator || !skeleton || activeIndicator.parentNode !== chatBox || skeleton.parentNode !== chatBox) return;
-      var children = Array.prototype.slice.call(chatBox.children || []);
-      if (children.indexOf(activeIndicator) > children.indexOf(skeleton)) {
-        chatBox.insertBefore(activeIndicator, skeleton);
+      if (!skeleton || skeleton.parentNode !== chatBox) return;
+      var responses = chatBox.querySelectorAll('.msg.bot:not(.jd-sk-msg)');
+      var responseMessage = responses.length ? responses[responses.length - 1] : null;
+      if (activeIndicator && activeIndicator.parentNode === chatBox && responseMessage && responseMessage.parentNode === chatBox) {
+        var children = Array.prototype.slice.call(chatBox.children || []);
+        if (children.indexOf(activeIndicator) > children.indexOf(responseMessage)) {
+          chatBox.insertBefore(activeIndicator, responseMessage);
+        }
+      }
+      if (responseMessage && responseMessage.parentNode === chatBox) {
+        if (skeleton.previousSibling !== responseMessage) {
+          chatBox.insertBefore(skeleton, responseMessage.nextSibling);
+        }
+      } else if (activeIndicator && activeIndicator.parentNode === chatBox && skeleton.previousSibling !== activeIndicator) {
+        chatBox.insertBefore(skeleton, activeIndicator.nextSibling);
       }
     } catch (e) {}
   }
@@ -191,11 +202,14 @@
               chatSkEl.className = 'msg bot jd-sk-msg';
               chatSkEl.setAttribute('data-jd-sk', '1');
               chatSkEl.innerHTML = chatSkeleton();
-              // Activity is created by the chat renderer, not by this watcher.
-              // Place the skeleton in a fixed slot below it regardless of which
-              // async startup callback ran first, and let Activity own scrolling.
+              // The live assistant message owns the three-dot stream cursor.
+              // Keep the skeleton after that message so the cursor stays above it.
+              var responseMessages = chatBox.querySelectorAll('.msg.bot:not(.jd-sk-msg)');
+              var responseMessage = responseMessages.length ? responseMessages[responseMessages.length - 1] : null;
               var activeIndicator = document.getElementById('activeAiIndicator');
-              if (activeIndicator && activeIndicator.parentNode === chatBox) {
+              if (responseMessage && responseMessage.parentNode === chatBox) {
+                chatBox.insertBefore(chatSkEl, responseMessage.nextSibling);
+              } else if (activeIndicator && activeIndicator.parentNode === chatBox) {
                 chatBox.insertBefore(chatSkEl, activeIndicator.nextSibling);
               } else {
                 chatBox.appendChild(chatSkEl);
@@ -204,7 +218,7 @@
           }
           // Keep repairing the order for the whole generation, even after the
           // one skeleton node exists: activity updates can append/move it later.
-          keepActivityBeforeSkeleton(chatBox);
+          keepLoadingOrder(chatBox);
         } else if (!generating && chatSkEl) {
           try { chatSkEl.remove(); } catch (e) {}
           chatSkEl = null;
