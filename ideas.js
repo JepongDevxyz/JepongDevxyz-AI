@@ -268,7 +268,7 @@
     if (p) p.hidden = true;
   }
 
-  var PATCH_VER = '20261004a66';
+  var PATCH_VER = '20261004a67';
 
   function addSidebarEntry() {
     /* In Explore mode, the unified Explore button replaces individual entries */

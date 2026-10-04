@@ -35,8 +35,11 @@
     'color:#a0a0a5;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto}',
     '.jdf-scroll{flex:1;overflow-y:auto;padding:8px 0 100px;-webkit-overflow-scrolling:touch}',
     /* Post rows — FLAT, no cards, thin dividers (Muse-app pixel parity) */
-    '.jdf-post{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}',
+    '.jdf-post{padding:0 0 18px;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}',
     '.jdf-post:active{background:rgba(255,255,255,.03)}',
+    '.jdf-post-hero{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#1a1a1c}',
+    '.jdf-post-hero-wrap{margin:0 0 14px;overflow:hidden}',
+    '.jdf-post-pad{padding:0 16px}',
     '.jdf-post-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}',
     '.jdf-post-emoji{font-size:1.9rem;flex:0 0 auto;line-height:1.2}',
     '.jdf-post-headwrap{flex:1;min-width:0}',
@@ -170,7 +173,22 @@
     } catch (e) { return ''; }
   }
 
-  /* ---------- Generation ---------- */
+  /* Build a Pollinations hero image URL (free, no API key — same fallback
+     the app itself uses for image generation). Deterministic per prompt. */
+  function heroImageUrl(imagePrompt) {
+    try {
+      var q = encodeURIComponent(String(imagePrompt || '').slice(0, 200));
+      if (!q) return '';
+      return 'https://image.pollinations.ai/prompt/' + q +
+        '?width=800&height=450&nologo=true&model=flux&seed=' +
+        (hashStr(q) % 100000);
+    } catch (e) { return ''; }
+  }
+  function hashStr(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
   var generating = false;
   async function generatePosts() {
     if (generating) return;
@@ -184,7 +202,8 @@
       '3 actionable idea posts (things the assistant can do for them, phrased as "I can ..."). ' +
       'Return ONLY a JSON array, no other text, no markdown fences. ' +
       'Each item: {"emoji":"single emoji","category":"short category like AI News or Productivity",' +
-      '"headline":"clear direct headline, no clickbait","body":"2-3 sentence body, plain text, no markdown links"}.';
+      '"headline":"clear direct headline, no clickbait","body":"2-3 sentence body, plain text, no markdown links",' +
+      '"image_prompt":"short visual description for a hero image, e.g. \'futuristic AI chip glowing blue\'"}.';
     try {
       var res = await fetch('/api/chat', {
         method: 'POST',
@@ -206,6 +225,7 @@
             emoji: p.emoji || '📰', category: p.category || 'Feed',
             headline: String(p.headline || '').slice(0, 160),
             body: String(p.body || '').slice(0, 600),
+            image: heroImageUrl(p.image_prompt || (p.category + ' ' + p.headline)),
             at: now - i * 3600000
           };
         });
@@ -260,8 +280,12 @@
       html += '<div class="jdf-empty">Your feed is empty.<br>Tap refresh to generate posts.</div>';
     } else {
       posts.forEach(function (p, i) {
-        html += '<div class="jdf-post" data-i="' + i + '">' +
-          '<div class="jdf-post-top"><span class="jdf-post-emoji">' + esc(p.emoji) + '</span>' +
+        var heroHtml = '';
+        if (p.image) {
+          heroHtml = '<div class="jdf-post-hero-wrap"><img class="jdf-post-hero" src="' + esc(p.image) + '" loading="lazy" alt=""/></div>';
+        }
+        html += '<div class="jdf-post" data-i="' + i + '">' + heroHtml +
+          '<div class="jdf-post-pad"><div class="jdf-post-top"><span class="jdf-post-emoji">' + esc(p.emoji) + '</span>' +
           '<div class="jdf-post-headwrap">' +
           '<div class="jdf-post-kicker">' + esc(p.category) + '</div>' +
           '<div class="jdf-post-headline">' + esc(p.headline) + '</div>' +
@@ -274,7 +298,7 @@
           '<button class="jdf-act-btn" data-act="idea" data-i="' + i + '" aria-label="Ideas">' + I.bulb + '</button>' +
           '<button class="jdf-act-btn" data-act="done" data-i="' + i + '" aria-label="Mark done">' + I.check + '</button>' +
           '<button class="jdf-act-btn" data-act="share" data-i="' + i + '" aria-label="Share">' + I.share + '</button>' +
-          '</div></div>';
+          '</div></div></div>';
       });
     }
     box.innerHTML = html;
@@ -426,7 +450,7 @@
     if (p) p.hidden = true;
   }
 
-  var PATCH_VER = '20261004a66';
+  var PATCH_VER = '20261004a67';
 
   function addSidebarEntry() {
     /* In Explore mode, the unified Explore button replaces individual entries */

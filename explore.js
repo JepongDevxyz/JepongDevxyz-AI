@@ -10,7 +10,7 @@
   if (window.__jdExplore) return;
   window.__jdExplore = true;
 
-  var PATCH_VER = '20261004a66';
+  var PATCH_VER = '20261004a67';
   var activeTab = 'feed';
   var mounted = {}; /* tab -> refresh fn */
 
