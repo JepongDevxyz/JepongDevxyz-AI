@@ -240,7 +240,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261004a78';
+  var V='?v=20261004a79';
   window.__jdExploreMode = true; /* unified Explore replaces Feed/Ideas/Library buttons */
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js'];
   function loadPatches(ver){
