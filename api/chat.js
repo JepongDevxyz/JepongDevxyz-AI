@@ -13,6 +13,7 @@ export const config = { runtime: 'edge' };
 
 import { runConfiguredWebSearch } from './web-search.js';
 import {
+  buildInlineMapDataUrl,
   buildLocationMapLinks,
   buildRouteMapAppendix,
   buildWeatherMapAppendix,
@@ -46,19 +47,8 @@ import {
   executeUnifiedTool,
 } from '../lib/tools/index.js';
 
-async function uploadInlineMapPage(filename,html){
-  const uploadPromise=uploadSharedFile({filename,bytes:html,mimeType:'text/html'}).catch(()=>null);
-  const timeoutPromise=new Promise(resolve=>setTimeout(()=>resolve(null),7000));
-  const uploaded=await Promise.race([uploadPromise,timeoutPromise]);
-  if(uploaded?.ok&&uploaded.url)return uploaded.url;
-  try{
-    const bytes=new TextEncoder().encode(String(html||''));
-    if(bytes.length>110000)return '';
-    let binary='';
-    for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
-    const encoded='data:text/html;base64,'+btoa(binary);
-    return encoded.length<=150000?encoded:'';
-  }catch(_){return '';}
+function inlineMapPageUrl(html){
+  try{return buildInlineMapDataUrl(html);}catch(_){return '';}
 }
 
 const PROVIDERS = {
@@ -5695,7 +5685,7 @@ async function processChat(body, emit) {
             lat:mapCenter.latitude,
             lon:mapCenter.longitude
           });
-          const mapUrl=await uploadInlineMapPage('weather-'+slugify(liveWeather.locationName)+'.html',mapHtml);
+          const mapUrl=await inlineMapPageUrl(mapHtml);
           locationToolAppendix=buildWeatherMapAppendix({location:mapCenter,weather:liveWeather,mapUrl});
           activity(emit,'location-weather-maps',mapUrl?'Prepared an in-chat radar and Himawari satellite map':'Prepared radar and satellite map links','completed','web');
         }
@@ -5725,7 +5715,7 @@ async function processChat(body, emit) {
             distanceKm:calculatedRoute.distanceKm,durationText:calculatedRoute.durationText,
             geometry:calculatedRoute.geometry
           });
-          routeMapUrl=await uploadInlineMapPage('route-'+slugify(routeRequest.origin)+'-to-'+slugify(routeRequest.destination)+'.html',mapHtml);
+          routeMapUrl=await inlineMapPageUrl(mapHtml);
         }
       }
     }catch(_){}
