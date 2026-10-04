@@ -18,7 +18,7 @@
   var LS_DISMISSED = 'jd_ideas_dismissed_v1';
 
   var CSS = [
-    '#jdIdeasPage{position:fixed;inset:0;z-index:24500;background:#0a0a0c;color:#fff;',
+    '#jdIdeasPage{position:fixed;inset:0;z-index:24500;background:#000;color:#fff;',
     'display:flex;flex-direction:column;font-family:inherit}',
     '#jdIdeasPage[hidden]{display:none!important}',
     '.jdi-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex:0 0 auto}',
@@ -27,31 +27,28 @@
     '.jdi-back:active,.jdi-refresh:active{transform:scale(.92);background:rgba(255,255,255,.1)}',
     '.jdi-back svg,.jdi-refresh svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     '.jdi-title{font-size:1.05rem;font-weight:600}',
-    '.jdi-scroll{flex:1;overflow-y:auto;padding:8px 16px 100px;-webkit-overflow-scrolling:touch}',
-    '.jdi-cat{font-size:.78rem;font-weight:700;color:#8e8e93;margin:20px 4px 12px}',
+    '.jdi-scroll{flex:1;overflow-y:auto;padding:8px 0 100px;-webkit-overflow-scrolling:touch}',
+    /* Category headers — large white text (Muse-app parity) */
+    '.jdi-cat{font-size:1.35rem;font-weight:700;color:#fff;margin:24px 16px 6px;letter-spacing:-.01em}',
     '.jdi-cat:first-child{margin-top:8px}',
-    '.jdi-card{background:#141416;border:1px solid rgba(255,255,255,.06);border-radius:20px;',
-    'padding:18px;margin-bottom:12px;cursor:pointer;position:relative}',
-    '.jdi-card:active{transform:scale(.99)}',
-    '.jdi-card-top{display:flex;align-items:flex-start;gap:12px}',
-    '.jdi-emoji{font-size:1.6rem;flex:0 0 auto}',
-    '.jdi-card-title{font-size:.95rem;font-weight:700;line-height:1.35;flex:1}',
-    '.jdi-dismiss{width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:#888;',
-    'font-size:.85rem;cursor:pointer;flex:0 0 auto;line-height:1}',
-    '.jdi-dismiss:active{transform:scale(.9)}',
-    '.jdi-card-desc{font-size:.84rem;color:#b0b0b5;line-height:1.55;margin-top:10px}',
+    /* Idea rows — FLAT, no cards, thin dividers */
+    '.jdi-row{display:flex;gap:14px;padding:16px;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}',
+    '.jdi-row:active{background:rgba(255,255,255,.03)}',
+    '.jdi-emoji{font-size:1.9rem;flex:0 0 auto;line-height:1.3}',
+    '.jdi-row-body{flex:1;min-width:0}',
+    '.jdi-row-title{font-size:1rem;font-weight:700;color:#fff;line-height:1.4;margin-bottom:6px}',
+    '.jdi-row-desc{font-size:.88rem;color:#8e8e93;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;',
+    '-webkit-box-orient:vertical;overflow:hidden}',
     '.jdi-loading{text-align:center;padding:50px 20px;color:#888}',
     '.jdi-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.12);border-top-color:#fff;',
     'border-radius:50%;margin:0 auto 14px;animation:jdispin 0.9s linear infinite}',
     '@keyframes jdispin{to{transform:rotate(360deg)}}',
     '.jdi-empty{text-align:center;padding:40px 20px;color:#8e8e93;font-size:.88rem;line-height:1.6}',
+    '.jdi-pane-refresh{text-align:center;padding:6px 0 12px}',
     /* Light mode */
     'body.theme-light #jdIdeasPage{background:#f7f7f9;color:#111}',
     'body.theme-light .jdi-back,body.theme-light .jdi-refresh{color:#111}',
-    'body.theme-light .jdi-card{background:#fff;border-color:rgba(0,0,0,.05);box-shadow:0 2px 14px rgba(0,0,0,.05)}',
-    'body.theme-light .jdi-card-desc{color:#555}',
     'body.theme-light .jdi-cat{color:#999}',
-    'body.theme-light .jdi-dismiss{background:rgba(0,0,0,.06);color:#888}',
     'body.theme-light .jdi-spinner{border-color:rgba(0,0,0,.1);border-top-color:#111}'
   ].join('\n');
 
@@ -189,26 +186,18 @@
     cats.forEach(function (c) {
       html += '<div class="jdi-cat">' + esc(c) + '</div>';
       ideas.filter(function (x) { return x.category === c; }).forEach(function (x) {
-        html += '<div class="jdi-card" data-id="' + esc(x.id) + '">' +
-          '<div class="jdi-card-top"><span class="jdi-emoji">' + esc(x.emoji) + '</span>' +
-          '<div class="jdi-card-title">' + esc(x.title) + '</div>' +
-          '<button class="jdi-dismiss" data-id="' + esc(x.id) + '" aria-label="Dismiss">×</button></div>' +
-          '<div class="jdi-card-desc">' + esc(x.description) + '</div></div>';
+        html += '<div class="jdi-row" data-id="' + esc(x.id) + '">' +
+          '<span class="jdi-emoji">' + esc(x.emoji) + '</span>' +
+          '<div class="jdi-row-body">' +
+          '<div class="jdi-row-title">' + esc(x.title) + '</div>' +
+          '<div class="jdi-row-desc">' + esc(x.description) + '</div>' +
+          '</div></div>';
       });
     });
     box.innerHTML = html;
-    box.querySelectorAll('.jdi-dismiss').forEach(function (b) {
-      b.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var d = getDismissed();
-        d.push(b.getAttribute('data-id'));
-        lsSet(dismissedKey(), d);
-        renderIdeas();
-      });
-    });
-    box.querySelectorAll('.jdi-card').forEach(function (card) {
-      card.addEventListener('click', function () {
-        var idea = getIdeas().find(function (x) { return x.id === card.getAttribute('data-id'); });
+    box.querySelectorAll('.jdi-row').forEach(function (row) {
+      row.addEventListener('click', function () {
+        var idea = getIdeas().find(function (x) { return x.id === row.getAttribute('data-id'); });
         if (idea) discussIdea(idea);
       });
     });
@@ -279,7 +268,7 @@
     if (p) p.hidden = true;
   }
 
-  var PATCH_VER = '20261004a65';
+  var PATCH_VER = '20261004a66';
 
   function addSidebarEntry() {
     /* In Explore mode, the unified Explore button replaces individual entries */

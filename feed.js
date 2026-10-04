@@ -21,7 +21,7 @@
   var DEFAULT_BRIEF = 'Make me a feed about my interests. Keep the tone clear and direct. Ensure it is quick to skim. Try to avoid clickbait.';
 
   var CSS = [
-    '#jdFeedPage{position:fixed;inset:0;z-index:24500;background:#0a0a0c;color:#fff;',
+    '#jdFeedPage{position:fixed;inset:0;z-index:24500;background:#000;color:#fff;',
     'display:flex;flex-direction:column;font-family:inherit}',
     '#jdFeedPage[hidden]{display:none!important}',
     '.jdf-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex:0 0 auto}',
@@ -33,20 +33,25 @@
     '.jdf-head-actions{display:flex;gap:4px}',
     '.jdf-brief-bar{margin:0 16px 8px;background:#1c1c1e;border-radius:16px;padding:12px 16px;font-size:.82rem;',
     'color:#a0a0a5;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto}',
-    '.jdf-scroll{flex:1;overflow-y:auto;padding:8px 16px 100px;-webkit-overflow-scrolling:touch}',
-    /* Post cards — editorial */
-    '.jdf-post{background:#141416;border-radius:22px;padding:20px;margin-bottom:16px;border:1px solid rgba(255,255,255,.06)}',
-    '.jdf-post-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}',
-    '.jdf-post-emoji{font-size:1.5rem}',
-    '.jdf-post-kicker{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#8e8e93}',
-    '.jdf-post-time{font-size:.7rem;color:#666;margin-left:auto;flex:0 0 auto}',
-    '.jdf-post-headline{font-size:1.12rem;font-weight:800;line-height:1.3;letter-spacing:-.01em;margin-bottom:10px}',
-    '.jdf-post-body{font-size:.88rem;color:#c5c5c9;line-height:1.6}',
+    '.jdf-scroll{flex:1;overflow-y:auto;padding:8px 0 100px;-webkit-overflow-scrolling:touch}',
+    /* Post rows — FLAT, no cards, thin dividers (Muse-app pixel parity) */
+    '.jdf-post{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer}',
+    '.jdf-post:active{background:rgba(255,255,255,.03)}',
+    '.jdf-post-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}',
+    '.jdf-post-emoji{font-size:1.9rem;flex:0 0 auto;line-height:1.2}',
+    '.jdf-post-headwrap{flex:1;min-width:0}',
+    '.jdf-post-kicker{font-size:.68rem;font-weight:600;color:#888;margin-bottom:4px}',
+    '.jdf-post-headline{font-size:1.02rem;font-weight:700;line-height:1.35;letter-spacing:-.01em;color:#fff}',
+    '.jdf-post-time{font-size:.72rem;color:#666;flex:0 0 auto;margin-top:2px}',
+    '.jdf-post-body{font-size:.9rem;color:#a0a0a5;line-height:1.6;margin:0 0 0 0;padding-left:0}',
     '.jdf-post-body a{color:#5eb0ff;text-decoration:underline}',
-    '.jdf-post-actions{display:flex;gap:8px;margin-top:14px}',
-    '.jdf-discuss{border:1px solid rgba(255,255,255,.15);background:transparent;color:#fff;font-size:.8rem;',
-    'font-weight:600;border-radius:20px;padding:8px 18px;cursor:pointer}',
-    '.jdf-discuss:active{transform:scale(.96);background:rgba(255,255,255,.08)}',
+    /* Action icon row: comment, bookmark, idea, check, share */
+    '.jdf-post-actions{display:flex;align-items:center;gap:26px;margin-top:14px;padding-left:2px}',
+    '.jdf-act-btn{background:none;border:none;color:#888;cursor:pointer;padding:4px;display:flex;align-items:center}',
+    '.jdf-act-btn:active{transform:scale(.9);color:#fff}',
+    '.jdf-act-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
+    '.jdf-act-btn.on{color:#fff}',
+    '.jdf-act-btn.on svg{fill:currentColor}',
     /* Brief editor sheet */
     '#jdfBriefSheet{position:fixed;inset:0;z-index:24600;display:none}',
     '#jdfBriefSheet.open{display:block}',
@@ -92,7 +97,12 @@
   var I = {
     back: '<svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
     refresh: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
-    tune: '<svg viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>'
+    tune: '<svg viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>',
+    comment: '<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+    bookmark: '<svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+    bulb: '<svg viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.1h6c0-.7.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
+    check: '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>',
+    share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>'
   };
 
   function ensureCSS() {
@@ -252,23 +262,61 @@
       posts.forEach(function (p, i) {
         html += '<div class="jdf-post" data-i="' + i + '">' +
           '<div class="jdf-post-top"><span class="jdf-post-emoji">' + esc(p.emoji) + '</span>' +
-          '<span class="jdf-post-kicker">' + esc(p.category) + '</span>' +
-          '<span class="jdf-post-time">' + esc(timeAgo(p.at)) + '</span></div>' +
+          '<div class="jdf-post-headwrap">' +
+          '<div class="jdf-post-kicker">' + esc(p.category) + '</div>' +
           '<div class="jdf-post-headline">' + esc(p.headline) + '</div>' +
+          '</div>' +
+          '<span class="jdf-post-time">' + esc(timeAgo(p.at)) + '</span></div>' +
           '<div class="jdf-post-body">' + esc(p.body) + '</div>' +
-          '<div class="jdf-post-actions"><button class="jdf-discuss" data-i="' + i + '">Discuss</button></div>' +
-          '</div>';
+          '<div class="jdf-post-actions">' +
+          '<button class="jdf-act-btn" data-act="discuss" data-i="' + i + '" aria-label="Discuss">' + I.comment + '</button>' +
+          '<button class="jdf-act-btn" data-act="save" data-i="' + i + '" aria-label="Save">' + I.bookmark + '</button>' +
+          '<button class="jdf-act-btn" data-act="idea" data-i="' + i + '" aria-label="Ideas">' + I.bulb + '</button>' +
+          '<button class="jdf-act-btn" data-act="done" data-i="' + i + '" aria-label="Mark done">' + I.check + '</button>' +
+          '<button class="jdf-act-btn" data-act="share" data-i="' + i + '" aria-label="Share">' + I.share + '</button>' +
+          '</div></div>';
       });
     }
     box.innerHTML = html;
     var bb = box.querySelector('#jdfBriefBar, .jdf-brief-bar');
     if (bb) bb.addEventListener('click', openBriefSheet);
-    box.querySelectorAll('.jdf-discuss').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var p = getPosts()[Number(b.getAttribute('data-i'))];
+    box.querySelectorAll('.jdf-act-btn').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var idx = Number(b.getAttribute('data-i'));
+        var act = b.getAttribute('data-act');
+        var p = getPosts()[idx];
+        if (!p) return;
+        if (act === 'discuss') discussPost(p);
+        else if (act === 'save') { b.classList.toggle('on'); toast(b.classList.contains('on') ? 'Saved' : 'Unsaved'); }
+        else if (act === 'idea') discussPost(p);
+        else if (act === 'done') { b.classList.toggle('on'); toast('Marked done'); }
+        else if (act === 'share') sharePost(p);
+      });
+    });
+    /* tapping the post body also opens discussion */
+    box.querySelectorAll('.jdf-post').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var p = getPosts()[Number(el.getAttribute('data-i'))];
         if (p) discussPost(p);
       });
     });
+  }
+
+  function toast(msg) {
+    try {
+      if (typeof window.showModernToast === 'function') window.showModernToast(msg);
+    } catch (e) {}
+  }
+
+  function sharePost(p) {
+    try {
+      var text = p.headline + '\n\n' + p.body;
+      if (navigator.share) navigator.share({ title: p.headline, text: text }).catch(function () {});
+      else if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function () { toast('Copied to clipboard'); });
+      }
+    } catch (e) {}
   }
 
   /* Mount feed UI into an Explore pane. Returns a refresh function. */
@@ -378,7 +426,7 @@
     if (p) p.hidden = true;
   }
 
-  var PATCH_VER = '20261004a65';
+  var PATCH_VER = '20261004a66';
 
   function addSidebarEntry() {
     /* In Explore mode, the unified Explore button replaces individual entries */

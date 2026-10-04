@@ -10,12 +10,12 @@
   if (window.__jdExplore) return;
   window.__jdExplore = true;
 
-  var PATCH_VER = '20261004a65';
+  var PATCH_VER = '20261004a66';
   var activeTab = 'feed';
   var mounted = {}; /* tab -> refresh fn */
 
   var CSS = [
-    '#jdExplorePage{position:fixed;inset:0;z-index:24500;background:#0a0a0c;color:#fff;',
+    '#jdExplorePage{position:fixed;inset:0;z-index:24500;background:#000;color:#fff;',
     'display:flex;flex-direction:column;font-family:inherit}',
     '#jdExplorePage[hidden]{display:none!important}',
     '.jdx-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex:0 0 auto}',
