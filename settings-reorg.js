@@ -137,44 +137,46 @@
 
   function addMissingToolsItems(section) {
     try {
-      // Remove any duplicates first (in case of multiple runs)
-      var seen = {};
-      section.querySelectorAll('[data-jd-custom-tool]').forEach(function (el) {
-        var title = getTitle(el);
-        if (seen[title]) {
-          el.remove();
-        } else {
-          seen[title] = true;
-        }
-      });
-      // Check if our custom items already exist (after dedup)
-      if (section.querySelector('[data-jd-custom-tool="mode"]')) return;
-
       var items = [
         { key: 'mode', title: 'Mode', icon: 'sliders-horizontal', onclick: "toggleModal('modeModalOverlay', true)" },
         { key: 'models', title: 'Models', icon: 'cpu', onclick: "openModelPicker()" },
         { key: 'permissions', title: 'Permissions', icon: 'shield-check', onclick: "if(window.openJdPermissions)window.openJdPermissions()" },
         { key: 'connectors', title: 'Connectors', icon: 'plug', onclick: "if(window.openJdConnectors)window.openJdConnectors()" }
       ];
+      var byTitle = Object.create(null);
 
-      // Insert in reverse order at the top so final order is Mode, Models, Permissions, Connectors
-      for (var i = items.length - 1; i >= 0; i--) {
-        var cfg = items[i];
-        // Skip if already exists
-        if (section.querySelector('[data-jd-custom-tool="' + cfg.key + '"]')) continue;
+      // Keep the existing functional settings row (for example
+      // #jdSettingsModeRow) and remove duplicate native/custom copies.
+      Array.prototype.slice.call(
+        section.querySelectorAll('.settings-nav-row, .settings-toggle-row')
+      ).forEach(function (row) {
+        var title = normalizeTitle(getTitle(row));
+        var configured = items.some(function (cfg) { return cfg.title === title; });
+        if (!configured || row.style.display === 'none') return;
+        if (byTitle[title]) {
+          row.remove();
+          return;
+        }
+        byTitle[title] = row;
+      });
+
+      // Add only tools that the settings section does not already provide.
+      items.forEach(function (cfg) {
+        if (byTitle[cfg.title]) return;
         var btn = document.createElement('button');
         btn.className = 'settings-nav-row';
         btn.type = 'button';
         btn.setAttribute('data-jd-custom-tool', cfg.key);
         btn.setAttribute('onclick', cfg.onclick);
         btn.innerHTML = '<i data-lucide="' + cfg.icon + '"></i><span><strong>' + cfg.title + '</strong></span><i data-lucide="chevron-right"></i>';
-        section.insertBefore(btn, section.firstChild);
-      }
+        byTitle[cfg.title] = btn;
+        section.appendChild(btn);
+      });
 
-      // Move Auto Temper and Pure Mode from My AI to AI & Tools if found there
+      // Re-apply the requested order after deduplication and adding missing rows.
+      reorderSection(section, AI_TOOLS_ORDER);
       moveTogglesToTools();
 
-      // Refresh Lucide icons
       if (window.refreshLucideIcons) {
         try { window.refreshLucideIcons(section); } catch (e) {}
       } else if (window.lucide && window.lucide.createIcons) {
