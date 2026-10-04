@@ -16,6 +16,7 @@ import {
   buildInlineMapDataUrl,
   buildLocationMapLinks,
   buildRouteMapAppendix,
+  buildRouteMapContext,
   buildWeatherMapAppendix,
   detectLocationWeatherIntent,
   extractRouteRequest,
@@ -5720,10 +5721,7 @@ async function processChat(body, emit) {
       }
     }catch(_){}
     locationToolAppendix=[locationToolAppendix,buildRouteMapAppendix(routeRequest,routeMapUrl)].filter(Boolean).join('\n\n');
-    const routeLinks=buildLocationMapLinks(null,routeRequest);
-    locationToolContext+=calculatedRoute
-      ?`\n\n[VERIFIED MAP ROUTE]\nOrigin: ${routeRequest.origin}\nDestination: ${routeRequest.destination}\nDriving distance: ${calculatedRoute.distanceKm} km\nEstimated drive time from the routing service: ${calculatedRoute.durationText}\nGoogle Maps directions URL: ${routeLinks.routeUrl}\nA route was calculated by the routing service and an interactive route map was generated. Traffic delays are not included.\n`
-      :`\n\n[REAL MAP DIRECTIONS LINK]\nOrigin: ${routeRequest.origin}\nDestination: ${routeRequest.destination}\nGoogle Maps directions URL: ${routeLinks.routeUrl}\nThe interactive route service did not return a route. Do not invent distance or ETA; the Google Maps link can still calculate directions.\n`;
+    locationToolContext+=buildRouteMapContext(routeRequest,routeMapUrl,calculatedRoute);
     activity(emit,'route-map',routeMapUrl?'Prepared an in-chat route map':'Prepared a Google Maps directions link',routeMapUrl?'completed':'warning','web',`${routeRequest.origin} → ${routeRequest.destination}`);
   }
 
