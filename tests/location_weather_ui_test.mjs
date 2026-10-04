@@ -38,7 +38,7 @@ assert.match(api,/inlineMapPageUrl\(mapHtml\)/);
 assert.doesNotMatch(api,/uploadInlineMapPage\(/,'generated map pages must not be served from Vercel Blob');
 const generatedMap='<!doctype html><meta name="jd-map-document" content="v1"><div id="map"></div>';
 const inlineMap=buildInlineMapDataUrl(generatedMap);
-assert.match(inlineMap,/^data:text\\/html;base64,/);
+assert.ok(inlineMap.startsWith('data:text/html;base64,'));
 assert.equal(Buffer.from(inlineMap.split(',')[1],'base64').toString(),generatedMap);
 assert.equal(buildInlineMapDataUrl('x'.repeat(110001)),'','oversized documents must fail closed rather than produce a blank embed');
 assert.match(html,/safeDataMap/);
