@@ -82,6 +82,8 @@ assert.equal(frame.src,dataUrl);
 assert.equal(frame.attrs.loading,'eager','map loading starts immediately');
 assert.equal(frame.attrs.sandbox,'allow-scripts','embedded HTML must not share the app origin');
 assert.equal(frame.attrs.referrerpolicy,'no-referrer');
+assert.match(frame.style.cssText,/height:clamp\(340px,56vh,500px\)/,
+  'the map card should use the enlarged responsive map height');
 assert.ok(status && !status.hidden,'users see a loading state instead of a blank area');
 assert.ok(fallback && fallback.hidden,'open-map fallback stays hidden while loading');
 assert.equal(fallback.dataset.jdMapEmbedded,undefined,'the fallback link remains a link and is never recursively embedded');
