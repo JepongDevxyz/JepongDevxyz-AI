@@ -36,7 +36,13 @@
   }
 
   function getSessions() {
-    try { return window.chatSessions || {}; } catch (e) { return {}; }
+    /* NOTE: the app declares `let chatSessions` (not window.chatSessions),
+       so we must read the bare binding — window.chatSessions is undefined. */
+    try {
+      if (typeof chatSessions !== 'undefined' && chatSessions) return chatSessions;
+    } catch (e) {}
+    try { return window.chatSessions || {}; } catch (e) {}
+    return {};
   }
 
   function ensureMainSession() {
