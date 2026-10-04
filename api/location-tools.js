@@ -182,6 +182,16 @@ export function buildRouteMapAppendix(route,mapUrl=''){
   return lines.join('\n');
 }
 
+export function buildRouteMapContext(route,mapUrl='',calculatedRoute=null){
+  if(!route?.origin||!route?.destination)return '';
+  const base=`Origin: ${route.origin}\nDestination: ${route.destination}`;
+  if(mapUrl&&calculatedRoute){
+    return `[VERIFIED MAP ROUTE]\n${base}\nDriving distance: ${calculatedRoute.distanceKm} km\nEstimated drive time from the routing service: ${calculatedRoute.durationText}\nA route was calculated and an interactive map is automatically embedded in the response. Do not output, mention, or invite the user to open a map link or live-map link; do not write a “click here” or similar map call-to-action. The embedded map is the only map action. Traffic delays are not included.\n`;
+  }
+  const links=buildLocationMapLinks(null,route);
+  return `[REAL MAP DIRECTIONS LINK]\n${base}\nGoogle Maps directions URL: ${links.routeUrl}\nThe interactive route service did not return a route. Do not invent distance or ETA; the Google Maps link can still calculate directions.\n`;
+}
+
 export function buildWeatherMapAppendix({location=null,weather=null,weatherError='',mapUrl='',now=new Date()}={}){
   const links=buildLocationMapLinks(location,null,now);
   if(!links.radarUrl||!links.satelliteUrl)return '';
