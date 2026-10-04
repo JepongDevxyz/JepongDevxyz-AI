@@ -91,7 +91,9 @@ setTimeout(() => {
     const aiChip2 = document.querySelector('.msg.user[data-message-index="2"] .user-actions > .jd-ai-reaction');
     assert(!!aiChip2 && aiChip2.textContent === '😢', 'AI sad chip on user msg');
     aiChip2.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    assert(!document.querySelector('.msg.user[data-message-index="2"] .user-actions > .jd-ai-reaction'), 'AI chip dismissed');
+    assert(document.querySelector('.msg.user[data-message-index="2"] .user-actions > .jd-ai-reaction') === aiChip2, 'AI reaction remains on the user message when tapped');
+    const savedAiReactions = JSON.parse(window.localStorage.getItem('jd_ai_reactions') || '{}');
+    assert(savedAiReactions.default && savedAiReactions.default['2'] === '😢', 'tapping keeps the AI reaction persisted');
 
     console.log('\n-- Part 2a: fetch wrapper --');
     (async () => {

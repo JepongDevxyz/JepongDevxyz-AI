@@ -31,7 +31,6 @@
   var AI_EMOJI_ALLOW = ['❤️', '👍', '😂', '😮', '😢', '🔥', '🎉', '🤔', '👏', '🙏'];
   var MARKER_RE = /\[USER_REACTION:([^\]]*)\]/g;
   var AI_LSKEY = 'jd_ai_reactions';
-  var AI_DISMISS_KEY = 'jd_ai_reactions_dismissed';
 
   /* ---------------- utils ---------------- */
   function sessionId() {
@@ -58,6 +57,7 @@
     /* Inline reaction chips inside action bars */
     '.jd-inline-reaction{display:inline-flex;align-items:center;border:1px solid var(--border-color);background:rgba(139,92,246,.12);border-radius:999px;padding:3px 10px;font-size:15px;line-height:1.4;cursor:pointer}',
     '.jd-inline-reaction:active{transform:scale(.94)}',
+    '.jd-ai-reaction{cursor:default!important}',
     'body.theme-light .jd-inline-reaction{background:rgba(139,92,246,.1)}'
   ].join('\n');
   function injectCSS() {
@@ -139,38 +139,22 @@
     else delete store[sid][msgKey(userEl)];
     saveStore(AI_LSKEY, store);
   }
-  function isAiDismissed(userEl) {
-    return !!((getStore(AI_DISMISS_KEY)[sessionId()] || {})[msgKey(userEl)]);
-  }
-  function setAiDismissed(userEl) {
-    var store = getStore(AI_DISMISS_KEY);
-    var sid = sessionId();
-    store[sid] = store[sid] || {};
-    store[sid][msgKey(userEl)] = 1;
-    saveStore(AI_DISMISS_KEY, store);
-  }
   function renderAiChip(userEl) {
     if (!userEl || !userEl.querySelector) return;
     var actions = userEl.querySelector(':scope > .user-actions');
     if (!actions) return;
     var old = actions.querySelector(':scope > .jd-ai-reaction');
     if (old) old.remove();
-    if (isAiDismissed(userEl)) return;
     var emoji = getAiReaction(userEl);
     if (!emoji || AI_EMOJI_ALLOW.indexOf(emoji) < 0) return;
-    var chip = document.createElement('button');
-    chip.type = 'button';
+    var chip = document.createElement('span');
     chip.className = 'jd-ai-reaction jd-inline-reaction';
-    chip.title = 'AI reaction — tap to dismiss';
+    chip.setAttribute('role', 'img');
+    chip.setAttribute('aria-label', 'AI reaction ' + emoji);
+    chip.title = 'AI reaction to your message';
     var s = document.createElement('span');
     s.textContent = emoji;
     chip.appendChild(s);
-    chip.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      setAiDismissed(userEl);
-      setAiReaction(userEl, '');
-      renderAiChip(userEl);
-    });
     actions.appendChild(chip);
   }
   function removeMarkerText(root, markerText) {
@@ -218,7 +202,7 @@
     var emoji = (m[1] || '').trim();
     if (AI_EMOJI_ALLOW.indexOf(emoji) < 0) return;
     var userEl = findUserMsgFor(botEl);
-    if (!userEl || isAiDismissed(userEl)) return;
+    if (!userEl) return;
     setAiReaction(userEl, emoji);
     renderAiChip(userEl);
   }

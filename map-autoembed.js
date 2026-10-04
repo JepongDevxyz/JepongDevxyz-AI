@@ -49,21 +49,76 @@
       if (link.dataset.jdMapEmbedded) return;
       link.dataset.jdMapEmbedded = '1';
 
-      // Create iframe
+      // Keep the reserved map area visibly useful while network resources load.
+      var card = document.createElement('div');
+      card.className = 'jd-map-embed';
+      card.dataset.state = 'loading';
+      card.setAttribute('role', 'region');
+      card.setAttribute('aria-label', 'Interactive map');
+      card.setAttribute('aria-busy', 'true');
+      card.style.cssText = 'position:relative;width:100%;min-height:280px;margin:12px 0;overflow:hidden;border-radius:12px;background:rgba(148,163,184,.08)';
+
+      var status = document.createElement('div');
+      status.className = 'jd-map-loading';
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      status.textContent = 'Loading interactive map…';
+      status.style.cssText = 'position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;padding:18px;color:var(--text-muted,#9ca3af);font:500 14px/1.45 system-ui,sans-serif;text-align:center;background:linear-gradient(110deg,rgba(148,163,184,.06) 8%,rgba(148,163,184,.14) 18%,rgba(148,163,184,.06) 33%);background-size:200% 100%;animation:jdMapShimmer 1.4s linear infinite';
+
+      var fallback = document.createElement('a');
+      fallback.className = 'jd-map-open-fallback';
+      fallback.href = url;
+      fallback.target = '_blank';
+      fallback.rel = 'noopener noreferrer';
+      fallback.textContent = 'Map is taking longer to load — open it directly';
+      fallback.hidden = true;
+      fallback.style.cssText = 'position:absolute;z-index:2;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);padding:8px 12px;border-radius:999px;background:rgba(24,24,27,.92);color:#c4b5fd;font:500 13px/1.3 system-ui,sans-serif;text-align:center;text-decoration:underline;white-space:normal';
+
       var iframe = document.createElement('iframe');
-      iframe.src = url;
-      iframe.style.cssText = 'width:100%;height:400px;border:0;border-radius:12px;margin:12px 0;display:block';
-      iframe.setAttribute('loading', 'lazy');
+      iframe.style.cssText = 'position:relative;z-index:0;width:100%;height:clamp(260px,42vh,360px);min-height:260px;border:0;border-radius:12px;margin:0;display:block;opacity:0;transition:opacity .18s ease';
+      iframe.setAttribute('loading', 'eager');
       iframe.setAttribute('sandbox', 'allow-scripts');
       iframe.setAttribute('referrerpolicy', 'no-referrer');
       iframe.title = 'Interactive map';
 
-      // Replace the link with the iframe, or insert after
-      // Keep the link text but add the map below it
-      link.parentNode.insertBefore(iframe, link.nextSibling);
+      var settled = false;
+      function markReady() {
+        settled = true;
+        if (card.dataset) card.dataset.state = 'ready';
+        card.setAttribute('aria-busy', 'false');
+        status.hidden = true;
+        fallback.hidden = true;
+        iframe.style.opacity = '1';
+      }
+      function markError() {
+        settled = true;
+        if (card.dataset) card.dataset.state = 'error';
+        card.setAttribute('aria-busy', 'false');
+        status.textContent = 'The map could not load. Open it directly to view the route.';
+        fallback.hidden = false;
+        iframe.style.display = 'none';
+      }
+
+      if (iframe.addEventListener) {
+        iframe.addEventListener('load', markReady);
+        iframe.addEventListener('error', markError);
+      } else {
+        iframe.onload = markReady;
+        iframe.onerror = markError;
+      }
+
+      card.appendChild(iframe);
+      card.appendChild(status);
+      card.appendChild(fallback);
+      link.parentNode.insertBefore(card, link.nextSibling);
+      iframe.src = url;
+      setTimeout(function () {
+        if (settled) return;
+        status.textContent = 'The map is taking longer to load. You can open it directly below.';
+        fallback.hidden = false;
+      }, 10000);
     } catch (e) {}
   }
-
   function scanForMaps() {
     try {
       // Search ALL links on the page (not just in bot messages)
@@ -89,6 +144,16 @@
       if (shouldScan) setTimeout(scanForMaps, 500);
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  } catch (e) {}
+
+  // Keep the animated placeholder styling scoped to map embeds.
+  try {
+    if (!document.getElementById('jdMapEmbedStyles')) {
+      var mapStyle = document.createElement('style');
+      mapStyle.id = 'jdMapEmbedStyles';
+      mapStyle.textContent = '@keyframes jdMapShimmer{to{background-position:-200% 0}} .jd-map-loading[hidden],.jd-map-open-fallback[hidden]{display:none!important}';
+      document.head.appendChild(mapStyle);
+    }
   } catch (e) {}
 
   // Initial scan
