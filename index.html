@@ -5854,7 +5854,10 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
             // normal viewport. Do not force them to 320px and clip the composer.
             const layoutHeight = Math.max(1, Math.round(window.innerHeight || document.documentElement.clientHeight || 0));
             const height = Math.max(1, Math.round(vv?.height || layoutHeight));
+            const layoutWidth = Math.max(1, Math.round(window.innerWidth || document.documentElement.clientWidth || 0));
+            const width = Math.max(1, Math.round(vv?.width || layoutWidth));
             const offsetTop = Math.max(0, Math.round(vv?.offsetTop || 0));
+            const offsetLeft = Math.max(0, Math.round(vv?.offsetLeft || 0));
             const keyboardOpen = (layoutHeight - height) > 120;
             document.documentElement.style.setProperty('--jepong-vh', `${height}px`);
             document.documentElement.style.setProperty('--jepong-vv-top', `${offsetTop}px`);
@@ -5864,10 +5867,12 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
                 // Chrome Android can PAN the visual viewport while keeping a focused textarea visible.
                 // Anchor the app to the visual viewport itself so the UI does not jump/flash into a blank area.
                 app.style.position = 'fixed';
-                app.style.left = '0';
-                app.style.right = '0';
+                app.style.left = `${offsetLeft}px`;
+                app.style.right = 'auto';
                 app.style.bottom = 'auto';
-                app.style.top = '0';
+                app.style.top = `${offsetTop}px`;
+                app.style.width = `${width}px`;
+                app.style.maxWidth = `${width}px`;
                 app.style.height = `${height}px`;
                 app.style.maxHeight = `${height}px`;
                 app.style.transform = '';
@@ -11195,6 +11200,14 @@ ${m.text || ''}
             return root;
         }
 
+        function suppressEmbeddedRouteMapCta(text) {
+            const value=String(text||'');
+            if(!/^\\s*>?\\s*\\[!STATUS info\\|Route map\\]/im.test(value))return value;
+            return value.split('\\n').filter(line=>
+                !/(?:pindutin dito para sa live map|click here (?:for|to) (?:the )?(?:live )?map|view the (?:live )?map here)/i.test(line)
+            ).join('\\n').replace(/\\n{3,}/g,'\\n\\n').trim();
+        }
+
         function renderCustomMarkdown(rawMarkdown) {
             const rawHtml = marked.parse(rawMarkdown);
             const tempDiv = document.createElement('div');
@@ -12186,6 +12199,7 @@ ${m.text || ''}
 
                 {
                     fullResponse=stripJdWorkNotes(fullResponse);
+                    fullResponse=suppressEmbeddedRouteMapCta(fullResponse);
                     const parsedUi=parseJdAssistantInteraction(safeAssistantText(fullResponse));
                     fullResponse=parsedUi.text;
                     assistantInteraction=parsedUi.interaction;
