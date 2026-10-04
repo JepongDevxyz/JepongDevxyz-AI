@@ -20,7 +20,9 @@ setTimeout(() => {
   const content = bot.querySelector(':scope > div');
   const frames = ['Salamat', 'Salamat!', 'Salamat! [USER_REACTION', 'Salamat! [USER_REACTION:🎉', 'Salamat! [USER_REACTION:🎉]'];
   frames.forEach((f, i) => {
-    content.innerHTML = `<p>${f}</p>`;
+    content.innerHTML = i === frames.length - 1
+      ? '<p>Salamat! [USER_REACTION:🎉]</p><blockquote><p>Guimba → Baguio</p><p>View route map inside the chat</p></blockquote>'
+      : `<p>${f}</p>`;
     if (i === frames.length - 1) {
       const ba = document.createElement('div');
       ba.className = 'bot-actions';
