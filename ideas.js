@@ -119,7 +119,17 @@
       ['🎯', 'Productivity', 'I can track your project milestones', 'Set up goals for your apps and I will remind you of deadlines and celebrate progress.'],
       ['💰', 'Financial Management', 'I can help plan your app monetization', 'From PayMongo integration to pricing tiers, I can outline a revenue strategy for your projects.'],
       ['🏋️', 'Health & Fitness', 'I can build you a workout routine', 'Tell me your schedule and equipment and I will design a practical fitness plan.'],
-      ['❤️', 'Relationships', 'I can help plan quality time', 'I can suggest activities and reminders to stay connected with the people who matter.']
+      ['❤️', 'Relationships', 'I can help plan quality time', 'I can suggest activities and reminders to stay connected with the people who matter.'],
+      ['📚', 'Learning', 'I can create a study plan for you', 'Tell me what you want to learn and your available time, and I will build a step-by-step learning path.'],
+      ['✈️', 'Travel', 'I can help plan your next trip', 'Share your destination and budget and I will suggest an itinerary with must-see spots.'],
+      ['🍳', 'Food & Cooking', 'I can suggest recipes for you', 'Tell me what ingredients you have and I will find a recipe you can cook right now.'],
+      ['✍️', 'Creativity', 'I can help you write better', 'From captions to essays, share your draft and I will help polish it.'],
+      ['🧠', 'Mental Wellness', 'I can guide a quick mindfulness break', 'Take 5 minutes with me for breathing exercises and a mental reset.'],
+      ['💻', 'Development', 'I can review your code', 'Paste your code and I will check for bugs, suggest improvements, and explain best practices.'],
+      ['📊', 'Financial Management', 'I can help you budget smarter', 'Tell me your income and expenses and I will build a practical monthly budget.'],
+      ['🎮', 'Entertainment', 'I can recommend games for you', 'Tell me what you enjoy playing and I will suggest games you might love.'],
+      ['🌐', 'Learning', 'I can explain any topic simply', 'Ask me about anything — science, history, tech — and I will break it down clearly.'],
+      ['🏠', 'Home', 'I can help organize your space', 'Describe your room or workspace and I will suggest a practical organization plan.']
     ];
     return base.map(function (b, i) {
       return { id: 'idea_fb_' + now + '_' + i, emoji: b[0], category: b[1], title: b[2], description: b[3] };
@@ -132,8 +142,8 @@
     renderLoading();
     /* Short prompt to avoid timeout */
     var prompt =
-      'Generate 6 personalized ideas for a developer in Philippines who builds Android apps and AI tools. ' +
-      'Categories: Productivity, Development, Financial Management, Health & Fitness, Relationships. ' +
+      'Generate 12 personalized ideas for a developer in Philippines who builds Android apps and AI tools. ' +
+      'Categories: Productivity, Development, Financial Management, Health & Fitness, Relationships, Learning, Travel, Food & Cooking, Creativity, Mental Wellness, Entertainment, Home. ' +
       'Title as "I can ...". Return ONLY a JSON array, no other text. ' +
       'Each: {"emoji":"emoji","category":"category","title":"I can ...","description":"2 sentences"}';
     var ideas = [];
@@ -254,10 +264,33 @@
     try { if (window.JDMainChat) window.JDMainChat.open(); } catch (e) {}
     setTimeout(function () {
       try {
-        var input = document.querySelector('textarea[jd-composer], #jdComposerInput, textarea[placeholder*="Message"]');
+        // Build a natural prompt from the idea
+        var prompt = idea.title.replace(/^I can /i, 'Can you help me ') + '. ' + idea.description;
+        var input = document.querySelector('textarea[jd-composer], #jdComposerInput, textarea[placeholder*="Message"], textarea[placeholder*="Ask"]');
         if (input) {
-          input.value = idea.title + ': ' + idea.description;
+          // Set value and trigger input event so frameworks detect the change
+          var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
+          if (nativeSetter && nativeSetter.set) nativeSetter.set.call(input, prompt);
+          else input.value = prompt;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
           input.focus();
+          // Auto-send after a short delay
+          setTimeout(function () {
+            try {
+              if (typeof window.handleMainAction === 'function') window.handleMainAction();
+              else {
+                var sendBtn = document.getElementById('mainActionBtn');
+                if (sendBtn) sendBtn.click();
+              }
+            } catch (e2) {}
+          }, 400);
+        } else {
+          // Fallback: try to send via global chat API if available
+          try {
+            if (typeof window.handleMainAction === 'function') {
+              // No input found, can't send
+            }
+          } catch (e2) {}
         }
       } catch (e) {}
     }, 600);
