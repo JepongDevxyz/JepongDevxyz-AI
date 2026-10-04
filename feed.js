@@ -69,7 +69,12 @@
     'border-radius:50%;margin:0 auto 14px;animation:jdfspin 0.9s linear infinite}',
     '@keyframes jdfspin{to{transform:rotate(360deg)}}',
     '.jdf-empty{text-align:center;padding:40px 20px;color:#8e8e93;font-size:.88rem;line-height:1.6}',
-    /* Light mode */
+    /* Pane styles for Explore embedding */
+    '.jdf-pane-refresh{text-align:center;padding:6px 0 12px}',
+    '.jdf-pane-btn{border:1px solid rgba(255,255,255,.15);background:transparent;color:#fff;font-size:.8rem;',
+    'font-weight:600;border-radius:20px;padding:8px 18px;cursor:pointer}',
+    '.jdf-pane-btn:active{transform:scale(.96)}',
+    'body.theme-light .jdf-pane-btn{border-color:rgba(0,0,0,.15);color:#111}',
     'body.theme-light #jdFeedPage{background:#f7f7f9;color:#111}',
     'body.theme-light .jdf-back,body.theme-light .jdf-refresh,body.theme-light .jdf-tune{color:#111}',
     'body.theme-light .jdf-brief-bar{background:#fff;color:#666;box-shadow:0 1px 6px rgba(0,0,0,.06)}',
@@ -232,6 +237,11 @@
 
   function renderPosts() {
     var box = document.getElementById('jdfBody');
+    if (box) renderPostsInto(box);
+  }
+
+  /* Pane API for the unified Explore page: renders feed UI into any container */
+  function renderPostsInto(box) {
     if (!box) return;
     var posts = getPosts();
     var brief = getBrief();
@@ -251,7 +261,7 @@
       });
     }
     box.innerHTML = html;
-    var bb = document.getElementById('jdfBriefBar');
+    var bb = box.querySelector('#jdfBriefBar, .jdf-brief-bar');
     if (bb) bb.addEventListener('click', openBriefSheet);
     box.querySelectorAll('.jdf-discuss').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -261,8 +271,31 @@
     });
   }
 
+  /* Mount feed UI into an Explore pane. Returns a refresh function. */
+  function mountPane(container) {
+    ensureCSS();
+    container.innerHTML = '<div class="jdf-pane-refresh"><button class="jdf-pane-btn" id="jdfPaneRefresh">↻ Regenerate feed</button></div><div class="jdf-pane-posts"></div>';
+    var postsBox = container.querySelector('.jdf-pane-posts');
+    function refresh() {
+      var posts = getPosts();
+      if (!posts.length || needsRefresh()) generatePostsInto(postsBox);
+      else renderPostsInto(postsBox);
+    }
+    var rb = container.querySelector('#jdfPaneRefresh');
+    if (rb) rb.addEventListener('click', function () { generatePostsInto(postsBox); });
+    refresh();
+    return refresh;
+  }
+
+  async function generatePostsInto(postsBox) {
+    if (postsBox) postsBox.innerHTML = '<div class="jdf-loading"><div class="jdf-spinner"></div>Generating your feed…</div>';
+    await generatePosts();
+    if (postsBox) renderPostsInto(postsBox);
+  }
+
   function discussPost(p) {
     closeFeed();
+    try { if (window.JDExplore) window.JDExplore.close(); } catch (e) {}
     /* route into the main chat with the post as context */
     try {
       if (window.JDMainChat) window.JDMainChat.open();
@@ -345,9 +378,11 @@
     if (p) p.hidden = true;
   }
 
-  var PATCH_VER = '20261004a64';
+  var PATCH_VER = '20261004a65';
 
   function addSidebarEntry() {
+    /* In Explore mode, the unified Explore button replaces individual entries */
+    if (window.__jdExploreMode) return;
     /* Self-healing: if a button from an older patch version exists, re-wire
        it to THIS version's openFeed (fixes stale-upgrade closure bug where
        the old button kept calling the old version's functions). */
@@ -410,7 +445,7 @@
     }, 10000);
   } catch (e) {}
 
-  window.JDFeed = { open: openFeed, close: closeFeed, render: renderPosts, regenerate: generatePosts, ver: PATCH_VER };
+  window.JDFeed = { open: openFeed, close: closeFeed, render: renderPosts, regenerate: generatePosts, ver: PATCH_VER, mountPane: mountPane };
 
   /* On account switch, the per-account keys change automatically; if the
      feed page is open, re-render so the new account sees their own feed. */

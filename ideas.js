@@ -171,6 +171,11 @@
 
   function renderIdeas() {
     var box = document.getElementById('jdiBody');
+    if (box) renderIdeasInto(box);
+  }
+
+  /* Pane API for Explore */
+  function renderIdeasInto(box) {
     if (!box) return;
     var dismissed = getDismissed();
     var ideas = getIdeas().filter(function (x) { return dismissed.indexOf(x.id) < 0; });
@@ -209,8 +214,31 @@
     });
   }
 
+  /* Mount ideas UI into an Explore pane */
+  function mountPane(container) {
+    ensureCSS();
+    container.innerHTML = '<div class="jdi-pane-refresh"><button class="jdf-pane-btn" id="jdiPaneRefresh">↻ New ideas</button></div><div class="jdi-pane-list"></div>';
+    var listBox = container.querySelector('.jdi-pane-list');
+    function refresh() {
+      if (!getIdeas().length) {
+        listBox.innerHTML = '<div class="jdi-loading"><div class="jdi-spinner"></div>Finding ideas for you…</div>';
+        generateIdeasInto(listBox);
+      } else renderIdeasInto(listBox);
+    }
+    var rb = container.querySelector('#jdiPaneRefresh');
+    if (rb) rb.addEventListener('click', function () { generateIdeasInto(listBox); });
+    refresh();
+    return refresh;
+  }
+
+  async function generateIdeasInto(listBox) {
+    await generateIdeas();
+    if (listBox) renderIdeasInto(listBox);
+  }
+
   function discussIdea(idea) {
     closeIdeas();
+    try { if (window.JDExplore) window.JDExplore.close(); } catch (e) {}
     try { if (window.JDMainChat) window.JDMainChat.open(); } catch (e) {}
     setTimeout(function () {
       try {
@@ -251,9 +279,11 @@
     if (p) p.hidden = true;
   }
 
-  var PATCH_VER = '20261004a64';
+  var PATCH_VER = '20261004a65';
 
   function addSidebarEntry() {
+    /* In Explore mode, the unified Explore button replaces individual entries */
+    if (window.__jdExploreMode) return;
     function wire(btn) {
       var clone = btn.cloneNode(false);
       clone.id = 'jdIdeasBtn';
@@ -309,7 +339,7 @@
     }, 10000);
   } catch (e) {}
 
-  window.JDIdeas = { open: openIdeas, close: closeIdeas, regenerate: generateIdeas, ver: PATCH_VER };
+  window.JDIdeas = { open: openIdeas, close: closeIdeas, regenerate: generateIdeas, ver: PATCH_VER, mountPane: mountPane };
 
   try {
     window.addEventListener('jd:account-changed', function () {

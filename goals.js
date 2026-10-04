@@ -314,8 +314,8 @@
   }
 
   /* ---------- Main list ---------- */
-  function renderList(list) {
-    var box = document.getElementById('jdgList');
+  function renderList(list, targetBox) {
+    var box = targetBox || document.getElementById('jdgList');
     if (!box) return;
     var tops = list.filter(function (g) { return !g.parent_goal_id; });
 
@@ -650,8 +650,23 @@
   }
 
   /* ---------- Public API (incl. AI operations) ---------- */
+  /* Mount goals list UI into an Explore pane */
+  function mountPane(container) {
+    ensureCSS();
+    container.innerHTML = '<div class="jdg-pane-list"></div>';
+    var listBox = container.querySelector('.jdg-pane-list');
+    async function refresh() {
+      var list = await loadGoals();
+      window.__jdGoalsList = list;
+      renderList(list, listBox);
+    }
+    refresh();
+    return refresh;
+  }
+
   window.JDGoals = {
     open: openGoals,
+    mountPane: mountPane,
     list: function () { return (window.__jdGoalsList || []).slice(); },
     activeGoals: function () {
       return (window.__jdGoalsList || []).filter(function (g) { return g.status === 'active'; });

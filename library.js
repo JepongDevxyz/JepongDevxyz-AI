@@ -220,12 +220,19 @@
 
   function render() {
     var box = document.getElementById('jdlBody');
+    if (box) renderInto(box);
+    /* tabs active state for standalone page */
+    try {
+      document.querySelectorAll('#jdLibPage .jdl-tab').forEach(function (t) {
+        t.classList.toggle('on', t.getAttribute('data-tab') === tab);
+      });
+    } catch (e) {}
+  }
+
+  /* Pane API for Explore: renders library UI into any container */
+  function renderInto(box) {
     if (!box) return;
     var data = scan();
-    /* tabs active state */
-    document.querySelectorAll('.jdl-tab').forEach(function (t) {
-      t.classList.toggle('on', t.getAttribute('data-tab') === tab);
-    });
     var html = '';
     if (tab === 'artifacts') {
       var arts = data.artifacts.slice();
@@ -358,6 +365,9 @@
   }
 
   function addSidebarEntry() {
+    /* In Explore mode, the unified Explore button replaces individual entries.
+       Note: the app has its own native Library button; ours stays hidden. */
+    if (window.__jdExploreMode) return;
     if (document.getElementById('jdLibBtn')) return;
     var iv = setInterval(function () {
       var ideas = document.getElementById('jdIdeasBtn');
@@ -381,7 +391,29 @@
     setTimeout(function () { clearInterval(iv); }, 30000);
   }
 
-  window.JDLibrary = { open: openLib, close: closeLib };
+  /* Mount library UI into an Explore pane, with its own Artifacts/Media tabs */
+  function mountPane(container) {
+    ensureCSS();
+    container.innerHTML =
+      '<div class="jdl-tabs"><button class="jdl-tab on" data-tab="artifacts">Artifacts</button>' +
+      '<button class="jdl-tab" data-tab="media">Media</button></div>' +
+      '<div class="jdl-pane-list"></div>';
+    var listBox = container.querySelector('.jdl-pane-list');
+    function refresh() { renderInto(listBox); }
+    container.querySelectorAll('.jdl-tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        tab = t.getAttribute('data-tab');
+        container.querySelectorAll('.jdl-tab').forEach(function (x) {
+          x.classList.toggle('on', x === t);
+        });
+        refresh();
+      });
+    });
+    refresh();
+    return refresh;
+  }
+
+  window.JDLibrary = { open: openLib, close: closeLib, mountPane: mountPane, render: render };
 
   ensureCSS();
   buildPage();
