@@ -251,8 +251,31 @@
     if (p) p.hidden = true;
   }
 
+  var PATCH_VER = '20261004a64';
+
   function addSidebarEntry() {
-    if (document.getElementById('jdIdeasBtn')) return;
+    function wire(btn) {
+      var clone = btn.cloneNode(false);
+      clone.id = 'jdIdeasBtn';
+      clone.className = 'jd-sidebar-menu-item';
+      clone.type = 'button';
+      clone.setAttribute('aria-label', 'Open ideas');
+      clone.setAttribute('data-jd-ver', PATCH_VER);
+      clone.innerHTML = '<i data-lucide="lightbulb"></i><span>Ideas</span>';
+      btn.parentNode.replaceChild(clone, btn);
+      clone.addEventListener('click', function () {
+        try { if (typeof window.closeAllDrawers === 'function') window.closeAllDrawers(); } catch (e) {}
+        openIdeas();
+      });
+      try {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+      } catch (e) {}
+    }
+    var existing = document.getElementById('jdIdeasBtn');
+    if (existing) {
+      if (existing.getAttribute('data-jd-ver') !== PATCH_VER) wire(existing);
+      return;
+    }
     var iv = setInterval(function () {
       var feed = document.getElementById('jdFeedBtn');
       if (!feed) return;
@@ -261,6 +284,7 @@
       btn.type = 'button';
       btn.id = 'jdIdeasBtn';
       btn.setAttribute('aria-label', 'Open ideas');
+      btn.setAttribute('data-jd-ver', PATCH_VER);
       btn.innerHTML = '<i data-lucide="lightbulb"></i><span>Ideas</span>';
       btn.addEventListener('click', function () {
         try { if (typeof window.closeAllDrawers === 'function') window.closeAllDrawers(); } catch (e) {}
@@ -275,7 +299,17 @@
     setTimeout(function () { clearInterval(iv); }, 30000);
   }
 
-  window.JDIdeas = { open: openIdeas, close: closeIdeas, regenerate: generateIdeas };
+  /* Persistent self-heal */
+  try {
+    setInterval(function () {
+      try {
+        var b = document.getElementById('jdIdeasBtn');
+        if (!b || b.getAttribute('data-jd-ver') !== PATCH_VER) addSidebarEntry();
+      } catch (e) {}
+    }, 10000);
+  } catch (e) {}
+
+  window.JDIdeas = { open: openIdeas, close: closeIdeas, regenerate: generateIdeas, ver: PATCH_VER };
 
   try {
     window.addEventListener('jd:account-changed', function () {

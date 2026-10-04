@@ -345,8 +345,35 @@
     if (p) p.hidden = true;
   }
 
+  var PATCH_VER = '20261004a64';
+
   function addSidebarEntry() {
-    if (document.getElementById('jdFeedBtn')) return;
+    /* Self-healing: if a button from an older patch version exists, re-wire
+       it to THIS version's openFeed (fixes stale-upgrade closure bug where
+       the old button kept calling the old version's functions). */
+    function wire(btn) {
+      var clone = btn.cloneNode(false);
+      clone.id = 'jdFeedBtn';
+      clone.className = 'jd-sidebar-menu-item';
+      clone.type = 'button';
+      clone.setAttribute('aria-label', 'Open feed');
+      clone.setAttribute('data-jd-ver', PATCH_VER);
+      clone.innerHTML = '<i data-lucide="newspaper"></i><span>Feed</span>';
+      btn.parentNode.replaceChild(clone, btn);
+      clone.addEventListener('click', function () {
+        try { if (typeof window.closeAllDrawers === 'function') window.closeAllDrawers(); } catch (e) {}
+        openFeed();
+      });
+      try {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+      } catch (e) {}
+      return clone;
+    }
+    var existing = document.getElementById('jdFeedBtn');
+    if (existing) {
+      if (existing.getAttribute('data-jd-ver') !== PATCH_VER) wire(existing);
+      return;
+    }
     var iv = setInterval(function () {
       var main = document.getElementById('jdMainChatBtn');
       if (!main) return;
@@ -355,6 +382,7 @@
       btn.type = 'button';
       btn.id = 'jdFeedBtn';
       btn.setAttribute('aria-label', 'Open feed');
+      btn.setAttribute('data-jd-ver', PATCH_VER);
       btn.innerHTML = '<i data-lucide="newspaper"></i><span>Feed</span>';
       btn.addEventListener('click', function () {
         try { if (typeof window.closeAllDrawers === 'function') window.closeAllDrawers(); } catch (e) {}
@@ -369,7 +397,20 @@
     setTimeout(function () { clearInterval(iv); }, 30000);
   }
 
-  window.JDFeed = { open: openFeed, close: closeFeed, render: renderPosts, regenerate: generatePosts };
+  /* Persistent self-heal: every 10s, verify our button exists and is wired
+     to this version. Recovers from sidebar re-renders or partial upgrades. */
+  try {
+    setInterval(function () {
+      try {
+        var b = document.getElementById('jdFeedBtn');
+        var main = document.getElementById('jdMainChatBtn');
+        if (!b && main) addSidebarEntry();
+        else if (b && b.getAttribute('data-jd-ver') !== PATCH_VER) addSidebarEntry();
+      } catch (e) {}
+    }, 10000);
+  } catch (e) {}
+
+  window.JDFeed = { open: openFeed, close: closeFeed, render: renderPosts, regenerate: generatePosts, ver: PATCH_VER };
 
   /* On account switch, the per-account keys change automatically; if the
      feed page is open, re-render so the new account sees their own feed. */
