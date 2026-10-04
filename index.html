@@ -5850,8 +5850,10 @@ if (!Number.isFinite(speechRate) || speechRate < 0.7 || speechRate > 1.3) {
 
         function syncVisualViewport() {
             const vv = window.visualViewport;
-            const layoutHeight = Math.max(320, Math.round(window.innerHeight || document.documentElement.clientHeight || 0));
-            const height = Math.max(320, Math.round(vv?.height || layoutHeight));
+            // Floating/minimized Android windows can be shorter than a phone's
+            // normal viewport. Do not force them to 320px and clip the composer.
+            const layoutHeight = Math.max(1, Math.round(window.innerHeight || document.documentElement.clientHeight || 0));
+            const height = Math.max(1, Math.round(vv?.height || layoutHeight));
             const offsetTop = Math.max(0, Math.round(vv?.offsetTop || 0));
             const keyboardOpen = (layoutHeight - height) > 120;
             document.documentElement.style.setProperty('--jepong-vh', `${height}px`);
@@ -9888,7 +9890,11 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 if(!indicator.isConnected||indicator.dataset.finalized==='true'){stopJdActivityClock();return;}
                 tickJdActivityClock(indicator);
             },1000);
-            chatBox.appendChild(indicator);
+            // The chat skeleton can win the async startup race and be inserted
+            // first. Keep Activity first and the skeleton immediately below it.
+            const chatSkeleton = chatBox.querySelector('.jd-sk-msg[data-jd-sk="1"]');
+            if(chatSkeleton)chatBox.insertBefore(indicator,chatSkeleton);
+            else chatBox.appendChild(indicator);
             const list=indicator.querySelector('#aiActivityList');
             // The supplied ChatGPT recording begins with one plain "Thinking"
             // line, then replaces it with the first model-authored planning state.

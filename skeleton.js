@@ -178,8 +178,15 @@
             chatSkEl.className = 'msg bot jd-sk-msg';
             chatSkEl.setAttribute('data-jd-sk', '1');
             chatSkEl.innerHTML = chatSkeleton();
-            chatBox.appendChild(chatSkEl);
-            try { chatBox.scrollTop = chatBox.scrollHeight; } catch (e) {}
+            // Activity is created by the chat renderer, not by this watcher.
+            // Place the skeleton in a fixed slot below it regardless of which
+            // async startup callback ran first, and let Activity own scrolling.
+            var activeIndicator = document.getElementById('activeAiIndicator');
+            if (activeIndicator && activeIndicator.parentNode === chatBox) {
+              chatBox.insertBefore(chatSkEl, activeIndicator.nextSibling);
+            } else {
+              chatBox.appendChild(chatSkEl);
+            }
           }
         } else if (!generating && chatSkEl) {
           try { chatSkEl.remove(); } catch (e) {}
@@ -264,3 +271,4 @@
     init();
   }
 })();
+

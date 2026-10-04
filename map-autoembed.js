@@ -41,18 +41,68 @@
     return false;
   }
 
+  function findAssistantMessage(link) {
+    var node = link;
+    while (node && node !== document.body) {
+      try {
+        if ((node.matches && node.matches('.msg.bot')) ||
+            (node.classList && node.classList.contains('msg') && node.classList.contains('bot'))) {
+          return node;
+        }
+        var classes = typeof node.className === 'string' ? node.className.split(/\s+/) : [];
+        if (classes.indexOf('msg') !== -1 && classes.indexOf('bot') !== -1) return node;
+      } catch (_) {}
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function messageAlreadyHasMap(link, url) {
+    var message = findAssistantMessage(link);
+    if (!message || !message.querySelectorAll) return false;
+    var maps = message.querySelectorAll('.jd-map-embed');
+    for (var i = 0; i < maps.length; i++) {
+      if (maps[i].dataset && maps[i].dataset.jdMapUrl === url) return true;
+    }
+    return false;
+  }
+
+  function isInsideMapEmbed(link) {
+    var node = link.parentNode;
+    while (node && node !== document.body) {
+      try {
+        if ((node.classList && node.classList.contains('jd-map-embed')) ||
+            (typeof node.className === 'string' && node.className.split(/\s+/).indexOf('jd-map-embed') !== -1)) {
+          return true;
+        }
+      } catch (_) {}
+      node = node.parentNode;
+    }
+    return false;
+  }
+
   function embedMap(link) {
     try {
       var url = link.href;
       if (!isMapUrl(url)) return;
+      // The direct-open fallback inside each card also has a map URL. It must
+      // stay a link and never be treated as a fresh map to embed.
+      if (isInsideMapEmbed(link)) return;
       // Don't double-embed
       if (link.dataset.jdMapEmbedded) return;
+      // A response can repeat its route link in multiple paragraphs. Keep the
+      // textual links, but show only one full map for the same URL per answer.
+      if (messageAlreadyHasMap(link, url)) {
+        link.dataset.jdMapEmbedded = 'duplicate';
+        return;
+      }
       link.dataset.jdMapEmbedded = '1';
 
       // Keep the reserved map area visibly useful while network resources load.
       var card = document.createElement('div');
       card.className = 'jd-map-embed';
       card.dataset.state = 'loading';
+      card.dataset.jdMapUrl = url;
       card.setAttribute('role', 'region');
       card.setAttribute('aria-label', 'Interactive map');
       card.setAttribute('aria-busy', 'true');
@@ -160,3 +210,4 @@
   setTimeout(scanForMaps, 2000);
   setInterval(scanForMaps, 5000);
 })();
+
