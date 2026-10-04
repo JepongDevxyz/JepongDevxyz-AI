@@ -104,10 +104,84 @@
     try { return window.chatSessions || {}; } catch (e) { return {}; }
   }
 
+  /* ---------- Per-account session ownership (leak prevention) ----------
+     The app does NOT clear chatSessions on sign-out, and merges old local
+     sessions into the new account on sign-in. Without ownership tags, the
+     Library would show Account A's files to Account B.
+     We tag every session id with its owner account id, and the scan below
+     only includes sessions owned by the CURRENT account. Untagged sessions
+     seen right after an account switch are treated as leftovers and hidden. */
+  var LS_OWNERS = 'jd_session_owners_v1';
+  var LS_LAST_ACCT = 'jd_last_account_id_v1';
+
+  function accountId() {
+    try {
+      if (typeof cloudUser !== 'undefined' && cloudUser && cloudUser.id) return 'a:' + cloudUser.id;
+    } catch (e) {}
+    try {
+      if (window.__jdCloudUser && window.__jdCloudUser.id) return 'a:' + window.__jdCloudUser.id;
+    } catch (e) {}
+    try {
+      var d = localStorage.getItem('jd_device_id_v1');
+      if (!d) {
+        d = 'd:' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('jd_device_id_v1', d);
+      }
+      return d;
+    } catch (e) { return 'd:guest'; }
+  }
+  function lsGet(k, fb) { try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? fb : v; } catch (e) { return fb; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  function ownedSessions() {
+    var all = sessions();
+    var cur = accountId();
+    var owners = lsGet(LS_OWNERS, {});
+    var lastAcct = null;
+    try { lastAcct = localStorage.getItem(LS_LAST_ACCT); } catch (e) {}
+    if (!lastAcct) {
+      /* first run: adopt existing sessions for the current account */
+      try { localStorage.setItem(LS_LAST_ACCT, cur); } catch (e) {}
+      lastAcct = cur;
+    }
+    var switched = (lastAcct !== cur);
+    var changed = false;
+    var out = {};
+    Object.keys(all).forEach(function (sid) {
+      var owner = owners[sid];
+      if (owner === cur) { out[sid] = all[sid]; return; }
+      if (owner && owner !== cur) return; /* someone else's — hidden */
+      /* untagged session */
+      if (!switched) {
+        owners[sid] = cur; changed = true; /* normal case: tag to current */
+        out[sid] = all[sid];
+      }
+      /* else: leftover from a previous account — hidden, not tagged */
+    });
+    if (changed) lsSet(LS_OWNERS, owners);
+    return out;
+  }
+
+  function noteAccountSeen() {
+    try { localStorage.setItem(LS_LAST_ACCT, accountId()); } catch (e) {}
+  }
+  try {
+    window.addEventListener('jd:account-changed', function () {
+      /* do NOT update LS_LAST_ACCT here — the next scan needs to detect
+         the switch and treat untagged sessions as leftovers */
+      var p = document.getElementById('jdLibPage');
+      if (p && !p.hidden) render();
+    });
+  } catch (e) {}
+
   /* Scan all sessions for artifacts (HTML/docs) and media (images/videos) */
   function scan() {
     var arts = [], media = [];
-    var ss = sessions();
+    var ss = ownedSessions(); /* per-account filtered — no cross-account leak.
+      Uses the PREVIOUS LS_LAST_ACCT value to detect a switch. */
+    noteAccountSeen(); /* record current account AFTER filtering, so the
+      next scan can detect the next switch. New sessions from now on get
+      tagged to the current account. */
     Object.keys(ss).forEach(function (sid) {
       var s = ss[sid];
       if (!s || !s.messages) return;
