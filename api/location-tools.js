@@ -14,6 +14,18 @@ function escapeMarkdown(value){
   return plainLocationLabel(value,100).replace(/[\\`*_{}\[\]()#+.!|>~-]/g,'\\$&');
 }
 
+// Map HTML must be served inline: Vercel Blob intentionally blocks HTML framing
+// with a restrictive CSP/X-Frame-Options policy. Generated maps are trusted,
+// size-limited documents and are separately validated before iframe rendering.
+export function buildInlineMapDataUrl(html){
+  const bytes=new TextEncoder().encode(String(html||''));
+  if(!bytes.length||bytes.length>110000)return '';
+  let binary='';
+  for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+  const dataUrl='data:text/html;base64,'+btoa(binary);
+  return dataUrl.length<=150000?dataUrl:'';
+}
+
 export function detectLocationWeatherIntent(message=''){
   const text=String(message||'').normalize('NFKC');
   return {

@@ -29,7 +29,7 @@
 
   var EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
   var AI_EMOJI_ALLOW = ['❤️', '👍', '😂', '😮', '😢', '🔥', '🎉', '🤔', '👏', '🙏'];
-  var MARKER_RE = /\[USER_REACTION:([^\]]*)\]\s*$/;
+  var MARKER_RE = /\[USER_REACTION:([^\]]*)\]/g;
   var AI_LSKEY = 'jd_ai_reactions';
   var AI_DISMISS_KEY = 'jd_ai_reactions_dismissed';
 
@@ -173,22 +173,31 @@
     });
     actions.appendChild(chip);
   }
-  function removeTrailingMarker(root, markerText) {
-    var remaining = markerText.length;
-    if (!remaining || !root || !document.createTreeWalker) return;
+  function removeMarkerText(root, markerText) {
+    if (!markerText || !root || !document.createTreeWalker) return false;
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
     var nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-    for (var i = nodes.length - 1; i >= 0 && remaining > 0; i--) {
-      var n = nodes[i];
-      var p = n.parentElement;
-      if (p && p.closest && p.closest('.bot-actions,.jd-inline-reaction,button,.jd-message-more')) continue;
-      var t = n.nodeValue || '';
-      if (!t) continue;
-      var take = Math.min(remaining, t.length);
-      n.nodeValue = t.slice(0, t.length - take);
-      remaining -= take;
+    var combined = '';
+    while (walker.nextNode()) {
+      var node = walker.currentNode;
+      var parent = node.parentElement;
+      if (parent && parent.closest && parent.closest('.bot-actions,.jd-inline-reaction,button,.jd-message-more')) continue;
+      nodes.push(node);
+      combined += node.nodeValue || '';
     }
+    var start = combined.lastIndexOf(markerText);
+    if (start < 0) return false;
+    var end = start + markerText.length;
+    var offset = 0;
+    for (var i = 0; i < nodes.length; i++) {
+      var value = nodes[i].nodeValue || '';
+      var from = Math.max(0, start - offset);
+      var to = Math.min(value.length, end - offset);
+      if (to > from) nodes[i].nodeValue = value.slice(0, from) + value.slice(to);
+      offset += value.length;
+      if (offset >= end) break;
+    }
+    return true;
   }
   function botContentEl(botEl) {
     if (!botEl || !botEl.querySelector) return null;
@@ -198,9 +207,12 @@
     if (!botEl) return;
     var content = botContentEl(botEl);
     if (!content || !content.textContent) return;
-    var m = content.textContent.match(MARKER_RE);
-    if (!m) return;
-    removeTrailingMarker(content, m[0]); // always strip: prevents any flash
+    var matches = Array.from(content.textContent.matchAll(MARKER_RE));
+    if (!matches.length) return;
+    var m = matches[matches.length - 1];
+    // Location/map appendices are added after the model text. Remove the marker
+    // wherever it occurs so it cannot leak into the assistant bubble.
+    if (!removeMarkerText(content, m[0])) return;
     if (botEl.__jdReactV2Done) return;
     botEl.__jdReactV2Done = true;
     var emoji = (m[1] || '').trim();
