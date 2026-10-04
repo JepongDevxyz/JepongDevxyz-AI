@@ -125,7 +125,7 @@
       fallback.style.cssText = 'position:absolute;z-index:2;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);padding:8px 12px;border-radius:999px;background:rgba(24,24,27,.92);color:#c4b5fd;font:500 13px/1.3 system-ui,sans-serif;text-align:center;text-decoration:underline;white-space:normal';
 
       var iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:relative;z-index:0;width:100%;height:clamp(260px,42vh,360px);min-height:260px;border:0;border-radius:12px;margin:0;display:block;opacity:0;transition:opacity .18s ease';
+      iframe.style.cssText = 'position:relative;z-index:0;width:100%;height:clamp(340px,56vh,500px);min-height:340px;border:0;border-radius:12px;margin:0;display:block;opacity:0;transition:opacity .18s ease';
       iframe.setAttribute('loading', 'eager');
       iframe.setAttribute('sandbox', 'allow-scripts');
       iframe.setAttribute('referrerpolicy', 'no-referrer');
