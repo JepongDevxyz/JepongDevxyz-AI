@@ -42,6 +42,10 @@ assert.match(links.routeUrl,/origin=Guimba/);
 assert.match(links.routeUrl,/destination=Baguio/);
 const routeCard=buildRouteMapAppendix({origin:'Guimba',destination:'Baguio',travelMode:'driving'},'https://maps.example/route-guimba-to-baguio.html');
 assert.match(routeCard,/\[View route map inside the chat\]\(https:\/\/maps\.example\/route-guimba-to-baguio\.html\)/);
+assert.doesNotMatch(routeCard,/Open driving directions in Google Maps/,
+  'a rendered in-chat route map should not have a duplicate directions link underneath');
+assert.match(buildRouteMapAppendix({origin:'Guimba',destination:'Baguio',travelMode:'driving'}),/Open the driving route in Google Maps/,
+  'keep the directions fallback when an in-chat route map could not be generated');
 assert.match(links.radarUrl,/rainviewer\.com\/weather-radar-map-live\.html\?loc=15\.6678%2C120\.7562%2C8/);
 const satellite=new URL(links.satelliteUrl);
 assert.equal(satellite.hostname,'worldview.earthdata.nasa.gov');

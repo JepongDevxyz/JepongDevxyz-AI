@@ -17,7 +17,13 @@ function runEmbed(url, event='none', linkCount=1, separateMessages=false){
   }
   const messages=[];
   function makeMessage(){
-    const message={className:'msg bot',embeds:[],querySelectorAll(selector){
+    const message={className:'msg bot',children:[],embeds:[],insertBefore(node,reference){
+      const index=reference?this.children.indexOf(reference):this.children.length;
+      this.children.splice(index<0?this.children.length:index,0,node);
+      node.parentNode=this;
+      inserted.push(node);
+      if(node.className==='jd-map-embed')this.embeds.push(node);
+    },removeChild(node){node.removed=true;this.children=this.children.filter(child=>child!==node);},querySelectorAll(selector){
       return selector==='.jd-map-embed'?this.embeds:[];
     }};
     messages.push(message);
@@ -26,13 +32,17 @@ function runEmbed(url, event='none', linkCount=1, separateMessages=false){
   const sharedMessage=makeMessage();
   const links=Array.from({length:linkCount},(_,index)=>{
     const message=separateMessages&&index?makeMessage():sharedMessage;
-    const parent={parentNode:message,insertBefore(node){
+    const parent={tagName:'P',parentNode:message,textContent:'View route map inside the chat',children:[],insertBefore(node,reference){
       inserted.push(node);
+      node.parentNode=message;
       if(node.className==='jd-map-embed')message.embeds.push(node);
-    }};
-    return {href:url,dataset:{},nextSibling:null,parentNode:parent,closest(selector){
+    },removeChild(node){node.removed=true;this.children=this.children.filter(child=>child!==node);}};
+    const link={href:url,dataset:{},textContent:'View route map inside the chat',nextSibling:null,parentNode:parent,closest(selector){
       return selector==='.msg.bot'?message:null;
     }};
+    parent.children.push(link);
+    message.children.push(parent);
+    return link;
   });
   const document={
     body:{},head:{appendChild(){}},
@@ -54,6 +64,7 @@ function runEmbed(url, event='none', linkCount=1, separateMessages=false){
     const frame=inserted[0].children.find(item=>item.tagName==='IFRAME');
     frame?.dispatch(event);
   }
+  inserted.sourceLinks=links;
   return inserted;
 }
 
@@ -74,6 +85,8 @@ assert.equal(frame.attrs.referrerpolicy,'no-referrer');
 assert.ok(status && !status.hidden,'users see a loading state instead of a blank area');
 assert.ok(fallback && fallback.hidden,'open-map fallback stays hidden while loading');
 assert.equal(fallback.dataset.jdMapEmbedded,undefined,'the fallback link remains a link and is never recursively embedded');
+assert.equal(embedded.sourceLinks[0].parentNode.removed,true,
+  'the visible source link should be replaced by the embedded map');
 
 const loaded=runEmbed(dataUrl,'load')[0];
 const loadedFrame=loaded.children.find(item=>item.tagName==='IFRAME');

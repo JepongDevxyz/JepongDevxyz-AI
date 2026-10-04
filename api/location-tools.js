@@ -167,14 +167,19 @@ export function buildRouteMapAppendix(route,mapUrl=''){
   const links=buildLocationMapLinks(null,route);
   const title=`${escapeMarkdown(route.origin)} → ${escapeMarkdown(route.destination)}`;
   const mode={driving:'driving',walking:'walking',bicycling:'bicycling',transit:'transit'}[route.travelMode]||'driving';
-  return [
+  const lines=[
     '> [!STATUS info|Route map]',
-    `> ### ${title}`,
-    mapUrl
-      ?`> [View route map inside the chat](${mapUrl})`
-      :`> Open the ${mode} route in Google Maps to see the live map and current directions.`,
-    `> [Open ${mode} directions in Google Maps](${links.routeUrl})`
-  ].join('\n');
+    `> ### ${title}`
+  ];
+  if(mapUrl){
+    // The map embed replaces this source link in the chat. Avoid a second,
+    // redundant Google Maps action under an already visible interactive map.
+    lines.push(`> [View route map inside the chat](${mapUrl})`);
+  }else{
+    lines.push(`> Open the ${mode} route in Google Maps to see the live map and current directions.`);
+    lines.push(`> [Open ${mode} directions in Google Maps](${links.routeUrl})`);
+  }
+  return lines.join('\n');
 }
 
 export function buildWeatherMapAppendix({location=null,weather=null,weatherError='',mapUrl='',now=new Date()}={}){

@@ -160,7 +160,19 @@
       card.appendChild(iframe);
       card.appendChild(status);
       card.appendChild(fallback);
-      link.parentNode.insertBefore(card, link.nextSibling);
+      // The generated route appendix uses a standalone paragraph link as the
+      // map source. Replace that line with the embedded card so it is not shown
+      // twice. Other links are removed in place after their card is inserted.
+      var sourceLine = link;
+      var sourceParent = link.parentNode;
+      if (sourceParent && String(sourceParent.tagName || '').toUpperCase() === 'P' &&
+          String(sourceParent.textContent || '').trim() === String(link.textContent || '').trim()) {
+        sourceLine = sourceParent;
+      }
+      var insertionParent = sourceLine.parentNode;
+      insertionParent.insertBefore(card, sourceLine.nextSibling);
+      if (insertionParent.removeChild) insertionParent.removeChild(sourceLine);
+      else if (sourceLine.remove) sourceLine.remove();
       iframe.src = url;
       setTimeout(function () {
         if (settled) return;
@@ -210,4 +222,3 @@
   setTimeout(scanForMaps, 2000);
   setInterval(scanForMaps, 5000);
 })();
-
