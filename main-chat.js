@@ -183,21 +183,19 @@
         openMainChat();
         setTimeout(function () {
           try {
-            var input = document.querySelector('textarea[jd-composer], #jdComposerInput, textarea[placeholder*="Message"], textarea');
-            var sendBtn = document.querySelector('[jd-send], #jdSendBtn, button[aria-label*="Send"], button[aria-label*="send"]');
+            var input = document.getElementById('userInput');
             if (input) {
               input.value = text;
-              /* trigger input event so the app picks up the value */
-              try {
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-              } catch (e) {}
-              /* fallback: click send button */
-              setTimeout(function () {
-                try {
-                  if (sendBtn && input.value) sendBtn.click();
-                } catch (e) {}
-              }, 300);
+              try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+              /* call the app's real send function directly */
+              if (typeof window.sendMessage === 'function') {
+                window.sendMessage();
+              } else if (typeof sendMessage === 'function') {
+                try { sendMessage(); } catch (e) {}
+              } else {
+                var btn = document.getElementById('mainActionBtn');
+                if (btn) btn.click();
+              }
             }
           } catch (e) {}
         }, 800);
