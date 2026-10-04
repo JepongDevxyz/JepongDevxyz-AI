@@ -85,6 +85,18 @@
     try {
       var url = link.href;
       if (!isMapUrl(url)) return;
+      // Don't embed maps in goal-related messages — the AI sometimes wrongly
+      // triggers directions on "→" arrows in goal text (2026-10-05).
+      var msgNode = findAssistantMessage(link);
+      if (msgNode) {
+        var msgText = (msgNode.textContent || '').toLowerCase();
+        var isGoalMsg = msgText.indexOf('goal') !== -1;
+        var isDirectionsMsg = msgText.indexOf('direction') !== -1 ||
+          msgText.indexOf('route from') !== -1 ||
+          msgText.indexOf('how to get to') !== -1 ||
+          msgText.indexOf('navigate to') !== -1;
+        if (isGoalMsg && !isDirectionsMsg) return;
+      }
       // The direct-open fallback inside each card also has a map URL. It must
       // stay a link and never be treated as a fresh map to embed.
       if (isInsideMapEmbed(link)) return;
