@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   buildLocationMapLinks,
   buildRouteMapAppendix,
+  buildRouteMapContext,
   buildWeatherMapAppendix,
   detectLocationWeatherIntent,
   extractRouteRequest,
@@ -44,6 +45,13 @@ const routeCard=buildRouteMapAppendix({origin:'Guimba',destination:'Baguio',trav
 assert.match(routeCard,/\[View route map inside the chat\]\(https:\/\/maps\.example\/route-guimba-to-baguio\.html\)/);
 assert.doesNotMatch(routeCard,/Open driving directions in Google Maps/,
   'a rendered in-chat route map should not have a duplicate directions link underneath');
+const routeContext=buildRouteMapContext({origin:'Guimba',destination:'Baguio'},'https://maps.example/route-guimba-to-baguio.html',{
+  distanceKm:123.3,durationText:'2 h 13 min'
+});
+assert.doesNotMatch(routeContext,/google\.com\/maps\/dir|https:\/\/maps\.example/,
+  'a generated embedded map must not expose a separate route URL to the model');
+assert.match(routeContext,/Do not output.*map link/i,
+  'the model must be told to rely on the embedded map instead of writing a map CTA');
 assert.match(buildRouteMapAppendix({origin:'Guimba',destination:'Baguio',travelMode:'driving'}),/Open the driving route in Google Maps/,
   'keep the directions fallback when an in-chat route map could not be generated');
 assert.match(links.radarUrl,/rainviewer\.com\/weather-radar-map-live\.html\?loc=15\.6678%2C120\.7562%2C8/);
