@@ -109,21 +109,41 @@
   }
 
   var generating = false;
+
+  /* Offline fallback ideas — shown when API times out */
+  function fallbackIdeas() {
+    var now = Date.now();
+    var base = [
+      ['💡', 'Productivity', 'I can organize your daily tasks', 'Tell me your priorities for today and I will create a structured task list with time estimates.'],
+      ['📱', 'Development', 'I can help debug your Android builds', 'Share your Gradle errors or code issues and I will walk through the fix step by step.'],
+      ['🎯', 'Productivity', 'I can track your project milestones', 'Set up goals for your apps and I will remind you of deadlines and celebrate progress.'],
+      ['💰', 'Financial Management', 'I can help plan your app monetization', 'From PayMongo integration to pricing tiers, I can outline a revenue strategy for your projects.'],
+      ['🏋️', 'Health & Fitness', 'I can build you a workout routine', 'Tell me your schedule and equipment and I will design a practical fitness plan.'],
+      ['❤️', 'Relationships', 'I can help plan quality time', 'I can suggest activities and reminders to stay connected with the people who matter.']
+    ];
+    return base.map(function (b, i) {
+      return { id: 'idea_fb_' + now + '_' + i, emoji: b[0], category: b[1], title: b[2], description: b[3] };
+    });
+  }
+
   async function generateIdeas() {
     if (generating) return;
     generating = true;
     renderLoading();
+    /* Short prompt to avoid timeout */
     var prompt =
-      'Generate personalized idea cards for this user. Context:\n' + userContext() +
-      '\n\nGenerate exactly 10 ideas across these categories: Productivity, Development, Financial Management, Health & Fitness, Relationships. ' +
-      'Each idea must be concrete and actionable for THIS user\'s projects and life. ' +
-      'Phrase the title as a capability ("I can ..."). Keep descriptions to 2 sentences, practical and specific. ' +
-      'Return ONLY a JSON array, no other text, no markdown fences. ' +
-      'Each item: {"emoji":"single emoji","category":"one of the categories above","title":"I can ...","description":"..."}';
+      'Generate 6 personalized ideas for a developer in Philippines who builds Android apps and AI tools. ' +
+      'Categories: Productivity, Development, Financial Management, Health & Fitness, Relationships. ' +
+      'Title as "I can ...". Return ONLY a JSON array, no other text. ' +
+      'Each: {"emoji":"emoji","category":"category","title":"I can ...","description":"2 sentences"}';
+    var ideas = [];
     try {
+      var ctrl = new AbortController();
+      var timeoutId = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 20000);
       var res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: ctrl.signal,
         body: JSON.stringify({
           message: '[jd-ideas-gen] Respond with ONLY the JSON array. No explanations.\n\n' + prompt,
           history: [],
@@ -131,22 +151,24 @@
           mode: 'general'
         })
       });
+      clearTimeout(timeoutId);
       var text = await res.text();
-      var ideas = parseIdeas(text);
-      if (ideas.length) {
-        ideas = ideas.map(function (x, i) {
-          return {
-            id: 'idea_' + Date.now() + '_' + i,
-            emoji: x.emoji || '💡', category: x.category || 'Productivity',
-            title: String(x.title || '').slice(0, 120),
-            description: String(x.description || '').slice(0, 400)
-          };
-        });
-        lsSet(ideasKey(), ideas);
-        lsSet(genKey(), Date.now());
-        lsSet(dismissedKey(), []);
-      }
+      ideas = parseIdeas(text);
     } catch (e) {}
+    if (!ideas.length) ideas = fallbackIdeas();
+    if (ideas.length) {
+      ideas = ideas.map(function (x, i) {
+        return {
+          id: x.id || ('idea_' + Date.now() + '_' + i),
+          emoji: x.emoji || '💡', category: x.category || 'Productivity',
+          title: String(x.title || '').slice(0, 120),
+          description: String(x.description || '').slice(0, 400)
+        };
+      });
+      lsSet(ideasKey(), ideas);
+      lsSet(genKey(), Date.now());
+      lsSet(dismissedKey(), []);
+    }
     generating = false;
     renderIdeas();
   }

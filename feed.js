@@ -206,24 +206,43 @@
     return Math.abs(h);
   }
   var generating = false;
+
+  /* Offline fallback posts — shown when API times out or fails */
+  function fallbackPosts() {
+    var now = Date.now();
+    return [
+      { emoji: '🤖', category: 'AI News', headline: 'AI assistants are getting more personal',
+        body: 'The latest AI models now remember your preferences and adapt to your workflow. Your JepongDevxyz AI already does this with memory and personalization settings.',
+        image: heroImageUrl('futuristic AI assistant glowing interface'), at: now },
+      { emoji: '💡', category: 'Productivity', headline: 'I can help organize your projects',
+        body: 'I can track your goals, set reminders, and keep your ideas organized. Just tell me what you want to achieve and I will help you plan it step by step.',
+        image: heroImageUrl('organized workspace with checklist'), at: now - 3600000 },
+      { emoji: '📱', category: 'Development', headline: 'I can help with your Android projects',
+        body: 'From DevxyzIDE builds to debugging Gradle issues, I can walk through your code and suggest fixes. Share your project details and lets solve it together.',
+        image: heroImageUrl('android developer workspace with code'), at: now - 7200000 }
+    ];
+  }
+
   async function generatePosts() {
     if (generating) return;
     generating = true;
     renderLoading();
     var brief = getBrief();
+    /* Short prompt to avoid timeout on slow networks */
     var prompt =
-      'You are writing a personal news/ideas feed. Follow this brief:\n' + brief +
-      '\n\nUser context (personalize to this user):\n' + userContext() +
-      '\n\nGenerate exactly 6 feed posts. Mix: 3 tech/AI/developer news posts relevant to their interests, ' +
-      '3 actionable idea posts (things the assistant can do for them, phrased as "I can ..."). ' +
-      'Return ONLY a JSON array, no other text, no markdown fences. ' +
-      'Each item: {"emoji":"single emoji","category":"short category like AI News or Productivity",' +
-      '"headline":"clear direct headline, no clickbait","body":"2-3 sentence body, plain text, no markdown links",' +
-      '"image_prompt":"short visual description for a hero image, e.g. \'futuristic AI chip glowing blue\'"}.';
+      'Write a personal feed. Brief: ' + brief.slice(0, 200) +
+      '\nUser: developer in Philippines, builds Android apps and AI tools.' +
+      '\nGenerate exactly 3 feed posts. Return ONLY a JSON array, no other text.' +
+      ' Each item: {"emoji":"emoji","category":"short","headline":"headline","body":"2 sentences","image_prompt":"visual description"}';
+    var posts = [];
+    /* Try API with timeout, fall back to offline content */
     try {
+      var ctrl = new AbortController();
+      var timeoutId = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 20000);
       var res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: ctrl.signal,
         body: JSON.stringify({
           message: '[jd-feed-gen] Respond with ONLY the JSON array. No explanations.\n\n' + prompt,
           history: [],
@@ -231,24 +250,29 @@
           mode: 'general'
         })
       });
+      clearTimeout(timeoutId);
       var text = await res.text();
-      var posts = parsePosts(text);
-      if (posts.length) {
-        var now = Date.now();
-        posts = posts.map(function (p, i) {
-          return {
-            emoji: p.emoji || '📰', category: p.category || 'Feed',
-            headline: String(p.headline || '').slice(0, 160),
-            body: String(p.body || '').slice(0, 600),
-            image: heroImageUrl(p.image_prompt || (p.category + ' ' + p.headline)),
-            at: now - i * 3600000
-          };
-        });
-        lsSet(postsKey(), posts);
-        try { localStorage.setItem(postsKey() + ':cver', CACHE_VER); } catch (e) {}
-        lsSet(genKey(), now);
-      }
+      posts = parsePosts(text);
     } catch (e) {}
+    if (!posts.length) {
+      /* API failed or timed out — use offline fallback so feed is never empty */
+      posts = fallbackPosts();
+    }
+    if (posts.length) {
+      var now = Date.now();
+      posts = posts.map(function (p, i) {
+        return {
+          emoji: p.emoji || '📰', category: p.category || 'Feed',
+          headline: String(p.headline || '').slice(0, 160),
+          body: String(p.body || '').slice(0, 600),
+          image: p.image || heroImageUrl(p.image_prompt || (p.category + ' ' + p.headline)),
+          at: p.at || (now - i * 3600000)
+        };
+      });
+      lsSet(postsKey(), posts);
+      try { localStorage.setItem(postsKey() + ':cver', CACHE_VER); } catch (e) {}
+      lsSet(genKey(), now);
+    }
     generating = false;
     renderPosts();
   }
