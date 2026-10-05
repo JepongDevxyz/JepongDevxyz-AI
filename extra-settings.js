@@ -133,11 +133,13 @@
 
         '<div class="jd-extra-ai-card">' +
         '<h4>🤖 Agent Browse <span style="font-size:10px;opacity:.6;font-weight:400">BETA</span></h4>' +
-        '<p>Jev-style browser agent brain — decides CLICK / TYPE / SELECT on page elements step by step using the app\'s current models. <b>Needs a browser backend</b> (cloud browser or extension relay) to act; until then it runs validated dry-run only.</p>' +
+        '<p>Jev-style browser agent — decides CLICK / TYPE / SELECT step by step using the app\'s current models. Type <b>"browse: &lt;goal&gt;"</b> in chat to start. Powered by the shared <b>Steel</b> pool (all users).</p>' +
         '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
         '<label class="squish-switch-root" aria-label="Enable Agent Browse">' +
         '<input type="checkbox" id="jdExtraBrowseToggle"' + (browseOn ? ' checked' : '') + '>' +
         '<span class="squish-switch__track"></span></label></div>' +
+        '<div class="jd-browse-status" id="jdSteelStatus" style="font-size:12px;opacity:.75;margin-top:10px">○ checking Steel pool…</div>' +
+        '<div style="font-size:11px;opacity:.55;margin-top:4px">Keys: Vercel → STEEL_API_KEYS (comma-separated) → redeploy.</div>' +
         '</div>' +
 
         '<button class="jd-extra-ai-done" data-act="close">Done</button>' +
@@ -166,9 +168,22 @@
       var browseT = sheet.querySelector('#jdExtraBrowseToggle');
       if (browseT) browseT.addEventListener('change', function () {
         try { window.jdSetBrowseAgent && window.jdSetBrowseAgent(browseT.checked); } catch (_) {}
-        try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 (beta — needs browser backend)' : 'Agent Browse OFF'); } catch (_) {}
+        try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 — type "browse: <goal>" in chat' : 'Agent Browse OFF'); } catch (_) {}
       });
       document.body.appendChild(sheet);
+      try {
+        if (window.jdSteelPoolInfo) {
+          window.jdSteelPoolInfo().then(function (info) {
+            var st = sheet.querySelector('#jdSteelStatus');
+            if (!st) return;
+            if (info && info.configured) {
+              st.textContent = '● Steel pool: ' + (info.keys || '?') + ' key' + ((info.keys || 0) === 1 ? '' : 's') + ' (shared, rotating)';
+            } else {
+              st.textContent = '○ Steel pool not configured';
+            }
+          }).catch(function () {});
+        }
+      } catch (_) {}
     } catch (_) {}
   };
   document.addEventListener('keydown', function (e) {
