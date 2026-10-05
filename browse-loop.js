@@ -601,15 +601,30 @@
       if (watchBtn) watchBtn.addEventListener('click', function () {
         try {
           /* Login-free live viewer (screenshot stream via our API).
-             Falls back to Steel's viewer URL if our viewer isn't loaded. */
+             If browse-viewer.js hasn't finished loading yet (slow network),
+             load it on demand before opening. Falls back to Steel's viewer
+             URL only if our viewer fails to load. */
           window.__jdBrowseLastBackend = backend;
           window.__jdBrowseLastLoop = loop;
+          function openViewer() {
+            if (window.jdBrowseWatchLive) {
+              window.jdBrowseWatchLive(backend.sessionId, backend.ki, goal);
+            } else if (backend.viewerUrl) {
+              window.open(backend.viewerUrl, '_blank', 'noopener');
+            } else if (window.showModernToast) {
+              window.showModernToast('Wala pang live view');
+            }
+          }
           if (window.jdBrowseWatchLive) {
-            window.jdBrowseWatchLive(backend.sessionId, backend.ki, goal);
-          } else if (backend.viewerUrl) {
-            window.open(backend.viewerUrl, '_blank', 'noopener');
-          } else if (window.showModernToast) {
-            window.showModernToast('Wala pang live view');
+            openViewer();
+          } else {
+            /* Race condition fix: load viewer on demand */
+            var sc = document.createElement('script');
+            sc.src = '/browse-viewer.js?v=' + (window.__jdPatchVer || Date.now());
+            sc.onload = openViewer;
+            sc.onerror = openViewer; /* fallback to Steel URL on failure */
+            document.head.appendChild(sc);
+            if (window.showModernToast) window.showModernToast('⏳ Loading live viewer…');
           }
         } catch (_) {}
       });
