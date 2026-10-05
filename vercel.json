@@ -7,6 +7,9 @@
     "api/codex.js": {
       "includeFiles": "codex-runner/**",
       "maxDuration": 60
+    },
+    "api/steel.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
