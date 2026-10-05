@@ -67,6 +67,14 @@ function handleMarker(kind, payload) {
 function tapResponse(res) {
   try {
     if (!res || !res.body || typeof res.body.getReader !== 'function') return res;
+    /* Binary-audio guard (2026-10-05): POST /api/chat is also the server TTS
+       endpoint (action:'tts' -> audio/mpeg blob). Decoding binary as UTF-8
+       corrupts it (invalid sequences -> U+FFFD, byte length changes), so only
+       tap text-ish responses. Empty/unknown content-type still taps (fail-open
+       for chat SSE streams). */
+    var ct = '';
+    try { ct = String(res.headers.get('content-type') || '').toLowerCase(); } catch (_) {}
+    if (ct && ct.indexOf('text/') !== 0 && ct.indexOf('json') === -1 && ct.indexOf('event-stream') === -1) return res;
     var reader = res.body.getReader();
     var decoder = new TextDecoder();
     var encoder = new TextEncoder();
