@@ -279,6 +279,10 @@ function downloadRepoZip(ownerInput, branchInput, btn) {
 var BACKUP_INTENT_RE = /backup/i;
 var BACKUP_EXCLUDE_RE = /\b(singer|dancer|vocalists?)\b/i;
 var BACKUP_CHAT_RE = /\bchat\b/i;
+/* Explicit "give me the backup" (ibigay/bigay/pahingi/hingi/give me)
+   → download immediately. Anything else with "backup" → confirmation
+   dialog first (no auto-download). */
+var GIVE_WORDS_RE = /ibigay|bigay|pahingi|hingi|give me/i;
 var __lastBackupMsg = '';
 var __lastBackupAt = 0;
 
@@ -291,20 +295,62 @@ function maybeAutoBackup(text) {
     if (msg === __lastBackupMsg && (now - __lastBackupAt) < 8000) return false; /* dedupe double-hook */
     __lastBackupMsg = msg;
     __lastBackupAt = now;
+    /* Download ONLY on explicit "give me the backup" (or the user
+       outright asking for it); otherwise open the confirmation dialog —
+       the .zip must NOT auto-download (her 2026-10-05 order). */
+    var give = GIVE_WORDS_RE.test(msg);
     var chatCode = BACKUP_CHAT_RE.test(msg);
     setTimeout(function () {
       try {
-        if (chatCode) {
-          toast('Backing up chat code…');
-          downloadChatCode(null);
+        if (give) {
+          if (chatCode) {
+            toast('Backing up chat code…');
+            downloadChatCode(null);
+          } else {
+            toast('Backing up repo…');
+            downloadRepoZip('JepongDevxyz/JepongDevxyz-AI', 'main', null);
+          }
         } else {
-          toast('Backing up repo…');
-          downloadRepoZip('JepongDevxyz/JepongDevxyz-AI', 'main', null);
+          openBackupDialog();
         }
-      } catch (_) { /* fail-open */ }
+      } catch (_) {}
     }, 400);
     return true;
   } catch (_) { return false; }
+}
+
+/* ---------- confirmation bottom-sheet (auto-opens on backup intent) ---------- */
+function openBackupDialog() {
+  try {
+    ensureCss();
+    if (document.querySelector('.jd-backup-sheet')) return;
+    var sheet = document.createElement('div');
+    sheet.className = 'jd-backup-sheet';
+    sheet.innerHTML =
+      '<div class="jd-backup-sheet__bg"></div>' +
+      '<div class="jd-backup-sheet__panel" role="dialog" aria-label="Backup">' +
+        '<div class="jd-backup-sheet__grab"></div>' +
+        '<div class="jd-backup-sheet__h">Backup</div>' +
+        '<div class="jd-backup-sheet__sub">Piliin ang iba-backup — tap para i-download ang .zip.</div>' +
+        '<button type="button" class="jd-backup-sheet__btn" data-jd-backup="repo">Repo ZIP<small style="display:block;font-weight:400;opacity:.65;margin-top:2px">JepongDevxyz-AI (main)</small></button>' +
+        '<button type="button" class="jd-backup-sheet__btn" data-jd-backup="chat" style="margin-top:10px">Chat code ZIP<small style="display:block;font-weight:400;opacity:.65;margin-top:2px">Code blocks sa conversation na ito</small></button>' +
+        '<button type="button" class="jd-backup-sheet__close">Cancel</button>' +
+      '</div>';
+    document.body.appendChild(sheet);
+    function close() { try { sheet.remove(); } catch (_) {} }
+    sheet.querySelector('.jd-backup-sheet__bg').addEventListener('click', close);
+    sheet.querySelector('.jd-backup-sheet__close').addEventListener('click', close);
+    sheet.querySelector('[data-jd-backup="repo"]').addEventListener('click', function () {
+      close();
+      toast('Backing up repo…');
+      downloadRepoZip('JepongDevxyz/JepongDevxyz-AI', 'main', null);
+    });
+    sheet.querySelector('[data-jd-backup="chat"]').addEventListener('click', function () {
+      close();
+      toast('Backing up chat code…');
+      downloadChatCode(null);
+    });
+  } catch (_) {}
 }
 
 function installSendWrap() {
