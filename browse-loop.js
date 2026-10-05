@@ -603,6 +603,7 @@
           /* Login-free live viewer (screenshot stream via our API).
              Falls back to Steel's viewer URL if our viewer isn't loaded. */
           window.__jdBrowseLastBackend = backend;
+          window.__jdBrowseLastLoop = loop;
           if (window.jdBrowseWatchLive) {
             window.jdBrowseWatchLive(backend.sessionId, backend.ki, goal);
           } else if (backend.viewerUrl) {
