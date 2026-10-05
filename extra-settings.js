@@ -103,13 +103,14 @@
       closeAiSheet();
       var slopOn = !!(window.jdSlopGateEnabled && window.jdSlopGateEnabled());
       var tideOn = !!(window.jdTidelineEnabled && window.jdTidelineEnabled());
+      var browseOn = !!(window.jdBrowseAgentEnabled && window.jdBrowseAgentEnabled());
       var sheet = document.createElement('div');
       sheet.className = 'jd-extra-ai-sheet';
       sheet.innerHTML =
         '<div class="jd-extra-ai-panel" role="dialog" aria-label="JepongDevxyz AI extra features">' +
         '<div class="jd-extra-ai-head"><strong>🤖 JepongDevxyz AI</strong>' +
         '<button class="jd-extra-ai-close" data-act="close">✕</button></div>' +
-        '<div class="jd-extra-ai-sub">Extra AI features — both off by default</div>' +
+        '<div class="jd-extra-ai-sub">Extra AI features — all off by default</div>' +
 
         '<div class="jd-extra-ai-card">' +
         '<h4>✨ Slop Filter</h4>' +
@@ -128,6 +129,15 @@
         '<input type="checkbox" id="jdExtraTidelineToggle"' + (tideOn ? ' checked' : '') + '>' +
         '<span class="squish-switch__track"></span></label></div>' +
         '<button class="jd-extra-ai-facts" data-act="facts">Manage facts</button>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🤖 Agent Browse <span style="font-size:10px;opacity:.6;font-weight:400">BETA</span></h4>' +
+        '<p>Jev-style browser agent brain — decides CLICK / TYPE / SELECT on page elements step by step using the app\'s current models. <b>Needs a browser backend</b> (cloud browser or extension relay) to act; until then it runs validated dry-run only.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Agent Browse">' +
+        '<input type="checkbox" id="jdExtraBrowseToggle"' + (browseOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
         '</div>' +
 
         '<button class="jd-extra-ai-done" data-act="close">Done</button>' +
@@ -152,6 +162,11 @@
       if (tideT) tideT.addEventListener('change', function () {
         try { window.jdSetTideline && window.jdSetTideline(tideT.checked); } catch (_) {}
         try { if (window.showModernToast) window.showModernToast(tideT.checked ? 'Tideline Memory ON 🌊' : 'Tideline Memory OFF'); } catch (_) {}
+      });
+      var browseT = sheet.querySelector('#jdExtraBrowseToggle');
+      if (browseT) browseT.addEventListener('change', function () {
+        try { window.jdSetBrowseAgent && window.jdSetBrowseAgent(browseT.checked); } catch (_) {}
+        try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 (beta — needs browser backend)' : 'Agent Browse OFF'); } catch (_) {}
       });
       document.body.appendChild(sheet);
     } catch (_) {}
