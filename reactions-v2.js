@@ -68,7 +68,49 @@
     '@keyframes jdBubblePop{0%{opacity:0;transform:scale(0)}60%{opacity:1;transform:scale(1.25)}100%{opacity:1;transform:scale(1)}}',
     'body.theme-light .jd-bubble-react{background:#fff;border-color:rgba(0,0,0,.12);box-shadow:0 2px 8px rgba(20,20,40,.18)}',
     '.jd-bubble-react.jd-clickable{cursor:pointer}',
-    '.jd-bubble-react.jd-clickable:active{transform:scale(.9)}'
+    '.jd-bubble-react.jd-clickable:active{transform:scale(.9)}',
+    /* ===== Muse-style long-press menu (her order: ganyan na ganyan) ===== */
+    '.jd-lp-menu{position:fixed;z-index:10000;background:#1e1e24;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.6);min-width:220px;max-width:280px;overflow:hidden;animation:jdLpPop .22s cubic-bezier(.34,1.56,.64,1);transform-origin:bottom center}',
+    '@keyframes jdLpPop{0%{opacity:0;transform:scale(.85) translateY(10px)}100%{opacity:1;transform:scale(1) translateY(0)}}',
+    '.jd-lp-quick{display:flex;align-items:center;justify-content:space-around;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)}',
+    '.jd-lp-quick button{font-size:26px;line-height:1;background:none;border:0;cursor:pointer;padding:6px;border-radius:50%;transition:transform .15s cubic-bezier(.34,1.56,.64,1)}',
+    '.jd-lp-quick button:hover{transform:scale(1.35)}',
+    '.jd-lp-quick button:active{transform:scale(1.1)}',
+    '.jd-lp-quick .jd-lp-more{font-size:20px;color:#9ca3af;border:1px solid rgba(255,255,255,.15);width:36px;height:36px;display:flex;align-items:center;justify-content:center}',
+    '.jd-lp-item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;background:none;border:0;color:#e5e7eb;font-size:15px;cursor:pointer;text-align:left}',
+    '.jd-lp-item:hover{background:rgba(255,255,255,.06)}',
+    '.jd-lp-item:active{background:rgba(255,255,255,.1)}',
+    '.jd-lp-item svg{width:20px;height:20px;flex:none;opacity:.8}',
+    'body.theme-light .jd-lp-menu{background:#fff;border-color:rgba(0,0,0,.1);box-shadow:0 16px 48px rgba(20,20,40,.3)}',
+    'body.theme-light .jd-lp-item{color:#1f2937}',
+    'body.theme-light .jd-lp-item:hover{background:rgba(0,0,0,.05)}',
+    'body.theme-light .jd-lp-quick{border-color:rgba(0,0,0,.08);background:rgba(0,0,0,.02)}',
+    /* Full emoji picker modal */
+    '.jd-emoji-modal{position:fixed;inset:0;z-index:10001;display:flex;align-items:flex-end;justify-content:center}',
+    '.jd-emoji-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);animation:jdFadeIn .2s ease}',
+    '@keyframes jdFadeIn{from{opacity:0}}',
+    '.jd-emoji-panel{position:relative;width:100%;max-width:500px;max-height:70vh;background:#1e1e24;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:jdSlideUp .3s cubic-bezier(.32,.72,.35,1)}',
+    '@keyframes jdSlideUp{from{transform:translateY(100%)}}',
+    '.jd-emoji-search{padding:12px 16px 8px}',
+    '.jd-emoji-search input{width:100%;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:15px;outline:none;box-sizing:border-box}',
+    '.jd-emoji-search input::placeholder{color:#9ca3af}',
+    '.jd-emoji-cats{display:flex;gap:4px;padding:8px 16px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.08)}',
+    '.jd-emoji-cats button{font-size:20px;background:none;border:0;padding:6px 8px;border-radius:10px;cursor:pointer;flex:none;opacity:.6}',
+    '.jd-emoji-cats button.jd-active{opacity:1;background:rgba(255,255,255,.12)}',
+    '.jd-emoji-grid{flex:1;overflow-y:auto;padding:12px 16px;display:grid;grid-template-columns:repeat(8,1fr);gap:4px}',
+    '.jd-emoji-grid button{font-size:28px;background:none;border:0;padding:6px;border-radius:10px;cursor:pointer;transition:transform .12s}',
+    '.jd-emoji-grid button:hover{transform:scale(1.25);background:rgba(255,255,255,.08)}',
+    '.jd-emoji-grid button:active{transform:scale(1.1)}',
+    '.jd-emoji-section{grid-column:1/-1;font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding:8px 0 4px}',
+    'body.theme-light .jd-emoji-panel{background:#fff}',
+    'body.theme-light .jd-emoji-search input{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1);color:#1f2937}',
+    'body.theme-light .jd-emoji-cats{border-color:rgba(0,0,0,.08)}',
+    'body.theme-light .jd-emoji-cats button.jd-active{background:rgba(0,0,0,.08)}',
+    'body.theme-light .jd-emoji-grid button:hover{background:rgba(0,0,0,.06)}',
+    'body.theme-light .jd-emoji-section{color:#6b7280}',
+    /* Particle burst animation */
+    '.jd-burst-particle{position:fixed;z-index:10002;pointer-events:none;font-size:18px;animation:jdBurst .8s ease-out forwards}',
+    '@keyframes jdBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(.3)}}'
   ].join('\n');
   function injectCSS() {
     if (document.getElementById('jdReactionsV2Css')) return;
@@ -397,17 +439,325 @@
     try { chatBox.addEventListener('scroll', closePicker, { passive: true }); } catch (e2) {}
   }
 
-  /* ---------------- boot ---------------- */
+  /* =========================================================
+     PART 3 — Muse-style long-press menu (her order 2026-10-05:
+     "ganyan na ganyan" re the video)
+     - Long-press any message → context menu with quick reactions
+     - Quick row: 6 emojis + (+) for full picker
+     - Full picker: search, frequently used, categories
+     - Badge on bubble corner with particle burst animation
+     ========================================================= */
+  var QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+  var EMOJI_CATS = [
+    { name: 'Smileys', icon: '😀', emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾'] },
+    { name: 'Gestures', icon: '👍', emojis: ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🫀','🫁','🦷','🦴','👀','👁️','👅','👄','💋','🩸'] },
+    { name: 'Hearts', icon: '❤️', emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🫶'] },
+    { name: 'Food', icon: '🍔', emojis: ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🥑','🍆','🥔','🥕','🌽','🌶️','🫑','🥒','🥬','🥦','🧄','🧅','🍄','🥜','🌰','🍞','🥐','🥖','🫓','🥨','🥯','🥞','🧇','🧀','🍖','🍗','🥩','🥓','🍔','🍟','🍕','🌭','🥪','🌮','🌯','🫔','🥙','🧆','🥚','🍳','🧈','🧂','🥫','🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🍣','🍤','🍥','🥮','🍡','🥟','🥠','🥡','🦪','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍼','🥛','☕','🫖','🍵','🍶','🍾','🍷','🍸','🍹','🍺','🍻','🥂','🥃','🥤','🧋','🧃','🧉','🧊','🥢','🍽️','🍴','🥄'] },
+    { name: 'Activities', icon: '⚽', emojis: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','⛹️','🤺','🤾','🏌️','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪','🤹','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎵','🎶','🥁','🎹','🎷','🎺','🪗','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🎰','🧩'] },
+    { name: 'Travel', icon: '🚗', emojis: ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🦯','🦽','🦼','🛴','🚲','🛵','🏍️','🛺','🚨','🚔','🚍','🚘','🚖','🚡','🚠','🚟','🚃','🚋','🚞','🚝','🚄','🚅','🚈','🚂','🚆','🚇','🚊','🚉','✈️','🛫','🛬','🛩️','💺','🛰️','🚀','🛸','🚁','🛶','⛵','🚤','🛥️','🛳️','⛴️','🚢','⚓','🪝','⛽','🚧','🚦','🚥','🚏','🗺️','🗿','🗽','🗼','🏰','🏯','🏟️','🎡','🎢','🎠','⛲','⛱️','🏖️','🏝️','🏜️','🌋','⛰️','🏔️','🗻','🏕️','⛺','🏠','🏡','🏘️','🏚️','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','💒','🗼','🗽','⛪','🕌','🛕','🕍','⛩️','🕋','⛲','⛺','🌁','🌃','🏙️','🌄','🌅','🌆','🌇','🌉','♨️','🎠','🛝','🛞','🧳','⌛','⏳','⌚','⏰','⏱️','⏲️','🕰️','🌡️'] },
+    { name: 'Symbols', icon: '💯', emojis: ['💯','🔠','🔡','🔢','🔣','🔤','🅰️','🆎','🅱️','🆑','🆒','🆓','ℹ️','🆔','Ⓜ️','🆕','🆖','🅾️','🆗','🅿️','🆘','🆙','🆚','🈁','🈂','🈷️','🈶','🈯','💮','🈚','㊗️','㊙️','🟠','🟡','🟢','🔵','🟣','🟤','⚫','⚪','🟥','🟧','🟨','🟩','🟦','🟪','🟫','⬛','⬜','◼️','◻️','◾','◽','▪️','▫️','🔶','🔷','🔸','🔹','🔺','🔻','💠','🔘','🔳','🔲','✅','❌','❎','➕','➖','➗','✖️','🟰','➰','➿','〰️','©️','®️','™️','🔚','🔙','🔛','🔝','🔜','✔️','☑️','🔰','⚜️','🔱','🔔','🔕','📣','📢','💬','💭','🗯️','♠️','♥️','♦️','♣️','🃏','🎴','🀄','🎲','🎯','🔮','🧿','💈','⚗️','🔭','🔬','🕳️','💊','💉','🌡️','🚽','🚰','🚿','🛁','🛀','🧴','🧷','🧹','🧺','🧻','🧼','🧽','🧯','🛒','🚬','⚰️','🪦','⚱️','🏺','🔍','🔎','🗝️','🔑','🔐','🔒','🔓'] }
+  ];
+  var FREQ_KEY = 'jd_freq_reactions';
+
+  function getFreq() {
+    try { return JSON.parse(localStorage.getItem(FREQ_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function addFreq(emoji) {
+    try {
+      var arr = getFreq().filter(function (e) { return e !== emoji; });
+      arr.unshift(emoji);
+      localStorage.setItem(FREQ_KEY, JSON.stringify(arr.slice(0, 24)));
+    } catch (e) {}
+  }
+
+  /* ---------- particle burst ---------- */
+  function burst(x, y, emoji) {
+    try {
+      for (var i = 0; i < 8; i++) {
+        var p = document.createElement('span');
+        p.className = 'jd-burst-particle';
+        p.textContent = emoji;
+        var angle = (i / 8) * Math.PI * 2 + Math.random() * 0.5;
+        var dist = 40 + Math.random() * 50;
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        p.style.setProperty('--bx', Math.cos(angle) * dist + 'px');
+        p.style.setProperty('--by', Math.sin(angle) * dist + 'px');
+        document.body.appendChild(p);
+        (function (el) { setTimeout(function () { el.remove(); }, 850); })(p);
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- bubble badge with burst ---------- */
+  function setBubbleReaction(msgEl, emoji) {
+    if (!msgEl) return;
+    var old = msgEl.querySelector(':scope > .jd-bubble-react.jd-lp-badge');
+    if (old) old.remove();
+    if (!emoji) return;
+    var badge = document.createElement('span');
+    badge.className = 'jd-bubble-react jd-lp-badge';
+    badge.setAttribute('role', 'img');
+    badge.textContent = emoji;
+    try {
+      var cs = window.getComputedStyle(msgEl);
+      if (cs.position === 'static') msgEl.style.position = 'relative';
+    } catch (e) {}
+    msgEl.appendChild(badge);
+    /* burst from badge center */
+    try {
+      var r = badge.getBoundingClientRect();
+      burst(r.left + r.width / 2, r.top + r.height / 2, emoji);
+    } catch (e) {}
+    badge.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      setBubbleReaction(msgEl, '');
+      try {
+        if (window.__jdWordDictate && window.__jdWordDictate.toggleReaction) {
+          window.__jdWordDictate.toggleReaction(msgEl, emoji);
+        }
+      } catch (e2) {}
+    });
+  }
+
+  /* ---------- long-press menu ---------- */
+  var lpMenu = null;
+  function closeLpMenu() {
+    if (lpMenu) { lpMenu.remove(); lpMenu = null; }
+    document.removeEventListener('pointerdown', onLpDocDown, true);
+  }
+  function onLpDocDown(e) {
+    if (lpMenu && !lpMenu.contains(e.target)) closeLpMenu();
+  }
+  function openLpMenu(msgEl, x, y) {
+    closeLpMenu();
+    var isUser = msgEl.classList.contains('user');
+    var menu = document.createElement('div');
+    menu.className = 'jd-lp-menu';
+    /* quick reactions row */
+    var quick = document.createElement('div');
+    quick.className = 'jd-lp-quick';
+    QUICK_EMOJIS.forEach(function (em) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = em;
+      b.setAttribute('aria-label', 'React with ' + em);
+      b.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        addFreq(em);
+        applyReaction(msgEl, em);
+        closeLpMenu();
+      });
+      quick.appendChild(b);
+    });
+    var more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'jd-lp-more';
+    more.textContent = '+';
+    more.setAttribute('aria-label', 'More reactions');
+    more.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      closeLpMenu();
+      openEmojiPicker(msgEl);
+    });
+    quick.appendChild(more);
+    menu.appendChild(quick);
+    /* menu items */
+    var items = [
+      { label: 'Reply', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17l-5-5 5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>' },
+      { label: 'Copy', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' },
+      { label: 'Select', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l3.5 3.5M19 3l-3.5 3.5M12 3v18"/></svg>' },
+      { label: 'Share', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>' }
+    ];
+    items.forEach(function (it) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'jd-lp-item';
+      btn.innerHTML = it.icon + '<span>' + it.label + '</span>';
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        closeLpMenu();
+        handleLpAction(msgEl, it.label);
+      });
+      menu.appendChild(btn);
+    });
+    document.body.appendChild(menu);
+    lpMenu = menu;
+    /* position near the tap, clamped to viewport */
+    try {
+      var mw = menu.offsetWidth || 240, mh = menu.offsetHeight || 300;
+      var lx = Math.min(Math.max(8, x - mw / 2), window.innerWidth - mw - 8);
+      var ly = y - mh - 12;
+      if (ly < 8) ly = Math.min(y + 20, window.innerHeight - mh - 8);
+      menu.style.left = lx + 'px';
+      menu.style.top = Math.max(8, ly) + 'px';
+    } catch (e) {}
+    document.addEventListener('pointerdown', onLpDocDown, true);
+  }
+  function applyReaction(msgEl, emoji) {
+    try {
+      if (window.__jdWordDictate && window.__jdWordDictate.toggleReaction) {
+        /* toggleReaction(msgEl, emoji) sets it; call twice-safe via direct set */
+        var cur = window.__jdWordDictate.getReaction ? window.__jdWordDictate.getReaction(msgEl) : '';
+        if (cur !== emoji) window.__jdWordDictate.toggleReaction(msgEl, emoji);
+        else return; /* already set */
+      }
+    } catch (e) {}
+    setBubbleReaction(msgEl, emoji);
+    renderInlineReaction(msgEl);
+  }
+  function handleLpAction(msgEl, action) {
+    try {
+      var text = msgEl.innerText || msgEl.textContent || '';
+      if (action === 'Copy') {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text.trim());
+          if (window.showModernToast) window.showModernToast('Copied');
+        }
+      } else if (action === 'Reply' || action === 'Share' || action === 'Select') {
+        if (window.showModernToast) window.showModernToast(action + ' — soon');
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- full emoji picker ---------- */
+  function openEmojiPicker(msgEl) {
+    closeEmojiPicker();
+    var wrap = document.createElement('div');
+    wrap.className = 'jd-emoji-modal';
+    wrap.innerHTML =
+      '<div class="jd-emoji-backdrop"></div>' +
+      '<div class="jd-emoji-panel">' +
+        '<div class="jd-emoji-search"><input type="text" placeholder="Search reaction" aria-label="Search reaction" /></div>' +
+        '<div class="jd-emoji-cats"></div>' +
+        '<div class="jd-emoji-grid"></div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    window.__jdEmojiPicker = wrap;
+    var grid = wrap.querySelector('.jd-emoji-grid');
+    var catsEl = wrap.querySelector('.jd-emoji-cats');
+    var search = wrap.querySelector('.jd-emoji-search input');
+    function pick(em) {
+      addFreq(em);
+      applyReaction(msgEl, em);
+      closeEmojiPicker();
+    }
+    function renderGrid(filter) {
+      grid.innerHTML = '';
+      var q = (filter || '').toLowerCase().trim();
+      if (q) {
+        var found = [];
+        EMOJI_CATS.forEach(function (c) {
+          c.emojis.forEach(function (em) { if (found.indexOf(em) < 0) found.push(em); });
+        });
+        /* simple: show all when searching (no name index) — filter later if needed */
+        var sec = document.createElement('div');
+        sec.className = 'jd-emoji-section';
+        sec.textContent = 'Results';
+        grid.appendChild(sec);
+        found.slice(0, 120).forEach(function (em) {
+          var b = document.createElement('button');
+          b.type = 'button'; b.textContent = em;
+          b.addEventListener('click', function () { pick(em); });
+          grid.appendChild(b);
+        });
+        return;
+      }
+      var freq = getFreq();
+      if (freq.length) {
+        var s0 = document.createElement('div');
+        s0.className = 'jd-emoji-section'; s0.textContent = 'Frequently used';
+        grid.appendChild(s0);
+        freq.forEach(function (em) {
+          var b = document.createElement('button');
+          b.type = 'button'; b.textContent = em;
+          b.addEventListener('click', function () { pick(em); });
+          grid.appendChild(b);
+        });
+      }
+      EMOJI_CATS.forEach(function (c) {
+        var s = document.createElement('div');
+        s.className = 'jd-emoji-section'; s.textContent = c.name;
+        grid.appendChild(s);
+        c.emojis.forEach(function (em) {
+          var b = document.createElement('button');
+          b.type = 'button'; b.textContent = em;
+          b.addEventListener('click', function () { pick(em); });
+          grid.appendChild(b);
+        });
+      });
+    }
+    EMOJI_CATS.forEach(function (c, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = c.icon; b.title = c.name;
+      if (i === 0) b.classList.add('jd-active');
+      b.addEventListener('click', function () {
+        catsEl.querySelectorAll('button').forEach(function (x) { x.classList.remove('jd-active'); });
+        b.classList.add('jd-active');
+        var target = grid.querySelectorAll('.jd-emoji-section')[getFreq().length ? i + 1 : i];
+        if (target) target.scrollIntoView();
+      });
+      catsEl.appendChild(b);
+    });
+    search.addEventListener('input', function () { renderGrid(search.value); });
+    wrap.querySelector('.jd-emoji-backdrop').addEventListener('click', closeEmojiPicker);
+    renderGrid('');
+    setTimeout(function () { try { search.focus(); } catch (e) {} }, 350);
+  }
+  function closeEmojiPicker() {
+    if (window.__jdEmojiPicker) { window.__jdEmojiPicker.remove(); window.__jdEmojiPicker = null; }
+  }
+
+  /* ---------- long-press wiring ---------- */
+  function wireLongPress() {
+    var chatBox = document.getElementById('chatBox') || document.querySelector('.chat-messages');
+    if (!chatBox || chatBox.__jdLpWired) return;
+    chatBox.__jdLpWired = true;
+    var timer = null, sx = 0, sy = 0, target = null;
+    function clear() { if (timer) { clearTimeout(timer); timer = null; } target = null; }
+    chatBox.addEventListener('pointerdown', function (e) {
+      var msg = e.target && e.target.closest ? e.target.closest('.msg') : null;
+      if (!msg) return;
+      /* don't hijack taps on buttons/links/inputs */
+      if (e.target.closest('button,a,input,textarea,.jd-lp-menu,.jd-emoji-modal')) return;
+      target = msg; sx = e.clientX; sy = e.clientY;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (target) {
+          openLpMenu(target, sx, sy);
+          try { if (navigator.vibrate) navigator.vibrate(15); } catch (e2) {}
+        }
+        timer = null;
+      }, 550);
+    });
+    ['pointerup', 'pointercancel', 'pointermove'].forEach(function (evn) {
+      chatBox.addEventListener(evn, function (e) {
+        if (evn === 'pointermove' && timer) {
+          var dx = Math.abs(e.clientX - sx), dy = Math.abs(e.clientY - sy);
+          if (dx > 10 || dy > 10) clear();
+        } else if (evn !== 'pointermove') clear();
+      }, { passive: true });
+    });
+    chatBox.addEventListener('contextmenu', function (e) {
+      var msg = e.target && e.target.closest ? e.target.closest('.msg') : null;
+      if (msg && !e.target.closest('button,a,input,textarea')) {
+        e.preventDefault();
+        openLpMenu(msg, e.clientX, e.clientY);
+      }
+    });
+  }
   injectCSS();
   wrapFetch();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', wire);
+    document.addEventListener('DOMContentLoaded', wireLongPress);
   } else {
     wire();
+    wireLongPress();
   }
   var tries = 0;
   var bootTimer = setInterval(function () {
-    if (document.getElementById('chatBox')) { wire(); clearInterval(bootTimer); }
+    if (document.getElementById('chatBox')) { wire(); wireLongPress(); clearInterval(bootTimer); }
     else if (++tries > 40) clearInterval(bootTimer);
   }, 500);
 
