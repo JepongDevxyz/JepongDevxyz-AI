@@ -459,6 +459,54 @@ function installAudioDomWatcher() {
     window.__jdAudioDomWatcher = true;
     var observer = new MutationObserver(function (mutations) {
       mutations.forEach(function (mut) {
+        /* Handle text changes from streaming (characterData) */
+        if (mut.type === 'characterData') {
+          try {
+            var tn = mut.target;
+            var parent = tn.parentElement;
+            var cmsg = parent && parent.closest ? parent.closest('.msg.bot') : null;
+            if (cmsg && !cmsg.__jdAudioDone) {
+              var ctext = cmsg.textContent || '';
+              AUDIO_MARK_RE.lastIndex = 0;
+              var cm = AUDIO_MARK_RE.exec(ctext);
+              if (cm) {
+                cmsg.__jdAudioDone = true;
+                var cspoken = cm[1];
+                try {
+                  LEFTOVER_RE.lastIndex = 0;
+                  var cwalker = document.createTreeWalker(cmsg, NodeFilter.SHOW_TEXT, null);
+                  var cnodes = [], cn;
+                  while ((cn = cwalker.nextNode())) cnodes.push(cn);
+                  cnodes.forEach(function (ctn) {
+                    try {
+                      if (LEFTOVER_RE.test(ctn.nodeValue)) {
+                        LEFTOVER_RE.lastIndex = 0;
+                        ctn.nodeValue = ctn.nodeValue.replace(LEFTOVER_RE, '');
+                      }
+                    } catch (_) {}
+                  });
+                } catch (_) {}
+                setTimeout(function () {
+                  try {
+                    if (cmsg.querySelector('[data-jd-ai-audio]')) return;
+                    var cbubble = buildBubble();
+                    try { cmsg.appendChild(cbubble); } catch (_) { return; }
+                    var cvoice = 'Ember';
+                    try {
+                      var cvp = window.personalizationSettings && window.personalizationSettings.voicePersona;
+                      if (cvp) cvoice = cvp;
+                    } catch (_) {}
+                    fetchTtsBlob(cspoken, detectLang(cspoken), cvoice).then(
+                      function (blob) { wireBubble(cbubble, blob); },
+                      function () { markError(cbubble); }
+                    );
+                  } catch (_) {}
+                }, 100);
+              }
+            }
+          } catch (_) {}
+          return;
+        }
         mut.addedNodes.forEach(function (node) {
           if (!node.querySelectorAll) return;
           var msgs = [];
@@ -513,7 +561,7 @@ function installAudioDomWatcher() {
         });
       });
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   } catch (_) {}
 }
 })();
