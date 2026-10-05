@@ -12,10 +12,10 @@
    3. Taps the response stream: when the model emits
         [[JD_LYRICS|artist|title]]
       the patch strips the marker from the displayed text (the user
-      never sees raw markers), fetches the lyrics from the free,
-      keyless, CORS-enabled https://api.lyrics.ovh endpoint, and
-      appends a lyrics card (header, scrollable lyrics body, Copy /
-      Read aloud buttons) to the finished assistant message.
+      never sees raw markers) and appends a lyrics card header
+      (title, artist, Copy / Read aloud buttons) to the finished
+      assistant message. The AI provides lyrics directly in its
+      response text, like Muse does — no external API needed.
 
    Marker fields: never contain '|' (the instruction says so).
 
@@ -150,18 +150,8 @@ function fillCard(card, ok, text) {
   } catch (_) {}
 }
 
-function fetchLyrics(artist, title) {
-  var url = 'https://api.lyrics.ovh/v1/' +
-    encodeURIComponent(String(artist || '').trim()) + '/' +
-    encodeURIComponent(String(title || '').trim());
-  return window.fetch(url, { method: 'GET' }).then(function (res) {
-    if (!res || !res.ok) throw new Error('lyrics-http-' + (res && res.status));
-    return res.json();
-  }).then(function (data) {
-    if (!data || typeof data.lyrics !== 'string' || !data.lyrics.trim()) throw new Error('lyrics-empty');
-    return data.lyrics.trim();
-  });
-}
+/* fetchLyrics removed 2026-10-05 (her order: "Alisin mo yung API lyrics.ovh") —
+   the AI now provides lyrics directly in its response, like Muse. */
 
 /* ---------- scrub any literal leftover markers from the message ---------- */
 function scrubLeftovers(msg) {
