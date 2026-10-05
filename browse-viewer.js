@@ -9,7 +9,8 @@
   if (window.__jdBrowseViewerLoaded) return;
   window.__jdBrowseViewerLoaded = true;
 
-  var POLL_MS = 2500;
+  var POLL_MS = 1500; /* normal: 1.5s (was 2.5s) */
+  var CONTROL_POLL_MS = 500; /* during takeover: 0.5s (was 1s) */
   var viewer = null;
 
   function esc(s) {
@@ -230,7 +231,7 @@
       toast('Click…');
       doAct('CLICK', p.x, p.y, '').then(function () {
         busy = false;
-        setTimeout(poll, 900); /* refresh after the click lands */
+        setTimeout(poll, 400); /* refresh after the click lands */
       }).catch(function () { busy = false; toast('Click failed'); });
     });
 
@@ -245,7 +246,7 @@
         sendBtn.textContent = 'Send';
         input.value = '';
         toast('Typed ✓');
-        setTimeout(poll, 900);
+        setTimeout(poll, 400);
       }).catch(function () { busy = false; sendBtn.textContent = 'Send'; toast('Type failed'); });
     }
     sendBtn.addEventListener('click', sendType);
@@ -264,7 +265,7 @@
         if (!b || busy || stopped) return;
         busy = true;
         doAct(b.getAttribute('data-d') === 'up' ? 'SCROLL_UP' : 'SCROLL_DOWN', 0, 0, '')
-          .then(function () { busy = false; setTimeout(poll, 900); })
+          .then(function () { busy = false; setTimeout(poll, 400); })
           .catch(function () { busy = false; });
       });
       el.querySelector('.jd-bv-actions').insertBefore(row, stopBtn);
@@ -280,10 +281,10 @@
       img.classList.add('controlling');
       addScrollRow();
       toast('Ikaw na ang may control 👆');
-      /* Faster refresh while controlling (1s vs 2.5s) */
+      /* Faster refresh while controlling (0.5s vs 1.5s) */
       try {
         if (viewer && viewer.timer) clearInterval(viewer.timer);
-        viewer.timer = setInterval(poll, 1000);
+        viewer.timer = setInterval(poll, CONTROL_POLL_MS);
       } catch (_) {}
       try {
         /* Pause the agent loop so it doesn't fight the user.
