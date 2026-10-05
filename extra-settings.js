@@ -73,6 +73,11 @@
           '<i data-lucide="bot"></i>' +
           '<span><strong>JepongDevxyz AI</strong><small>Slop Filter &amp; Tideline Memory</small></span>' +
           '<i data-lucide="chevron-right"></i>' +
+        '</button>' +
+        '<button class="settings-nav-row" id="jdExtraCacheRow" type="button" aria-label="Cache settings">' +
+          '<i data-lucide="trash-2"></i>' +
+          '<span><strong>Cache</strong><small>Clear cache &amp; auto-clear</small></span>' +
+          '<i data-lucide="chevron-right"></i>' +
         '</button>';
 
       legalLabel.parentNode.insertBefore(h, legalLabel);
@@ -85,6 +90,11 @@
       var aiRow = document.getElementById('jdExtraAiRow');
       if (aiRow) aiRow.addEventListener('click', function () {
         try { window.jdExtraOpenAiSheet && window.jdExtraOpenAiSheet(); } catch (_) {}
+      });
+      /* Cache row opens the dedicated Cache sheet. */
+      var cacheRow = document.getElementById('jdExtraCacheRow');
+      if (cacheRow) cacheRow.addEventListener('click', function () {
+        try { window.jdExtraOpenCacheSheet && window.jdExtraOpenCacheSheet(); } catch (_) {}
       });
 
       return true;
@@ -166,17 +176,6 @@
         '<div style="font-size:11px;opacity:.55;margin-top:4px">Keys: Vercel → STEEL_API_KEYS (comma-separated) → redeploy.</div>' +
         '</div>' +
 
-        '<div class="jd-extra-ai-card">' +
-        '<h4>🗑️ Cache</h4>' +
-        '<p>Clear the app\'s cached files when updates don\'t appear. Your settings and chats are kept.</p>' +
-        '<button class="jd-extra-ai-clearcache" data-act="clearcache" style="width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#1f2937;color:#f3f4f6;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">🗑️ Clear Cache Now</button>' +
-        '<div class="jd-extra-ai-toggle" style="margin-top:10px"><span>Automatic Clear Cache on refresh</span>' +
-        '<label class="squish-switch-root" aria-label="Automatic Clear Cache">' +
-        '<input type="checkbox" id="jdExtraAutoClearToggle">' +
-        '<span class="squish-switch__track"></span></label></div>' +
-        '<div style="font-size:11px;opacity:.55;margin-top:4px">When ON, cached files are cleared every time the app loads — updates appear immediately.</div>' +
-        '</div>' +
-
         '<button class="jd-extra-ai-done" data-act="close">Done</button>' +
         '</div>';
       sheet.addEventListener('click', function (e) {
@@ -188,13 +187,6 @@
         if (act === 'facts') {
           closeAiSheet();
           try { window.jdTidelineOpenManager && window.jdTidelineOpenManager(); } catch (_) {}
-        }
-        if (act === 'clearcache') {
-          if (window.jdClearAppCache) {
-            try { if (window.showModernToast) window.showModernToast('🗑️ Clearing cache…'); } catch (_) {}
-            window.jdClearAppCache(true);
-          }
-          return;
         }
       });
       var slopT = sheet.querySelector('#jdExtraSlopToggle');
@@ -212,15 +204,6 @@
         try { window.jdSetBrowseAgent && window.jdSetBrowseAgent(browseT.checked); } catch (_) {}
         try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 — type "browse: <goal>" in chat' : 'Agent Browse OFF'); } catch (_) {}
       });
-      /* Cache: auto-clear toggle — OFF by default per her standing rule */
-      var autoClearT = sheet.querySelector('#jdExtraAutoClearToggle');
-      if (autoClearT) {
-        try { autoClearT.checked = localStorage.getItem('jd_auto_clear_cache') === '1'; } catch (_) {}
-        autoClearT.addEventListener('change', function () {
-          try { localStorage.setItem('jd_auto_clear_cache', autoClearT.checked ? '1' : '0'); } catch (_) {}
-          try { if (window.showModernToast) window.showModernToast(autoClearT.checked ? 'Auto Clear Cache ON 🗑️ — clears on every load' : 'Auto Clear Cache OFF'); } catch (_) {}
-        });
-      }
       document.body.appendChild(sheet);
       try {
         if (window.jdSteelPoolInfo) {
@@ -237,6 +220,63 @@
       } catch (_) {}
     } catch (_) {}
   };
+
+  /* ---- Dedicated Cache sheet (her order 2026-10-05: separate row below
+     JepongDevxyz AI, not inside the AI sheet) ---- */
+  window.jdExtraOpenCacheSheet = function () {
+    try {
+      ensureAiSheetCSS();
+      closeAiSheet();
+      var autoOn = false;
+      try { autoOn = localStorage.getItem('jd_auto_clear_cache') === '1'; } catch (_) {}
+      var sheet = document.createElement('div');
+      sheet.className = 'jd-extra-ai-sheet';
+      sheet.innerHTML =
+        '<div class="jd-extra-ai-panel" role="dialog" aria-label="Cache settings">' +
+        '<div class="jd-extra-ai-head"><strong>🗑️ Cache</strong>' +
+        '<button class="jd-extra-ai-close" data-act="close">✕</button></div>' +
+        '<div class="jd-extra-ai-sub">Cached files management — settings and chats are kept</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🗑️ Clear Cache Now</h4>' +
+        '<p>Clear the app\'s cached files immediately when updates don\'t appear. The app will reload.</p>' +
+        '<button class="jd-extra-ai-clearcache" data-act="clearcache" style="width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#1f2937;color:#f3f4f6;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">🗑️ Clear Cache Now</button>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🔄 Automatic Clear Cache</h4>' +
+        '<p>When ON, cached files are cleared every time the app loads — updates appear immediately without manual clearing.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Automatic Clear Cache">' +
+        '<input type="checkbox" id="jdExtraAutoClearToggle"' + (autoOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '</div>' +
+
+        '<button class="jd-extra-ai-done" data-act="close">Done</button>' +
+        '</div>';
+      sheet.addEventListener('click', function (e) {
+        if (e.target === sheet) { closeAiSheet(); return; }
+        var btn = e.target.closest('[data-act]');
+        if (!btn) return;
+        var act = btn.getAttribute('data-act');
+        if (act === 'close') { closeAiSheet(); return; }
+        if (act === 'clearcache') {
+          if (window.jdClearAppCache) {
+            try { if (window.showModernToast) window.showModernToast('🗑️ Clearing cache…'); } catch (_) {}
+            window.jdClearAppCache(true);
+          }
+          return;
+        }
+      });
+      var autoT = sheet.querySelector('#jdExtraAutoClearToggle');
+      if (autoT) autoT.addEventListener('change', function () {
+        try { localStorage.setItem('jd_auto_clear_cache', autoT.checked ? '1' : '0'); } catch (_) {}
+        try { if (window.showModernToast) window.showModernToast(autoT.checked ? 'Auto Clear Cache ON 🗑️ — clears on every load' : 'Auto Clear Cache OFF'); } catch (_) {}
+      });
+      document.body.appendChild(sheet);
+    } catch (_) {}
+  };
+
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeAiSheet();
   });
