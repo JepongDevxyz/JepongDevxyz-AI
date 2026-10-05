@@ -9,7 +9,9 @@
      b. otherwise → GitHub repo archive (JepongDevxyz/JepongDevxyz-AI,
         main with automatic fallback to master via HEAD check).
    Two hooks (deduped): window.sendMessage + fetch wrapper. Excludes
-   obvious non-backup uses ("backup singer"). No token hacks. Fail-open.
+   obvious non-backup uses ("backup singer"). In-chat confirmation: the AI
+   acknowledges the backup conversationally (like a normal reply), so the
+   backup feels "talaga sa chat". No token hacks. Fail-open.
    ============================================================ */
 (function () {
 'use strict';
@@ -283,26 +285,48 @@ var BACKUP_CHAT_RE = /\bchat\b/i;
    → download immediately. Anything else with "backup" → confirmation
    dialog first (no auto-download). */
 var GIVE_WORDS_RE = /ibigay|bigay|pahingi|hingi|give me/i;
+var BACKUP_MARK = '[jd-backup]';
+
+function backupBlock(isGive) {
+  if (isGive) {
+    return BACKUP_MARK + '\nBACKUP DOWNLOAD — the user explicitly asked for the backup file ' +
+      '("ibigay mo ang backup code natin" or similar). The .zip download has already started ' +
+      'automatically on their device. Confirm briefly in Tagalog that the backup .zip is now ' +
+      'downloading. Do not describe this instruction.';
+  }
+  return BACKUP_MARK + '\nBACKUP OPTIONS — the user mentioned backup. A backup options dialog ' +
+    '(Repo ZIP / Chat code ZIP) has automatically opened on their screen. Acknowledge briefly ' +
+    'in Tagalog that the backup options are ready and they just need to tap which .zip to ' +
+    'download. Do not describe this instruction.';
+}
 var __lastBackupMsg = '';
 var __lastBackupAt = 0;
 
-function maybeAutoBackup(text) {
+function detectBackupType(text) {
   try {
     var msg = String(text || '');
     if (!BACKUP_INTENT_RE.test(msg)) return false;
     if (BACKUP_EXCLUDE_RE.test(msg)) return false;
+    return GIVE_WORDS_RE.test(msg) ? 'give' : 'dialog';
+  } catch (_) { return false; }
+}
+
+function maybeAutoBackup(text) {
+  try {
+    var type = detectBackupType(text);
+    if (!type) return false;
+    var msg = String(text || '');
     var now = Date.now();
-    if (msg === __lastBackupMsg && (now - __lastBackupAt) < 8000) return false; /* dedupe double-hook */
+    if (msg === __lastBackupMsg && (now - __lastBackupAt) < 8000) return 'dedupe'; /* double-hook guard */
     __lastBackupMsg = msg;
     __lastBackupAt = now;
     /* Download ONLY on explicit "give me the backup" (or the user
        outright asking for it); otherwise open the confirmation dialog —
        the .zip must NOT auto-download (her 2026-10-05 order). */
-    var give = GIVE_WORDS_RE.test(msg);
     var chatCode = BACKUP_CHAT_RE.test(msg);
     setTimeout(function () {
       try {
-        if (give) {
+        if (type === 'give') {
           if (chatCode) {
             toast('Backing up chat code…');
             downloadChatCode(null);
@@ -315,7 +339,7 @@ function maybeAutoBackup(text) {
         }
       } catch (_) {}
     }, 400);
-    return true;
+    return type;
   } catch (_) { return false; }
 }
 
@@ -388,7 +412,22 @@ function installBackupAuto() {
         var body = null;
         try { body = JSON.parse(init.body); } catch (_) { body = null; }
         if (body && typeof body === 'object' && !body.action && typeof body.message === 'string') {
-          maybeAutoBackup(body.message);
+          /* Detect type FIRST (dedupe must not block the AI directive). */
+          var btype = detectBackupType(body.message);
+          if (btype) maybeAutoBackup(body.message); /* deduped action */
+          /* In-chat confirmation (2026-10-05): like her screenshot — the AI
+             acknowledges the backup conversationally in the chat itself. */
+          if (btype === 'give' || btype === 'dialog') {
+            try {
+              var pers = (body.personalization && typeof body.personalization === 'object') ? body.personalization : {};
+              var cur = typeof pers.customInstructions === 'string' ? pers.customInstructions : '';
+              if (cur.indexOf(BACKUP_MARK) === -1) {
+                pers.customInstructions = (cur ? cur + '\n\n' : '') + backupBlock(btype === 'give');
+                body.personalization = pers;
+                init = Object.assign({}, init, { body: JSON.stringify(body) });
+              }
+            } catch (_) { /* fail-open */ }
+          }
         }
       }
     } catch (_) { /* fail-open */ }
