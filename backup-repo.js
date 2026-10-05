@@ -301,7 +301,9 @@ function openBackupDialog() {
         '<button type="button" class="jd-backup-sheet__close" data-act="close">Isara</button>' +
       '</div>';
     document.body.appendChild(sheet);
-    function close() { try { sheet.remove(); } catch (_) {} }
+    function close() { try { document.removeEventListener('keydown', onKey); } catch (_) {} try { sheet.remove(); } catch (_) {} }
+    function onKey(e) { try { if (e && (e.key === 'Escape' || e.keyCode === 27)) close(); } catch (_) {} }
+    try { document.addEventListener('keydown', onKey); } catch (_) {}
     sheet.querySelector('.jd-backup-sheet__bg').addEventListener('click', close);
     sheet.querySelector('[data-act="close"]').addEventListener('click', close);
     sheet.querySelector('[data-act="scan"]').addEventListener('click', function () {
