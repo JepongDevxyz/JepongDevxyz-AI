@@ -57,6 +57,10 @@
           '<span class="jd-bv-title">👁 Live — ' + esc(goal || 'Browser') + '</span>' +
           '<button class="jd-bv-close" aria-label="Close">✕</button>' +
         '</div>' +
+        '<div class="jd-bv-urlbar">' +
+          '<span class="jd-bv-lock">🔒</span>' +
+          '<span class="jd-bv-url" id="jdBvUrl">connecting…</span>' +
+        '</div>' +
         '<div class="jd-bv-body">' +
           '<img class="jd-bv-img" alt="Live browser view" />' +
           '<div class="jd-bv-cursor" style="display:none"></div>' +
@@ -89,6 +93,9 @@
       '.jd-bv-cb-sub{font-size:12px;color:#9ca3af}' +
       '.jd-bv-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1f2937;color:#f3f4f6;font-weight:600;font-size:14px}' +
       '.jd-bv-close{background:#1f2937;border:0;color:#fff;border-radius:8px;width:32px;height:32px;font-size:16px;cursor:pointer}' +
+      '.jd-bv-urlbar{display:flex;align-items:center;gap:8px;background:#111827;border-bottom:1px solid #1f2937;padding:8px 14px;color:#9ca3af;font-size:13px}' +
+      '.jd-bv-lock{font-size:12px;flex:none}' +
+      '.jd-bv-url{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '.jd-bv-body{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:#000;min-height:0;overflow:hidden;touch-action:none}' +
       '.jd-bv-img{max-width:100%;max-height:100%;object-fit:contain;display:none;user-select:none;-webkit-user-select:none}' +
       '.jd-bv-img.controlling{cursor:crosshair}' +
@@ -114,6 +121,7 @@
     var img = el.querySelector('.jd-bv-img');
     var loading = el.querySelector('.jd-bv-loading');
     var status = el.querySelector('.jd-bv-status');
+    var urlEl = el.querySelector('.jd-bv-url');
     var cursor = el.querySelector('.jd-bv-cursor');
     var toastEl = el.querySelector('.jd-bv-toast');
     var banner = el.querySelector('.jd-bv-control-banner');
@@ -165,6 +173,16 @@
 
     function poll() {
       if (stopped) return;
+      /* Update URL bar from backend */
+      try {
+        var bu = window.__jdBrowseLastBackend && window.__jdBrowseLastBackend.currentUrl;
+        if (bu && urlEl) urlEl.textContent = bu;
+        else if (urlEl && urlEl.textContent === 'connecting…') {
+          /* Fallback: extract URL from goal */
+          var gm = /(https?:\/\/[^\s,]+|www\.[^\s,]+|(?:[a-z0-9-]+\.)+[a-z]{2,})/i.exec(goal || '');
+          if (gm) urlEl.textContent = gm[1].indexOf('http') === 0 ? gm[1] : 'https://' + gm[1];
+        }
+      } catch (_) {}
       getScreenshot().then(function (b64) {
         if (stopped || !b64) return;
         img.src = 'data:image/png;base64,' + b64;
@@ -262,6 +280,11 @@
       img.classList.add('controlling');
       addScrollRow();
       toast('Ikaw na ang may control 👆');
+      /* Faster refresh while controlling (1s vs 2.5s) */
+      try {
+        if (viewer && viewer.timer) clearInterval(viewer.timer);
+        viewer.timer = setInterval(poll, 1000);
+      } catch (_) {}
       try {
         /* Pause the agent loop so it doesn't fight the user.
            Session stays alive for manual driving. */
