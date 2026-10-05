@@ -278,6 +278,17 @@ window.JDCodingAgent=Object.freeze({open,close});
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
   var V='?v=20261004a87';
+  /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
+     CacheStorage on every boot so updates appear immediately. */
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('jd_auto_clear_cache') === '1') {
+      if ('caches' in window && window.caches && window.caches.keys) {
+        window.caches.keys().then(function (names) {
+          names.forEach(function (n) { window.caches.delete(n).catch(function () {}); });
+        }).catch(function () {});
+      }
+    }
+  } catch (_) {}
   window.__jdExploreMode = true; /* unified Explore replaces Feed/Ideas/Library buttons */
   var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/backup-repo.js','/followups-restore-fix.js','/desktop-layout.js','/slop-gate.js','/tideline.js','/extra-settings.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js'];
   function loadPatches(ver){
