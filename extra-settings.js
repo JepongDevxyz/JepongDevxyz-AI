@@ -19,6 +19,30 @@
    ========================================================= */
 (function () {
   'use strict';
+
+  /* ---------- Cache management (her order 2026-10-05) ----------
+     jdClearAppCache(reload): clears CacheStorage (HTTP-cached files)
+     without touching localStorage settings or chats. */
+  window.jdClearAppCache = function (reload) {
+    function done() {
+      if (reload !== false) {
+        try { location.reload(); } catch (_) {}
+      }
+    }
+    try {
+      if ('caches' in window && window.caches && window.caches.keys) {
+        window.caches.keys().then(function (names) {
+          return Promise.all(names.map(function (n) {
+            return window.caches.delete(n).catch(function () {});
+          }));
+        }).then(done).catch(done);
+        /* Safety: reload even if cache API hangs */
+        setTimeout(done, 3000);
+      } else {
+        done();
+      }
+    } catch (_) { done(); }
+  };  'use strict';
   if (window.__jdExtraSettingsLoaded) return;
   window.__jdExtraSettingsLoaded = true;
 
@@ -142,6 +166,17 @@
         '<div style="font-size:11px;opacity:.55;margin-top:4px">Keys: Vercel → STEEL_API_KEYS (comma-separated) → redeploy.</div>' +
         '</div>' +
 
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🗑️ Cache</h4>' +
+        '<p>Clear the app\'s cached files when updates don\'t appear. Your settings and chats are kept.</p>' +
+        '<button class="jd-extra-ai-clearcache" data-act="clearcache" style="width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#1f2937;color:#f3f4f6;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">🗑️ Clear Cache Now</button>' +
+        '<div class="jd-extra-ai-toggle" style="margin-top:10px"><span>Automatic Clear Cache on refresh</span>' +
+        '<label class="squish-switch-root" aria-label="Automatic Clear Cache">' +
+        '<input type="checkbox" id="jdExtraAutoClearToggle">' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '<div style="font-size:11px;opacity:.55;margin-top:4px">When ON, cached files are cleared every time the app loads — updates appear immediately.</div>' +
+        '</div>' +
+
         '<button class="jd-extra-ai-done" data-act="close">Done</button>' +
         '</div>';
       sheet.addEventListener('click', function (e) {
@@ -153,6 +188,13 @@
         if (act === 'facts') {
           closeAiSheet();
           try { window.jdTidelineOpenManager && window.jdTidelineOpenManager(); } catch (_) {}
+        }
+        if (act === 'clearcache') {
+          if (window.jdClearAppCache) {
+            try { if (window.showModernToast) window.showModernToast('🗑️ Clearing cache…'); } catch (_) {}
+            window.jdClearAppCache(true);
+          }
+          return;
         }
       });
       var slopT = sheet.querySelector('#jdExtraSlopToggle');
@@ -170,6 +212,15 @@
         try { window.jdSetBrowseAgent && window.jdSetBrowseAgent(browseT.checked); } catch (_) {}
         try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 — type "browse: <goal>" in chat' : 'Agent Browse OFF'); } catch (_) {}
       });
+      /* Cache: auto-clear toggle — OFF by default per her standing rule */
+      var autoClearT = sheet.querySelector('#jdExtraAutoClearToggle');
+      if (autoClearT) {
+        try { autoClearT.checked = localStorage.getItem('jd_auto_clear_cache') === '1'; } catch (_) {}
+        autoClearT.addEventListener('change', function () {
+          try { localStorage.setItem('jd_auto_clear_cache', autoClearT.checked ? '1' : '0'); } catch (_) {}
+          try { if (window.showModernToast) window.showModernToast(autoClearT.checked ? 'Auto Clear Cache ON 🗑️ — clears on every load' : 'Auto Clear Cache OFF'); } catch (_) {}
+        });
+      }
       document.body.appendChild(sheet);
       try {
         if (window.jdSteelPoolInfo) {
