@@ -278,7 +278,10 @@ async function doAct(key, sessionId, op, x, y, text) {
   } else if (op === 'SCROLL_DOWN') {
     r = await computer({ action: 'scroll', delta_y: 800 });
   } else if (op === 'WAIT') {
-    r = await computer({ action: 'wait', duration: 2000 });
+    /* Server-side sleep — Steel's computer 'wait' hangs; a local pause is
+       deterministic and costs no Steel API time. */
+    await new Promise(function (res) { setTimeout(res, 2000); });
+    r = { ok: true, note: 'waited 2s' };
   } else {
     return { ok: false, note: 'unsupported-op' };
   }
