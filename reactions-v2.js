@@ -84,10 +84,12 @@
      appends it to the system prompt for ALL providers/models).
      ========================================================= */
   var REACTION_INSTRUCTION =
-    'REACTION: At the very end of your response, on its own line, output exactly [USER_REACTION:X] where X is ONE emoji that is your genuine reaction to the user\'s latest message — the way a close friend reacts in chat. ' +
-    'Be accurate to the tone of their message: ❤️ when you appreciate or like what they said, 😢 when they scold you or share something sad, 😂 when they are funny, 👍 when you agree, 😮 when surprised, 🔥 when something is cool or impressive, 🎉 for good news worth celebrating. ' +
-    'If no reaction feels natural, output [USER_REACTION:] with nothing inside. ' +
-    'Output nothing else on that line. Never mention, explain, or apologize for this marker.';
+    'MANDATORY FINAL LINE — you MUST obey this on EVERY response, no exceptions: ' +
+    'After your normal response text, on its OWN separate line at the very end, output exactly [USER_REACTION:X] where X is ONE single emoji. ' +
+    'This is your genuine emotional reaction to the user\'s message, like a close friend reacting in chat. Choose accurately: ' +
+    'use ❤️ when you appreciate or like what they said, 😢 when they scold you or share sad news, 😂 when they are funny, 👍 when you agree with them, 😮 when surprised, 🔥 when something is cool or impressive, 🎉 for good news worth celebrating, 🤔 when they ask something thoughtful, 👏 when they accomplish something, 🙏 when they thank you. ' +
+    'If truly no reaction fits, output [USER_REACTION:] with nothing inside — but you MUST still output the empty marker. ' +
+    'CRITICAL RULES: (1) This line is REQUIRED — never skip it. (2) Output ONLY the marker on that line, nothing else. (3) Never mention, explain, apologize for, or draw attention to this marker in your visible text. (4) Do NOT put the marker inside code blocks or quotes — always on its own plain line at the very end.';
 
   /* Task-completion instruction: make every model follow prompts
      fully and accurately, like Muse does. Added 2026-10-03 per
@@ -112,7 +114,7 @@
             body.personalization = body.personalization || {};
             var existing = body.personalization.customInstructions || '';
             if (existing.indexOf('USER_REACTION') < 0) {
-              existing = (existing ? existing + ' ' : '') + REACTION_INSTRUCTION;
+              existing = REACTION_INSTRUCTION + (existing ? ' ' + existing : '');
             }
             if (existing.indexOf('TASK COMPLETION') < 0) {
               existing = (existing ? existing + ' ' : '') + TASK_INSTRUCTION;
