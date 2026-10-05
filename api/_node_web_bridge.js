@@ -58,10 +58,14 @@ async function webRequestFromNode(req){
       else options.body=JSON.stringify(req.body);
     }else if(req&&typeof req[Symbol.asyncIterator]==='function'){
       let n=0;const parts=[];
+      // Steel file uploads (multipart) need headroom; everything else keeps the 20KB cap.
+      const ctype=String(rawHeaders['content-type']||'');
+      const bigOk=url.pathname==='/api/steel'&&ctype.includes('multipart/form-data');
+      const cap=bigOk?4*1024*1024:20000;
       for await(const part of req){
         const chunk=Buffer.isBuffer(part)?part:Buffer.from(part);
         n+=chunk.length;
-        if(n>20000)throw Object.assign(new Error('Request too large.'),{status:413});
+        if(n>cap)throw Object.assign(new Error('Request too large.'),{status:413});
         parts.push(chunk);
       }
       options.body=Buffer.concat(parts);
@@ -73,7 +77,10 @@ async function replyNode(res,response){
   if(!res)return response;
   if(typeof res.writeHead!=='function'||typeof res.end!=='function')return response;
   res.writeHead(response.status,Object.fromEntries(response.headers.entries()));
-  res.end(await response.text());
+  const ct=String(response.headers.get('content-type')||'');
+  // Binary-safe: only text-ish responses go through .text().
+  if(ct===''||/^(text\/|application\/(json|.*\+json))/i.test(ct)) res.end(await response.text());
+  else res.end(Buffer.from(await response.arrayBuffer()));
 }
 export async function webCompatible(req,res,handle){
   // Native Fetch Request in tests/Fetch runtimes.
