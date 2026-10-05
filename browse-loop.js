@@ -600,8 +600,16 @@
       var watchBtn = card.querySelector('.jd-browse-watch');
       if (watchBtn) watchBtn.addEventListener('click', function () {
         try {
-          if (backend.viewerUrl) window.open(backend.viewerUrl, '_blank', 'noopener');
-          else if (window.showModernToast) window.showModernToast('Wala pang live view');
+          /* Login-free live viewer (screenshot stream via our API).
+             Falls back to Steel's viewer URL if our viewer isn't loaded. */
+          window.__jdBrowseLastBackend = backend;
+          if (window.jdBrowseWatchLive) {
+            window.jdBrowseWatchLive(backend.sessionId, backend.ki, goal);
+          } else if (backend.viewerUrl) {
+            window.open(backend.viewerUrl, '_blank', 'noopener');
+          } else if (window.showModernToast) {
+            window.showModernToast('Wala pang live view');
+          }
         } catch (_) {}
       });
       var shotBtn = card.querySelector('.jd-browse-shotbtn');
