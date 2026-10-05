@@ -371,6 +371,26 @@ function installDomWatcher() {
     window.__jdLyricsDomWatcher = true;
     var observer = new MutationObserver(function (mutations) {
       mutations.forEach(function (mut) {
+        /* Handle text changes from streaming (characterData) */
+        if (mut.type === 'characterData') {
+          try {
+            var tn = mut.target;
+            var parent = tn.parentElement;
+            var msg = parent && parent.closest ? parent.closest('.msg.bot') : null;
+            if (msg && !msg.__jdLyricsDone) {
+              var text = msg.textContent || '';
+              LYRICS_MARK_RE.lastIndex = 0;
+              var m = LYRICS_MARK_RE.exec(text);
+              if (m) {
+                msg.__jdLyricsDone = true;
+                var artist = m[1], title = m[2];
+                scrubLeftovers(msg);
+                setTimeout(function () { attachWhenReady(artist, title); }, 100);
+              }
+            }
+          } catch (_) {}
+          return;
+        }
         mut.addedNodes.forEach(function (node) {
           if (!node.querySelectorAll) return;
           /* Check the node itself and its descendants */
@@ -399,7 +419,7 @@ function installDomWatcher() {
         });
       });
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     /* Also check existing messages on install */
     setTimeout(function () {
       try {
