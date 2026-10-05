@@ -61,6 +61,7 @@
     this.targetId = null;
     this.ki = null;
     this.viewerUrl = null;
+    this.currentUrl = null;
   }
 
   SteelBackend.prototype.connect = function () {
@@ -75,10 +76,12 @@
   };
 
   SteelBackend.prototype.navigate = function (url) {
+    var self = this;
     return apiCall('navigate', {
       sessionId: this.sessionId, targetId: this.targetId, ki: this.ki, url: url
     }).then(function (r) {
       if (!r || r.error) throw new Error((r && r.error) || 'navigate-failed');
+      self.currentUrl = url; /* track for viewer URL bar */
     });
   };
 
