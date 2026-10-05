@@ -441,8 +441,79 @@ function install() {
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', install, { once: true });
+  document.addEventListener('DOMContentLoaded', installAudioDomWatcher, { once: true });
 } else {
   install();
+  installAudioDomWatcher();
 }
 setTimeout(install, 1500);
+setTimeout(installAudioDomWatcher, 2000);
+
+/* ---------- INDEPENDENT DOM watcher (robust fallback) ----------
+   Watches for [[JD_AUDIO|text]] markers in rendered messages,
+   strips them, and renders the voice bubble. Does NOT depend on
+   the fetch wrapper chain. Added 2026-10-05 to fix raw markers. */
+function installAudioDomWatcher() {
+  try {
+    if (window.__jdAudioDomWatcher) return;
+    window.__jdAudioDomWatcher = true;
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mut) {
+        mut.addedNodes.forEach(function (node) {
+          if (!node.querySelectorAll) return;
+          var msgs = [];
+          if (node.classList && node.classList.contains('msg') && node.classList.contains('bot')) {
+            msgs.push(node);
+          }
+          var descendants = node.querySelectorAll ? node.querySelectorAll('.msg.bot') : [];
+          for (var i = 0; i < descendants.length; i++) msgs.push(descendants[i]);
+          msgs.forEach(function (msg) {
+            try {
+              if (msg.__jdAudioDone) return;
+              var text = msg.textContent || '';
+              AUDIO_MARK_RE.lastIndex = 0;
+              var m = AUDIO_MARK_RE.exec(text);
+              if (m) {
+                msg.__jdAudioDone = true;
+                var spoken = m[1];
+                /* Strip marker and render bubble */
+                try {
+                  LEFTOVER_RE.lastIndex = 0;
+                  var walker = document.createTreeWalker(msg, NodeFilter.SHOW_TEXT, null);
+                  var nodes = [], n;
+                  while ((n = walker.nextNode())) nodes.push(n);
+                  nodes.forEach(function (tn) {
+                    try {
+                      if (LEFTOVER_RE.test(tn.nodeValue)) {
+                        LEFTOVER_RE.lastIndex = 0;
+                        tn.nodeValue = tn.nodeValue.replace(LEFTOVER_RE, '');
+                      }
+                    } catch (_) {}
+                  });
+                } catch (_) {}
+                setTimeout(function () {
+                  try {
+                    if (msg.querySelector('[data-jd-ai-audio]')) return;
+                    var bubble = buildBubble();
+                    try { msg.appendChild(bubble); } catch (_) { return; }
+                    var voice = 'Ember';
+                    try {
+                      var vp = window.personalizationSettings && window.personalizationSettings.voicePersona;
+                      if (vp) voice = vp;
+                    } catch (_) {}
+                    fetchTtsBlob(spoken, detectLang(spoken), voice).then(
+                      function (blob) { wireBubble(bubble, blob); },
+                      function () { markError(bubble); }
+                    );
+                  } catch (_) {}
+                }, 100);
+              }
+            } catch (_) {}
+          });
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  } catch (_) {}
+}
 })();
