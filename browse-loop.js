@@ -715,8 +715,13 @@
           if (body && typeof body === 'object' && !body.action && !body._jdBrowse) {
             var msg = typeof body.message === 'string' ? body.message : '';
             var m = /^\s*browse\s*:\s*/i.exec(msg);
-            if (m && window.jdBrowseAgentEnabled && window.jdBrowseAgentEnabled()) {
-              return handleBrowseCommand(msg.slice(m[0].length).trim());
+            if (m) {
+              if (window.jdBrowseAgentEnabled && window.jdBrowseAgentEnabled()) {
+                return handleBrowseCommand(msg.slice(m[0].length).trim());
+              }
+              /* Toggle is OFF — tell the user how to enable instead of
+                 sending "browse:" as a normal chat message. */
+              return synth('⚠️ Naka-OFF ang Agent Browse.\n\nI-ON mo muna:\nSettings → Extra → JepongDevxyz AI → Agent Browse\n\nTapos subukan ulit: browse: <goal>');
             }
           }
         }
