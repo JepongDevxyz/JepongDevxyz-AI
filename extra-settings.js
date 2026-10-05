@@ -22,10 +22,20 @@
 
   /* ---------- Cache management (her order 2026-10-05) ----------
      jdClearAppCache(reload): clears CacheStorage (HTTP-cached files)
-     without touching localStorage settings or chats. */
+     without touching localStorage settings or chats.
+     v2: Also forces a cache-busting navigation to truly bypass the
+     browser HTTP cache (CacheStorage API alone can't clear <script>
+     HTTP cache). */
   window.jdClearAppCache = function (reload) {
-    function done() {
-      if (reload !== false) {
+    function hardReload() {
+      if (reload === false) return;
+      try {
+        /* Navigate to a fresh URL to bypass ALL caches (HTTP + memory).
+           The ?jd_fresh param is stripped by the app on boot. */
+        var url = window.location.pathname + '?jd_fresh=' + Date.now() +
+                  window.location.hash;
+        window.location.replace(url);
+      } catch (_) {
         try { location.reload(); } catch (_) {}
       }
     }
@@ -35,14 +45,21 @@
           return Promise.all(names.map(function (n) {
             return window.caches.delete(n).catch(function () {});
           }));
-        }).then(done).catch(done);
-        /* Safety: reload even if cache API hangs */
-        setTimeout(done, 3000);
+        }).then(hardReload).catch(hardReload);
+        /* Safety: hard reload even if cache API hangs */
+        setTimeout(hardReload, 3000);
       } else {
-        done();
+        hardReload();
       }
-    } catch (_) { done(); }
-  };  'use strict';
+    } catch (_) { hardReload(); }
+  };
+  /* Strip the ?jd_fresh param on boot so it doesn't pollute the URL. */
+  try {
+    if (window.location.search.indexOf('jd_fresh=') !== -1) {
+      var clean = window.location.pathname + window.location.hash;
+      window.history.replaceState(null, '', clean);
+    }
+  } catch (_) {}  'use strict';
   if (window.__jdExtraSettingsLoaded) return;
   window.__jdExtraSettingsLoaded = true;
 
@@ -235,17 +252,17 @@
         '<div class="jd-extra-ai-panel" role="dialog" aria-label="Cache settings">' +
         '<div class="jd-extra-ai-head"><strong>🗑️ Cache</strong>' +
         '<button class="jd-extra-ai-close" data-act="close">✕</button></div>' +
-        '<div class="jd-extra-ai-sub">Cached files management — settings and chats are kept</div>' +
+        '<div class="jd-extra-ai-sub">JepongDevxyz AI cached files only — other sites are not affected</div>' +
 
         '<div class="jd-extra-ai-card">' +
         '<h4>🗑️ Clear Cache Now</h4>' +
-        '<p>Clear the app\'s cached files immediately when updates don\'t appear. The app will reload.</p>' +
+        '<p>Clear JepongDevxyz AI\'s cached files immediately when updates don\'t appear. Only this app\'s cache is cleared — your settings, chats, and other websites are kept. The app will reload.</p>' +
         '<button class="jd-extra-ai-clearcache" data-act="clearcache" style="width:100%;padding:12px;border-radius:10px;border:1px solid #374151;background:#1f2937;color:#f3f4f6;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">🗑️ Clear Cache Now</button>' +
         '</div>' +
 
         '<div class="jd-extra-ai-card">' +
         '<h4>🔄 Automatic Clear Cache</h4>' +
-        '<p>When ON, cached files are cleared every time the app loads — updates appear immediately without manual clearing.</p>' +
+        '<p>When ON, JepongDevxyz AI\'s cached files are cleared every time the app loads — updates appear immediately without manual clearing. Only this app is affected.</p>' +
         '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
         '<label class="squish-switch-root" aria-label="Automatic Clear Cache">' +
         '<input type="checkbox" id="jdExtraAutoClearToggle"' + (autoOn ? ' checked' : '') + '>' +
