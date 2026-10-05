@@ -358,6 +358,65 @@ function install() {
 
 function installAll() {
   install();
+  installDomWatcher();
+}
+
+/* ---------- INDEPENDENT DOM watcher (robust fallback) ----------
+   Watches for [[JD_LYRICS|artist|title]] markers in rendered messages,
+   strips them, and renders the card. Does NOT depend on the fetch
+   wrapper chain. Added 2026-10-05 to fix raw markers showing. */
+function installDomWatcher() {
+  try {
+    if (window.__jdLyricsDomWatcher) return;
+    window.__jdLyricsDomWatcher = true;
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mut) {
+        mut.addedNodes.forEach(function (node) {
+          if (!node.querySelectorAll) return;
+          /* Check the node itself and its descendants */
+          var msgs = [];
+          if (node.classList && node.classList.contains('msg') && node.classList.contains('bot')) {
+            msgs.push(node);
+          }
+          var descendants = node.querySelectorAll ? node.querySelectorAll('.msg.bot') : [];
+          for (var i = 0; i < descendants.length; i++) msgs.push(descendants[i]);
+          msgs.forEach(function (msg) {
+            try {
+              if (msg.__jdLyricsDone) return;
+              var text = msg.textContent || '';
+              LYRICS_MARK_RE.lastIndex = 0;
+              var m = LYRICS_MARK_RE.exec(text);
+              if (m) {
+                msg.__jdLyricsDone = true;
+                var artist = m[1], title = m[2];
+                /* Strip the marker from DOM */
+                scrubLeftovers(msg);
+                /* Render the card */
+                setTimeout(function () { attachWhenReady(artist, title); }, 100);
+              }
+            } catch (_) {}
+          });
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    /* Also check existing messages on install */
+    setTimeout(function () {
+      try {
+        document.querySelectorAll('.msg.bot').forEach(function (msg) {
+          if (msg.__jdLyricsDone) return;
+          var text = msg.textContent || '';
+          LYRICS_MARK_RE.lastIndex = 0;
+          var m = LYRICS_MARK_RE.exec(text);
+          if (m) {
+            msg.__jdLyricsDone = true;
+            scrubLeftovers(msg);
+            attachWhenReady(m[1], m[2]);
+          }
+        });
+      } catch (_) {}
+    }, 2000);
+  } catch (_) {}
 }
 
 if (document.readyState === 'loading') {
