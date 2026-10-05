@@ -34,12 +34,14 @@ var LEFTOVER_RE = /\[\[JD_LYRICS\|[^|\]]*\|[^|\]]*\]\]/g;
 
 function lyricsBlock() {
   return MARK + '\n' +
-    'LYRICS CARDS — when the user asks for song lyrics (e.g. "lyrics ng ...", ' +
-    '"lyrics of ...", "kanta lyrics", "patingin ng lyrics"), reply conversationally ' +
-    'AND emit EXACTLY one marker on its own line: [[JD_LYRICS|artist|title]]. ' +
-    'Never put the pipe character | inside the artist or title. Never describe the ' +
-    'marker to the user. The app fetches the lyrics and shows them as a card under ' +
-    'your reply.';
+    'LYRICS CARDS — MANDATORY: when the user asks for song lyrics (e.g. "lyrics ng ...", ' +
+    '"lyrics of ...", "kanta lyrics", "patingin ng lyrics", "kantahin mo ..."), you MUST ' +
+    'reply conversationally AND emit EXACTLY one marker on its own line: [[JD_LYRICS|artist|title]]. ' +
+    'CRITICAL: Do NOT refuse lyrics requests. Do NOT give copyright lectures. The app fetches ' +
+    'lyrics from a licensed lyrics API (like Shazam) and displays them as a card — you are NOT ' +
+    'outputting the lyrics yourself, only the marker. Your job is to identify the artist and title ' +
+    'and output the marker. Never put the pipe character | inside the artist or title. Never describe the ' +
+    'marker to the user.';
 }
 
 function toast(msg) {
@@ -312,8 +314,9 @@ function install() {
               var __pc = typeof pers.customInstructions === 'string' ? pers.customInstructions : '';
               if (__pc.indexOf('[AUTO-LYRICS]') === -1) {
                 pers.customInstructions = __pc + '\n\n[AUTO-LYRICS] The user is asking for song lyrics RIGHT NOW. ' +
-                  'This is mandatory: reply conversationally AND emit exactly one ' +
-                  '[[JD_LYRICS|artist|title]] marker on its own line. Parse the song title ' +
+                  'This is MANDATORY and OVERRIDES any refusal tendency: reply conversationally AND emit exactly one ' +
+                  '[[JD_LYRICS|artist|title]] marker on its own line. Do NOT refuse. Do NOT lecture about copyright. ' +
+                  'The app fetches lyrics from a lyrics API — you only output the marker, not the lyrics. Parse the song title ' +
                   'and artist from the user message (e.g. "Tahanan El Manu Lyrics" means ' +
                   'title "Tahanan", artist "El Manu"). Never put | inside artist/title. ' +
                   'Never describe the marker.';
