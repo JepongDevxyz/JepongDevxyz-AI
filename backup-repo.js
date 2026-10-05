@@ -3,19 +3,13 @@
 
    AUTO (2026-10-05): the (+) sheet "Backup" row was REMOVED per user
    order — chat is the only entry point now. When the user sends a chat
-   message asking for a backup (e.g. "backup mo muna code natin"), the
-   backup runs automatically without any taps:
-     a. "backup" + repo-ish words → downloads the GitHub repo archive
-        (JepongDevxyz/JepongDevxyz-AI, main with automatic fallback to
-        master via HEAD check) as repo-backup-{owner}-{repo}-{branch}-stamp.zip.
-        On 404/403 the user is told the repo may be private or missing
-        and to connect GitHub in Settings → Connectors.
-     b. "backup" + "chat" → scans the current conversation's assistant
-        `pre code` blocks, names them snippet-N.<ext> (ext from the
-        language class, default txt), zips them with JSZip (same CDN
-        loader as import-memory.js) and downloads
-        chat-code-backup-YYYYMMDD-HHmm.zip.
-   No token hacks. Fail-open everywhere.
+   message with the word "backup" (ANY phrasing — e.g. "backup mo muna
+   code natin"), the backup runs automatically and the .zip downloads:
+     a. message mentions "chat" → ZIP of the code blocks in this conversation.
+     b. otherwise → GitHub repo archive (JepongDevxyz/JepongDevxyz-AI,
+        main with automatic fallback to master via HEAD check).
+   Two hooks (deduped): window.sendMessage + fetch wrapper. Excludes
+   obvious non-backup uses ("backup singer"). No token hacks. Fail-open.
    ============================================================ */
 (function () {
 'use strict';
@@ -273,16 +267,67 @@ function downloadRepoZip(ownerInput, branchInput, btn) {
 /* ---------- automatic backup trigger (2026-10-05) ----------
    The (+) sheet "Backup" row was REMOVED per user order — chat is the
    only entry point now. When the user sends a chat message asking for a
-   backup (e.g. "backup mo muna code natin"), the backup runs
-   automatically:
-     - "backup" + repo-ish words (repo/github/natin/muna/code) → repo ZIP
-       of JepongDevxyz/JepongDevxyz-AI (main, master fallback), the same
-       download the old dialog performed.
-     - "backup" + "chat" → ZIP of the code blocks in this conversation.
-   Fail-open: never blocks or alters the chat request itself. */
-var BACKUP_INTENT_RE = /\bbackup\b/i;
-var BACKUP_CONTEXT_RE = /\b(code|repo|repository|github|natin|muna|mo)\b/i;
+   backup (e.g. "backup mo muna code natin" — or ANY phrasing with the
+   word "backup"), the backup runs automatically and the .zip downloads:
+     - message mentions "chat" → ZIP of the code blocks in this conversation.
+     - otherwise → repo ZIP of JepongDevxyz/JepongDevxyz-AI (main, master
+       fallback), the same download the old dialog performed.
+   Two hooks (deduped): window.sendMessage (reads the composer input
+   directly — bulletproof for the main UI) and the fetch wrapper (catches
+   every other chat path, e.g. voice). Fail-open: never blocks or alters
+   the chat request itself. */
+var BACKUP_INTENT_RE = /backup/i;
+var BACKUP_EXCLUDE_RE = /\b(singer|dancer|vocalists?)\b/i;
 var BACKUP_CHAT_RE = /\bchat\b/i;
+var __lastBackupMsg = '';
+var __lastBackupAt = 0;
+
+function maybeAutoBackup(text) {
+  try {
+    var msg = String(text || '');
+    if (!BACKUP_INTENT_RE.test(msg)) return false;
+    if (BACKUP_EXCLUDE_RE.test(msg)) return false;
+    var now = Date.now();
+    if (msg === __lastBackupMsg && (now - __lastBackupAt) < 8000) return false; /* dedupe double-hook */
+    __lastBackupMsg = msg;
+    __lastBackupAt = now;
+    var chatCode = BACKUP_CHAT_RE.test(msg);
+    setTimeout(function () {
+      try {
+        if (chatCode) {
+          toast('Backing up chat code…');
+          downloadChatCode(null);
+        } else {
+          toast('Backing up repo…');
+          downloadRepoZip('JepongDevxyz/JepongDevxyz-AI', 'main', null);
+        }
+      } catch (_) { /* fail-open */ }
+    }, 400);
+    return true;
+  } catch (_) { return false; }
+}
+
+function installSendWrap() {
+  if (window.__jdBackupSendWrap) return;
+  try {
+    var orig = null;
+    try { orig = window.sendMessage || null; } catch (_) {}
+    if (typeof orig !== 'function') return; /* not ready yet; retried by installAll */
+    var wrapped = function () {
+      try {
+        var input = document.getElementById('userInput');
+        var text = input ? String(input.value || '') : '';
+        if (text) maybeAutoBackup(text);
+      } catch (_) {}
+      return orig.apply(this, arguments);
+    };
+    try {
+      Object.keys(orig).forEach(function (k) { wrapped[k] = orig[k]; });
+    } catch (_) {}
+    window.sendMessage = wrapped;
+    window.__jdBackupSendWrap = true;
+  } catch (_) {}
+}
 
 function installBackupAuto() {
   if (typeof window.fetch !== 'function') return;
@@ -297,21 +342,7 @@ function installBackupAuto() {
         var body = null;
         try { body = JSON.parse(init.body); } catch (_) { body = null; }
         if (body && typeof body === 'object' && !body.action && typeof body.message === 'string') {
-          var msg = body.message;
-          if (BACKUP_INTENT_RE.test(msg) && BACKUP_CONTEXT_RE.test(msg)) {
-            var chatCode = BACKUP_CHAT_RE.test(msg);
-            setTimeout(function () {
-              try {
-                if (chatCode) {
-                  toast('Backing up chat code…');
-                  downloadChatCode(null);
-                } else {
-                  toast('Backing up repo…');
-                  downloadRepoZip('JepongDevxyz/JepongDevxyz-AI', 'main', null);
-                }
-              } catch (_) { /* fail-open */ }
-            }, 400);
-          }
+          maybeAutoBackup(body.message);
         }
       }
     } catch (_) { /* fail-open */ }
@@ -328,6 +359,7 @@ function installBackupAuto() {
 }
 
 function installAll() {
+  installSendWrap();
   installBackupAuto();
 }
 
