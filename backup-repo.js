@@ -1,19 +1,20 @@
 /* ============================================================
-   backup-repo.js — in-app backup (chat code + GitHub repo .zip).
+   backup-repo.js — automatic backup (chat code + GitHub repo .zip).
 
-   1. Adds a "Backup" row to the composer (+) tool sheet. Tapping it
-      opens a bottom-sheet dialog with two sections:
-      a. "Code sa chat na ito" — scans the current conversation's
-         assistant `pre code` blocks, names them snippet-N.<ext>
-         (ext from the language class, default txt), zips them with
-         JSZip (same CDN loader as import-memory.js) and downloads
-         chat-code-backup-YYYYMMDD-HHmm.zip.
-      b. "GitHub repo" — owner/repo input (prefilled
-         JepongDevxyz/JepongDevxyz-AI) + branch (default main, with
-         automatic fallback to master via HEAD check), downloads the
-         repo archive as repo-backup-{owner}-{repo}-{branch}-stamp.zip.
-         On 404/403 the user is told the repo may be private or
-         missing and to connect GitHub in Settings → Connectors.
+   AUTO (2026-10-05): the (+) sheet "Backup" row was REMOVED per user
+   order — chat is the only entry point now. When the user sends a chat
+   message asking for a backup (e.g. "backup mo muna code natin"), the
+   backup runs automatically without any taps:
+     a. "backup" + repo-ish words → downloads the GitHub repo archive
+        (JepongDevxyz/JepongDevxyz-AI, main with automatic fallback to
+        master via HEAD check) as repo-backup-{owner}-{repo}-{branch}-stamp.zip.
+        On 404/403 the user is told the repo may be private or missing
+        and to connect GitHub in Settings → Connectors.
+     b. "backup" + "chat" → scans the current conversation's assistant
+        `pre code` blocks, names them snippet-N.<ext> (ext from the
+        language class, default txt), zips them with JSZip (same CDN
+        loader as import-memory.js) and downloads
+        chat-code-backup-YYYYMMDD-HHmm.zip.
    No token hacks. Fail-open everywhere.
    ============================================================ */
 (function () {
@@ -80,7 +81,6 @@ function ensureCss() {
   } catch (_) {}
 }
 
-var SVG_ARCHIVE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>';
 
 /* ---------- JSZip loader (same CDN as import-memory.js) ---------- */
 function loadJsZip(cb, onErr) {
@@ -270,85 +270,65 @@ function downloadRepoZip(ownerInput, branchInput, btn) {
   }
 }
 
-/* ---------- bottom-sheet dialog ---------- */
-function openBackupDialog() {
-  try {
-    ensureCss();
-    if (document.querySelector('.jd-backup-sheet')) return;
-    var sheet = document.createElement('div');
-    sheet.className = 'jd-backup-sheet';
-    sheet.innerHTML =
-      '<div class="jd-backup-sheet__bg"></div>' +
-      '<div class="jd-backup-sheet__panel" role="dialog" aria-label="Backup">' +
-        '<div class="jd-backup-sheet__grab"></div>' +
-        '<div class="jd-backup-sheet__h">Backup</div>' +
-        '<div class="jd-backup-sheet__sub">I-save ang code o ang buong repo bilang .zip.</div>' +
-        '<div class="jd-backup-sheet__sec">' +
-          '<div class="jd-backup-sheet__sec-h">Code sa chat na ito</div>' +
-          '<div class="jd-backup-sheet__sec-d">I-scan ang code blocks ng AI sa kasalukuyang usapan at i-download as .zip.</div>' +
-          '<button type="button" class="jd-backup-sheet__btn" data-act="scan">Scan &amp; download code</button>' +
-        '</div>' +
-        '<div class="jd-backup-sheet__sec">' +
-          '<div class="jd-backup-sheet__sec-h">GitHub repo</div>' +
-          '<div class="jd-backup-sheet__sec-d">I-download ang buong repo bilang .zip archive.</div>' +
-          '<label class="jd-backup-sheet__label" for="jdBackupRepo">Repo (owner/name)</label>' +
-          '<input id="jdBackupRepo" class="jd-backup-sheet__input" type="text" value="' + esc('JepongDevxyz/JepongDevxyz-AI') + '" autocomplete="off" spellcheck="false">' +
-          '<label class="jd-backup-sheet__label" for="jdBackupBranch">Branch</label>' +
-          '<input id="jdBackupBranch" class="jd-backup-sheet__input" type="text" value="main" autocomplete="off" spellcheck="false">' +
-          '<button type="button" class="jd-backup-sheet__btn" data-act="repo">Download repo .zip</button>' +
-          '<div class="jd-backup-sheet__note">Public repos lang ang gumagana dito. Para sa private repos, i-connect ang GitHub sa Settings &rarr; Connectors.</div>' +
-        '</div>' +
-        '<button type="button" class="jd-backup-sheet__close" data-act="close">Isara</button>' +
-      '</div>';
-    document.body.appendChild(sheet);
-    function close() { try { document.removeEventListener('keydown', onKey); } catch (_) {} try { sheet.remove(); } catch (_) {} }
-    function onKey(e) { try { if (e && (e.key === 'Escape' || e.keyCode === 27)) close(); } catch (_) {} }
-    try { document.addEventListener('keydown', onKey); } catch (_) {}
-    sheet.querySelector('.jd-backup-sheet__bg').addEventListener('click', close);
-    sheet.querySelector('[data-act="close"]').addEventListener('click', close);
-    sheet.querySelector('[data-act="scan"]').addEventListener('click', function () {
-      downloadChatCode(this);
-    });
-    sheet.querySelector('[data-act="repo"]').addEventListener('click', function () {
-      var btn = this, repoV = '', branchV = '';
-      try {
-        repoV = sheet.querySelector('#jdBackupRepo').value;
-        branchV = sheet.querySelector('#jdBackupBranch').value;
-      } catch (_) {}
-      downloadRepoZip(repoV, branchV, btn);
-    });
-  } catch (_) {}
-}
+/* ---------- automatic backup trigger (2026-10-05) ----------
+   The (+) sheet "Backup" row was REMOVED per user order — chat is the
+   only entry point now. When the user sends a chat message asking for a
+   backup (e.g. "backup mo muna code natin"), the backup runs
+   automatically:
+     - "backup" + repo-ish words (repo/github/natin/muna/code) → repo ZIP
+       of JepongDevxyz/JepongDevxyz-AI (main, master fallback), the same
+       download the old dialog performed.
+     - "backup" + "chat" → ZIP of the code blocks in this conversation.
+   Fail-open: never blocks or alters the chat request itself. */
+var BACKUP_INTENT_RE = /\bbackup\b/i;
+var BACKUP_CONTEXT_RE = /\b(code|repo|repository|github|natin|muna|mo)\b/i;
+var BACKUP_CHAT_RE = /\bchat\b/i;
 
-/* ---------- (+) sheet row ---------- */
-function injectSheetRow() {
+function installBackupAuto() {
+  if (typeof window.fetch !== 'function') return;
+  if (window.fetch.__jdBackupAuto) return;
+  var origFetch = window.fetch;
+  var wrapped = function (input, init) {
+    try {
+      var url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+      var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      var isChat = url.indexOf('/api/chat') !== -1 && method === 'POST';
+      if (isChat && init && typeof init.body === 'string') {
+        var body = null;
+        try { body = JSON.parse(init.body); } catch (_) { body = null; }
+        if (body && typeof body === 'object' && !body.action && typeof body.message === 'string') {
+          var msg = body.message;
+          if (BACKUP_INTENT_RE.test(msg) && BACKUP_CONTEXT_RE.test(msg)) {
+            var chatCode = BACKUP_CHAT_RE.test(msg);
+            setTimeout(function () {
+              try {
+                if (chatCode) {
+                  toast('Backing up chat code…');
+                  downloadChatCode(null);
+                } else {
+                  toast('Backing up repo…');
+                  downloadRepoZip('JepongDevxyz/JepongDevxyz-AI', 'main', null);
+                }
+              } catch (_) { /* fail-open */ }
+            }, 400);
+          }
+        }
+      }
+    } catch (_) { /* fail-open */ }
+    return origFetch.call(window, input, init);
+  };
+  wrapped.__jdBackupAuto = true;
+  /* Preserve sibling wrapper markers so chained patches keep working. */
   try {
-    var sheet = document.getElementById('composerToolSheet');
-    if (!sheet) return;
-    if (sheet.querySelector('[data-prompt-source="backup"]')) return; /* once */
-    var row = document.createElement('button');
-    row.type = 'button';
-    row.className = 'prompt-bar__row';
-    row.setAttribute('role', 'option');
-    row.setAttribute('data-prompt-source', 'backup');
-    row.innerHTML =
-      '<span class="prompt-bar__row-icon">' + SVG_ARCHIVE + '</span>' +
-      '<span class="prompt-bar__row-name">Backup</span>' +
-      '<span class="prompt-bar__row-desc">Save chat code or repo</span>';
-    row.addEventListener('mousedown', function (e) { try { e.preventDefault(); } catch (_) {} });
-    row.addEventListener('click', function () {
-      try {
-        sheet.hidden = true; /* close the (+) sheet */
-        openBackupDialog();
-      } catch (_) {}
+    Object.keys(origFetch).forEach(function (k) {
+      if (k.indexOf('__jd') === 0) wrapped[k] = true;
     });
-    try { sheet.insertBefore(row, sheet.firstChild); }
-    catch (_) { try { sheet.appendChild(row); } catch (_) {} }
   } catch (_) {}
+  window.fetch = wrapped;
 }
 
 function installAll() {
-  injectSheetRow();
+  installBackupAuto();
 }
 
 if (document.readyState === 'loading') {
@@ -357,5 +337,4 @@ if (document.readyState === 'loading') {
   installAll();
 }
 setTimeout(installAll, 1500);
-setTimeout(injectSheetRow, 3000);
 })();
