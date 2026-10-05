@@ -55,8 +55,8 @@
     '.jd-react-picker button:hover{transform:scale(1.3)}',
     '.jd-react-picker button:active{transform:scale(1.25)}',
     'body.theme-light .jd-react-picker{background:#fff;border-color:rgba(0,0,0,.1);box-shadow:0 12px 32px rgba(20,20,40,.25)}',
-    /* Inline reaction chips inside action bars */
-    '.jd-inline-reaction{display:inline-flex;align-items:center;border:1px solid var(--border-color);background:rgba(139,92,246,.12);border-radius:999px;padding:3px 10px;font-size:15px;line-height:1.4;cursor:pointer}',
+    /* Inline reaction chips inside action bars — with Muse-style pop animation */
+    '.jd-inline-reaction{display:inline-flex;align-items:center;border:1px solid var(--border-color);background:rgba(139,92,246,.12);border-radius:999px;padding:3px 10px;font-size:15px;line-height:1.4;cursor:pointer;animation:jdBubblePop .35s cubic-bezier(.34,1.56,.64,1)}',
     '.jd-inline-reaction:active{transform:scale(.94)}',
     '.jd-ai-reaction{cursor:default!important}',
     'body.theme-light .jd-inline-reaction{background:rgba(139,92,246,.1)}',
@@ -153,35 +153,31 @@
   }
   function renderAiChip(userEl) {
     if (!userEl || !userEl.querySelector) return;
-    /* Muse-style: badge attached to the message bubble corner */
-    var old = userEl.querySelector(':scope > .jd-bubble-react.jd-ai-badge');
+    /* Back to action-bar position (her order), with pop animation kept */
+    var actions = userEl.querySelector(':scope > .user-actions');
+    if (!actions) return;
+    var old = actions.querySelector(':scope > .jd-ai-reaction');
     if (old) old.remove();
+    /* Remove any bubble badge from the previous version */
+    var bubble = userEl.querySelector(':scope > .jd-bubble-react.jd-ai-badge');
+    if (bubble) bubble.remove();
     var emoji = getAiReaction(userEl);
     if (!emoji || AI_EMOJI_ALLOW.indexOf(emoji) < 0) return;
-    var badge = document.createElement('span');
-    badge.className = 'jd-bubble-react jd-ai-badge';
-    badge.setAttribute('role', 'img');
-    badge.setAttribute('aria-label', 'AI reaction ' + emoji);
-    badge.title = 'AI reaction to your message — tap to dismiss';
-    badge.textContent = emoji;
-    badge.style.cursor = 'pointer';
-    badge.addEventListener('click', function (ev) {
+    var chip = document.createElement('span');
+    chip.className = 'jd-ai-reaction jd-inline-reaction';
+    chip.setAttribute('role', 'img');
+    chip.setAttribute('aria-label', 'AI reaction ' + emoji);
+    chip.title = 'AI reaction to your message — tap to dismiss';
+    chip.style.cursor = 'pointer';
+    var s = document.createElement('span');
+    s.textContent = emoji;
+    chip.appendChild(s);
+    chip.addEventListener('click', function (ev) {
       ev.stopPropagation();
       setAiReaction(userEl, '');
-      badge.remove();
+      chip.remove();
     });
-    /* Ensure the message has relative positioning for the badge */
-    try {
-      var cs = window.getComputedStyle(userEl);
-      if (cs.position === 'static') userEl.style.position = 'relative';
-    } catch (_) {}
-    userEl.appendChild(badge);
-    /* Keep the old action-bar chip for backwards compat (hidden by CSS anyway) */
-    var actions = userEl.querySelector(':scope > .user-actions');
-    if (actions) {
-      var oldChip = actions.querySelector(':scope > .jd-ai-reaction');
-      if (oldChip) oldChip.remove();
-    }
+    actions.appendChild(chip);
   }
   function removeMarkerText(root, markerText) {
     if (!markerText || !root || !document.createTreeWalker) return false;
@@ -263,18 +259,25 @@
   }
   function renderInlineReaction(msgEl) {
     if (!msgEl || !msgEl.querySelector) return;
-    /* Muse-style: badge attached to the AI message bubble corner */
-    var old = msgEl.querySelector(':scope > .jd-bubble-react.jd-manual-badge');
+    /* Back to action-bar position (her order), with pop animation kept */
+    var actions = msgEl.querySelector(':scope > .bot-actions');
+    if (!actions) return;
+    var old = actions.querySelector(':scope > .jd-manual-reaction');
     if (old) old.remove();
+    /* Remove any bubble badge from the previous version */
+    var bubble = msgEl.querySelector(':scope > .jd-bubble-react.jd-manual-badge');
+    if (bubble) bubble.remove();
     var emoji = getManualReaction(msgEl);
     if (!emoji) return;
-    var badge = document.createElement('button');
-    badge.type = 'button';
-    badge.className = 'jd-bubble-react jd-manual-badge jd-clickable';
-    badge.title = 'Tap to remove reaction';
-    badge.setAttribute('aria-label', 'Your reaction ' + emoji + ' — tap to remove');
-    badge.textContent = emoji;
-    badge.addEventListener('click', function (ev) {
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'jd-manual-reaction jd-inline-reaction';
+    chip.title = 'Tap to remove reaction';
+    chip.setAttribute('aria-label', 'Your reaction ' + emoji + ' — tap to remove');
+    var s = document.createElement('span');
+    s.textContent = emoji;
+    chip.appendChild(s);
+    chip.addEventListener('click', function (ev) {
       ev.stopPropagation();
       try {
         if (window.__jdWordDictate && window.__jdWordDictate.toggleReaction) {
@@ -283,17 +286,7 @@
       } catch (e) {}
       renderInlineReaction(msgEl);
     });
-    try {
-      var cs = window.getComputedStyle(msgEl);
-      if (cs.position === 'static') msgEl.style.position = 'relative';
-    } catch (_) {}
-    msgEl.appendChild(badge);
-    /* Remove old action-bar chip */
-    var actions = msgEl.querySelector(':scope > .bot-actions');
-    if (actions) {
-      var oldChip = actions.querySelector(':scope > .jd-manual-reaction');
-      if (oldChip) oldChip.remove();
-    }
+    actions.appendChild(chip);
   }
 
   var openPicker = null;
