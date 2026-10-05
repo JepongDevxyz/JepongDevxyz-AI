@@ -40,7 +40,7 @@
     try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (_) {}
   };
 
-  var OPS = ['CLICK', 'TYPE_TEXT', 'SELECT', 'SCROLL_UP', 'SCROLL_DOWN', 'WAIT', 'DONE', 'BLOCKED'];
+  var OPS = ['CLICK', 'TYPE_TEXT', 'SELECT', 'SCROLL_UP', 'SCROLL_DOWN', 'WAIT', 'DONE', 'BLOCKED', 'ATTACH_FILE', 'READ_FILE'];
   /* Which element roles accept which operations. */
   var ROLE_OPS = {
     button: ['CLICK'], link: ['CLICK'],
@@ -48,7 +48,8 @@
     combobox: ['CLICK', 'TYPE_TEXT', 'SELECT'],
     select: ['CLICK', 'SELECT'], listbox: ['CLICK', 'SELECT'],
     checkbox: ['CLICK'], radio: ['CLICK'], switch: ['CLICK'],
-    menuitem: ['CLICK'], tab: ['CLICK']
+    menuitem: ['CLICK'], tab: ['CLICK'],
+    'file-input': ['CLICK', 'ATTACH_FILE']
   };
   var NO_TARGET_OPS = ['SCROLL_UP', 'SCROLL_DOWN', 'WAIT', 'DONE', 'BLOCKED'];
 
@@ -62,11 +63,13 @@
       'Step ' + (step || 1) + ' of ' + (maxSteps || 25) + '.\n\n' +
       'ELEMENT TABLE (use ONLY these indexed targets):\n' + String(table || '(empty)') + '\n\n' +
       'ACTION HISTORY:\n' + (hist || '(none yet)') + '\n\n' +
-      'OPERATIONS: CLICK, TYPE_TEXT, SELECT, SCROLL_UP, SCROLL_DOWN, WAIT, DONE, BLOCKED.\n' +
+      'OPERATIONS: CLICK, TYPE_TEXT, SELECT, SCROLL_UP, SCROLL_DOWN, WAIT, DONE, BLOCKED, ATTACH_FILE, READ_FILE.\n' +
       'Rules:\n' +
       '- Reply with EXACTLY ONE JSON object, no other text: {"operation":"CLICK","target":3} or {"operation":"TYPE_TEXT","target":2,"text":"Manila"}\n' +
-      '- target must be an index from the table above; omit target for SCROLL_UP/SCROLL_DOWN/WAIT/DONE/BLOCKED.\n' +
+      '- target must be an index from the table above; omit target for SCROLL_UP/SCROLL_DOWN/WAIT/DONE/BLOCKED/READ_FILE.\n' +
       '- TYPE_TEXT only on textbox/searchbox/combobox; SELECT only on select/combobox/listbox; CLICK on buttons/links/checkboxes.\n' +
+      '- ATTACH_FILE only on file-input targets; text = the exact session filename (e.g. {"operation":"ATTACH_FILE","target":5,"text":"resume.pdf"}). Use it when the goal needs a file the operator uploaded.\n' +
+      '- READ_FILE reads a text file from the session (no target): {"operation":"READ_FILE","text":"notes.txt"}. Use it when the goal needs file contents; the file text comes back in history.\n' +
       '- Keep TYPE_TEXT under 200 chars; type exactly what the field needs, nothing more.\n' +
       '- Choose DONE only when the goal is visibly achieved; BLOCKED when impossible (login wall, captcha, paywall).\n' +
       '- Never repeat a failed action; try a different target or operation.\n' +
@@ -77,7 +80,7 @@
     /* index -> {role, label} */
     var map = Object.create(null);
     String(table || '').split('\n').forEach(function (line) {
-      var m = line.match(/^\s*\[(\d+)\]\s+(\w+)\s+"?([^"|]*)"?/);
+      var m = line.match(/^\s*\[(\d+)\]\s+([\w-]+)\s+"?([^"|]*)"?/);
       if (m) map[m[1]] = { role: m[2].toLowerCase(), label: m[3] };
     });
     return map;
@@ -103,6 +106,11 @@
     if (NO_TARGET_OPS.indexOf(op) !== -1) {
       return { ok: true, action: { operation: op, target: null, text: null } };
     }
+    if (op === 'READ_FILE') {
+      var rf = String(obj.text == null ? '' : obj.text).trim().split('/').pop().split('\\').pop();
+      if (!rf || rf === '.' || rf === '..') return fail('bad-filename');
+      return { ok: true, action: { operation: op, target: null, text: rf } };
+    }
     if (target == null || target === '') return fail('missing-target');
     var tkey = String(target).trim();
     if (!/^\d+$/.test(tkey) || !tmap[tkey]) return fail('unknown-target');
@@ -117,6 +125,11 @@
     if (op === 'SELECT') {
       text = String(obj.text == null ? '' : obj.text).slice(0, 200);
       if (!text.trim()) return fail('missing-text');
+    }
+    if (op === 'ATTACH_FILE') {
+      text = String(obj.text == null ? '' : obj.text).trim().slice(0, 200);
+      text = text.split('/').pop().split('\\').pop(); /* basename only — no path traversal */
+      if (!text || text === '.' || text === '..') return fail('bad-filename');
     }
     return { ok: true, action: { operation: op, target: parseInt(tkey, 10), text: text } };
   }
