@@ -94,10 +94,11 @@
   };
 
   function extractStartUrl(goal) {
-    var m = /(https?:\/\/[^\s,]+|www\.[^\s,]+)/i.exec(goal || '');
+    /* Match: https://..., www...., or bare domains like foo.vercel.app / foo.com/path */
+    var m = /(https?:\/\/[^\s,]+|www\.[^\s,]+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s,]*)?)/i.exec(goal || '');
     if (!m) return null;
     var u = m[1].replace(/[.,;!?)]+$/, '');
-    if (/^www\./i.test(u)) u = 'https://' + u;
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
     return u;
   }
   BrowseLoop.extractStartUrl = extractStartUrl;
