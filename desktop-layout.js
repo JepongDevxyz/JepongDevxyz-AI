@@ -10,10 +10,9 @@
       280px left column (ChatGPT/Claude style) instead of an overlay
       drawer. The screen-dimming overlay, the drawer's internal X and
       the header hamburger are hidden (nothing left to open/close).
-   10. Boot skeleton: the static first-paint loader (#jdBootSkeleton) is
-      full-width; on desktop it is re-fit to mirror the homepage —
-      280px sidebar skeleton + centered 768px header/composer and a
-      900px chat column. Tiny DOM wrap/inject (idempotent, desktop-only).
+   (Boot-skeleton desktop fit moved to agent.js 2026-10-05: it must run
+   synchronously right after HTML parse — no network wait — so the
+   sidebar version shows from the very first paint.)
    2. Composer: widened from the 400px pill to 768px so it matches the
       message column; the mic/voice/send buttons get breathing room.
    3. Header: nav row + controls constrained to a centered 768px
@@ -35,8 +34,7 @@
    ALL rules live inside @media(min-width:1024px) (plus an optional
    1600px tier), so mobile/tablet-portrait rendering is 100% untouched.
    Theme-aware via existing CSS vars. Fail-open: CSS only, injection
-   guarded in try/catch. (Issue 10 adds one tiny idempotent DOM
-   wrap/inject for the boot skeleton; everything else is pure CSS.)
+   guarded in try/catch.
    ============================================================ */
 (function () {
 'use strict';
@@ -127,25 +125,6 @@ var CSS = [
 '    max-width:760px!important;',
 '    margin-left:auto!important;margin-right:auto!important;',
 '  }',
-'',
-'/* ---- Issue 10: boot skeleton fits the desktop homepage ---- */',
-'  /* The static first-paint loader (#jdBootSkeleton) is edge-to-edge;',
-'     on desktop the real homepage has a 280px sidebar plus a centered',
-'     768px header/composer and a 900px chat column. Mirror that here so',
-'     the loader looks like the page it is loading. The sidebar column',
-'     (.jd-boot-side) and the .jd-boot-main wrapper are injected by the',
-'     small script at the bottom of this file. */',
-'  #jdBootSkeleton{flex-direction:row!important;padding:0!important;}',
-'  .jd-boot-side{',
-'    flex:0 0 280px!important;width:280px!important;min-height:0;',
-'    display:flex;flex-direction:column;gap:10px;',
-'    padding:18px 14px;overflow:hidden;',
-'    background:var(--boot-surface);border-right:1px solid var(--boot-line);',
-'  }',
-'  .jd-boot-main{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column;}',
-'  .jd-boot-main .jd-boot-header{max-width:768px!important;width:100%!important;margin-inline:auto!important;}',
-'  .jd-boot-main .jd-boot-conversation{max-width:900px!important;width:100%!important;margin-inline:auto!important;}',
-'  .jd-boot-main .jd-boot-composer{width:min(100% - 32px,768px)!important;}',
 '}',
 '',
 '/* ---- Wide tier: chat column grows at 1600px, composer follows ---- */',
@@ -154,8 +133,6 @@ var CSS = [
 '  .floating-search-trigger-btn{right:max(14px, calc((100% - 1200px)/2 + 16px))!important;}',
 '  .jd-navigation{max-width:860px!important;}',
 '  .app-container .header-controls{max-width:860px!important;}',
-'  .jd-boot-main .jd-boot-header{max-width:860px!important;}',
-'  .jd-boot-main .jd-boot-composer{width:min(100% - 32px,860px)!important;}',
 '}',
 '',
 '/* ---- Tablet tier (768-1023px): index.html\'s own @media(min-width:768px)',
@@ -187,50 +164,4 @@ try {
     inject();
   }
 } catch (_) { inject(); }
-})();
-
-/* Issue 10 (DOM half): re-fit the static boot skeleton (#jdBootSkeleton)
-   to the desktop homepage. Wraps the skeleton rows in .jd-boot-main and
-   prepends a 280px sidebar skeleton so the loader mirrors the real
-   desktop layout (sidebar + centered 768px header/composer, 900px chat
-   column). Desktop-only, idempotent, no-ops if the skeleton is gone. */
-(function () {
-'use strict';
-function fit() {
-  try {
-    if (!window.matchMedia('(min-width:1024px)').matches) return;
-    var sk = document.getElementById('jdBootSkeleton');
-    if (!sk || sk.querySelector('.jd-boot-side') || sk.querySelector('.jd-boot-main')) return;
-    var main = document.createElement('div');
-    main.className = 'jd-boot-main';
-    main.setAttribute('aria-hidden', 'true');
-    while (sk.firstChild) main.appendChild(sk.firstChild);
-    var side = document.createElement('div');
-    side.className = 'jd-boot-side';
-    side.setAttribute('aria-hidden', 'true');
-    var rows = '';
-    for (var i = 0; i < 6; i++) {
-      rows += '<div class="jd-boot-shape" style="height:38px;border-radius:10px"></div>';
-    }
-    side.innerHTML =
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">' +
-        '<div class="jd-boot-shape" style="width:36px;height:36px;border-radius:12px;flex:0 0 auto"></div>' +
-        '<div class="jd-boot-shape" style="height:16px;width:55%;border-radius:8px"></div>' +
-      '</div>' +
-      '<div class="jd-boot-shape" style="height:40px;border-radius:12px"></div>' +
-      '<div class="jd-boot-shape" style="height:14px;width:42%;border-radius:7px;margin-top:10px"></div>' +
-      rows +
-      '<div style="flex:1"></div>' +
-      '<div class="jd-boot-shape" style="height:48px;border-radius:12px"></div>';
-    sk.appendChild(side);
-    sk.appendChild(main);
-  } catch (_) {}
-}
-try {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fit, { once: true });
-  } else {
-    fit();
-  }
-} catch (_) { fit(); }
 })();

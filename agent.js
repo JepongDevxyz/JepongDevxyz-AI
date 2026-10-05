@@ -166,6 +166,43 @@ window.JDCodingAgent=Object.freeze({open,close});
   (function(){
     var sk=document.getElementById('jdBootSkeleton');
     if(!sk)return;
+    /* Desktop fit (2026-10-05): re-fit the static skeleton to the desktop
+       homepage from the very first paint — 280px sidebar skeleton +
+       centered 768px header/composer, 900px chat column (860px at 1600px+).
+       Runs synchronously here (deferred script, right after HTML parse, no
+       network wait) so the sidebar version shows immediately instead of
+       snapping in later. Desktop-only (>=1024px), idempotent. */
+    /* JD-BOOT-FIT-START */
+    try{
+      if(window.matchMedia('(min-width:1024px)').matches&&!sk.querySelector('.jd-boot-side')){
+        var __bfCss=document.createElement('style');
+        __bfCss.id='jdBootSkeletonFit';
+        __bfCss.textContent=
+          '@media(min-width:1024px){'+
+          '#jdBootSkeleton{flex-direction:row!important;padding:0!important}'+
+          '.jd-boot-side{flex:0 0 280px!important;width:280px!important;min-height:0;display:flex;flex-direction:column;gap:10px;padding:18px 14px;overflow:hidden;background:var(--boot-surface);border-right:1px solid var(--boot-line)}'+
+          '.jd-boot-main{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column}'+
+          '.jd-boot-main .jd-boot-header{max-width:768px!important;width:100%!important;margin-inline:auto!important}'+
+          '.jd-boot-main .jd-boot-conversation{max-width:900px!important;width:100%!important;margin-inline:auto!important}'+
+          '.jd-boot-main .jd-boot-composer{width:min(100% - 32px,768px)!important}'+
+          '}'+
+          '@media(min-width:1600px){'+
+          '.jd-boot-main .jd-boot-header{max-width:860px!important}'+
+          '.jd-boot-main .jd-boot-composer{width:min(100% - 32px,860px)!important}'+
+          '}';
+        document.head.appendChild(__bfCss);
+        var __bfMain=document.createElement('div');
+        __bfMain.className='jd-boot-main';__bfMain.setAttribute('aria-hidden','true');
+        while(sk.firstChild)__bfMain.appendChild(sk.firstChild);
+        var __bfSide=document.createElement('div');
+        __bfSide.className='jd-boot-side';__bfSide.setAttribute('aria-hidden','true');
+        var __bfRows='';
+        for(var __bfI=0;__bfI<6;__bfI++)__bfRows+='<div class="jd-boot-shape" style="height:38px;border-radius:10px"></div>';
+        __bfSide.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="jd-boot-shape" style="width:36px;height:36px;border-radius:12px;flex:0 0 auto"></div><div class="jd-boot-shape" style="height:16px;width:55%;border-radius:8px"></div></div><div class="jd-boot-shape" style="height:40px;border-radius:12px"></div><div class="jd-boot-shape" style="height:14px;width:42%;border-radius:7px;margin-top:10px"></div>'+__bfRows+'<div style="flex:1"></div><div class="jd-boot-shape" style="height:48px;border-radius:12px"></div>';
+        sk.appendChild(__bfSide);sk.appendChild(__bfMain);
+      }
+    }catch(__bfE){}
+    /* JD-BOOT-FIT-END */
     /* Use the static first-paint shell in index.html; this script manages its lifecycle. */
     document.body.classList.add('jd-sk-active');
     /* Proactively fix the effort badge (2026-10-02): update "Instant" to saved value
