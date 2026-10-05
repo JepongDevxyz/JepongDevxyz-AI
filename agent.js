@@ -279,13 +279,27 @@ window.JDCodingAgent=Object.freeze({open,close});
      with it. Bump patch-version.txt on every push that changes patches. */
   var V='?v=20261004a87';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
-     CacheStorage on every boot so updates appear immediately. */
+     CacheStorage and force a fresh navigation on every boot so updates
+     appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
   try {
     if (typeof localStorage !== 'undefined' && localStorage.getItem('jd_auto_clear_cache') === '1') {
-      if ('caches' in window && window.caches && window.caches.keys) {
-        window.caches.keys().then(function (names) {
-          names.forEach(function (n) { window.caches.delete(n).catch(function () {}); });
-        }).catch(function () {});
+      var hasFresh = false;
+      try { hasFresh = window.location.search.indexOf('jd_fresh=') !== -1; } catch (_) {}
+      if (!hasFresh) {
+        var doFreshNav = function () {
+          try {
+            var url = window.location.pathname + '?jd_fresh=' + Date.now() + window.location.hash;
+            window.location.replace(url);
+          } catch (_) {}
+        };
+        if ('caches' in window && window.caches && window.caches.keys) {
+          window.caches.keys().then(function (names) {
+            return Promise.all(names.map(function (n) { return window.caches.delete(n).catch(function () {}); }));
+          }).then(doFreshNav).catch(doFreshNav);
+          setTimeout(doFreshNav, 2500);
+        } else {
+          doFreshNav();
+        }
       }
     }
   } catch (_) {}
