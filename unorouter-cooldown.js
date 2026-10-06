@@ -67,6 +67,7 @@
       return;
     }
     var s = remainingSec();
+    guardSendFn(); /* re-apply in case the app redefined the send fn */
     if (btn) {
       btn.disabled = true;
       btn.style.opacity = '0.35';
@@ -94,6 +95,26 @@
       e.stopPropagation();
     }
   }, true);
+
+  /* Bulletproof: guard the app's own send function. The button's
+     onclick calls the global handleMainAction(); wrapping it blocks
+     sends during cooldown no matter how the click is triggered,
+     even if the button is re-rendered or disabled is overridden. */
+  function guardSendFn() {
+    try {
+      var fn = window.handleMainAction;
+      if (typeof fn === 'function' && !fn.__jdUnoGuarded) {
+        var orig = fn;
+        var wrapped = function () {
+          if (inCooldown()) return false;
+          return orig.apply(this, arguments);
+        };
+        wrapped.__jdUnoGuarded = true;
+        window.handleMainAction = wrapped;
+      }
+    } catch (e) {}
+  }
+  guardSendFn();
 
   /* Belt-and-suspenders: block send-button clicks during cooldown even if
      the app overrides the disabled property (capture phase). */
