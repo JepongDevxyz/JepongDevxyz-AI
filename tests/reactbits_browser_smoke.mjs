@@ -378,8 +378,16 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   dt.items.add(file);
   Object.defineProperty(input,'files',{configurable:true,value:dt.files});
   let handlerCalls=0;
+  const handlerInfo={};
   const originalHandler=window.handleFileSelect;
-  window.handleFileSelect=async event=>{handlerCalls++;return originalHandler(event);};
+  window.handleFileSelect=async event=>{
+    handlerCalls++;
+    handlerInfo.targetId=event?.target?.id||'';
+    handlerInfo.fileCount=event?.target?.files?.length||0;
+    handlerInfo.librarySearch=personalizationSettings.librarySearch;
+    try{return await originalHandler(event);}
+    catch(error){handlerInfo.error=String(error?.message||error);throw error;}
+  };
   input.dispatchEvent(new Event('change',{bubbles:true}));
 
   for(let i=0;i<20;i++){
@@ -392,6 +400,7 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
     handlerCalls,
     fileCount:input.files?.length||0,
     selectedCount:selectedFilesData.length,
+    handlerInfo,
     changeHandler:typeof input.onchange,
     hidden:host?.hidden,
     display:getComputedStyle(host).display,
