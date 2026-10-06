@@ -198,7 +198,7 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
 
   input.value='hello';
   input.dispatchEvent(new Event('input',{bubbles:true}));
-  assert.equal(!!send.__jdVoiceSwapped,false,'typing must restore the send action after voice entry');
+  const voiceSwappedAfterTyping=!!send.__jdVoiceSwapped;
   const armed=send.hasAttribute('data-armed');
   const arrowBefore=path?.getAttribute('d')||'';
 
@@ -234,7 +234,7 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
   const arrowAfter=path?.getAttribute('d')||'';
 
   return JSON.stringify({
-    busy,idle,models:bar.dataset.models,armed,sourceOpen,effortOpen,
+    busy,idle,models:bar.dataset.models,armed,voiceSwappedAfterTyping,sourceOpen,effortOpen,
     field:!!bar.querySelector('.prompt-bar__field'),
     controls:!!bar.querySelector('.prompt-bar__bar'),
     chips:!!bar.querySelector('#filePreviewContainer.prompt-bar__chips'),
@@ -246,6 +246,7 @@ assert(prompt.busy,'PromptBar busy attribute missing');
 assert(prompt.idle,'PromptBar busy attribute did not clear');
 assert.equal(prompt.models,'false');
 assert(prompt.armed,'PromptBar send never armed');
+assert.equal(prompt.voiceSwappedAfterTyping,false,'typing must restore the send action after voice entry');
 assert(prompt.sourceOpen,'ReactBits source menu did not open');
 assert(prompt.effortOpen,'ReactBits effort slider did not open');
 assert.equal(prompt.effortDots,6,'ReactBits effort slider must expose six stops');
