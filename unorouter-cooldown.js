@@ -95,6 +95,17 @@
     }
   }, true);
 
+  /* Belt-and-suspenders: block send-button clicks during cooldown even if
+     the app overrides the disabled property (capture phase). */
+  document.addEventListener('click', function (e) {
+    if (!inCooldown()) return;
+    var t = e.target;
+    if (t && t.closest && t.closest('#mainActionBtn')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+
   /* ---------- UnoRouter model list sync ----------
      The app defines syncDynamicProviderModels() in index.html but never
      calls it, so the picker only shows the static 'auto'. Trigger it so
