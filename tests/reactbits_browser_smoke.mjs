@@ -377,6 +377,9 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   const dt=new DataTransfer();
   dt.items.add(file);
   Object.defineProperty(input,'files',{configurable:true,value:dt.files});
+  let handlerCalls=0;
+  const originalHandler=window.handleFileSelect;
+  window.handleFileSelect=async event=>{handlerCalls++;return originalHandler(event);};
   input.dispatchEvent(new Event('change',{bubbles:true}));
 
   for(let i=0;i<20;i++){
@@ -386,6 +389,10 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   const chip=host?.querySelector('.jd-upload-chip');
   const during={
     chip:!!chip,
+    handlerCalls,
+    fileCount:input.files?.length||0,
+    selectedCount:selectedFilesData.length,
+    changeHandler:typeof input.onchange,
     hidden:host?.hidden,
     display:getComputedStyle(host).display,
     visibility:getComputedStyle(host).visibility,
@@ -400,6 +407,7 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   renderFilePreviews();
   return JSON.stringify(during);
 })()`));
+console.log('FILE_INPUT_DIAG '+JSON.stringify(realFileInput));
 assert.equal(realFileInput.chip,true,'real file input path did not create the upload chip');
 assert.equal(realFileInput.hidden,false,'real file input path left preview hidden');
 assert.equal(realFileInput.display,'flex','real file input preview is not flex-visible');
