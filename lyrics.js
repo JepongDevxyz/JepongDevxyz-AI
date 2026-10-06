@@ -50,6 +50,7 @@ function lyricsBlock() {
     'CRITICAL FORMATTING: Each lyric line MUST be on its own separate line. Put a line break after EVERY single lyric line. ' +
     'Do NOT join multiple lyric lines into one paragraph. Example:\n[Verse 1]\nFirst lyric line here\nSecond lyric line here\nThird lyric line here\n\n[Chorus]\nChorus line one\nChorus line two\n. ' +
     'NO extra commentary between sections. ' +
+    'NEVER use code blocks (```) for lyrics — output as PLAIN TEXT only. ' +
     'MANDATORY: After the lyrics, emit EXACTLY one marker on its own line: [[JD_LYRICS|artist|title]]. This is REQUIRED, never skip it. ' +
     'Never put the pipe character | inside the artist or title. Never describe the ' +
     'marker to the user.';
@@ -520,8 +521,11 @@ function tryFallbackLyrics(msg) {
           var m = LYRICS_MARK_RE.exec(text);
           if (m) {
             msg.__jdLyricsDone = true;
-            scrubLeftovers(msg);
-            attachWhenReady(m[1], m[2]);
+            try { msg.classList.add('jd-has-lyrics'); } catch (_) {}
+            setTimeout(function () { attachWhenReady(m[1], m[2], msg); }, 100);
+          } else {
+            /* Fallback: check if looks like lyrics without marker */
+            tryFallbackLyrics(msg);
           }
         });
       } catch (_) {}
