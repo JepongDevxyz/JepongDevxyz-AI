@@ -17,7 +17,7 @@ function runEmbed(url, event='none', linkCount=1, separateMessages=false){
   }
   const messages=[];
   function makeMessage(){
-    const message={className:'msg bot',children:[],embeds:[],insertBefore(node,reference){
+    const message={className:'msg bot',textContent:'Route map: Guimba → Baguio',children:[],embeds:[],insertBefore(node,reference){
       const index=reference?this.children.indexOf(reference):this.children.length;
       this.children.splice(index<0?this.children.length:index,0,node);
       node.parentNode=this;
