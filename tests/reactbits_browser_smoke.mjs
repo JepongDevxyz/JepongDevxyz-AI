@@ -105,9 +105,7 @@ assert.equal(voiceEntryState.armed,true,'voice action must enter the Sling quick
 assert.equal(voiceEntryState.slingDisabled,false,'Sling wrapper must not suppress the voice action');
 
 // Keep this component smoke independent from the external Markdown CDN used only to render message bodies.
-if(typeof window.marked==='undefined'){
-  await evaluate(`window.marked={parse:value=>String(value??'').replace(/[&<>]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]))}`);
-}
+await evaluate(`if(typeof window.marked==='undefined'){window.marked={parse:value=>String(value??'').replace(/[&<>]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]))}}`);
 
 // 1/6: frame-match the supplied Work Activity recording.
 const activity=JSON.parse(await evaluate(`(async()=>{
