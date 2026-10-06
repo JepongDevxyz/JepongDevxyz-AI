@@ -45,7 +45,8 @@ assert(htmlReq && htmlReq.ext === 'html', 'explicit downloadable HTML request mu
 // Android keyboard/viewport regression: app must follow the visual viewport rather than letting Chrome pan it away.
 assert(/visualViewport\.addEventListener\(['\"]scroll['\"]/.test(html), 'visualViewport scroll listener missing');
 assert(/app\.style\.position\s*=\s*['\"]fixed['\"]/.test(html), 'mobile app is not fixed to the visual viewport');
-assert(/app\.style\.top\s*=\s*['\"]0['\"]/.test(html), 'mobile app top must remain anchored at zero');
+assert(/const appTop = keepFloatingWindowGeometry \? 0 : offsetTop/.test(html), 'mobile app top must use the selected visual viewport geometry');
+assert(/app\.style\.top\s*=\s*`\$\{appTop\}px`/.test(html), 'mobile app top must apply the computed viewport position');
 assert(!/app\.style\.top\s*=\s*`\$\{offsetTop\}px`/.test(html), 'visualViewport offsetTop must not shift the whole app');
 assert(/app\.style\.transform\s*=\s*['\"]['\"]/.test(html), 'mobile app transform must be cleared');
 assert(/overscroll-behavior\s*:\s*none/.test(html), 'root overscroll lock missing');
