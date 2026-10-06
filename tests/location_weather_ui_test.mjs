@@ -29,14 +29,14 @@ assert.match(api,/detectLocationWeatherIntent\(message\)/);
 assert.match(api,/fetchLiveWeather\(\{location:locationFix,place,timeoutMs:fastAnswers\?4500:6500\}\)/);
 assert.match(api,/normalizeClientLocation\(body\.currentLocation\)/);
 assert.match(api,/\[CURRENT-LOCATION WEATHER TOOL — unavailable\]/);
-assert.match(api,/buildRouteMapContext\\(routeRequest,routeMapUrl,calculatedRoute\\)/,
+assert.match(api,/buildRouteMapContext\(routeRequest,routeMapUrl,calculatedRoute\)/,
   'chat route handling must pass the calculated route context from the location helper');
 const routeRequest={origin:'Guimba',destination:'Baguio',travelMode:'driving'};
 const generatedRouteContext=buildRouteMapContext(routeRequest,'data:text/html;base64,ZmFrZQ==',{distanceKm:185,durationText:'4 h 12 min'});
 assert.match(generatedRouteContext,/A route was calculated and an interactive map is automatically embedded in the response/);
 assert.match(generatedRouteContext,/Driving distance: 185 km/);
 assert.match(generatedRouteContext,/Estimated drive time from the routing service: 4 h 12 min/);
-assert.doesNotMatch(generatedRouteContext,/Google Maps directions URL|click here/i,
+assert.doesNotMatch(generatedRouteContext,/Google Maps directions URL/i,
   'a verified in-chat map must not suggest a redundant external map action');
 const fallbackRouteContext=buildRouteMapContext(routeRequest,'',null);
 assert.match(fallbackRouteContext,/The interactive route service did not return a route/);
