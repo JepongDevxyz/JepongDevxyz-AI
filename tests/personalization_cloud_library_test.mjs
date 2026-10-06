@@ -54,8 +54,16 @@ assert(existsSync(migrationPath),'the Supabase schema/RLS migration must be chec
 const migration=readFileSync(migrationPath,'utf8');
 assert.match(migration,/create table if not exists public\.user_settings/i);
 assert.match(migration,/enable row level security/i);
-assert.match(migration,/auth\.uid\(\)\s*=\s*user_id/i);
+assert.match(migration,/\(select auth\.uid\(\)\)\s*=\s*user_id/i);
 assert.match(migration,/search_library_items/i);
 assert.match(migration,/using\s+gin/i);
 assert.match(migration,/security invoker/i,'the search function must not bypass RLS');
+assert.match(migration,/from public, anon, service_role/i,'search RPC must not be callable by anonymous/service roles');
+assert.match(migration,/for all to authenticated[\s\S]{0,140}\(select auth\.uid\(\)\)/i,'settings RLS must be authenticated-only and initplan optimized');
+const hardeningPath=new URL('../supabase/migrations/20261006_personalization_library_search_hardening.sql',import.meta.url);
+assert(existsSync(hardeningPath),'a follow-up migration must normalize existing policies and explicit grants');
+const hardening=readFileSync(hardeningPath,'utf8');
+assert.match(hardening,/drop policy if exists "Users can insert own settings"/i);
+assert.match(hardening,/for all to authenticated/i);
+assert.match(hardening,/from public, anon, service_role/i);
 console.log('PASS: canonical Supabase personalization and private Library search are wired end to end');
