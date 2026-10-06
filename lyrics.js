@@ -44,12 +44,13 @@ function lyricsBlock() {
     'from Genius, AZLyrics, or other reliable lyrics sites. Do NOT rely solely on your memory — VERIFY via web search. ' +
     'Be extremely meticulous with every single word. If you know the song, provide the FULL lyrics with PERFECT spelling. ' +
     'If you are unsure of exact wording, provide what you know and note it honestly — never guess spellings. ' +
-    'FORMAT EXACTLY LIKE THIS: Start with "Here you go, [name] — lyrics of \'[title]\' by [artist]:" ' +
-    'then structure the lyrics with clear section headers: [Verse 1], [Pre-Chorus], [Chorus], [Bridge], etc. ' +
+    'FORMAT EXACTLY LIKE THIS — MANDATORY EVEN WHEN USING WEB SEARCH: Start with "Here you go, [name] — lyrics of \'[title]\' by [artist]:" ' +
+    'then you MUST add clear section headers: [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], etc. ' +
+    'Even if the web source has no headers, ANALYZE the song structure and ADD the headers yourself. ' +
     'CRITICAL FORMATTING: Each lyric line MUST be on its own separate line. Put a line break after EVERY single lyric line. ' +
     'Do NOT join multiple lyric lines into one paragraph. Example:\n[Verse 1]\nFirst lyric line here\nSecond lyric line here\nThird lyric line here\n\n[Chorus]\nChorus line one\nChorus line two\n. ' +
     'NO extra commentary between sections. ' +
-    'ALSO emit EXACTLY one marker on its own line after the lyrics: [[JD_LYRICS|artist|title]]. ' +
+    'MANDATORY: After the lyrics, emit EXACTLY one marker on its own line: [[JD_LYRICS|artist|title]]. This is REQUIRED, never skip it. ' +
     'Never put the pipe character | inside the artist or title. Never describe the ' +
     'marker to the user.';
 }
@@ -407,10 +408,14 @@ var LYRICS_HEADER_RE = /\[(Verse|Chorus|Pre-Chorus|Bridge|Outro|Intro|Hook)\s*\d
 
 function looksLikeLyrics(text) {
   try {
-    if (!text || text.length < 100) return false;
-    /* Must have at least 2 section headers to be considered lyrics */
+    if (!text || text.length < 200) return false;
+    /* Check for section headers (2+ required) */
     var matches = text.match(/\[(Verse|Chorus|Pre-Chorus|Bridge|Outro|Intro)\s*\d*\]|\((Verse|Chorus|Pre-Chorus|Bridge|Outro|Intro)[^)]*\)/gi);
-    return matches && matches.length >= 2;
+    if (matches && matches.length >= 2) return true;
+    /* Fallback: lyrics intro pattern + substantial text (for web search results without headers) */
+    if (/lyrics of ['"][^'"]+['"] by /i.test(text) && text.length > 500) return true;
+    if (/narito ang lyrics ng/i.test(text) && text.length > 500) return true;
+    return false;
   } catch (_) { return false; }
 }
 
