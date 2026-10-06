@@ -9,7 +9,7 @@ const must=[
   'ps-about-you-card',
   'ps-custom-instructions-card',
   'Customize how JepongDevxyz AI responds to you',
-  'Your changes are saved automatically on this device.'
+  'Sign in to securely sync settings to your account.'
 ];
 for(const s of must){if(!html.includes(s)){console.error('MISSING',s);process.exit(1)}}
 for(const id of ['psBaseStyleBtn','psWarmBtn','psEnthusiasticBtn','psHeadersBtn','psEmojiBtn','psCustomInstructions','psNickname','psOccupation','psMoreAbout']){
