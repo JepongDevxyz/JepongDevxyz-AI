@@ -1,0 +1,155 @@
+/* =========================================================
+   JepongDevxyz AI — UnoRouter free-model 60s cooldown (2026-10-06)
+   Her order: UnoRouter free models allow 1 send per minute.
+   After sending with an UnoRouter free model:
+     - the send button locks for 60 seconds
+     - a live "wait 60s" countdown ticks inside the composer textbox
+   Loaded by agent.js. Idempotent.
+   ========================================================= */
+(function () {
+  'use strict';
+  if (window.__jdUnoCooldownLoaded) return;
+  window.__jdUnoCooldownLoaded = true;
+
+  var COOLDOWN_MS = 60000;
+  var cooldownUntil = 0;
+  var tickId = null;
+
+  function isUnoFreeModel(model) {
+    if (!model) return false;
+    var m = String(model).toLowerCase();
+    return m.indexOf(':free') !== -1 || m.indexOf('/free') !== -1 || /-free$/.test(m);
+  }
+
+  function sendBtn() { return document.getElementById('mainActionBtn'); }
+  function input() { return document.getElementById('userInput'); }
+
+  function inCooldown() { return Date.now() < cooldownUntil; }
+  function remainingSec() { return Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000)); }
+
+  function ensureBadge() {
+    var badge = document.getElementById('jd-uno-cooldown-badge');
+    if (badge) return badge;
+    var ta = input();
+    if (!ta) return null;
+    var host = ta.closest ? (ta.closest('.prompt-bar') || ta.parentElement) : ta.parentElement;
+    if (!host) return null;
+    var cs = window.getComputedStyle(host);
+    if (cs.position === 'static') host.style.position = 'relative';
+    badge = document.createElement('div');
+    badge.id = 'jd-uno-cooldown-badge';
+    badge.setAttribute('aria-live', 'polite');
+    badge.style.cssText =
+      'position:absolute;top:6px;right:10px;z-index:30;pointer-events:none;' +
+      'background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.55);color:#fbbf24;' +
+      'font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;' +
+      'font-family:inherit;white-space:nowrap;';
+    host.appendChild(badge);
+    return badge;
+  }
+
+  function paint() {
+    var btn = sendBtn();
+    var badge = document.getElementById('jd-uno-cooldown-badge');
+    if (!inCooldown()) {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '';
+        btn.style.cursor = '';
+        btn.title = 'Send';
+      }
+      if (badge && badge.parentElement) badge.parentElement.removeChild(badge);
+      if (tickId) { clearInterval(tickId); tickId = null; }
+      cooldownUntil = 0;
+      return;
+    }
+    var s = remainingSec();
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.35';
+      btn.style.cursor = 'not-allowed';
+      btn.title = 'UnoRouter free limit — wait ' + s + 's before sending again';
+    }
+    var b = ensureBadge();
+    if (b) b.textContent = '\u23F3 wait ' + s + 's';
+  }
+
+  function startCooldown() {
+    if (inCooldown()) return; /* already cooling down — don't restart */
+    cooldownUntil = Date.now() + COOLDOWN_MS;
+    paint();
+    if (tickId) clearInterval(tickId);
+    tickId = setInterval(paint, 250);
+  }
+
+  /* Block Enter-to-send during cooldown (capture phase, before app handler). */
+  document.addEventListener('keydown', function (e) {
+    if (!inCooldown()) return;
+    var ta = input();
+    if (ta && e.target === ta && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+
+  /* Detect UnoRouter free-model sends via the chat request. */
+  var origFetch = window.fetch;
+  window.fetch = function (url, opts) {
+    try {
+      var urlStr = String(url || '');
+      if (urlStr.indexOf('/api/chat') !== -1 && opts && opts.body) {
+        var body = null;
+        try { body = JSON.parse(opts.body); } catch (e) {}
+        if (body && typeof body === 'object' &&
+            String(body.provider || '').toLowerCase() === 'unorouter') {
+          /* Fix (2026-10-06): 'auto' is a bootstrap placeholder, not a real
+             UnoRouter model (sending it 404s). Resolve to the first live
+             model from the dynamic catalog before the request goes out. */
+          if (String(body.model || '').toLowerCase() === 'auto' && !body.__jdUnoResolved) {
+            return resolveUnoAuto(url, opts, body);
+          }
+          if (isUnoFreeModel(body.model)) startCooldown();
+        }
+      }
+    } catch (e) {}
+    return origFetch.apply(this, arguments);
+  };
+
+  var unoCatalogCache = null;
+  var unoCatalogAt = 0;
+  function resolveUnoAuto(url, opts, body) {
+    /* Async: fetch the live catalog, substitute the first real model. */
+    return (async function () {
+      try {
+        var now = Date.now();
+        if (!unoCatalogCache || now - unoCatalogAt > 60000) {
+          var r = await origFetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'provider-models' })
+          });
+          var j = await r.json();
+          var list = j && j.providers && j.providers.unorouter && j.providers.unorouter.models;
+          if (Array.isArray(list) && list.length) {
+            unoCatalogCache = list;
+            unoCatalogAt = now;
+          }
+        }
+        var first = (unoCatalogCache || []).find(function (m) {
+          var id = m && m.id ? String(m.id) : '';
+          return id && id.toLowerCase() !== 'auto';
+        });
+        if (first) {
+          body.model = first.id;
+          body.__jdUnoResolved = true;
+          opts.body = JSON.stringify(body);
+          if (isUnoFreeModel(first.id)) startCooldown();
+          return origFetch.call(this, url, opts);
+        }
+      } catch (e) {}
+      /* Catalog unavailable — let the original request go through so the
+         server returns its clear error (better than silently hanging). */
+      return origFetch.apply(this, arguments);
+    })();
+  }
+})();
