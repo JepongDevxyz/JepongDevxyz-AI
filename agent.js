@@ -344,7 +344,11 @@ window.JDCodingAgent=Object.freeze({open,close});
       }, 5000);
     } catch(e){ doLoad(FILES); }
   }
-  var loadedVer = null;
+  var patchLoaderState=window.__JD_PATCH_LOADER_STATE__;
+  if(!patchLoaderState||typeof patchLoaderState!=='object'){
+    patchLoaderState={version:null};
+    window.__JD_PATCH_LOADER_STATE__=patchLoaderState;
+  }
   /* Keep versioned stylesheets fresh too: index.html pins
      ?v= on reactbits-micro.css, so bump it to the live patch
      version â otherwise the slim sheet etc. stay cached. */
@@ -359,12 +363,12 @@ window.JDCodingAgent=Object.freeze({open,close});
   }
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
-    if (loadedVer === ver) return;
+    if (patchLoaderState.version === ver) return;
     // Remove old patch scripts before loading new version
-    if (loadedVer !== null) {
+    if (patchLoaderState.version !== null) {
       document.querySelectorAll('script[data-jd-patch]').forEach(function (s) { s.remove(); });
     }
-    loadedVer = ver;
+    patchLoaderState.version = ver;
     loadPatches(ver);
   }
   function go(ver){
