@@ -30,7 +30,7 @@ window.__jdLyrics = true;
 
 var MARK = '[jd-lyrics]';
 var LYRICS_MARK_RE = /\[\[JD_LYRICS\|([^|\]]*)\|([^|\]]*)\]\]/;
-var LEFTOVER_RE = /\[\[JD_LYRICS\|[^|\]]*\|[^|\]]*\]\]/g;
+var LEFTOVER_RE = /\[\[JD_LYR[^\]]*\]\]/g;
 
 function lyricsBlock() {
   return MARK + '\n' +
@@ -45,13 +45,16 @@ function lyricsBlock() {
     'Be extremely meticulous with every single word. If you know the song, provide the FULL lyrics with PERFECT spelling. ' +
     'If you are unsure of exact wording, provide what you know and note it honestly — never guess spellings. ' +
     'FORMAT EXACTLY LIKE THIS — MANDATORY EVEN WHEN USING WEB SEARCH: Start with "Here you go, [name] — lyrics of \'[title]\' by [artist]:" ' +
-    'then you MUST add clear section headers: [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], etc. ' +
+    'then you MUST add clear section headers on their OWN SEPARATE LINES: [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], etc. ' +
+    'Each header gets its OWN LINE — do NOT put lyrics on the same line as the header. Example:\\n[Chorus]\\nLyric line 1\\nLyric line 2\\n\\n[Verse 2]\\nLyric line 1\\n. ' +
     'Even if the web source has no headers, ANALYZE the song structure and ADD the headers yourself. ' +
     'CRITICAL FORMATTING: Each lyric line MUST be on its own separate line. Put a line break after EVERY single lyric line. ' +
     'Do NOT join multiple lyric lines into one paragraph. Example:\n[Verse 1]\nFirst lyric line here\nSecond lyric line here\nThird lyric line here\n\n[Chorus]\nChorus line one\nChorus line two\n. ' +
     'NO extra commentary between sections. ' +
     'NEVER use code blocks (```) for lyrics — output as PLAIN TEXT only. ' +
-    'MANDATORY: After the lyrics, emit EXACTLY one marker on its own line: [[JD_LYRICS|artist|title]]. This is REQUIRED, never skip it. ' +
+    'MANDATORY: After the lyrics, on a NEW LINE by itself, type EXACTLY: [[JD_LYRICS|El Manu|Tahanan]] ' +
+    '(replace El Manu with the artist, Tahanan with the title — keep the [[ ]], the JD_LYRICS, and the | separators). ' +
+    'Example for "Tahanan" by "El Manu":\\n[[JD_LYRICS|El Manu|Tahanan]]\\n. This is REQUIRED, never skip it, never truncate it. ' +
     'Never put the pipe character | inside the artist or title. Never describe the ' +
     'marker to the user.';
 }
