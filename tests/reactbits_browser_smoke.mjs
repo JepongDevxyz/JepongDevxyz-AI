@@ -56,7 +56,13 @@ function call(method,params={}){
   });
 }
 async function evaluate(expression){
-  const out=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+  let out;
+  try{
+    out=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+  }catch(error){
+    const excerpt=String(expression).replace(/\\s+/g,' ').slice(0,220);
+    throw new Error(`${error.message}; expression=${excerpt}`);
+  }
   if(out.exceptionDetails)throw new Error(out.exceptionDetails.text||'Evaluation failed');
   return out.result?.value;
 }
