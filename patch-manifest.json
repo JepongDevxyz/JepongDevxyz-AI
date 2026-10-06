@@ -1,5 +1,5 @@
 {
-  "version": "20261005a100",
+  "version": "20261006a130",
   "files": [
     "/paymongo-topup.js",
     "/credits.js",
@@ -75,6 +75,7 @@
     "/browser-agent.js",
     "/steel-backend.js",
     "/browse-loop.js",
-    "/browse-viewer.js"
+    "/browse-viewer.js",
+    "/email-guard.js"
   ]
 }
