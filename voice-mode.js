@@ -639,6 +639,21 @@
       toast(t('errNoTTS'));
       return;
     }
+    /* 2026-10-06 FIX for "walang pumapasok na voice": explicitly request mic permission */
+    /* This triggers the browser prompt and ensures mic is available before starting */
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        try { stream.getTracks().forEach(function (tr) { tr.stop(); }); } catch (e) {}
+        openAfterMic();
+      }).catch(function () {
+        toast(t('errMic'));
+      });
+      return;
+    }
+    openAfterMic();
+  }
+
+  function openAfterMic() {
     buildUI();
     try { if (typeof stopSpeechRecognition === 'function') stopSpeechRecognition('voice-mode'); } catch (e) {}
     try { if (typeof stopAllSpeech === 'function') stopAllSpeech(); } catch (e) {}
