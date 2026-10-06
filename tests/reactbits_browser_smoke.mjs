@@ -198,6 +198,7 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
 
   input.value='hello';
   input.dispatchEvent(new Event('input',{bubbles:true}));
+  assert.equal(!!send.__jdVoiceSwapped,false,'typing must restore the send action after voice entry');
   const armed=send.hasAttribute('data-armed');
   const arrowBefore=path?.getAttribute('d')||'';
 
