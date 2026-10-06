@@ -89,11 +89,11 @@
 
   /* Dropdown options */
   var DROPS = {
-    style: ['Professional', 'Casual', 'Friendly', 'Formal', 'Playful', 'Concise'],
-    warmth: ['Default', 'Warm', 'Neutral', 'Cool'],
-    enthusiasm: ['Default', 'High', 'Moderate', 'Low'],
-    headers: ['Default', 'Always use headers', 'Never use headers', 'Use lists often'],
-    emoji: ['Default', 'Never use emoji', 'Use sparingly', 'Use freely']
+    style: ['Default', 'Professional', 'Friendly', 'Candid', 'Quirky', 'Efficient', 'Cynical'],
+    warmth: ['More', 'Default', 'Less'],
+    enthusiasm: ['More', 'Default', 'Less'],
+    headers: ['More', 'Default', 'Less'],
+    emoji: ['More', 'Default', 'Less']
   };
 
   var DROP_LABELS = {
