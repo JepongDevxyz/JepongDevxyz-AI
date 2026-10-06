@@ -620,15 +620,26 @@ const voiceEntryTap=JSON.parse(await evaluate(`(async()=>{
   const action=document.getElementById('mainActionBtn');
   const oldSpeak=window.speakSmartVoice;
   const oldSR=window.SpeechRecognition,oldWebkitSR=window.webkitSpeechRecognition;
+  const mediaDevices=navigator.mediaDevices;
+  const oldGetUserMediaDescriptor=mediaDevices?Object.getOwnPropertyDescriptor(mediaDevices,'getUserMedia'):null;
+  // CI has no microphone permission prompt; simulate a granted stream.
+  if(mediaDevices)Object.defineProperty(mediaDevices,'getUserMedia',{
+    configurable:true,
+    value:()=>Promise.resolve({getTracks:()=>[{stop(){}}]})
+  });
   window.speakSmartVoice=()=>{};
   window.SpeechRecognition=function(){this.start=()=>{};this.abort=()=>{};this.stop=()=>{};};
   action.click();
-  await new Promise(r=>setTimeout(r,30));
+  for(let i=0;i<20&&!window.JDVoiceMode?.isOpen();i++)await new Promise(r=>setTimeout(r,10));
   const opened=!!window.JDVoiceMode?.isOpen()&&!document.getElementById('jdVoiceMode')?.hasAttribute('hidden');
   window.JDVoiceMode?.close();
   window.speakSmartVoice=oldSpeak;
   if(oldSR===undefined)delete window.SpeechRecognition;else window.SpeechRecognition=oldSR;
   if(oldWebkitSR===undefined)delete window.webkitSpeechRecognition;else window.webkitSpeechRecognition=oldWebkitSR;
+  if(mediaDevices){
+    if(oldGetUserMediaDescriptor)Object.defineProperty(mediaDevices,'getUserMedia',oldGetUserMediaDescriptor);
+    else delete mediaDevices.getUserMedia;
+  }
   return JSON.stringify({opened});
 })()`));
 assert.equal(voiceEntryTap.opened,true,'tapping the waveform voice action must open voice mode');
