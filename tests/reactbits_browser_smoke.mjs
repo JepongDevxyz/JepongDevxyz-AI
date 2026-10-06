@@ -377,6 +377,10 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   const dt=new DataTransfer();
   dt.items.add(file);
   Object.defineProperty(input,'files',{configurable:true,value:dt.files});
+  // The upload flow is intentionally gated by the Library/file-search setting.
+  // Enable that prerequisite here; the OFF gate is covered by settings_toggle_runtime_test.mjs.
+  const previousLibrarySearch=personalizationSettings.librarySearch;
+  personalizationSettings.librarySearch=true;
   let handlerCalls=0;
   const handlerInfo={};
   const originalHandler=window.handleFileSelect;
@@ -414,6 +418,7 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   await new Promise(r=>setTimeout(r,200));
   selectedFilesData.splice(0,selectedFilesData.length);
   renderFilePreviews();
+  personalizationSettings.librarySearch=previousLibrarySearch;
   return JSON.stringify(during);
 })()`));
 console.log('FILE_INPUT_DIAG '+JSON.stringify(realFileInput));
