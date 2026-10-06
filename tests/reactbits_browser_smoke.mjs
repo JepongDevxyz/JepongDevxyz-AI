@@ -239,7 +239,9 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
     controls:!!bar.querySelector('.prompt-bar__bar'),
     chips:!!bar.querySelector('#filePreviewContainer.prompt-bar__chips'),
     effortLevels,effortDots,
-    arrowBefore,stopPath,arrowAfter
+    arrowBefore,stopPath,arrowAfter,
+    voiceSwappedAfterTyping,
+    sendFaceHtml:send.querySelector('.rb-sling-face')?.innerHTML||''
   });
 })()`));
 assert(prompt.busy,'PromptBar busy attribute missing');
@@ -263,7 +265,7 @@ assert.deepEqual(
 assert.equal(prompt.effortLevels.at(-1).max,true,'Max effort must enable the ReactBits max/spark state');
 assert.equal(prompt.effortLevels.slice(0,-1).some(x=>x.max),false,'Only Max may enable the ReactBits max/spark state');
 assert(prompt.field&&prompt.controls&&prompt.chips,'ReactBits PromptBar hierarchy missing');
-assert.notEqual(prompt.stopPath,prompt.arrowBefore,'send glyph did not morph to stop');
+assert.notEqual(prompt.stopPath,prompt.arrowBefore,'send glyph did not morph to stop: '+JSON.stringify({voiceSwappedAfterTyping:prompt.voiceSwappedAfterTyping,arrowBefore:prompt.arrowBefore,stopPath:prompt.stopPath,sendFaceHtml:prompt.sendFaceHtml}));
 assert.equal(prompt.arrowAfter,prompt.arrowBefore,'send glyph did not morph back to arrow');
 
 // Sling Button follows the ReactBits defaults and routes each gesture once.
