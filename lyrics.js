@@ -38,8 +38,10 @@ function lyricsBlock() {
     '"lyrics of ...", "kanta lyrics", "patingin ng lyrics", "kantahin mo ..."), you MUST ' +
     'provide the song lyrics DIRECTLY in your response, just like a knowledgeable friend would. ' +
     'CRITICAL: Do NOT refuse lyrics requests. Do NOT give copyright lectures. Do NOT say you cannot ' +
-    'provide lyrics. Write out the lyrics from your knowledge. If you know the song, provide the full ' +
-    'lyrics. If you are unsure of exact wording, provide what you know and note it. ' +
+    'provide lyrics. Write out the lyrics from your knowledge. ' +
+    'ACCURACY IS MANDATORY — 100% correct spelling, like Shazam: Be extremely meticulous with every single word. ' +
+    'Double-check spelling as you write. If you know the song, provide the FULL lyrics with PERFECT spelling. ' +
+    'If you are unsure of exact wording, provide what you know and note it honestly — never guess spellings. ' +
     'FORMAT EXACTLY LIKE THIS: Start with "Here you go, [name] — lyrics of \'[title]\' by [artist]:" ' +
     'then structure the lyrics with clear section headers: [Verse 1], [Pre-Chorus], [Chorus], [Bridge], etc. ' +
     'CRITICAL FORMATTING: Each lyric line MUST be on its own separate line. Put a line break after EVERY single lyric line. ' +
