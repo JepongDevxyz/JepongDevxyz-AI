@@ -19,7 +19,7 @@ assert.equal(historyPolicy({...voiceSettings,referenceRecordHistory:false}).voic
 assert.equal(historyPolicy({...voiceSettings,referenceRecordHistory:false}).voiceSpeed,1,'OFF must restore the default tuning');
 assert(html.includes('personalizationSettings=personalizationWithHistoryPolicy({...PERSONALIZATION_DEFAULTS,...remote})'),'Cloud settings hydration must apply the OFF policy to the remote state before rendering');
 assert(html.includes('const cloudPersonalization=personalizationWithHistoryPolicy();')&&html.includes('personalization:cloudPersonalization'),'Cloud sync must persist only policy-approved personalization to Supabase');
-assert(!/localStorage\\.setItem\\(['"]jepong_personalization/.test(html),'personalization settings must not be duplicated in browser-local storage');
+assert(!html.includes("localStorage.setItem('jepong_personalization'"),'personalization settings must not be duplicated in browser-local storage');
 
 const executeSource=section(html,'function executeSnippetFromButton(btn) {','function openCodeFullscreenFromButton(btn) {');
 const execute= new Function('personalizationSettings','snippetFromButton','document','closeTransientSurfaces','buildRunnableSnippetDocument','showModernToast',executeSource+'\nreturn executeSnippetFromButton;');
