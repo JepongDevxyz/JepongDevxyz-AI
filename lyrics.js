@@ -77,7 +77,7 @@ function ensureCss() {
       '.jd-lyrics-card__btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 0;' +
       'border:1px solid var(--border-color);border-radius:10px;background:transparent;color:var(--text-main);' +
       'font-size:13px;cursor:pointer}\n' +
-      '.jd-lyrics-card__btn:active{transform:scale(.97)}\n' +
+      '.jd-lyrics-card__btn:active{transform:scale(.97)}\n.msg.bot.jd-has-lyrics{white-space:pre-wrap}\n' +
       '.jd-lyrics-card__btn svg{width:15px;height:15px}\n' +
       '.jd-lyrics-card__via{padding:0 14px 10px;font-size:10px;color:var(--text-main);opacity:.4}\n' +
       '.jd-lyrics-card.is-loading .jd-lyrics-card__body{opacity:.6}\n' +
@@ -163,6 +163,7 @@ function fillCard(card, ok, text) {
 /* ---------- scrub any literal leftover markers from the message ---------- */
 function scrubLeftovers(msg) {
   try {
+    /* First pass: clean individual text nodes (handles non-split markers) */
     LEFTOVER_RE.lastIndex = 0;
     var walker = document.createTreeWalker(msg, NodeFilter.SHOW_TEXT, null);
     var nodes = [], n;
@@ -175,11 +176,28 @@ function scrubLeftovers(msg) {
         }
       } catch (_) {}
     });
+    /* Second pass: check combined textContent for any remaining marker
+       (handles split markers — if found in textContent but not in individual nodes,
+       do a targeted innerHTML replacement as last resort) */
+    try {
+      var combined = msg.textContent || '';
+      LEFTOVER_RE.lastIndex = 0;
+      if (LEFTOVER_RE.test(combined)) {
+        /* Marker still present — try innerHTML replacement */
+        var html = msg.innerHTML;
+        LEFTOVER_RE.lastIndex = 0;
+        var newHtml = html.replace(LEFTOVER_RE, '');
+        if (newHtml !== html) {
+          /* Only replace if we actually removed something, to avoid breaking the DOM */
+          msg.innerHTML = newHtml;
+        }
+      }
+    } catch (_) {}
   } catch (_) {}
 }
 
 /* ---------- attach the card once the assistant message settles ---------- */
-function attachWhenReady(artist, title) {
+function attachWhenReady(artist, title, targetMsg) {
   try {
     artist = String(artist || '').trim();
     title = String(title || '').trim();
@@ -189,8 +207,12 @@ function attachWhenReady(artist, title) {
     var timer = setInterval(function () {
       try {
         tries++;
-        var bots = document.querySelectorAll('#chatBox .msg.bot');
-        var msg = bots && bots.length ? bots[bots.length - 1] : null;
+        /* Use the specific message that had the marker, not just the last one */
+        var msg = targetMsg && targetMsg.isConnected ? targetMsg : null;
+        if (!msg) {
+          var bots = document.querySelectorAll('#chatBox .msg.bot');
+          msg = bots && bots.length ? bots[bots.length - 1] : null;
+        }
         if (!msg || msg.querySelector('[data-jd-lyrics]')) {
           if (!msg && tries < 25) return; /* keep waiting for the message */
           clearInterval(timer);
@@ -391,8 +413,11 @@ function installDomWatcher() {
               if (m) {
                 msg.__jdLyricsDone = true;
                 var artist = m[1], title = m[2];
-                scrubLeftovers(msg);
-                setTimeout(function () { attachWhenReady(artist, title); }, 100);
+                /* Preserve line breaks for lyrics formatting */
+                try { msg.classList.add('jd-has-lyrics'); } catch (_) {}
+                /* DON'T scrub during streaming — marker may be split across text nodes.
+                   attachWhenReady will scrub after the message stabilizes. */
+                setTimeout(function () { attachWhenReady(artist, title, msg); }, 100);
               }
             }
           } catch (_) {}
@@ -416,10 +441,10 @@ function installDomWatcher() {
               if (m) {
                 msg.__jdLyricsDone = true;
                 var artist = m[1], title = m[2];
-                /* Strip the marker from DOM */
-                scrubLeftovers(msg);
-                /* Render the card */
-                setTimeout(function () { attachWhenReady(artist, title); }, 100);
+                /* Preserve line breaks for lyrics formatting */
+                try { msg.classList.add('jd-has-lyrics'); } catch (_) {}
+                /* DON'T scrub during streaming — attachWhenReady scrubs after stabilization */
+                setTimeout(function () { attachWhenReady(artist, title, msg); }, 100);
               }
             } catch (_) {}
           });
