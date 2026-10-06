@@ -92,6 +92,7 @@
       if (msgNode) {
         var msgText = (msgNode.textContent || '').toLowerCase();
         var hasDirectionsIntent =
+          msgText.indexOf('route map') !== -1 ||
           msgText.indexOf('direction') !== -1 ||
           msgText.indexOf('route from') !== -1 ||
           msgText.indexOf('how to get to') !== -1 ||
