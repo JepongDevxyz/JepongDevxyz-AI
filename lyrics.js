@@ -398,6 +398,45 @@ function installDomWatcher() {
   try {
     if (window.__jdLyricsDomWatcher) return;
     window.__jdLyricsDomWatcher = true;
+
+/* ---------- fallback: detect lyrics without marker ---------- */
+/* If AI provides lyrics but forgets the marker, detect via section headers */
+var LYRICS_HEADER_RE = /\[(Verse|Chorus|Pre-Chorus|Bridge|Outro|Intro|Hook)\s*\d*\]|\((Verse|Chorus|Pre-Chorus|Bridge|Outro|Intro|Hook)[^)]*\)/i;
+
+function looksLikeLyrics(text) {
+  try {
+    if (!text || text.length < 100) return false;
+    /* Must have at least 2 section headers to be considered lyrics */
+    var matches = text.match(/\[(Verse|Chorus|Pre-Chorus|Bridge|Outro|Intro)\s*\d*\]|\((Verse|Chorus|Pre-Chorus|Bridge|Outro|Intro)[^)]*\)/gi);
+    return matches && matches.length >= 2;
+  } catch (_) { return false; }
+}
+
+function tryFallbackLyrics(msg) {
+  try {
+    if (!msg || msg.__jdLyricsDone || msg.__jdLyricsFallback) return;
+    var text = msg.textContent || '';
+    /* Only trigger if user asked for lyrics (check for lyrics keyword in recent user message) */
+    /* For now, just check if it looks like lyrics and has substantial content */
+    if (looksLikeLyrics(text)) {
+      msg.__jdLyricsFallback = true;
+      try { msg.classList.add('jd-has-lyrics'); } catch (_) {}
+      /* Try to extract artist/title from the intro line */
+      var artist = '', title = '';
+      var introMatch = /lyrics of ['"]([^'"]+)['"] by ([^:\n]+)/i.exec(text);
+      if (introMatch) {
+        title = introMatch[1].trim();
+        artist = introMatch[2].trim().replace(/:.*$/, '').trim();
+      }
+      /* If we can't parse, use generic */
+      if (!artist) artist = 'Unknown Artist';
+      if (!title) title = 'Unknown Title';
+      /* Attach a card */
+      setTimeout(function () { attachWhenReady(artist, title, msg); }, 500);
+    }
+  } catch (_) {}
+}
+
     var observer = new MutationObserver(function (mutations) {
       mutations.forEach(function (mut) {
         /* Handle text changes from streaming (characterData) */
@@ -445,6 +484,18 @@ function installDomWatcher() {
                 try { msg.classList.add('jd-has-lyrics'); } catch (_) {}
                 /* DON'T scrub during streaming — attachWhenReady scrubs after stabilization */
                 setTimeout(function () { attachWhenReady(artist, title, msg); }, 100);
+              }
+            } catch (_) {}
+          });
+          /* Fallback: check if any new message looks like lyrics (no marker) */
+          mut.addedNodes.forEach(function (node) {
+            try {
+              if (node.classList && node.classList.contains('msg') && node.classList.contains('bot')) {
+                if (!node.__jdLyricsDone) tryFallbackLyrics(node);
+              }
+              var bots = node.querySelectorAll ? node.querySelectorAll('.msg.bot') : [];
+              for (var i = 0; i < bots.length; i++) {
+                if (!bots[i].__jdLyricsDone) tryFallbackLyrics(bots[i]);
               }
             } catch (_) {}
           });
