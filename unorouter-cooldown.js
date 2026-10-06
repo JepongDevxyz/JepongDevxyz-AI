@@ -4,6 +4,9 @@
    After sending with an UnoRouter free model:
      - the send button locks for 60 seconds
      - a live "wait 60s" countdown ticks inside the composer textbox
+   Also (2026-10-06): triggers the app's syncDynamicProviderModels()
+   (defined in index.html but never called) so the picker shows ALL
+   live UnoRouter models incl. the 107 free ones, not just 'auto'.
    Loaded by agent.js. Idempotent.
    ========================================================= */
 (function () {
@@ -91,6 +94,20 @@
       e.stopPropagation();
     }
   }, true);
+
+  /* ---------- UnoRouter model list sync ----------
+     The app defines syncDynamicProviderModels() in index.html but never
+     calls it, so the picker only shows the static 'auto'. Trigger it so
+     ALL live UnoRouter models (incl. the 107 free ones) appear. */
+  function triggerUnoSync() {
+    try {
+      if (typeof syncDynamicProviderModels === 'function') syncDynamicProviderModels();
+      else if (window.syncDynamicProviderModels) window.syncDynamicProviderModels();
+    } catch (e) {}
+  }
+  if (document.readyState === 'complete') triggerUnoSync();
+  else window.addEventListener('load', triggerUnoSync);
+  setTimeout(triggerUnoSync, 10000); /* retry in case keys weren't ready */
 
   /* Detect UnoRouter free-model sends via the chat request. */
   var origFetch = window.fetch;
