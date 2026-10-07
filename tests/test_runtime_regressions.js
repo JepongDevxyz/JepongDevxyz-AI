@@ -52,4 +52,10 @@ assert(/app\.style\.transform\s*=\s*['\"]['\"]/.test(html), 'mobile app transfor
 assert(/overscroll-behavior\s*:\s*none/.test(html), 'root overscroll lock missing');
 assert(/function\s+lockDocumentViewport\s*\(/.test(html), 'document viewport lock helper missing');
 
+// Login must never create an account; signup may create one only when that mode is active.
+const emailOtp = html.match(/signInWithOtp\(\{email,options:\{shouldCreateUser:([^}]+)\}\}\)/);
+assert(emailOtp, 'email OTP auth call missing');
+assert.strictEqual(emailOtp[1], 'jdAuthSignUpMode', 'email OTP must create accounts only in explicit signup mode');
+assert(/let jdAuthSignUpMode=false;/.test(html), 'email OTP must default to existing-account login mode');
+
 console.log('PASS: runtime regressions');
