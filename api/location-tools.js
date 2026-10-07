@@ -62,6 +62,8 @@ export function extractRouteRequest(message=''){
   else if(/\b(?:bus|train|public transit|commute)\b/iu.test(text))travelMode='transit';
 
   text=text.replace(/^(?:hey\s+)?(?:can|could|would)\s+you\s+/iu,'')
+    .replace(/^(?:ipakita|pakita)(?:\s+(?:mo|po))?\s+(?:ang\s+)?(?:mapa|ruta)(?:\s+at\s+(?:mapa|ruta))?\s+mula\s+/iu,'')
+    .replace(/\s+papuntang\s+/iu,' to ')
     .replace(/^(?:please\s+)?(?:show\s+me\s+(?:a\s+)?(?:map|route|directions?)|give\s+me\s+(?:a\s+)?(?:map|route|directions?)|find\s+(?:a\s+)?route|map|route|directions?|navigate|driving\s+directions|walking\s+directions|how\s+do\s+i\s+get|how\s+to\s+get|distance)\s*/iu,'')
     .replace(/^(?:from|between)\s+/iu,'')
     .replace(/[?.!]+$/g,'').trim();
@@ -180,6 +182,20 @@ export function buildRouteMapAppendix(route,mapUrl=''){
     lines.push(`> [Open ${mode} directions in Google Maps](${links.routeUrl})`);
   }
   return lines.join('\n');
+}
+
+export function buildNativeDirectionsAppendix(result){
+  if(!result?.ok||!result.from||!result.to)return '';
+  const route={origin:result.from,destination:result.to,travelMode:'driving'};
+  const details=[];
+  const km=Number(result.distance_km);
+  if(Number.isFinite(km)&&km>0)details.push(`${km} km`);
+  if(result.duration)details.push(plainLocationLabel(result.duration,60));
+  // Uploaded HTML is blocked from iframe display by Vercel Blob's CSP.
+  // Only the validated inline document is an in-chat map.
+  const inlineMap=/^data:text\/html;base64,/i.test(String(result.map_url||''))?result.map_url:'';
+  return [details.length?`Ruta: ${escapeMarkdown(result.from)} → ${escapeMarkdown(result.to)} (${details.join(', ')}).`:'',
+    buildRouteMapAppendix(route,inlineMap)].filter(Boolean).join('\n\n');
 }
 
 export function buildRouteMapContext(route,mapUrl='',calculatedRoute=null){

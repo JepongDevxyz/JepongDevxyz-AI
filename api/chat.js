@@ -17,6 +17,7 @@ import {
   buildLocationMapLinks,
   buildRouteMapAppendix,
   buildRouteMapContext,
+  buildNativeDirectionsAppendix,
   buildWeatherMapAppendix,
   detectLocationWeatherIntent,
   extractRouteRequest,
@@ -6468,6 +6469,8 @@ function activityStreamResponse(body, requestSignal=null) {
           // function calling keep working through the pipeline below.
           let pendingSessionTitle='';
           let sharedViaNativeTool=false;
+          let nativeDirectionsAppendix='';
+          let nativeDirectionsUrl='';
           let toolRounds=0;
           while(!cancelled && toolRounds<MAX_TOOL_ROUNDS){
             const toolFamily=activeFinishState?.toolFamily||null;
@@ -6493,6 +6496,11 @@ function activityStreamResponse(body, requestSignal=null) {
                 onCreateSession:(title)=>{ pendingSessionTitle=title; },
               });
               toolResults.push({call,result:toolResult});
+              if(call.name==='get_directions'&&toolResult.ok&&!result.locationToolAppendix){
+                nativeDirectionsAppendix=buildNativeDirectionsAppendix(toolResult);
+                nativeDirectionsUrl=/^data:text\/html;base64,/i.test(String(toolResult.map_url||''))
+                  ?String(toolResult.map_url):'';
+              }
               send('activity',{type:'activity',id:'tool-'+call.name+'-'+toolRounds,
                 label:toolResult.ok?toolLabel+' — done':toolLabel+' — failed',
                 state:toolResult.ok?'completed':'warning',kind:'tool',
@@ -6546,6 +6554,15 @@ function activityStreamResponse(body, requestSignal=null) {
           }
 
           generatedText=sanitizeAssistantOutput(generatedText);
+          // A native directions tool may succeed while the provider's follow-up
+          // request fails. Deliver its verified result even without model prose.
+          if(nativeDirectionsAppendix
+            &&!generatedText.includes('View route map inside the chat')
+            &&!(nativeDirectionsUrl&&generatedText.includes(nativeDirectionsUrl))){
+            const addition=(generatedText.trim()?'\n\n':'')+nativeDirectionsAppendix;
+            generatedText+=addition;
+            send('text',{text:addition});
+          }
 
           // create_session tool (pipeline fallback): the model must ask permission
           // first and only emit [CREATE_SESSION: <title>] after the user agrees.
