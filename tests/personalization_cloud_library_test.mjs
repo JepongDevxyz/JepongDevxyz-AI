@@ -47,7 +47,7 @@ assert.deepEqual(enabled.personalization.libraryContext,[{fileName:'note.txt',sn
 assert.equal(enabled.files.length,1,'Library search context must coexist with current attachments when enabled');
 const disabledFeatures=applyFeatures({message:'x',files:[{name:'attached.png'}],personalization:{librarySearch:false,libraryContext:[{fileName:'secret.txt',snippet:'private'}]}});
 assert.deepEqual(disabledFeatures.personalization.libraryContext,[],'the API must drop private excerpts when Library search is OFF');
-assert.deepEqual(disabledFeatures.files,[],'preserve the existing file search/attachment gate when it is OFF');
+assert.equal(disabledFeatures.files.length,1,'automatic Library search OFF must preserve manual attachments');
 assert.match(api,/p\.libraryContext/,'the system prompt must deliver Library context to the selected model');
 const migrationPath=new URL('../supabase/migrations/20261006_personalization_library_search.sql',import.meta.url);
 assert(existsSync(migrationPath),'the Supabase schema/RLS migration must be checked in');

@@ -5434,7 +5434,6 @@ function applyChatFeatureSettings(body={}){
   return {
     ...body,
     ...(personalization?{personalization}:{}),
-    ...(settings.librarySearch===false?{files:[]}:{ }),
     ...(settings.connectorSearch===false?{plugins:{superpowers,skills,autoUse,plugins:[]}}:{})
   };
 }

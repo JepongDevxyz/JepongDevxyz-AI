@@ -37,19 +37,18 @@ assert.equal(runState.calls,0,'Canvas OFF must not run or open preview');
 assert.equal(runState.iframe.srcdoc,'','Canvas OFF must not populate preview code');
 assert(denied,'Canvas OFF should explain why the action is unavailable');
 
-const filesSource=section(html,'async function addSelectedFiles(fileList){','async function handleFileSelect(e){');
+const filesSource=section(html,'async function addSelectedFiles(fileList,options={}){','async function handleFileSelect(e){');
 const addFiles=new Function('personalizationSettings','showModernToast','selectedFilesData',filesSource+'\nreturn addSelectedFiles;');
 const selected=[];let fileNotice='';
-await addFiles({librarySearch:false},msg=>fileNotice=msg,selected)([{name:'private.txt'}]);
-assert.equal(selected.length,0,'File search OFF must reject attachments before processing');
-assert(fileNotice,'File search OFF should tell the user how to enable attachments');
+await addFiles({librarySearch:false},msg=>fileNotice=msg,selected)([]);
+assert.equal(selected.length,0,'Empty file selection must remain empty');
 
 const gateStart=api.indexOf('function applyChatFeatureSettings(');
 const gateEnd=api.indexOf('\nfunction ',gateStart+10);
 assert(gateStart>=0&&gateEnd>gateStart,'API must expose a request-boundary settings gate');
 const featureGate=new Function(api.slice(gateStart,gateEnd)+'\nreturn applyChatFeatureSettings;')();
 const gated=featureGate({message:'hello',files:[{name:'private.txt'}],plugins:{github:{enabled:true}},personalization:{librarySearch:false,connectorSearch:false}});
-assert.deepEqual(gated.files,[],'API must not pass attachments while File search is OFF');
+assert.equal(gated.files.length,1,'File search OFF must preserve files explicitly attached by the user');
 assert.equal(gated.plugins.github,undefined,'API must not query connectors while Connector search is OFF');
 const internalPlugins={superpowers:{enabled:true},skills:['tdd'],autoUse:true};
 const frontendPluginContext={...internalPlugins,plugins:[{id:'gmail',name:'Gmail'}],github:{enabled:true,repo:'owner/repo'}};
@@ -82,4 +81,4 @@ const setEffort=new Function('normalizeResponseEffortClient','personalizationSet
 for(const level of levels)setEffort(level,{toast:false});
 assert.deepEqual(persisted,levels,'Selecting each effort tier must persist and send that exact selection');
 assert.equal(selectedEffort.fastAnswers,false,'Non-Instant tiers must not be overridden by the fast-answer boolean');
-console.log('PASS: toggle ON/OFF gates Canvas, files, connectors, record history; all six effort levels alter real request policy.');
+console.log('PASS: toggles gate Canvas, automatic Library search, connectors and history while manual files remain available; effort levels alter request policy.');

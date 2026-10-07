@@ -4,10 +4,10 @@
    - Tabs: Suggested | Favorites | Folders (pill style)
    - 2-column grid with thumbnails, filenames, type icons
    - Bottom: search bar + plus button
-   - 3-dot menu: Select / Grid / List / Deleted
+   - 3-dot menu: Select / Grid / List
    - Plus menu: Upload files / New folder
    - Favorites: star items (stored in metadata JSONB)
-   - Folders: organize items (stored in metadata JSONB + localStorage)
+   - Folders: organize items (account-scoped Supabase folders + metadata)
    Replaces the old #libraryModal. Pure addition. Idempotent. */
 (function () {
   'use strict';
@@ -22,7 +22,7 @@
     /* Header */
     '.jdlib-header{display:flex;align-items:center;justify-content:space-between;',
     'padding:12px 8px;flex:0 0 auto}',
-    '.jdlib-hbtn{width:40px;height:40px;border-radius:50%;border:none;background:none;color:#fff;',
+    '.jdlib-hbtn{width:40px;height:40px;border-radius:50%;border:none;background:#282828;color:#fff;',
     'display:flex;align-items:center;justify-content:center;cursor:pointer}',
     '.jdlib-hbtn:active{background:rgba(255,255,255,.1)}',
     '.jdlib-hbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
@@ -35,6 +35,7 @@
     '.jdlib-tab:active{transform:scale(.95)}',
     /* Content */
     '.jdlib-content{flex:1;overflow-y:auto;padding:0 16px 100px;-webkit-overflow-scrolling:touch}',
+    '.jdlib-content.selecting{padding-top:56px}',
     '.jdlib-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}',
     '.jdlib-grid.list{grid-template-columns:1fr}',
     /* Cards */
@@ -53,11 +54,13 @@
     '.jdlib-grid.list .jdlib-thumb{width:56px;height:56px;aspect-ratio:auto;border-radius:8px;margin:8px;flex:0 0 auto}',
     '.jdlib-grid.list .jdlib-info{flex:1;padding:8px 12px 8px 0}',
     /* Folder cards */
-    '.jdlib-folder{background:#1e1e1e;border-radius:12px;padding:20px 16px;text-align:center;cursor:pointer}',
+    '.jdlib-folder{min-width:0;text-align:left;cursor:pointer}',
     '.jdlib-folder:active{transform:scale(.97)}',
-    '.jdlib-folder svg{width:40px;height:40px;stroke:#888;fill:none;stroke-width:1.5;margin-bottom:8px}',
-    '.jdlib-folder .jdlib-fname{font-size:.9rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-    '.jdlib-folder .jdlib-fcount{font-size:.78rem;color:#888;margin-top:2px}',
+    '.jdlib-folder-icon{aspect-ratio:1/.95;background:#242424;border:1px solid #333;border-radius:11px;',
+    'display:flex;align-items:center;justify-content:center}',
+    '.jdlib-folder-icon svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:1.7}',
+    '.jdlib-folder .jdlib-fname{font-size:.9rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:7px}',
+    '.jdlib-folder .jdlib-fcount{font-size:.78rem;color:#999;margin-top:2px}',
     /* Empty state */
     '.jdlib-empty{text-align:center;padding:60px 20px;color:#888;grid-column:1/-1}',
     '.jdlib-empty svg{width:56px;height:56px;stroke:#555;fill:none;stroke-width:1.5;margin-bottom:16px}',
@@ -90,8 +93,20 @@
     '.jdlib-mi .jdlib-check{margin-left:auto;color:#fff;font-weight:700}',
     /* Select mode */
     '.jdlib-card.selected{outline:2px solid #6366f1}',
-    '.jdlib-selbar{position:absolute;top:0;left:0;right:0;background:#1e1e1e;padding:12px 16px;',
+    '.jdlib-selbar{position:absolute;top:105px;left:0;right:0;background:#1e1e1e;padding:12px 16px;',
     'display:flex;align-items:center;justify-content:space-between;z-index:10}',
+    '.jdlib-selbar[hidden]{display:none}',
+    '.jdlib-selbar button{background:#333;color:#fff;border:0;border-radius:20px;padding:9px 12px}',
+    '.jdlib-folder-dialog{position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:27000;display:flex;',
+    'align-items:flex-start;justify-content:center;padding: min(30vh,210px) 16px 16px}',
+    '.jdlib-folder-dialog[hidden]{display:none}',
+    '.jdlib-dialog-panel{width:min(100%,420px);background:#202020;border-radius:20px;padding:18px;color:#fff}',
+    '.jdlib-dialog-panel label{display:block;border:1px solid #aaa;border-radius:4px;padding:6px 10px;font-size:12px}',
+    '.jdlib-dialog-panel input{display:block;width:100%;box-sizing:border-box;border:0;outline:0;',
+    'background:transparent;color:#fff;font:inherit;padding:5px 0}',
+    '.jdlib-dialog-actions{display:flex;justify-content:flex-end;gap:14px;margin-top:16px}',
+    '.jdlib-dialog-actions button{border:0;background:none;color:#fff;padding:8px;cursor:pointer}',
+    '.jdlib-dialog-actions button:disabled{opacity:.4}',
     /* Light mode (follows theme) */
     'body.theme-light #jdChatLibraryPage{background:#fff;color:#111}',
     'body.theme-light .jdlib-hbtn{color:#111}',
@@ -100,12 +115,16 @@
     'body.theme-light .jdlib-card{background:#f0f0f2}',
     'body.theme-light .jdlib-thumb{background:#e0e0e2}',
     'body.theme-light .jdlib-folder{background:#f0f0f2}',
+    'body.theme-light .jdlib-folder-icon{background:#f0f0f2;border-color:#ddd}',
+    'body.theme-light .jdlib-folder-icon svg{stroke:#222}',
     'body.theme-light .jdlib-search{background:#e8e8e8}',
     'body.theme-light .jdlib-search span{color:#888}',
     'body.theme-light .jdlib-search input{color:#111}',
     'body.theme-light .jdlib-plus{background:#e8e8e8;color:#111}',
     'body.theme-light .jdlib-menu{background:#fff;box-shadow:0 8px 32px rgba(0,0,0,.15)}',
     'body.theme-light .jdlib-mi{color:#111}'
+    ,'body.theme-light .jdlib-dialog-panel{background:#fff;color:#111}',
+    'body.theme-light .jdlib-dialog-panel input{color:#111}'
   ].join('\n');
 
   var I = {
@@ -185,18 +204,46 @@
       '<button class="jdlib-tab" data-tab="folders">Folders</button>' +
       '</div>' +
       '<div class="jdlib-content" id="jdLibContent"><div class="jdlib-grid" id="jdLibGrid"></div></div>' +
+      '<div class="jdlib-selbar" id="jdLibSelectedActions" hidden><span id="jdLibSelectedCount">0 selected</span>' +
+      '<button type="button" id="jdLibAttachSelected">Add to chat</button>' +
+      '<button type="button" id="jdLibDeleteSelected">Delete</button>' +
+      '<button type="button" id="jdLibCancelSelected">Cancel</button></div>' +
       '<div class="jdlib-bottom">' +
       '<div class="jdlib-search" id="jdLibSearchBar">' + I.search + '<span>Search</span><input id="jdLibSearchInput" type="text" placeholder="Search">' + '</div>' +
       '<button class="jdlib-plus" id="jdLibPlus">' + I.plus + '</button>' +
       '</div>' +
       '<div class="jdlib-menu" id="jdLibMenuPop" hidden></div>' +
-      '<div class="jdlib-menu" id="jdLibPlusPop" hidden></div>';
+      '<div class="jdlib-menu" id="jdLibPlusPop" hidden></div>' +
+      '<div class="jdlib-folder-dialog" id="jdLibFolderDialog" hidden>' +
+      '<form class="jdlib-dialog-panel" id="jdLibFolderForm"><label>Name<input id="jdLibFolderName" maxlength="120" autocomplete="off" required></label>' +
+      '<div class="jdlib-dialog-actions"><button type="button" id="jdLibFolderCancel">Cancel</button>' +
+      '<button type="submit" id="jdLibFolderCreate" disabled>Create</button></div></form></div>';
     document.body.appendChild(page);
 
     // Events
-    document.getElementById('jdLibBack').addEventListener('click', closeLibrary);
+    document.getElementById('jdLibBack').addEventListener('click', function(){
+      if(state.currentFolder){state.currentFolder=null;document.querySelector('.jdlib-title').textContent='Library';render();}
+      else closeLibrary();
+    });
     document.getElementById('jdLibMenu').addEventListener('click', toggleMenu);
     document.getElementById('jdLibPlus').addEventListener('click', togglePlus);
+    document.getElementById('jdLibFolderCancel').addEventListener('click', closeFolderDialog);
+    document.getElementById('jdLibFolderName').addEventListener('input', function(e){
+      document.getElementById('jdLibFolderCreate').disabled=!e.target.value.trim();
+    });
+    document.getElementById('jdLibFolderForm').addEventListener('submit', submitFolderDialog);
+    document.getElementById('jdLibCancelSelected').addEventListener('click', function(){state.selected.clear();state.selectMode=false;render();});
+    document.getElementById('jdLibAttachSelected').addEventListener('click', async function(){
+      var items=state.items.filter(function(it){return state.selected.has(it.id);});
+      for(var item of items)await attachLibraryItem(item);
+    });
+    document.getElementById('jdLibDeleteSelected').addEventListener('click', async function(){
+      var items=state.items.filter(function(it){return state.selected.has(it.id);});
+      if(!items.length)return;
+      if(!confirm('Delete '+items.length+' selected file(s)?'))return;
+      for(var item of items)await itemAction(item,'del');
+      state.selected.clear();state.selectMode=false;render();
+    });
     page.querySelectorAll('.jdlib-tab').forEach(function (t) {
       t.addEventListener('click', function () { switchTab(t.dataset.tab); });
     });
@@ -246,6 +293,7 @@
   function closeLibrary() {
     var page = document.getElementById('jdChatLibraryPage');
     if (page) {
+      closeFolderDialog();
       page.setAttribute('hidden', '');
       if (window.jdBackNav) window.jdBackNav.pop(page);
     }
@@ -257,42 +305,38 @@
     if (!grid) return;
     var libraryStore = window.JDLibraryStorage;
     if (!libraryStore || !libraryStore.isSignedIn()) {
+      state.items=[];state.folders=[];state.selected.clear();
       grid.innerHTML = '<div class="jdlib-empty">' + I.folder + '<p>Sign in to use your Library.</p></div>';
       return;
     }
-    grid.innerHTML = '';
+    grid.innerHTML = '<div class="jdlib-empty"><p>Loading Library…</p></div>';
     try {
-      var r = await libraryStore.listItems();
-      if (r.error) throw r.error;
-      state.items = r.data || [];
+      var accountId=libraryStore.accountId();
+      var results=await Promise.all([libraryStore.listItems(),libraryStore.listFolders()]);
+      if(accountId!==libraryStore.accountId())return loadItems();
+      if(results[0].error)throw results[0].error;
+      if(results[1].error)throw results[1].error;
+      state.items = results[0].data || [];
+      state.folders = (results[1].data || []).map(function(f){return {id:f.id,name:f.name,count:0};});
       loadFolders();
       render();
     } catch (e) {
-      grid.innerHTML = '<div class="jdlib-empty"><p>Failed to load.</p></div>';
+      if(accountId!==libraryStore.accountId())return loadItems();
+      grid.innerHTML = '<div class="jdlib-empty"><p>'+esc(e.message||'Failed to load Library.')+'</p></div>';
     }
   }
 
   function loadFolders() {
-    // From localStorage + items' metadata
-    var stored = [];
-    try { stored = JSON.parse(localStorage.getItem('jd_lib_folders') || '[]'); } catch (e) {}
     var fromItems = {};
     state.items.forEach(function (it) {
       var f = itemFolder(it);
       if (f) fromItems[f] = (fromItems[f] || 0) + 1;
     });
-    var all = {};
-    stored.forEach(function (f) { all[f] = fromItems[f] || 0; });
-    Object.keys(fromItems).forEach(function (f) { all[f] = fromItems[f]; });
-    state.folders = Object.keys(all).map(function (name) {
-      return { name: name, count: all[name] };
+    state.folders.forEach(function(f){f.count=fromItems[f.name]||0;});
+    // Existing item metadata may predate the dedicated folder table.
+    Object.keys(fromItems).forEach(function(name){
+      if(!state.folders.some(function(f){return f.name===name;}))state.folders.push({name:name,count:fromItems[name],legacy:true});
     });
-  }
-
-  function saveFolders() {
-    try {
-      localStorage.setItem('jd_lib_folders', JSON.stringify(state.folders.map(function (f) { return f.name; })));
-    } catch (e) {}
   }
 
   /* ---------- Render ---------- */
@@ -300,6 +344,12 @@
     var grid = document.getElementById('jdLibGrid');
     if (!grid) return;
     grid.className = 'jdlib-grid' + (state.view === 'list' ? ' list' : '');
+    var selectedActions=document.getElementById('jdLibSelectedActions');
+    if(selectedActions){
+      selectedActions.hidden=!state.selectMode;
+      document.getElementById('jdLibSelectedCount').textContent=state.selected.size+' selected';
+      document.getElementById('jdLibContent').classList.toggle('selecting',state.selectMode);
+    }
 
     var q = state.search.toLowerCase();
     function matchSearch(it) {
@@ -317,14 +367,15 @@
   }
 
   function renderFolders(grid) {
-    if (!state.folders.length) {
+    var folders=state.folders.filter(function(f){return !state.search||f.name.toLowerCase().includes(state.search.toLowerCase());});
+    if (!folders.length) {
       grid.innerHTML = '<div class="jdlib-empty">' + I.folder +
-        '<p>No folders yet.<br>Tap + to create one.</p></div>';
+        '<p>'+(state.search?'No matching folders.':'No folders yet.<br>Tap + to create one.')+'</p></div>';
       return;
     }
-    grid.innerHTML = state.folders.map(function (f) {
+    grid.innerHTML = folders.map(function (f) {
       return '<div class="jdlib-folder" data-folder="' + esc(f.name) + '">' +
-        I.folder +
+        '<div class="jdlib-folder-icon">'+I.folder+'</div>' +
         '<div class="jdlib-fname">' + esc(f.name) + '</div>' +
         '<div class="jdlib-fcount">' + f.count + ' item' + (f.count === 1 ? '' : 's') + '</div>' +
         '</div>';
@@ -332,7 +383,11 @@
     grid.querySelectorAll('.jdlib-folder').forEach(function (el) {
       el.addEventListener('click', function () {
         state.currentFolder = el.dataset.folder;
+        document.querySelector('.jdlib-title').textContent=state.currentFolder;
         render();
+      });
+      el.addEventListener('contextmenu',function(e){
+        e.preventDefault();showFolderMenu(state.folders.find(function(f){return f.name===el.dataset.folder;}),e.clientX,e.clientY);
       });
     });
   }
@@ -340,7 +395,7 @@
   function renderItems(grid, items) {
     if (!items.length) {
       var msg = state.tab === 'favorites'
-        ? I.bookmark + '<p><b>Save your favorites</b><br>Items you add to Favorites will appear here.</p><div class="jdlib-del" id="jdLibEmptyDel">' + I.trash + '</div>'
+        ? I.bookmark + '<p><b>Save your favorites</b><br>Items you add to Favorites will appear here.</p>'
         : I.folder + '<p>No files yet.</p>';
       grid.innerHTML = '<div class="jdlib-empty">' + msg + '</div>';
       return;
@@ -377,9 +432,13 @@
         if (state.selectMode) {
           if (state.selected.has(id)) { state.selected.delete(id); card.classList.remove('selected'); }
           else { state.selected.add(id); card.classList.add('selected'); }
+          render();
         } else {
           var item = state.items.find(function (x) { return x.id === id; });
-          if (item) openItem(item);
+          if (item){
+            var rect=card.getBoundingClientRect();
+            showItemMenu(item.id,rect.left,Math.min(rect.bottom+4,window.innerHeight-290));
+          }
         }
       });
       card.addEventListener('contextmenu', function (e) {
@@ -435,8 +494,7 @@
     pop.innerHTML =
       '<button class="jdlib-mi" data-act="select">' + I.select + 'Select</button>' +
       '<button class="jdlib-mi" data-act="grid">' + I.grid + 'Grid' + (state.view === 'grid' ? '<span class="jdlib-check">✓</span>' : '') + '</button>' +
-      '<button class="jdlib-mi" data-act="list">' + I.list + 'List' + (state.view === 'list' ? '<span class="jdlib-check">✓</span>' : '') + '</button>' +
-      '<button class="jdlib-mi" data-act="deleted">' + I.trash + 'Deleted</button>';
+      '<button class="jdlib-mi" data-act="list">' + I.list + 'List' + (state.view === 'list' ? '<span class="jdlib-check">✓</span>' : '') + '</button>';
     pop.hidden = false;
     pop.querySelectorAll('.jdlib-mi').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -454,9 +512,6 @@
     } else if (act === 'grid' || act === 'list') {
       state.view = act;
       render();
-    } else if (act === 'deleted') {
-      // Show deleted (we don't have soft-delete, show info)
-      if (typeof showModernAlert === 'function') showModernAlert('Deleted items are permanently removed.', 'Library');
     }
   }
 
@@ -521,27 +576,64 @@
       document.body.appendChild(inp);
       inp.click();
     } else if (act === 'newfolder') {
-      var name = prompt('Folder name:');
-      if (name && name.trim()) {
-        name = name.trim();
-        if (!state.folders.find(function (f) { return f.name === name; })) {
-          state.folders.push({ name: name, count: 0 });
-          saveFolders();
-          if (state.tab === 'folders') render();
-        }
-      }
+      var dialog=document.getElementById('jdLibFolderDialog');
+      var input=document.getElementById('jdLibFolderName');
+      dialog.hidden=false;input.value='';document.getElementById('jdLibFolderCreate').disabled=true;
+      requestAnimationFrame(function(){input.focus();});
     }
+  }
+
+  function closeFolderDialog(){
+    var dialog=document.getElementById('jdLibFolderDialog');
+    if(dialog)dialog.hidden=true;
+    document.getElementById('jdLibFolderName')?.blur();
+  }
+
+  async function submitFolderDialog(event){
+    event.preventDefault();
+    var name=document.getElementById('jdLibFolderName').value.trim();
+    if(!name)return;
+    if(state.folders.some(function(f){return f.name.toLowerCase()===name.toLowerCase();})){
+      showLibraryError(new Error('A folder with that name already exists.'));return;
+    }
+    var button=document.getElementById('jdLibFolderCreate');button.disabled=true;
+    var result=await window.JDLibraryStorage.createFolder(name);
+    if(result.error){showLibraryError(result.error);button.disabled=false;return;}
+    closeFolderDialog();state.tab='folders';state.currentFolder=null;
+    document.querySelectorAll('.jdlib-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='folders');});
+    await loadItems();
+  }
+
+  function showLibraryError(error){
+    if(typeof showModernAlert==='function')showModernAlert(String(error?.message||error||'Library action failed.'),'Library');
+  }
+
+  function showFolderMenu(folder,x,y){
+    if(!folder)return;
+    var pop=document.getElementById('jdLibMenuPop');
+    pop.style.top=y+'px';pop.style.left=Math.max(8,Math.min(x,window.innerWidth-200))+'px';pop.style.right='auto';
+    pop.innerHTML='<button class="jdlib-mi" type="button">'+I.trash+'Delete folder</button>';
+    pop.hidden=false;
+    pop.querySelector('button').addEventListener('click',async function(){
+      pop.hidden=true;
+      if(!confirm('Delete folder '+folder.name+'? Its files will remain in Library.'))return;
+      var result=await window.JDLibraryStorage.deleteFolder(folder);
+      if(result.error){showLibraryError(result.error);return;}
+      state.currentFolder=null;await loadItems();
+    });
   }
 
   function showItemMenu(id, x, y) {
     var item = state.items.find(function (z) { return z.id === id; });
     if (!item) return;
     var pop = document.getElementById('jdLibMenuPop');
-    pop.style.top = y + 'px';
-    pop.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+    pop.style.top = Math.max(8,y) + 'px';
+    pop.style.left = Math.max(8,Math.min(x, window.innerWidth - 200)) + 'px';
     pop.style.right = 'auto';
     var fav = isFav(item);
     pop.innerHTML =
+      '<button class="jdlib-mi" data-act="attach">' + I.plus + 'Add to chat</button>' +
+      '<button class="jdlib-mi" data-act="open">' + I.doc + 'Open</button>' +
       '<button class="jdlib-mi" data-act="fav">' + I.star + (fav ? 'Remove from Favorites' : 'Add to Favorites') + '</button>' +
       '<button class="jdlib-mi" data-act="move">' + I.folder + 'Move to folder</button>' +
       '<button class="jdlib-mi" data-act="del">' + I.trash + 'Delete</button>';
@@ -555,14 +647,18 @@
   }
 
   async function itemAction(item, act) {
+    var store=window.JDLibraryStorage;
+    if(act==='attach'){await attachLibraryItem(item);return;}
+    if(act==='open'){openItem(item);return;}
     if (act === 'fav') {
       var meta = getMeta(item);
-      meta.favorite = !meta.favorite;
+      meta = {...meta,favorite:!meta.favorite};
       try {
-        await cloudClient.from('library_items').update({ metadata: meta }).eq('id', item.id);
+        var result=await store.updateItemMetadata(item.id,meta);
+        if(result.error)throw result.error;
         item.metadata = meta;
         render();
-      } catch (e) {}
+      } catch (e) {showLibraryError(e);}
     } else if (act === 'move') {
       if (!state.folders.length) {
         if (typeof showModernAlert === 'function') showModernAlert('Create a folder first (tap +).', 'Library');
@@ -570,20 +666,36 @@
       }
       var name = prompt('Move to folder:\n' + state.folders.map(function (f) { return '- ' + f.name; }).join('\n'));
       if (name) {
-        var meta2 = getMeta(item);
-        meta2.folder = name.trim();
+        name=name.trim();
+        if(!state.folders.some(function(f){return f.name===name;})){showLibraryError(new Error('Choose an existing folder.'));return;}
+        var meta2 = {...getMeta(item),folder:name};
         try {
-          await cloudClient.from('library_items').update({ metadata: meta2 }).eq('id', item.id);
+          var moved=await store.updateItemMetadata(item.id,meta2);
+          if(moved.error)throw moved.error;
           item.metadata = meta2;
           loadFolders(); render();
-        } catch (e) {}
+        } catch (e) {showLibraryError(e);}
       }
     } else if (act === 'del') {
-      if (typeof deleteLibraryItem === 'function') {
-        deleteLibraryItem(item.id, encodeURIComponent(item.storage_path));
-        setTimeout(loadItems, 1000);
-      }
+      if(!state.selectMode&&!confirm('Delete '+item.file_name+' from Library?'))return;
+      try{
+        var deleted=await store.deleteItem(item);
+        if(deleted.error)throw deleted.error;
+        delete thumbCache[item.id];
+        await loadItems();
+      }catch(e){showLibraryError(e);}
     }
+  }
+
+  async function attachLibraryItem(item){
+    try{
+      var file=await window.JDLibraryStorage.getFile(item);
+      if(file.error)throw file.error;
+      if(typeof addSelectedFiles!=='function')throw new Error('Chat attachments are unavailable.');
+      await addSelectedFiles([file],{manualLibrary:true});
+      closeLibrary();
+      if(typeof showModernToast==='function')showModernToast('Added '+item.file_name+' to chat.');
+    }catch(e){showLibraryError(e);}
   }
 
   /* ---------- Init: override openLibrary ---------- */
