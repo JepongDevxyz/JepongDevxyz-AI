@@ -91,51 +91,52 @@ assert(library.includes('!isLibraryPlusTarget(e.target)) pp.hidden = true;'),
 
 +
 +// Library file picker must use an attached input so browser chooser automation can
-+// address the node; selection saves files and cancellation removes the temporary input.
-+const libUploadStart = library.indexOf('  function plusAction(act) {');
-+assert.notEqual(libUploadStart, -1, 'Library upload action is missing');
-+const libUploadEnd = library.indexOf('\\n  }\\n', libUploadStart);
-+assert.notEqual(libUploadEnd, -1, 'Library upload action is incomplete');
-+const libUploadFunction = library.slice(libUploadStart, libUploadEnd + 4).trim();
-+let libUploadAttachedInput = null;
-+let libUploadSaves = [];
-+let libUploadReloads = 0;
-+let libUploadClicks = 0;
-+const libUploadListeners = {};
-+const libUploadBody = {
-+  appendChild(input) { libUploadAttachedInput = input; input.parentNode = this; return input; },
-+  removeChild(input) { if (libUploadAttachedInput === input) libUploadAttachedInput = null; input.parentNode = null; return input; }
-+};
-+const libUploadInput = {
-+  style: {},
-+  files: [{name: 'library-upload-fixture.txt'}],
-+  parentNode: null,
-+  addEventListener(name, handler) { libUploadListeners[name] = handler; },
-+  setAttribute() {},
-+  click() {
-+    assert.equal(this.parentNode, libUploadBody, 'file input must be attached before opening the picker');
-+    libUploadClicks++;
-+  }
-+};
-+const runLibraryUpload = vm.runInNewContext('(' + libUploadFunction + ')', {
-+  document: {body: libUploadBody, createElement: () => libUploadInput},
-+  saveFileToLibrary(file, options) { libUploadSaves.push({file, options}); },
-+  loadItems() { libUploadReloads++; },
-+  setTimeout(callback, delay) { assert.equal(delay, 2000); callback(); }
-+});
-+runLibraryUpload('upload');
-+assert.equal(libUploadClicks, 1, 'Library should open the picker exactly once');
-+assert.equal(libUploadInput.type, 'file');
-+assert.equal(libUploadInput.multiple, true);
-+assert.equal(libUploadInput.style.left, '-10000px', 'temporary input should remain visually hidden');
-+libUploadInput.onchange();
-+assert.equal(libUploadSaves.length, 1, 'selected files should be saved to Library');
-+assert.equal(libUploadSaves[0].file.name, 'library-upload-fixture.txt');
-+assert.equal(libUploadReloads, 1, 'Library should reload after upload');
-+assert.equal(libUploadAttachedInput, null, 'temporary input should be removed after selection');
-+runLibraryUpload('upload');
-+assert.equal(typeof libUploadListeners.cancel, 'function', 'picker cancellation should clean up the input');
-+libUploadListeners.cancel();
-+assert.equal(libUploadAttachedInput, null, 'temporary input should be removed after cancellation');
+// address the node; selection saves files and cancellation removes the temporary input.
+const libUploadStart = library.indexOf('  function plusAction(act) {');
+assert.notEqual(libUploadStart, -1, 'Library upload action is missing');
+const libUploadEnd = library.indexOf('\n  }\n', libUploadStart);
+assert.notEqual(libUploadEnd, -1, 'Library upload action is incomplete');
+const libUploadFunction = library.slice(libUploadStart, libUploadEnd + 4).trim();
+let libUploadAttachedInput = null;
+let libUploadSaves = [];
+let libUploadReloads = 0;
+let libUploadClicks = 0;
+const libUploadListeners = {};
+const libUploadBody = {
+  appendChild(input) { libUploadAttachedInput = input; input.parentNode = this; return input; },
+  removeChild(input) { if (libUploadAttachedInput === input) libUploadAttachedInput = null; input.parentNode = null; return input; }
+};
+const libUploadInput = {
+  style: {},
+  files: [{name: 'library-upload-fixture.txt'}],
+  parentNode: null,
+  addEventListener(name, handler) { libUploadListeners[name] = handler; },
+  setAttribute() {},
+  click() {
+    assert.equal(this.parentNode, libUploadBody, 'file input must be attached before opening the picker');
+    libUploadClicks++;
+  }
+};
+const runLibraryUpload = vm.runInNewContext('(' + libUploadFunction + ')', {
+  document: {body: libUploadBody, createElement: () => libUploadInput},
+  saveFileToLibrary(file, options) { libUploadSaves.push({file, options}); },
+  loadItems() { libUploadReloads++; },
+  setTimeout(callback, delay) { assert.equal(delay, 2000); callback(); }
+});
+runLibraryUpload('upload');
+assert.equal(libUploadClicks, 1, 'Library should open the picker exactly once');
+assert.equal(libUploadInput.type, 'file');
+assert.equal(libUploadInput.multiple, true);
+assert.equal(libUploadInput.style.left, '-10000px', 'temporary input should remain visually hidden');
+libUploadInput.onchange();
+assert.equal(libUploadSaves.length, 1, 'selected files should be saved to Library');
+assert.equal(libUploadSaves[0].file.name, 'library-upload-fixture.txt');
+assert.equal(libUploadReloads, 1, 'Library should reload after upload');
+assert.equal(libUploadAttachedInput, null, 'temporary input should be removed after selection');
+runLibraryUpload('upload');
+assert.equal(typeof libUploadListeners.cancel, 'function', 'picker cancellation should clean up the input');
+libUploadListeners.cancel();
+assert.equal(libUploadAttachedInput, null, 'temporary input should be removed after cancellation');
+
 
 console.log('PASS: runtime regressions');
