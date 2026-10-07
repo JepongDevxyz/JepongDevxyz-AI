@@ -5672,15 +5672,77 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
                 item.cloudStatus='error';item.cloudError=error?.message||'Upload failed.';renderFilePreviews();return {error:error};
             }
         }
+        async function extractLibrarySearchText(file){
+            const mime=String(file?.type||'').toLowerCase();
+            const name=String(file?.name||'');
+            if(!mime.startsWith('text/')&&!/\.(txt|md|csv|json|xml|ya?ml|html?|css|js|mjs|cjs|ts|tsx|jsx|py|java|kt|sql|log)$/i.test(name))return '';
+            try{return (await file.text()).slice(0,24000);}catch{return '';}
+        }
         window.JDLibraryStorage={
             isSignedIn:()=>!!(cloudUser&&cloudClient),
+            accountId:()=>cloudUser?.id||null,
             listItems:async()=>{
                 if(!cloudUser||!cloudClient)return {data:null,error:new Error('Sign in to use Library.')};
-                return await cloudClient.from('library_items').select('id,storage_path,file_name,mime_type,size_bytes,created_at,metadata').eq('user_id',cloudUser.id).order('created_at',{ascending:false}).limit(200);
+                const data=[];
+                for(let offset=0;;offset+=200){
+                    const result=await cloudClient.from('library_items').select('id,storage_path,file_name,mime_type,size_bytes,created_at,metadata').eq('user_id',cloudUser.id).order('created_at',{ascending:false}).range(offset,offset+199);
+                    if(result.error)return result;
+                    data.push(...(result.data||[]));
+                    if((result.data||[]).length<200)return {data,error:null};
+                }
+            },
+            listFolders:async()=>{
+                if(!cloudUser||!cloudClient)return {data:null,error:new Error('Sign in to use Library.')};
+                const data=[];
+                for(let offset=0;;offset+=200){
+                    const result=await cloudClient.from('library_folders').select('id,name,created_at').eq('user_id',cloudUser.id).order('created_at',{ascending:false}).range(offset,offset+199);
+                    if(result.error)return result;
+                    data.push(...(result.data||[]));
+                    if((result.data||[]).length<200)return {data,error:null};
+                }
+            },
+            createFolder:async(name)=>{
+                if(!cloudUser||!cloudClient)return {error:new Error('Sign in to create a folder.')};
+                const trimmed=String(name||'').trim();
+                if(!trimmed||trimmed.length>120)return {error:new Error('Folder name must be 1–120 characters.')};
+                return await cloudClient.from('library_folders').insert({user_id:cloudUser.id,name:trimmed});
+            },
+            deleteFolder:async(folder)=>{
+                if(!cloudUser||!cloudClient)return {error:new Error('Sign in to delete a folder.')};
+                const rows=await cloudClient.from('library_items').select('id,metadata').eq('user_id',cloudUser.id);
+                if(rows.error)return rows;
+                for(const item of rows.data||[]){
+                    if(item.metadata?.folder!==folder.name)continue;
+                    const metadata={...item.metadata};delete metadata.folder;
+                    const updated=await cloudClient.from('library_items').update({metadata}).eq('id',item.id).eq('user_id',cloudUser.id);
+                    if(updated.error)return updated;
+                }
+                if(folder.legacy)return {data:true,error:null};
+                return await cloudClient.from('library_folders').delete().eq('id',folder.id).eq('user_id',cloudUser.id);
+            },
+            updateItemMetadata:async(id,metadata)=>{
+                if(!cloudUser||!cloudClient)return {error:new Error('Sign in to edit a Library item.')};
+                return await cloudClient.from('library_items').update({metadata}).eq('id',id).eq('user_id',cloudUser.id);
+            },
+            getFile:async(item)=>{
+                if(!cloudUser||!cloudClient)return {error:new Error('Sign in to use Library files.')};
+                if(!item?.storage_path?.startsWith(cloudUser.id+'/'))return {error:new Error('Invalid Library file path.')};
+                const result=await cloudClient.storage.from('user-library').download(item.storage_path);
+                if(result.error)return result;
+                const file=new File([result.data],item.file_name,{type:item.mime_type||'application/octet-stream'});
+                file.__jdFromLibrary=true;
+                return file;
+            },
+            deleteItem:async(item)=>{
+                if(!cloudUser||!cloudClient)return {error:new Error('Sign in to delete Library files.')};
+                if(!item?.storage_path?.startsWith(cloudUser.id+'/'))return {error:new Error('Invalid Library file path.')};
+                const removed=await cloudClient.storage.from('user-library').remove([item.storage_path]);
+                if(removed.error)return removed;
+                return await cloudClient.from('library_items').delete().eq('id',item.id).eq('user_id',cloudUser.id);
             },
             saveFile:async(file)=>{
                 if(!cloudUser||!cloudClient)return {error:new Error('Sign in to upload files to Library.')};
-                const item={kind:'file',extractedText:''};
+                const item={kind:'file',extractedText:await extractLibrarySearchText(file)};
                 const result=await saveFileToLibrary(file,item);
                 return item.cloudStatus==='saved'?{data:true,error:null}:{error:result?.error||new Error(item.cloudError||'Upload failed.')};
             }
@@ -13812,7 +13874,7 @@ ${m.text || ''}
                 placeholder.progressCompletedAt=performance.now();
                 placeholder.status=result.extractionWarning?'warning':'ready';
                 placeholder.statusText=result.extractionWarning?'Ready with warning':'Ready';
-                if(cloudUser) saveFileToLibrary(file,placeholder).catch(()=>{});
+                if(cloudUser&&!file.__jdFromLibrary) saveFileToLibrary(file,placeholder).catch(()=>{});
             }catch(err){
                 placeholder.status='error';
                 placeholder.progressIndeterminate=false;
@@ -13825,8 +13887,7 @@ ${m.text || ''}
             return placeholder;
         }
 
-        async function addSelectedFiles(fileList){
-            if(personalizationSettings.librarySearch===false){showModernToast?.('File attachments are off. Turn on Library / file search in Settings to use them.');return;}
+        async function addSelectedFiles(fileList,options={}){
             const incoming=Array.from(fileList||[]);
             if(!incoming.length)return;
 
