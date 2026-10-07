@@ -5656,14 +5656,35 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             if(!silent)showModernAlert('Memory, settings and chats synced.','Cloud sync');renderCloudAccount();
         }
         async function saveFileToLibrary(file,item){
-            if(!cloudUser||!cloudClient||!file)return;
+            if(!cloudUser||!cloudClient||!file)return {error:new Error('Sign in to upload files to Library.')};
             const path=`${cloudUser.id}/${Date.now()}-${crypto.randomUUID?.()||Math.random().toString(36).slice(2)}-${cloudSafeName(file.name)}`;
             item.cloudStatus='uploading';renderFilePreviews();
-            const up=await cloudClient.storage.from('user-library').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});
-            if(up.error){item.cloudStatus='error';item.cloudError=up.error.message;renderFilePreviews();return;}
-            const {error}=await cloudClient.from('library_items').insert({user_id:cloudUser.id,storage_path:path,file_name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_conversation_id:null,metadata:{kind:item.kind,last_modified:file.lastModified||null},search_text:String(item.extractedText||'').slice(0,24000)});
-            item.cloudStatus=error?'error':'saved';item.cloudError=error?.message||'';renderFilePreviews();
+            try{
+                const up=await cloudClient.storage.from('user-library').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});
+                if(up.error){item.cloudStatus='error';item.cloudError=up.error.message;renderFilePreviews();return {error:up.error};}
+                const {error}=await cloudClient.from('library_items').insert({user_id:cloudUser.id,storage_path:path,file_name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_conversation_id:null,metadata:{kind:item.kind,last_modified:file.lastModified||null},search_text:String(item.extractedText||'').slice(0,24000)});
+                if(error){
+                    await cloudClient.storage.from('user-library').remove([path]).catch(()=>{});
+                    item.cloudStatus='error';item.cloudError=error.message;renderFilePreviews();return {error:error};
+                }
+                item.cloudStatus='saved';item.cloudError='';renderFilePreviews();return {data:true,error:null};
+            }catch(error){
+                item.cloudStatus='error';item.cloudError=error?.message||'Upload failed.';renderFilePreviews();return {error:error};
+            }
         }
+        window.JDLibraryStorage={
+            isSignedIn:()=>!!(cloudUser&&cloudClient),
+            listItems:async()=>{
+                if(!cloudUser||!cloudClient)return {data:null,error:new Error('Sign in to use Library.')};
+                return await cloudClient.from('library_items').select('id,storage_path,file_name,mime_type,size_bytes,created_at,metadata').eq('user_id',cloudUser.id).order('created_at',{ascending:false}).limit(200);
+            },
+            saveFile:async(file)=>{
+                if(!cloudUser||!cloudClient)return {error:new Error('Sign in to upload files to Library.')};
+                const item={kind:'file',extractedText:''};
+                const result=await saveFileToLibrary(file,item);
+                return item.cloudStatus==='saved'?{data:true,error:null}:{error:result?.error||new Error(item.cloudError||'Upload failed.')};
+            }
+        };
         async function searchPrivateLibraryForChat(query){
             if(personalizationSettings.librarySearch!==true||!cloudUser||!cloudClient)return [];
             const searchQuery=String(query||'').normalize('NFKC').trim().slice(0,500);
