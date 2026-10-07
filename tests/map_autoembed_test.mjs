@@ -82,7 +82,8 @@ assert.equal(frame.srcdoc,safeHtml,'trusted map HTML renders as srcdoc in the ch
 assert.equal(frame.src,undefined,'no data URL navigation is needed');
 assert.equal(frame.attrs.loading,'eager','map loading starts immediately');
 assert.equal(frame.attrs.sandbox,'allow-scripts','embedded HTML must not share the app origin');
-assert.equal(frame.attrs.referrerpolicy,'no-referrer');
+assert.equal(frame.attrs.referrerpolicy,'strict-origin-when-cross-origin',
+  'map tile requests need an identifying origin Referer under the OSM tile policy');
 assert.match(frame.style.cssText,/height:clamp\(340px,56vh,500px\)/,
   'the map card should use the enlarged responsive map height');
 assert.ok(status && !status.hidden,'users see a loading state instead of a blank area');

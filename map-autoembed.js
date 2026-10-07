@@ -154,7 +154,7 @@
       iframe.style.cssText = 'position:relative;z-index:0;width:100%;height:clamp(340px,56vh,500px);min-height:340px;border:0;border-radius:12px;margin:0;display:block;opacity:0;transition:opacity .18s ease';
       iframe.setAttribute('loading', 'eager');
       iframe.setAttribute('sandbox', 'allow-scripts');
-      iframe.setAttribute('referrerpolicy', 'no-referrer');
+      iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
       iframe.title = 'Interactive map';
 
       var settled = false;
