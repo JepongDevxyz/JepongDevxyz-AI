@@ -70,7 +70,7 @@ const PROVIDERS = {
   },
   openrouter: {
     label: 'OpenRouter',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','openai/gpt-oss-120b:free','google/gemma-4-31b-it:free','nvidia/nemotron-3-super-120b-a12b:free'],
+    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','google/gemma-4-26b-a4b-it:free','google/gemma-4-31b-it:free','nvidia/nemotron-3-super-120b-a12b:free'],
     defaultModel: 'nvidia/nemotron-3-super-120b-a12b:free'
   },
   mistral: {
