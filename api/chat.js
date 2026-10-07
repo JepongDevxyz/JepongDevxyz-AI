@@ -55,8 +55,8 @@ function inlineMapPageUrl(html){
 const PROVIDERS = {
   gemini: {
     label: 'Gemini',
-    models: ['gemini-flash-latest','gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'],
-    defaultModel: 'gemini-flash-latest'
+    models: ['gemini-1.5-flash-lite','gemini-3.5-flash-lite'],
+    defaultModel: 'gemini-3.5-flash-lite'
   },
   cloudflare: {
     label: 'Cloudflare',
@@ -113,7 +113,7 @@ const PROVIDERS = {
   },
   hcnsec: {
     label: 'HCNSEC',
-    models: ['DeepSeek-V4-Flash','glm-5.3-flash','MiMo-V2.6-Flash','Qwen3.8-Flash-Next','sensenova-6.8-flash-lite','spark-x2.5'],
+    models: ['DeepSeek-V4-Flash','MiMo-V2.6-Flash','MiniMax-M3.1-Flash','Qwen3.8-Flash-Next'],
     defaultModel: 'DeepSeek-V4-Flash'
   },
   bailucode: {
