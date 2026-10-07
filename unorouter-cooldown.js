@@ -141,6 +141,29 @@
   else window.addEventListener('load', triggerUnoSync);
   setTimeout(triggerUnoSync, 10000); /* retry in case keys weren't ready */
 
+  /* ---------- UnoRouter picker: FREE MODELS ONLY + dead removed ----------
+     Jepong's order (2026-10-07): the UnoRouter picker must show ONLY free
+     models (no paid), and dead models (404) are removed.
+     Implemented by filtering the provider-models response: keep 'auto'
+     (bootstrap placeholder) + models ending in ':free', minus denylist. */
+  var JD_UNO_DEAD = ['nemotron-nano-9b-v2:free']; /* 404s; add more as found */
+  function filterUnoModels(data) {
+    try {
+      var prov = data && data.providers && data.providers.unorouter;
+      if (prov && Array.isArray(prov.models)) {
+        prov.models = prov.models.filter(function (m) {
+          var id = m && m.id ? String(m.id) : '';
+          if (!id) return false;
+          var low = id.toLowerCase();
+          if (low === 'auto') return true;
+          if (JD_UNO_DEAD.indexOf(low) !== -1) return false;
+          return low.endsWith(':free');
+        });
+      }
+    } catch (e) {}
+    return data;
+  }
+
   /* Detect UnoRouter free-model sends via the chat request. */
   var origFetch = window.fetch;
   window.fetch = function (url, opts) {
@@ -149,8 +172,23 @@
       if (urlStr.indexOf('/api/chat') !== -1 && opts && opts.body) {
         var body = null;
         try { body = JSON.parse(opts.body); } catch (e) {}
-        if (body && typeof body === 'object' &&
-            String(body.provider || '').toLowerCase() === 'unorouter') {
+        if (body && typeof body === 'object') {
+          /* Filter the model catalog: free-only + dead removed. */
+          if (body.action === 'provider-models') {
+            return origFetch.apply(this, arguments).then(function (resp) {
+              try {
+                return resp.clone().json().then(function (data) {
+                  var filtered = filterUnoModels(data);
+                  return new Response(JSON.stringify(filtered), {
+                    status: resp.status,
+                    statusText: resp.statusText,
+                    headers: resp.headers
+                  });
+                }).catch(function () { return resp; });
+              } catch (e) { return resp; }
+            });
+          }
+          if (String(body.provider || '').toLowerCase() === 'unorouter') {
           /* Fix (2026-10-06): 'auto' is a bootstrap placeholder, not a real
              UnoRouter model (sending it 404s). Resolve to the first live
              model from the dynamic catalog before the request goes out. */
@@ -158,6 +196,7 @@
             return resolveUnoAuto(url, opts, body);
           }
           if (isUnoFreeModel(body.model)) startCooldown();
+          }
         }
       }
     } catch (e) {}
