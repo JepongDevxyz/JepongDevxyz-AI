@@ -56,8 +56,8 @@ function inlineMapPageUrl(html){
 const PROVIDERS = {
   gemini: {
     label: 'Gemini',
-    models: ['gemini-flash-latest','gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3.5-flash-lite'],
-    defaultModel: 'gemini-flash-latest'
+    models: ['gemini-3.1-flash-lite','gemini-3.5-flash-lite'],
+    defaultModel: 'gemini-3.5-flash-lite'
   },
   cloudflare: {
     label: 'Cloudflare',
@@ -71,13 +71,13 @@ const PROVIDERS = {
   },
   openrouter: {
     label: 'OpenRouter',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','poolside/laguna-s-2.1:free','nvidia/nemotron-3-super-120b-a12b:free'],
-    defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b:free'
+    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','nvidia/nemotron-3.5-lightning:free','inclusionai/ling-3.0-flash-sante:free','nvidia/nemotron-3-super-120b-a12b:free'],
+    defaultModel: 'nvidia/nemotron-3-super-120b-a12b:free'
   },
   mistral: {
     label: 'Mistral',
-    models: ['mistral-small-latest','codestral-latest'],
-    defaultModel: 'mistral-small-latest'
+    models: ['ministral-8b-latest','codestral-latest'],
+    defaultModel: 'ministral-8b-latest'
   },
   cohere: {
     label: 'Cohere',
@@ -114,7 +114,7 @@ const PROVIDERS = {
   },
   hcnsec: {
     label: 'HCNSEC',
-    models: ['DeepSeek-V4-Flash','glm-5.3-flash','MiMo-V2.6-Flash','Qwen3.8-Flash-Next','sensenova-6.8-flash-lite','spark-x2.5'],
+    models: ['DeepSeek-V4-Flash','MiMo-V2.6-Flash','MiniMax-M3.1-Flash','Qwen3.8-Flash-Next'],
     defaultModel: 'DeepSeek-V4-Flash'
   },
   bailucode: {
