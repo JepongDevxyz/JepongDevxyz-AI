@@ -58,4 +58,17 @@ assert(emailOtp, 'email OTP auth call missing');
 assert.strictEqual(emailOtp[1], 'jdAuthSignUpMode', 'email OTP must create accounts only in explicit signup mode');
 assert(/let jdAuthSignUpMode=false;/.test(html), 'email OTP must default to existing-account login mode');
 
+// Gemini picker IDs must match the backend allowlist; migrate stale selections before the first request.
+assert.match(html,/const GEMINI_ALLOWED_MODELS=\['gemini-3\.1-flash-lite','gemini-3\.5-flash-lite'\]/,
+  'Gemini frontend choices must match the server allowlist');
+assert.match(html,/currentSelectedProvider==='gemini'&&!GEMINI_ALLOWED_MODELS\.includes\(currentSelectedModel\)/,
+  'a stale Gemini model selection must be normalized');
+assert.match(html,/currentSelectedModel='gemini-3\.5-flash-lite';\s*localStorage\.setItem\('jepong_last_model',currentSelectedModel\)/,
+  'stale Gemini model selection must persist the supported default');
+const geminiSection=html.slice(html.indexOf('<section class="model-provider-page" data-provider="gemini">'),html.indexOf('<section class="model-provider-page" data-provider="cloudflare">'));
+assert(geminiSection.includes('data-model="gemini-3.5-flash-lite"'), 'supported Gemini model is missing from the picker');
+for (const id of ['gemini-flash-latest','gemini-3.8-flash','gemini-3.7-flash']) {
+  assert(!geminiSection.includes('data-model="'+id+'"'), 'unsupported Gemini model remains selectable: '+id);
+}
+
 console.log('PASS: runtime regressions');
