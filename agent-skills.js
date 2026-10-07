@@ -1,6 +1,6 @@
 /* ============================================================
    agent-skills.js — Agent Skills for JepongDevxyz AI
-   Version: v20261007a141
+   Version: v20261007a145
    Inspired by mattpocock/skills (MIT) — adapted as chat slash commands.
 
    Toggle: EXTRA → JepongDevxyz AI → "Agent Skills" (default OFF)
@@ -152,11 +152,14 @@
 
   function detectSkill(text) {
     if (!text || typeof text !== 'string') return null;
-    var m = text.match(/^\s*\/([a-z]+)\b/);
+    // Strip Specialist Dot prefix if present (dots hook runs first)
+    // Format: "[Specialist Dot: Name | Role: ...]\nInstructions: ...\n---\n"
+    var clean = text.replace(/^\[Specialist Dot:[^\]]*\][\s\S]*?---\n/, '');
+    var m = clean.match(/^\s*\/([a-z]+)\b/);
     if (!m) return null;
     var cmd = m[1].toLowerCase();
-    if (cmd === 'skills') return { cmd: 'skills' };
-    if (SKILLS[cmd]) return { cmd: cmd, rest: text.slice(m[0].length).trim() };
+    if (cmd === 'skills') return { cmd: 'skills', cleanRest: clean.slice(m[0].length).trim() };
+    if (SKILLS[cmd]) return { cmd: cmd, rest: clean.slice(m[0].length).trim() };
     return null;
   }
 
@@ -273,5 +276,5 @@
     document.head.appendChild(st);
   }
 
-  console.log('[agent-skills] loaded v20261007a141');
+  console.log('[agent-skills] loaded v20261007a145');
 })();

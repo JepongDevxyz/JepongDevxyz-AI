@@ -1,6 +1,6 @@
 /* ============================================================
    opendots-features.js — OpenDots-inspired features for JepongDevxyz AI
-   Version: v20261007a140
+   Version: v20261007a145
    
    Three features (all OFF by default, toggles in EXTRA → JepongDevxyz AI):
    1. Specialist Dots — custom AI agents with name, role, instructions
@@ -105,7 +105,8 @@
           var dot = getActiveDot();
           if (dot && dot.instructions) {
             var body = typeof opts.body === 'string' ? JSON.parse(opts.body) : opts.body;
-            if (body && typeof body === 'object' && !body.__dotInjected) {
+            // Skip if a skill was already injected (skill takes precedence over dot)
+            if (body && typeof body === 'object' && !body.__dotInjected && !body.__skillInjected) {
               body.__dotInjected = true;
               var dotCtx = '[Specialist Dot: ' + dot.name + ' | Role: ' + (dot.role || 'assistant') + ']\n' +
                            'Instructions: ' + dot.instructions + '\n' +
@@ -597,5 +598,5 @@
     document.head.appendChild(st);
   }
 
-  console.log('[opendots-features] loaded v20261007a140');
+  console.log('[opendots-features] loaded v20261007a145');
 })();
