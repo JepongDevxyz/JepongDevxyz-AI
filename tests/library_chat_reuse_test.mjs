@@ -24,4 +24,7 @@ const applySettings=new Function(gate+'\nreturn applyChatFeatureSettings;')();
 const processed=applySettings({files:[{name:'saved.txt'}],personalization:{librarySearch:false,libraryContext:[{fileName:'private',snippet:'hidden'}]}});
 assert.equal(processed.files.length,1,'automatic Library search OFF must preserve manually attached files');
 assert.deepEqual(processed.personalization.libraryContext,[],'automatic search OFF must still exclude automatic excerpts');
+const settingsHandler=html.slice(html.indexOf("function setPersonalizationToggle("),html.indexOf("function setPersonalizationToggle(")+2600);
+assert.doesNotMatch(settingsHandler,/key==='librarySearch'\s*&&\s*!value[\s\S]{0,150}selectedFilesData\.length\s*=\s*0/,
+  'switching automatic Library search OFF must not remove manually attached files');
 console.log('PASS: saved Library file reaches the real composer attachment path');
