@@ -387,7 +387,7 @@
         render();
       });
       el.addEventListener('contextmenu',function(e){
-        e.preventDefault();showFolderMenu(state.folders.find(function(f){return f.name===el.dataset.folder;}),e.clientX,e.clientY);
+        e.preventDefault();e.stopPropagation();showFolderMenu(state.folders.find(function(f){return f.name===el.dataset.folder;}),e.clientX,e.clientY);
       });
     });
   }
@@ -427,7 +427,8 @@
 
     // Click handlers
     grid.querySelectorAll('.jdlib-card').forEach(function (card) {
-      card.addEventListener('click', function () {
+      card.addEventListener('click', function (e) {
+        e.stopPropagation();
         var id = card.dataset.id;
         if (state.selectMode) {
           if (state.selected.has(id)) { state.selected.delete(id); card.classList.remove('selected'); }
@@ -443,6 +444,7 @@
       });
       card.addEventListener('contextmenu', function (e) {
         e.preventDefault();
+        e.stopPropagation();
         showItemMenu(card.dataset.id, e.clientX, e.clientY);
       });
     });

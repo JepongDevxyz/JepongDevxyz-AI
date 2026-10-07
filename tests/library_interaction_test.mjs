@@ -13,6 +13,9 @@ assert.match(load,/libraryStore\.listFolders\(\)/,'folders must be loaded from t
 assert.match(load,/libraryStore\.accountId\(\)/,'late responses must be checked against the current account');
 
 const actions=section('async function itemAction(item, act) {','/* ---------- Init:');
+const cardHandlers=section("grid.querySelectorAll('.jdlib-card').forEach",'var thumbCache = {}');
+assert.match(cardHandlers,/addEventListener\('click', function \(e\) \{\s*e\.stopPropagation\(\)/,'opening a file menu must not bubble into the outside-tap closer');
+assert.match(cardHandlers,/addEventListener\('contextmenu', function \(e\) \{\s*e\.preventDefault\(\);\s*e\.stopPropagation\(\)/,'context menu must remain open after the originating event');
 assert.match(actions,/updateItemMetadata\(/,'Favorites and Move must use the account-scoped storage bridge');
 assert.match(actions,/deleteItem\(/,'Delete must await private Storage and row deletion');
 assert.match(actions,/getFile\(/,'Add to chat must retrieve actual saved file bytes');
