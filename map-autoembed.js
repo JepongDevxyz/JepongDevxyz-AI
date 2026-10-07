@@ -22,6 +22,15 @@
     } catch (_) { return false; }
   }
 
+  function generatedMapHtml(url) {
+    try {
+      if (!isGeneratedMapDocument(url)) return '';
+      var encoded = String(url).split(',')[1];
+      var bytes = Uint8Array.from(atob(encoded), function (char) { return char.charCodeAt(0); });
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch (_) { return ''; }
+  }
+
   function isMapUrl(url) {
     if (!url) return false;
     var u = String(url).toLowerCase();
@@ -190,7 +199,15 @@
       insertionParent.insertBefore(card, sourceLine.nextSibling);
       if (insertionParent.removeChild) insertionParent.removeChild(sourceLine);
       else if (sourceLine.remove) sourceLine.remove();
-      iframe.src = url;
+      // Keep generated HTML in a sandboxed inline document. Some browsers
+      // block data: iframe navigation even when the route card is allowed.
+      if (String(url).toLowerCase().indexOf('data:text/html;base64,') === 0) {
+        var html = generatedMapHtml(url);
+        if (html) iframe.srcdoc = html;
+        else markError();
+      } else {
+        iframe.src = url;
+      }
       setTimeout(function () {
         if (settled) return;
         status.textContent = 'The map is taking longer to load. You can open it directly below.';
