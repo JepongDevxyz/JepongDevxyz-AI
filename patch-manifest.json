@@ -1,6 +1,5 @@
 {
- "version": "20261007a138",
- "generated": "2026-10-07T02:20:35.185Z",
+ "version": "20261007a139",
  "files": [
   "/paymongo-topup.js",
   "/credits.js",
@@ -78,6 +77,7 @@
   "/browse-loop.js",
   "/browse-viewer.js",
   "/email-guard.js",
-  "/unorouter-cooldown.js"
+  "/unorouter-cooldown.js",
+  "/opendots-features.js"
  ]
 }

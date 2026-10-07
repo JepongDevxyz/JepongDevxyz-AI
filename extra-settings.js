@@ -155,6 +155,9 @@
       var slopOn = !!(window.jdSlopGateEnabled && window.jdSlopGateEnabled());
       var tideOn = !!(window.jdTidelineEnabled && window.jdTidelineEnabled());
       var browseOn = !!(window.jdBrowseAgentEnabled && window.jdBrowseAgentEnabled());
+      var dotsOn = !!(window.jdDotsEnabled && window.jdDotsEnabled());
+      var apprOn = !!(window.jdApprovalEnabled && window.jdApprovalEnabled());
+      var spacesOn = !!(window.jdSpacesEnabled && window.jdSpacesEnabled());
       var sheet = document.createElement('div');
       sheet.className = 'jd-extra-ai-sheet';
       sheet.innerHTML =
@@ -193,6 +196,35 @@
         '<div style="font-size:11px;opacity:.55;margin-top:4px">Keys: Vercel → STEEL_API_KEYS (comma-separated) → redeploy.</div>' +
         '</div>' +
 
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🎯 Specialist Dots</h4>' +
+        '<p>Custom AI specialists — each with its own name, role, and instructions. Activate one and it shapes every reply.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Specialist Dots">' +
+        '<input type="checkbox" id="jdExtraDotsToggle"' + (dotsOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '<button class="jd-extra-ai-facts" data-act="dots">Manage dots</button>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🛡️ Approval Cards</h4>' +
+        '<p>Human-in-the-loop for Agent Browse. Every browse action pauses for your <b>Approve & Run</b> / <b>Decline</b> decision in chat.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Approval Cards">' +
+        '<input type="checkbox" id="jdExtraApprovalToggle"' + (apprOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>📄 Spaces</h4>' +
+        '<p>Document workspace — save chats as pages, search your library, edit with formatting. All stored on your device.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Spaces">' +
+        '<input type="checkbox" id="jdExtraSpacesToggle"' + (spacesOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '<button class="jd-extra-ai-facts" data-act="spaces">Open Spaces</button>' +
+        '</div>' +
+
         '<button class="jd-extra-ai-done" data-act="close">Done</button>' +
         '</div>';
       sheet.addEventListener('click', function (e) {
@@ -204,6 +236,14 @@
         if (act === 'facts') {
           closeAiSheet();
           try { window.jdTidelineOpenManager && window.jdTidelineOpenManager(); } catch (_) {}
+        }
+        if (act === 'dots') {
+          closeAiSheet();
+          try { window.jdDotsOpenManager && window.jdDotsOpenManager(); } catch (_) {}
+        }
+        if (act === 'spaces') {
+          closeAiSheet();
+          try { window.jdSpacesOpenLibrary && window.jdSpacesOpenLibrary(); } catch (_) {}
         }
       });
       var slopT = sheet.querySelector('#jdExtraSlopToggle');
@@ -220,6 +260,21 @@
       if (browseT) browseT.addEventListener('change', function () {
         try { window.jdSetBrowseAgent && window.jdSetBrowseAgent(browseT.checked); } catch (_) {}
         try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 — type "browse: <goal>" in chat' : 'Agent Browse OFF'); } catch (_) {}
+      });
+      var dotsT = sheet.querySelector('#jdExtraDotsToggle');
+      if (dotsT) dotsT.addEventListener('change', function () {
+        try { window.jdSetDots && window.jdSetDots(dotsT.checked); } catch (_) {}
+        try { if (window.showModernToast) window.showModernToast(dotsT.checked ? 'Specialist Dots ON 🎯' : 'Specialist Dots OFF'); } catch (_) {}
+      });
+      var apprT = sheet.querySelector('#jdExtraApprovalToggle');
+      if (apprT) apprT.addEventListener('change', function () {
+        try { window.jdSetApproval && window.jdSetApproval(apprT.checked); } catch (_) {}
+        try { if (window.showModernToast) window.showModernToast(apprT.checked ? 'Approval Cards ON 🛡️' : 'Approval Cards OFF'); } catch (_) {}
+      });
+      var spacesT = sheet.querySelector('#jdExtraSpacesToggle');
+      if (spacesT) spacesT.addEventListener('change', function () {
+        try { window.jdSetSpaces && window.jdSetSpaces(spacesT.checked); } catch (_) {}
+        try { if (window.showModernToast) window.showModernToast(spacesT.checked ? 'Spaces ON 📄' : 'Spaces OFF'); } catch (_) {}
       });
       document.body.appendChild(sheet);
       try {
