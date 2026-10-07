@@ -16,9 +16,9 @@
 
   var CSS = [
     /* Full-screen page */
-    '#jdLibPage{position:fixed;inset:0;z-index:25000;background:#000;color:#fff;',
+    '#jdChatLibraryPage{position:fixed;inset:0;z-index:25000;background:#000;color:#fff;',
     'display:flex;flex-direction:column;font-family:inherit}',
-    '#jdLibPage[hidden]{display:none!important}',
+    '#jdChatLibraryPage[hidden]{display:none!important}',
     /* Header */
     '.jdlib-header{display:flex;align-items:center;justify-content:space-between;',
     'padding:12px 8px;flex:0 0 auto}',
@@ -93,7 +93,7 @@
     '.jdlib-selbar{position:absolute;top:0;left:0;right:0;background:#1e1e1e;padding:12px 16px;',
     'display:flex;align-items:center;justify-content:space-between;z-index:10}',
     /* Light mode (follows theme) */
-    'body.theme-light #jdLibPage{background:#fff;color:#111}',
+    'body.theme-light #jdChatLibraryPage{background:#fff;color:#111}',
     'body.theme-light .jdlib-hbtn{color:#111}',
     'body.theme-light .jdlib-tab{color:#666}',
     'body.theme-light .jdlib-tab.active{background:#e8e8e8;color:#111}',
@@ -162,7 +162,7 @@
 
   /* ---------- Build the page ---------- */
   function buildPage() {
-    if (document.getElementById('jdLibPage')) return;
+    if (document.getElementById('jdChatLibraryPage')) return;
     if (!document.getElementById('jdLibChatCss')) {
       var st = document.createElement('style');
       st.id = 'jdLibChatCss';
@@ -171,7 +171,7 @@
     }
 
     var page = document.createElement('div');
-    page.id = 'jdLibPage';
+    page.id = 'jdChatLibraryPage';
     page.setAttribute('hidden', '');
     page.innerHTML =
       '<div class="jdlib-header">' +
@@ -233,7 +233,7 @@
   /* ---------- Open/Close ---------- */
   function openLibrary() {
     buildPage();
-    var page = document.getElementById('jdLibPage');
+    var page = document.getElementById('jdChatLibraryPage');
     page.removeAttribute('hidden');
     // Hide the old modal if it's open
     var old = document.getElementById('libraryModal');
@@ -244,7 +244,7 @@
   }
 
   function closeLibrary() {
-    var page = document.getElementById('jdLibPage');
+    var page = document.getElementById('jdChatLibraryPage');
     if (page) {
       page.setAttribute('hidden', '');
       if (window.jdBackNav) window.jdBackNav.pop(page);
@@ -582,7 +582,7 @@
     window.closeJdLibrary = closeLibrary;
     // Also handle back-nav close event
     document.addEventListener('jd-back-close', function (e) {
-      var page = document.getElementById('jdLibPage');
+      var page = document.getElementById('jdChatLibraryPage');
       if (page && !page.hidden && (e.target === page || page.contains(e.target))) {
         closeLibrary();
       }
