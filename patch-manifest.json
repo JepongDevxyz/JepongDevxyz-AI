@@ -1,5 +1,5 @@
 {
- "version": "20261007a139",
+ "version": "20261007a143",
  "files": [
   "/paymongo-topup.js",
   "/credits.js",
@@ -78,6 +78,9 @@
   "/browse-viewer.js",
   "/email-guard.js",
   "/unorouter-cooldown.js",
-  "/opendots-features.js"
+  "/opendots-features.js",
+  "/agent-skills.js",
+  "/browse-improvements.js",
+  "/paperclip-inspired.js"
  ]
 }
