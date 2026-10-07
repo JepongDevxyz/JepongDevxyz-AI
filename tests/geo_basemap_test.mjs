@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const source=readFileSync(new URL('../geo.js',import.meta.url),'utf8');
+const source=readFileSync(new URL('../lib/tools/geo.js',import.meta.url),'utf8');
 const {buildRouteMapHtml,buildRadarMapHtml}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 
 const route=buildRouteMapHtml({fromName:'Guimba',toName:'Baguio',distanceKm:123,durationText:'2 h',geometry:{coordinates:[[120.8,15.7],[120.6,16.4]]}});
