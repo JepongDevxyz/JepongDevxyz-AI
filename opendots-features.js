@@ -1,6 +1,6 @@
 /* ============================================================
    opendots-features.js — OpenDots-inspired features for JepongDevxyz AI
-   Version: v20261007a139
+   Version: v20261007a140
    
    Three features (all OFF by default, toggles in EXTRA → JepongDevxyz AI):
    1. Specialist Dots — custom AI agents with name, role, instructions
@@ -26,6 +26,29 @@
   window.jdSetApproval = function (on) { setToggle('jd_approval_enabled', !!on); };
   window.jdSpacesEnabled = function () { return getToggle('jd_spaces_enabled'); };
   window.jdSetSpaces = function (on) { setToggle('jd_spaces_enabled', !!on); };
+
+  /* Self-contained toast (does not depend on window.showModernToast) */
+  function jdToast(msg) {
+    try {
+      if (typeof window.showModernToast === 'function') {
+        window.showModernToast(msg);
+        return;
+      }
+    } catch (_) {}
+    try {
+      var t = document.createElement('div');
+      t.className = 'jd-od-toast';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      ensureToastCSS();
+      setTimeout(function () { t.classList.add('show'); }, 10);
+      setTimeout(function () {
+        t.classList.remove('show');
+        setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+      }, 2200);
+    } catch (_) {}
+  }
+  window.jdOdToast = jdToast;
 
   /* ============================================================
      1. SPECIALIST DOTS
@@ -499,6 +522,18 @@
   };
 
   /* ============ CSS ============ */
+  function ensureToastCSS() {
+    if (document.getElementById('jdOdToastCSS')) return;
+    var st = document.createElement('style');
+    st.id = 'jdOdToastCSS';
+    st.textContent = '.jd-od-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);' +
+      'background:rgba(20,20,35,.95);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;' +
+      'z-index:10001;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;' +
+      'border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 16px rgba(0,0,0,.4);white-space:nowrap}' +
+      '.jd-od-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}';
+    document.head.appendChild(st);
+  }
+
   function ensureDotsCSS() {
     if (document.getElementById('jdDotsCSS')) return;
     var st = document.createElement('style');
@@ -562,5 +597,5 @@
     document.head.appendChild(st);
   }
 
-  console.log('[opendots-features] loaded v20261007a139');
+  console.log('[opendots-features] loaded v20261007a140');
 })();
