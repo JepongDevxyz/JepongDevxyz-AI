@@ -55,7 +55,7 @@ function inlineMapPageUrl(html){
 const PROVIDERS = {
   gemini: {
     label: 'Gemini',
-    models: ['gemini-1.5-flash-lite','gemini-3.5-flash-lite'],
+    models: ['gemini-3.1-flash-lite','gemini-3.5-flash-lite'],
     defaultModel: 'gemini-3.5-flash-lite'
   },
   cloudflare: {
