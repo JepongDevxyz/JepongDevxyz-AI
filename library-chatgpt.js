@@ -255,15 +255,15 @@
   async function loadItems() {
     var grid = document.getElementById('jdLibGrid');
     if (!grid) return;
-    if (typeof cloudUser === 'undefined' || !cloudUser) {
+    var libraryStore = window.JDLibraryStorage;
+    if (!libraryStore || !libraryStore.isSignedIn()) {
       grid.innerHTML = '<div class="jdlib-empty">' + I.folder + '<p>Sign in to use your Library.</p></div>';
       return;
     }
     grid.innerHTML = '';
     try {
-      var r = await cloudClient.from('library_items')
-        .select('id,storage_path,file_name,mime_type,size_bytes,created_at,metadata')
-        .eq('user_id', cloudUser.id).order('created_at', { ascending: false }).limit(200);
+      var r = await libraryStore.listItems();
+      if (r.error) throw r.error;
       state.items = r.data || [];
       loadFolders();
       render();
@@ -495,15 +495,27 @@
       var removeUploadInput = function () {
         if (inp.parentNode) inp.parentNode.removeChild(inp);
       };
-      inp.onchange = function () {
+      inp.onchange = async function () {
         var files = Array.from(inp.files || []);
         removeUploadInput();
-        files.forEach(function (f) {
-          if (typeof saveFileToLibrary === 'function') {
-            saveFileToLibrary(f, {});
-          }
-        });
-        setTimeout(loadItems, 2000);
+        if (!files.length) return;
+        var libraryStore = window.JDLibraryStorage;
+        if (!libraryStore || typeof libraryStore.saveFile !== 'function') {
+          if (typeof showModernAlert === 'function') showModernAlert('Library upload is unavailable. Please reload and try again.', 'Library');
+          return;
+        }
+        var results = await Promise.all(files.map(async function (f) {
+          try { return await libraryStore.saveFile(f); }
+          catch (error) { return { error: error }; }
+        }));
+        var failed = results.filter(function (result) { return !result || result.error; });
+        await loadItems();
+        if (failed.length) {
+          var message = String(failed[0].error && failed[0].error.message || 'Upload failed.');
+          if (typeof showModernAlert === 'function') showModernAlert(message, 'Library upload');
+        } else if (typeof showModernToast === 'function') {
+          showModernToast(files.length === 1 ? 'File saved to Library.' : files.length + ' files saved to Library.');
+        }
       };
       inp.addEventListener('cancel', removeUploadInput, { once: true });
       document.body.appendChild(inp);
