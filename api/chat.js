@@ -70,13 +70,13 @@ const PROVIDERS = {
   },
   openrouter: {
     label: 'OpenRouter',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','poolside/laguna-s-2.1:free','nvidia/nemotron-3-super-120b-a12b:free'],
-    defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b:free'
+    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','openai/gpt-oss-120b:free','google/gemma-4-31b-it:free','nvidia/nemotron-3-super-120b-a12b:free'],
+    defaultModel: 'nvidia/nemotron-3-super-120b-a12b:free'
   },
   mistral: {
     label: 'Mistral',
-    models: ['mistral-small-latest','codestral-latest'],
-    defaultModel: 'mistral-small-latest'
+    models: ['mistral-medium-latest','codestral-latest'],
+    defaultModel: 'mistral-medium-latest'
   },
   cohere: {
     label: 'Cohere',
