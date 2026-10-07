@@ -485,14 +485,28 @@
       var inp = document.createElement('input');
       inp.type = 'file';
       inp.multiple = true;
+      inp.style.position = 'fixed';
+      inp.style.left = '-10000px';
+      inp.style.top = '0';
+      inp.style.width = '1px';
+      inp.style.height = '1px';
+      inp.style.opacity = '0';
+      inp.setAttribute('aria-hidden', 'true');
+      var removeUploadInput = function () {
+        if (inp.parentNode) inp.parentNode.removeChild(inp);
+      };
       inp.onchange = function () {
-        Array.from(inp.files).forEach(function (f) {
+        var files = Array.from(inp.files || []);
+        removeUploadInput();
+        files.forEach(function (f) {
           if (typeof saveFileToLibrary === 'function') {
             saveFileToLibrary(f, {});
           }
         });
         setTimeout(loadItems, 2000);
       };
+      inp.addEventListener('cancel', removeUploadInput, { once: true });
+      document.body.appendChild(inp);
       inp.click();
     } else if (act === 'newfolder') {
       var name = prompt('Folder name:');
