@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert';
+import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -71,4 +72,20 @@ for (const id of ['gemini-flash-latest','gemini-3.8-flash','gemini-3.7-flash']) 
   assert(!geminiSection.includes('data-model="'+id+'"'), 'unsupported Gemini model remains selectable: '+id);
 }
 
+
+// A click on the Library plus button's SVG path must not be treated as an outside click.
+const libraryPath = path.join(__dirname,'..','library-chatgpt.js');
+const library = fs.readFileSync(libraryPath, 'utf8');
+const plusTargetStart = library.indexOf('  function isLibraryPlusTarget(target) {');
+assert.notEqual(plusTargetStart, -1, 'Library plus target detection helper is missing');
+const plusTargetEnd = library.indexOf('\n  }\n', plusTargetStart);
+assert.notEqual(plusTargetEnd, -1, 'Library plus target detection helper is incomplete');
+const plusTargetHelper = library.slice(plusTargetStart, plusTargetEnd + 4).trim();
+const isLibraryPlusTarget = vm.runInNewContext('(' + plusTargetHelper + ')');
+const plusButton = { closest: (selector) => selector === '#jdLibPlus' ? plusButton : null };
+const plusIconPath = { closest: (selector) => selector === '#jdLibPlus' ? plusButton : null };
+assert.equal(isLibraryPlusTarget(plusIconPath), true, 'SVG icon clicks must count as plus-button clicks');
+assert.equal(isLibraryPlusTarget({ closest: () => null }), false, 'unrelated clicks must remain outside clicks');
+assert(library.includes('!isLibraryPlusTarget(e.target)) pp.hidden = true;'),
+  'the outside-click handler must use the SVG-aware plus-button target check');
 console.log('PASS: runtime regressions');
