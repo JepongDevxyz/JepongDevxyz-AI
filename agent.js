@@ -166,43 +166,6 @@ window.JDCodingAgent=Object.freeze({open,close});
   (function(){
     var sk=document.getElementById('jdBootSkeleton');
     if(!sk)return;
-    /* Desktop fit (2026-10-05): re-fit the static skeleton to the desktop
-       homepage from the very first paint — 280px sidebar skeleton +
-       centered 768px header/composer, 900px chat column (860px at 1600px+).
-       Runs synchronously here (deferred script, right after HTML parse, no
-       network wait) so the sidebar version shows immediately instead of
-       snapping in later. Desktop-only (>=1024px), idempotent. */
-    /* JD-BOOT-FIT-START */
-    try{
-      if(window.matchMedia('(min-width:1024px)').matches&&!sk.querySelector('.jd-boot-side')){
-        var __bfCss=document.createElement('style');
-        __bfCss.id='jdBootSkeletonFit';
-        __bfCss.textContent=
-          '@media(min-width:1024px){'+
-          '#jdBootSkeleton{flex-direction:row!important;padding:0!important}'+
-          '.jd-boot-side{flex:0 0 280px!important;width:280px!important;min-height:0;display:flex;flex-direction:column;gap:10px;padding:18px 14px;overflow:hidden;background:var(--boot-surface);border-right:1px solid var(--boot-line)}'+
-          '.jd-boot-main{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column}'+
-          '.jd-boot-main .jd-boot-header{max-width:768px!important;width:100%!important;margin-inline:auto!important}'+
-          '.jd-boot-main .jd-boot-conversation{max-width:900px!important;width:100%!important;margin-inline:auto!important}'+
-          '.jd-boot-main .jd-boot-composer{width:min(100% - 32px,768px)!important}'+
-          '}'+
-          '@media(min-width:1600px){'+
-          '.jd-boot-main .jd-boot-header{max-width:860px!important}'+
-          '.jd-boot-main .jd-boot-composer{width:min(100% - 32px,860px)!important}'+
-          '}';
-        document.head.appendChild(__bfCss);
-        var __bfMain=document.createElement('div');
-        __bfMain.className='jd-boot-main';__bfMain.setAttribute('aria-hidden','true');
-        while(sk.firstChild)__bfMain.appendChild(sk.firstChild);
-        var __bfSide=document.createElement('div');
-        __bfSide.className='jd-boot-side';__bfSide.setAttribute('aria-hidden','true');
-        var __bfRows='';
-        for(var __bfI=0;__bfI<6;__bfI++)__bfRows+='<div class="jd-boot-shape" style="height:38px;border-radius:10px"></div>';
-        __bfSide.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="jd-boot-shape" style="width:36px;height:36px;border-radius:12px;flex:0 0 auto"></div><div class="jd-boot-shape" style="height:16px;width:55%;border-radius:8px"></div></div><div class="jd-boot-shape" style="height:40px;border-radius:12px"></div><div class="jd-boot-shape" style="height:14px;width:42%;border-radius:7px;margin-top:10px"></div>'+__bfRows+'<div style="flex:1"></div><div class="jd-boot-shape" style="height:48px;border-radius:12px"></div>';
-        sk.appendChild(__bfSide);sk.appendChild(__bfMain);
-      }
-    }catch(__bfE){}
-    /* JD-BOOT-FIT-END */
     /* Use the static first-paint shell in index.html; this script manages its lifecycle. */
     document.body.classList.add('jd-sk-active');
     /* Proactively fix the effort badge (2026-10-02): update "Instant" to saved value
@@ -277,34 +240,9 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261004a87';
-  /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
-     CacheStorage and force a fresh navigation on every boot so updates
-     appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
-  try {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('jd_auto_clear_cache') === '1') {
-      var hasFresh = false;
-      try { hasFresh = window.location.search.indexOf('jd_fresh=') !== -1; } catch (_) {}
-      if (!hasFresh) {
-        var doFreshNav = function () {
-          try {
-            var url = window.location.pathname + '?jd_fresh=' + Date.now() + window.location.hash;
-            window.location.replace(url);
-          } catch (_) {}
-        };
-        if ('caches' in window && window.caches && window.caches.keys) {
-          window.caches.keys().then(function (names) {
-            return Promise.all(names.map(function (n) { return window.caches.delete(n).catch(function () {}); }));
-          }).then(doFreshNav).catch(doFreshNav);
-          setTimeout(doFreshNav, 2500);
-        } else {
-          doFreshNav();
-        }
-      }
-    }
-  } catch (_) {}
+  var V='?v=20261004a88';
   window.__jdExploreMode = true; /* unified Explore replaces Feed/Ideas/Library buttons */
-  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/backup-repo.js','/followups-restore-fix.js','/desktop-layout.js','/slop-gate.js','/tideline.js','/extra-settings.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js','/email-guard.js','/unorouter-cooldown.js'];
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/gemini-filter.js'];
   function loadPatches(ver){
     /* Fetch server manifest for current file list (no-store) — ensures stale
        agent.js still loads NEW patch files added after it was cached.
