@@ -20,7 +20,7 @@
      etc.; empty when no reaction fits).
    - A MutationObserver strips the marker before paint (no flash)
      and attaches the emoji as a chip in the user's .user-actions
-     row. Persisted per session; tap the chip to dismiss.
+     row. Persisted per session as an informational reaction chip.
    ========================================================= */
 (function () {
   'use strict';
@@ -209,16 +209,11 @@
     chip.className = 'jd-ai-reaction jd-inline-reaction';
     chip.setAttribute('role', 'img');
     chip.setAttribute('aria-label', 'AI reaction ' + emoji);
-    chip.title = 'AI reaction to your message — tap to dismiss';
-    chip.style.cursor = 'pointer';
+    chip.title = 'AI reaction to your message';
+    chip.style.cursor = 'default';
     var s = document.createElement('span');
     s.textContent = emoji;
     chip.appendChild(s);
-    chip.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      setAiReaction(userEl, '');
-      chip.remove();
-    });
     actions.appendChild(chip);
   }
   function removeMarkerText(root, markerText) {

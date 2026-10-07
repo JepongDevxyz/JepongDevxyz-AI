@@ -56,7 +56,13 @@ function call(method,params={}){
   });
 }
 async function evaluate(expression){
-  const out=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+  let out;
+  try{
+    out=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+  }catch(error){
+    const excerpt=String(expression).replace(/\\s+/g,' ').slice(0,220);
+    throw new Error(`${error.message}; expression=${excerpt}`);
+  }
   if(out.exceptionDetails)throw new Error(out.exceptionDetails.text||'Evaluation failed');
   return out.result?.value;
 }
@@ -103,6 +109,9 @@ assert(voiceEntryState.swapped,'empty composer must display the voice action');
 assert.equal(voiceEntryState.disabled,false,'visible voice action must remain tappable when the composer is empty');
 assert.equal(voiceEntryState.armed,true,'voice action must enter the Sling quick-tap path');
 assert.equal(voiceEntryState.slingDisabled,false,'Sling wrapper must not suppress the voice action');
+
+// Keep this component smoke independent from the external Markdown CDN used only to render message bodies.
+await evaluate(`if(typeof window.marked==='undefined'){window.marked={parse:value=>String(value??'').replace(/[&<>]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]))}}`);
 
 // 1/6: frame-match the supplied Work Activity recording.
 const activity=JSON.parse(await evaluate(`(async()=>{
@@ -191,10 +200,11 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
   const bar=document.getElementById('promptBar');
   const input=document.getElementById('userInput');
   const send=document.getElementById('mainActionBtn');
-  const path=document.getElementById('promptBarSendPath');
 
   input.value='hello';
   input.dispatchEvent(new Event('input',{bubbles:true}));
+  const voiceSwappedAfterTyping=!!send.__jdVoiceSwapped;
+  const path=document.getElementById('promptBarSendPath');
   const armed=send.hasAttribute('data-armed');
   const arrowBefore=path?.getAttribute('d')||'';
 
@@ -230,18 +240,20 @@ const prompt=JSON.parse(await evaluate(`(async()=>{
   const arrowAfter=path?.getAttribute('d')||'';
 
   return JSON.stringify({
-    busy,idle,models:bar.dataset.models,armed,sourceOpen,effortOpen,
+    busy,idle,models:bar.dataset.models,armed,voiceSwappedAfterTyping,sourceOpen,effortOpen,
     field:!!bar.querySelector('.prompt-bar__field'),
     controls:!!bar.querySelector('.prompt-bar__bar'),
     chips:!!bar.querySelector('#filePreviewContainer.prompt-bar__chips'),
     effortLevels,effortDots,
-    arrowBefore,stopPath,arrowAfter
+    arrowBefore,stopPath,arrowAfter,
+    voiceSwappedAfterTyping
   });
 })()`));
 assert(prompt.busy,'PromptBar busy attribute missing');
 assert(prompt.idle,'PromptBar busy attribute did not clear');
 assert.equal(prompt.models,'false');
 assert(prompt.armed,'PromptBar send never armed');
+assert.equal(prompt.voiceSwappedAfterTyping,false,'typing must restore the send action after voice entry');
 assert(prompt.sourceOpen,'ReactBits source menu did not open');
 assert(prompt.effortOpen,'ReactBits effort slider did not open');
 assert.equal(prompt.effortDots,6,'ReactBits effort slider must expose six stops');
@@ -371,6 +383,21 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   const dt=new DataTransfer();
   dt.items.add(file);
   Object.defineProperty(input,'files',{configurable:true,value:dt.files});
+  // The upload flow is intentionally gated by the Library/file-search setting.
+  // Enable that prerequisite here; the OFF gate is covered by settings_toggle_runtime_test.mjs.
+  const previousLibrarySearch=personalizationSettings.librarySearch;
+  personalizationSettings.librarySearch=true;
+  let handlerCalls=0;
+  const handlerInfo={};
+  const originalHandler=window.handleFileSelect;
+  window.handleFileSelect=async event=>{
+    handlerCalls++;
+    handlerInfo.targetId=event?.target?.id||'';
+    handlerInfo.fileCount=event?.target?.files?.length||0;
+    handlerInfo.librarySearch=personalizationSettings.librarySearch;
+    try{return await originalHandler(event);}
+    catch(error){handlerInfo.error=String(error?.message||error);throw error;}
+  };
   input.dispatchEvent(new Event('change',{bubbles:true}));
 
   for(let i=0;i<20;i++){
@@ -380,6 +407,11 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   const chip=host?.querySelector('.jd-upload-chip');
   const during={
     chip:!!chip,
+    handlerCalls,
+    fileCount:input.files?.length||0,
+    selectedCount:selectedFilesData.length,
+    handlerInfo,
+    changeHandler:typeof input.onchange,
     hidden:host?.hidden,
     display:getComputedStyle(host).display,
     visibility:getComputedStyle(host).visibility,
@@ -392,8 +424,10 @@ const realFileInput=JSON.parse(await evaluate(`(async()=>{
   await new Promise(r=>setTimeout(r,200));
   selectedFilesData.splice(0,selectedFilesData.length);
   renderFilePreviews();
+  personalizationSettings.librarySearch=previousLibrarySearch;
   return JSON.stringify(during);
 })()`));
+console.log('FILE_INPUT_DIAG '+JSON.stringify(realFileInput));
 assert.equal(realFileInput.chip,true,'real file input path did not create the upload chip');
 assert.equal(realFileInput.hidden,false,'real file input path left preview hidden');
 assert.equal(realFileInput.display,'flex','real file input preview is not flex-visible');
@@ -586,15 +620,26 @@ const voiceEntryTap=JSON.parse(await evaluate(`(async()=>{
   const action=document.getElementById('mainActionBtn');
   const oldSpeak=window.speakSmartVoice;
   const oldSR=window.SpeechRecognition,oldWebkitSR=window.webkitSpeechRecognition;
+  const mediaDevices=navigator.mediaDevices;
+  const oldGetUserMediaDescriptor=mediaDevices?Object.getOwnPropertyDescriptor(mediaDevices,'getUserMedia'):null;
+  // CI has no microphone permission prompt; simulate a granted stream.
+  if(mediaDevices)Object.defineProperty(mediaDevices,'getUserMedia',{
+    configurable:true,
+    value:()=>Promise.resolve({getTracks:()=>[{stop(){}}]})
+  });
   window.speakSmartVoice=()=>{};
   window.SpeechRecognition=function(){this.start=()=>{};this.abort=()=>{};this.stop=()=>{};};
   action.click();
-  await new Promise(r=>setTimeout(r,30));
+  for(let i=0;i<20&&!window.JDVoiceMode?.isOpen();i++)await new Promise(r=>setTimeout(r,10));
   const opened=!!window.JDVoiceMode?.isOpen()&&!document.getElementById('jdVoiceMode')?.hasAttribute('hidden');
   window.JDVoiceMode?.close();
   window.speakSmartVoice=oldSpeak;
   if(oldSR===undefined)delete window.SpeechRecognition;else window.SpeechRecognition=oldSR;
   if(oldWebkitSR===undefined)delete window.webkitSpeechRecognition;else window.webkitSpeechRecognition=oldWebkitSR;
+  if(mediaDevices){
+    if(oldGetUserMediaDescriptor)Object.defineProperty(mediaDevices,'getUserMedia',oldGetUserMediaDescriptor);
+    else delete mediaDevices.getUserMedia;
+  }
   return JSON.stringify({opened});
 })()`));
 assert.equal(voiceEntryTap.opened,true,'tapping the waveform voice action must open voice mode');

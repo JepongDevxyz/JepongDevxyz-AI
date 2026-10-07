@@ -1,11 +1,20 @@
 import fs from 'node:fs';
 import assert from 'node:assert';
+import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const htmlPath = path.join(__dirname,'..','index.html');
 const apiPath = path.join(__dirname,'..','api','chat.js');
 const html = fs.readFileSync(htmlPath, 'utf8');
+const libraryChatGPT = fs.readFileSync(path.join(__dirname, '..', 'library-chatgpt.js'), 'utf8');
+const artifactLibrary = fs.readFileSync(path.join(__dirname, '..', 'library.js'), 'utf8');
+assert.match(libraryChatGPT, /page\.id = 'jdChatLibraryPage'/, 'upload-enabled Library must use its own page ID');
+assert.doesNotMatch(libraryChatGPT, /getElementById\('jdLibPage'\)/, 'upload-enabled Library must not attach to the Artifacts/Media page');
+assert.match(artifactLibrary, /p\.id = 'jdLibPage'/, 'Artifacts/Media Library keeps its separate page ID');
+assert.match(html, /window\.JDLibraryStorage\s*=\s*\{/, 'app must expose authenticated Library storage actions');
+assert.match(html, /listItems:async/, 'Library bridge must load rows through the app Supabase client');
+assert.match(html, /saveFile:async\(file\)/, 'Library bridge must save through the app Supabase client');
 let api = fs.readFileSync(apiPath, 'utf8');
 
 function loadDetector(source) {
@@ -45,10 +54,97 @@ assert(htmlReq && htmlReq.ext === 'html', 'explicit downloadable HTML request mu
 // Android keyboard/viewport regression: app must follow the visual viewport rather than letting Chrome pan it away.
 assert(/visualViewport\.addEventListener\(['\"]scroll['\"]/.test(html), 'visualViewport scroll listener missing');
 assert(/app\.style\.position\s*=\s*['\"]fixed['\"]/.test(html), 'mobile app is not fixed to the visual viewport');
-assert(/app\.style\.top\s*=\s*['\"]0['\"]/.test(html), 'mobile app top must remain anchored at zero');
+assert(/const appTop = keepFloatingWindowGeometry \? 0 : offsetTop/.test(html), 'mobile app top must use the selected visual viewport geometry');
+assert(/app\.style\.top\s*=\s*`\$\{appTop\}px`/.test(html), 'mobile app top must apply the computed viewport position');
 assert(!/app\.style\.top\s*=\s*`\$\{offsetTop\}px`/.test(html), 'visualViewport offsetTop must not shift the whole app');
 assert(/app\.style\.transform\s*=\s*['\"]['\"]/.test(html), 'mobile app transform must be cleared');
 assert(/overscroll-behavior\s*:\s*none/.test(html), 'root overscroll lock missing');
 assert(/function\s+lockDocumentViewport\s*\(/.test(html), 'document viewport lock helper missing');
+
+// Login must never create an account; signup may create one only when that mode is active.
+const emailOtp = html.match(/signInWithOtp\(\{email,options:\{shouldCreateUser:([^}]+)\}\}\)/);
+assert(emailOtp, 'email OTP auth call missing');
+assert.strictEqual(emailOtp[1], 'jdAuthSignUpMode', 'email OTP must create accounts only in explicit signup mode');
+assert(/let jdAuthSignUpMode=false;/.test(html), 'email OTP must default to existing-account login mode');
+
+// Gemini picker IDs must match the backend allowlist; migrate stale selections before the first request.
+assert.match(html,/const GEMINI_ALLOWED_MODELS=\['gemini-3\.1-flash-lite','gemini-3\.5-flash-lite'\]/,
+  'Gemini frontend choices must match the server allowlist');
+assert.match(html,/currentSelectedProvider==='gemini'&&!GEMINI_ALLOWED_MODELS\.includes\(currentSelectedModel\)/,
+  'a stale Gemini model selection must be normalized');
+assert.match(html,/currentSelectedModel='gemini-3\.5-flash-lite';\s*localStorage\.setItem\('jepong_last_model',currentSelectedModel\)/,
+  'stale Gemini model selection must persist the supported default');
+const geminiSection=html.slice(html.indexOf('<section class="model-provider-page" data-provider="gemini">'),html.indexOf('<section class="model-provider-page" data-provider="cloudflare">'));
+assert(geminiSection.includes('data-model="gemini-3.5-flash-lite"'), 'supported Gemini model is missing from the picker');
+for (const id of ['gemini-flash-latest','gemini-3.8-flash','gemini-3.7-flash']) {
+  assert(!geminiSection.includes('data-model="'+id+'"'), 'unsupported Gemini model remains selectable: '+id);
+}
+
+
+// A click on the Library plus button's SVG path must not be treated as an outside click.
+const libraryPath = path.join(__dirname,'..','library-chatgpt.js');
+const library = fs.readFileSync(libraryPath, 'utf8');
+const plusTargetStart = library.indexOf('  function isLibraryPlusTarget(target) {');
+assert.notEqual(plusTargetStart, -1, 'Library plus target detection helper is missing');
+const plusTargetEnd = library.indexOf('\n  }\n', plusTargetStart);
+assert.notEqual(plusTargetEnd, -1, 'Library plus target detection helper is incomplete');
+const plusTargetHelper = library.slice(plusTargetStart, plusTargetEnd + 4).trim();
+const isLibraryPlusTarget = vm.runInNewContext('(' + plusTargetHelper + ')');
+const plusButton = { closest: (selector) => selector === '#jdLibPlus' ? plusButton : null };
+const plusIconPath = { closest: (selector) => selector === '#jdLibPlus' ? plusButton : null };
+assert.equal(isLibraryPlusTarget(plusIconPath), true, 'SVG icon clicks must count as plus-button clicks');
+assert.equal(isLibraryPlusTarget({ closest: () => null }), false, 'unrelated clicks must remain outside clicks');
+assert(library.includes('!isLibraryPlusTarget(e.target)) pp.hidden = true;'),
+  'the outside-click handler must use the SVG-aware plus-button target check');
+
+
+// Library file picker must use an attached input so browser chooser automation can
+// address the node; selection saves files and cancellation removes the temporary input.
+const libUploadStart = library.indexOf('  function plusAction(act) {');
+assert.notEqual(libUploadStart, -1, 'Library upload action is missing');
+const libUploadEnd = library.indexOf('\n  }\n', libUploadStart);
+assert.notEqual(libUploadEnd, -1, 'Library upload action is incomplete');
+const libUploadFunction = library.slice(libUploadStart, libUploadEnd + 4).trim();
+let libUploadAttachedInput = null;
+let libUploadSaves = [];
+let libUploadReloads = 0;
+let libUploadClicks = 0;
+const libUploadListeners = {};
+const libUploadBody = {
+  appendChild(input) { libUploadAttachedInput = input; input.parentNode = this; return input; },
+  removeChild(input) { if (libUploadAttachedInput === input) libUploadAttachedInput = null; input.parentNode = null; return input; }
+};
+const libUploadInput = {
+  style: {},
+  files: [{name: 'library-upload-fixture.txt'}],
+  parentNode: null,
+  addEventListener(name, handler) { libUploadListeners[name] = handler; },
+  setAttribute() {},
+  click() {
+    assert.equal(this.parentNode, libUploadBody, 'file input must be attached before opening the picker');
+    libUploadClicks++;
+  }
+};
+const runLibraryUpload = vm.runInNewContext('(' + libUploadFunction + ')', {
+  document: {body: libUploadBody, createElement: () => libUploadInput},
+  window: {JDLibraryStorage: {async saveFile(file) { libUploadSaves.push(file); return {data: true, error: null}; }}},
+  loadItems() { libUploadReloads++; }
+});
+runLibraryUpload('upload');
+assert.equal(libUploadClicks, 1, 'Library should open the picker exactly once');
+assert.equal(libUploadInput.type, 'file');
+assert.equal(libUploadInput.multiple, true);
+assert.equal(libUploadInput.style.left, '-10000px', 'temporary input should remain visually hidden');
+await libUploadInput.onchange();
+assert.equal(libUploadSaves.length, 1, 'selected files should be saved to Library');
+assert.equal(libUploadSaves[0].name, 'library-upload-fixture.txt');
+assert.equal(libUploadReloads, 1, 'Library should reload after upload');
+assert.equal(libUploadAttachedInput, null, 'temporary input should be removed after selection');
+runLibraryUpload('upload');
+assert.equal(typeof libUploadListeners.cancel, 'function', 'picker cancellation should clean up the input');
+libUploadListeners.cancel();
+assert.equal(libUploadAttachedInput, null, 'temporary input should be removed after cancellation');
+
+
 
 console.log('PASS: runtime regressions');

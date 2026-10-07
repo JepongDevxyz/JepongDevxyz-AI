@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {buildInlineMapDataUrl} from '../api/location-tools.js';
+import {buildInlineMapDataUrl,buildRouteMapContext} from '../api/location-tools.js';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
@@ -29,8 +29,21 @@ assert.match(api,/detectLocationWeatherIntent\(message\)/);
 assert.match(api,/fetchLiveWeather\(\{location:locationFix,place,timeoutMs:fastAnswers\?4500:6500\}\)/);
 assert.match(api,/normalizeClientLocation\(body\.currentLocation\)/);
 assert.match(api,/\[CURRENT-LOCATION WEATHER TOOL — unavailable\]/);
-assert.match(api,/A route was calculated by the routing service and an interactive route map was generated/);
-assert.match(api,/The interactive route service did not return a route/);
+assert.match(api,/buildRouteMapContext\(routeRequest,routeMapUrl,calculatedRoute\)/,
+  'chat route handling must pass the calculated route context from the location helper');
+const routeRequest={origin:'Guimba',destination:'Baguio',travelMode:'driving'};
+const generatedRouteContext=buildRouteMapContext(routeRequest,'data:text/html;base64,ZmFrZQ==',{distanceKm:185,durationText:'4 h 12 min'});
+assert.match(generatedRouteContext,/A route was calculated and an interactive map is automatically embedded in the response/);
+assert.match(generatedRouteContext,/Driving distance: 185 km/);
+assert.match(generatedRouteContext,/Estimated drive time from the routing service: 4 h 12 min/);
+assert.doesNotMatch(generatedRouteContext,/Google Maps directions URL/i,
+  'a verified in-chat map must not suggest a redundant external map action');
+const fallbackRouteContext=buildRouteMapContext(routeRequest,'',null);
+assert.match(fallbackRouteContext,/The interactive route service did not return a route/);
+assert.match(fallbackRouteContext,/Google Maps directions URL:/);
+assert.match(fallbackRouteContext,/Do not invent distance or ETA/);
+assert.doesNotMatch(fallbackRouteContext,/Driving distance:|Estimated drive time/,
+  'a missing route must not invent distance or ETA');
 assert.match(api,/const locationToolAppendix=String\(result\.locationToolAppendix\|\|''\)\.trim\(\)/);
 assert.match(api,/buildRouteMapHtml\(/);
 assert.match(api,/buildRadarMapHtml\(/);

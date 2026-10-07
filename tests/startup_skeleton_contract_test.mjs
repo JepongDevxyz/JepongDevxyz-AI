@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 const html = fs.readFileSync('index.html', 'utf8');
 const agent = fs.readFileSync('agent.js', 'utf8');
+const patchVersion = fs.readFileSync('patch-version.txt', 'utf8').trim();
+const manifest = JSON.parse(fs.readFileSync('patch-manifest.json', 'utf8'));
 const shell = fs.readFileSync('reference-shell.css', 'utf8');
 const bodyStart = html.indexOf('<body>');
 const boot = html.indexOf('id="jdBootSkeleton"');
@@ -27,7 +29,7 @@ assert(html.includes('.jd-boot-welcome{width:min(100%,280px);height:138px;displa
 assert(shell.includes('.jd-navigation{grid-template-columns:48px minmax(0,1fr) 48px;gap:7px;min-height:52px}') && html.includes('#jdBootSkeleton{--boot-base:#171717;--boot-surface:#222;--boot-line:rgba(255,255,255,.075);--boot-hi:rgba(255,255,255,.13);position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;min-height:100dvh;padding:env(safe-area-inset-top) max(16px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px,env(safe-area-inset-left))') && html.includes('#jdBootSkeleton{padding-left:12px;padding-right:12px}.jd-boot-header{height:70px;flex-basis:70px;grid-template-columns:48px minmax(0,1fr) 48px;gap:7px;padding:0 3px}') && html.includes('.jd-boot-search{top:16px;right:3px;width:36px;height:36px}') && html.includes('.jd-boot-tab:first-child:before{bottom:-26px}'), 'mobile skeleton navigation, search control, and composer insets must track the real shell measurements');
 assert(html.includes('background:#171717') && !html.includes('background:#0b0f19'), 'dark boot skeleton must use the app shell charcoal palette instead of the obsolete navy palette');
 assert(!html.includes('jd-boot-brand'), 'boot skeleton must not add a fake brand mark');
-assert(agent.includes("var V='?v=20261004a44'") && fs.readFileSync('patch-version.txt', 'utf8').trim() === '20261004a44', 'new startup loader must publish with a bumped runtime patch cache version');
+assert(/^20\d{6}[a-z0-9]+$/.test(patchVersion) && agent.includes(`var V='?v=${patchVersion}'`) && manifest.version === patchVersion, 'startup loader fallback, patch manifest, and version file must stay aligned');
 assert(html.includes('html[data-theme="light"] #jdBootSkeleton') && html.includes('body.theme-light #jdBootSkeleton'), 'boot skeleton must follow both persisted theme selectors');
 assert(agent.includes("getElementById('jdBootSkeleton')"), 'agent bootstrap must manage the static first-paint skeleton');
 assert(!agent.includes("sk.id='jdInitSkeleton'"), 'agent bootstrap must not create a second, late skeleton');

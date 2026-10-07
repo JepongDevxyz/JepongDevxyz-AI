@@ -16,9 +16,9 @@
 
   var CSS = [
     /* Full-screen page */
-    '#jdLibPage{position:fixed;inset:0;z-index:25000;background:#000;color:#fff;',
+    '#jdChatLibraryPage{position:fixed;inset:0;z-index:25000;background:#000;color:#fff;',
     'display:flex;flex-direction:column;font-family:inherit}',
-    '#jdLibPage[hidden]{display:none!important}',
+    '#jdChatLibraryPage[hidden]{display:none!important}',
     /* Header */
     '.jdlib-header{display:flex;align-items:center;justify-content:space-between;',
     'padding:12px 8px;flex:0 0 auto}',
@@ -93,7 +93,7 @@
     '.jdlib-selbar{position:absolute;top:0;left:0;right:0;background:#1e1e1e;padding:12px 16px;',
     'display:flex;align-items:center;justify-content:space-between;z-index:10}',
     /* Light mode (follows theme) */
-    'body.theme-light #jdLibPage{background:#fff;color:#111}',
+    'body.theme-light #jdChatLibraryPage{background:#fff;color:#111}',
     'body.theme-light .jdlib-hbtn{color:#111}',
     'body.theme-light .jdlib-tab{color:#666}',
     'body.theme-light .jdlib-tab.active{background:#e8e8e8;color:#111}',
@@ -162,7 +162,7 @@
 
   /* ---------- Build the page ---------- */
   function buildPage() {
-    if (document.getElementById('jdLibPage')) return;
+    if (document.getElementById('jdChatLibraryPage')) return;
     if (!document.getElementById('jdLibChatCss')) {
       var st = document.createElement('style');
       st.id = 'jdLibChatCss';
@@ -171,7 +171,7 @@
     }
 
     var page = document.createElement('div');
-    page.id = 'jdLibPage';
+    page.id = 'jdChatLibraryPage';
     page.setAttribute('hidden', '');
     page.innerHTML =
       '<div class="jdlib-header">' +
@@ -217,19 +217,23 @@
       if (!searchInput.value) searchBar.classList.remove('active');
     });
 
-    // Close menus on outside tap
+    // Close menus on outside tap. Include SVG descendants of the plus icon.
     document.addEventListener('click', function (e) {
       var mp = document.getElementById('jdLibMenuPop');
       var pp = document.getElementById('jdLibPlusPop');
       if (mp && !mp.hidden && !mp.contains(e.target) && e.target.id !== 'jdLibMenu') mp.hidden = true;
-      if (pp && !pp.hidden && !pp.contains(e.target) && e.target.id !== 'jdLibPlus') pp.hidden = true;
+      if (pp && !pp.hidden && !pp.contains(e.target) && !isLibraryPlusTarget(e.target)) pp.hidden = true;
     });
+  }
+
+  function isLibraryPlusTarget(target) {
+    return !!(target && typeof target.closest === 'function' && target.closest('#jdLibPlus'));
   }
 
   /* ---------- Open/Close ---------- */
   function openLibrary() {
     buildPage();
-    var page = document.getElementById('jdLibPage');
+    var page = document.getElementById('jdChatLibraryPage');
     page.removeAttribute('hidden');
     // Hide the old modal if it's open
     var old = document.getElementById('libraryModal');
@@ -240,7 +244,7 @@
   }
 
   function closeLibrary() {
-    var page = document.getElementById('jdLibPage');
+    var page = document.getElementById('jdChatLibraryPage');
     if (page) {
       page.setAttribute('hidden', '');
       if (window.jdBackNav) window.jdBackNav.pop(page);
@@ -251,15 +255,15 @@
   async function loadItems() {
     var grid = document.getElementById('jdLibGrid');
     if (!grid) return;
-    if (typeof cloudUser === 'undefined' || !cloudUser) {
+    var libraryStore = window.JDLibraryStorage;
+    if (!libraryStore || !libraryStore.isSignedIn()) {
       grid.innerHTML = '<div class="jdlib-empty">' + I.folder + '<p>Sign in to use your Library.</p></div>';
       return;
     }
     grid.innerHTML = '';
     try {
-      var r = await cloudClient.from('library_items')
-        .select('id,storage_path,file_name,mime_type,size_bytes,created_at,metadata')
-        .eq('user_id', cloudUser.id).order('created_at', { ascending: false }).limit(200);
+      var r = await libraryStore.listItems();
+      if (r.error) throw r.error;
       state.items = r.data || [];
       loadFolders();
       render();
@@ -481,14 +485,40 @@
       var inp = document.createElement('input');
       inp.type = 'file';
       inp.multiple = true;
-      inp.onchange = function () {
-        Array.from(inp.files).forEach(function (f) {
-          if (typeof saveFileToLibrary === 'function') {
-            saveFileToLibrary(f, {});
-          }
-        });
-        setTimeout(loadItems, 2000);
+      inp.style.position = 'fixed';
+      inp.style.left = '-10000px';
+      inp.style.top = '0';
+      inp.style.width = '1px';
+      inp.style.height = '1px';
+      inp.style.opacity = '0';
+      inp.setAttribute('aria-hidden', 'true');
+      var removeUploadInput = function () {
+        if (inp.parentNode) inp.parentNode.removeChild(inp);
       };
+      inp.onchange = async function () {
+        var files = Array.from(inp.files || []);
+        removeUploadInput();
+        if (!files.length) return;
+        var libraryStore = window.JDLibraryStorage;
+        if (!libraryStore || typeof libraryStore.saveFile !== 'function') {
+          if (typeof showModernAlert === 'function') showModernAlert('Library upload is unavailable. Please reload and try again.', 'Library');
+          return;
+        }
+        var results = await Promise.all(files.map(async function (f) {
+          try { return await libraryStore.saveFile(f); }
+          catch (error) { return { error: error }; }
+        }));
+        var failed = results.filter(function (result) { return !result || result.error; });
+        await loadItems();
+        if (failed.length) {
+          var message = String(failed[0].error && failed[0].error.message || 'Upload failed.');
+          if (typeof showModernAlert === 'function') showModernAlert(message, 'Library upload');
+        } else if (typeof showModernToast === 'function') {
+          showModernToast(files.length === 1 ? 'File saved to Library.' : files.length + ' files saved to Library.');
+        }
+      };
+      inp.addEventListener('cancel', removeUploadInput, { once: true });
+      document.body.appendChild(inp);
       inp.click();
     } else if (act === 'newfolder') {
       var name = prompt('Folder name:');
@@ -564,7 +594,7 @@
     window.closeJdLibrary = closeLibrary;
     // Also handle back-nav close event
     document.addEventListener('jd-back-close', function (e) {
-      var page = document.getElementById('jdLibPage');
+      var page = document.getElementById('jdChatLibraryPage');
       if (page && !page.hidden && (e.target === page || page.contains(e.target))) {
         closeLibrary();
       }

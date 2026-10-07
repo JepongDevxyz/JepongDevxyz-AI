@@ -8,7 +8,7 @@ on:
       - 'api/_node_web_bridge.js'
       - 'api/_codex_identity.js'
       - 'api/_codex_sandbox.js'
-      - 'api/codex-account.js'
+      - 'lib/codex/account.js'
       - 'codex-choice.js'
       - 'codex-choice.css'
       - 'index.html'
@@ -25,7 +25,7 @@ on:
       - 'codex-runner/**'
       - 'api/codex.js'
       - 'api/_node_web_bridge.js'
-      - 'api/codex-account.js'
+      - 'lib/codex/account.js'
       - 'codex-choice.js'
       - 'codex-choice.css'
       - 'index.html'
@@ -60,7 +60,7 @@ jobs:
       - name: Syntax verification
         run: |
           node --check api/codex.js
-          node --check api/codex-account.js
+          node --check lib/codex/account.js
           node --check codex-choice.js
           cd codex-runner
           npm run check

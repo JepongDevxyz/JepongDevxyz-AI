@@ -17,7 +17,7 @@ function runEmbed(url, event='none', linkCount=1, separateMessages=false){
   }
   const messages=[];
   function makeMessage(){
-    const message={className:'msg bot',children:[],embeds:[],insertBefore(node,reference){
+    const message={className:'msg bot',textContent:'Route map: Guimba → Baguio',children:[],embeds:[],insertBefore(node,reference){
       const index=reference?this.children.indexOf(reference):this.children.length;
       this.children.splice(index<0?this.children.length:index,0,node);
       node.parentNode=this;
@@ -56,7 +56,7 @@ function runEmbed(url, event='none', linkCount=1, separateMessages=false){
   class MutationObserver{constructor(callback){onMutation=callback;}observe(){}}
   vm.runInNewContext(source,{
     window:{},document,MutationObserver,
-    atob:value=>Buffer.from(value,'base64').toString('binary'),
+    atob:value=>Buffer.from(value,'base64').toString('binary'),TextDecoder,
     setTimeout:(fn,delay=0)=>{if(delay<10000)fn();return 1;},setInterval:()=>{}
   });
   if(onMutation&&inserted.length)onMutation([{addedNodes:[inserted[0]]}]);
@@ -78,10 +78,12 @@ const frame=card.children.find(item=>item.tagName==='IFRAME');
 const status=card.children.find(item=>item.className==='jd-map-loading');
 const fallback=card.children.find(item=>item.className==='jd-map-open-fallback');
 assert.ok(frame,'map iframe is inside the loading card');
-assert.equal(frame.src,dataUrl);
+assert.equal(frame.srcdoc,safeHtml,'trusted map HTML renders as srcdoc in the chat');
+assert.equal(frame.src,undefined,'no data URL navigation is needed');
 assert.equal(frame.attrs.loading,'eager','map loading starts immediately');
 assert.equal(frame.attrs.sandbox,'allow-scripts','embedded HTML must not share the app origin');
-assert.equal(frame.attrs.referrerpolicy,'no-referrer');
+assert.equal(frame.attrs.referrerpolicy,'strict-origin-when-cross-origin',
+  'map tile requests need an identifying origin Referer under the OSM tile policy');
 assert.match(frame.style.cssText,/height:clamp\(340px,56vh,500px\)/,
   'the map card should use the enlarged responsive map height');
 assert.ok(status && !status.hidden,'users see a loading state instead of a blank area');

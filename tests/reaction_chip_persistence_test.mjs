@@ -9,7 +9,7 @@ const renderSource=source.slice(start,end).trim();
 
 function makeElement(tag){
   const node={
-    tagName:String(tag).toUpperCase(),className:'',title:'',attrs:{},children:[],listeners:{},
+    tagName:String(tag).toUpperCase(),className:'',title:'',style:{},attrs:{},children:[],listeners:{},
     parentNode:null,_text:'',
     get textContent(){return this._text+this.children.map(child=>child.textContent).join('');},
     set textContent(value){this._text=String(value);this.children=[];},

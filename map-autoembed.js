@@ -22,6 +22,15 @@
     } catch (_) { return false; }
   }
 
+  function generatedMapHtml(url) {
+    try {
+      if (!isGeneratedMapDocument(url)) return '';
+      var encoded = String(url).split(',')[1];
+      var bytes = Uint8Array.from(atob(encoded), function (char) { return char.charCodeAt(0); });
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch (_) { return ''; }
+  }
+
   function isMapUrl(url) {
     if (!url) return false;
     var u = String(url).toLowerCase();
@@ -92,6 +101,7 @@
       if (msgNode) {
         var msgText = (msgNode.textContent || '').toLowerCase();
         var hasDirectionsIntent =
+          msgText.indexOf('route map') !== -1 ||
           msgText.indexOf('direction') !== -1 ||
           msgText.indexOf('route from') !== -1 ||
           msgText.indexOf('how to get to') !== -1 ||
@@ -144,7 +154,7 @@
       iframe.style.cssText = 'position:relative;z-index:0;width:100%;height:clamp(340px,56vh,500px);min-height:340px;border:0;border-radius:12px;margin:0;display:block;opacity:0;transition:opacity .18s ease';
       iframe.setAttribute('loading', 'eager');
       iframe.setAttribute('sandbox', 'allow-scripts');
-      iframe.setAttribute('referrerpolicy', 'no-referrer');
+      iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
       iframe.title = 'Interactive map';
 
       var settled = false;
@@ -189,7 +199,15 @@
       insertionParent.insertBefore(card, sourceLine.nextSibling);
       if (insertionParent.removeChild) insertionParent.removeChild(sourceLine);
       else if (sourceLine.remove) sourceLine.remove();
-      iframe.src = url;
+      // Keep generated HTML in a sandboxed inline document. Some browsers
+      // block data: iframe navigation even when the route card is allowed.
+      if (String(url).toLowerCase().indexOf('data:text/html;base64,') === 0) {
+        var html = generatedMapHtml(url);
+        if (html) iframe.srcdoc = html;
+        else markError();
+      } else {
+        iframe.src = url;
+      }
       setTimeout(function () {
         if (settled) return;
         status.textContent = 'The map is taking longer to load. You can open it directly below.';
