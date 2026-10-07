@@ -7,6 +7,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const htmlPath = path.join(__dirname,'..','index.html');
 const apiPath = path.join(__dirname,'..','api','chat.js');
 const html = fs.readFileSync(htmlPath, 'utf8');
+const libraryChatGPT = fs.readFileSync(path.join(__dirname, '..', 'library-chatgpt.js'), 'utf8');
+const artifactLibrary = fs.readFileSync(path.join(__dirname, '..', 'library.js'), 'utf8');
+assert.match(libraryChatGPT, /page\.id = 'jdChatLibraryPage'/, 'upload-enabled Library must use its own page ID');
+assert.doesNotMatch(libraryChatGPT, /getElementById\('jdLibPage'\)/, 'upload-enabled Library must not attach to the Artifacts/Media page');
+assert.match(artifactLibrary, /p\.id = 'jdLibPage'/, 'Artifacts/Media Library keeps its separate page ID');
 let api = fs.readFileSync(apiPath, 'utf8');
 
 function loadDetector(source) {
