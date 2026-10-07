@@ -97,7 +97,7 @@ assert.equal(isLibraryPlusTarget({ closest: () => null }), false, 'unrelated cli
 assert(library.includes('!isLibraryPlusTarget(e.target)) pp.hidden = true;'),
   'the outside-click handler must use the SVG-aware plus-button target check');
 
-+
+
 // Library file picker must use an attached input so browser chooser automation can
 // address the node; selection saves files and cancellation removes the temporary input.
 const libUploadStart = library.indexOf('  function plusAction(act) {');

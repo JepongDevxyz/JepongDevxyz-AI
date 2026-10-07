@@ -155,6 +155,10 @@
       var slopOn = !!(window.jdSlopGateEnabled && window.jdSlopGateEnabled());
       var tideOn = !!(window.jdTidelineEnabled && window.jdTidelineEnabled());
       var browseOn = !!(window.jdBrowseAgentEnabled && window.jdBrowseAgentEnabled());
+      var dotsOn = !!(window.jdDotsEnabled && window.jdDotsEnabled());
+      var apprOn = !!(window.jdApprovalEnabled && window.jdApprovalEnabled());
+      var spacesOn = !!(window.jdSpacesEnabled && window.jdSpacesEnabled());
+      var skillsOn = !!(window.jdAgentSkillsEnabled && window.jdAgentSkillsEnabled());
       var sheet = document.createElement('div');
       sheet.className = 'jd-extra-ai-sheet';
       sheet.innerHTML =
@@ -193,6 +197,62 @@
         '<div style="font-size:11px;opacity:.55;margin-top:4px">Keys: Vercel → STEEL_API_KEYS (comma-separated) → redeploy.</div>' +
         '</div>' +
 
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🎯 Specialist Dots</h4>' +
+        '<p>Custom AI specialists — each with its own name, role, and instructions. Activate one and it shapes every reply.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Specialist Dots">' +
+        '<input type="checkbox" id="jdExtraDotsToggle"' + (dotsOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '<button class="jd-extra-ai-facts" data-act="dots">Manage dots</button>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🛡️ Approval Cards</h4>' +
+        '<p>Human-in-the-loop for Agent Browse. Every browse action pauses for your <b>Approve & Run</b> / <b>Decline</b> decision in chat.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Approval Cards">' +
+        '<input type="checkbox" id="jdExtraApprovalToggle"' + (apprOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>📄 Spaces</h4>' +
+        '<p>Document workspace — save chats as pages, search your library, edit with formatting. All stored on your device.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Spaces">' +
+        '<input type="checkbox" id="jdExtraSpacesToggle"' + (spacesOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '<button class="jd-extra-ai-facts" data-act="spaces">Open Spaces</button>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>⚡ Agent Skills</h4>' +
+        '<p>Slash-command disciplines for the AI: <b>/grill</b> (ask first), <b>/tdd</b>, <b>/review</b>, <b>/debug</b>, <b>/spec</b>, <b>/research</b>, <b>/prototype</b>, <b>/plan</b>. Type <b>/skills</b> in chat for the list.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Agent Skills">' +
+        '<input type="checkbox" id="jdExtraAgentSkillsToggle"' + (skillsOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🧵 Goal Threads</h4>' +
+        '<p>Unified thread per goal — timeline, notes, and history in one view. Inspired by Paperclip task threads.</p>' +
+        '<button class="jd-extra-ai-facts" data-act="goal-threads">Open threads</button>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>🧠 Skill Studio</h4>' +
+        '<p>View, edit, and test Agent Skills. Changes apply instantly. Version history included.</p>' +
+        '<button class="jd-extra-ai-facts" data-act="skill-studio">Open studio</button>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>📅 Routine Manager</h4>' +
+        '<p>Powerful scheduled tasks — with owner, schedule, and run history. Inspired by Paperclip routines.</p>' +
+        '<button class="jd-extra-ai-facts" data-act="routines">Open routines</button>' +
+        '</div>' +
+
         '<button class="jd-extra-ai-done" data-act="close">Done</button>' +
         '</div>';
       sheet.addEventListener('click', function (e) {
@@ -204,6 +264,35 @@
         if (act === 'facts') {
           closeAiSheet();
           try { window.jdTidelineOpenManager && window.jdTidelineOpenManager(); } catch (_) {}
+        }
+        if (act === 'dots') {
+          closeAiSheet();
+          try { window.jdDotsOpenManager && window.jdDotsOpenManager(); } catch (_) {}
+        }
+        if (act === 'spaces') {
+          closeAiSheet();
+          try { window.jdSpacesOpenLibrary && window.jdSpacesOpenLibrary(); } catch (_) {}
+        }
+        if (act === 'goal-threads') {
+          closeAiSheet();
+          try {
+            // Pick first goal or prompt — for now open a goal picker
+            var raw = localStorage.getItem('jd_goals_v2');
+            var goals = raw ? JSON.parse(raw) : [];
+            if (!goals.length) { try { window.jdOdToast && window.jdOdToast('No goals yet'); } catch (_) {} return; }
+            // Open thread for the first active goal
+            var g = goals[0];
+            for (var i = 0; i < goals.length; i++) { if (goals[i].status !== 'completed') { g = goals[i]; break; } }
+            window.jdGoalThreadOpen && window.jdGoalThreadOpen(g.id);
+          } catch (_) {}
+        }
+        if (act === 'skill-studio') {
+          closeAiSheet();
+          try { window.jdSkillStudioOpen && window.jdSkillStudioOpen(); } catch (_) {}
+        }
+        if (act === 'routines') {
+          closeAiSheet();
+          try { window.jdRoutineManagerOpen && window.jdRoutineManagerOpen(); } catch (_) {}
         }
       });
       var slopT = sheet.querySelector('#jdExtraSlopToggle');
@@ -220,6 +309,26 @@
       if (browseT) browseT.addEventListener('change', function () {
         try { window.jdSetBrowseAgent && window.jdSetBrowseAgent(browseT.checked); } catch (_) {}
         try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 — type "browse: <goal>" in chat' : 'Agent Browse OFF'); } catch (_) {}
+      });
+      var dotsT = sheet.querySelector('#jdExtraDotsToggle');
+      if (dotsT) dotsT.addEventListener('change', function () {
+        try { window.jdSetDots && window.jdSetDots(dotsT.checked); } catch (_) {}
+        try { if (window.jdOdToast) window.jdOdToast(dotsT.checked ? 'Specialist Dots ON 🎯' : 'Specialist Dots OFF'); } catch (_) {}
+      });
+      var apprT = sheet.querySelector('#jdExtraApprovalToggle');
+      if (apprT) apprT.addEventListener('change', function () {
+        try { window.jdSetApproval && window.jdSetApproval(apprT.checked); } catch (_) {}
+        try { if (window.jdOdToast) window.jdOdToast(apprT.checked ? 'Approval Cards ON 🛡️' : 'Approval Cards OFF'); } catch (_) {}
+      });
+      var spacesT = sheet.querySelector('#jdExtraSpacesToggle');
+      if (spacesT) spacesT.addEventListener('change', function () {
+        try { window.jdSetSpaces && window.jdSetSpaces(spacesT.checked); } catch (_) {}
+        try { if (window.jdOdToast) window.jdOdToast(spacesT.checked ? 'Spaces ON 📄' : 'Spaces OFF'); } catch (_) {}
+      });
+      var askillsT = sheet.querySelector('#jdExtraAgentSkillsToggle');
+      if (askillsT) askillsT.addEventListener('change', function () {
+        try { window.jdSetAgentSkills && window.jdSetAgentSkills(askillsT.checked); } catch (_) {}
+        try { if (window.jdOdToast) window.jdOdToast(askillsT.checked ? 'Agent Skills ON ⚡ — type /skills in chat' : 'Agent Skills OFF'); } catch (_) {}
       });
       document.body.appendChild(sheet);
       try {
