@@ -12,6 +12,9 @@ const artifactLibrary = fs.readFileSync(path.join(__dirname, '..', 'library.js')
 assert.match(libraryChatGPT, /page\.id = 'jdChatLibraryPage'/, 'upload-enabled Library must use its own page ID');
 assert.doesNotMatch(libraryChatGPT, /getElementById\('jdLibPage'\)/, 'upload-enabled Library must not attach to the Artifacts/Media page');
 assert.match(artifactLibrary, /p\.id = 'jdLibPage'/, 'Artifacts/Media Library keeps its separate page ID');
+assert.match(html, /window\.JDLibraryStorage\s*=\s*\{/, 'app must expose authenticated Library storage actions');
+assert.match(html, /listItems:async/, 'Library bridge must load rows through the app Supabase client');
+assert.match(html, /saveFile:async\(file\)/, 'Library bridge must save through the app Supabase client');
 let api = fs.readFileSync(apiPath, 'utf8');
 
 function loadDetector(source) {
@@ -124,18 +127,17 @@ const libUploadInput = {
 };
 const runLibraryUpload = vm.runInNewContext('(' + libUploadFunction + ')', {
   document: {body: libUploadBody, createElement: () => libUploadInput},
-  saveFileToLibrary(file, options) { libUploadSaves.push({file, options}); },
-  loadItems() { libUploadReloads++; },
-  setTimeout(callback, delay) { assert.equal(delay, 2000); callback(); }
+  window: {JDLibraryStorage: {async saveFile(file) { libUploadSaves.push(file); return {data: true, error: null}; }}},
+  loadItems() { libUploadReloads++; }
 });
 runLibraryUpload('upload');
 assert.equal(libUploadClicks, 1, 'Library should open the picker exactly once');
 assert.equal(libUploadInput.type, 'file');
 assert.equal(libUploadInput.multiple, true);
 assert.equal(libUploadInput.style.left, '-10000px', 'temporary input should remain visually hidden');
-libUploadInput.onchange();
+await libUploadInput.onchange();
 assert.equal(libUploadSaves.length, 1, 'selected files should be saved to Library');
-assert.equal(libUploadSaves[0].file.name, 'library-upload-fixture.txt');
+assert.equal(libUploadSaves[0].name, 'library-upload-fixture.txt');
 assert.equal(libUploadReloads, 1, 'Library should reload after upload');
 assert.equal(libUploadAttachedInput, null, 'temporary input should be removed after selection');
 runLibraryUpload('upload');
