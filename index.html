@@ -4857,7 +4857,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
               <h3>Advanced</h3>
 <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Canvas / code preview</strong><small>Allow runnable previews and fullscreen code tools in supported responses.</small></div><label class="squish-switch-root"><input id="psCanvas" type="checkbox" onchange="setPersonalizationToggle('canvasPreview',this.checked)"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Voice</strong><small>Allow response speech and voice controls.</small></div><label class="squish-switch-root"><input id="psVoiceFeature" type="checkbox" onchange="setPersonalizationToggle('voiceEnabled',this.checked);syncPersonalizationFeatureToggles()"><span></span></label></div>
-              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Library / file search</strong><small>Allow attached files to be included in supported AI requests.</small></div><label class="squish-switch-root"><input id="psLibrarySearch" type="checkbox" onchange="setPersonalizationToggle('librarySearch',this.checked)"><span></span></label></div>
+              <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Library search</strong><small>Automatically search saved files for answers. Manual attachments work separately.</small></div><label class="squish-switch-root"><input id="psLibrarySearch" type="checkbox" onchange="setPersonalizationToggle('librarySearch',this.checked)"><span></span></label></div>
               <div class="ps-ref-row"><div class="ps-ref-copy"><strong>Connector search preference</strong><small>Saves your preference for future connected-service integrations. It does not connect an external account by itself.</small></div><label class="squish-switch-root"><input id="psConnectorSearch" type="checkbox" onchange="setPersonalizationToggle('connectorSearch',this.checked)"><span></span></label></div>
             </section>
 
@@ -8451,10 +8451,6 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
                 const {pet}=getLivePetElements();
                 if(pet)pet.dataset.dragEnabled=value?'true':'false';
                 if(!value)cancelLivePetDrag(true);
-            } else if(key==='librarySearch' && !value) {
-                selectedFilesData.length=0;
-                renderFilePreviews();
-                showModernToast?.('File attachments are off. Turn on Library / file search in Settings to use them.');
             } else if(key==='canvasPreview' && !value) {
                 closeCodeRunner();
                 closeCodeFullscreen();
