@@ -108,6 +108,18 @@
     {
       "source": "/logo-512.jpg",
       "destination": "/api/logo?size=512"
+    },
+    {
+      "source": "/api/turnstile",
+      "destination": "/api/helpers?helper=turnstile"
+    },
+    {
+      "source": "/api/dictionary",
+      "destination": "/api/helpers?helper=dictionary"
+    },
+    {
+      "source": "/api/generate-image",
+      "destination": "/api/helpers?helper=generate-image"
     }
   ],
   "headers": [
