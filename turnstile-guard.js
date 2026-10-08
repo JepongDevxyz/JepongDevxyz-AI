@@ -1,4 +1,4 @@
-/* turnstile-guard.js v20261008a150 — Cloudflare Turnstile anti-bot.
+/* turnstile-guard.js v20261008a151 — Cloudflare Turnstile anti-bot.
    - Shows Turnstile ONCE per device (localStorage flag).
    - Guests: before first chat message. Login: before OTP send.
    - Server-side verification via /api/turnstile (cannot be bypassed).
@@ -33,18 +33,43 @@
   function ensureWidget() {
     var el = document.getElementById(WIDGET_ID);
     if (el) return el;
-    // Full-screen blocking overlay
+    // Full-screen blocking overlay — highest z-index, no dismissal
     el = document.createElement('div');
     el.id = WIDGET_ID;
-    el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:10002;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;';
-    el.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.3);text-align:center;max-width:320px;">' +
-      '<div style="font-weight:600;margin-bottom:12px;color:#333;">Verify you are human</div>' +
-      '<div id="jd-turnstile-inner"></div>' +
-      '<div style="font-size:12px;color:#888;margin-top:12px;">One-time check to protect against bots</div>' +
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+    // Inner card — perfectly centered, no overlap
+    el.innerHTML = '<div id="jd-turnstile-card" style="background:#fff;border-radius:16px;padding:28px 24px;box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:center;width:100%;max-width:340px;box-sizing:border-box;position:relative;">' +
+      '<div style="font-weight:700;font-size:17px;margin-bottom:6px;color:#1a1a1a;">Verify you are human</div>' +
+      '<div style="font-size:13px;color:#666;margin-bottom:16px;">One-time check to protect against bots</div>' +
+      '<div id="jd-turnstile-inner" style="display:flex;justify-content:center;align-items:center;min-height:65px;"></div>' +
       '</div>';
+    // Block ALL clicks on overlay (no tap-outside dismissal)
+    el.addEventListener('click', function (e) { e.stopPropagation(); }, true);
+    el.addEventListener('touchstart', function (e) { e.stopPropagation(); }, true);
     document.body.appendChild(el);
     return el;
   }
+
+  /* Trap back button while modal is showing */
+  function trapBack() {
+    try {
+      history.pushState({ jdTurnstile: true }, '');
+    } catch (_) {}
+  }
+  function releaseBack() {
+    try {
+      if (history.state && history.state.jdTurnstile) history.back();
+    } catch (_) {}
+  }
+  // If user presses back while modal is up, re-push and keep modal
+  window.addEventListener('popstate', function (e) {
+    try {
+      var el = document.getElementById(WIDGET_ID);
+      if (el && el.style.display !== 'none' && !isPassed()) {
+        trapBack();
+      }
+    } catch (_) {}
+  });
 
   /* Show Turnstile, verify server-side, then call onPass(). */
   function challenge(onPass, onFail) {
@@ -57,6 +82,7 @@
       }
       var el = ensureWidget();
       el.style.display = 'flex';
+      trapBack(); // Prevent back-button bypass
       var inner = document.getElementById('jd-turnstile-inner');
       if (inner) inner.innerHTML = '';
       try {
@@ -73,7 +99,7 @@
               .then(function (d) {
                 if (d && d.ok) {
                   setPassed();
-                  el.style.display = 'none';
+                  el.style.display = 'none'; releaseBack();
                   try { window.turnstile.reset(); } catch (_) {}
                   onPass();
                 } else {
@@ -81,7 +107,7 @@
                   console.warn('[turnstile] server verify failed, allowing through (fail-open)');
                   try { window.jdErrorReport && window.jdErrorReport('turnstile-server-reject', JSON.stringify(d).slice(0, 200)); } catch (_) {}
                   setPassed();
-                  el.style.display = 'none';
+                  el.style.display = 'none'; releaseBack();
                   try { window.turnstile.reset(); } catch (_) {}
                   onPass();
                 }
@@ -90,23 +116,23 @@
                 // Fail open on network error
                 console.warn('[turnstile] verify network error, allowing through');
                 setPassed();
-                el.style.display = 'none';
+                el.style.display = 'none'; releaseBack();
                 onPass();
               });
           },
           'expired-callback': function () {
-            el.style.display = 'none';
+            el.style.display = 'none'; releaseBack();
             if (onFail) onFail();
           },
           'error-callback': function () {
-            el.style.display = 'none';
+            el.style.display = 'none'; releaseBack();
             // Fail open on widget error
             console.warn('[turnstile] widget error, allowing through');
             onPass();
           }
         });
       } catch (e) {
-        el.style.display = 'none';
+        el.style.display = 'none'; releaseBack();
         onPass();
       }
     });
@@ -249,5 +275,5 @@
   window.jdTurnstilePassed = isPassed;
   window.jdTurnstileReset = function () { try { localStorage.removeItem(FLAG); } catch (_) {} };
 
-  console.log('[turnstile-guard] loaded v20261008a150');
+  console.log('[turnstile-guard] loaded v20261008a151');
 })();
