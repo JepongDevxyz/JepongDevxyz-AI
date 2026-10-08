@@ -1,4 +1,4 @@
-/* turnstile-guard.js v20261008a151 — Cloudflare Turnstile anti-bot.
+/* turnstile-guard.js v20261008a152 — Cloudflare Turnstile anti-bot.
    - Shows Turnstile ONCE per device (localStorage flag).
    - Guests: before first chat message. Login: before OTP send.
    - Server-side verification via /api/turnstile (cannot be bypassed).
@@ -221,26 +221,8 @@
       }, 2000);
     }
 
-    // Also intercept fetch as a backup (in case composer is bypassed)
-    if (!window.fetch) return;
-    var origFetch = window.fetch;
-    window.fetch = function (url, opts) {
-      try {
-        var urlStr = typeof url === 'string' ? url : (url && url.url) || '';
-        if (urlStr.indexOf('/api/chat') !== -1 && opts && opts.body && !isPassed() && !window.__jdTurnstileChallenging) {
-          window.__jdTurnstileChallenging = true;
-          var self = this, args = arguments;
-          challenge(function () {
-            window.__jdTurnstileChallenging = false;
-            origFetch.apply(self, args);
-          }, function () {
-            window.__jdTurnstileChallenging = false;
-          });
-          return new Promise(function () {});
-        }
-      } catch (_) {}
-      return origFetch.apply(this, arguments);
-    };
+    // Note: We do NOT intercept fetch — UI blocking (disabled composer) is sufficient.
+    // Fetch interception caused "Thinking..." stuck states with 24 wrapper layers.
   }
 
   /* ---- Login: intercept Send Code button ---- */
@@ -275,5 +257,5 @@
   window.jdTurnstilePassed = isPassed;
   window.jdTurnstileReset = function () { try { localStorage.removeItem(FLAG); } catch (_) {} };
 
-  console.log('[turnstile-guard] loaded v20261008a151');
+  console.log('[turnstile-guard] loaded v20261008a152');
 })();
