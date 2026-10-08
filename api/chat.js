@@ -4,6 +4,8 @@ import { resolveGitHubAccess } from './_github_app.js';
 import { fetchGitHubRunContext } from './_plugin_execution_context.js';
 import { fetchGitHubIssuesContext,shouldReadGitHubIssues } from './_plugin_issues_context.js';
 
+/* Keep the chat endpoint on Edge to stay within the Vercel Hobby function limit.
+   Streaming requests return an SSE response before external session work begins. */
 export const config = { runtime: 'edge' };
 
 /* =========================================================
@@ -6263,7 +6265,31 @@ function sseEvent(event, data) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-function activityStreamResponse(body, requestSignal=null) {
+async function attachChatGitHubAccess(req, body){
+  const githubSession=await getGitHubSession(req);
+  body._githubAccessToken=githubSession?.token||'';
+  if(githubSession?.token&&body.plugins?.github?.enabled===true&&body.plugins.github.repo){
+    // Installed Apps receive a short-lived repository-scoped token. Their
+    // GitHub-side repository selection cannot be bypassed with the older OAuth token.
+    try{
+      const access=await resolveGitHubAccess(req,{repository:body.plugins.github.repo,permissions:{contents:'read'}});
+      body._githubAccessToken=access.token;
+    }catch(_){
+      body._githubAccessToken='';
+      body._githubPermissionDenied=true;
+    }
+  }
+
+  body._githubIssuesToken='';
+  if(githubSession?.token&&body.plugins?.github?.enabled===true&&body.plugins.github.repo&&shouldReadGitHubIssues(body.message)){
+    try{
+      const issueAccess=await resolveGitHubAccess(req,{repository:body.plugins.github.repo,permissions:{issues:'read'}});
+      body._githubIssuesToken=issueAccess.token;
+    }catch(_){body._githubIssuesPermissionDenied=true;}
+  }
+}
+
+function activityStreamResponse(body, requestSignal=null, request=null) {
   const encoder=new TextEncoder();
   let cancelled=false;
   let activeReader=null;
@@ -6301,6 +6327,7 @@ function activityStreamResponse(body, requestSignal=null) {
       },10000);
       (async()=>{
         try{
+          await attachChatGitHubAccess(request,body);
           const activityContextMessage=contextualTaskMessage(body.message||'',body.history||[]);
           const result=await processChat(body,emit);
           if(!result.ok){
@@ -7373,34 +7400,15 @@ export default async function handler(req){
     }
     if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
 
-    const githubSession=await getGitHubSession(req);
-    body._githubAccessToken=githubSession?.token||'';
-    if(githubSession?.token&&body.plugins?.github?.enabled===true&&body.plugins.github.repo){
-      // Installed Apps receive a short-lived repository-scoped token. Their
-      // GitHub-side repository selection cannot be bypassed with the older OAuth token.
-      try{
-        const access=await resolveGitHubAccess(req,{repository:body.plugins.github.repo,permissions:{contents:'read'}});
-        body._githubAccessToken=access.token;
-      }catch(_){
-        body._githubAccessToken='';
-        body._githubPermissionDenied=true;
-      }
-    }
-
-    body._githubIssuesToken='';
-    if(githubSession?.token&&body.plugins?.github?.enabled===true&&body.plugins.github.repo&&shouldReadGitHubIssues(body.message)){
-      try{
-        const issueAccess=await resolveGitHubAccess(req,{repository:body.plugins.github.repo,permissions:{issues:'read'}});
-        body._githubIssuesToken=issueAccess.token;
-      }catch(_){body._githubIssuesPermissionDenied=true;}
-    }
     const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
     const hasFiles=Array.isArray(body.files)&&body.files.length>0;
     if(!hasMessage&&!hasFiles){
       return json({error:'Message or attachment is required.'},400);
     }
 
-    if(body.activityStream===true) return activityStreamResponse(body,req.signal);
+    if(body.activityStream===true) return activityStreamResponse(body,req.signal,req);
+
+    await attachChatGitHubAccess(req,body);
 
     const result=await processChat(body,null);
     if(result.ok)return result.response;
