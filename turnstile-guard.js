@@ -1,4 +1,4 @@
-/* turnstile-guard.js v20261008a147 — Cloudflare Turnstile anti-bot.
+/* turnstile-guard.js v20261008a148 — Cloudflare Turnstile anti-bot.
    - Shows Turnstile ONCE per device (localStorage flag).
    - Guests: before first chat message. Login: before OTP send.
    - Server-side verification via /api/turnstile (cannot be bypassed).
@@ -33,9 +33,15 @@
   function ensureWidget() {
     var el = document.getElementById(WIDGET_ID);
     if (el) return el;
+    // Full-screen blocking overlay
     el = document.createElement('div');
     el.id = WIDGET_ID;
-    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:10002;background:#fff;border-radius:12px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,.3);display:none;';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:10002;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;';
+    el.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.3);text-align:center;max-width:320px;">' +
+      '<div style="font-weight:600;margin-bottom:12px;color:#333;">Verify you are human</div>' +
+      '<div id="jd-turnstile-inner"></div>' +
+      '<div style="font-size:12px;color:#888;margin-top:12px;">One-time check to protect against bots</div>' +
+      '</div>';
     document.body.appendChild(el);
     return el;
   }
@@ -50,10 +56,11 @@
         return onPass();
       }
       var el = ensureWidget();
-      el.style.display = 'block';
-      el.innerHTML = '';
+      el.style.display = 'flex';
+      var inner = document.getElementById('jd-turnstile-inner');
+      if (inner) inner.innerHTML = '';
       try {
-        window.turnstile.render(el, {
+        window.turnstile.render(inner || el, {
           sitekey: SITE_KEY,
           callback: function (token) {
             el.style.display = 'none';
@@ -106,15 +113,32 @@
     } catch (_) {}
   }
 
-  /* ---- Guest: intercept first chat send ---- */
+  /* ---- Guest: block composer until verified ---- */
   function hookChat() {
-    if (!window.fetch || window.__jdTurnstileChatHooked) return;
+    if (window.__jdTurnstileChatHooked) return;
     window.__jdTurnstileChatHooked = true;
+
+    // Show challenge immediately on load if not passed (don't wait for first message)
+    if (!isPassed()) {
+      // Wait a bit for the app to render, then challenge
+      setTimeout(function () {
+        if (!isPassed() && !window.__jdTurnstileChallenging) {
+          window.__jdTurnstileChallenging = true;
+          challenge(function () {
+            window.__jdTurnstileChallenging = false;
+          }, function () {
+            window.__jdTurnstileChallenging = false;
+          });
+        }
+      }, 2000);
+    }
+
+    // Also intercept fetch as a backup (in case composer is bypassed)
+    if (!window.fetch) return;
     var origFetch = window.fetch;
     window.fetch = function (url, opts) {
       try {
         var urlStr = typeof url === 'string' ? url : (url && url.url) || '';
-        // Only intercept chat API, only if not yet verified
         if (urlStr.indexOf('/api/chat') !== -1 && opts && opts.body && !isPassed() && !window.__jdTurnstileChallenging) {
           window.__jdTurnstileChallenging = true;
           var self = this, args = arguments;
@@ -124,7 +148,6 @@
           }, function () {
             window.__jdTurnstileChallenging = false;
           });
-          // Return a pending promise; the real fetch happens after challenge
           return new Promise(function () {});
         }
       } catch (_) {}
@@ -164,5 +187,5 @@
   window.jdTurnstilePassed = isPassed;
   window.jdTurnstileReset = function () { try { localStorage.removeItem(FLAG); } catch (_) {} };
 
-  console.log('[turnstile-guard] loaded v20261008a147');
+  console.log('[turnstile-guard] loaded v20261008a148');
 })();
