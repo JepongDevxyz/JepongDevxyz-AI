@@ -466,9 +466,7 @@
     pop.style.right = '16px';
     pop.innerHTML =
       '<button class="jdlib-mi" data-act="upload">' + I.upload + 'Upload files</button>' +
-      '<button class="jdlib-mi" data-act="newfolder">' + I.newfolder + 'New folder</button>' +
-      '<button class="jdlib-mi" data-act="gdrive">' + I.folder + 'Google Drive</button>' +
-      '<button class="jdlib-mi" data-act="dropbox">' + I.cloud + 'Dropbox</button>';
+      '<button class="jdlib-mi" data-act="newfolder">' + I.newfolder + 'New folder</button>';
     pop.hidden = false;
     pop.querySelectorAll('.jdlib-mi').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -492,18 +490,6 @@
         setTimeout(loadItems, 2000);
       };
       inp.click();
-    } else if (act === 'gdrive') {
-      if (typeof window.openCloudBrowser === 'function') {
-        window.openCloudBrowser('gdrive', 'Google Drive');
-      } else if (window.jdOdToast) {
-        window.jdOdToast('Cloud browser loading...');
-      }
-    } else if (act === 'dropbox') {
-      if (typeof window.openCloudBrowser === 'function') {
-        window.openCloudBrowser('dropbox', 'Dropbox');
-      } else if (window.jdOdToast) {
-        window.jdOdToast('Cloud browser loading...');
-      }
     } else if (act === 'newfolder') {
       var name = prompt('Folder name:');
       if (name && name.trim()) {

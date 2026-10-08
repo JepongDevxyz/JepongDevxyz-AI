@@ -214,3 +214,83 @@
 
   injectCloudSources();
 })();
+
+/* ---- Inject cloud folders into Folders tab + skeleton loader ---- */
+(function () {
+  // Dropbox logo SVG (blue)
+  var dropboxLogo = '<svg viewBox="0 0 24 24" style="width:32px;height:32px"><path fill="#0061ff" d="M6 2l6 4.5L18 2l3 4.5-6 4.5L9 6.5 3 11 6 6.5z"/><path fill="#0061ff" d="M3 13l6 4.5L3 22l-3-4.5 3-4.5zm18 0l3 4.5-3 4.5-6-4.5 6-4.5zM9 17.5l3 4.5 3-4.5-3-2-3 2z"/></svg>';
+  var gdriveLogo = '<svg viewBox="0 0 24 24" style="width:32px;height:32px"><path fill="#ffc107" d="M8 2l8 14H0z"/><path fill="#ff3d00" d="M16 2l8 14h-8z"/><path fill="#4caf50" d="M8 16h16l-8 6z"/></svg>';
+
+  function getConnectedProviders() {
+    var providers = [];
+    try {
+      var c = JSON.parse(localStorage.getItem('jd_connectors') || '{}');
+      if (c.gdrive && c.gdrive.connected) providers.push({ id: 'gdrive', name: 'Google Drive', logo: gdriveLogo });
+      if (c.dropbox && c.dropbox.connected) providers.push({ id: 'dropbox', name: 'Dropbox', logo: dropboxLogo });
+    } catch (e) {}
+    return providers;
+  }
+
+  // Watch for Folders tab rendering and inject cloud folders
+  var observer = new MutationObserver(function (mutations) {
+    var grid = document.getElementById('jdLibGrid');
+    if (!grid) return;
+    // Check if we're in folders tab (has jdlib-folder elements)
+    var folders = grid.querySelectorAll('.jdlib-folder');
+    if (folders.length > 0 && !grid.querySelector('.jdlib-cloud-folder')) {
+      injectCloudFolders(grid);
+    }
+  });
+
+  function injectCloudFolders(grid) {
+    var providers = getConnectedProviders();
+    if (providers.length === 0) return;
+
+    providers.forEach(function (p) {
+      var div = document.createElement('div');
+      div.className = 'jdlib-folder jdlib-cloud-folder';
+      div.setAttribute('data-cloud', p.id);
+      div.innerHTML =
+        '<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center">' + p.logo + '</div>' +
+        '<div class="jdlib-fname">' + p.name + '</div>' +
+        '<div class="jdlib-fcount">Cloud storage</div>';
+      div.addEventListener('click', function () {
+        if (typeof window.openCloudBrowser === 'function') {
+          window.openCloudBrowser(p.id, p.name);
+        }
+      });
+      // Insert at the beginning
+      grid.insertBefore(div, grid.firstChild);
+    });
+  }
+
+  // Start observing when Library opens
+  document.addEventListener('click', function (e) {
+    // If Library is opened, start observer
+    setTimeout(function () {
+      var grid = document.getElementById('jdLibGrid');
+      if (grid && !observer._observing) {
+        observer.observe(document.body, { childList: true, subtree: true });
+        observer._observing = true;
+      }
+    }, 500);
+  });
+
+  // Skeleton loader CSS
+  var skelCss = document.createElement('style');
+  skelCss.textContent = [
+    '.jdlib-skeleton{background:#1e1e1e;border-radius:16px;min-height:120px;',
+    'animation:jdlib-pulse 1.5s ease-in-out infinite}',
+    '@keyframes jdlib-pulse{0%,100%{opacity:.6}50%{opacity:.3}}',
+    'body.theme-light .jdlib-skeleton{background:#e8e8e8}'
+  ].join('\n');
+  document.head.appendChild(skelCss);
+
+  // Expose skeleton helper
+  window.showLibrarySkeleton = function () {
+    var grid = document.getElementById('jdLibGrid');
+    if (grid) {
+      grid.innerHTML = '<div class="jdlib-skeleton"></div>'.repeat(6);
+    }
+  };
+})();
