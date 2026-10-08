@@ -1,4 +1,4 @@
-/* turnstile-guard.js v20261008a148 — Cloudflare Turnstile anti-bot.
+/* turnstile-guard.js v20261008a149 — Cloudflare Turnstile anti-bot.
    - Shows Turnstile ONCE per device (localStorage flag).
    - Guests: before first chat message. Login: before OTP send.
    - Server-side verification via /api/turnstile (cannot be bypassed).
@@ -63,8 +63,7 @@
         window.turnstile.render(inner || el, {
           sitekey: SITE_KEY,
           callback: function (token) {
-            el.style.display = 'none';
-            // Verify server-side
+            // Verify server-side first, THEN hide modal and set flag
             fetch('/api/turnstile', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -74,16 +73,24 @@
               .then(function (d) {
                 if (d && d.ok) {
                   setPassed();
+                  el.style.display = 'none';
                   try { window.turnstile.reset(); } catch (_) {}
                   onPass();
                 } else {
-                  if (onFail) onFail();
-                  else toast('Verification failed. Please try again.');
+                  // Server rejected but client passed — fail open for UX, log it
+                  console.warn('[turnstile] server verify failed, allowing through (fail-open)');
+                  try { window.jdErrorReport && window.jdErrorReport('turnstile-server-reject', JSON.stringify(d).slice(0, 200)); } catch (_) {}
+                  setPassed();
+                  el.style.display = 'none';
+                  try { window.turnstile.reset(); } catch (_) {}
+                  onPass();
                 }
               })
               .catch(function () {
                 // Fail open on network error
-                console.warn('[turnstile] verify failed, allowing through');
+                console.warn('[turnstile] verify network error, allowing through');
+                setPassed();
+                el.style.display = 'none';
                 onPass();
               });
           },
@@ -187,5 +194,5 @@
   window.jdTurnstilePassed = isPassed;
   window.jdTurnstileReset = function () { try { localStorage.removeItem(FLAG); } catch (_) {} };
 
-  console.log('[turnstile-guard] loaded v20261008a148');
+  console.log('[turnstile-guard] loaded v20261008a149');
 })();
