@@ -30,27 +30,45 @@
     function hardReload() {
       if (reload === false) return;
       try {
+        /* Clear patch file cache from localStorage/sessionStorage */
+        try {
+          var keys = [];
+          for (var i = 0; i < sessionStorage.length; i++) {
+            var k = sessionStorage.key(i);
+            if (k && (k.indexOf('jd_patch') !== -1 || k.indexOf('patch') !== -1)) keys.push(k);
+          }
+          keys.forEach(function(k) { try { sessionStorage.removeItem(k); } catch(_) {} });
+        } catch (_) {}
         /* Navigate to a fresh URL to bypass ALL caches (HTTP + memory).
-           The ?jd_fresh param is stripped by the app on boot. */
-        var url = window.location.pathname + '?jd_fresh=' + Date.now() +
+           The ?jd_fresh param is stripped by the app on boot.
+           Also add cache-busting for patch files. */
+        var url = window.location.pathname + '?jd_fresh=' + Date.now() + '&jd_nocache=1' +
                   window.location.hash;
         window.location.replace(url);
       } catch (_) {
-        try { location.reload(); } catch (_) {}
+        try { location.reload(true); } catch (_) {}
       }
     }
     try {
+      /* Clear CacheStorage */
+      var cachePromise = Promise.resolve();
       if ('caches' in window && window.caches && window.caches.keys) {
-        window.caches.keys().then(function (names) {
+        cachePromise = window.caches.keys().then(function (names) {
           return Promise.all(names.map(function (n) {
             return window.caches.delete(n).catch(function () {});
           }));
-        }).then(hardReload).catch(hardReload);
-        /* Safety: hard reload even if cache API hangs */
-        setTimeout(hardReload, 3000);
-      } else {
-        hardReload();
+        }).catch(function() {});
       }
+      /* Unregister service workers */
+      var swPromise = Promise.resolve();
+      if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+        swPromise = navigator.serviceWorker.getRegistrations().then(function(regs) {
+          return Promise.all(regs.map(function(r) { return r.unregister().catch(function(){}); }));
+        }).catch(function() {});
+      }
+      Promise.all([cachePromise, swPromise]).then(hardReload).catch(hardReload);
+      /* Safety: hard reload even if APIs hang */
+      setTimeout(hardReload, 3000);
     } catch (_) { hardReload(); }
   };
   /* Strip the ?jd_fresh param on boot so it doesn't pollute the URL. */
