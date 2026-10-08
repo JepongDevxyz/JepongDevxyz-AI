@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
 
-const migrationPath='supabase/migrations/20261006_library_search.sql';
+const migrationPath='supabase/migrations/20261008_library_chunk_search_regression_safe.sql';
 const testPath='supabase/tests/library_search_rls_test.sql';
 assert.ok(existsSync(migrationPath),'private Library search migration exists');
 assert.ok(existsSync(testPath),'private Library search RLS allow/deny test exists');
