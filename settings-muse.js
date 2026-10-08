@@ -26,6 +26,11 @@
     '.jdset-back:active{transform:scale(.92)}',
     '.jdset-back svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     '.jdset-title{font-size:1.05rem;font-weight:600}',
+    '.jdset-profile{display:flex;align-items:center;gap:12px;flex:1;margin-left:8px}',
+    '.jdset-avatar{width:40px;height:40px;border-radius:50%;background:#0a84ff;color:#fff;',
+    'display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.9rem;flex-shrink:0}',
+    '.jdset-ptitle{font-size:1rem;font-weight:600}',
+    '.jdset-psub{font-size:.8rem;color:#8e8e93}',
     /* Scrollable content */
     '.jdset-scroll{flex:1;overflow-y:auto;padding:8px 16px 40px;-webkit-overflow-scrolling:touch}',
     /* Usage card */
@@ -111,44 +116,69 @@
     cpu: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>',
     layers: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>',
     folder: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
-    test: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'
+    test: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+    smile: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+    cat: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 5c-2 0-3 1-3 1s-1.5-1-3-1c-1 0-2 1-2 1l2 4c-1 1-2 3-2 5a7 7 0 0 0 14 0c0-2-1-4-2-5l2-4s-1-1-2-1c-1.5 0-3 1-3 1s-1-1-3-1z"/><circle cx="9" cy="12" r=".5"/><circle cx="15" cy="12" r=".5"/></svg>',
+    mic: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+    sliders: '<svg class="jdset-ic" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>',
+    thermometer: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>',
+    volume: '<svg class="jdset-ic" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+    wifi: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>',
+    vibrate: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10v4M10 10v4M14 10v4M18 10v4"/></svg>',
+    chart: '<svg class="jdset-ic" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>',
+    sparkles: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg>',
+    trash: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+    file: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+    globe: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
   };
 
   /* Settings structure: groups of rows. */
   /* Each row: {icon, label, action} — action is a function name or 'toggle:KEY'. */
   var GROUPS = [
+    // MY AI
     [
-      { icon: 'grid', label: 'Connectors', fn: 'openConnectors' },
-      { icon: 'wallet', label: 'Usage & Credits', fn: 'openUsage' },
-      { icon: 'key', label: 'Custom API Keys', fn: 'openProviderKeysSettings' },
-      { icon: 'shield', label: 'Permissions', fn: 'openPermissions' },
-      { icon: 'plug', label: 'Plugins', fn: 'openPlugins' }
-    ],
-    [
-      { icon: 'user', label: 'Personalization', fn: 'openPersonalizationSettings' },
-      { icon: 'database', label: 'Memory', fn: 'openSettingsMemory' },
-      { icon: 'bell', label: 'Reply Notifications', fn: 'openJdReplyNotifications' },
-      { icon: 'palette', label: 'Appearance', fn: 'openJdAppearance' },
-      { icon: 'heart', label: 'Pet', fn: 'openPetPicker' },
-      { icon: 'zap', label: 'Haptics', fn: 'openJdHaptics' },
-      { icon: 'message', label: 'Thoughts', fn: 'openJdThoughts' }
-    ],
-    [
-      { icon: 'cpu', label: 'Model', fn: 'openModelPicker' },
-      { icon: 'layers', label: 'Presets', fn: 'openPresetsModal' },
+      { icon: 'user', label: 'Account', fn: 'openAccountModal' },
+      { icon: 'smile', label: 'Personalization', fn: 'openPersonalizationSettings' },
       { icon: 'folder', label: 'Library', fn: 'openLibrary' },
-      { icon: 'chat', label: 'Web Search', toggle: 'webSearch' },
-      { icon: 'star', label: 'Smart Model Router', toggle: 'smartRouter' },
-      { icon: 'shieldcheck', label: 'Auto Provider Fallback', toggle: 'autoFallback' }
+      { icon: 'database', label: 'Memory', fn: 'openSettingsMemory' },
+      { icon: 'cat', label: 'Pet', fn: 'openPetPicker' },
+      { icon: 'mic', label: 'Voice', fn: 'openVoiceSettings' }
     ],
+    // AI & TOOLS
     [
-      { icon: 'book', label: 'Guide', fn: 'jdOpenGuide' },
-      { icon: 'history', label: 'Chat History', fn: 'openChatHistory' },
-      { icon: 'help', label: 'Help & support', fn: 'openHelp' },
-      { icon: 'info', label: 'Legal info', fn: 'openLegal' },
-      { icon: 'test', label: 'API Tester', fn: 'openCustomApiTester' }
+      { icon: 'sliders', label: 'Mode', fn: 'openModeSettings' },
+      { icon: 'cpu', label: 'Models', fn: 'openModelPicker' },
+      { icon: 'bell', label: 'Reply Notifications', fn: 'openJdReplyNotifications' },
+      { icon: 'shield', label: 'Permissions', fn: 'openPermissions' },
+      { icon: 'grid', label: 'Connectors', fn: 'openConnectors' },
+      { icon: 'key', label: 'Custom API Keys', fn: 'openProviderKeysSettings' },
+      { icon: 'download', label: 'Import Memory', fn: 'openImportMemory' },
+      { icon: 'globe', label: 'Web Search', toggle: 'webSearch' },
+      { icon: 'thermometer', label: 'Auto Temper', toggle: 'autoTemper' },
+      { icon: 'zap', label: 'Pure Mode', toggle: 'pureMode' },
+      { icon: 'volume', label: 'Response Speech', toggle: 'responseSpeech' },
+      { icon: 'wifi', label: 'Reconnect notice', toggle: 'reconnectNotice' },
+      { icon: 'shieldcheck', label: 'Auto Provider Fallback', toggle: 'autoFallback' },
+      { icon: 'star', label: 'Smart Model Router', toggle: 'smartRouter' }
+    ],
+    // APP
+    [
+      { icon: 'palette', label: 'Appearance', fn: 'openJdAppearance' },
+      { icon: 'vibrate', label: 'Haptics', fn: 'openJdHaptics' },
+      { icon: 'chart', label: 'Usage & Limits', fn: 'openUsage' }
+    ],
+    // EXTRA
+    [
+      { icon: 'sparkles', label: 'JepongDevxyz AI', fn: 'openExtraFeatures' },
+      { icon: 'trash', label: 'Cache', fn: 'openCacheSettings' }
+    ],
+    // LEGAL & PRIVACY
+    [
+      { icon: 'file', label: 'Terms of Service', fn: 'openTerms' },
+      { icon: 'lock', label: 'Privacy Policy', fn: 'openPrivacy' }
     ]
   ];
+  var GROUP_LABELS = ['MY AI', 'AI & TOOLS', 'APP', 'EXTRA', 'LEGAL & PRIVACY'];
 
   function buildPage() {
     if (document.getElementById('jdSetPage')) return;
@@ -163,7 +193,7 @@
     page.id = 'jdSetPage';
     page.setAttribute('hidden', '');
 
-    var groupsHtml = GROUPS.map(function (group) {
+    var groupsHtml = GROUPS.map(function (group, idx) {
       var rows = group.map(function (r) {
         var right = I.chev;
         var tag = 'button';
@@ -171,16 +201,20 @@
           tag = 'div'; // div (not button) to avoid nested-button layout break
           right = '<button class="jdset-toggle" data-toggle="' + r.toggle + '" aria-label="' + r.label + '"></button>';
         }
+        var iconHtml = I[r.icon] || I.chev;
         return '<' + tag + ' class="jdset-row" data-fn="' + (r.fn || '') + '" data-toggle-key="' + (r.toggle || '') + '">' +
-          I[r.icon] + '<span class="jdset-label">' + r.label + '</span>' + right + '</' + tag + '>';
+          iconHtml + '<span class="jdset-label">' + r.label + '</span>' + right + '</' + tag + '>';
       }).join('');
-      return '<div class="jdset-group">' + rows + '</div>';
+      var label = (typeof GROUP_LABELS !== 'undefined' && GROUP_LABELS[idx]) ? '<div class="jdset-seclabel">' + GROUP_LABELS[idx] + '</div>' : '';
+      return label + '<div class="jdset-group">' + rows + '</div>';
     }).join('');
 
     page.innerHTML =
       '<div class="jdset-header">' +
       '<button class="jdset-back" id="jdSetBack">' + I.back + '</button>' +
-      '<div class="jdset-title">Settings</div>' +
+      '<div class="jdset-profile"><div class="jdset-avatar">JD</div>' +
+      '<div><div class="jdset-ptitle">JepongDevxyz</div>' +
+      '<div class="jdset-psub">JepongDevxyz AI settings</div></div></div>' +
       '</div>' +
       '<div class="jdset-scroll">' +
       '<div class="jdset-skeleton-wrap"><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div></div>' +
