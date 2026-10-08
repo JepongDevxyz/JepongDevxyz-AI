@@ -1,4 +1,4 @@
-/* turnstile-guard.js v20261008a149 — Cloudflare Turnstile anti-bot.
+/* turnstile-guard.js v20261008a150 — Cloudflare Turnstile anti-bot.
    - Shows Turnstile ONCE per device (localStorage flag).
    - Guests: before first chat message. Login: before OTP send.
    - Server-side verification via /api/turnstile (cannot be bypassed).
@@ -121,18 +121,73 @@
   }
 
   /* ---- Guest: block composer until verified ---- */
+  function blockComposer() {
+    try {
+      // Disable send buttons and composer inputs
+      var selectors = [
+        'button[type="submit"]',
+        '[data-testid="send-button"]',
+        '.jd-send-btn',
+        '#jd-composer-send',
+        'textarea[placeholder*="Ask"]',
+        'textarea[placeholder*="ask"]',
+        '[contenteditable="true"]'
+      ];
+      selectors.forEach(function (sel) {
+        document.querySelectorAll(sel).forEach(function (el) {
+          if (el.tagName === 'BUTTON') {
+            el.disabled = true;
+            el.style.opacity = '0.5';
+            el.setAttribute('data-jd-turnstile-blocked', '1');
+          } else if (el.tagName === 'TEXTAREA' || el.isContentEditable) {
+            el.setAttribute('data-jd-turnstile-blocked', '1');
+            el.style.opacity = '0.7';
+          }
+        });
+      });
+    } catch (_) {}
+  }
+
+  function unblockComposer() {
+    try {
+      document.querySelectorAll('[data-jd-turnstile-blocked]').forEach(function (el) {
+        if (el.tagName === 'BUTTON') {
+          el.disabled = false;
+          el.style.opacity = '';
+        } else {
+          el.style.opacity = '';
+        }
+        el.removeAttribute('data-jd-turnstile-blocked');
+      });
+    } catch (_) {}
+  }
+
   function hookChat() {
     if (window.__jdTurnstileChatHooked) return;
     window.__jdTurnstileChatHooked = true;
 
     // Show challenge immediately on load if not passed (don't wait for first message)
     if (!isPassed()) {
+      // Block composer right away
+      blockComposer();
+      // Re-block periodically in case new elements render (SPA)
+      var blockInterval = setInterval(function () {
+        if (isPassed()) {
+          clearInterval(blockInterval);
+          unblockComposer();
+        } else {
+          blockComposer();
+        }
+      }, 1000);
+
       // Wait a bit for the app to render, then challenge
       setTimeout(function () {
         if (!isPassed() && !window.__jdTurnstileChallenging) {
           window.__jdTurnstileChallenging = true;
           challenge(function () {
             window.__jdTurnstileChallenging = false;
+            clearInterval(blockInterval);
+            unblockComposer();
           }, function () {
             window.__jdTurnstileChallenging = false;
           });
@@ -194,5 +249,5 @@
   window.jdTurnstilePassed = isPassed;
   window.jdTurnstileReset = function () { try { localStorage.removeItem(FLAG); } catch (_) {} };
 
-  console.log('[turnstile-guard] loaded v20261008a149');
+  console.log('[turnstile-guard] loaded v20261008a150');
 })();
