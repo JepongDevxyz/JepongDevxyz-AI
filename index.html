@@ -5662,10 +5662,24 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             try{
                 const up=await cloudClient.storage.from('user-library').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});
                 if(up.error){item.cloudStatus='error';item.cloudError=up.error.message;renderFilePreviews();return {error:up.error};}
-                const {error}=await cloudClient.from('library_items').insert({user_id:cloudUser.id,storage_path:path,file_name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_conversation_id:null,metadata:{kind:item.kind,last_modified:file.lastModified||null},search_text:String(item.extractedText||'').slice(0,24000)});
+                const {data:libraryRow,error}=await cloudClient.from('library_items').insert({user_id:cloudUser.id,storage_path:path,file_name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size,source_conversation_id:null,metadata:{kind:item.kind,last_modified:file.lastModified||null},search_text:String(item.extractedText||'').slice(0,24000)}).select('id').single();
                 if(error){
                     await cloudClient.storage.from('user-library').remove([path]).catch(()=>{});
                     item.cloudStatus='error';item.cloudError=error.message;renderFilePreviews();return {error:error};
+                }
+                const searchableText=String(item.extractedText||'').normalize('NFKC').trim().slice(0,24000);
+                if(libraryRow?.id&&searchableText){
+                    const chunkSize=900;
+                    const chunks=[];
+                    for(let start=0,index=0;start<searchableText.length;start+=chunkSize,index++){
+                        chunks.push({library_item_id:libraryRow.id,chunk_index:index,content:searchableText.slice(start,start+chunkSize)});
+                    }
+                    const chunkResult=await cloudClient.from('library_item_chunks').insert(chunks);
+                    if(chunkResult.error){
+                        await cloudClient.from('library_items').delete().eq('id',libraryRow.id).eq('user_id',cloudUser.id);
+                        await cloudClient.storage.from('user-library').remove([path]).catch(()=>{});
+                        item.cloudStatus='error';item.cloudError=chunkResult.error.message;renderFilePreviews();return {error:chunkResult.error};
+                    }
                 }
                 item.cloudStatus='saved';item.cloudError='';renderFilePreviews();return {data:true,error:null};
             }catch(error){
@@ -5752,11 +5766,11 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
             const searchQuery=String(query||'').normalize('NFKC').trim().slice(0,500);
             if(searchQuery.length<2)return [];
             try{
-                const {data,error}=await cloudClient.rpc('search_library_items',{search_query:searchQuery,result_limit:5});
+                const {data,error}=await cloudClient.rpc('search_library_chunks',{search_query:searchQuery,result_limit:6});
                 if(error||!Array.isArray(data))return [];
                 return data.slice(0,5).map(item=>({
                     fileName:String(item?.file_name||'').trim().slice(0,160),
-                    snippet:String(item?.snippet||'').trim().slice(0,1200)
+                    snippet:String(item?.content||'').trim().slice(0,1200)
                 })).filter(item=>item.fileName&&item.snippet);
             }catch(error){console.warn('Private Library search unavailable:',String(error?.message||error).slice(0,160));return [];}
         }
