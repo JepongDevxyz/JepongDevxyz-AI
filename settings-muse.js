@@ -228,7 +228,7 @@
       groupsHtml +
       '<div class="jdset-seclabel">Your account</div>' +
       '<div class="jdset-group">' +
-      '<button class="jdset-row danger" data-fn="cloudSignOut" data-fnpath="" data-arg="">' + I.logout + '<span class="jdset-label">Log out</span>' + I.chev + '</button>' +
+      '<button class="jdset-row danger" data-fn="jdMuseSignOut" data-fnpath="" data-arg="">' + I.logout + '<span class="jdset-label">Log out</span>' + I.chev + '</button>' +
       '</div>' +
       '</div>';
     document.body.appendChild(page);
@@ -236,26 +236,46 @@
     // Back
     document.getElementById('jdSetBack').addEventListener('click', closeSettings);
 
-    // Row clicks (all rows call REAL app functions)
+    // Log out with user feedback (silent no-op if not signed in is confusing)
+    window.jdMuseSignOut = function () {
+      try {
+        var signedIn = false;
+        try { signedIn = !!(window.cloudUser && (window.cloudUser.email || window.cloudUser.id)); } catch (e) {}
+        if (!signedIn && typeof window.showModernToast === 'function') {
+          window.showModernToast('You are not signed in');
+          return;
+        }
+        if (typeof window.cloudSignOut === 'function') window.cloudSignOut();
+      } catch (err) {}
+    };
+
+    // Row clicks: close our page FIRST (like the original
+    // closeSettingsModal(); setTimeout(openX,0) pattern), then open the
+    // real detail. This avoids z-index/overlay clashes and matches the
+    // expectations of openSettingsPet/openSettingsVoice/etc.
     page.querySelectorAll('.jdset-row').forEach(function (row) {
       row.addEventListener('click', function (e) {
         // If it's a toggle button, don't trigger row action
         if (e.target.classList.contains('jdset-toggle')) return;
-        try {
-          var fnPath = row.dataset.fnpath;
-          if (fnPath) {
-            // Dotted path like __jdConnectors.open
-            var parts = fnPath.split('.');
-            var obj = window;
-            for (var i = 0; i < parts.length; i++) { obj = obj ? obj[parts[i]] : undefined; }
-            if (typeof obj === 'function') { obj(); return; }
-          }
-          var fn = row.dataset.fn;
-          var arg = row.dataset.arg;
-          if (fn && typeof window[fn] === 'function') {
-            if (arg) window[fn](arg); else window[fn]();
-          }
-        } catch (err) {}
+        var fnPath = row.dataset.fnpath;
+        var fn = row.dataset.fn;
+        var arg = row.dataset.arg;
+        if (!fnPath && !fn) return;
+        try { closeSettings(); } catch (err) {}
+        setTimeout(function () {
+          try {
+            if (fnPath) {
+              // Dotted path like __jdConnectors.open
+              var parts = fnPath.split('.');
+              var obj = window;
+              for (var i = 0; i < parts.length; i++) { obj = obj ? obj[parts[i]] : undefined; }
+              if (typeof obj === 'function') { obj(); return; }
+            }
+            if (fn && typeof window[fn] === 'function') {
+              if (arg) window[fn](arg); else window[fn]();
+            }
+          } catch (err2) {}
+        }, 60);
       });
     });
 
