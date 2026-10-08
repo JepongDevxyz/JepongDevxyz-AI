@@ -109,6 +109,10 @@
     if (typeof refreshLucideIcons === 'function') refreshLucideIcons(page);
   }
 
+  /* Global openers for the Muse-style settings page (v20261008a174) */
+  window.jdOpenModeSettings = function () { openPage('jdModeSettingsPage'); };
+  window.jdOpenModelsSettings = function () { openPage('jdModelsSettingsPage'); };
+
   function saveSettingsPosition() {
     var scroll = document.querySelector('#settingsModal .settings-home-scroll');
     if (scroll) nav.scrollTop = scroll.scrollTop;

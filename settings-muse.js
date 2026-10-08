@@ -26,11 +26,6 @@
     '.jdset-back:active{transform:scale(.92)}',
     '.jdset-back svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
     '.jdset-title{font-size:1.05rem;font-weight:600}',
-    '.jdset-profile{display:flex;align-items:center;gap:12px;flex:1;margin-left:8px}',
-    '.jdset-avatar{width:40px;height:40px;border-radius:50%;background:#0a84ff;color:#fff;',
-    'display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.9rem;flex-shrink:0}',
-    '.jdset-ptitle{font-size:1rem;font-weight:600}',
-    '.jdset-psub{font-size:.8rem;color:#8e8e93}',
     /* Scrollable content */
     '.jdset-scroll{flex:1;overflow-y:auto;padding:8px 16px 40px;-webkit-overflow-scrolling:touch}',
     /* Usage card */
@@ -117,68 +112,76 @@
     layers: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>',
     folder: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
     test: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
-    smile: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
-    cat: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 5c-2 0-3 1-3 1s-1.5-1-3-1c-1 0-2 1-2 1l2 4c-1 1-2 3-2 5a7 7 0 0 0 14 0c0-2-1-4-2-5l2-4s-1-1-2-1c-1.5 0-3 1-3 1s-1-1-3-1z"/><circle cx="9" cy="12" r=".5"/><circle cx="15" cy="12" r=".5"/></svg>',
-    mic: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
-    sliders: '<svg class="jdset-ic" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>',
-    thermometer: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>',
-    volume: '<svg class="jdset-ic" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-    wifi: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>',
-    vibrate: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10v4M10 10v4M14 10v4M18 10v4"/></svg>',
-    chart: '<svg class="jdset-ic" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>',
-    sparkles: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg>',
+    smile: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>',
+    cat: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M6.5 8 5 4l4 2.5"/><path d="M17.5 8 19 4l-4 2.5"/><circle cx="9.5" cy="12" r="0.6"/><circle cx="14.5" cy="12" r="0.6"/><path d="M10.5 15.5c.8.6 2.2.6 3 0"/></svg>',
+    audio: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg>',
+    sliders: '<svg class="jdset-ic" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>',
+    import: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+    globe: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>',
+    sparkles: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.2 2.2M16.2 16.2l2.2 2.2M5.6 18.4l2.2-2.2M16.2 7.8l2.2-2.2"/></svg>',
+    ellipsis: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>',
+    volume: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+    wifi: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>',
+    shuffle: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M2 18h4l10-12h4"/><path d="m18 14 4 4-4 4"/><path d="M2 6h4l10 12h4"/><path d="m18 2 4 4-4 4"/></svg>',
+    route: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>',
+    vibrate: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
+    chart: '<svg class="jdset-ic" viewBox="0 0 24 24"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>',
+    bot: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>',
     trash: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
-    file: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
-    globe: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+    file: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>'
   };
 
   /* Settings structure: groups of rows. */
   /* Each row: {icon, label, action} — action is a function name or 'toggle:KEY'. */
   var GROUPS = [
-    // MY AI
-    [
+    { label: 'MY AI', rows: [
       { icon: 'user', label: 'Account', fn: 'openAccountModal' },
       { icon: 'smile', label: 'Personalization', fn: 'openPersonalizationSettings' },
       { icon: 'folder', label: 'Library', fn: 'openLibrary' },
       { icon: 'database', label: 'Memory', fn: 'openSettingsMemory' },
-      { icon: 'cat', label: 'Pet', fn: 'openPetPicker' },
-      { icon: 'mic', label: 'Voice', fn: 'openVoiceSettings' }
-    ],
-    // AI & TOOLS
-    [
-      { icon: 'sliders', label: 'Mode', fn: 'openModeSettings' },
-      { icon: 'cpu', label: 'Models', fn: 'openModelPicker' },
+      { icon: 'cat', label: 'Pet', fn: 'openSettingsPet' },
+      { icon: 'audio', label: 'Voice', fn: 'openSettingsVoice' }
+    ]},
+    { label: 'AI & TOOLS', rows: [
+      { icon: 'sliders', label: 'Mode', fn: 'jdOpenModeSettings' },
+      { icon: 'cpu', label: 'Models', fn: 'jdOpenModelsSettings' },
       { icon: 'bell', label: 'Reply Notifications', fn: 'openJdReplyNotifications' },
-      { icon: 'shield', label: 'Permissions', fn: 'openPermissions' },
-      { icon: 'grid', label: 'Connectors', fn: 'openConnectors' },
+      { icon: 'shieldcheck', label: 'Permissions', fn: 'openJdPermissions' },
+      { icon: 'plug', label: 'Connectors', fnPath: '__jdConnectors.open' },
       { icon: 'key', label: 'Custom API Keys', fn: 'openProviderKeysSettings' },
-      { icon: 'download', label: 'Import Memory', fn: 'openImportMemory' },
+      { icon: 'import', label: 'Import Memory', fn: 'jdOpenImportMemory' },
       { icon: 'globe', label: 'Web Search', toggle: 'webSearch' },
-      { icon: 'thermometer', label: 'Auto Temper', toggle: 'autoTemper' },
-      { icon: 'zap', label: 'Pure Mode', toggle: 'pureMode' },
+      { icon: 'sparkles', label: 'Auto Temper', toggle: 'autoTemper' },
+      { icon: 'ellipsis', label: 'Pure Mode', toggle: 'pureMode' },
       { icon: 'volume', label: 'Response Speech', toggle: 'responseSpeech' },
       { icon: 'wifi', label: 'Reconnect notice', toggle: 'reconnectNotice' },
-      { icon: 'shieldcheck', label: 'Auto Provider Fallback', toggle: 'autoFallback' },
-      { icon: 'star', label: 'Smart Model Router', toggle: 'smartRouter' }
-    ],
-    // APP
-    [
+      { icon: 'shuffle', label: 'Auto Provider Fallback', toggle: 'autoFallback' },
+      { icon: 'route', label: 'Smart Model Router', toggle: 'smartRouter' }
+    ]},
+    { label: 'APP', rows: [
       { icon: 'palette', label: 'Appearance', fn: 'openJdAppearance' },
       { icon: 'vibrate', label: 'Haptics', fn: 'openJdHaptics' },
       { icon: 'chart', label: 'Usage & Limits', fn: 'openUsage' }
-    ],
-    // EXTRA
-    [
-      { icon: 'sparkles', label: 'JepongDevxyz AI', fn: 'openExtraFeatures' },
-      { icon: 'trash', label: 'Cache', fn: 'openCacheSettings' }
-    ],
-    // LEGAL & PRIVACY
-    [
-      { icon: 'file', label: 'Terms of Service', fn: 'openTerms' },
-      { icon: 'lock', label: 'Privacy Policy', fn: 'openPrivacy' }
-    ]
+    ]},
+    { label: 'EXTRA', rows: [
+      { icon: 'bot', label: 'JepongDevxyz AI', fn: 'jdExtraOpenAiSheet' },
+      { icon: 'trash', label: 'Cache', fn: 'jdExtraOpenCacheSheet' }
+    ]},
+    { label: 'LEGAL & PRIVACY', rows: [
+      { icon: 'file', label: 'Terms of Service', fn: 'openJdLegalPolicy', arg: 'terms' },
+      { icon: 'shield', label: 'Privacy Policy', fn: 'openJdLegalPolicy', arg: 'privacy' }
+    ]}
   ];
-  var GROUP_LABELS = ['MY AI', 'AI & TOOLS', 'APP', 'EXTRA', 'LEGAL & PRIVACY'];
+  /* Toggle key -> {checkbox id in original settings, real global fn to call} */
+  var TOGGLE_MAP = {
+    webSearch:      { checkbox: 'settingsWebSearchToggle', call: 'setLiveWebSearchEnabled' },
+    autoTemper:     { checkbox: 'jdAutoTemperToggle',      call: 'toggleJdAutoTemper' },
+    pureMode:       { checkbox: 'jdPureModeToggle',         call: 'toggleJdPureMode' },
+    responseSpeech: { checkbox: 'responseSpeechToggle',    call: 'toggleResponseSpeech' },
+    reconnectNotice:{ checkbox: 'jdReconnectCardToggle',   call: 'setReconnectCardEnabled' },
+    autoFallback:   { checkbox: 'autoFallbackToggle',       call: 'toggleAutoFallback' },
+    smartRouter:    { checkbox: 'smartRouterToggle',        call: 'toggleSmartRouter' }
+  };
 
   function buildPage() {
     if (document.getElementById('jdSetPage')) return;
@@ -193,8 +196,8 @@
     page.id = 'jdSetPage';
     page.setAttribute('hidden', '');
 
-    var groupsHtml = GROUPS.map(function (group, idx) {
-      var rows = group.map(function (r) {
+    var groupsHtml = GROUPS.map(function (group) {
+      var rows = group.rows.map(function (r) {
         var right = I.chev;
         var tag = 'button';
         if (r.toggle) {
@@ -202,19 +205,17 @@
           right = '<button class="jdset-toggle" data-toggle="' + r.toggle + '" aria-label="' + r.label + '"></button>';
         }
         var iconHtml = I[r.icon] || I.chev;
-        return '<' + tag + ' class="jdset-row" data-fn="' + (r.fn || '') + '" data-toggle-key="' + (r.toggle || '') + '">' +
+        return '<' + tag + ' class="jdset-row" data-fn="' + (r.fn || '') + '" data-fnpath="' + (r.fnPath || '') + '"' +
+          ' data-arg="' + (r.arg || '') + '" data-toggle-key="' + (r.toggle || '') + '">' +
           iconHtml + '<span class="jdset-label">' + r.label + '</span>' + right + '</' + tag + '>';
       }).join('');
-      var label = (typeof GROUP_LABELS !== 'undefined' && GROUP_LABELS[idx]) ? '<div class="jdset-seclabel">' + GROUP_LABELS[idx] + '</div>' : '';
-      return label + '<div class="jdset-group">' + rows + '</div>';
+      return '<div class="jdset-seclabel">' + group.label + '</div><div class="jdset-group">' + rows + '</div>';
     }).join('');
 
     page.innerHTML =
       '<div class="jdset-header">' +
       '<button class="jdset-back" id="jdSetBack">' + I.back + '</button>' +
-      '<div class="jdset-profile"><div class="jdset-avatar">JD</div>' +
-      '<div><div class="jdset-ptitle">JepongDevxyz</div>' +
-      '<div class="jdset-psub">JepongDevxyz AI settings</div></div></div>' +
+      '<div class="jdset-title">Settings</div>' +
       '</div>' +
       '<div class="jdset-scroll">' +
       '<div class="jdset-skeleton-wrap"><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div></div>' +
@@ -227,8 +228,7 @@
       groupsHtml +
       '<div class="jdset-seclabel">Your account</div>' +
       '<div class="jdset-group">' +
-      '<button class="jdset-row" data-fn="openAccountModal">' + I.user + '<span class="jdset-label">Account</span>' + I.chev + '</button>' +
-      '<button class="jdset-row danger" data-fn="cloudSignOut">' + I.logout + '<span class="jdset-label">Log out</span>' + I.chev + '</button>' +
+      '<button class="jdset-row danger" data-fn="cloudSignOut" data-fnpath="" data-arg="">' + I.logout + '<span class="jdset-label">Log out</span>' + I.chev + '</button>' +
       '</div>' +
       '</div>';
     document.body.appendChild(page);
@@ -236,33 +236,69 @@
     // Back
     document.getElementById('jdSetBack').addEventListener('click', closeSettings);
 
-    // Row clicks
+    // Row clicks (all rows call REAL app functions)
     page.querySelectorAll('.jdset-row').forEach(function (row) {
       row.addEventListener('click', function (e) {
         // If it's a toggle button, don't trigger row action
         if (e.target.classList.contains('jdset-toggle')) return;
-        var fn = row.dataset.fn;
-        if (fn && typeof window[fn] === 'function') {
-          try { window[fn](); } catch (err) {}
-        }
+        try {
+          var fnPath = row.dataset.fnpath;
+          if (fnPath) {
+            // Dotted path like __jdConnectors.open
+            var parts = fnPath.split('.');
+            var obj = window;
+            for (var i = 0; i < parts.length; i++) { obj = obj ? obj[parts[i]] : undefined; }
+            if (typeof obj === 'function') { obj(); return; }
+          }
+          var fn = row.dataset.fn;
+          var arg = row.dataset.arg;
+          if (fn && typeof window[fn] === 'function') {
+            if (arg) window[fn](arg); else window[fn]();
+          }
+        } catch (err) {}
       });
     });
 
-    // Toggle switches
+    // Toggle switches — call the REAL app functions, read REAL state
     page.querySelectorAll('.jdset-toggle').forEach(function (tgl) {
       var key = tgl.dataset.toggle;
-      // Set initial state (default OFF)
+      var map = (typeof TOGGLE_MAP !== 'undefined' && TOGGLE_MAP[key]) || null;
+      // Initial state: read the original settings checkbox if present
       var isOn = false;
       try {
-        var s = JSON.parse(localStorage.getItem('jepong_personalization') || '{}');
-        isOn = !!s[key];
+        if (map && map.checkbox) {
+          var cb = document.getElementById(map.checkbox);
+          if (cb) isOn = !!cb.checked;
+        }
+        if (!isOn) {
+          var s = JSON.parse(localStorage.getItem('jepong_personalization') || '{}');
+          isOn = !!s[key];
+        }
       } catch (e) {}
       tgl.classList.toggle('on', isOn);
+      tgl.setAttribute('aria-pressed', isOn ? 'true' : 'false');
       tgl.addEventListener('click', function (e) {
         e.stopPropagation();
         var on = !tgl.classList.contains('on');
         tgl.classList.toggle('on', on);
+        tgl.setAttribute('aria-pressed', on ? 'true' : 'false');
         try {
+          // 1) Call the real app toggle function
+          if (map && map.call && typeof window[map.call] === 'function') {
+            window[map.call](on);
+          }
+          // 2) Mirror to the original checkbox so both stay in sync
+          if (map && map.checkbox) {
+            var cb2 = document.getElementById(map.checkbox);
+            if (cb2 && cb2.checked !== on) {
+              cb2.checked = on;
+              // fire change for any listeners
+              var ev = document.createEvent('HTMLEvents');
+              ev.initEvent('change', true, false);
+              cb2.dispatchEvent(ev);
+            }
+          }
+          // 3) Persist
           var s2 = JSON.parse(localStorage.getItem('jepong_personalization') || '{}');
           s2[key] = on;
           localStorage.setItem('jepong_personalization', JSON.stringify(s2));
