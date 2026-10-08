@@ -1,0 +1,309 @@
+/* JepongDevxyz AI — Muse-style Settings (2026-10-01)
+   Pixel-perfect replica of the Muse app's Settings UI:
+   - Full-screen black page, circular back button, centered "Settings" title
+   - Usage card: credits with progress bars (real data)
+   - Grouped dark cards with dividers
+   - Clean rows: icon + title + chevron (no subtitles)
+   - "Your account" section with Sign out (red)
+   - NO "Learn more" link (per user request)
+   Replaces the old settings modal content. All rows have real handlers.
+   Pure addition. Idempotent. */
+(function () {
+  'use strict';
+  if (window.__jdSettingsMuse) return;
+  window.__jdSettingsMuse = true;
+
+  var CSS = [
+    /* Full-screen page */
+    '#jdSetPage{position:fixed;inset:0;z-index:24000;background:#000;color:#fff;',
+    'display:flex;flex-direction:column;font-family:inherit}',
+    '#jdSetPage[hidden]{display:none!important}',
+    /* Header */
+    '.jdset-header{display:flex;align-items:center;justify-content:center;',
+    'padding:12px 16px;position:relative;flex:0 0 auto}',
+    '.jdset-back{position:absolute;left:16px;width:40px;height:40px;border-radius:50%;',
+    'border:none;background:#1e1e1e;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}',
+    '.jdset-back:active{transform:scale(.92)}',
+    '.jdset-back svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
+    '.jdset-title{font-size:1.05rem;font-weight:600}',
+    /* Scrollable content */
+    '.jdset-scroll{flex:1;overflow-y:auto;padding:8px 16px 40px;-webkit-overflow-scrolling:touch}',
+    /* Usage card */
+    '.jdset-usage{background:#1e1e1e;border-radius:16px;padding:18px;margin-bottom:16px}',
+    '.jdset-urow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}',
+    '.jdset-uplan{font-size:.95rem;font-weight:600}',
+    '.jdset-upct{font-size:.82rem;color:#999}',
+    '.jdset-usub{font-size:.8rem;color:#888;margin-bottom:8px}',
+    '.jdset-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:14px}',
+    '.jdset-bar-fill{height:100%;background:#fff;border-radius:3px;transition:width .5s}',
+    '.jdset-upgrade{color:#60a5fa;font-size:.92rem;font-weight:500;background:none;border:none;',
+    'padding:0;cursor:pointer;text-align:left}',
+    '.jdset-upgrade:active{opacity:.7}',
+    /* Group cards */
+    '.jdset-group{background:#1e1e1e;border-radius:16px;margin-bottom:16px;overflow:hidden}',
+    '.jdset-row{display:flex;align-items:center;gap:14px;width:100%;border:none;background:none;',
+    'color:#fff;padding:0 16px;min-height:56px;cursor:pointer;text-align:left;font-size:.95rem}',
+    '.jdset-row:active{background:rgba(255,255,255,.05)}',
+    '.jdset-row + .jdset-row{border-top:1px solid rgba(255,255,255,.07)}',
+    '.jdset-row svg.jdset-ic{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.8;',
+    'stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}',
+    '.jdset-row .jdset-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.jdset-row svg.jdset-chev{width:18px;height:18px;stroke:#888;fill:none;stroke-width:2;flex:0 0 auto}',
+    '.jdset-row.danger .jdset-label{color:#ef4444}',
+    /* Section label */
+    '.jdset-seclabel{font-size:.85rem;color:#999;padding:8px 4px}',
+    /* Toggle switch */
+    '.jdset-toggle{width:48px;height:28px;border-radius:14px;background:rgba(255,255,255,.15);',
+    'position:relative;flex:0 0 auto;transition:background .2s;border:none;cursor:pointer}',
+    '.jdset-toggle.on{background:#34c759}',
+    '.jdset-toggle::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;',
+    'border-radius:50%;background:#fff;transition:left .2s}',
+    '.jdset-toggle.on::after{left:22px}',
+    /* Light mode */
+    'body.theme-light #jdSetPage{background:#f2f2f5;color:#111}',
+    'body.theme-light .jdset-back{background:#e8e8e8;color:#111}',
+    'body.theme-light .jdset-usage,body.theme-light .jdset-group{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06)}',
+    'body.theme-light .jdset-row{color:#111}',
+    'body.theme-light .jdset-row svg.jdset-ic{stroke:#111}',
+    'body.theme-light .jdset-row + .jdset-row{border-top-color:rgba(0,0,0,.06)}',
+    'body.theme-light .jdset-bar{background:rgba(0,0,0,.08)}',
+    'body.theme-light .jdset-bar-fill{background:#111}',
+    'body.theme-light .jdset-toggle{background:rgba(0,0,0,.15)}',
+    'body.theme-light .jdset-toggle.on{background:#34c759}',
+    '.jdset-skeleton{background:#1e1e1e;border-radius:16px;min-height:64px;margin-bottom:12px;',
+    'animation:jdset-pulse 1.5s ease-in-out infinite}',
+    '@keyframes jdset-pulse{0%,100%{opacity:.6}50%{opacity:.3}}',
+    'body.theme-light .jdset-skeleton{background:#e8e8e8}',
+    '#jdSetPage.jdset-loading .jdset-scroll > *:not(.jdset-skeleton-wrap){display:none}',
+    '.jdset-skeleton-wrap{padding:8px 0}',
+    '#jdSetPage:not(.jdset-loading) .jdset-skeleton-wrap{display:none}'
+  ].join('\n');
+
+  var I = {
+    back: '<svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
+    chev: '<svg class="jdset-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>',
+    grid: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>',
+    wallet: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>',
+    shield: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>',
+    hand: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>',
+    chat: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
+    devices: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
+    bell: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+    palette: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h2.356c2.063 0 3.74-1.67 3.74-3.732C21.5 6.5 17 2 12 2z"/></svg>',
+    lock: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    star: '<svg class="jdset-ic" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    home: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
+    gift: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>',
+    database: '<svg class="jdset-ic" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>',
+    info: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+    help: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
+    download: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>',
+    shieldcheck: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',
+    user: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    logout: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>',
+    book: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>',
+    key: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+    plug: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>',
+    history: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+    heart: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+    zap: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>',
+    message: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    cpu: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>',
+    layers: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>',
+    folder: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+    test: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'
+  };
+
+  /* Settings structure: groups of rows. */
+  /* Each row: {icon, label, action} — action is a function name or 'toggle:KEY'. */
+  var GROUPS = [
+    [
+      { icon: 'grid', label: 'Connectors', fn: 'openConnectors' },
+      { icon: 'wallet', label: 'Usage & Credits', fn: 'openUsage' },
+      { icon: 'key', label: 'Custom API Keys', fn: 'openProviderKeysSettings' },
+      { icon: 'shield', label: 'Permissions', fn: 'openPermissions' },
+      { icon: 'plug', label: 'Plugins', fn: 'openPlugins' }
+    ],
+    [
+      { icon: 'user', label: 'Personalization', fn: 'openPersonalizationSettings' },
+      { icon: 'database', label: 'Memory', fn: 'openSettingsMemory' },
+      { icon: 'bell', label: 'Reply Notifications', fn: 'openJdReplyNotifications' },
+      { icon: 'palette', label: 'Appearance', fn: 'openJdAppearance' },
+      { icon: 'heart', label: 'Pet', fn: 'openPetPicker' },
+      { icon: 'zap', label: 'Haptics', fn: 'openJdHaptics' },
+      { icon: 'message', label: 'Thoughts', fn: 'openJdThoughts' }
+    ],
+    [
+      { icon: 'cpu', label: 'Model', fn: 'openModelPicker' },
+      { icon: 'layers', label: 'Presets', fn: 'openPresetsModal' },
+      { icon: 'folder', label: 'Library', fn: 'openLibrary' },
+      { icon: 'chat', label: 'Web Search', toggle: 'webSearch' },
+      { icon: 'star', label: 'Smart Model Router', toggle: 'smartRouter' },
+      { icon: 'shieldcheck', label: 'Auto Provider Fallback', toggle: 'autoFallback' }
+    ],
+    [
+      { icon: 'book', label: 'Guide', fn: 'jdOpenGuide' },
+      { icon: 'history', label: 'Chat History', fn: 'openChatHistory' },
+      { icon: 'help', label: 'Help & support', fn: 'openHelp' },
+      { icon: 'info', label: 'Legal info', fn: 'openLegal' },
+      { icon: 'test', label: 'API Tester', fn: 'openCustomApiTester' }
+    ]
+  ];
+
+  function buildPage() {
+    if (document.getElementById('jdSetPage')) return;
+    if (!document.getElementById('jdSetMuseCss')) {
+      var st = document.createElement('style');
+      st.id = 'jdSetMuseCss';
+      st.textContent = CSS;
+      document.head.appendChild(st);
+    }
+
+    var page = document.createElement('div');
+    page.id = 'jdSetPage';
+    page.setAttribute('hidden', '');
+
+    var groupsHtml = GROUPS.map(function (group) {
+      var rows = group.map(function (r) {
+        var right = I.chev;
+        var tag = 'button';
+        if (r.toggle) {
+          tag = 'div'; // div (not button) to avoid nested-button layout break
+          right = '<button class="jdset-toggle" data-toggle="' + r.toggle + '" aria-label="' + r.label + '"></button>';
+        }
+        return '<' + tag + ' class="jdset-row" data-fn="' + (r.fn || '') + '" data-toggle-key="' + (r.toggle || '') + '">' +
+          I[r.icon] + '<span class="jdset-label">' + r.label + '</span>' + right + '</' + tag + '>';
+      }).join('');
+      return '<div class="jdset-group">' + rows + '</div>';
+    }).join('');
+
+    page.innerHTML =
+      '<div class="jdset-header">' +
+      '<button class="jdset-back" id="jdSetBack">' + I.back + '</button>' +
+      '<div class="jdset-title">Settings</div>' +
+      '</div>' +
+      '<div class="jdset-scroll">' +
+      '<div class="jdset-skeleton-wrap"><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div></div>' +
+      '<div class="jdset-usage" id="jdSetUsage">' +
+      '<div class="jdset-urow"><span class="jdset-uplan">Credits</span><span class="jdset-upct" id="jdSetPct">--</span></div>' +
+      '<div class="jdset-usub" id="jdSetSub">Loading…</div>' +
+      '<div class="jdset-bar"><div class="jdset-bar-fill" id="jdSetBar" style="width:0%"></div></div>' +
+      '<button class="jdset-upgrade" id="jdSetTopup">Top up credits</button>' +
+      '</div>' +
+      groupsHtml +
+      '<div class="jdset-seclabel">Your account</div>' +
+      '<div class="jdset-group">' +
+      '<button class="jdset-row" data-fn="openAccountModal">' + I.user + '<span class="jdset-label">Account</span>' + I.chev + '</button>' +
+      '<button class="jdset-row danger" data-fn="cloudSignOut">' + I.logout + '<span class="jdset-label">Log out</span>' + I.chev + '</button>' +
+      '</div>' +
+      '</div>';
+    document.body.appendChild(page);
+
+    // Back
+    document.getElementById('jdSetBack').addEventListener('click', closeSettings);
+
+    // Row clicks
+    page.querySelectorAll('.jdset-row').forEach(function (row) {
+      row.addEventListener('click', function (e) {
+        // If it's a toggle button, don't trigger row action
+        if (e.target.classList.contains('jdset-toggle')) return;
+        var fn = row.dataset.fn;
+        if (fn && typeof window[fn] === 'function') {
+          try { window[fn](); } catch (err) {}
+        }
+      });
+    });
+
+    // Toggle switches
+    page.querySelectorAll('.jdset-toggle').forEach(function (tgl) {
+      var key = tgl.dataset.toggle;
+      // Set initial state (default OFF)
+      var isOn = false;
+      try {
+        var s = JSON.parse(localStorage.getItem('jepong_personalization') || '{}');
+        isOn = !!s[key];
+      } catch (e) {}
+      tgl.classList.toggle('on', isOn);
+      tgl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var on = !tgl.classList.contains('on');
+        tgl.classList.toggle('on', on);
+        try {
+          var s2 = JSON.parse(localStorage.getItem('jepong_personalization') || '{}');
+          s2[key] = on;
+          localStorage.setItem('jepong_personalization', JSON.stringify(s2));
+        } catch (e2) {}
+      });
+    });
+
+    // Top up
+    document.getElementById('jdSetTopup').addEventListener('click', function () {
+      if (typeof window.openTopup === 'function') window.openTopup();
+      else if (typeof window.openPaymongoTopup === 'function') window.openPaymongoTopup();
+    });
+  }
+
+  function updateUsage() {
+    // Get real credit data
+    try {
+      var pct = document.getElementById('jdSetPct');
+      var sub = document.getElementById('jdSetSub');
+      var bar = document.getElementById('jdSetBar');
+      if (!pct || !sub || !bar) return;
+      // Try to get from credits.js
+      if (window.jdCredits && window.jdCredits.balance != null) {
+        var bal = window.jdCredits.balance;
+        var total = window.jdCredits.total || 500;
+        var pctLeft = Math.round((bal / total) * 100);
+        pct.textContent = pctLeft + '% left';
+        sub.textContent = bal + ' of ' + total + ' credits';
+        bar.style.width = pctLeft + '%';
+      } else {
+        pct.textContent = '--';
+        sub.textContent = 'Sign in to see credits';
+      }
+    } catch (e) {}
+  }
+
+  function openSettings() {
+    buildPage();
+    var page = document.getElementById('jdSetPage');
+    page.removeAttribute('hidden');
+    page.classList.add('jdset-loading');
+    // Show skeleton for 400ms then reveal (ChatGPT-style)
+    setTimeout(function () {
+      page.classList.remove('jdset-loading');
+      updateUsage();
+    }, 400);
+    // Hide old modal
+    var old = document.getElementById('settingsModal');
+    if (old) old.classList.remove('open');
+    if (window.jdBackNav) window.jdBackNav.push(page);
+  }
+
+  function closeSettings() {
+    var page = document.getElementById('jdSetPage');
+    if (page) {
+      page.setAttribute('hidden', '');
+      if (window.jdBackNav) window.jdBackNav.pop(page);
+    }
+  }
+
+  function init() {
+    buildPage();
+    // Override openSettingsModal to use our page
+    window.openSettingsModal = openSettings;
+    window.closeSettingsModal = closeSettings;
+    // Back-nav integration
+    document.addEventListener('jd-back-close', function (e) {
+      var page = document.getElementById('jdSetPage');
+      if (page && !page.hidden && (e.target === page || page.contains(e.target))) closeSettings();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
