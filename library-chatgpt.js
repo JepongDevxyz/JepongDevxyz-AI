@@ -105,7 +105,11 @@
     'body.theme-light .jdlib-search input{color:#111}',
     'body.theme-light .jdlib-plus{background:#e8e8e8;color:#111}',
     'body.theme-light .jdlib-menu{background:#fff;box-shadow:0 8px 32px rgba(0,0,0,.15)}',
-    'body.theme-light .jdlib-mi{color:#111}'
+    'body.theme-light .jdlib-mi{color:#111}',
+    '.jdlib-skeleton{background:#1e1e1e;border-radius:16px;min-height:120px;',
+    'animation:jdlib-pulse 1.5s ease-in-out infinite}',
+    '@keyframes jdlib-pulse{0%,100%{opacity:.6}50%{opacity:.3}}',
+    'body.theme-light .jdlib-skeleton{background:#e8e8e8}'
   ].join('\n');
 
   var I = {
@@ -234,7 +238,14 @@
     // Hide the old modal if it's open
     var old = document.getElementById('libraryModal');
     if (old) old.classList.remove('open');
-    loadItems();
+    // Show skeleton loader (ChatGPT-style)
+    if (typeof window.showLibrarySkeleton === 'function') {
+      window.showLibrarySkeleton();
+    } else {
+      var grid = document.getElementById('jdLibGrid');
+      if (grid) grid.innerHTML = '<div class="jdlib-skeleton"></div>'.repeat(6);
+    }
+    setTimeout(loadItems, 300);
     // Push for back-nav
     if (window.jdBackNav) window.jdBackNav.push(page);
   }
