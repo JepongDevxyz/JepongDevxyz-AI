@@ -63,14 +63,17 @@
 
   function getSettings() {
     try {
-      return JSON.parse(localStorage.getItem('jepong_personalization') || '{}');
+      return (typeof personalizationSettings === 'object' && personalizationSettings)
+        ? { ...personalizationSettings }
+        : {};
     } catch (e) { return {}; }
   }
 
-  function saveSettings(s) {
-    try {
-      localStorage.setItem('jepong_personalization', JSON.stringify(s));
-    } catch (e) {}
+  function setToggleState(toggle, enabled) {
+    if (!toggle) return;
+    var on = !!enabled;
+    toggle.classList.toggle('on', on);
+    toggle.setAttribute('aria-pressed', String(on));
   }
 
   function buildPage() {
@@ -113,11 +116,27 @@
     // Toggle
     var tgl = document.getElementById('jdMemToggle');
     tgl.addEventListener('click', function () {
-      tgl.classList.toggle('on');
+      setToggleState(tgl, !tgl.classList.contains('on'));
     });
     // Summary card
     document.getElementById('jdMemSummaryCard').addEventListener('click', function () {
-      if (typeof window.openSettingsMemory === 'function') window.openSettingsMemory();
+      var openSettings = window.openPersonalizationSettings;
+      var filterSettings = window.filterPersonalizationSettings;
+      var openSummary = window.openMemorySummaryEditor;
+      if (typeof openSettings !== 'function' ||
+          typeof filterSettings !== 'function' ||
+          typeof openSummary !== 'function') {
+        try {
+          if (typeof window.showToast === 'function') {
+            window.showToast('Memory summary editor is unavailable.');
+          }
+        } catch (e) {}
+        return;
+      }
+      closeMemory();
+      openSettings();
+      filterSettings('memory');
+      openSummary();
     });
 
     loadValues();
@@ -126,26 +145,34 @@
   function loadValues() {
     var s = getSettings();
     var tgl = document.getElementById('jdMemToggle');
-    if (tgl) tgl.classList.toggle('on', !!s.memoryEnabled);
+    setToggleState(tgl, !!s.memoryEnabled);
     var nick = document.getElementById('jdMemNick');
     if (nick) nick.value = s.nickname || '';
     var occ = document.getElementById('jdMemOcc');
     if (occ) occ.value = s.occupation || '';
     var about = document.getElementById('jdMemAbout');
-    if (about) about.value = s.aboutMe || s.customInstructions || '';
+    if (about) about.value = s.moreAbout || s.aboutMe || '';
   }
 
   function saveAndClose() {
-    var s = getSettings();
+    if (typeof window.setPersonalizationToggle !== 'function' ||
+        typeof window.savePersonalizationField !== 'function') {
+      try {
+        if (typeof window.showToast === 'function') {
+          window.showToast('Hindi available ang personalization sync. Subukan ulit.');
+        }
+      } catch (e) {}
+      return;
+    }
+
     var tgl = document.getElementById('jdMemToggle');
-    s.memoryEnabled = tgl ? tgl.classList.contains('on') : false;
+    window.setPersonalizationToggle('memoryEnabled', tgl ? tgl.classList.contains('on') : false);
     var nick = document.getElementById('jdMemNick');
-    if (nick) s.nickname = nick.value.trim();
+    if (nick) window.savePersonalizationField('nickname', nick.value.trim());
     var occ = document.getElementById('jdMemOcc');
-    if (occ) s.occupation = occ.value.trim();
+    if (occ) window.savePersonalizationField('occupation', occ.value.trim());
     var about = document.getElementById('jdMemAbout');
-    if (about) s.aboutMe = about.value.trim();
-    saveSettings(s);
+    if (about) window.savePersonalizationField('moreAbout', about.value.trim());
     // Toast
     try {
       if (typeof window.showToast === 'function') window.showToast('Memory settings saved');
@@ -182,3 +209,4 @@
     init();
   }
 })();
+
