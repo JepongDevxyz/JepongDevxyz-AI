@@ -4,7 +4,9 @@ import { resolveGitHubAccess } from './_github_app.js';
 import { fetchGitHubRunContext } from './_plugin_execution_context.js';
 import { fetchGitHubIssuesContext,shouldReadGitHubIssues } from './_plugin_issues_context.js';
 
-export const config = { runtime: 'edge' };
+/* Keep /api/chat on Vercel's default Node.js runtime. Edge functions have a
+   25-second deadline to produce their initial response, which is too short
+   for this long-running AI streaming route. */
 
 /* =========================================================
    JEPONGDEVXYZ AI — MULTI PROVIDER / MULTI KEY / ACTIVITY SSE
