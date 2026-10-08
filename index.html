@@ -8549,9 +8549,23 @@ function getVoiceProfile(name = personalizationSettings.voicePersona) {
             return {superpowers,skills,autoUse};
         }
 
-        function getHistoryForRequest(history) {
-            if (isIncognito) return history;
-            return personalizationSettings.referenceChatHistory ? history : [];
+        function getHistoryForRequest(history, prompt='') {
+            // The active conversation is always part of the current request.
+            // "Reference chat history" controls retrieval of relevant past chats,
+            // not whether the current conversation is remembered.
+            if (isIncognito || !personalizationSettings.referenceChatHistory) return history;
+            try {
+                const references = window.JDChatHistoryReference?.buildPastReference(
+                    chatSessions,
+                    currentSessionId,
+                    prompt,
+                    { maxSessions: 3, maxMessages: 5, maxChars: 6000 }
+                ) || [];
+                return references.concat(history || []);
+            } catch (error) {
+                console.warn('Past chat reference unavailable:', error);
+                return history;
+            }
         }
 
         function openSettingsVoice(){
@@ -12226,7 +12240,7 @@ ${m.text || ''}
                     signal: requestController.signal,
                     body: JSON.stringify({ 
                         message: promptText, 
-                        history: getHistoryForRequest(continuousChatHistory),
+                        history: getHistoryForRequest(continuousChatHistory, promptText),
                         files: currentFiles, 
                         provider: currentSelectedProvider,
                         model: currentSelectedModel, 
@@ -14400,6 +14414,7 @@ ${m.text || ''}
     <script src="/reactbits-micro.js?v=20261002a9" defer></script>
     <script src="/motion-ux.js?v=20260927-three-reference-v2" defer></script>
     <script src="/memory-system.js?v=20261008-v1"></script>
+    <script src="/chat-history-reference.js?v=20261008-v1"></script>
 
 <style id="jd-final-mobile-theme-invariants">
 /* Final invariants: later than all legacy/reference layers. */
