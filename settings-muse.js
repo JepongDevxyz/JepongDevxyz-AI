@@ -303,10 +303,22 @@
       var restore = function () {
         try {
           page.classList.remove('jdset-behind');
+          // Ensure the page is visible even if something hid it
+          // (e.g., a detail's back button triggering jdBackNav/history)
+          page.removeAttribute('hidden');
           var ds = document.getElementById('jdSetDetailSkeleton');
           if (ds) ds.setAttribute('hidden', '');
           var sc = page.querySelector('.jdset-scroll');
           if (sc) sc.scrollTop = savedScroll;
+          // Re-push to back-nav stack if we were popped, so Android back
+          // still returns to chat instead of exiting
+          if (window.jdBackNav) {
+            var st = [];
+            try { st = window.jdBackNav.stack() || []; } catch (e) {}
+            if (st.indexOf('jdSetPage') === -1) {
+              try { window.jdBackNav.push(page); } catch (e2) {}
+            }
+          }
         } catch (e) {}
         if (obs) { try { obs.disconnect(); } catch (e2) {} obs = null; }
       };
