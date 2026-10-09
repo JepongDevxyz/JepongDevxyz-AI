@@ -81,7 +81,7 @@
   ].join('\n');
 
   var CSS = [
-    '#jdmSetPage{position:fixed;inset:0;z-index:999;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
+    '#jdmSetPage{position:fixed;inset:0;z-index:24000;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
     '#jdmSetPage[hidden]{display:none!important}',
     '#jdmSetPage svg{flex-shrink:0}',
     '.jdm-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)}',
@@ -292,7 +292,8 @@
         var fnPath = btn.getAttribute('data-fnpath');
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
-        // Detail opens on top of Settings. Make it full-screen to prevent overlap.
+        // Hide Settings immediately (no flicker), then open detail
+        page.setAttribute('hidden', '');
         window.__jdOpeningDetail = true;
         setTimeout(function () {
           try {
@@ -308,9 +309,24 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
-          // Clear flag after detail opens
-          setTimeout(function() { window.__jdOpeningDetail = false; }, 500);
-          // Full-screen handled by CSS body class (immediate, no flicker)
+          // Clear flag, then watch for detail close
+          setTimeout(function() { 
+            window.__jdOpeningDetail = false;
+            // Simple watcher: when detail closes, show Settings
+            var checks = 0;
+            var timer = setInterval(function() {
+              checks++;
+              try {
+                var detailOpen = document.querySelector('[role="dialog"]:not([hidden]):not(#' + PAGE_ID + ')');
+                if (!detailOpen) {
+                  var p = document.getElementById(PAGE_ID);
+                  if (p) p.removeAttribute('hidden');
+                  clearInterval(timer);
+                }
+              } catch(e) {}
+              if (checks > 60) clearInterval(timer);
+            }, 500);
+          }, 500);
         }, 60);
       });
     });
