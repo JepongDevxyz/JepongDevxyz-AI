@@ -80,13 +80,6 @@
     'body.theme-light.jdm-settings-open [role="dialog"]:not(#' + PAGE_ID + '):not(#settingsModal){background:#fff!important}'
   ].join('\n');
 
-  /* Top-up modal: full-screen ONLY when opened from Usage & Limits (separate from Credits card) */
-  var TOPUP_CSS = [
-    'body.jdpay-fullscreen-mode .jdpay-ov{z-index:10000!important;padding:0!important}',
-    'body.jdpay-fullscreen-mode .jdpay-box{max-width:none!important;width:100%!important;height:100dvh!important;max-height:none!important;',
-    'margin:0!important;border-radius:0!important;display:flex!important;flex-direction:column!important;justify-content:center!important}'
-  ].join('\n');
-
   var CSS = [
     '#jdmSetPage{position:fixed;inset:0;z-index:999;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
     '#jdmSetPage[hidden]{display:none!important}',
@@ -191,7 +184,7 @@
     if (old) old.remove();
     var st = document.createElement('style');
     st.id = CSS_ID;
-    st.textContent = CSS + '\n' + TRANSITION_CSS + '\n' + TOPUP_CSS;
+    st.textContent = CSS + '\n' + TRANSITION_CSS;
     document.head.appendChild(st);
   }
 

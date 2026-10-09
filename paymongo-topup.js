@@ -194,22 +194,5 @@
     });
   }
 
-  /* Fullscreen version for Usage & Limits (separate from Credits card modal) */
-  window.openTopupFullscreen = function() {
-    document.body.classList.add('jdpay-fullscreen-mode');
-    open();
-    // Remove the class when modal closes
-    var origClose = close;
-    // Patch close to remove class
-    setTimeout(function() {
-      var check = setInterval(function() {
-        if (!document.querySelector('.jdpay-ov')) {
-          document.body.classList.remove('jdpay-fullscreen-mode');
-          clearInterval(check);
-        }
-      }, 500);
-    }, 1000);
-  };
-
   window.JdPay = { open: open, close: close, plans: PLANS };
 })();
