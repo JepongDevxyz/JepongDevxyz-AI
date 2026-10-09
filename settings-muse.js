@@ -65,6 +65,7 @@
     '.theme-light .jdset-usage,.theme-light .jdset-group{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06)}',
     '.theme-light .jdset-row{color:#111}',
     '.theme-light .jdset-row svg.jdset-ic{stroke:#111}',
+    '.jdpay-ov{z-index:26000!important}',
     '.theme-light .jdset-row + .jdset-row{border-top-color:rgba(0,0,0,.06)}',
     '.theme-light .jdset-bar{background:rgba(0,0,0,.08)}',
     '.theme-light .jdset-bar-fill{background:#111}',
@@ -277,6 +278,7 @@
           '.modal-overlay.open,' +
           '.jd-legal-policy.open,' +
           '.jd-extra-ai-sheet,' +
+          '.jdpay-ov,' +
           '[id$="Page"]:not([hidden]),' +
           '[id$="Overlay"].open'
         );
@@ -422,12 +424,14 @@
 
     // Top up
     document.getElementById('jdSetTopup').addEventListener('click', function () {
-      try {
-        if (window.JDCredits && typeof window.JDCredits.openTopup === 'function') { window.JDCredits.openTopup(); return; }
-        if (typeof window.openTopup === 'function') { window.openTopup(); return; }
-        if (typeof window.openPaymongoTopup === 'function') { window.openPaymongoTopup(); return; }
-        if (window.showModernToast) window.showModernToast('Top-up is not available right now');
-      } catch (e) {}
+      openDetailSmooth(function () {
+        try {
+          if (window.JDCredits && typeof window.JDCredits.openTopup === 'function') { window.JDCredits.openTopup(); return; }
+          if (typeof window.openTopup === 'function') { window.openTopup(); return; }
+          if (typeof window.openPaymongoTopup === 'function') { window.openPaymongoTopup(); return; }
+          if (window.showModernToast) window.showModernToast('Top-up is not available right now');
+        } catch (e) {}
+      });
     });
   }
 
