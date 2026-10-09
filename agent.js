@@ -374,27 +374,6 @@ window.JDCodingAgent=Object.freeze({open,close});
   }
   try{
     var fetchDone = false;
-    /* Update banner: if server has newer version than this loaded agent.js,
-       show a banner so user can tap to update (handles stale cached agent.js) */
-    try {
-      var bakedVer = V.replace('?v=','');
-      fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
-      .then(function(r){ return r.text(); })
-      .then(function(serverVer){
-        serverVer = (serverVer||'').trim();
-        if (serverVer && serverVer !== bakedVer && !document.getElementById('jdUpdateBanner')) {
-          var b = document.createElement('div');
-          b.id = 'jdUpdateBanner';
-          b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#f59e0b;color:#000;padding:12px;text-align:center;font-weight:bold;font-size:14px;cursor:pointer;';
-          b.textContent = 'May bagong update! Pindutin para mag-update.';
-          b.onclick = function() {
-            try { sessionStorage.setItem('jd_force_fresh','1'); } catch(e) {}
-            location.href = location.pathname + '?jd_update=' + Date.now();
-          };
-          document.body.appendChild(b);
-        }
-      }).catch(function(){});
-    } catch(e) {}
     fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
       .then(function(r){ return r.ok?r.text():''; })
       .then(function(t){
