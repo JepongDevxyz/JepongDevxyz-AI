@@ -212,7 +212,7 @@
 
     // Events
     document.getElementById('jdLibBack').addEventListener('click', closeLibrary);
-    document.getElementById('jdLibMenu').addEventListener('click', toggleMenu);
+    document.getElementById('jdLibMenu').addEventListener('click', handleMenuBtnClick);
     document.getElementById('jdLibPlus').addEventListener('click', togglePlus);
     page.querySelectorAll('.jdlib-tab').forEach(function (t) {
       t.addEventListener('click', function () { switchTab(t.dataset.tab); });
@@ -489,21 +489,27 @@
       if (backBtn) backBtn.style.visibility = 'hidden';
       if (menuBtn) {
         menuBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
-        menuBtn.onclick = function() {
-          state.selectMode = false;
-          state.selected.clear();
-          render();
-          updateSelectHeader();
-        };
       }
     } else {
       title.textContent = 'Library';
       if (backBtn) backBtn.style.visibility = '';
       if (menuBtn) {
         menuBtn.innerHTML = I.dots;
-        menuBtn.onclick = toggleMenu;
       }
     }
+  }
+
+  // Single handler for menu button: exits select mode if active, else toggles menu
+  function handleMenuBtnClick(e) {
+    if (state.selectMode) {
+      state.selectMode = false;
+      state.selected.clear();
+      render();
+      updateSelectHeader();
+      e.stopPropagation();
+      return;
+    }
+    toggleMenu();
   }
 
   function menuAction(act) {
