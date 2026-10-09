@@ -251,10 +251,7 @@
       html += '</div>';
     });
 
-    html += '<div class="jdm-seclabel">Your account</div><div class="jdm-group">' +
-      '<button class="jdm-row danger" id="jdmLogout" type="button">' +
-      I.logout + '<span class="jdm-t">Log out</span>' +
-      '<span class="jdm-chev">' + I.chev + '</span></button></div>';
+    // "Your account" / Log out removed - Account page already has Sign out
     html += '<div id="jdmVersion" style="text-align:center;padding:16px 0 8px;color:#71717a;font-size:12px">v…</div>';
     html += '</div>';
 
@@ -275,17 +272,7 @@
       } catch (e) {}
     });
 
-    document.getElementById('jdmLogout').addEventListener('click', function () {
-      try {
-        var signedIn = false;
-        try { signedIn = !!(window.cloudUser && (window.cloudUser.email || window.cloudUser.id)); } catch (e) {}
-        if (!signedIn) {
-          if (typeof window.showModernToast === 'function') window.showModernToast('You are not signed in');
-          return;
-        }
-        if (typeof window.cloudSignOut === 'function') window.cloudSignOut();
-      } catch (err) {}
-    });
+    // Log out handler removed
 
     /* Nav: HIDE Settings (not close), open detail, show Settings when detail closes.
        This ensures back from detail returns to Settings, not homepage. */
@@ -408,25 +395,7 @@
     if (!page) return;
     syncToggles();
     updateCredits();
-    // Hide "Your account" (Log out) when not signed in (guest mode)
-    try {
-      var signedIn = !!(window.cloudUser && (window.cloudUser.email || window.cloudUser.id));
-      var logoutBtn = page.querySelector('#jdmLogout');
-      if (logoutBtn) {
-        var group = logoutBtn.closest('.jdm-group');
-        var label = null;
-        // Find the "Your account" label (previous sibling)
-        var prev = group ? group.previousElementSibling : null;
-        if (prev && prev.classList && prev.classList.contains('jdm-seclabel')) label = prev;
-        if (!signedIn) {
-          if (group) group.style.display = 'none';
-          if (label) label.style.display = 'none';
-        } else {
-          if (group) group.style.display = '';
-          if (label) label.style.display = '';
-        }
-      }
-    } catch (e) {}
+    // Your account hide logic removed
 
     // Slide in from right (Muse app style)
     page.classList.add('jdm-entering');
