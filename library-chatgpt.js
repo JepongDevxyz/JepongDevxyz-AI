@@ -17,13 +17,12 @@
   var CSS = [
     /* Full-screen page */
     '#jdLibPage{position:fixed;inset:0;z-index:25000;background:#000;color:#fff;',
-    'display:flex;flex-direction:column;font-family:inherit;',
-    '-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}',
+    'display:flex;flex-direction:column;font-family:inherit}',
     '#jdLibPage[hidden]{display:none!important}',
     /* Header */
     '.jdlib-header{display:flex;align-items:center;justify-content:space-between;',
     'padding:12px 8px;flex:0 0 auto}',
-    '.jdlib-hbtn{width:40px;height:40px;border-radius:50%;border:none;background:#2f2f2f;color:#fff;',
+    '.jdlib-hbtn{width:40px;height:40px;border-radius:50%;border:none;background:none;color:#fff;',
     'display:flex;align-items:center;justify-content:center;cursor:pointer}',
     '.jdlib-hbtn:active{background:rgba(255,255,255,.1)}',
     '.jdlib-hbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
@@ -39,7 +38,7 @@
     '.jdlib-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}',
     '.jdlib-grid.list{grid-template-columns:1fr}',
     /* Cards */
-    '.jdlib-card{background:#1e1e1e;border-radius:12px;overflow:hidden;cursor:pointer;-webkit-user-select:none;user-select:none;',
+    '.jdlib-card{background:#1e1e1e;border-radius:12px;overflow:hidden;cursor:pointer;',
     'transition:transform .15s}',
     '.jdlib-card:active{transform:scale(.97)}',
     '.jdlib-thumb{width:100%;aspect-ratio:1/.85;background:#2a2a2a;display:flex;',
@@ -56,7 +55,7 @@
     '.jdlib-grid.list .jdlib-info{flex:1;padding:8px 12px 8px 0}',
     /* Select mode checkboxes - top-right like video */
     '.jdlib-card{position:relative}',
-    '.jdlib-checkbx{position:absolute;top:50%;right:16px;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;',
+    '.jdlib-checkbx{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;',
     'border:2px solid #666;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2;flex:0 0 auto}',
     '.jdlib-card.selected .jdlib-checkbx{background:#0a84ff;border-color:#0a84ff}',
     '.jdlib-card.selected .jdlib-checkbx::after{content:"✓";color:#fff;font-size:14px;font-weight:700}',
@@ -211,12 +210,6 @@
     document.body.appendChild(page);
 
     // Events
-    // Prevent system text selection on long-press (Google search overlay)
-    page.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
-    page.addEventListener('contextmenu', function(e) {
-      // Allow our custom context menu, prevent system one
-      if (!e.target.closest('.jdlib-menu')) e.preventDefault();
-    });
     document.getElementById('jdLibBack').addEventListener('click', closeLibrary);
     document.getElementById('jdLibMenu').addEventListener('click', toggleMenu);
     document.getElementById('jdLibPlus').addEventListener('click', togglePlus);
@@ -495,8 +488,6 @@
       if (backBtn) backBtn.style.visibility = 'hidden';
       if (menuBtn) {
         menuBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
-        menuBtn.style.background = '#2f2f2f';
-        menuBtn.style.borderRadius = '50%';
         menuBtn.onclick = function() {
           state.selectMode = false;
           state.selected.clear();
@@ -509,8 +500,6 @@
       if (backBtn) backBtn.style.visibility = '';
       if (menuBtn) {
         menuBtn.innerHTML = I.dots;
-        menuBtn.style.background = '';
-        menuBtn.style.borderRadius = '';
         menuBtn.onclick = toggleMenu;
       }
     }
