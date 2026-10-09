@@ -17,7 +17,8 @@
   var CSS = [
     /* Full-screen page */
     '#jdLibPage{position:fixed;inset:0;z-index:25000;background:#000;color:#fff;',
-    'display:flex;flex-direction:column;font-family:inherit}',
+    'display:flex;flex-direction:column;font-family:inherit;',
+    '-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}',
     '#jdLibPage[hidden]{display:none!important}',
     /* Header */
     '.jdlib-header{display:flex;align-items:center;justify-content:space-between;',
@@ -38,7 +39,7 @@
     '.jdlib-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}',
     '.jdlib-grid.list{grid-template-columns:1fr}',
     /* Cards */
-    '.jdlib-card{background:#1e1e1e;border-radius:12px;overflow:hidden;cursor:pointer;',
+    '.jdlib-card{background:#1e1e1e;border-radius:12px;overflow:hidden;cursor:pointer;-webkit-user-select:none;user-select:none;',
     'transition:transform .15s}',
     '.jdlib-card:active{transform:scale(.97)}',
     '.jdlib-thumb{width:100%;aspect-ratio:1/.85;background:#2a2a2a;display:flex;',
@@ -210,6 +211,12 @@
     document.body.appendChild(page);
 
     // Events
+    // Prevent system text selection on long-press (Google search overlay)
+    page.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });
+    page.addEventListener('contextmenu', function(e) {
+      // Allow our custom context menu, prevent system one
+      if (!e.target.closest('.jdlib-menu')) e.preventDefault();
+    });
     document.getElementById('jdLibBack').addEventListener('click', closeLibrary);
     document.getElementById('jdLibMenu').addEventListener('click', toggleMenu);
     document.getElementById('jdLibPlus').addEventListener('click', togglePlus);
