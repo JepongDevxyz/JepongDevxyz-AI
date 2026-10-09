@@ -262,10 +262,10 @@
     // - Detail opens IMMEDIATELY above the Settings list (no homepage flash)
     // - Muse page drops below modal overlays so the detail is fully clickable
     // - On detail close, Settings returns at the exact scroll position
-    // Track active detail observer so we can clean up (prevents leaks/freezes)
-    var activeDetailObs = null;
+    // Track active detail poller so we can clean up (prevents leaks/freezes)
+    var activeDetailTimer = null;
     function stopDetailObs() {
-      if (activeDetailObs) { try { activeDetailObs.disconnect(); } catch (e) {} activeDetailObs = null; }
+      if (activeDetailTimer) { try { clearInterval(activeDetailTimer); } catch (e) {} activeDetailTimer = null; }
     }
 
     // Lightweight detail-open check (no getComputedStyle — freeze-proof).
@@ -325,23 +325,19 @@
           }
         } catch (e) {}
       };
-      // Debounced check: batch rapid mutations to avoid freeze
-      var checkTimer = null;
-      var scheduleCheck = function () {
-        if (checkTimer) return;
-        checkTimer = setTimeout(function () {
-          checkTimer = null;
-          if (!detailOpen()) restore();
-        }, 120);
-      };
-      // Let the detail open first, then watch for its close
+      // Let the detail open first, then poll for its close (lightweight, freeze-proof)
       setTimeout(function () {
         if (dskel) dskel.setAttribute('hidden', '');
         if (detailOpen()) {
-          activeDetailObs = new MutationObserver(scheduleCheck);
-          try { activeDetailObs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'hidden'] }); } catch (e) {}
-          // Safety: stop watching after 5 min to avoid leaks
-          setTimeout(stopDetailObs, 300000);
+          var checks = 0;
+          activeDetailTimer = setInterval(function () {
+            checks++;
+            try {
+              if (!detailOpen()) { restore(); return; }
+            } catch (e) {}
+            // Safety: stop polling after 5 min to avoid leaks
+            if (checks > 600) stopDetailObs();
+          }, 500);
         } else {
           restore(); // detail didn't open — come back immediately
         }
