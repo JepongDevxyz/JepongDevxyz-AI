@@ -379,6 +379,14 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
+        // Force-fresh: after in-app Clear Cache, bypass ALL caches with timestamp
+        try {
+          if (sessionStorage.getItem('jd_force_fresh') === '1') {
+            sessionStorage.removeItem('jd_force_fresh');
+            go('?v=fresh'+Date.now());
+            return;
+          }
+        } catch (e) {}
         // Allow letters+numbers in version (e.g. 20261001g3)
         go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
       })

@@ -42,9 +42,12 @@
         /* Navigate to a fresh URL to bypass ALL caches (HTTP + memory).
            The ?jd_fresh param is stripped by the app on boot.
            Also add cache-busting for patch files. */
-        var url = window.location.pathname + '?jd_fresh=' + Date.now() + '&jd_nocache=1' +
-                  window.location.hash;
-        window.location.replace(url);
+        /* Use href (not replace) to break bfcache, add random param to defeat HTTP cache */
+        var url = window.location.origin + window.location.pathname +
+                  '?jd_fresh=' + Date.now() + '&jd_nocache=1&jd_cb=' +
+                  Math.random().toString(36).slice(2) + window.location.hash;
+        try { sessionStorage.setItem('jd_force_fresh', '1'); } catch (_) {}
+        window.location.href = url;
       } catch (_) {
         try { location.reload(true); } catch (_) {}
       }
