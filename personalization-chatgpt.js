@@ -89,11 +89,11 @@
 
   /* Dropdown options */
   var DROPS = {
-    style: ['Default', 'Professional', 'Friendly', 'Candid', 'Quirky', 'Efficient', 'Cynical'],
-    warmth: ['More', 'Default', 'Less'],
-    enthusiasm: ['More', 'Default', 'Less'],
-    headers: ['More', 'Default', 'Less'],
-    emoji: ['More', 'Default', 'Less']
+    style: ['Professional', 'Casual', 'Friendly', 'Formal', 'Playful', 'Concise'],
+    warmth: ['Default', 'Warm', 'Neutral', 'Cool'],
+    enthusiasm: ['Default', 'High', 'Moderate', 'Low'],
+    headers: ['Default', 'Always use headers', 'Never use headers', 'Use lists often'],
+    emoji: ['Default', 'Never use emoji', 'Use sparingly', 'Use freely']
   };
 
   var DROP_LABELS = {
@@ -104,32 +104,13 @@
     emoji: 'Emoji'
   };
 
-  const FIELD_MAP = Object.freeze({
-    style: 'baseStyle',
-    warmth: 'warm',
-    enthusiasm: 'enthusiastic',
-    headers: 'headersLists',
-    emoji: 'emoji'
-  });
-  var draftSettings = {};
-
   function getSettings() {
-    try { return { ...personalizationSettings }; }
+    try { return JSON.parse(localStorage.getItem('jepong_personalization') || '{}'); }
     catch (e) { return {}; }
   }
   function saveSettings(s) {
-    Object.keys(FIELD_MAP).forEach(function (key) {
-      var field = FIELD_MAP[key];
-      if (personalizationSettings[field] !== s[field]) savePersonalizationField(field, s[field]);
-    });
-    ['fastAnswers', 'suggestedPrompts', 'librarySearch'].forEach(function (key) {
-      var value = !!s[key];
-      if (!!personalizationSettings[key] !== value) setPersonalizationToggle(key, value);
-    });
-    var customInstructions = String(s.customInstructions || '').trim();
-    if (personalizationSettings.customInstructions !== customInstructions) {
-      savePersonalizationField('customInstructions', customInstructions);
-    }
+    try { localStorage.setItem('jepong_personalization', JSON.stringify(s)); }
+    catch (e) {}
   }
 
   var currentDrop = null;
@@ -165,11 +146,12 @@
       '<div class="jdpers-tgl"><span>Fast answers</span>' +
       '<button class="jdpers-toggle" id="jdPersFast" aria-label="Fast answers"></button></div>' +
       '<div class="jdpers-desc">JepongDevxyz AI can sometimes use its general knowledge to give fast, in-depth answers. These aren\'t personalized and don\'t use your memory.</div>' +
-      '<div class="jdpers-tgl"><span>Suggested prompts</span>' +
-      '<button class="jdpers-toggle" id="jdPersSugg" aria-label="Suggested prompts"></button></div>' +
-      '<div class="jdpers-desc">JepongDevxyz AI can generate suggestions based on searching connected plugins.</div>' +
+
       '<label class="jdpers-label">Custom instructions</label>' +
       '<textarea class="jdpers-text" id="jdPersCustom" placeholder="What would you like the AI to know about you?"></textarea>' +
+      '<div class="jdpers-tgl"><span>Rich responses</span>' +
+      '<button class="jdpers-toggle" id="jdPersRich" aria-label="Rich responses"></button></div>' +
+      '<div class="jdpers-desc">Use custom layouts and interactive elements in responses.</div>' +
       '<button class="jdpers-adv" id="jdPersAdvBtn"><span>Advanced</span>' + I.chev + '</button>' +
       '<div id="jdpersAdvBody">' +
       '<div class="jdpers-tgl"><span>Library search</span>' +
@@ -196,7 +178,7 @@
     page.querySelectorAll('.jdpers-drop').forEach(function (btn) {
       btn.addEventListener('click', function () { openDropSheet(btn.dataset.drop); });
     });
-    ['jdPersFast', 'jdPersSugg', 'jdPersLib'].forEach(function (id) {
+    ['jdPersFast', 'jdPersRich', 'jdPersLib'].forEach(function (id) {
       document.getElementById(id).addEventListener('click', function () {
         this.classList.toggle('on');
       });
@@ -212,7 +194,8 @@
   function openDropSheet(key) {
     currentDrop = key;
     var body = document.getElementById('jdpersSheetBody');
-    var cur = draftSettings[FIELD_MAP[key]] || 'Default';
+    var s = getSettings();
+    var cur = s['pers_' + key] || 'Default';
     body.innerHTML = DROPS[key].map(function (opt) {
       var sel = opt === cur ? ' sel' : '';
       var check = opt === cur ? '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>' : '';
@@ -220,7 +203,9 @@
     }).join('');
     body.querySelectorAll('.jdpers-opt').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        draftSettings[FIELD_MAP[currentDrop]] = btn.dataset.opt;
+        var s2 = getSettings();
+        s2['pers_' + currentDrop] = btn.dataset.opt;
+        saveSettings(s2);
         document.getElementById('jdpersVal_' + currentDrop).textContent = btn.dataset.opt;
         document.getElementById('jdpersSheet').setAttribute('hidden', '');
       });
@@ -229,27 +214,30 @@
   }
 
   function loadValues() {
-    draftSettings = getSettings();
+    var s = getSettings();
     Object.keys(DROPS).forEach(function (k) {
       var el = document.getElementById('jdpersVal_' + k);
-      if (el) el.textContent = draftSettings[FIELD_MAP[k]] || 'Default';
+      if (el) el.textContent = s['pers_' + k] || 'Default';
     });
     var f = document.getElementById('jdPersFast');
-    if (f) f.classList.toggle('on', !!draftSettings.fastAnswers);
-    var sg = document.getElementById('jdPersSugg');
-    if (sg) sg.classList.toggle('on', !!draftSettings.suggestedPrompts);
+    if (f) f.classList.toggle('on', !!s.fastAnswers);
+    var r = document.getElementById('jdPersRich');
+    if (r) r.classList.toggle('on', !!s.richResponses);
+
     var lb = document.getElementById('jdPersLib');
-    if (lb) lb.classList.toggle('on', !!draftSettings.librarySearch);
+    if (lb) lb.classList.toggle('on', !!s.librarySearch);
     var cu = document.getElementById('jdPersCustom');
-    if (cu) cu.value = draftSettings.customInstructions || '';
+    if (cu) cu.value = s.customInstructions || '';
   }
 
   function saveAndClose() {
-    draftSettings.fastAnswers = document.getElementById('jdPersFast').classList.contains('on');
-    draftSettings.suggestedPrompts = document.getElementById('jdPersSugg').classList.contains('on');
-    draftSettings.librarySearch = document.getElementById('jdPersLib').classList.contains('on');
-    draftSettings.customInstructions = document.getElementById('jdPersCustom').value.trim();
-    saveSettings(draftSettings);
+    var s = getSettings();
+    s.fastAnswers = document.getElementById('jdPersFast').classList.contains('on');
+    s.richResponses = document.getElementById('jdPersRich').classList.contains('on');
+
+    s.librarySearch = document.getElementById('jdPersLib').classList.contains('on');
+    s.customInstructions = document.getElementById('jdPersCustom').value.trim();
+    saveSettings(s);
     try { if (typeof window.showToast === 'function') window.showToast('Personalization saved'); } catch (e) {}
     closePers();
   }
