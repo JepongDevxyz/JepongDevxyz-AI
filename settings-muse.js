@@ -311,13 +311,18 @@
       var boostCount = 0;
       var boostTimer = setInterval(function () {
         boostCount++;
+        // Comprehensive: catch all possible detail types
         var details = document.querySelectorAll(
           '.modal-overlay.open,' +
           '.modal-overlay:not([style*="display: none"]),' +
           '.jd-legal-policy.open,' +
           '.jd-extra-ai-sheet,' +
+          '.jd-extra-ai-panel,' +
           '[id$="Page"]:not([hidden]),' +
-          '[id$="Overlay"]:not([hidden])'
+          '[id$="Overlay"]:not([hidden]),' +
+          '[id$="Sheet"]:not([hidden]),' +
+          '[id$="Dialog"]:not([hidden]),' +
+          '[role="dialog"]:not([hidden])'
         );
         var boosted = false;
         details.forEach(function (d) {
