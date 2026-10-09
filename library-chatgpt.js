@@ -53,12 +53,13 @@
     '.jdlib-grid.list .jdlib-card{display:flex;align-items:center}',
     '.jdlib-grid.list .jdlib-thumb{width:56px;height:56px;aspect-ratio:auto;border-radius:8px;margin:8px;flex:0 0 auto}',
     '.jdlib-grid.list .jdlib-info{flex:1;padding:8px 12px 8px 0}',
-    /* Select mode checkboxes - pixel-perfect to video */
-    '.jdlib-checkbx{width:24px;height:24px;border-radius:50%;border:2px solid #666;flex:0 0 auto;margin-right:16px;',
-    'display:flex;align-items:center;justify-content:center;background:transparent}',
+    /* Select mode checkboxes - top-right like video */
+    '.jdlib-card{position:relative}',
+    '.jdlib-checkbx{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;',
+    'border:2px solid #666;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2}',
     '.jdlib-card.selected .jdlib-checkbx{background:#0a84ff;border-color:#0a84ff}',
     '.jdlib-card.selected .jdlib-checkbx::after{content:"✓";color:#fff;font-size:14px;font-weight:700}',
-    '.jdlib-card.selected{outline:none}',
+    '.jdlib-card.selected{outline:2px solid #0a84ff;outline-offset:-2px}',
     /* Folder cards */
     '.jdlib-folder{background:#1e1e1e;border-radius:12px;padding:20px 16px;text-align:center;cursor:pointer}',
     '.jdlib-folder:active{transform:scale(.97)}',
@@ -73,10 +74,12 @@
     'display:flex;align-items:center;justify-content:center;margin:24px auto 0;cursor:pointer}',
     '.jdlib-empty .jdlib-del svg{width:28px;height:28px;stroke:#fff;margin:0}',
     /* Bottom bar */
-    '.jdlib-bottom{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;z-index:5}',
+    '.jdlib-bottom{position:absolute;bottom:0;left:0;right:0;display:flex;gap:12px;',
+    'padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000 40%)}',
+    '.jdlib-search{flex:1;display:flex;align-items:center;gap:10px;background:#2f2f2f;border-radius:24px;padding:12px 16px}',
+    '.jdlib-plus{width:48px;height:48px;border-radius:50%;background:#2f2f2f;color:#fff;border:none;flex:0 0 auto;display:flex;align-items:center;justify-content:center;cursor:pointer}',
     '.jdlib-plus{width:56px;height:56px;border-radius:50%;background:#2f2f2f;color:#fff;border:none;',
     'display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}',
-    '.jdlib-searchwrap{padding:0 16px 12px;flex:0 0 auto}',
     '.jdlib-search{flex:1;display:flex;align-items:center;gap:10px;background:#2f2f2f;',
     'border-radius:24px;padding:0 18px;height:48px;cursor:text}',
     '.jdlib-search svg{width:20px;height:20px;stroke:#999;fill:none;stroke-width:2;flex:0 0 auto}',
@@ -192,9 +195,6 @@
       '<div class="jdlib-title">Library</div>' +
       '<button class="jdlib-hbtn" id="jdLibMenu">' + I.dots + '</button>' +
       '</div>' +
-      '<div class="jdlib-searchwrap">' +
-      '<div class="jdlib-search" id="jdLibSearchBar">' + I.search + '<span>Search</span><input id="jdLibSearchInput" type="text" placeholder="Search">' + '</div>' +
-      '</div>' +
       '<div class="jdlib-tabs">' +
       '<button class="jdlib-tab active" data-tab="suggested">Suggested</button>' +
       '<button class="jdlib-tab" data-tab="favorites">Favorites</button>' +
@@ -202,6 +202,7 @@
       '</div>' +
       '<div class="jdlib-content" id="jdLibContent"><div class="jdlib-grid" id="jdLibGrid"></div></div>' +
       '<div class="jdlib-bottom">' +
+      '<div class="jdlib-search" id="jdLibSearchBar">' + I.search + '<span>Search</span><input id="jdLibSearchInput" type="text" placeholder="Search">' + '</div>' +
       '<button class="jdlib-plus" id="jdLibPlus">' + I.plus + '</button>' +
       '</div>' +
       '<div class="jdlib-menu" id="jdLibMenuPop" hidden></div>' +
@@ -406,6 +407,7 @@
         if (state.selectMode) {
           if (state.selected.has(id)) { state.selected.delete(id); card.classList.remove('selected'); }
           else { state.selected.add(id); card.classList.add('selected'); }
+          updateSelectHeader();
         } else {
           var item = state.items.find(function (x) { return x.id === id; });
           if (item) openItem(item);
@@ -475,11 +477,39 @@
     });
   }
 
+  function updateSelectHeader() {
+    var title = document.querySelector('.jdlib-title');
+    var backBtn = document.getElementById('jdLibBack');
+    var menuBtn = document.getElementById('jdLibMenu');
+    if (!title) return;
+    if (state.selectMode) {
+      var n = state.selected.size;
+      title.textContent = n > 0 ? n + ' selected' : 'Select items';
+      if (backBtn) backBtn.style.visibility = 'hidden';
+      if (menuBtn) {
+        menuBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+        menuBtn.onclick = function() {
+          state.selectMode = false;
+          state.selected.clear();
+          render();
+        };
+      }
+    } else {
+      title.textContent = 'Library';
+      if (backBtn) backBtn.style.visibility = '';
+      if (menuBtn) {
+        menuBtn.innerHTML = I.dots;
+        menuBtn.onclick = toggleMenu;
+      }
+    }
+  }
+
   function menuAction(act) {
     if (act === 'select') {
       state.selectMode = !state.selectMode;
       if (!state.selectMode) state.selected.clear();
       render();
+      updateSelectHeader();
     } else if (act === 'grid' || act === 'list') {
       state.view = act;
       render();
