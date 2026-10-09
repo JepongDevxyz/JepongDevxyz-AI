@@ -47,11 +47,18 @@
     '.jdlib-thumb .jdlib-ficon{width:28px;height:28px}',
     '.jdlib-info{padding:10px 12px;display:flex;align-items:center;gap:8px}',
     '.jdlib-name{flex:1;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.jdlib-date{font-size:.8rem;color:#888;margin-top:2px}',
     '.jdlib-ticon{width:20px;height:20px;flex:0 0 auto}',
     /* List mode */
     '.jdlib-grid.list .jdlib-card{display:flex;align-items:center}',
     '.jdlib-grid.list .jdlib-thumb{width:56px;height:56px;aspect-ratio:auto;border-radius:8px;margin:8px;flex:0 0 auto}',
     '.jdlib-grid.list .jdlib-info{flex:1;padding:8px 12px 8px 0}',
+    /* Select mode checkboxes - pixel-perfect to video */
+    '.jdlib-checkbx{width:24px;height:24px;border-radius:50%;border:2px solid #666;flex:0 0 auto;margin-right:16px;',
+    'display:flex;align-items:center;justify-content:center;background:transparent}',
+    '.jdlib-card.selected .jdlib-checkbx{background:#0a84ff;border-color:#0a84ff}',
+    '.jdlib-card.selected .jdlib-checkbx::after{content:"✓";color:#fff;font-size:14px;font-weight:700}',
+    '.jdlib-card.selected{outline:none}',
     /* Folder cards */
     '.jdlib-folder{background:#1e1e1e;border-radius:12px;padding:20px 16px;text-align:center;cursor:pointer}',
     '.jdlib-folder:active{transform:scale(.97)}',
@@ -79,15 +86,15 @@
     'display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}',
     '.jdlib-plus:active{transform:scale(.9)}',
     '.jdlib-plus svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}',
-    /* Dropdown menus */
-    '.jdlib-menu{position:absolute;background:#2f2f2f;border-radius:16px;padding:8px;min-width:180px;',
+    /* Dropdown menus - pixel-perfect to video */
+    '.jdlib-menu{position:absolute;background:#2e2e2e;border-radius:14px;padding:6px;min-width:190px;',
     'box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:26000}',
     '.jdlib-menu[hidden]{display:none}',
-    '.jdlib-mi{display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;color:#fff;',
-    'font-size:.92rem;padding:12px 14px;border-radius:10px;cursor:pointer;text-align:left}',
-    '.jdlib-mi:active{background:rgba(255,255,255,.08)}',
-    '.jdlib-mi svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
-    '.jdlib-mi .jdlib-check{margin-left:auto;color:#fff;font-weight:700}',
+    '.jdlib-mi{display:flex;align-items:center;gap:14px;width:100%;border:none;background:none;color:#fff;',
+    'font-size:16px;padding:13px 16px;border-radius:10px;cursor:pointer;text-align:left;font-weight:400}',
+    '.jdlib-mi:active{background:rgba(255,255,255,.1)}',
+    '.jdlib-mi svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}',
+    '.jdlib-mi .jdlib-check{margin-left:auto;color:#fff;font-size:18px;font-weight:600}',
     /* Select mode */
     '.jdlib-card.selected{outline:2px solid #6366f1}',
     '.jdlib-selbar{position:absolute;top:0;left:0;right:0;background:#1e1e1e;padding:12px 16px;',
@@ -361,12 +368,21 @@
         ? '<div class="jdlib-thumb" data-thumb="' + it.id + '"><div class="jdlib-ficon" style="color:' + ti.color + '">' + I[ti.icon] + '</div></div>'
         : '<div class="jdlib-thumb"><div class="jdlib-ficon" style="color:' + ti.color + '">' + I[ti.icon] + '</div></div>';
       var sel = state.selected.has(it.id) ? ' selected' : '';
+      var checkbx = state.selectMode ? '<div class="jdlib-checkbx"></div>' : '';
+      var dateStr = '';
+      try {
+        if (it.created_at) {
+          var d = new Date(it.created_at);
+          dateStr = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        }
+      } catch (e) {}
+      var dateHtml = dateStr ? '<div class="jdlib-date">' + dateStr + '</div>' : '';
       return '<div class="jdlib-card' + sel + '" data-id="' + it.id + '">' +
         thumb +
         '<div class="jdlib-info">' +
         '<div class="jdlib-ticon" style="color:' + ti.color + '">' + I[ti.icon] + '</div>' +
-        '<div class="jdlib-name">' + esc(it.file_name) + '</div>' +
-        '</div></div>';
+        '<div><div class="jdlib-name">' + esc(it.file_name) + '</div>' + dateHtml + '</div>' +
+        '</div>' + checkbx + '</div>';
     }).join('');
 
     // Thumbnails
