@@ -9,15 +9,15 @@
   var CSS = [
     /* Pet page: force theme-aware background */
     '#personalizationPetPage{background:var(--modal-bg,#151d2d)!important;color:var(--text-main)!important}',
-    'body.theme-light #personalizationPetPage{background:#ffffff!important;color:#0f172a!important}',
+    '.theme-light #personalizationPetPage{background:#ffffff!important;color:#0f172a!important}',
     /* Voice page: same */
     '#personalizationVoicePage{background:var(--modal-bg,#151d2d)!important;color:var(--text-main)!important}',
-    'body.theme-light #personalizationVoicePage{background:#ffffff!important;color:#0f172a!important}',
+    '.theme-light #personalizationVoicePage{background:#ffffff!important;color:#0f172a!important}',
     /* Pet list items: ensure text is readable in light mode */
-    'body.theme-light .ps-pet-copy strong{color:#0f172a!important}',
-    'body.theme-light .ps-pet-copy small{color:#64748b!important}',
+    '.theme-light .ps-pet-copy strong{color:#0f172a!important}',
+    '.theme-light .ps-pet-copy small{color:#64748b!important}',
     /* Modal container: ensure theme applies */
-    'body.theme-light #personalizationModalOverlay .personalization-modal.ps-reference-ui{background:#f6f6f6!important}'
+    '.theme-light #personalizationModalOverlay .personalization-modal.ps-reference-ui{background:#f6f6f6!important}'
   ].join('\n');
 
   function inject() {
