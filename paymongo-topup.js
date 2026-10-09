@@ -94,7 +94,7 @@
 
   function open() {
     var box = show(
-      '<h3>Top up credits</h3><p class="sub">Magbayad via QR Ph — i-scan gamit ang GCash, Maya, o bank app.</p>' +
+      '<h3>Pricing</h3><p class="sub">Magbayad via QR Ph — i-scan gamit ang GCash, Maya, o bank app.</p>' +
       '<div class="jdpay-err" style="display:none"></div>' +
       PLANS.map(function (p) {
         return '<button class="jdpay-plan" data-plan="' + p.id + '"><b>' + p.name + '</b><span>' + p.blurb + '</span></button>';
