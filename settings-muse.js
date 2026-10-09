@@ -75,6 +75,7 @@
     '@keyframes jdset-pulse{0%,100%{opacity:.6}50%{opacity:.3}}',
     'body.theme-light .jdset-skeleton{background:#e8e8e8}',
     '#jdSetPage.jdset-loading .jdset-scroll > *:not(.jdset-skeleton-wrap){display:none}',
+    '#jdSetPage.jdset-behind{z-index:900!important;pointer-events:none}',
     '.jdset-skeleton-wrap{padding:8px 0}',
     '#jdSetPage:not(.jdset-loading) .jdset-skeleton-wrap{display:none}'
   ].join('\n');
@@ -249,10 +250,58 @@
       } catch (err) {}
     };
 
-    // Row clicks: close our page FIRST (like the original
-    // closeSettingsModal(); setTimeout(openX,0) pattern), then open the
-    // real detail. This avoids z-index/overlay clashes and matches the
-    // expectations of openSettingsPet/openSettingsVoice/etc.
+    // Smooth detail navigation (user request 2026-10-09):
+    // - Detail opens IMMEDIATELY above the Settings list (no homepage flash)
+    // - Muse page drops below modal overlays so the detail is fully clickable
+    // - On detail close, Settings returns at the exact scroll position
+    function openDetailSmooth(openFn) {
+      var page = document.getElementById('jdSetPage');
+      if (!page) { try { openFn(); } catch (e) {} return; }
+      var scrollEl = page.querySelector('.jdset-scroll');
+      var savedScroll = 0;
+      try { savedScroll = scrollEl ? scrollEl.scrollTop : 0; } catch (e) {}
+      // Drop below .modal-overlay (z-index 1000) so detail buttons are clickable
+      page.classList.add('jdset-behind');
+      try { openFn(); } catch (e) {}
+      var obs = null;
+      var detailOpen = function () {
+        try {
+          var els = document.querySelectorAll('.modal-overlay.open, [id$="Overlay"].open, [id$="Page"].open, [id$="Sheet"].open');
+          for (var i = 0; i < els.length; i++) {
+            var id = els[i].id;
+            if (id === 'jdSetPage' || id === 'settingsModal') continue;
+            return true;
+          }
+        } catch (e) {}
+        return false;
+      };
+      var restore = function () {
+        try {
+          page.classList.remove('jdset-behind');
+          var sc = page.querySelector('.jdset-scroll');
+          if (sc) sc.scrollTop = savedScroll;
+        } catch (e) {}
+        if (obs) { try { obs.disconnect(); } catch (e2) {} obs = null; }
+      };
+      // Let the detail open first, then watch for its close
+      setTimeout(function () {
+        if (detailOpen()) {
+          obs = new MutationObserver(function () {
+            if (!detailOpen()) restore();
+          });
+          try { obs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'hidden', 'style'] }); } catch (e) {}
+          // Safety: stop watching after 5 min to avoid leaks
+          setTimeout(function () { if (obs) { try { obs.disconnect(); } catch (e) {} obs = null; } }, 300000);
+        } else {
+          restore(); // detail didn't open — come back immediately
+        }
+      }, 350);
+    }
+
+    // Row clicks: open the detail SMOOTHLY above the Settings list.
+    // The Settings page stays open underneath (scroll saved); the detail
+    // opens immediately with no homepage flash. On detail close, we return
+    // to the exact spot in the Settings list.
     page.querySelectorAll('.jdset-row').forEach(function (row) {
       row.addEventListener('click', function (e) {
         // If it's a toggle button, don't trigger row action
@@ -261,21 +310,18 @@
         var fn = row.dataset.fn;
         var arg = row.dataset.arg;
         if (!fnPath && !fn) return;
-        try { closeSettings(); } catch (err) {}
-        setTimeout(function () {
-          try {
-            if (fnPath) {
-              // Dotted path like __jdConnectors.open
-              var parts = fnPath.split('.');
-              var obj = window;
-              for (var i = 0; i < parts.length; i++) { obj = obj ? obj[parts[i]] : undefined; }
-              if (typeof obj === 'function') { obj(); return; }
-            }
-            if (fn && typeof window[fn] === 'function') {
-              if (arg) window[fn](arg); else window[fn]();
-            }
-          } catch (err2) {}
-        }, 60);
+        openDetailSmooth(function () {
+          if (fnPath) {
+            // Dotted path like __jdConnectors.open
+            var parts = fnPath.split('.');
+            var obj = window;
+            for (var i = 0; i < parts.length; i++) { obj = obj ? obj[parts[i]] : undefined; }
+            if (typeof obj === 'function') { obj(); return; }
+          }
+          if (fn && typeof window[fn] === 'function') {
+            if (arg) window[fn](arg); else window[fn]();
+          }
+        });
       });
     });
 
@@ -359,12 +405,9 @@
     buildPage();
     var page = document.getElementById('jdSetPage');
     page.removeAttribute('hidden');
-    page.classList.add('jdset-loading');
-    // Show skeleton for 400ms then reveal (ChatGPT-style)
-    setTimeout(function () {
-      page.classList.remove('jdset-loading');
-      updateUsage();
-    }, 400);
+    // Show instantly — no skeleton delay (user wants Settings right away)
+    page.classList.remove('jdset-loading');
+    try { updateUsage(); } catch (e) {}
     // Hide old modal
     var old = document.getElementById('settingsModal');
     if (old) old.classList.remove('open');
@@ -373,10 +416,12 @@
 
   function closeSettings() {
     var page = document.getElementById('jdSetPage');
-    if (page) {
-      page.setAttribute('hidden', '');
-      if (window.jdBackNav) window.jdBackNav.pop(page);
-    }
+    if (!page) return;
+    // Smooth-nav guard: if a detail is open above us, stay in the background.
+    // Hiding here would break the return-to-Settings flow.
+    if (page.classList.contains('jdset-behind')) return;
+    page.setAttribute('hidden', '');
+    if (window.jdBackNav) window.jdBackNav.pop(page);
   }
 
   function init() {
