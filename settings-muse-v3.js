@@ -29,7 +29,7 @@
 
   /* Verified Lucide icon paths (stroke=currentColor). */
   var I = {
-    back: '<svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
     chev: '<svg class="jdset-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>',
     user: '<svg class="jdset-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
     smile: '<svg class="jdset-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>',
@@ -296,8 +296,7 @@
         var fnPath = btn.getAttribute('data-fnpath');
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
-        // Prevent Pet/Voice internal closeSettingsModal from closing us
-        window.__jdInNavHandler = true;
+        window.__jdNavTime = Date.now();
         setTimeout(function () {
           try {
             if (code === 'mode') {
@@ -312,7 +311,6 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
-          setTimeout(function() { window.__jdInNavHandler = false; }, 500);
         }, 60);
       });
     });
@@ -426,8 +424,8 @@
   function closeSettings() {
     var page = document.getElementById(PAGE_ID);
     if (!page || !isOpen) return;
-    // Ignore if called internally by Pet/Voice during detail open
-    if (window.__jdInNavHandler) return;
+    // Ignore if called within 100ms of a nav tap (Pet/Voice internal close)
+    if (window.__jdNavTime && (Date.now() - window.__jdNavTime) < 100) return;
     isOpen = false;
     // Slide out to right
     page.classList.add('jdm-exiting');
