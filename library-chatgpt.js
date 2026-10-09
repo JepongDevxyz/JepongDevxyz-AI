@@ -221,12 +221,14 @@
       if (!searchInput.value) searchBar.classList.remove('active');
     });
 
-    // Close menus on outside tap
+    // Close menus on outside tap (fixed: check contains, not just id)
     document.addEventListener('click', function (e) {
       var mp = document.getElementById('jdLibMenuPop');
       var pp = document.getElementById('jdLibPlusPop');
-      if (mp && !mp.hidden && !mp.contains(e.target) && e.target.id !== 'jdLibMenu') mp.hidden = true;
-      if (pp && !pp.hidden && !pp.contains(e.target) && e.target.id !== 'jdLibPlus') pp.hidden = true;
+      var mb = document.getElementById('jdLibMenu');
+      var pb = document.getElementById('jdLibPlus');
+      if (mp && !mp.hidden && !mp.contains(e.target) && !(mb && mb.contains(e.target))) mp.hidden = true;
+      if (pp && !pp.hidden && !pp.contains(e.target) && !(pb && pb.contains(e.target))) pp.hidden = true;
     });
   }
 
