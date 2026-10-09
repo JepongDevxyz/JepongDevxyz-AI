@@ -79,6 +79,17 @@
     if (window.location.search.indexOf('jd_fresh=') !== -1) {
       var clean = window.location.pathname + window.location.hash;
       window.history.replaceState(null, '', clean);
+      // Close any open sidebar/drawers after fresh reload
+      setTimeout(function() {
+        try {
+          document.querySelectorAll('.sidebar.open, .drawer.open').forEach(function(el) {
+            el.classList.remove('open');
+          });
+          var ov = document.querySelector('.sidebar-overlay.open');
+          if (ov) ov.classList.remove('open');
+          if (window.closeAllDrawers) window.closeAllDrawers();
+        } catch(e) {}
+      }, 500);
     }
   } catch (_) {}  'use strict';
   if (window.__jdExtraSettingsLoaded) return;
