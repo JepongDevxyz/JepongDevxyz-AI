@@ -69,11 +69,15 @@
     '#' + PAGE_ID + '[hidden]{display:none!important}'
   ].join('\n');
 
-  /* Details opened from Settings: full-screen, opaque, no background bleed */
+  /* Details opened from Settings: full-screen immediately via body class (no flicker) */
   var DETAIL_CSS = [
-    '.jdm-detail-open{position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important;',
-    'max-width:none!important;margin:0!important;border-radius:0!important;background:#000!important;z-index:1001!important}',
-    'body.theme-light .jdm-detail-open{background:#fff!important}'
+    'body.jdm-settings-open [role="dialog"]:not(#' + PAGE_ID + '):not(#settingsModal){',
+    'position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important;',
+    'max-width:none!important;margin:0!important;border-radius:0!important;',
+    'background:#000!important;z-index:1001!important}',
+    'body.jdm-settings-open [role="dialog"]:not(#' + PAGE_ID + '):not(#settingsModal) .settings-home{',
+    'width:100%!important;height:100dvh!important;max-width:none!important;margin:0!important;border-radius:0!important}',
+    'body.theme-light.jdm-settings-open [role="dialog"]:not(#' + PAGE_ID + '):not(#settingsModal){background:#fff!important}'
   ].join('\n');
 
   var CSS = [
@@ -306,20 +310,7 @@
           } catch (e) {}
           // Clear flag after detail opens
           setTimeout(function() { window.__jdOpeningDetail = false; }, 500);
-          // Make the opened detail full-screen (covers Settings, no overlap)
-          setTimeout(function() {
-            try {
-              var details = document.querySelectorAll('[role="dialog"]:not([hidden])');
-              for (var i = 0; i < details.length; i++) {
-                var d = details[i];
-                if (d.id === PAGE_ID || (d.closest && d.closest('#' + PAGE_ID))) continue;
-                if (d.id === 'settingsModal') continue;
-                d.classList.add('jdm-detail-open');
-                var inner = d.querySelector('.settings-home');
-                if (inner) inner.classList.add('jdm-detail-open');
-              }
-            } catch(e2) {}
-          }, 150);
+          // Full-screen handled by CSS body class (immediate, no flicker)
         }, 60);
       });
     });
@@ -417,6 +408,8 @@
     if (!page) return;
     syncToggles();
     updateCredits();
+    // Mark body so details open full-screen immediately (no flicker)
+    document.body.classList.add('jdm-settings-open');
     // Slide in from right (Muse app style)
     page.classList.add('jdm-entering');
     page.removeAttribute('hidden');
@@ -434,6 +427,7 @@
     if (!page || !isOpen) return;
     // Don't close if a detail is opening (Pet/Voice/API Keys call closeSettingsModal internally)
     if (window.__jdOpeningDetail) return;
+    document.body.classList.remove('jdm-settings-open');
     isOpen = false;
     // Slide out to right
     page.classList.add('jdm-exiting');
