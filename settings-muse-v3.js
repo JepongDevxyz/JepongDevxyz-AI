@@ -150,7 +150,7 @@
       { icon: 'wifi',     label: 'Reconnect notice',       toggle: 'reconnectNotice' },
       { icon: 'shuffle',  label: 'Auto Provider Fallback', toggle: 'autoFallback' },
       { icon: 'route',    label: 'Smart Model Router',     toggle: 'smartRouter' },
-      { icon: 'bell',     label: 'Reply Notifications',    toggle: 'replyNotify' }
+      { icon: 'bell',     label: 'Reply Notifications',    fn: 'openJdReplyNotifications' }
     ]},
     { label: 'APP', rows: [
       { icon: 'brush',   label: 'Appearance',     fn: 'openJdAppearance' },
