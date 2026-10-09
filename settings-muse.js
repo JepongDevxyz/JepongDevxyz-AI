@@ -45,7 +45,7 @@
     'color:#fff;padding:0 16px;min-height:56px;cursor:pointer;text-align:left;font-size:.95rem}',
     '.jdset-row:active{background:rgba(255,255,255,.05)}',
     '.jdset-row + .jdset-row{border-top:1px solid rgba(255,255,255,.07)}',
-    '.jdset-row svg.jdset-ic{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:1.8;',
+    '.jdset-row svg.jdset-ic{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;',
     'stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}',
     '.jdset-row .jdset-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
     '.jdset-row svg.jdset-chev{width:18px;height:18px;stroke:#888;fill:none;stroke-width:2;flex:0 0 auto}',
