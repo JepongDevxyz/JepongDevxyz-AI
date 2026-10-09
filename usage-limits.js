@@ -87,20 +87,12 @@
       '<div class="jduse-label">Credits</div>' +
       '<div class="jduse-card">' +
       '<div class="jduse-row" id="jdUseRemainRow"><span>Credits remaining</span><span class="jduse-rval" id="jdUseRemain">--</span></div>' +
-      '<button class="jduse-row" id="jdUseTopupRow"><span>Top up credits</span>' + I.chev + '</button>' +
       '</div>' +
       '<div class="jduse-desc">Credits are used for AI chats and image generation. Top up to continue when you run out.</div>' +
       '</div>';
     document.body.appendChild(page);
 
     document.getElementById('jdUseBack').addEventListener('click', closeUsage);
-    document.getElementById('jdUseTopupRow').addEventListener('click', function () {
-      try {
-        // Use fullscreen top-up (separate from Credits card modal)
-        if (window.openTopupFullscreen) { window.openTopupFullscreen(); return; }
-        if (window.JdPay && typeof window.JdPay.open === 'function') { window.JdPay.open(); return; }
-      } catch (e) {}
-    });
 
     updateValues();
   }
