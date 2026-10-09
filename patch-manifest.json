@@ -1,5 +1,5 @@
 {
- "version": "20261008a204",
+ "version": "20261008a205",
  "files": [
   "/paymongo-topup.js",
   "/credits.js",
@@ -88,6 +88,7 @@
   "/error-tracking.js",
   "/turnstile-guard.js",
   "/pet-theme-sync.js",
-  "/detail-theme-sync.js"
+  "/detail-theme-sync.js",
+  "/sidebar-blur-fix.js"
  ]
 }
