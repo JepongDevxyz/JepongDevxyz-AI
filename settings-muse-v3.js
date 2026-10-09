@@ -143,14 +143,14 @@
       { icon: 'grid',     label: 'Connectors',             fnPath: '__jdConnectors.open' },
       { icon: 'key',      label: 'Custom API Keys',        fn: 'openProviderKeysSettings' },
       { icon: 'import',   label: 'Import Memory',          fn: 'jdOpenImportMemory' },
+      { icon: 'bell',     label: 'Reply Notifications',    fn: 'openJdReplyNotifications' },
       { icon: 'globe',    label: 'Web Search',             toggle: 'webSearch' },
       { icon: 'sparkles', label: 'Auto Temper',            toggle: 'autoTemper' },
       { icon: 'ellipsis', label: 'Pure Mode',              toggle: 'pureMode' },
       { icon: 'volume',   label: 'Response Speech',        toggle: 'responseSpeech' },
       { icon: 'wifi',     label: 'Reconnect notice',       toggle: 'reconnectNotice' },
       { icon: 'shuffle',  label: 'Auto Provider Fallback', toggle: 'autoFallback' },
-      { icon: 'route',    label: 'Smart Model Router',     toggle: 'smartRouter' },
-      { icon: 'bell',     label: 'Reply Notifications',    fn: 'openJdReplyNotifications' }
+      { icon: 'route',    label: 'Smart Model Router',     toggle: 'smartRouter' }
     ]},
     { label: 'APP', rows: [
       { icon: 'brush',   label: 'Appearance',     fn: 'openJdAppearance' },
