@@ -99,12 +99,7 @@
       PLANS.map(function (p) {
         return '<button class="jdpay-plan" data-plan="' + p.id + '"><b>' + p.name + '</b><span>' + p.blurb + '</span></button>';
       }).join('') +
-      '<button class="jdpay-close">Isara</button>' +
-      '<p class="jdpay-terms-text" style="font-size:11px;color:#71717a;text-align:center;margin-top:12px;line-height:1.5">' +
-      'Ang credits ay non-refundable at non-transferable.<br>' +
-      'Magagamit sa chat, image generation, at iba pang features.<br>' +
-      'By topping up, you agree to our Terms of Service.' +
-      '</p>'
+      '<button class="jdpay-close">Isara</button>'
     );
     box.querySelector('.jdpay-close').onclick = close;
     var errBox = box.querySelector('.jdpay-err');

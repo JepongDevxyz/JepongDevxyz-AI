@@ -162,7 +162,8 @@
     ]},
     { label: 'LEGAL & PRIVACY', rows: [
       { icon: 'file',   label: 'Terms of Service', fn: 'openJdLegalPolicy', arg: 'terms' },
-      { icon: 'shield', label: 'Privacy Policy',   fn: 'openJdLegalPolicy', arg: 'privacy' }
+      { icon: 'shield', label: 'Privacy Policy',   fn: 'openJdLegalPolicy', arg: 'privacy' },
+      { icon: 'coins',  label: 'Refund Policy',    fn: 'openJdTopupTerms' }
     ]}
   ];
 
@@ -448,6 +449,38 @@
       .then(function(t) { el.textContent = 'v' + t.trim(); })
       .catch(function() {});
   }
+
+  /* Refund and Cancellation Policy (global) */
+  window.openJdTopupTerms = function() {
+    var overlay = document.createElement('div');
+    overlay.setAttribute('role', 'dialog');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;background:#0a0a0a;color:#f5f5f5;overflow-y:auto;';
+    overlay.innerHTML =
+      '<div style="padding:16px;max-width:600px;margin:0 auto;">' +
+      '<button id="jdTopupTermsBack" style="background:none;border:none;color:#f5f5f5;font-size:16px;cursor:pointer;margin-bottom:16px;">\u2190 Back</button>' +
+      '<h2 style="font-size:20px;margin-bottom:4px;">Refund and Cancellation Policy</h2>' +
+      '<p style="font-size:12px;color:#71717a;margin-bottom:16px;">Last updated: September 30, 2026</p>' +
+      '<div style="font-size:14px;line-height:1.7;color:#d4d4d8;">' +
+      '<p>Thank you for using JepongDevxyz AI. Because our platform utilizes a manual, top-up framework exclusively via QR Ph, we maintain a straightforward billing policy. Please review our rules regarding purchases and credit tokens below:</p>' +
+      '<h3 style="font-size:16px;margin:16px 0 8px;color:#f5f5f5;">1. One-Time Prepaid Top-Ups</h3>' +
+      '<p>All credit tiers available on JepongDevxyz AI (Starter, Pro, and Max) are processed strictly as one-time, manual prepaid top-ups.</p>' +
+      '<ul style="padding-left:20px;"><li>There are no automated recurring subscriptions active on our platform.</li>' +
+      '<li>You will never be automatically charged or auto-renewed. You only pay when you intentionally choose to buy a top-up package.</li></ul>' +
+      '<h3 style="font-size:16px;margin:16px 0 8px;color:#f5f5f5;">2. Strict Non-Refundable Policy</h3>' +
+      '<p>All transactions processed through our active payment gateway via QR Ph (GCash, Maya, or mobile banking apps) are permanent and immediate.</p>' +
+      '<ul style="padding-left:20px;"><li><strong>All payments made to JepongDevxyz AI are strictly non-refundable.</strong></li>' +
+      '<li>Because our system does not feature an automated refund mechanism for QR Ph payments, we do not provide cash returns, credit reversals, or manual chargebacks under any circumstances.</li>' +
+      '<li>Purchased credits hold no monetary value and cannot be redeemed, exchanged, or transferred back into real currency (PHP).</li></ul>' +
+      '<h3 style="font-size:16px;margin:16px 0 8px;color:#f5f5f5;">3. Credit Allocation & Delivery</h3>' +
+      '<p>Your purchased credits (1,000 for Starter, 5,000 for Pro, and 12,000 for Max) will be credited to your account profile immediately after a successful QR Ph scan. These tokens do not expire as long as your account is active and will stay securely in your pool until spent on text chats (10 credits each) or image generations (50 credits each). Unused credits cannot be refunded if you decide to stop using the application.</p>' +
+      '<h3 style="font-size:16px;margin:16px 0 8px;color:#f5f5f5;">4. Technical Issues & Support</h3>' +
+      '<p>If your payment went through your mobile wallet but your credits failed to appear on your dashboard due to a network delay, please contact us immediately through our official repository support or communication channels with your transaction reference slip. We will verify the transaction logs manually and manually credit the missing tokens to your account.</p>' +
+      '<h3 style="font-size:16px;margin:16px 0 8px;color:#f5f5f5;">5. Policy Updates</h3>' +
+      '<p>JepongDevxyz AI reserves the right to update this policy at any time to align with new features or changes introduced by our payment gateway providers.</p>' +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('#jdTopupTermsBack').onclick = function() { overlay.remove(); };
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() { buildPage(); updateVersion(); });
