@@ -70,7 +70,7 @@
   ].join('\n');
 
   var CSS = [
-    '#jdmSetPage{position:fixed;inset:0;z-index:24000;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
+    '#jdmSetPage{position:fixed;inset:0;z-index:999;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
     '#jdmSetPage[hidden]{display:none!important}',
     '#jdmSetPage svg{flex-shrink:0}',
     '.jdm-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)}',
@@ -281,9 +281,7 @@
         var fnPath = btn.getAttribute('data-fnpath');
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
-        // Hide Settings (keep in back-nav so back returns here)
-        page.setAttribute('hidden', '');
-        window.__jdSettingsHidden = true;
+        // Detail opens on top of Settings (no hide needed)
         setTimeout(function () {
           try {
             if (code === 'mode') {
@@ -298,69 +296,12 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
-          // Watch for detail close, then show Settings again
-          watchDetailAndShowSettings();
+          // No watcher needed - Settings stays visible underneath
         }, 60);
       });
     });
 
-    /* Watch for open detail modals; when all closed, show Settings again */
-    function watchDetailAndShowSettings() {
-      if (window.__jdSettingsWatch) return;
-      window.__jdSettingsWatch = true;
-      var checks = 0;
-      // Wait 1.5s for detail to fully render before checking (prevents false "closed" detection)
-      setTimeout(function() {
-        var timer = setInterval(function () {
-        checks++;
-        try {
-          // Check if any detail modal/overlay is open
-          var detailOpen = false;
-          var selectors = [
-            '.modal-overlay.open', '.modal.open', '[role="dialog"]:not([hidden])',
-            '.jd-detail-page:not([hidden])', '.settings-detail:not([hidden])'
-          ];
-          for (var i = 0; i < selectors.length; i++) {
-            var els = document.querySelectorAll(selectors[i]);
-            for (var j = 0; j < els.length; j++) {
-              var el = els[j];
-              // Exclude our own Settings page
-              if (el.id === PAGE_ID || el.closest('#' + PAGE_ID)) continue;
-              // Exclude the main settings modal (it's closed)
-              if (el.id === 'settingsModal') continue;
-              var r = el.getBoundingClientRect();
-              if (r.width > 0 && r.height > 0) { detailOpen = true; break; }
-            }
-            if (detailOpen) break;
-          }
-          if (!detailOpen && window.__jdSettingsHidden) {
-            // Detail closed - REMOVE hidden detail modals from DOM to prevent freeze
-            try {
-              document.querySelectorAll('.modal-overlay, .modal, [role="dialog"]').forEach(function(el) {
-                if (el.id === PAGE_ID || el.closest('#' + PAGE_ID)) return;
-                if (el.id === 'settingsModal') return;
-                var r = el.getBoundingClientRect();
-                // If hidden (0 size) and not our Settings, remove it
-                if (r.width === 0 && r.height === 0 && el.parentNode) {
-                  // Only remove if it's a detail modal (not main app elements)
-                  if (el.classList.contains('open') === false) {
-                    try { el.remove(); } catch(e2) {}
-                  }
-                }
-              });
-            } catch(e2) {}
-            // Show Settings again
-            var p = document.getElementById(PAGE_ID);
-            if (p) p.removeAttribute('hidden');
-            window.__jdSettingsHidden = false;
-            clearInterval(timer);
-            window.__jdSettingsWatch = false;
-          }
-        } catch (e) {}
-        if (checks > 120) { clearInterval(timer); window.__jdSettingsWatch = false; } // 60s max
-        }, 500);
-      }, 1500);
-    }
+    /* Watcher removed - Muse app style: details open on top, no hide/show needed */
 
     /* Toggles: call the real global function; mirror the original
        modal's checkbox so both stay in sync. */
