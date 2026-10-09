@@ -182,7 +182,7 @@
     if (document.getElementById(CSS_ID)) return;
     var st = document.createElement('style');
     st.id = CSS_ID;
-    st.textContent = CSS + '\n' + TRANSITION_CSS + '\n' + DETAIL_CSS;
+    st.textContent = CSS + '\n' + TRANSITION_CSS;
     document.head.appendChild(st);
   }
 
@@ -408,8 +408,7 @@
     if (!page) return;
     syncToggles();
     updateCredits();
-    // Mark body so details open full-screen immediately (no flicker)
-    document.body.classList.add('jdm-settings-open');
+
     // Slide in from right (Muse app style)
     page.classList.add('jdm-entering');
     page.removeAttribute('hidden');
@@ -427,7 +426,6 @@
     if (!page || !isOpen) return;
     // Don't close if a detail is opening (Pet/Voice/API Keys call closeSettingsModal internally)
     if (window.__jdOpeningDetail) return;
-    document.body.classList.remove('jdm-settings-open');
     isOpen = false;
     // Slide out to right
     page.classList.add('jdm-exiting');
