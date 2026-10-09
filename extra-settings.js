@@ -79,17 +79,32 @@
     if (window.location.search.indexOf('jd_fresh=') !== -1) {
       var clean = window.location.pathname + window.location.hash;
       window.history.replaceState(null, '', clean);
-      // Close any open sidebar/drawers after fresh reload
-      setTimeout(function() {
+      // Close any open sidebar/drawers after fresh reload (retry for 5s)
+      var closeAttempts = 0;
+      var closeTimer = setInterval(function() {
+        closeAttempts++;
         try {
-          document.querySelectorAll('.sidebar.open, .drawer.open').forEach(function(el) {
+          var closed = false;
+          document.querySelectorAll('.sidebar.open, .drawer.open, [class*="drawer"].open').forEach(function(el) {
             el.classList.remove('open');
+            closed = true;
           });
           var ov = document.querySelector('.sidebar-overlay.open');
-          if (ov) ov.classList.remove('open');
-          if (window.closeAllDrawers) window.closeAllDrawers();
+          if (ov) { ov.classList.remove('open'); closed = true; }
+          if (window.closeAllDrawers) { try { window.closeAllDrawers(); } catch(e2) {} }
+          // Also try clicking the close button if sidebar is visible
+          var sb = document.querySelector('.sidebar');
+          if (sb && sb.getBoundingClientRect().width > 0) {
+            var cs = window.getComputedStyle(sb);
+            if (cs.transform !== 'none') {
+              // Sidebar is translated (open), force close
+              sb.classList.remove('open');
+              sb.style.transform = '';
+            }
+          }
         } catch(e) {}
-      }, 500);
+        if (closeAttempts >= 25) clearInterval(closeTimer);
+      }, 200);
     }
   } catch (_) {}  'use strict';
   if (window.__jdExtraSettingsLoaded) return;
