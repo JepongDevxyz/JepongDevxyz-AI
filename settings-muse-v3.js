@@ -292,8 +292,11 @@
         var fnPath = btn.getAttribute('data-fnpath');
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
-        // Hide Settings immediately (no flicker), then open detail
-        page.setAttribute('hidden', '');
+        // For Voice/Pet: wait for detail to render before hiding (they open 2 modals)
+        var isVoicePet = (fn === 'openSettingsVoice' || fn === 'openSettingsPet');
+        if (!isVoicePet) {
+          page.setAttribute('hidden', '');
+        }
         window.__jdOpeningDetail = true;
         setTimeout(function () {
           try {
@@ -309,6 +312,13 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
+          // For Voice/Pet: hide Settings now that detail is open
+          if (isVoicePet) {
+            setTimeout(function() {
+              var p = document.getElementById(PAGE_ID);
+              if (p) p.setAttribute('hidden', '');
+            }, 300);
+          }
           // Clear flag, then watch for detail close
           setTimeout(function() { 
             window.__jdOpeningDetail = false;
