@@ -17,7 +17,8 @@
   var CSS = [
     /* Full-screen page */
     '#jdLibPage{position:fixed;inset:0;z-index:25000;background:#000;color:#fff;',
-    'display:flex;flex-direction:column;font-family:inherit}',
+    'display:flex;flex-direction:column;font-family:inherit;',
+    '-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}',
     '#jdLibPage[hidden]{display:none!important}',
     /* Header */
     '.jdlib-header{display:flex;align-items:center;justify-content:space-between;',
