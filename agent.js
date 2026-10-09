@@ -277,7 +277,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261008a198';
+  var V='?v=20261008a199';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
      CacheStorage and force a fresh navigation on every boot so updates
      appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
@@ -374,6 +374,37 @@ window.JDCodingAgent=Object.freeze({open,close});
   }
   try{
     var fetchDone = false;
+    /* Update card: centered modal when server has newer version */
+    try {
+      var bakedV = (V || '').replace('?v=', '').replace(/^v/, '');
+      fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
+      .then(function(r){ return r.text(); })
+      .then(function(sv){
+        sv = (sv||'').trim().replace(/^v/, '');
+        if (sv && bakedV && sv !== bakedV && !document.getElementById('jdUpdateCard')) {
+          var ov = document.createElement('div');
+          ov.id = 'jdUpdateCard';
+          ov.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+          var card = document.createElement('div');
+          card.style.cssText = 'background:#fff;color:#111;border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+          card.innerHTML = '<div style="font-size:18px;font-weight:700;margin-bottom:8px;">New Update Detected!</div>' +
+            '<div style="font-size:14px;color:#555;margin-bottom:20px;">Update now to try new features</div>' +
+            '<button id="jdUpdateBtn" style="background:#111;color:#fff;border:0;border-radius:10px;padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Update now</button>';
+          ov.appendChild(card);
+          document.body.appendChild(ov);
+          document.getElementById('jdUpdateBtn').onclick = function() {
+            try { sessionStorage.setItem('jd_force_fresh','1'); } catch(e) {}
+            try {
+              if ('caches' in window) {
+                caches.keys().then(function(names) {
+                  return Promise.all(names.map(function(n) { return caches.delete(n); }));
+                }).then(function() { location.reload(); });
+              } else { location.reload(); }
+            } catch(e) { location.reload(); }
+          };
+        }
+      }).catch(function(){});
+    } catch(e) {}
     fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
       .then(function(r){ return r.ok?r.text():''; })
       .then(function(t){
