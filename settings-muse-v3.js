@@ -179,7 +179,9 @@
   };
 
   function injectCss() {
-    if (document.getElementById(CSS_ID)) return;
+    // Remove old CSS first (prevents cached broken styles)
+    var old = document.getElementById(CSS_ID);
+    if (old) old.remove();
     var st = document.createElement('style');
     st.id = CSS_ID;
     st.textContent = CSS + '\n' + TRANSITION_CSS;
