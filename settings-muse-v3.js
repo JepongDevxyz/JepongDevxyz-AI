@@ -81,7 +81,7 @@
   ].join('\n');
 
   var CSS = [
-    '#jdmSetPage{position:fixed;inset:0;z-index:24000;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
+    '#jdmSetPage{position:fixed;inset:0;z-index:999;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
     '#jdmSetPage[hidden]{display:none!important}',
     '#jdmSetPage svg{flex-shrink:0}',
     '.jdm-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)}',
@@ -292,12 +292,8 @@
         var fnPath = btn.getAttribute('data-fnpath');
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
-        // For Voice/Pet: wait for detail to render before hiding (they open 2 modals)
-        var isVoicePet = (fn === 'openSettingsVoice' || fn === 'openSettingsPet');
-        if (!isVoicePet) {
-          page.setAttribute('hidden', '');
-        }
-        window.__jdOpeningDetail = true;
+        // Prevent Pet/Voice internal closeSettingsModal from closing us
+        window.__jdInNavHandler = true;
         setTimeout(function () {
           try {
             if (code === 'mode') {
@@ -312,33 +308,7 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
-          // For Voice/Pet: hide Settings now that detail is open
-          if (isVoicePet) {
-            setTimeout(function() {
-              var p = document.getElementById(PAGE_ID);
-              if (p) p.setAttribute('hidden', '');
-            }, 300);
-          }
-          // Clear flag, then watch for detail close
-          setTimeout(function() { 
-            window.__jdOpeningDetail = false;
-            // Simple watcher: when detail closes, show Settings
-            var checks = 0;
-            var timer = setInterval(function() {
-              checks++;
-              try {
-                // Check for any open detail, including top-up modal
-                var detailOpen = document.querySelector('[role="dialog"]:not([hidden]):not(#' + PAGE_ID + ')');
-                var topupOpen = document.querySelector('.jdpay-ov');
-                if (!detailOpen && !topupOpen) {
-                  var p = document.getElementById(PAGE_ID);
-                  if (p) p.removeAttribute('hidden');
-                  clearInterval(timer);
-                }
-              } catch(e) {}
-              if (checks > 60) clearInterval(timer);
-            }, 500);
-          }, 500);
+          setTimeout(function() { window.__jdInNavHandler = false; }, 500);
         }, 60);
       });
     });
@@ -452,8 +422,8 @@
   function closeSettings() {
     var page = document.getElementById(PAGE_ID);
     if (!page || !isOpen) return;
-    // Don't close if a detail is opening (Pet/Voice/API Keys call closeSettingsModal internally)
-    if (window.__jdOpeningDetail) return;
+    // Ignore if called internally by Pet/Voice during detail open
+    if (window.__jdInNavHandler) return;
     isOpen = false;
     // Slide out to right
     page.classList.add('jdm-exiting');
