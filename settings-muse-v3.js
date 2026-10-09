@@ -309,7 +309,9 @@
       if (window.__jdSettingsWatch) return;
       window.__jdSettingsWatch = true;
       var checks = 0;
-      var timer = setInterval(function () {
+      // Wait 1.5s for detail to fully render before checking (prevents false "closed" detection)
+      setTimeout(function() {
+        var timer = setInterval(function () {
         checks++;
         try {
           // Check if any detail modal/overlay is open
@@ -356,7 +358,8 @@
           }
         } catch (e) {}
         if (checks > 120) { clearInterval(timer); window.__jdSettingsWatch = false; } // 60s max
-      }, 500);
+        }, 500);
+      }, 1500);
     }
 
     /* Toggles: call the real global function; mirror the original
@@ -407,13 +410,19 @@
       var shown = false;
       try {
         if (window.JDCredits && window.JDCredits.balance != null) {
-          var bal = window.JDCredits.balance;
-          var total = 500;
-          var left = Math.round((bal / total) * 100);
-          if (!isNaN(left)) {
+          var bal = parseInt(window.JDCredits.balance, 10);
+          if (!isNaN(bal) && bal >= 0) {
+            var total = 500;
+            // Cap percentage at 100% to avoid 6936% bug
+            var left = Math.min(100, Math.round((bal / total) * 100));
             pct.textContent = left + '% left';
-            sub.textContent = bal + ' of ' + total + ' credits';
-            fill.style.width = Math.max(0, Math.min(100, left)) + '%';
+            // If balance exceeds total, just show balance (not "X of 500")
+            if (bal > total) {
+              sub.textContent = bal + ' credits';
+            } else {
+              sub.textContent = bal + ' of ' + total + ' credits';
+            }
+            fill.style.width = left + '%';
             shown = true;
           }
         }
