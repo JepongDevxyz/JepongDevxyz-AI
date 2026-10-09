@@ -264,7 +264,8 @@
       } catch (err) {}
     });
 
-    /* SIMPLE nav: hide this page, then call the real opener. */
+    /* Nav: HIDE Settings (not close), open detail, show Settings when detail closes.
+       This ensures back from detail returns to Settings, not homepage. */
     var navRows = page.querySelectorAll('.jdm-row[data-fn], .jdm-row[data-fnpath], .jdm-row[data-code]');
     Array.prototype.forEach.call(navRows, function (btn) {
       btn.addEventListener('click', function () {
@@ -272,28 +273,68 @@
         var fnPath = btn.getAttribute('data-fnpath');
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
-        closeSettings();
+        // Hide Settings (keep in back-nav so back returns here)
+        page.setAttribute('hidden', '');
+        window.__jdSettingsHidden = true;
         setTimeout(function () {
           try {
             if (code === 'mode') {
               if (window.toggleModal) window.toggleModal('modeModalOverlay', true);
-              return;
-            }
-            if (fnPath) {
+            } else if (fnPath) {
               var parts = fnPath.split('.');
               var obj = window;
               for (var i = 0; i < parts.length && obj; i++) obj = obj[parts[i]];
               if (typeof obj === 'function') obj();
-              return;
-            }
-            if (fn) {
+            } else if (fn) {
               var f = window[fn];
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
+          // Watch for detail close, then show Settings again
+          watchDetailAndShowSettings();
         }, 60);
       });
     });
+
+    /* Watch for open detail modals; when all closed, show Settings again */
+    function watchDetailAndShowSettings() {
+      if (window.__jdSettingsWatch) return;
+      window.__jdSettingsWatch = true;
+      var checks = 0;
+      var timer = setInterval(function () {
+        checks++;
+        try {
+          // Check if any detail modal/overlay is open
+          var detailOpen = false;
+          var selectors = [
+            '.modal-overlay.open', '.modal.open', '[role="dialog"]:not([hidden])',
+            '.jd-detail-page:not([hidden])', '.settings-detail:not([hidden])'
+          ];
+          for (var i = 0; i < selectors.length; i++) {
+            var els = document.querySelectorAll(selectors[i]);
+            for (var j = 0; j < els.length; j++) {
+              var el = els[j];
+              // Exclude our own Settings page
+              if (el.id === PAGE_ID || el.closest('#' + PAGE_ID)) continue;
+              // Exclude the main settings modal (it's closed)
+              if (el.id === 'settingsModal') continue;
+              var r = el.getBoundingClientRect();
+              if (r.width > 0 && r.height > 0) { detailOpen = true; break; }
+            }
+            if (detailOpen) break;
+          }
+          if (!detailOpen && window.__jdSettingsHidden) {
+            // Detail closed, show Settings again
+            var p = document.getElementById(PAGE_ID);
+            if (p) p.removeAttribute('hidden');
+            window.__jdSettingsHidden = false;
+            clearInterval(timer);
+            window.__jdSettingsWatch = false;
+          }
+        } catch (e) {}
+        if (checks > 120) { clearInterval(timer); window.__jdSettingsWatch = false; } // 60s max
+      }, 500);
+    }
 
     /* Toggles: call the real global function; mirror the original
        modal's checkbox so both stay in sync. */
