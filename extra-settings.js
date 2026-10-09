@@ -167,6 +167,21 @@
   function closeAiSheet() {
     var s = document.querySelector('.jd-extra-ai-sheet');
     if (s) s.remove();
+    // Ensure Muse Settings page is visible (return to Settings, not homepage)
+    try {
+      var sp = document.getElementById('jdSetPage');
+      if (sp) {
+        sp.removeAttribute('hidden');
+        // Re-push to back-nav so Android back works correctly
+        if (window.jdBackNav) {
+          var st = [];
+          try { st = window.jdBackNav.stack() || []; } catch (e) {}
+          if (st.indexOf('jdSetPage') === -1) {
+            try { window.jdBackNav.push(sp); } catch (e2) {}
+          }
+        }
+      }
+    } catch (e) {}
   }
 
   window.jdExtraOpenAiSheet = function () {

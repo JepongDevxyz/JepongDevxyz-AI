@@ -315,6 +315,7 @@
           '.modal-overlay.open,' +
           '.modal-overlay:not([style*="display: none"]),' +
           '.jd-legal-policy.open,' +
+          '.jd-extra-ai-sheet,' +
           '[id$="Page"]:not([hidden]),' +
           '[id$="Overlay"]:not([hidden])'
         );
