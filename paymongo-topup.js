@@ -107,8 +107,12 @@
     if (termsBtn) {
       termsBtn.onclick = function() {
         try {
-          if (window.openJdLegalPolicy) window.openJdLegalPolicy('terms');
-          else if (window.openTermsOfService) window.openTermsOfService();
+          // Close top-up modal first, then open Terms
+          close();
+          setTimeout(function() {
+            if (window.openJdLegalPolicy) window.openJdLegalPolicy('terms');
+            else if (window.openTermsOfService) window.openTermsOfService();
+          }, 100);
         } catch(e) {}
       };
     }
