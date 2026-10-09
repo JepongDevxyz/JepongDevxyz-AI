@@ -95,12 +95,8 @@
 
     document.getElementById('jdUseBack').addEventListener('click', closeUsage);
     document.getElementById('jdUseTopupRow').addEventListener('click', function () {
-      try {
-        if (window.JDCredits && typeof window.JDCredits.openTopup === 'function') { window.JDCredits.openTopup(); return; }
-        if (typeof window.openTopup === 'function') { window.openTopup(); return; }
-        if (typeof window.openPaymongoTopup === 'function') { window.openPaymongoTopup(); return; }
-        if (window.showModernToast) window.showModernToast('Top-up is not available right now');
-      } catch (e) {}
+      if (typeof window.openTopup === 'function') window.openTopup();
+      else if (typeof window.openPaymongoTopup === 'function') window.openPaymongoTopup();
     });
 
     updateValues();
@@ -126,8 +122,6 @@
       var gbar = document.getElementById('jdUseGuestBar');
       try {
         var gbal = parseInt(localStorage.getItem('jd_guest_credit_mirror') || '100', 10);
-        if (isNaN(gbal)) gbal = 100;
-        if (gbal < 0) gbal = 0; if (gbal > 100) gbal = 100;
         var gp = Math.round((gbal / 100) * 100);
         if (gpct) gpct.textContent = gp + '% remaining';
         if (gbar) gbar.style.width = gp + '%';
