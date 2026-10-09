@@ -327,8 +327,10 @@
             var timer = setInterval(function() {
               checks++;
               try {
+                // Check for any open detail, including top-up modal
                 var detailOpen = document.querySelector('[role="dialog"]:not([hidden]):not(#' + PAGE_ID + ')');
-                if (!detailOpen) {
+                var topupOpen = document.querySelector('.jdpay-ov');
+                if (!detailOpen && !topupOpen) {
                   var p = document.getElementById(PAGE_ID);
                   if (p) p.removeAttribute('hidden');
                   clearInterval(timer);
