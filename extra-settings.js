@@ -79,32 +79,7 @@
     if (window.location.search.indexOf('jd_fresh=') !== -1) {
       var clean = window.location.pathname + window.location.hash;
       window.history.replaceState(null, '', clean);
-      // Close any open sidebar/drawers after fresh reload (retry for 5s)
-      var closeAttempts = 0;
-      var closeTimer = setInterval(function() {
-        closeAttempts++;
-        try {
-          var closed = false;
-          document.querySelectorAll('.sidebar.open, .drawer.open, [class*="drawer"].open').forEach(function(el) {
-            el.classList.remove('open');
-            closed = true;
-          });
-          var ov = document.querySelector('.sidebar-overlay.open');
-          if (ov) { ov.classList.remove('open'); closed = true; }
-          if (window.closeAllDrawers) { try { window.closeAllDrawers(); } catch(e2) {} }
-          // Also try clicking the close button if sidebar is visible
-          var sb = document.querySelector('.sidebar');
-          if (sb && sb.getBoundingClientRect().width > 0) {
-            var cs = window.getComputedStyle(sb);
-            if (cs.transform !== 'none') {
-              // Sidebar is translated (open), force close
-              sb.classList.remove('open');
-              sb.style.transform = '';
-            }
-          }
-        } catch(e) {}
-        if (closeAttempts >= 25) clearInterval(closeTimer);
-      }, 200);
+
     }
   } catch (_) {}  'use strict';
   if (window.__jdExtraSettingsLoaded) return;
@@ -193,21 +168,6 @@
   function closeAiSheet() {
     var s = document.querySelector('.jd-extra-ai-sheet');
     if (s) s.remove();
-    // Ensure Muse Settings page is visible (return to Settings, not homepage)
-    try {
-      var sp = document.getElementById('jdSetPage');
-      if (sp) {
-        sp.removeAttribute('hidden');
-        // Re-push to back-nav so Android back works correctly
-        if (window.jdBackNav) {
-          var st = [];
-          try { st = window.jdBackNav.stack() || []; } catch (e) {}
-          if (st.indexOf('jdSetPage') === -1) {
-            try { window.jdBackNav.push(sp); } catch (e2) {}
-          }
-        }
-      }
-    } catch (e) {}
   }
 
   window.jdExtraOpenAiSheet = function () {
