@@ -69,6 +69,13 @@
     '#' + PAGE_ID + '[hidden]{display:none!important}'
   ].join('\n');
 
+  /* Details opened from Settings: full-screen, opaque, no background bleed */
+  var DETAIL_CSS = [
+    '.jdm-detail-open{position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important;',
+    'max-width:none!important;margin:0!important;border-radius:0!important;background:#000!important;z-index:1001!important}',
+    'body.theme-light .jdm-detail-open{background:#fff!important}'
+  ].join('\n');
+
   var CSS = [
     '#jdmSetPage{position:fixed;inset:0;z-index:999;background:#000;color:#f5f5f5;display:flex;flex-direction:column;font-family:inherit;-webkit-tap-highlight-color:transparent}',
     '#jdmSetPage[hidden]{display:none!important}',
@@ -171,7 +178,7 @@
     if (document.getElementById(CSS_ID)) return;
     var st = document.createElement('style');
     st.id = CSS_ID;
-    st.textContent = CSS + '\n' + TRANSITION_CSS;
+    st.textContent = CSS + '\n' + TRANSITION_CSS + '\n' + DETAIL_CSS;
     document.head.appendChild(st);
   }
 
@@ -281,7 +288,7 @@
         var fnPath = btn.getAttribute('data-fnpath');
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
-        // Detail opens on top of Settings (no hide needed)
+        // Detail opens on top of Settings. Make it full-screen to prevent overlap.
         setTimeout(function () {
           try {
             if (code === 'mode') {
@@ -296,7 +303,20 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
-          // No watcher needed - Settings stays visible underneath
+          // Make the opened detail full-screen (covers Settings, no overlap)
+          setTimeout(function() {
+            try {
+              var details = document.querySelectorAll('[role="dialog"]:not([hidden])');
+              for (var i = 0; i < details.length; i++) {
+                var d = details[i];
+                if (d.id === PAGE_ID || (d.closest && d.closest('#' + PAGE_ID))) continue;
+                if (d.id === 'settingsModal') continue;
+                d.classList.add('jdm-detail-open');
+                var inner = d.querySelector('.settings-home');
+                if (inner) inner.classList.add('jdm-detail-open');
+              }
+            } catch(e2) {}
+          }, 150);
         }, 60);
       });
     });
