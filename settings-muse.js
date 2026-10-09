@@ -97,6 +97,7 @@
     chat: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>',
     devices: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="2" y="5" width="14" height="10" rx="2"/><path d="M6 19h12"/><path d="M18 9h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3"/></svg>',
     bell: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg>',
+    brush: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M9.5 12.5l7-7a2.1 2.1 0 0 1 3 3l-7 7H9.5v-3z"/><path d="M9.5 12.5L4 20l3.5.5L9.5 12.5z"/><path d="M14.5 5.5l3 3"/></svg>',
     palette: '<svg class="jdset-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1" fill="currentColor" stroke="none"/><path d="M12 21a9 9 0 0 1 0-18 9 9 0 0 1 9 9c0 2-1.5 3-3 3h-2a2 2 0 0 0-1.5 3.3c.5.6.2 2.7-2.5 2.7z"/></svg>',
     lock: '<svg class="jdset-ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     star: '<svg class="jdset-ic" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg>',
@@ -154,8 +155,8 @@
       { icon: 'sliders', label: 'Mode', fn: 'jdOpenModeSettings' },
       { icon: 'cpu', label: 'Models', fn: 'jdOpenModelsSettings' },
       { icon: 'bell', label: 'Reply Notifications', fn: 'openJdReplyNotifications' },
-      { icon: 'shieldcheck', label: 'Permissions', fn: 'openJdPermissions' },
-      { icon: 'plug', label: 'Connectors', fnPath: '__jdConnectors.open' },
+      { icon: 'hand', label: 'Permissions', fn: 'openJdPermissions' },
+      { icon: 'grid', label: 'Connectors', fnPath: '__jdConnectors.open' },
       { icon: 'key', label: 'Custom API Keys', fn: 'openProviderKeysSettings' },
       { icon: 'import', label: 'Import Memory', fn: 'jdOpenImportMemory' },
       { icon: 'globe', label: 'Web Search', toggle: 'webSearch' },
@@ -167,7 +168,7 @@
       { icon: 'route', label: 'Smart Model Router', toggle: 'smartRouter' }
     ]},
     { label: 'APP', rows: [
-      { icon: 'palette', label: 'Appearance', fn: 'openJdAppearance' },
+      { icon: 'brush', label: 'Appearance', fn: 'openJdAppearance' },
       { icon: 'vibrate', label: 'Haptics', fn: 'openJdHaptics' },
       { icon: 'chart', label: 'Usage & Limits', fn: 'openUsage' }
     ]},
