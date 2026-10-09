@@ -324,7 +324,22 @@
             if (detailOpen) break;
           }
           if (!detailOpen && window.__jdSettingsHidden) {
-            // Detail closed, show Settings again
+            // Detail closed - REMOVE hidden detail modals from DOM to prevent freeze
+            try {
+              document.querySelectorAll('.modal-overlay, .modal, [role="dialog"]').forEach(function(el) {
+                if (el.id === PAGE_ID || el.closest('#' + PAGE_ID)) return;
+                if (el.id === 'settingsModal') return;
+                var r = el.getBoundingClientRect();
+                // If hidden (0 size) and not our Settings, remove it
+                if (r.width === 0 && r.height === 0 && el.parentNode) {
+                  // Only remove if it's a detail modal (not main app elements)
+                  if (el.classList.contains('open') === false) {
+                    try { el.remove(); } catch(e2) {}
+                  }
+                }
+              });
+            } catch(e2) {}
+            // Show Settings again
             var p = document.getElementById(PAGE_ID);
             if (p) p.removeAttribute('hidden');
             window.__jdSettingsHidden = false;
