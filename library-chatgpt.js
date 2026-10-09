@@ -73,8 +73,10 @@
     'display:flex;align-items:center;justify-content:center;margin:24px auto 0;cursor:pointer}',
     '.jdlib-empty .jdlib-del svg{width:28px;height:28px;stroke:#fff;margin:0}',
     /* Bottom bar */
-    '.jdlib-bottom{position:absolute;bottom:0;left:0;right:0;display:flex;gap:12px;',
-    'padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#000 40%)}',
+    '.jdlib-bottom{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;z-index:5}',
+    '.jdlib-plus{width:56px;height:56px;border-radius:50%;background:#2f2f2f;color:#fff;border:none;',
+    'display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4)}',
+    '.jdlib-searchwrap{padding:0 16px 12px;flex:0 0 auto}',
     '.jdlib-search{flex:1;display:flex;align-items:center;gap:10px;background:#2f2f2f;',
     'border-radius:24px;padding:0 18px;height:48px;cursor:text}',
     '.jdlib-search svg{width:20px;height:20px;stroke:#999;fill:none;stroke-width:2;flex:0 0 auto}',
@@ -190,6 +192,9 @@
       '<div class="jdlib-title">Library</div>' +
       '<button class="jdlib-hbtn" id="jdLibMenu">' + I.dots + '</button>' +
       '</div>' +
+      '<div class="jdlib-searchwrap">' +
+      '<div class="jdlib-search" id="jdLibSearchBar">' + I.search + '<span>Search</span><input id="jdLibSearchInput" type="text" placeholder="Search">' + '</div>' +
+      '</div>' +
       '<div class="jdlib-tabs">' +
       '<button class="jdlib-tab active" data-tab="suggested">Suggested</button>' +
       '<button class="jdlib-tab" data-tab="favorites">Favorites</button>' +
@@ -197,7 +202,6 @@
       '</div>' +
       '<div class="jdlib-content" id="jdLibContent"><div class="jdlib-grid" id="jdLibGrid"></div></div>' +
       '<div class="jdlib-bottom">' +
-      '<div class="jdlib-search" id="jdLibSearchBar">' + I.search + '<span>Search</span><input id="jdLibSearchInput" type="text" placeholder="Search">' + '</div>' +
       '<button class="jdlib-plus" id="jdLibPlus">' + I.plus + '</button>' +
       '</div>' +
       '<div class="jdlib-menu" id="jdLibMenuPop" hidden></div>' +
