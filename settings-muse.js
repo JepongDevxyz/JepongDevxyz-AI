@@ -276,11 +276,26 @@
       var obs = null;
       var detailOpen = function () {
         try {
-          var els = document.querySelectorAll('.modal-overlay.open, [id$="Overlay"].open, [id$="Page"].open, [id$="Sheet"].open');
+          // 1) Known overlay patterns (class-based)
+          var els = document.querySelectorAll('.modal-overlay.open, [id$="Overlay"].open, [id$="Page"].open, [id$="Sheet"].open, .jd-extra-ai-sheet, .jd-legal-policy.open');
           for (var i = 0; i < els.length; i++) {
             var id = els[i].id;
             if (id === 'jdSetPage' || id === 'settingsModal') continue;
-            return true;
+            // visible check
+            var cs = window.getComputedStyle(els[i]);
+            if (cs.display !== 'none' && cs.visibility !== 'hidden') return true;
+          }
+          // 2) Fallback: any visible fixed overlay at/above our behind level (z 900),
+          // excluding the muse page itself. Catches non-standard IDs.
+          var all = document.querySelectorAll('body > *');
+          for (var j = 0; j < all.length; j++) {
+            var el = all[j];
+            if (el.id === 'jdSetPage' || el.id === 'settingsModal') continue;
+            var s = window.getComputedStyle(el);
+            if (s.position === 'fixed' && s.display !== 'none' && s.visibility !== 'hidden') {
+              var z = parseInt(s.zIndex, 10);
+              if (!isNaN(z) && z >= 900) return true;
+            }
           }
         } catch (e) {}
         return false;
