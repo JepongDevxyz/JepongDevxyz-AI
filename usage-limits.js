@@ -96,9 +96,9 @@
     document.getElementById('jdUseBack').addEventListener('click', closeUsage);
     document.getElementById('jdUseTopupRow').addEventListener('click', function () {
       try {
+        // Use fullscreen top-up (separate from Credits card modal)
+        if (window.openTopupFullscreen) { window.openTopupFullscreen(); return; }
         if (window.JdPay && typeof window.JdPay.open === 'function') { window.JdPay.open(); return; }
-        if (typeof window.openTopup === 'function') { window.openTopup(); return; }
-        if (typeof window.openPaymongoTopup === 'function') { window.openPaymongoTopup(); return; }
       } catch (e) {}
     });
 

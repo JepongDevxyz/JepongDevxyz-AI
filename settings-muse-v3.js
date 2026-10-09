@@ -80,10 +80,10 @@
     'body.theme-light.jdm-settings-open [role="dialog"]:not(#' + PAGE_ID + '):not(#settingsModal){background:#fff!important}'
   ].join('\n');
 
-  /* Top-up modal: full-screen when opened from Settings */
+  /* Top-up modal: full-screen ONLY when opened from Usage & Limits (separate from Credits card) */
   var TOPUP_CSS = [
-    '.jdpay-ov{z-index:1001!important;padding:0!important}',
-    '.jdpay-box{max-width:none!important;width:100%!important;height:100dvh!important;max-height:none!important;',
+    'body.jdpay-fullscreen-mode .jdpay-ov{z-index:1001!important;padding:0!important}',
+    'body.jdpay-fullscreen-mode .jdpay-box{max-width:none!important;width:100%!important;height:100dvh!important;max-height:none!important;',
     'margin:0!important;border-radius:0!important;display:flex!important;flex-direction:column!important;justify-content:center!important}'
   ].join('\n');
 
