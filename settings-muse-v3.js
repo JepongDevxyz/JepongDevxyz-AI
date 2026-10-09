@@ -413,7 +413,7 @@
     var page = document.getElementById(PAGE_ID);
     if (!page || !isOpen) return;
     // Ignore if called within 100ms of a nav tap (Pet/Voice internal close)
-    if (window.__jdNavTime && (Date.now() - window.__jdNavTime) < 100) return;
+    if (window.__jdNavTime && (Date.now() - window.__jdNavTime) < 1000) return;
     isOpen = false;
     // Slide out to right
     page.classList.add('jdm-exiting');
