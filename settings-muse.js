@@ -293,7 +293,9 @@
       var page = document.getElementById('jdSetPage');
       var dskel = document.getElementById('jdSetDetailSkeleton');
       if (dskel) dskel.removeAttribute('hidden');
+      window.__jdSetOpeningDetail = true;
       try { openFn(); } catch (e) {}
+      window.__jdSetOpeningDetail = false;
       // Boost any opened detail above settings (z-24000 -> z-25000).
       // Retry for 2s in case detail opens late. Settings stays interactive.
       var boostCount = 0;
@@ -469,11 +471,15 @@
   }
 
   function closeSettings() {
+    // Don't hide if we're in the middle of opening a detail
+    // (the detail's openFn calls closeSettingsModal internally)
+    if (window.__jdSetOpeningDetail) return;
     var page = document.getElementById('jdSetPage');
     if (!page) return;
     page.setAttribute('hidden', '');
     if (window.jdBackNav) { try { window.jdBackNav.pop(page); } catch (e) {} }
   }
+
 
   function init() {
     buildPage();
