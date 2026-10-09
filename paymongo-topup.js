@@ -99,9 +99,19 @@
       PLANS.map(function (p) {
         return '<button class="jdpay-plan" data-plan="' + p.id + '"><b>' + p.name + '</b><span>' + p.blurb + '</span></button>';
       }).join('') +
-      '<button class="jdpay-close">Isara</button>'
+      '<button class="jdpay-close">Isara</button>' +
+      '<button class="jdpay-terms" style="background:none;border:none;color:#71717a;font-size:12px;margin-top:12px;cursor:pointer;text-decoration:underline">Terms of Service</button>'
     );
     box.querySelector('.jdpay-close').onclick = close;
+    var termsBtn = box.querySelector('.jdpay-terms');
+    if (termsBtn) {
+      termsBtn.onclick = function() {
+        try {
+          if (window.openJdLegalPolicy) window.openJdLegalPolicy('terms');
+          else if (window.openTermsOfService) window.openTermsOfService();
+        } catch(e) {}
+      };
+    }
     var errBox = box.querySelector('.jdpay-err');
     box.querySelectorAll('.jdpay-plan').forEach(function (btn) {
       btn.onclick = function () { start(btn.getAttribute('data-plan'), errBox); };
