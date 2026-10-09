@@ -76,6 +76,12 @@
     'body.theme-light .jdset-skeleton{background:#e8e8e8}',
     '#jdSetPage.jdset-loading .jdset-scroll > *:not(.jdset-skeleton-wrap){display:none}',
     '#jdSetPage.jdset-behind{z-index:900!important;pointer-events:none}',
+    '#jdSetDetailSkeleton{position:fixed;inset:0;z-index:950;background:#000;display:flex;flex-direction:column;gap:12px;padding:76px 16px 20px}',
+    '#jdSetDetailSkeleton[hidden]{display:none!important}',
+    '.jdset-dskel{height:58px;border-radius:16px;background:#1c1c1e;animation:jdset-pulse 1.2s ease-in-out infinite}',
+    '.jdset-dskel.tall{height:120px}',
+    'body.theme-light #jdSetDetailSkeleton{background:#fff}',
+    'body.theme-light .jdset-dskel{background:#e9e9ee}',
     '.jdset-skeleton-wrap{padding:8px 0}',
     '#jdSetPage:not(.jdset-loading) .jdset-skeleton-wrap{display:none}'
   ].join('\n');
@@ -220,6 +226,7 @@
       '</div>' +
       '<div class="jdset-scroll">' +
       '<div class="jdset-skeleton-wrap"><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div><div class="jdset-skeleton"></div></div>' +
+      '<div id="jdSetDetailSkeleton" hidden><div class="jdset-dskel tall"></div><div class="jdset-dskel"></div><div class="jdset-dskel"></div><div class="jdset-dskel"></div><div class="jdset-dskel"></div></div>' +
       '<div class="jdset-usage" id="jdSetUsage">' +
       '<div class="jdset-urow"><span class="jdset-uplan">Credits</span><span class="jdset-upct" id="jdSetPct">--</span></div>' +
       '<div class="jdset-usub" id="jdSetSub">Loading…</div>' +
@@ -262,6 +269,9 @@
       try { savedScroll = scrollEl ? scrollEl.scrollTop : 0; } catch (e) {}
       // Drop below .modal-overlay (z-index 1000) so detail buttons are clickable
       page.classList.add('jdset-behind');
+      // Show Muse-style detail skeleton (fits the design) while the detail loads
+      var dskel = document.getElementById('jdSetDetailSkeleton');
+      if (dskel) dskel.removeAttribute('hidden');
       try { openFn(); } catch (e) {}
       var obs = null;
       var detailOpen = function () {
@@ -278,6 +288,8 @@
       var restore = function () {
         try {
           page.classList.remove('jdset-behind');
+          var ds = document.getElementById('jdSetDetailSkeleton');
+          if (ds) ds.setAttribute('hidden', '');
           var sc = page.querySelector('.jdset-scroll');
           if (sc) sc.scrollTop = savedScroll;
         } catch (e) {}
@@ -286,6 +298,7 @@
       // Let the detail open first, then watch for its close
       setTimeout(function () {
         if (detailOpen()) {
+          if (dskel) dskel.setAttribute('hidden', '');
           obs = new MutationObserver(function () {
             if (!detailOpen()) restore();
           });
@@ -405,9 +418,12 @@
     buildPage();
     var page = document.getElementById('jdSetPage');
     page.removeAttribute('hidden');
-    // Show instantly — no skeleton delay (user wants Settings right away)
-    page.classList.remove('jdset-loading');
-    try { updateUsage(); } catch (e) {}
+    // Skeleton loader shows immediately (no homepage visible), then reveals
+    page.classList.add('jdset-loading');
+    setTimeout(function () {
+      page.classList.remove('jdset-loading');
+      try { updateUsage(); } catch (e) {}
+    }, 400);
     // Hide old modal
     var old = document.getElementById('settingsModal');
     if (old) old.classList.remove('open');
