@@ -291,27 +291,37 @@
 
     function openDetailSmooth(openFn) {
       var page = document.getElementById('jdSetPage');
-      // Show skeleton
       var dskel = document.getElementById('jdSetDetailSkeleton');
       if (dskel) dskel.removeAttribute('hidden');
       try { openFn(); } catch (e) {}
-      // After detail opens, boost it above settings (z-24000)
-      // Settings stays at z-24000, interactive. Detail goes to z-25000.
-      setTimeout(function () {
-        var ds = document.getElementById('jdSetDetailSkeleton');
-        if (ds) ds.setAttribute('hidden', '');
-        // Find the newly opened detail and boost its z-index
+      // Boost any opened detail above settings (z-24000 -> z-25000).
+      // Retry for 2s in case detail opens late. Settings stays interactive.
+      var boostCount = 0;
+      var boostTimer = setInterval(function () {
+        boostCount++;
         var details = document.querySelectorAll(
           '.modal-overlay.open,' +
+          '.modal-overlay:not([style*="display: none"]),' +
           '.jd-legal-policy.open,' +
-          '[id$="Page"]:not([hidden])'
+          '[id$="Page"]:not([hidden]),' +
+          '[id$="Overlay"]:not([hidden])'
         );
+        var boosted = false;
         details.forEach(function (d) {
-          if (d.id !== 'jdSetPage') {
-            d.style.zIndex = '25000';
+          if (d.id !== 'jdSetPage' && d.id !== 'jdSetDetailSkeleton') {
+            var cs = window.getComputedStyle(d);
+            if (cs.display !== 'none' && cs.visibility !== 'hidden') {
+              d.style.setProperty('z-index', '25000', 'important');
+              boosted = true;
+            }
           }
         });
-      }, 400);
+        if (boostCount >= 10 || (boosted && boostCount >= 3)) {
+          clearInterval(boostTimer);
+          var ds = document.getElementById('jdSetDetailSkeleton');
+          if (ds) ds.setAttribute('hidden', '');
+        }
+      }, 200);
     }
 
     // Row clicks: open the detail SMOOTHLY above the Settings list.
