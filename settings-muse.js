@@ -76,7 +76,6 @@
     '@keyframes jdset-pulse{0%,100%{opacity:.6}50%{opacity:.3}}',
     '.theme-light .jdset-skeleton{background:#e8e8e8}',
     '#jdSetPage.jdset-loading .jdset-scroll > *:not(.jdset-skeleton-wrap){display:none}',
-    '#jdSetPage.jdset-behind{z-index:900!important;pointer-events:none}',
     '#jdSetDetailSkeleton{position:fixed;inset:0;z-index:950;background:#000;display:flex;flex-direction:column;gap:12px;padding:76px 16px 20px}',
     '#jdSetDetailSkeleton[hidden]{display:none!important}',
     '.jdset-dskel{height:58px;border-radius:16px;background:#1c1c1e;animation:jdset-pulse 1.2s ease-in-out infinite}',
@@ -292,17 +291,26 @@
 
     function openDetailSmooth(openFn) {
       var page = document.getElementById('jdSetPage');
-      if (!page) { try { openFn(); } catch (e) {} return; }
-      // Drop settings behind the detail (detail must be above z-900).
-      // No auto-restore: when detail closes, settings is visible underneath.
-      page.classList.add('jdset-behind');
+      // Show skeleton
       var dskel = document.getElementById('jdSetDetailSkeleton');
       if (dskel) dskel.removeAttribute('hidden');
       try { openFn(); } catch (e) {}
-      // Hide skeleton after detail opens
+      // After detail opens, boost it above settings (z-24000)
+      // Settings stays at z-24000, interactive. Detail goes to z-25000.
       setTimeout(function () {
         var ds = document.getElementById('jdSetDetailSkeleton');
         if (ds) ds.setAttribute('hidden', '');
+        // Find the newly opened detail and boost its z-index
+        var details = document.querySelectorAll(
+          '.modal-overlay.open,' +
+          '.jd-legal-policy.open,' +
+          '[id$="Page"]:not([hidden])'
+        );
+        details.forEach(function (d) {
+          if (d.id !== 'jdSetPage') {
+            d.style.zIndex = '25000';
+          }
+        });
       }, 400);
     }
 
@@ -453,7 +461,6 @@
   function closeSettings() {
     var page = document.getElementById('jdSetPage');
     if (!page) return;
-    page.classList.remove('jdset-behind');
     page.setAttribute('hidden', '');
     if (window.jdBackNav) { try { window.jdBackNav.pop(page); } catch (e) {} }
   }
