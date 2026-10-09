@@ -263,11 +263,9 @@
     // - Detail opens IMMEDIATELY above the Settings list (no homepage flash)
     // - Muse page drops below modal overlays so the detail is fully clickable
     // - On detail close, Settings returns at the exact scroll position
-    // Track active detail poller so we can clean up (prevents leaks/freezes)
-    var activeDetailTimer = null;
-    function stopDetailObs() {
-      if (activeDetailTimer) { try { clearInterval(activeDetailTimer); } catch (e) {} activeDetailTimer = null; }
-    }
+    // No auto-restore: when detail closes, settings is visible underneath.
+    // User taps settings back button to close. Simple, freeze-proof.
+    function stopDetailObs() {}
 
     // Lightweight detail-open check (no getComputedStyle — freeze-proof).
     // Covers: .modal-overlay.open (most modals), .jd-legal-policy.open
@@ -295,44 +293,17 @@
     function openDetailSmooth(openFn) {
       var page = document.getElementById('jdSetPage');
       if (!page) { try { openFn(); } catch (e) {} return; }
-      stopDetailObs(); // clean up any previous
-      var scrollEl = page.querySelector('.jdset-scroll');
-      var savedScroll = 0;
-      try { savedScroll = scrollEl ? scrollEl.scrollTop : 0; } catch (e) {}
-      // Drop below .modal-overlay (z-index 1000) so detail buttons are clickable
+      // Drop settings behind the detail (detail must be above z-900).
+      // No auto-restore: when detail closes, settings is visible underneath.
       page.classList.add('jdset-behind');
-      // Show Muse-style detail skeleton (fits the design) while the detail loads
       var dskel = document.getElementById('jdSetDetailSkeleton');
       if (dskel) dskel.removeAttribute('hidden');
       try { openFn(); } catch (e) {}
-      var restore = function () {
-        stopDetailObs();
-        try {
-          page.classList.remove('jdset-behind');
-          page.removeAttribute('hidden');
-          var ds = document.getElementById('jdSetDetailSkeleton');
-          if (ds) ds.setAttribute('hidden', '');
-          var sc = page.querySelector('.jdset-scroll');
-          if (sc) sc.scrollTop = savedScroll;
-        } catch (e) {}
-      };
-      // Let the detail open first, then poll for its close (lightweight, freeze-proof)
+      // Hide skeleton after detail opens
       setTimeout(function () {
-        if (dskel) dskel.setAttribute('hidden', '');
-        if (detailOpen()) {
-          var checks = 0;
-          activeDetailTimer = setInterval(function () {
-            checks++;
-            try {
-              if (!detailOpen()) { restore(); return; }
-            } catch (e) {}
-            // Safety: stop polling after 5 min to avoid leaks
-            if (checks > 600) stopDetailObs();
-          }, 500);
-        } else {
-          restore(); // detail didn't open — come back immediately
-        }
-      }, 350);
+        var ds = document.getElementById('jdSetDetailSkeleton');
+        if (ds) ds.setAttribute('hidden', '');
+      }, 400);
     }
 
     // Row clicks: open the detail SMOOTHLY above the Settings list.
@@ -482,12 +453,9 @@
   function closeSettings() {
     var page = document.getElementById('jdSetPage');
     if (!page) return;
-    // Smooth-nav guard: if a detail is open above us, stay in the background.
-    // Hiding here would break the return-to-Settings flow.
-    if (page.classList.contains('jdset-behind')) return;
-    try { stopDetailObs(); } catch (e) {}
+    page.classList.remove('jdset-behind');
     page.setAttribute('hidden', '');
-    if (window.jdBackNav) window.jdBackNav.pop(page);
+    if (window.jdBackNav) { try { window.jdBackNav.pop(page); } catch (e) {} }
   }
 
   function init() {
