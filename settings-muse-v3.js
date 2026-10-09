@@ -162,7 +162,8 @@
     ]},
     { label: 'LEGAL & PRIVACY', rows: [
       { icon: 'file',   label: 'Terms of Service', fn: 'openJdLegalPolicy', arg: 'terms' },
-      { icon: 'shield', label: 'Privacy Policy',   fn: 'openJdLegalPolicy', arg: 'privacy' }
+      { icon: 'shield', label: 'Privacy Policy',   fn: 'openJdLegalPolicy', arg: 'privacy' },
+      { icon: 'tag',    label: 'Pricing',          fnPath: 'JdPay.open' }
     ]}
   ];
 
