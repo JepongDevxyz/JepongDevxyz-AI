@@ -289,6 +289,7 @@
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
         // Detail opens on top of Settings. Make it full-screen to prevent overlap.
+        window.__jdOpeningDetail = true;
         setTimeout(function () {
           try {
             if (code === 'mode') {
@@ -303,6 +304,8 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
+          // Clear flag after detail opens
+          setTimeout(function() { window.__jdOpeningDetail = false; }, 500);
           // Make the opened detail full-screen (covers Settings, no overlap)
           setTimeout(function() {
             try {
@@ -429,6 +432,8 @@
   function closeSettings() {
     var page = document.getElementById(PAGE_ID);
     if (!page || !isOpen) return;
+    // Don't close if a detail is opening (Pet/Voice/API Keys call closeSettingsModal internally)
+    if (window.__jdOpeningDetail) return;
     isOpen = false;
     // Slide out to right
     page.classList.add('jdm-exiting');
