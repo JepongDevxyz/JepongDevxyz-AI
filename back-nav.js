@@ -133,6 +133,10 @@
         var id = el.id || '';
         if (!/modal|overlay|sheet|drawer|page/i.test(id)) return;
         if (id === 'jdOfflineBar') return;
+        // Muse-settings smooth nav: a page with 'jdset-behind' is intentionally
+        // lowered below overlays while a detail is open — treat as still open
+        // so the stack never empties and history.back() never fires.
+        if (el.classList && el.classList.contains('jdset-behind')) { found.push(el); return; }
         if (isVisible(el)) {
           var cs = getComputedStyle(el);
           if (cs.position === 'fixed' && parseInt(cs.zIndex || '0', 10) >= 1000) found.push(el);

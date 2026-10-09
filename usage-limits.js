@@ -95,8 +95,12 @@
 
     document.getElementById('jdUseBack').addEventListener('click', closeUsage);
     document.getElementById('jdUseTopupRow').addEventListener('click', function () {
-      if (typeof window.openTopup === 'function') window.openTopup();
-      else if (typeof window.openPaymongoTopup === 'function') window.openPaymongoTopup();
+      try {
+        if (window.JDCredits && typeof window.JDCredits.openTopup === 'function') { window.JDCredits.openTopup(); return; }
+        if (typeof window.openTopup === 'function') { window.openTopup(); return; }
+        if (typeof window.openPaymongoTopup === 'function') { window.openPaymongoTopup(); return; }
+        if (window.showModernToast) window.showModernToast('Top-up is not available right now');
+      } catch (e) {}
     });
 
     updateValues();

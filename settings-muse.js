@@ -261,9 +261,38 @@
     // - Detail opens IMMEDIATELY above the Settings list (no homepage flash)
     // - Muse page drops below modal overlays so the detail is fully clickable
     // - On detail close, Settings returns at the exact scroll position
+    // Track active detail observer so we can clean up (prevents leaks/freezes)
+    var activeDetailObs = null;
+    function stopDetailObs() {
+      if (activeDetailObs) { try { activeDetailObs.disconnect(); } catch (e) {} activeDetailObs = null; }
+    }
+
+    // Lightweight detail-open check (no getComputedStyle — freeze-proof).
+    // Covers: .modal-overlay.open (most modals), .jd-legal-policy.open
+    // (Terms/Privacy), .jd-extra-ai-sheet (Cache, in-DOM = open),
+    // [id$="Page"]:not([hidden]) (full-screen pages like Usage, Library).
+    function detailOpen() {
+      try {
+        var els = document.querySelectorAll(
+          '.modal-overlay.open,' +
+          '.jd-legal-policy.open,' +
+          '.jd-extra-ai-sheet,' +
+          '[id$="Page"]:not([hidden]),' +
+          '[id$="Overlay"].open'
+        );
+        for (var i = 0; i < els.length; i++) {
+          var id = els[i].id;
+          if (id === 'jdSetPage' || id === 'settingsModal' || id === 'jdSetDetailSkeleton') continue;
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
     function openDetailSmooth(openFn) {
       var page = document.getElementById('jdSetPage');
       if (!page) { try { openFn(); } catch (e) {} return; }
+      stopDetailObs(); // clean up any previous
       var scrollEl = page.querySelector('.jdset-scroll');
       var savedScroll = 0;
       try { savedScroll = scrollEl ? scrollEl.scrollTop : 0; } catch (e) {}
@@ -273,38 +302,11 @@
       var dskel = document.getElementById('jdSetDetailSkeleton');
       if (dskel) dskel.removeAttribute('hidden');
       try { openFn(); } catch (e) {}
-      var obs = null;
-      var detailOpen = function () {
-        try {
-          // 1) Known overlay patterns (class-based)
-          var els = document.querySelectorAll('.modal-overlay.open, [id$="Overlay"].open, [id$="Page"].open, [id$="Sheet"].open, .jd-extra-ai-sheet, .jd-legal-policy.open');
-          for (var i = 0; i < els.length; i++) {
-            var id = els[i].id;
-            if (id === 'jdSetPage' || id === 'settingsModal') continue;
-            // visible check
-            var cs = window.getComputedStyle(els[i]);
-            if (cs.display !== 'none' && cs.visibility !== 'hidden') return true;
-          }
-          // 2) Fallback: any visible fixed overlay at/above our behind level (z 900),
-          // excluding the muse page itself. Catches non-standard IDs.
-          var all = document.querySelectorAll('body > *');
-          for (var j = 0; j < all.length; j++) {
-            var el = all[j];
-            if (el.id === 'jdSetPage' || el.id === 'settingsModal') continue;
-            var s = window.getComputedStyle(el);
-            if (s.position === 'fixed' && s.display !== 'none' && s.visibility !== 'hidden') {
-              var z = parseInt(s.zIndex, 10);
-              if (!isNaN(z) && z >= 900) return true;
-            }
-          }
-        } catch (e) {}
-        return false;
-      };
       var restore = function () {
+        stopDetailObs();
         try {
           page.classList.remove('jdset-behind');
           // Ensure the page is visible even if something hid it
-          // (e.g., a detail's back button triggering jdBackNav/history)
           page.removeAttribute('hidden');
           var ds = document.getElementById('jdSetDetailSkeleton');
           if (ds) ds.setAttribute('hidden', '');
@@ -320,18 +322,24 @@
             }
           }
         } catch (e) {}
-        if (obs) { try { obs.disconnect(); } catch (e2) {} obs = null; }
+      };
+      // Debounced check: batch rapid mutations to avoid freeze
+      var checkTimer = null;
+      var scheduleCheck = function () {
+        if (checkTimer) return;
+        checkTimer = setTimeout(function () {
+          checkTimer = null;
+          if (!detailOpen()) restore();
+        }, 120);
       };
       // Let the detail open first, then watch for its close
       setTimeout(function () {
+        if (dskel) dskel.setAttribute('hidden', '');
         if (detailOpen()) {
-          if (dskel) dskel.setAttribute('hidden', '');
-          obs = new MutationObserver(function () {
-            if (!detailOpen()) restore();
-          });
-          try { obs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'hidden', 'style'] }); } catch (e) {}
+          activeDetailObs = new MutationObserver(scheduleCheck);
+          try { activeDetailObs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'hidden'] }); } catch (e) {}
           // Safety: stop watching after 5 min to avoid leaks
-          setTimeout(function () { if (obs) { try { obs.disconnect(); } catch (e) {} obs = null; } }, 300000);
+          setTimeout(stopDetailObs, 300000);
         } else {
           restore(); // detail didn't open — come back immediately
         }
@@ -414,27 +422,50 @@
 
     // Top up
     document.getElementById('jdSetTopup').addEventListener('click', function () {
-      if (typeof window.openTopup === 'function') window.openTopup();
-      else if (typeof window.openPaymongoTopup === 'function') window.openPaymongoTopup();
+      try {
+        if (window.JDCredits && typeof window.JDCredits.openTopup === 'function') { window.JDCredits.openTopup(); return; }
+        if (typeof window.openTopup === 'function') { window.openTopup(); return; }
+        if (typeof window.openPaymongoTopup === 'function') { window.openPaymongoTopup(); return; }
+        if (window.showModernToast) window.showModernToast('Top-up is not available right now');
+      } catch (e) {}
     });
   }
 
   function updateUsage() {
-    // Get real credit data
+    // Get real credit data from JDCredits (credits.js)
     try {
       var pct = document.getElementById('jdSetPct');
       var sub = document.getElementById('jdSetSub');
       var bar = document.getElementById('jdSetBar');
       if (!pct || !sub || !bar) return;
-      // Try to get from credits.js
-      if (window.jdCredits && window.jdCredits.balance != null) {
-        var bal = window.jdCredits.balance;
-        var total = window.jdCredits.total || 500;
-        var pctLeft = Math.round((bal / total) * 100);
-        pct.textContent = pctLeft + '% left';
-        sub.textContent = bal + ' of ' + total + ' credits';
-        bar.style.width = pctLeft + '%';
-      } else {
+      var shown = false;
+      // Signed-in balance
+      try {
+        if (window.JDCredits && window.JDCredits.balance != null) {
+          var bal = window.JDCredits.balance;
+          var total = 500;
+          var pctLeft = Math.round((bal / total) * 100);
+          if (!isNaN(pctLeft)) {
+            pct.textContent = pctLeft + '% left';
+            sub.textContent = bal + ' of ' + total + ' credits';
+            bar.style.width = Math.max(0, Math.min(100, pctLeft)) + '%';
+            shown = true;
+          }
+        }
+      } catch (e) {}
+      // Guest credits fallback
+      if (!shown) {
+        try {
+          var gbal = parseInt(localStorage.getItem('jd_guest_credit_mirror') || '100', 10);
+          if (isNaN(gbal)) gbal = 100;
+          var gpct = Math.round((gbal / 100) * 100);
+          pct.textContent = gpct + '% left';
+          sub.textContent = gbal + ' guest credits (resets daily)';
+          bar.style.width = Math.max(0, Math.min(100, gpct)) + '%';
+          shown = true;
+        } catch (e2) {}
+      }
+      if (!shown) {
         pct.textContent = '--';
         sub.textContent = 'Sign in to see credits';
       }
@@ -463,6 +494,7 @@
     // Smooth-nav guard: if a detail is open above us, stay in the background.
     // Hiding here would break the return-to-Settings flow.
     if (page.classList.contains('jdset-behind')) return;
+    try { stopDetailObs(); } catch (e) {}
     page.setAttribute('hidden', '');
     if (window.jdBackNav) window.jdBackNav.pop(page);
   }
