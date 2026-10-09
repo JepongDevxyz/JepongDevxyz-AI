@@ -239,11 +239,21 @@
       '<div class="jdset-group">' +
       '<button class="jdset-row danger" data-fn="jdMuseSignOut" data-fnpath="" data-arg="">' + I.logout + '<span class="jdset-label">Log out</span>' + I.chev + '</button>' +
       '</div>' +
+      '<div class="jdset-version" id="jdSetVersion" style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px;">v20261008a202</div>' +
       '</div>';
     document.body.appendChild(page);
 
     // Back
     document.getElementById('jdSetBack').addEventListener('click', closeSettings);
+    // Fetch live patch version for footer
+    try {
+      fetch('/patch-version.txt?ts='+Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.text(); })
+        .then(function(v){
+          var el = document.getElementById('jdSetVersion');
+          if (el && v) el.textContent = 'v' + v.trim();
+        }).catch(function(){});
+    } catch(e) {}
 
     // Log out with user feedback (silent no-op if not signed in is confusing)
     window.jdMuseSignOut = function () {
