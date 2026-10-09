@@ -408,6 +408,25 @@
     if (!page) return;
     syncToggles();
     updateCredits();
+    // Hide "Your account" (Log out) when not signed in (guest mode)
+    try {
+      var signedIn = !!(window.cloudUser && (window.cloudUser.email || window.cloudUser.id));
+      var logoutBtn = page.querySelector('#jdmLogout');
+      if (logoutBtn) {
+        var group = logoutBtn.closest('.jdm-group');
+        var label = null;
+        // Find the "Your account" label (previous sibling)
+        var prev = group ? group.previousElementSibling : null;
+        if (prev && prev.classList && prev.classList.contains('jdm-seclabel')) label = prev;
+        if (!signedIn) {
+          if (group) group.style.display = 'none';
+          if (label) label.style.display = 'none';
+        } else {
+          if (group) group.style.display = '';
+          if (label) label.style.display = '';
+        }
+      }
+    } catch (e) {}
 
     // Slide in from right (Muse app style)
     page.classList.add('jdm-entering');
