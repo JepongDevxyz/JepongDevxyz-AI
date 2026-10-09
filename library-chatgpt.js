@@ -23,7 +23,7 @@
     /* Header */
     '.jdlib-header{display:flex;align-items:center;justify-content:space-between;',
     'padding:12px 8px;flex:0 0 auto}',
-    '.jdlib-hbtn{width:40px;height:40px;border-radius:50%;border:none;background:none;color:#fff;',
+    '.jdlib-hbtn{width:40px;height:40px;border-radius:50%;border:none;background:#2f2f2f;color:#fff;',
     'display:flex;align-items:center;justify-content:center;cursor:pointer}',
     '.jdlib-hbtn:active{background:rgba(255,255,255,.1)}',
     '.jdlib-hbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}',
@@ -56,8 +56,8 @@
     '.jdlib-grid.list .jdlib-info{flex:1;padding:8px 12px 8px 0}',
     /* Select mode checkboxes - top-right like video */
     '.jdlib-card{position:relative}',
-    '.jdlib-checkbx{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;',
-    'border:2px solid #666;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2}',
+    '.jdlib-checkbx{position:absolute;top:50%;right:16px;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;',
+    'border:2px solid #666;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2;flex:0 0 auto}',
     '.jdlib-card.selected .jdlib-checkbx{background:#0a84ff;border-color:#0a84ff}',
     '.jdlib-card.selected .jdlib-checkbx::after{content:"✓";color:#fff;font-size:14px;font-weight:700}',
     '.jdlib-card.selected{outline:2px solid #0a84ff;outline-offset:-2px}',
@@ -494,11 +494,14 @@
       title.textContent = n > 0 ? n + ' selected' : 'Select items';
       if (backBtn) backBtn.style.visibility = 'hidden';
       if (menuBtn) {
-        menuBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+        menuBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+        menuBtn.style.background = '#2f2f2f';
+        menuBtn.style.borderRadius = '50%';
         menuBtn.onclick = function() {
           state.selectMode = false;
           state.selected.clear();
           render();
+          updateSelectHeader();
         };
       }
     } else {
@@ -506,6 +509,8 @@
       if (backBtn) backBtn.style.visibility = '';
       if (menuBtn) {
         menuBtn.innerHTML = I.dots;
+        menuBtn.style.background = '';
+        menuBtn.style.borderRadius = '';
         menuBtn.onclick = toggleMenu;
       }
     }
