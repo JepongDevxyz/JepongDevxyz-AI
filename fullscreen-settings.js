@@ -12,7 +12,10 @@
     '#personalizationModalOverlay.open{background:#0a0a0a!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}',
     '.theme-light #personalizationModalOverlay.open{background:#ffffff!important;}',
     /* Pet page: full screen, no transition (prevents Credits card flicker) */
-    '#personalizationPetPage{transition:none!important;animation:none!important;}',
+    '#personalizationPetPage{transition:none!important;animation:none!important;background:#0a0a0a!important;}',
+    '.theme-light #personalizationPetPage{background:#ffffff!important;}',
+    '#personalizationModalOverlay.open #personalizationPetPage.open{background:#0a0a0a!important;}',
+    '.theme-light #personalizationModalOverlay.open #personalizationPetPage.open{background:#ffffff!important;}',
     '#personalizationPetPage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;transition:none!important;animation:none!important;}',
     /* Voice page: full screen, no transition (prevents Credits card flicker) */
     '#personalizationVoicePage{transition:none!important;animation:none!important;}',
