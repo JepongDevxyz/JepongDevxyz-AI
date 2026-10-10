@@ -543,6 +543,8 @@
     if (lpMenu && !lpMenu.contains(e.target)) closeLpMenu();
   }
   function openLpMenu(msgEl, x, y) {
+    /* DISABLED: word-dictate.js menu is the original keeper (with Dictate) */
+    return;
     closeLpMenu();
     var isUser = msgEl.classList.contains('user');
     var menu = document.createElement('div');
