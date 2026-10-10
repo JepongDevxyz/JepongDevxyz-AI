@@ -7,6 +7,8 @@
   window.__jdReactionAnim = true;
 
   var CSS = [
+    /* Remove the second (old floating) reaction - keep only the inline one */
+    '.jd-reaction-chip{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
     /* Base floating animation */
     '@keyframes jdReactFloat{',
     '  0%{transform:translateY(0) scale(0.5);opacity:0;}',
