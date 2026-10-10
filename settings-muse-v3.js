@@ -284,12 +284,18 @@
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
         window.__jdNavTime = Date.now();
-        // For Pet/Voice: fade out our Settings smoothly (they open in personalization modal)
+        // For Pet/Voice: hide our Settings (they open in personalization modal)
         var isPetVoice = (fn === 'openSettingsPet' || fn === 'openSettingsVoice');
+        var isVoice = (fn === 'openSettingsVoice');
         if (isPetVoice) {
           var ourPage = document.getElementById(PAGE_ID);
           if (ourPage) {
-            ourPage.style.transition = 'opacity .25s ease';
+            // Voice: instant hide (async loading causes flicker), Pet: smooth fade
+            if (isVoice) {
+              ourPage.style.transition = 'none';
+            } else {
+              ourPage.style.transition = 'opacity .25s ease';
+            }
             ourPage.style.opacity = '0';
             ourPage.style.pointerEvents = 'none';
           }
