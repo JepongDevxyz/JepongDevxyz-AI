@@ -72,6 +72,7 @@
     '.jd-wordmenu__react{font-size:24px;line-height:1;background:none;border:0;cursor:pointer;padding:8px 6px;border-radius:12px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center}',
     '.jd-wordmenu__react.jd-wordmenu__more{font-size:22px;color:#9ca3af;background:rgba(255,255,255,.08);border-radius:50%;width:40px;height:40px;}',
     '.jd-wordmenu__react[data-on]{background:rgba(255,255,255,.14)}',
+    '.jd-wordmenu__reactbar{position:fixed;z-index:10002;display:flex;gap:4px;justify-content:space-between;align-items:center;background:#1e1e24;border-radius:16px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.4)}',
     '.jd-wordmenu__word{padding:6px 12px 6px;font-size:12px;opacity:.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}',
     '.jd-wordmenu__row{display:flex;align-items:center;gap:12px;width:100%;padding:0 12px;height:46px;background:none;border:0;border-radius:12px;color:inherit;font-size:15px;font-weight:500;cursor:pointer;text-align:left}',
     '.jd-wordmenu__row:active{background:rgba(255,255,255,.09)}',
@@ -210,7 +211,10 @@
     dictate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>'
   };
   function closeMenu() {
-    if (openMenu) { openMenu.remove(); openMenu = null; }
+    if (openMenu) {
+      if (openMenu._reactBar) openMenu._reactBar.remove();
+      openMenu.remove(); openMenu = null;
+    }
     document.removeEventListener('pointerdown', onDocDown, true);
   }
   function onDocDown(e) {
@@ -222,10 +226,8 @@
     menu.className = 'jd-wordmenu';
     menu.setAttribute('role', 'menu');
     var current = ctx.msgEl ? getReaction(ctx.msgEl) : '';
-    var html = '<div class="jd-wordmenu__reacts">' + EMOJIS.map(function (em) {
-      return '<button type="button" class="jd-wordmenu__react" data-emoji="' + em + '"' +
-        (current === em ? ' data-on="1"' : '') + '>' + em + '</button>';
-    }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button></div>';
+    /* Reactions are now in a separate bar below (like Muse app) - no overlap */
+    var html = '';
     if (ctx.word) {
       html += '<div class="jd-wordmenu__word">&ldquo;' + esc(ctx.word) + '&rdquo;</div>';
       html += '<button type="button" class="jd-wordmenu__row" data-act="reply">' + ICONS.reply + '<span>Reply</span></button>';
@@ -242,6 +244,34 @@
     if (top + h > window.innerHeight - 10) top = Math.max(10, y - h - 14);
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
+    /* Separate reaction bar below menu (like Muse app - no overlap) */
+    var reactBar = document.createElement('div');
+    reactBar.className = 'jd-wordmenu__reactbar';
+    reactBar.innerHTML = EMOJIS.map(function (em) {
+      return '<button type="button" class="jd-wordmenu__react" data-emoji="' + em + '">' + em + '</button>';
+    }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button>';
+    document.body.appendChild(reactBar);
+    reactBar.style.left = left + 'px';
+    reactBar.style.top = (top + h + 8) + 'px';
+    reactBar.style.width = w + 'px';
+    reactBar.addEventListener('click', function (e) {
+      var rbtn = e.target.closest('.jd-wordmenu__react');
+      if (rbtn && ctx.msgEl) {
+        var em = rbtn.getAttribute('data-emoji');
+        if (em === '+') {
+          closeMenu();
+          try {
+            var evt = new CustomEvent('jd-open-emoji-picker', { detail: { msgEl: ctx.msgEl } });
+            document.dispatchEvent(evt);
+          } catch (err) {}
+          return;
+        }
+        toggleReaction(ctx.msgEl, em);
+        closeMenu();
+      }
+    });
+    // Store reactBar for cleanup
+    menu._reactBar = reactBar;
     menu.addEventListener('click', function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
