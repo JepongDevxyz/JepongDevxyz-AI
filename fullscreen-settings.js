@@ -11,6 +11,12 @@
     /* ROOT CAUSE FIX: overlay is semi-transparent, make it solid */
     '#personalizationModalOverlay.open{background:#0a0a0a!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}',
     '.theme-light #personalizationModalOverlay.open{background:#ffffff!important;}',
+    /* Pet/Voice: force solid on all children too (like other rows) */
+    '#personalizationPetPage.open *, #personalizationVoicePage.open *{background-color:transparent!important;}',
+    '#personalizationPetPage.open{background:#0a0a0a!important;}',
+    '#personalizationVoicePage.open{background:#0a0a0a!important;}',
+    '.theme-light #personalizationPetPage.open{background:#ffffff!important;}',
+    '.theme-light #personalizationVoicePage.open{background:#ffffff!important;}',
     /* Pet page: full screen, no transition (prevents Credits card flicker) */
     '#personalizationPetPage{transition:none!important;animation:none!important;background:#0a0a0a!important;}',
     '.theme-light #personalizationPetPage{background:#ffffff!important;}',
