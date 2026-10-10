@@ -284,6 +284,32 @@
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
         window.__jdNavTime = Date.now();
+        var isPetVoice = (fn === 'openSettingsPet' || fn === 'openSettingsVoice');
+        // Hide our Settings for Pet/Voice (they're not full-screen overlays)
+        if (isPetVoice) {
+          var ourPage = document.getElementById(PAGE_ID);
+          if (ourPage) ourPage.setAttribute('hidden', '');
+          isOpen = false;
+          // Watch for Pet/Voice to close, then show our Settings again
+          var obs = new MutationObserver(function () {
+            // If no Pet/Voice page visible, show our Settings
+            var petOpen = document.querySelector('[id*="Pet"]:not([hidden])');
+            var voiceOpen = document.querySelector('[id*="Voice"]:not([hidden])');
+            if (!petOpen && !voiceOpen) {
+              var p = document.getElementById(PAGE_ID);
+              if (p && !isOpen) {
+                // Only show if user hasn't navigated elsewhere
+                // Check if we're supposed to be open (user didn't tap back)
+                p.removeAttribute('hidden');
+                isOpen = true;
+              }
+              obs.disconnect();
+            }
+          });
+          obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+          // Safety: disconnect after 30s
+          setTimeout(function() { obs.disconnect(); }, 30000);
+        }
         setTimeout(function () {
           try {
             if (code === 'mode') {
