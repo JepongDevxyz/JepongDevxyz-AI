@@ -476,17 +476,19 @@
     if (!chatBox || chatBox.__jdWordDictateWired) return;
     chatBox.__jdWordDictateWired = true;
     // Long-press on touch + right-click/long-press on desktop.
+    /* DISABLED: message long-press is handled by reactions-v2.js (keeper menu)
     chatBox.addEventListener('touchstart', function (e) {
       var t = (e.touches && e.touches[0]) || null;
       var msgEl = e.target && e.target.closest ? e.target.closest('.msg.bot') : null;
       if (t && msgEl) onPressStart(t.clientX, t.clientY, msgEl);
-    }, { passive: true });
+    }, { passive: true }); */
     chatBox.addEventListener('touchmove', function (e) {
       var t = (e.touches && e.touches[0]) || null;
       if (t) onPressMove(t.clientX, t.clientY);
     }, { passive: true });
     chatBox.addEventListener('touchend', clearLp, { passive: true });
     chatBox.addEventListener('touchcancel', clearLp, { passive: true });
+/* DISABLED: message contextmenu is handled by reactions-v2.js (keeper menu)
     chatBox.addEventListener('contextmenu', function (e) {
       var msgEl = e.target && e.target.closest ? e.target.closest('.msg.bot') : null;
       if (!msgEl) return;
@@ -502,7 +504,7 @@
         start: hit ? hit.start : 0,
         end: hit ? hit.end : 0
       });
-    });
+    }); */
     // Re-apply saved reactions whenever messages render.
     try {
       new MutationObserver(function (muts) {
