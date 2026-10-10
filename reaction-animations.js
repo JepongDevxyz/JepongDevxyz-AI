@@ -78,7 +78,7 @@
     var obs = new MutationObserver(function(muts) {
       muts.forEach(function(m) {
         m.addedNodes.forEach(function(n) {
-          if (n.nodeType === 1 && n.classList && n.classList.contains('jd-reaction-inline')) {
+          if (n.nodeType === 1 && n.classList && (n.classList.contains('jd-inline-reaction') || n.classList.contains('jd-manual-reaction'))) {
             var emoji = (n.textContent || '').trim();
             if (emoji && /\p{Emoji}/u.test(emoji)) {
               var rect = n.getBoundingClientRect();
