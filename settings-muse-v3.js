@@ -129,7 +129,7 @@
      toggle = toggle key; code = special-case. */
   var GROUPS = [
     { label: 'MY AI', rows: [
-      { icon: 'user',     label: 'Account',         fn: 'openJdAccountRebuilt' },
+      { icon: 'user',     label: 'Account',         fn: 'openAccountModal' },
       { icon: 'smile',    label: 'Personalization', fn: 'openPersonalizationSettings' },
       { icon: 'folder',   label: 'Library',         fn: 'openLibrary' },
       { icon: 'database', label: 'Memory',          fn: 'openSettingsMemory' },
@@ -493,110 +493,6 @@
       }
     } catch (err) {}
   });
-
-  /* Rebuilt Account page (modern Muse-app style) */
-  window.openJdAccountRebuilt = function() {
-    // Hide our Settings
-    var ourPage = document.getElementById(PAGE_ID);
-    if (ourPage) ourPage.style.display = 'none';
-
-    // Create full-screen Account page
-    var page = document.createElement('div');
-    page.id = 'jdAccountRebuilt';
-    page.style.cssText = 'position:fixed;inset:0;z-index:1000;background:#0a0a0a;color:#f5f5f5;overflow-y:auto;transform:translateX(100%);transition:transform .28s cubic-bezier(.32,.72,0,1);';
-
-    var signed = !!(window.cloudUser);
-    var user = window.cloudUser || {};
-    var meta = user.user_metadata || {};
-    var name = meta.full_name || meta.name || user.email || 'JepongDevxyz AI';
-    var email = user.email || '';
-    var avatarLetter = String(name).trim().charAt(0).toUpperCase() || 'J';
-
-    page.innerHTML =
-      '<div style="max-width:600px;margin:0 auto;padding:0 0 40px;">' +
-      '<div style="display:flex;align-items:center;padding:16px;position:sticky;top:0;background:#0a0a0a;z-index:1;border-bottom:1px solid rgba(255,255,255,.08);">' +
-      '<button id="jdAccountBack" style="background:none;border:none;color:#f5f5f5;font-size:20px;cursor:pointer;padding:8px;margin:-8px;">←</button>' +
-      '<div style="flex:1;text-align:center;font-weight:600;font-size:17px;margin-right:32px;">Account</div>' +
-      '</div>' +
-      '<div style="padding:24px 20px;">' +
-      (signed ?
-        // Signed in view
-        '<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">' +
-        '<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;">' + avatarLetter + '</div>' +
-        '<div><div style="font-size:18px;font-weight:600;">' + name.replace(/</g,'&lt;') + '</div>' +
-        '<div style="font-size:14px;color:#a1a1aa;">' + email.replace(/</g,'&lt;') + '</div></div></div>' +
-        '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:16px;">' +
-        '<div style="font-size:14px;color:#a1a1aa;margin-bottom:8px;">Cloud sync is active for this account.</div>' +
-        '<div style="font-size:14px;">Memory, Library, settings and chats are synced across devices.</div></div>' +
-        '<button id="jdAccountEditProfile" style="width:100%;padding:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#f5f5f5;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;">Edit Profile</button>' +
-        '<button id="jdAccountSignOut" style="width:100%;padding:14px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:14px;color:#fca5a5;font-size:15px;font-weight:600;cursor:pointer;">Sign Out</button>'
-        :
-        // Signed out view
-        '<div style="text-align:center;padding:40px 20px;">' +
-        '<div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;">👤</div>' +
-        '<div style="font-size:20px;font-weight:600;margin-bottom:8px;">Log into your account</div>' +
-        '<div style="font-size:14px;color:#a1a1aa;margin-bottom:24px;">Sign in to sync Memory, Library, settings and chats across devices.</div>' +
-        '<button id="jdAccountSignIn" style="width:100%;padding:14px;background:#f5f5f5;border:none;border-radius:14px;color:#0a0a0a;font-size:15px;font-weight:700;cursor:pointer;">Sign In</button></div>'
-      ) +
-      '</div></div>';
-
-    document.body.appendChild(page);
-
-    // Slide in
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        page.style.transform = 'translateX(0)';
-      });
-    });
-
-    // Back button
-    document.getElementById('jdAccountBack').addEventListener('click', function() {
-      page.style.transform = 'translateX(100%)';
-      setTimeout(function() {
-        page.remove();
-        var p = document.getElementById(PAGE_ID);
-        if (p) p.style.display = '';
-      }, 280);
-    });
-
-    // Sign in button (opens existing auth modal)
-    var signInBtn = document.getElementById('jdAccountSignIn');
-    if (signInBtn) {
-      signInBtn.addEventListener('click', function() {
-        // Close our page, open the real auth modal
-        page.remove();
-        if (window.openAccountModal) window.openAccountModal();
-        else {
-          var p = document.getElementById(PAGE_ID);
-          if (p) p.style.display = '';
-        }
-      });
-    }
-
-    // Edit profile button
-    var editBtn = document.getElementById('jdAccountEditProfile');
-    if (editBtn) {
-      editBtn.addEventListener('click', function() {
-        if (window.openJdEditProfile) window.openJdEditProfile();
-      });
-    }
-
-    // Sign out button
-    var signOutBtn = document.getElementById('jdAccountSignOut');
-    if (signOutBtn) {
-      signOutBtn.addEventListener('click', function() {
-        if (confirm('Sign out of your account?')) {
-          try {
-            if (window.cloudClient && window.cloudClient.auth) {
-              window.cloudClient.auth.signOut().then(function() {
-                location.reload();
-              });
-            }
-          } catch (e) {}
-        }
-      });
-    }
-  };
 
   /* Replace the original settings modal. */
   window.openSettingsModal = openSettings;
