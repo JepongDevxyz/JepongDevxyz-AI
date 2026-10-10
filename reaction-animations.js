@@ -71,18 +71,8 @@
 
   function init() {
     injectCSS();
-    // User taps on reaction chips/emoji picker
-    document.addEventListener('click', function(e) {
-      var chip = e.target.closest('.jd-reaction-inline, .jd-emoji-grid button, .jd-quick-react, .jd-lp-quick button');
-      if (chip) {
-        var emoji = (chip.textContent || '').trim() || chip.getAttribute('data-emoji');
-        if (emoji && /\p{Emoji}/u.test(emoji)) {
-          var rect = chip.getBoundingClientRect();
-          floatReaction(emoji, rect.left + rect.width/2, rect.top);
-        }
-      }
-    }, true);
-    // AI auto-reactions: watch for chips being added
+    // Single trigger: watch for chips being added (user taps AND AI reactions)
+    // Using only MutationObserver prevents double animation
     var obs = new MutationObserver(function(muts) {
       muts.forEach(function(m) {
         m.addedNodes.forEach(function(n) {
