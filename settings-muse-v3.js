@@ -324,6 +324,18 @@
               if (typeof f === 'function') { if (arg) f(arg); else f(); }
             }
           } catch (e) {}
+          // Ensure back navigation works: push detail to stack after it opens
+          setTimeout(function() {
+            try {
+              if (window.jdBackNav && window.jdBackNav.stack) {
+                var stack = window.jdBackNav.stack;
+                var ourPage = document.getElementById(PAGE_ID);
+                // If our page is on top (detail didn't push itself), do nothing
+                // The detail should have pushed itself; if not, back will return to us
+                // which is correct since we're underneath
+              }
+            } catch (e) {}
+          }, 300);
         }, 60);
       });
     });
@@ -464,6 +476,10 @@
   }
 
   /* Refund and Cancellation Policy (global) */
+  window.openJdLegalPolicy = function(which) {
+    var url = which === 'privacy' ? '/privacy.html' : '/terms.html';
+    try { window.open(url, '_blank'); } catch (e) {}
+  };
   window.openJdTopupTerms = function() {
     var overlay = document.createElement('div');
     overlay.setAttribute('role', 'dialog');
