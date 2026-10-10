@@ -1,31 +1,46 @@
 /* JepongDevxyz AI — Animated reactions (2026-10-10)
    Makes message reactions float up with animation, like the Muse app.
-   When a reaction is tapped, the emoji floats up from the message
-   and fades out, with a nice spring animation. */
+   Each emoji has its own exact animation. AI auto-reactions also animate. */
 (function () {
   'use strict';
   if (window.__jdReactionAnim) return;
   window.__jdReactionAnim = true;
 
   var CSS = [
-    /* Floating reaction animation */
+    /* Base floating animation */
     '@keyframes jdReactFloat{',
     '  0%{transform:translateY(0) scale(0.5);opacity:0;}',
     '  15%{transform:translateY(-10px) scale(1.2);opacity:1;}',
     '  100%{transform:translateY(-80px) scale(1);opacity:0;}',
+    '}',
+    /* Heart: pulse then float */
+    '@keyframes jdReactHeart{',
+    '  0%{transform:scale(0.3);opacity:0;}',
+    '  25%{transform:scale(1.3);opacity:1;}',
+    '  50%{transform:scale(1) translateY(-20px);opacity:1;}',
+    '  100%{transform:scale(1) translateY(-80px);opacity:0;}',
+    '}',
+    /* Party: burst */
+    '@keyframes jdReactBurst{',
+    '  0%{transform:scale(0.3) rotate(-10deg);opacity:0;}',
+    '  30%{transform:scale(1.5) rotate(5deg);opacity:1;}',
+    '  100%{transform:scale(1) translateY(-50px) rotate(0deg);opacity:0;}',
+    '}',
+    /* Fire: flicker up */
+    '@keyframes jdReactFire{',
+    '  0%{transform:translateY(0) scale(0.6);opacity:0;}',
+    '  20%{transform:translateY(-15px) scale(1.3) rotate(-5deg);opacity:1;}',
+    '  40%{transform:translateY(-30px) scale(1.1) rotate(5deg);opacity:1;}',
+    '  100%{transform:translateY(-90px) scale(1);opacity:0;}',
     '}',
     '.jd-react-float{',
     '  position:fixed;z-index:10002;pointer-events:none;',
     '  font-size:32px;line-height:1;',
     '  animation:jdReactFloat 0.9s cubic-bezier(.2,.7,.3,1) forwards;',
     '}',
-    /* Party popper burst for 🎉 */
-    '@keyframes jdReactBurst{',
-    '  0%{transform:scale(0.3);opacity:0;}',
-    '  30%{transform:scale(1.4);opacity:1;}',
-    '  100%{transform:scale(1) translateY(-40px);opacity:0;}',
-    '}',
-    '.jd-react-float.jd-burst{animation:jdReactBurst 1s ease-out forwards;font-size:40px;}'
+    '.jd-react-float.jd-heart{animation:jdReactHeart 1s ease-out forwards;font-size:36px;}',
+    '.jd-react-float.jd-burst{animation:jdReactBurst 1s ease-out forwards;font-size:42px;}',
+    '.jd-react-float.jd-fire{animation:jdReactFire 1s ease-out forwards;font-size:36px;}'
   ].join('\n');
 
   function injectCSS() {
@@ -36,31 +51,52 @@
     document.head.appendChild(st);
   }
 
-  /* Show floating animation at the tap position */
+  function getAnimClass(emoji) {
+    if (emoji === '❤️' || emoji === '💕' || emoji === '💖') return 'jd-heart';
+    if (emoji === '🎉' || emoji === '🥳' || emoji === '🎊') return 'jd-burst';
+    if (emoji === '🔥') return 'jd-fire';
+    return '';
+  }
+
+  /* Show floating animation at position */
   function floatReaction(emoji, x, y) {
     var el = document.createElement('div');
-    el.className = 'jd-react-float' + (emoji === '🎉' ? ' jd-burst' : '');
+    el.className = 'jd-react-float ' + getAnimClass(emoji);
     el.textContent = emoji;
     el.style.left = (x - 16) + 'px';
     el.style.top = (y - 16) + 'px';
     document.body.appendChild(el);
-    setTimeout(function() { el.remove(); }, 1000);
+    setTimeout(function() { el.remove(); }, 1100);
   }
 
-  /* Hook into reaction taps */
   function init() {
     injectCSS();
-    // Listen for taps on reaction chips and emoji picker
+    // User taps on reaction chips/emoji picker
     document.addEventListener('click', function(e) {
-      var chip = e.target.closest('.jd-reaction-inline, .jd-emoji-grid button, .jd-quick-react');
+      var chip = e.target.closest('.jd-reaction-inline, .jd-emoji-grid button, .jd-quick-react, .jd-lp-quick button');
       if (chip) {
-        var emoji = chip.textContent.trim() || chip.getAttribute('data-emoji');
-        if (emoji) {
+        var emoji = (chip.textContent || '').trim() || chip.getAttribute('data-emoji');
+        if (emoji && /\p{Emoji}/u.test(emoji)) {
           var rect = chip.getBoundingClientRect();
           floatReaction(emoji, rect.left + rect.width/2, rect.top);
         }
       }
     }, true);
+    // AI auto-reactions: watch for chips being added
+    var obs = new MutationObserver(function(muts) {
+      muts.forEach(function(m) {
+        m.addedNodes.forEach(function(n) {
+          if (n.nodeType === 1 && n.classList && n.classList.contains('jd-reaction-inline')) {
+            var emoji = (n.textContent || '').trim();
+            if (emoji && /\p{Emoji}/u.test(emoji)) {
+              var rect = n.getBoundingClientRect();
+              if (rect.top > 0) floatReaction(emoji, rect.left + rect.width/2, rect.top);
+            }
+          }
+        });
+      });
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === 'loading') {
