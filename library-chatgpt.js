@@ -46,8 +46,9 @@
     'align-items:center;justify-content:center;position:relative;overflow:hidden}',
     '.jdlib-thumb img{width:100%;height:100%;object-fit:cover}',
     '.jdlib-thumb .jdlib-ficon{width:28px;height:28px}',
-    '.jdlib-info{padding:10px 12px;display:flex;align-items:center;gap:8px}',
-    '.jdlib-name{flex:1;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.jdlib-info{padding:10px 12px;display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}',
+    '.jdlib-name{flex:1;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}',
+    '.jdlib-info>div:last-child{flex:1;min-width:0;overflow:hidden}',
     '.jdlib-date{font-size:.8rem;color:#888;margin-top:2px}',
     '.jdlib-ticon{width:20px;height:20px;flex:0 0 auto}',
     /* List mode */
