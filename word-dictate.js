@@ -220,7 +220,11 @@
     document.removeEventListener('pointerdown', onDocDown, true);
   }
   function onDocDown(e) {
-    if (openMenu && !openMenu.contains(e.target)) closeMenu();
+    if (openMenu) {
+      var inMenu = openMenu.contains(e.target);
+      var inBar = openMenu._reactBar && openMenu._reactBar.contains(e.target);
+      if (!inMenu && !inBar) closeMenu();
+    }
   }
   function showMenu(x, y, ctx) {
     closeMenu();
