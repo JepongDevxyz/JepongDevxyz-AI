@@ -252,8 +252,15 @@
     }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button>';
     document.body.appendChild(reactBar);
     reactBar.style.left = left + 'px';
-    reactBar.style.top = (top + h + 8) + 'px';
     reactBar.style.width = w + 'px';
+    // Position reactBar: below menu if space, otherwise above
+    var rbH = 56; // estimated reactbar height
+    var rbTop = top + h + 8;
+    if (rbTop + rbH > window.innerHeight - 10) {
+      // Not enough space below, put reactBar above menu
+      rbTop = Math.max(10, top - rbH - 8);
+    }
+    reactBar.style.top = rbTop + 'px';
     reactBar.addEventListener('click', function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
