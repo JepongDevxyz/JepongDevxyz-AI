@@ -723,6 +723,11 @@
     if (window.__jdEmojiPicker) { window.__jdEmojiPicker.remove(); window.__jdEmojiPicker = null; }
   }
 
+  /* Listen for (+) from word-dictate.js menu */
+  document.addEventListener('jd-open-emoji-picker', function(e) {
+    var msgEl = e.detail && e.detail.msgEl;
+    if (msgEl && typeof openEmojiPicker === 'function') openEmojiPicker(msgEl);
+  });
   /* ---------- long-press wiring ---------- */
   function wireLongPress() {
     var chatBox = document.getElementById('chatBox') || document.querySelector('.chat-messages');
