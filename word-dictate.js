@@ -487,8 +487,11 @@
     chatBox.addEventListener('contextmenu', function (e) {
       var msgEl = e.target && e.target.closest ? e.target.closest('.msg.bot') : null;
       if (!msgEl) return;
-      e.preventDefault();
       var hit = wordAtPoint(e.clientX, e.clientY);
+      // Only show word menu if a word was actually hit; message long-press
+      // is handled by reactions-v2.js (the keeper menu with Dictate)
+      if (!hit || !hit.word) return;
+      e.preventDefault();
       showMenu(e.clientX, e.clientY, {
         msgEl: msgEl,
         word: hit ? hit.word : '',
