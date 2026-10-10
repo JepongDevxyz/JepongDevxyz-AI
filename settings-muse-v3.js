@@ -290,14 +290,15 @@
         if (isPetVoice) {
           var ourPage = document.getElementById(PAGE_ID);
           if (ourPage) {
-            // Voice: instant hide (async loading causes flicker), Pet: smooth fade
             if (isVoice) {
-              ourPage.style.transition = 'none';
+              // Voice: display none (prevents header flicker)
+              ourPage.style.display = 'none';
             } else {
+              // Pet: smooth fade
               ourPage.style.transition = 'opacity .25s ease';
+              ourPage.style.opacity = '0';
+              ourPage.style.pointerEvents = 'none';
             }
-            ourPage.style.opacity = '0';
-            ourPage.style.pointerEvents = 'none';
           }
           // Watch for personalization modal to close, then fade our Settings back in
           var fadeObs = new MutationObserver(function() {
@@ -307,8 +308,10 @@
             if (!isOpen) {
               var p = document.getElementById(PAGE_ID);
               if (p) {
+                p.style.display = '';
                 p.style.opacity = '';
                 p.style.pointerEvents = '';
+                p.style.transition = '';
               }
               fadeObs.disconnect();
             }
