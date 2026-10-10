@@ -321,7 +321,18 @@
               if (typeof obj === 'function') obj();
             } else if (fn) {
               var f = window[fn];
-              if (typeof f === 'function') { if (arg) f(arg); else f(); }
+              if (typeof f === 'function') {
+                if (arg) f(arg); else f();
+                // Push sheet to back nav so browser back closes it (not the browser)
+                if (fn === 'jdExtraOpenAiSheet' || fn === 'jdExtraOpenCacheSheet') {
+                  setTimeout(function() {
+                    try {
+                      var sheet = document.querySelector('.jd-extra-ai-sheet, .jd-extra-cache-sheet');
+                      if (sheet && window.jdBackNav) window.jdBackNav.push(sheet);
+                    } catch (e) {}
+                  }, 200);
+                }
+              }
             }
           } catch (e) {}
           // Ensure back navigation works: push detail to stack after it opens
