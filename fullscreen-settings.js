@@ -21,6 +21,11 @@
     '.theme-light #personalizationVoicePage.open{background:#ffffff!important;}',
     /* Pet page: full screen, no transition (prevents Credits card flicker) */
     '#personalizationPetPage{transition:none!important;animation:none!important;background:#0a0a0a!important;}',
+    /* ROOT CAUSE: Pet page has no dimming overlay like Personalization modal.
+       Force solid background on Pet page and its toolbar. */
+    '.ps-pet-toolbar{background:#0a0a0a!important;}',
+    '.theme-light .ps-pet-toolbar{background:#ffffff!important;}',
+    'div[class*="pet"][style*="fixed"], div[id*="Pet"][style*="fixed"]{background:#0a0a0a!important;}',
     '.theme-light #personalizationPetPage{background:#ffffff!important;}',
     '#personalizationModalOverlay.open #personalizationPetPage.open{background:#0a0a0a!important;}',
     '.theme-light #personalizationModalOverlay.open #personalizationPetPage.open{background:#ffffff!important;}',
