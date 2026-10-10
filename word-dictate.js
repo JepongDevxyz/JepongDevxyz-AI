@@ -74,7 +74,7 @@
     '.jd-wordmenu__react[data-on]{background:rgba(255,255,255,.14)}',
     '.jd-wordmenu__reactbar{position:fixed;z-index:10003;display:flex;gap:4px;justify-content:space-between;align-items:center;background:#1e1e24;border-radius:16px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.4)}',
     '.jd-wordmenu{z-index:10003!important;}',
-    '.jd-wordmenu__reactbar button,.jd-wordmenu button{pointer-events:auto!important;}',
+    '.jd-wordmenu__reactbar button,.jd-wordmenu button{pointer-events:auto!important;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}',
     '.jd-wordmenu__word{padding:6px 12px 6px;font-size:12px;opacity:.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}',
     '.jd-wordmenu__row{display:flex;align-items:center;gap:12px;width:100%;padding:0 12px;height:46px;background:none;border:0;border-radius:12px;color:inherit;font-size:15px;font-weight:500;cursor:pointer;text-align:left}',
     '.jd-wordmenu__row:active{background:rgba(255,255,255,.09)}',
@@ -267,7 +267,7 @@
       rbTop = Math.max(10, top - rbH - 8);
     }
     reactBar.style.top = rbTop + 'px';
-    reactBar.addEventListener('click', function (e) {
+    var onReactTap = function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
         var em = rbtn.getAttribute('data-emoji');
@@ -282,7 +282,8 @@
         toggleReaction(ctx.msgEl, em);
         closeMenu();
       }
-    });
+    };
+    reactBar.addEventListener('click', onReactTap);
     // Store reactBar for cleanup
     menu._reactBar = reactBar;
     menu.addEventListener('click', function (e) {
