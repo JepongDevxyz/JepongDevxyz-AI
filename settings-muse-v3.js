@@ -284,14 +284,15 @@
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
         window.__jdNavTime = Date.now();
-        // For Pet/Voice: hide our Settings (they open in personalization modal)
-        var isPetVoice = (fn === 'openSettingsPet' || fn === 'openSettingsVoice');
+        // For Pet/Voice/Account: hide our Settings (they open in modals)
+        var isPetVoice = (fn === 'openSettingsPet' || fn === 'openSettingsVoice' || fn === 'openAccountModal');
         var isVoice = (fn === 'openSettingsVoice');
+        var isAccount = (fn === 'openAccountModal');
         if (isPetVoice) {
           var ourPage = document.getElementById(PAGE_ID);
           if (ourPage) {
-            if (isVoice) {
-              // Voice: display none (prevents header flicker)
+            if (isVoice || isAccount) {
+              // Voice/Account: display none (prevents flicker)
               ourPage.style.display = 'none';
             } else {
               // Pet: smooth fade
@@ -303,9 +304,11 @@
           // Watch for personalization modal to close, then fade our Settings back in
           var fadeObs = new MutationObserver(function() {
             var overlay = document.getElementById('personalizationModalOverlay');
-            var isOpen = overlay && !overlay.hasAttribute('hidden') &&
-                         window.getComputedStyle(overlay).display !== 'none';
-            if (!isOpen) {
+            var accountModal = document.getElementById('cloudAccountModal');
+            var overlayOpen = overlay && !overlay.hasAttribute('hidden') &&
+                              window.getComputedStyle(overlay).display !== 'none';
+            var accountOpen = accountModal && accountModal.classList.contains('open');
+            if (!overlayOpen && !accountOpen) {
               var p = document.getElementById(PAGE_ID);
               if (p) {
                 p.style.display = '';
