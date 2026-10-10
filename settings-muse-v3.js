@@ -301,13 +301,16 @@
             }
           }
           // Watch for personalization modal to close, then fade our Settings back in
+          var overlayWasOpen = false;
           var fadeObs = new MutationObserver(function() {
             var overlay = document.getElementById('personalizationModalOverlay');
             var accountModal = document.getElementById('cloudAccountModal');
             var overlayOpen = overlay && !overlay.hasAttribute('hidden') &&
                               window.getComputedStyle(overlay).display !== 'none';
             var accountOpen = accountModal && accountModal.classList.contains('open');
-            if (!overlayOpen && !accountOpen) {
+            // Only restore after overlay was actually open (prevents premature restore)
+            if (overlayOpen || accountOpen) overlayWasOpen = true;
+            if (overlayWasOpen && !overlayOpen && !accountOpen) {
               var p = document.getElementById(PAGE_ID);
               if (p) {
                 p.style.display = '';
