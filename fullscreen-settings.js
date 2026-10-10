@@ -8,6 +8,8 @@
   window.__jdFullscreenSettings = true;
 
   var CSS = [
+    /* Make modal full screen like Personalization main page */
+    '#personalizationModalOverlay.open .personalization-modal{width:100vw!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;}',
     /* ROOT CAUSE FIX: overlay is semi-transparent, make it solid */
     '#personalizationModalOverlay.open{background:#0a0a0a!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}',
     '.theme-light #personalizationModalOverlay.open{background:#ffffff!important;}',
