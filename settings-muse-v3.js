@@ -261,7 +261,7 @@
     page.innerHTML = html;
     document.body.appendChild(page);
 
-    document.getElementById('jdmBack').addEventListener('click', closeSettings);
+    document.getElementById('jdmBack').addEventListener('click', function() { closeSettings(true); });
 
     document.getElementById('jdmTopup').addEventListener('click', function () {
       try {
@@ -284,32 +284,6 @@
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
         window.__jdNavTime = Date.now();
-        var isPetVoice = (fn === 'openSettingsPet' || fn === 'openSettingsVoice');
-        // Hide our Settings for Pet/Voice (they're not full-screen overlays)
-        if (isPetVoice) {
-          var ourPage = document.getElementById(PAGE_ID);
-          if (ourPage) ourPage.setAttribute('hidden', '');
-          isOpen = false;
-          // Watch for Pet/Voice to close, then show our Settings again
-          var obs = new MutationObserver(function () {
-            // If no Pet/Voice page visible, show our Settings
-            var petOpen = document.querySelector('[id*="Pet"]:not([hidden])');
-            var voiceOpen = document.querySelector('[id*="Voice"]:not([hidden])');
-            if (!petOpen && !voiceOpen) {
-              var p = document.getElementById(PAGE_ID);
-              if (p && !isOpen) {
-                // Only show if user hasn't navigated elsewhere
-                // Check if we're supposed to be open (user didn't tap back)
-                p.removeAttribute('hidden');
-                isOpen = true;
-              }
-              obs.disconnect();
-            }
-          });
-          obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
-          // Safety: disconnect after 30s
-          setTimeout(function() { obs.disconnect(); }, 30000);
-        }
         setTimeout(function () {
           try {
             if (code === 'mode') {
@@ -453,11 +427,12 @@
     if (window.jdBackNav) { try { window.jdBackNav.push(page); } catch (e) {} }
   }
 
-  function closeSettings() {
+  function closeSettings(userInitiated) {
     var page = document.getElementById(PAGE_ID);
     if (!page || !isOpen) return;
-    // Ignore if called within 100ms of a nav tap (Pet/Voice internal close)
-    if (window.__jdNavTime && (Date.now() - window.__jdNavTime) < 1000) return;
+    // Only close when user taps back button - never from programmatic calls (Pet/Voice)
+    // This prevents flicker and ensures smooth transitions like Muse app
+    if (userInitiated !== true) return;
     isOpen = false;
     // Slide out to right
     page.classList.add('jdm-exiting');
