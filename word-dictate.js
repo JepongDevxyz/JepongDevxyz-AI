@@ -68,11 +68,9 @@
     '.msg.bot.jd-allow-select,.msg.bot.jd-allow-select *{user-select:text!important;-webkit-user-select:text!important}',
     '.jd-wordmenu{position:fixed;z-index:9999;min-width:210px;max-width:250px;background:#232328;color:#f5f5f5;border-radius:18px;box-shadow:0 18px 45px -12px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.2);padding:8px;animation:jdWordMenuPop .16s ease-out}',
     '@keyframes jdWordMenuPop{from{opacity:0;transform:scale(.94) translateY(4px)}}',
-    '.jd-wordmenu__reacts{display:flex;gap:4px;justify-content:space-between;align-items:center;padding:8px 4px 10px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:4px}',
-    '.jd-wordmenu__react{font-size:24px;line-height:1;background:none;border:0;cursor:pointer;padding:8px 6px;border-radius:12px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center}',
-    '.jd-wordmenu__react.jd-wordmenu__more{font-size:22px;color:#9ca3af;background:rgba(255,255,255,.08);border-radius:50%;width:40px;height:40px;}',
+    '.jd-wordmenu__reacts{display:flex;gap:2px;justify-content:space-between;padding:4px 2px 8px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:4px}',
+    '.jd-wordmenu__react{font-size:22px;line-height:1;background:none;border:0;cursor:pointer;padding:7px 5px;border-radius:12px}',
     '.jd-wordmenu__react[data-on]{background:rgba(255,255,255,.14)}',
-
     '.jd-wordmenu__word{padding:6px 12px 6px;font-size:12px;opacity:.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}',
     '.jd-wordmenu__row{display:flex;align-items:center;gap:12px;width:100%;padding:0 12px;height:46px;background:none;border:0;border-radius:12px;color:inherit;font-size:15px;font-weight:500;cursor:pointer;text-align:left}',
     '.jd-wordmenu__row:active{background:rgba(255,255,255,.09)}',
@@ -156,7 +154,7 @@
 
   /* ---------------- reactions ---------------- */
   var LSKEY = 'jd_msg_reactions';
-  var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+  var EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
   function getStore() {
     try { return JSON.parse(localStorage.getItem(LSKEY) || '{}'); } catch (e) { return {}; }
   }
@@ -226,7 +224,7 @@
     var html = '<div class="jd-wordmenu__reacts">' + EMOJIS.map(function (em) {
       return '<button type="button" class="jd-wordmenu__react" data-emoji="' + em + '"' +
         (current === em ? ' data-on="1"' : '') + '>' + em + '</button>';
-    }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button></div>';
+    }).join('') + '</div>';
     if (ctx.word) {
       html += '<div class="jd-wordmenu__word">&ldquo;' + esc(ctx.word) + '&rdquo;</div>';
       html += '<button type="button" class="jd-wordmenu__row" data-act="reply">' + ICONS.reply + '<span>Reply</span></button>';
@@ -246,18 +244,7 @@
     menu.addEventListener('click', function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
-        var em = rbtn.getAttribute('data-emoji');
-        if (em === '+') {
-          // (+) button - open full emoji picker
-          closeMenu();
-          // Use reactions-v2.js emoji picker
-          try {
-            var evt = new CustomEvent('jd-open-emoji-picker', { detail: { msgEl: ctx.msgEl } });
-            document.dispatchEvent(evt);
-          } catch (e) {}
-          return;
-        }
-        toggleReaction(ctx.msgEl, em);
+        toggleReaction(ctx.msgEl, rbtn.getAttribute('data-emoji'));
         closeMenu();
         return;
       }

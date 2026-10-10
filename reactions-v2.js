@@ -20,14 +20,14 @@
      etc.; empty when no reaction fits).
    - A MutationObserver strips the marker before paint (no flash)
      and attaches the emoji as a chip in the user's .user-actions
-     row. Persisted per session; tap the chip to dismiss.
+     row. Persisted per session as an informational reaction chip.
    ========================================================= */
 (function () {
   'use strict';
   if (window.__jdReactionsV2Loaded) return;
   window.__jdReactionsV2Loaded = true;
 
-  var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+  var EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
   var AI_EMOJI_ALLOW = ['❤️', '👍', '😂', '😮', '😢', '🔥', '🎉', '🤔', '👏', '🙏'];
   var MARKER_RE = /\[USER_REACTION:([^\]]*)\]/g;
   var AI_LSKEY = 'jd_ai_reactions';
@@ -87,7 +87,6 @@
     'body.theme-light .jd-lp-quick{border-color:rgba(0,0,0,.08);background:rgba(0,0,0,.02)}',
     /* Full emoji picker modal */
     '.jd-emoji-modal{position:fixed;inset:0;z-index:10001;display:flex;align-items:flex-end;justify-content:center}',
-    '.jd-react-more{font-size:20px;color:#9ca3af;background:rgba(255,255,255,.08);border:0;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}',
     '.jd-emoji-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);animation:jdFadeIn .2s ease}',
     '@keyframes jdFadeIn{from{opacity:0}}',
     '.jd-emoji-panel{position:relative;width:100%;max-width:500px;max-height:70vh;background:#1e1e24;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:jdSlideUp .3s cubic-bezier(.32,.72,.35,1)}',
@@ -210,16 +209,11 @@
     chip.className = 'jd-ai-reaction jd-inline-reaction';
     chip.setAttribute('role', 'img');
     chip.setAttribute('aria-label', 'AI reaction ' + emoji);
-    chip.title = 'AI reaction to your message — tap to dismiss';
-    chip.style.cursor = 'pointer';
+    chip.title = 'AI reaction to your message';
+    chip.style.cursor = 'default';
     var s = document.createElement('span');
     s.textContent = emoji;
     chip.appendChild(s);
-    chip.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      setAiReaction(userEl, '');
-      chip.remove();
-    });
     actions.appendChild(chip);
   }
   function removeMarkerText(root, markerText) {
@@ -367,18 +361,6 @@
       });
       picker.appendChild(b);
     });
-    /* (+) button to open full emoji picker */
-    var moreBtn = document.createElement('button');
-    moreBtn.type = 'button';
-    moreBtn.textContent = '+';
-    moreBtn.className = 'jd-react-more';
-    moreBtn.setAttribute('aria-label', 'More reactions');
-    moreBtn.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      closePicker();
-      if (typeof openEmojiPicker === 'function') openEmojiPicker(msgEl);
-    });
-    picker.appendChild(moreBtn);
     document.body.appendChild(picker);
     var r = btn.getBoundingClientRect();
     var pw = picker.offsetWidth || 240, ph = picker.offsetHeight || 48;
@@ -543,8 +525,6 @@
     if (lpMenu && !lpMenu.contains(e.target)) closeLpMenu();
   }
   function openLpMenu(msgEl, x, y) {
-    /* DISABLED: word-dictate.js menu is the original keeper (with Dictate) */
-    return;
     closeLpMenu();
     var isUser = msgEl.classList.contains('user');
     var menu = document.createElement('div');
@@ -643,7 +623,7 @@
     wrap.innerHTML =
       '<div class="jd-emoji-backdrop"></div>' +
       '<div class="jd-emoji-panel">' +
-        /* No search bar - like the Muse app video */
+        '<div class="jd-emoji-search"><input type="text" placeholder="Search reaction" aria-label="Search reaction" /></div>' +
         '<div class="jd-emoji-cats"></div>' +
         '<div class="jd-emoji-grid"></div>' +
       '</div>';
@@ -651,7 +631,7 @@
     window.__jdEmojiPicker = wrap;
     var grid = wrap.querySelector('.jd-emoji-grid');
     var catsEl = wrap.querySelector('.jd-emoji-cats');
-    /* Search removed */
+    var search = wrap.querySelector('.jd-emoji-search input');
     function pick(em) {
       addFreq(em);
       applyReaction(msgEl, em);
@@ -723,11 +703,6 @@
     if (window.__jdEmojiPicker) { window.__jdEmojiPicker.remove(); window.__jdEmojiPicker = null; }
   }
 
-  /* Listen for (+) from word-dictate.js menu */
-  document.addEventListener('jd-open-emoji-picker', function(e) {
-    var msgEl = e.detail && e.detail.msgEl;
-    if (msgEl && typeof openEmojiPicker === 'function') openEmojiPicker(msgEl);
-  });
   /* ---------- long-press wiring ---------- */
   function wireLongPress() {
     var chatBox = document.getElementById('chatBox') || document.querySelector('.chat-messages');

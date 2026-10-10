@@ -1,5 +1,5 @@
 {
- "version": "20261008a317",
+ "version": "20261008a318",
  "files": [
   "/paymongo-topup.js",
   "/credits.js",
@@ -88,7 +88,6 @@
   "/turnstile-guard.js",
   "/settings-muse-v3.js",
   "/no-copy-global.js",
-  "/fullscreen-settings.js",
-  "/reaction-animations.js"
+  "/fullscreen-settings.js"
  ]
 }
