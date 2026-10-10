@@ -10,6 +10,8 @@
     /* Remove the second (bubble) reaction - keep only the inline one in action bar */
     '.jd-reaction-chip{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
     '.jd-bubble-react{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
+    /* Hide the React button - long-press menu already has reactions */
+    '.jd-react-btn{display:none!important;visibility:hidden!important;}',
     /* Base floating animation */
     '@keyframes jdReactFloat{',
     '  0%{transform:translateY(0) scale(0.5);opacity:0;}',
