@@ -284,46 +284,8 @@
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
         window.__jdNavTime = Date.now();
-        // For Pet/Voice: hide our Settings (they open in modals)
-        var isPetVoice = (fn === 'openSettingsPet' || fn === 'openSettingsVoice');
-        var isVoice = (fn === 'openSettingsVoice');
-        if (isPetVoice) {
-          var ourPage = document.getElementById(PAGE_ID);
-          if (ourPage) {
-            if (isVoice) {
-              // Voice: display none (prevents flicker)
-              ourPage.style.display = 'none';
-            } else {
-              // Pet: smooth fade
-              ourPage.style.transition = 'opacity .25s ease';
-              ourPage.style.opacity = '0';
-              ourPage.style.pointerEvents = 'none';
-            }
-          }
-          // Watch for personalization modal to close, then fade our Settings back in
-          var overlayWasOpen = false;
-          var fadeObs = new MutationObserver(function() {
-            var overlay = document.getElementById('personalizationModalOverlay');
-            var accountModal = document.getElementById('cloudAccountModal');
-            var overlayOpen = overlay && !overlay.hasAttribute('hidden') &&
-                              window.getComputedStyle(overlay).display !== 'none';
-            var accountOpen = accountModal && accountModal.classList.contains('open');
-            // Only restore after overlay was actually open (prevents premature restore)
-            if (overlayOpen || accountOpen) overlayWasOpen = true;
-            if (overlayWasOpen && !overlayOpen && !accountOpen) {
-              var p = document.getElementById(PAGE_ID);
-              if (p) {
-                p.style.display = '';
-                p.style.opacity = '';
-                p.style.pointerEvents = '';
-                p.style.transition = '';
-              }
-              fadeObs.disconnect();
-            }
-          });
-          fadeObs.observe(document.body, { childList: true, subtree: true, attributes: true });
-          setTimeout(function() { fadeObs.disconnect(); }, 60000);
-        }
+        // Pet/Voice open full-screen (fullscreen-settings.js), covering our Settings.
+        // No need to hide - prevents black screen bug.
         setTimeout(function () {
           try {
             if (code === 'mode') {
