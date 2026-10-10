@@ -9,11 +9,11 @@
     /* Overlay: solid background (not transparent) */
     '#personalizationModalOverlay.open{background:#0a0a0a!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}',
     '.theme-light #personalizationModalOverlay.open{background:#ffffff!important;}',
-    /* Pet page: solid background, no transition */
-    '#personalizationPetPage{background:#0a0a0a!important;transition:none!important;animation:none!important;}',
+    /* Pet page: solid background, no transition, force GPU layer (mobile fix) */
+    '#personalizationPetPage{background:#0a0a0a!important;transition:none!important;animation:none!important;transform:translateZ(0)!important;will-change:transform!important;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;}',
     '.theme-light #personalizationPetPage{background:#ffffff!important;}',
-    /* Voice page: solid background, no transition */
-    '#personalizationVoicePage{background:#0a0a0a!important;transition:none!important;animation:none!important;}',
+    /* Voice page: solid background, no transition, force GPU layer (mobile fix) */
+    '#personalizationVoicePage{background:#0a0a0a!important;transition:none!important;animation:none!important;transform:translateZ(0)!important;will-change:transform!important;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;}',
     '.theme-light #personalizationVoicePage{background:#ffffff!important;}',
     /* Toolbars: solid */
     '.ps-pet-toolbar{background:#0a0a0a!important;}',
