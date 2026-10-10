@@ -24,6 +24,8 @@
     /* ROOT CAUSE: Pet page has no dimming overlay like Personalization modal.
        Force solid background on Pet page and its toolbar. */
     '.ps-pet-toolbar{background:#0a0a0a!important;}',
+    '.ps-voice-toolbar{background:#0a0a0a!important;}',
+    '.theme-light .ps-voice-toolbar{background:#ffffff!important;}',
     '.theme-light .ps-pet-toolbar{background:#ffffff!important;}',
     'div[class*="pet"][style*="fixed"], div[id*="Pet"][style*="fixed"]{background:#0a0a0a!important;}',
     '.theme-light #personalizationPetPage{background:#ffffff!important;}',
