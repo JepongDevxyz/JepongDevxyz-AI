@@ -8,10 +8,10 @@
   window.__jdFullscreenSettings = true;
 
   var CSS = [
-    /* Pet page: full screen */
-    '#personalizationPetPage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;}',
-    /* Voice page: full screen */
-    '#personalizationVoicePage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;}',
+    /* Pet page: full screen, no transition (prevents Credits card flicker) */
+    '#personalizationPetPage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;transition:none!important;animation:none!important;}',
+    /* Voice page: full screen, no transition (prevents Credits card flicker) */
+    '#personalizationVoicePage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;transition:none!important;animation:none!important;}',
     /* Personalization main page: full screen when open */
     '#personalizationModalOverlay.open #personalizationMainPage{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;}',
     /* Account modal: full screen on mobile */
