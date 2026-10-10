@@ -643,7 +643,7 @@
     wrap.innerHTML =
       '<div class="jd-emoji-backdrop"></div>' +
       '<div class="jd-emoji-panel">' +
-        '<div class="jd-emoji-search"><input type="text" placeholder="Search reaction" aria-label="Search reaction" /></div>' +
+        /* No search bar - like the Muse app video */
         '<div class="jd-emoji-cats"></div>' +
         '<div class="jd-emoji-grid"></div>' +
       '</div>';
@@ -651,7 +651,7 @@
     window.__jdEmojiPicker = wrap;
     var grid = wrap.querySelector('.jd-emoji-grid');
     var catsEl = wrap.querySelector('.jd-emoji-cats');
-    var search = wrap.querySelector('.jd-emoji-search input');
+    /* Search removed */
     function pick(em) {
       addFreq(em);
       applyReaction(msgEl, em);
