@@ -134,8 +134,8 @@
       { icon: 'smile',    label: 'Personalization', fn: 'openPersonalizationSettings' },
       { icon: 'folder',   label: 'Library',         fn: 'openLibrary' },
       { icon: 'database', label: 'Memory',          fn: 'openSettingsMemory' },
-      { icon: 'paw',      label: 'Pet',             fn: 'openSettingsPet' },
-      { icon: 'mic',      label: 'Voice',           fn: 'openSettingsVoice' }
+      { icon: 'paw',      label: 'Pet',             fn: 'openJdPetLikePersonalization' },
+      { icon: 'mic',      label: 'Voice',           fn: 'openJdVoiceLikePersonalization' }
     ]},
     { label: 'AI & TOOLS', rows: [
       { icon: 'sliders',  label: 'Mode',                   code: 'mode' },
@@ -459,6 +459,30 @@
       }
     } catch (err) {}
   });
+
+  /* Pet/Voice: open like Personalization (main page first, then switch tab) */
+  window.openJdPetLikePersonalization = function() {
+    try {
+      // Open the Personalization modal (main page - this works fine)
+      if (window.openPersonalizationSettings) window.openPersonalizationSettings();
+      // Then switch to Pet tab after modal is open
+      setTimeout(function() {
+        try {
+          if (window.openPetPicker) window.openPetPicker();
+        } catch (e) {}
+      }, 100);
+    } catch (e) {}
+  };
+  window.openJdVoiceLikePersonalization = function() {
+    try {
+      if (window.openPersonalizationSettings) window.openPersonalizationSettings();
+      setTimeout(function() {
+        try {
+          if (window.openVoiceSettingsPage) window.openVoiceSettingsPage();
+        } catch (e) {}
+      }, 100);
+    } catch (e) {}
+  };
 
   /* Replace the original settings modal. */
   window.openSettingsModal = openSettings;
