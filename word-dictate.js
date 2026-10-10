@@ -224,7 +224,7 @@
     var html = '<div class="jd-wordmenu__reacts">' + EMOJIS.map(function (em) {
       return '<button type="button" class="jd-wordmenu__react" data-emoji="' + em + '"' +
         (current === em ? ' data-on="1"' : '') + '>' + em + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button></div>';
     if (ctx.word) {
       html += '<div class="jd-wordmenu__word">&ldquo;' + esc(ctx.word) + '&rdquo;</div>';
       html += '<button type="button" class="jd-wordmenu__row" data-act="reply">' + ICONS.reply + '<span>Reply</span></button>';
@@ -244,7 +244,18 @@
     menu.addEventListener('click', function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
-        toggleReaction(ctx.msgEl, rbtn.getAttribute('data-emoji'));
+        var em = rbtn.getAttribute('data-emoji');
+        if (em === '+') {
+          // (+) button - open full emoji picker
+          closeMenu();
+          // Use reactions-v2.js emoji picker
+          try {
+            var evt = new CustomEvent('jd-open-emoji-picker', { detail: { msgEl: ctx.msgEl } });
+            document.dispatchEvent(evt);
+          } catch (e) {}
+          return;
+        }
+        toggleReaction(ctx.msgEl, em);
         closeMenu();
         return;
       }
