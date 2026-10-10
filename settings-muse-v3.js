@@ -323,14 +323,9 @@
               var f = window[fn];
               if (typeof f === 'function') {
                 if (arg) f(arg); else f();
-                // Push sheet to back nav so browser back closes it (not the browser)
+                // Push history state so browser back closes sheet (not the browser)
                 if (fn === 'jdExtraOpenAiSheet' || fn === 'jdExtraOpenCacheSheet') {
-                  setTimeout(function() {
-                    try {
-                      var sheet = document.querySelector('.jd-extra-ai-sheet, .jd-extra-cache-sheet');
-                      if (sheet && window.jdBackNav) window.jdBackNav.push(sheet);
-                    } catch (e) {}
-                  }, 200);
+                  try { history.pushState({jdSheet: true}, ''); } catch (e) {}
                 }
               }
             }
@@ -473,6 +468,20 @@
     if (window.jdBackNav) { try { window.jdBackNav.pop(page); } catch (e) {} }
   }
 
+  // Close sheets on browser back (instead of navigating away)
+  window.addEventListener('popstate', function(e) {
+    try {
+      var aiSheet = document.querySelector('.jd-extra-ai-sheet');
+      var cacheSheet = document.querySelector('.jd-extra-cache-sheet');
+      if (aiSheet) { aiSheet.remove(); }
+      if (cacheSheet) { cacheSheet.remove(); }
+      // If we closed a sheet, push state again so back still works
+      if (aiSheet || cacheSheet) {
+        try { history.pushState({jdSheetClosed: true}, ''); } catch (err) {}
+      }
+    } catch (err) {}
+  });
+
   /* Replace the original settings modal. */
   window.openSettingsModal = openSettings;
   window.closeSettingsModal = closeSettings;
@@ -488,12 +497,7 @@
 
   /* Refund and Cancellation Policy (global) */
   window.openJdLegalPolicy = function(which) {
-    if (which === 'refund') {
-      // Open Refund Policy in modal (consistent with Terms/Privacy style)
-      if (window.openJdTopupTerms) window.openJdTopupTerms();
-      return;
-    }
-    var url = which === 'privacy' ? '/privacy.html' : '/terms.html';
+    var url = which === 'privacy' ? '/privacy.html' : which === 'refund' ? '/refund.html' : '/terms.html';
     try { window.open(url, '_blank'); } catch (e) {}
   };
   window.openJdTopupTerms = function() {
