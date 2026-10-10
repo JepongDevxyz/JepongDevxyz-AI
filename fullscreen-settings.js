@@ -8,6 +8,9 @@
   window.__jdFullscreenSettings = true;
 
   var CSS = [
+    /* ROOT CAUSE FIX: overlay is semi-transparent, make it solid */
+    '#personalizationModalOverlay.open{background:#0a0a0a!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}',
+    '.theme-light #personalizationModalOverlay.open{background:#ffffff!important;}',
     /* Pet page: full screen, no transition (prevents Credits card flicker) */
     '#personalizationPetPage{transition:none!important;animation:none!important;}',
     '#personalizationPetPage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;transition:none!important;animation:none!important;}',

@@ -277,7 +277,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261008a284';
+  var V='?v=20261008a285';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
      CacheStorage and force a fresh navigation on every boot so updates
      appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
