@@ -79,10 +79,14 @@
       muts.forEach(function(m) {
         m.addedNodes.forEach(function(n) {
           if (n.nodeType === 1 && n.classList && (n.classList.contains('jd-inline-reaction') || n.classList.contains('jd-manual-reaction'))) {
-            var emoji = (n.textContent || '').trim();
-            if (emoji && /\p{Emoji}/u.test(emoji)) {
+            // Get emoji from the span (just the emoji, not the label)
+            var span = n.querySelector('span');
+            var emoji = span ? (span.textContent || '').trim() : (n.textContent || '').trim().charAt(0);
+            // Extract only the first emoji character
+            var match = emoji.match(/\p{Emoji_Presentation}|\p{Emoji}\uFE0F/u);
+            if (match) {
               var rect = n.getBoundingClientRect();
-              if (rect.top > 0) floatReaction(emoji, rect.left + rect.width/2, rect.top);
+              if (rect.top > 0) floatReaction(match[0], rect.left + rect.width/2, rect.top);
             }
           }
         });
