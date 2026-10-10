@@ -453,6 +453,9 @@
       var s = lpStart; lpStart = null;
       if (!s) return;
       var hit = wordAtPoint(s.x, s.y);
+      // Only show word menu if a word was hit; message long-press
+      // is handled by reactions-v2.js (the keeper menu with Dictate)
+      if (!hit || !hit.word) return;
       showMenu(s.x, s.y, {
         msgEl: s.msgEl,
         word: hit ? hit.word : '',
