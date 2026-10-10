@@ -27,7 +27,7 @@
   if (window.__jdReactionsV2Loaded) return;
   window.__jdReactionsV2Loaded = true;
 
-  var EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
+  var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
   var AI_EMOJI_ALLOW = ['❤️', '👍', '😂', '😮', '😢', '🔥', '🎉', '🤔', '👏', '🙏'];
   var MARKER_RE = /\[USER_REACTION:([^\]]*)\]/g;
   var AI_LSKEY = 'jd_ai_reactions';

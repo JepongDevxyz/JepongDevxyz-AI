@@ -154,7 +154,7 @@
 
   /* ---------------- reactions ---------------- */
   var LSKEY = 'jd_msg_reactions';
-  var EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
+  var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
   function getStore() {
     try { return JSON.parse(localStorage.getItem(LSKEY) || '{}'); } catch (e) { return {}; }
   }
