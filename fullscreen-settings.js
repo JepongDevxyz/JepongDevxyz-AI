@@ -1,53 +1,25 @@
 /* JepongDevxyz AI — Full-screen Settings (2026-10-10)
-   Forces all Settings detail pages/modals to be full-screen.
-   This prevents flicker caused by non-fullscreen overlays showing
-   the Settings behind them. */
+   Clean version: only essential rules, no stacking. */
 (function () {
   'use strict';
   if (window.__jdFullscreenSettings) return;
   window.__jdFullscreenSettings = true;
 
   var CSS = [
-    /* Make modal full screen like Personalization main page */
-    '#personalizationModalOverlay.open .personalization-modal{width:100vw!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;}',
-    /* ROOT CAUSE FIX: overlay is semi-transparent, make it solid */
+    /* Overlay: solid background (not transparent) */
     '#personalizationModalOverlay.open{background:#0a0a0a!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}',
     '.theme-light #personalizationModalOverlay.open{background:#ffffff!important;}',
-    /* Pet/Voice: force solid on all children too (like other rows) */
-    '#personalizationPetPage.open *, #personalizationVoicePage.open *{background-color:transparent!important;}',
-    '#personalizationPetPage.open{background:#0a0a0a!important;}',
-    '#personalizationVoicePage.open{background:#0a0a0a!important;}',
-    '.theme-light #personalizationPetPage.open{background:#ffffff!important;}',
-    '.theme-light #personalizationVoicePage.open{background:#ffffff!important;}',
-    /* Pet page: full screen, no transition (prevents Credits card flicker) */
-    '#personalizationPetPage{transition:none!important;animation:none!important;background:#0a0a0a!important;}',
-    /* ROOT CAUSE: Pet page has no dimming overlay like Personalization modal.
-       Force solid background on Pet page and its toolbar. */
-    '.ps-pet-toolbar{background:#0a0a0a!important;}',
-    '.ps-voice-toolbar{background:#0a0a0a!important;}',
-    '.theme-light .ps-voice-toolbar{background:#ffffff!important;}',
-    '.theme-light .ps-pet-toolbar{background:#ffffff!important;}',
-    'div[class*="pet"][style*="fixed"], div[id*="Pet"][style*="fixed"]{background:#0a0a0a!important;}',
+    /* Pet page: solid background, no transition */
+    '#personalizationPetPage{background:#0a0a0a!important;transition:none!important;animation:none!important;}',
     '.theme-light #personalizationPetPage{background:#ffffff!important;}',
-    '#personalizationModalOverlay.open #personalizationPetPage.open{background:#0a0a0a!important;}',
-    '.theme-light #personalizationModalOverlay.open #personalizationPetPage.open{background:#ffffff!important;}',
-    '#personalizationPetPage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;transition:none!important;animation:none!important;}',
-    /* Voice page: full screen, no transition (prevents Credits card flicker) */
-    '#personalizationVoicePage{transition:none!important;animation:none!important;}',
-    '#personalizationVoicePage.open{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;z-index:1001!important;background:var(--modal-bg,#0a0a0a)!important;overflow-y:auto!important;transition:none!important;animation:none!important;}',
-    /* Personalization main page: full screen when open */
-    '#personalizationModalOverlay.open #personalizationMainPage{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;}',
-    /* Account modal: full screen on mobile */
-    '@media (max-width:768px){',
-    '  #cloudAccountModal.open .modal-content{width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;border-radius:0!important;}',
-    '  #cloudAccountModal.open{padding:0!important;}',
-    '}',
-    /* JepongDevxyz AI sheet: full screen */
-    '.jd-extra-ai-sheet{position:fixed!important;inset:0!important;}',
-    '.jd-extra-ai-sheet .jd-extra-ai-panel{width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;border-radius:0!important;}',
-    /* Cache sheet: full screen */
-    '.jd-extra-cache-sheet{position:fixed!important;inset:0!important;}',
-    '.jd-extra-cache-sheet .jd-extra-cache-panel{width:100%!important;max-width:none!important;height:100%!important;max-height:none!important;border-radius:0!important;}'
+    /* Voice page: solid background, no transition */
+    '#personalizationVoicePage{background:#0a0a0a!important;transition:none!important;animation:none!important;}',
+    '.theme-light #personalizationVoicePage{background:#ffffff!important;}',
+    /* Toolbars: solid */
+    '.ps-pet-toolbar{background:#0a0a0a!important;}',
+    '.theme-light .ps-pet-toolbar{background:#ffffff!important;}',
+    '.ps-voice-toolbar{background:#0a0a0a!important;}',
+    '.theme-light .ps-voice-toolbar{background:#ffffff!important;}'
   ].join('\n');
 
   function inject() {
