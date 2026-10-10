@@ -284,6 +284,32 @@
         var code = btn.getAttribute('data-code');
         var arg = btn.getAttribute('data-arg');
         window.__jdNavTime = Date.now();
+        // For Pet/Voice: fade out our Settings smoothly (they open in personalization modal)
+        var isPetVoice = (fn === 'openSettingsPet' || fn === 'openSettingsVoice');
+        if (isPetVoice) {
+          var ourPage = document.getElementById(PAGE_ID);
+          if (ourPage) {
+            ourPage.style.transition = 'opacity .25s ease';
+            ourPage.style.opacity = '0';
+            ourPage.style.pointerEvents = 'none';
+          }
+          // Watch for personalization modal to close, then fade our Settings back in
+          var fadeObs = new MutationObserver(function() {
+            var overlay = document.getElementById('personalizationModalOverlay');
+            var isOpen = overlay && !overlay.hasAttribute('hidden') &&
+                         window.getComputedStyle(overlay).display !== 'none';
+            if (!isOpen) {
+              var p = document.getElementById(PAGE_ID);
+              if (p) {
+                p.style.opacity = '';
+                p.style.pointerEvents = '';
+              }
+              fadeObs.disconnect();
+            }
+          });
+          fadeObs.observe(document.body, { childList: true, subtree: true, attributes: true });
+          setTimeout(function() { fadeObs.disconnect(); }, 60000);
+        }
         setTimeout(function () {
           try {
             if (code === 'mode') {
