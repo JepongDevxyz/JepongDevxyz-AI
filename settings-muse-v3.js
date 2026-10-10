@@ -164,7 +164,7 @@
     { label: 'LEGAL & PRIVACY', rows: [
       { icon: 'file',   label: 'Terms of Service', fn: 'openJdLegalPolicy', arg: 'terms' },
       { icon: 'shield', label: 'Privacy Policy',   fn: 'openJdLegalPolicy', arg: 'privacy' },
-      { icon: 'receipt', label: 'Refund Policy',    fn: 'openJdTopupTerms' }
+      { icon: 'receipt', label: 'Refund Policy',    fn: 'openJdLegalPolicy', arg: 'refund' }
     ]}
   ];
 
@@ -488,6 +488,11 @@
 
   /* Refund and Cancellation Policy (global) */
   window.openJdLegalPolicy = function(which) {
+    if (which === 'refund') {
+      // Open Refund Policy in modal (consistent with Terms/Privacy style)
+      if (window.openJdTopupTerms) window.openJdTopupTerms();
+      return;
+    }
     var url = which === 'privacy' ? '/privacy.html' : '/terms.html';
     try { window.open(url, '_blank'); } catch (e) {}
   };
