@@ -507,7 +507,7 @@
     // Initial pass (history render).
     chatBox.querySelectorAll('.msg.bot').forEach(handleBotEl);
     chatBox.querySelectorAll('.msg.user').forEach(handleUserEl);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePicker(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePicker(); try { if (window.__jdEmojiPicker) { window.__jdEmojiPicker.remove(); window.__jdEmojiPicker = null; } } catch (e2) {} } });
     try { chatBox.addEventListener('scroll', closePicker, { passive: true }); } catch (e2) {}
   }
 
