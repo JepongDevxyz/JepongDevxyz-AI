@@ -80,6 +80,52 @@
         } catch (e) { /* fail-open */ }
     }
 
+    /* Catch-all: strip the dot prefix from already-rendered thought/activity
+       text (e.g. expanded Thinking audit sections that bypass
+       normalizeActivityEventForUI). */
+    var DOT_RE = /\[Specialist Dot:[^\]]*\][\s\S]*?---\n?/g;
+    function scrubNode(root) {
+        try {
+            var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+            var nodes = [], n;
+            while ((n = walker.nextNode())) {
+                if (n.nodeValue && n.nodeValue.indexOf('[Specialist Dot:') >= 0) nodes.push(n);
+            }
+            nodes.forEach(function (tn) {
+                tn.nodeValue = tn.nodeValue.replace(DOT_RE, '').replace(/\s{2,}/g, ' ').trim();
+            });
+        } catch (e) {}
+    }
+    function watchThoughts() {
+        try {
+            var target = document.getElementById('chatBox') || document.body;
+            var obs = new MutationObserver(function (muts) {
+                muts.forEach(function (m) {
+                    if (m.type === 'characterData') {
+                        var t = m.target;
+                        if (t.nodeValue && t.nodeValue.indexOf('[Specialist Dot:') >= 0) {
+                            t.nodeValue = t.nodeValue.replace(DOT_RE, '').replace(/\s{2,}/g, ' ').trim();
+                        }
+                        return;
+                    }
+                    (m.addedNodes || []).forEach(function (nd) {
+                        if (nd.nodeType === 1) scrubNode(nd);
+                        else if (nd.nodeType === 3 && nd.nodeValue && nd.nodeValue.indexOf('[Specialist Dot:') >= 0) {
+                            nd.nodeValue = nd.nodeValue.replace(DOT_RE, '').replace(/\s{2,}/g, ' ').trim();
+                        }
+                    });
+                });
+            });
+            obs.observe(target, { childList: true, subtree: true, characterData: true });
+            scrubNode(target);
+        } catch (e) {}
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watchThoughts);
+    } else {
+        watchThoughts();
+    }
+
     ensureCss();
     if (!hook()) {
         var tries = 0;
