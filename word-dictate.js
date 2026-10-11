@@ -103,7 +103,9 @@
     'body.theme-light .jd-reaction-chip{background:#fff;border-color:rgba(0,0,0,.1)}'
   ].join('\n');
   function injectCSS() {
-    if (document.getElementById('jdWordDictateCss')) return;
+    /* Remove old CSS to ensure updates apply (fix for stacked CSS) */
+    var oldSt = document.getElementById('jdWordDictateCss');
+    if (oldSt) oldSt.remove();
     var st = document.createElement('style');
     st.id = 'jdWordDictateCss';
     st.textContent = CSS;
