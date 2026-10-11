@@ -71,6 +71,10 @@
     '.jd-wordmenu__reacts{display:flex;gap:2px;justify-content:space-between;padding:4px 2px 8px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:4px}',
     '.jd-wordmenu__react{font-size:22px;line-height:1;background:none;border:0;cursor:pointer;padding:7px 5px;border-radius:12px}',
     '.jd-wordmenu__react[data-on]{background:rgba(255,255,255,.14)}',
+    '.jd-wordmenu{overflow:visible!important}',
+    '.jd-wordmenu__reactbar{display:flex;gap:2px;justify-content:space-between;align-items:center;background:#2a2a30;border-radius:999px;padding:6px 8px;box-shadow:0 8px 24px rgba(0,0,0,.4)}',
+    '.jd-wordmenu__reactbar .jd-wordmenu__react{font-size:24px;min-width:38px;min-height:38px}',
+    '.jd-wordmenu__reactbar .jd-wordmenu__more{font-size:20px;color:#9ca3af}',
     '.jd-wordmenu__word{padding:6px 12px 6px;font-size:12px;opacity:.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}',
     '.jd-wordmenu__row{display:flex;align-items:center;gap:12px;width:100%;padding:0 12px;height:46px;background:none;border:0;border-radius:12px;color:inherit;font-size:15px;font-weight:500;cursor:pointer;text-align:left}',
     '.jd-wordmenu__row:active{background:rgba(255,255,255,.09)}',
@@ -154,7 +158,7 @@
 
   /* ---------------- reactions ---------------- */
   var LSKEY = 'jd_msg_reactions';
-  var EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
+  var EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
   function getStore() {
     try { return JSON.parse(localStorage.getItem(LSKEY) || '{}'); } catch (e) { return {}; }
   }
@@ -223,10 +227,8 @@
     menu.className = 'jd-wordmenu';
     menu.setAttribute('role', 'menu');
     var current = ctx.msgEl ? getReaction(ctx.msgEl) : '';
-    var html = '<div class="jd-wordmenu__reacts">' + EMOJIS.map(function (em) {
-      return '<button type="button" class="jd-wordmenu__react" data-emoji="' + em + '"' +
-        (current === em ? ' data-on="1"' : '') + '>' + em + '</button>';
-    }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button></div>';
+    /* Reactions in separate bar below (like Muse app) - wrapper contains both */
+    var html = '';
     if (ctx.word) {
       html += '<div class="jd-wordmenu__word">&ldquo;' + esc(ctx.word) + '&rdquo;</div>';
       html += '<button type="button" class="jd-wordmenu__row" data-act="reply">' + ICONS.reply + '<span>Reply</span></button>';
@@ -243,6 +245,22 @@
     if (top + h > window.innerHeight - 10) top = Math.max(10, y - h - 14);
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
+    /* Separate reaction bar BELOW menu (like Muse app screenshot) */
+    /* Attached to menu element so contains() works - no onDocDown bug */
+    var reactBar = document.createElement('div');
+    reactBar.className = 'jd-wordmenu__reactbar';
+    reactBar.innerHTML = EMOJIS.map(function (em) {
+      return '<button type="button" class="jd-wordmenu__react" data-emoji="' + em + '"' +
+        (current === em ? ' data-on="1"' : '') + '>' + em + '</button>';
+    }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button>';
+    /* Position below menu with 8px gap */
+    reactBar.style.position = 'absolute';
+    reactBar.style.top = '100%';
+    reactBar.style.marginTop = '8px';
+    reactBar.style.left = '0';
+    reactBar.style.right = '0';
+    menu.style.position = 'fixed'; /* ensure absolute child positions correctly */
+    menu.appendChild(reactBar);
     menu.addEventListener('click', function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
