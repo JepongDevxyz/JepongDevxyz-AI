@@ -533,201 +533,6 @@
     });
   }
 
-  /* ---------- long-press menu ---------- */
-  var lpMenu = null;
-  function closeLpMenu() {
-    if (lpMenu) { lpMenu.remove(); lpMenu = null; }
-    document.removeEventListener('pointerdown', onLpDocDown, true);
-  }
-  function onLpDocDown(e) {
-    if (lpMenu && !lpMenu.contains(e.target)) closeLpMenu();
-  }
-  function openLpMenu(msgEl, x, y) {
-    /* DISABLED: word-dictate.js menu is the original keeper (with Dictate) */
-    return;
-    closeLpMenu();
-    var isUser = msgEl.classList.contains('user');
-    var menu = document.createElement('div');
-    menu.className = 'jd-lp-menu';
-    /* quick reactions row */
-    var quick = document.createElement('div');
-    quick.className = 'jd-lp-quick';
-    QUICK_EMOJIS.forEach(function (em) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = em;
-      b.setAttribute('aria-label', 'React with ' + em);
-      b.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        addFreq(em);
-        applyReaction(msgEl, em);
-        closeLpMenu();
-      });
-      quick.appendChild(b);
-    });
-    var more = document.createElement('button');
-    more.type = 'button';
-    more.className = 'jd-lp-more';
-    more.textContent = '+';
-    more.setAttribute('aria-label', 'More reactions');
-    more.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      closeLpMenu();
-      openEmojiPicker(msgEl);
-    });
-    quick.appendChild(more);
-    menu.appendChild(quick);
-    /* menu items */
-    var items = [
-      { label: 'Reply', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17l-5-5 5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>' },
-      { label: 'Copy', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' },
-      { label: 'Select', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l3.5 3.5M19 3l-3.5 3.5M12 3v18"/></svg>' },
-      { label: 'Share', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>' }
-    ];
-    items.forEach(function (it) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'jd-lp-item';
-      btn.innerHTML = it.icon + '<span>' + it.label + '</span>';
-      btn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        closeLpMenu();
-        handleLpAction(msgEl, it.label);
-      });
-      menu.appendChild(btn);
-    });
-    document.body.appendChild(menu);
-    lpMenu = menu;
-    /* position near the tap, clamped to viewport */
-    try {
-      var mw = menu.offsetWidth || 240, mh = menu.offsetHeight || 300;
-      var lx = Math.min(Math.max(8, x - mw / 2), window.innerWidth - mw - 8);
-      var ly = y - mh - 12;
-      if (ly < 8) ly = Math.min(y + 20, window.innerHeight - mh - 8);
-      menu.style.left = lx + 'px';
-      menu.style.top = Math.max(8, ly) + 'px';
-    } catch (e) {}
-    document.addEventListener('pointerdown', onLpDocDown, true);
-  }
-  function applyReaction(msgEl, emoji) {
-    try {
-      if (window.__jdWordDictate && window.__jdWordDictate.toggleReaction) {
-        /* toggleReaction(msgEl, emoji) sets it; call twice-safe via direct set */
-        var cur = window.__jdWordDictate.getReaction ? window.__jdWordDictate.getReaction(msgEl) : '';
-        if (cur !== emoji) window.__jdWordDictate.toggleReaction(msgEl, emoji);
-        else return; /* already set */
-      }
-    } catch (e) {}
-    setBubbleReaction(msgEl, emoji);
-    renderInlineReaction(msgEl);
-  }
-  function handleLpAction(msgEl, action) {
-    try {
-      var text = msgEl.innerText || msgEl.textContent || '';
-      if (action === 'Copy') {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text.trim());
-          if (window.showModernToast) window.showModernToast('Copied');
-        }
-      } else if (action === 'Reply' || action === 'Share' || action === 'Select') {
-        if (window.showModernToast) window.showModernToast(action + ' — soon');
-      }
-    } catch (e) {}
-  }
-
-  /* ---------- full emoji picker ---------- */
-  function openEmojiPicker(msgEl) {
-    closeEmojiPicker();
-    var wrap = document.createElement('div');
-    wrap.className = 'jd-emoji-modal';
-    wrap.innerHTML =
-      '<div class="jd-emoji-backdrop"></div>' +
-      '<div class="jd-emoji-panel">' +
-        '<div class="jd-emoji-search"><input type="text" placeholder="Search reaction" aria-label="Search reaction" /></div>' +
-        '<div class="jd-emoji-cats"></div>' +
-        '<div class="jd-emoji-grid"></div>' +
-      '</div>';
-    document.body.appendChild(wrap);
-    window.__jdEmojiPicker = wrap;
-    var grid = wrap.querySelector('.jd-emoji-grid');
-    var catsEl = wrap.querySelector('.jd-emoji-cats');
-    var search = wrap.querySelector('.jd-emoji-search input');
-    function pick(em) {
-      addFreq(em);
-      applyReaction(msgEl, em);
-      closeEmojiPicker();
-    }
-    function renderGrid(filter) {
-      grid.innerHTML = '';
-      var q = (filter || '').toLowerCase().trim();
-      if (q) {
-        var found = [];
-        EMOJI_CATS.forEach(function (c) {
-          c.emojis.forEach(function (em) { if (found.indexOf(em) < 0) found.push(em); });
-        });
-        /* simple: show all when searching (no name index) — filter later if needed */
-        var sec = document.createElement('div');
-        sec.className = 'jd-emoji-section';
-        sec.textContent = 'Results';
-        grid.appendChild(sec);
-        found.slice(0, 120).forEach(function (em) {
-          var b = document.createElement('button');
-          b.type = 'button'; b.textContent = em;
-          b.addEventListener('click', function () { pick(em); });
-          grid.appendChild(b);
-        });
-        return;
-      }
-      var freq = getFreq();
-      if (freq.length) {
-        var s0 = document.createElement('div');
-        s0.className = 'jd-emoji-section'; s0.textContent = 'Frequently used';
-        grid.appendChild(s0);
-        freq.forEach(function (em) {
-          var b = document.createElement('button');
-          b.type = 'button'; b.textContent = em;
-          b.addEventListener('click', function () { pick(em); });
-          grid.appendChild(b);
-        });
-      }
-      EMOJI_CATS.forEach(function (c) {
-        var s = document.createElement('div');
-        s.className = 'jd-emoji-section'; s.textContent = c.name;
-        grid.appendChild(s);
-        c.emojis.forEach(function (em) {
-          var b = document.createElement('button');
-          b.type = 'button'; b.textContent = em;
-          b.addEventListener('click', function () { pick(em); });
-          grid.appendChild(b);
-        });
-      });
-    }
-    EMOJI_CATS.forEach(function (c, i) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.textContent = c.icon; b.title = c.name;
-      if (i === 0) b.classList.add('jd-active');
-      b.addEventListener('click', function () {
-        catsEl.querySelectorAll('button').forEach(function (x) { x.classList.remove('jd-active'); });
-        b.classList.add('jd-active');
-        var target = grid.querySelectorAll('.jd-emoji-section')[getFreq().length ? i + 1 : i];
-        if (target) target.scrollIntoView();
-      });
-      catsEl.appendChild(b);
-    });
-    search.addEventListener('input', function () { renderGrid(search.value); });
-    wrap.querySelector('.jd-emoji-backdrop').addEventListener('click', closeEmojiPicker);
-    renderGrid('');
-    setTimeout(function () { try { search.focus(); } catch (e) {} }, 350);
-  }
-  function closeEmojiPicker() {
-    if (window.__jdEmojiPicker) { window.__jdEmojiPicker.remove(); window.__jdEmojiPicker = null; }
-  }
-
-  /* Listen for (+) from word-dictate.js menu */
-  document.addEventListener('jd-open-emoji-picker', function(e) {
-    var msgEl = e.detail && e.detail.msgEl;
-    if (msgEl && typeof openEmojiPicker === 'function') openEmojiPicker(msgEl);
-  });
   /* ---------- long-press wiring ---------- */
   function wireLongPress() {
     var chatBox = document.getElementById('chatBox') || document.querySelector('.chat-messages');
@@ -744,7 +549,7 @@
       clearTimeout(timer);
       timer = setTimeout(function () {
         if (target) {
-          openLpMenu(target, sx, sy);
+          /* REMOVED: openLpMenu deleted - word-dictate.js handles long-press */
           try { if (navigator.vibrate) navigator.vibrate(15); } catch (e2) {}
         }
         timer = null;
@@ -762,7 +567,7 @@
       var msg = e.target && e.target.closest ? e.target.closest('.msg') : null;
       if (msg && !e.target.closest('button,a,input,textarea')) {
         e.preventDefault();
-        openLpMenu(msg, e.clientX, e.clientY);
+        /* REMOVED: openLpMenu deleted - word-dictate.js handles long-press */
       }
     });
   }
