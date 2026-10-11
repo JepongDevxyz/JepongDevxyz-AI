@@ -72,7 +72,7 @@
     '.jd-wordmenu__react{font-size:22px;line-height:1;background:none;border:0;cursor:pointer;padding:7px 5px;border-radius:12px}',
     '.jd-wordmenu__react[data-on]{background:rgba(255,255,255,.14)}',
     '.jd-wordmenu{overflow:visible!important}',
-    '.jd-wordmenu__reactbar{display:flex;gap:2px;justify-content:space-between;align-items:center;background:#2a2a30;border-radius:999px;padding:6px 8px;box-shadow:0 8px 24px rgba(0,0,0,.4)}',
+    '.jd-wordmenu__reactbar{display:flex;gap:2px;justify-content:center;align-items:center;background:#2a2a30;border-radius:999px;padding:6px 10px;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:calc(100vw - 20px);overflow:hidden}',
     '.jd-wordmenu__reactbar .jd-wordmenu__react{font-size:24px;min-width:38px;min-height:38px}',
     '.jd-wordmenu__reactbar .jd-wordmenu__more{font-size:20px;color:#9ca3af}',
     '.jd-wordmenu__word{padding:6px 12px 6px;font-size:12px;opacity:.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}',
@@ -255,8 +255,9 @@
     }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button>';
     /* Position reaction bar: below menu if space, else above (like Muse app) */
     reactBar.style.position = 'absolute';
-    reactBar.style.left = '0';
-    reactBar.style.right = '0';
+    reactBar.style.left = '50%';
+    reactBar.style.transform = 'translateX(-50%)';
+    reactBar.style.whiteSpace = 'nowrap';
     menu.style.position = 'fixed';
     menu.appendChild(reactBar);
     /* Check if bar goes off-screen below */
