@@ -114,7 +114,9 @@
     '@keyframes jdBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(.3)}}'
   ].join('\n');
   function injectCSS() {
-    if (document.getElementById('jdReactionsV2Css')) return;
+    /* Remove old CSS to prevent stacking (her 2026-10-11 order) */
+    var oldV2 = document.getElementById('jdReactionsV2Css');
+    if (oldV2) oldV2.remove();
     var st = document.createElement('style');
     st.id = 'jdReactionsV2Css';
     st.textContent = CSS;

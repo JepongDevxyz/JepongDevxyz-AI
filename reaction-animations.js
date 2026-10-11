@@ -49,7 +49,9 @@
   ].join('\n');
 
   function injectCSS() {
-    if (document.getElementById('jdReactAnimCSS')) return;
+    /* Remove old CSS to prevent stacking (her 2026-10-11 order) */
+    var oldCss = document.getElementById('jdReactAnimCSS');
+    if (oldCss) oldCss.remove();
     var st = document.createElement('style');
     st.id = 'jdReactAnimCSS';
     st.textContent = CSS;
