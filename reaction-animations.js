@@ -16,11 +16,13 @@
     '.jd-bubble-react{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
     /* Hide the React button - long-press menu already has reactions */
     '.jd-react-btn{display:none!important;visibility:hidden!important;}',
-    /* Base floating animation */
+    /* Base floating animation - smooth like Muse app video */
     '@keyframes jdReactFloat{',
-    '  0%{transform:translateY(0) scale(0.5);opacity:0;}',
-    '  15%{transform:translateY(-10px) scale(1.2);opacity:1;}',
-    '  100%{transform:translateY(-80px) scale(1);opacity:0;}',
+    '  0%{transform:translateY(0) scale(0.3);opacity:0;}',
+    '  20%{transform:translateY(-15px) scale(1.4);opacity:1;}',
+    '  40%{transform:translateY(-30px) scale(1.1);opacity:1;}',
+    '  70%{transform:translateY(-60px) scale(1);opacity:0.8;}',
+    '  100%{transform:translateY(-100px) scale(0.9);opacity:0;}',
     '}',
     /* Heart: pulse then float */
     '@keyframes jdReactHeart{',
@@ -44,8 +46,8 @@
     '}',
     '.jd-react-float{',
     '  position:fixed;z-index:10002;pointer-events:none;',
-    '  font-size:32px;line-height:1;',
-    '  animation:jdReactFloat 0.9s cubic-bezier(.2,.7,.3,1) forwards;',
+    '  font-size:36px;line-height:1;',
+    '  animation:jdReactFloat 1.2s cubic-bezier(.25,.8,.35,1) forwards;',
     '}',
     '.jd-react-float.jd-heart{animation:jdReactHeart 1s ease-out forwards;font-size:36px;}',
     '.jd-react-float.jd-burst{animation:jdReactBurst 1s ease-out forwards;font-size:42px;}',
@@ -77,7 +79,7 @@
     el.style.left = (x - 16) + 'px';
     el.style.top = (y - 16) + 'px';
     document.body.appendChild(el);
-    setTimeout(function() { el.remove(); }, 1100);
+    setTimeout(function() { el.remove(); }, 1300);
   }
 
   function init() {
