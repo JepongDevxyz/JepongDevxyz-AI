@@ -273,11 +273,14 @@
     menu.style.position = 'fixed';
     /* Keep reference for cleanup */
     menu._reactBar = reactBar;
-    /* Vertical: bar ABOVE menu (like Muse app video) */
-    /* Measure bar height */
+    /* Vertical: bar ABOVE tap point, menu BELOW tap (like Muse app, no overlap) */
     var barH = reactBar.offsetHeight || 56;
-    var menuTop = parseInt(menu.style.top, 10);
-    var barTop = Math.max(10, menuTop - barH - 8);
+    var barTop = Math.max(10, y - barH - 8);
+    /* If not enough space above, put bar below menu */
+    var menuBottom = parseInt(menu.style.top, 10) + menu.offsetHeight;
+    if (barTop < 10) {
+      barTop = Math.min(window.innerHeight - barH - 10, menuBottom + 8);
+    }
     reactBar.style.top = barTop + 'px';
     /* Click handler for separate bar */
     reactBar.addEventListener('click', function(e) {
