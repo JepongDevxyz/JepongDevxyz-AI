@@ -317,7 +317,9 @@
           } catch (err) {}
           return;
         }
-        toggleReaction(ctx.msgEl, em);
+        /* Use setReaction (not toggle) to ensure switching works - chip handles removal */
+        var cx = e.clientX || 0, cy = e.clientY || 0;
+        setReaction(ctx.msgEl, em, cx, cy);
         closeMenu();
       }
     });
