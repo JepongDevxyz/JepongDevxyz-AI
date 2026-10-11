@@ -253,14 +253,23 @@
       return '<button type="button" class="jd-wordmenu__react" data-emoji="' + em + '"' +
         (current === em ? ' data-on="1"' : '') + '>' + em + '</button>';
     }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button>';
-    /* Position below menu with 8px gap */
+    /* Position reaction bar: below menu if space, else above (like Muse app) */
     reactBar.style.position = 'absolute';
-    reactBar.style.top = '100%';
-    reactBar.style.marginTop = '8px';
     reactBar.style.left = '0';
     reactBar.style.right = '0';
-    menu.style.position = 'fixed'; /* ensure absolute child positions correctly */
+    menu.style.position = 'fixed';
     menu.appendChild(reactBar);
+    /* Check if bar goes off-screen below */
+    var menuRect = menu.getBoundingClientRect();
+    var barH = 56; /* estimated */
+    if (menuRect.bottom + 8 + barH > window.innerHeight - 10) {
+      /* Not enough space below - put bar above menu */
+      reactBar.style.bottom = '100%';
+      reactBar.style.marginBottom = '8px';
+    } else {
+      reactBar.style.top = '100%';
+      reactBar.style.marginTop = '8px';
+    }
     menu.addEventListener('click', function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
