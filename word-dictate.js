@@ -188,6 +188,23 @@
     saveStore(store);
     renderReaction(msgEl);
   }
+  function setReaction(msgEl, emoji, x, y) {
+    /* Set reaction directly (no toggle) - for switching between emojis */
+    var store = getStore();
+    var sid = sessionId();
+    store[sid] = store[sid] || {};
+    var k = msgKey(msgEl);
+    store[sid][k] = emoji;
+    saveStore(store);
+    renderReaction(msgEl);
+    /* Trigger float animation like Muse app */
+    try {
+      if (window.__jdReactionAnim && window.__jdReactionAnim.float) {
+        var rect = msgEl.getBoundingClientRect();
+        window.__jdReactionAnim.float(emoji, x || (rect.left + rect.width/2), y || rect.top);
+      }
+    } catch (e) {}
+  }
   function renderReaction(msgEl) {
     if (!msgEl || !msgEl.getAttribute) return;
     var emoji = getReaction(msgEl);
@@ -603,6 +620,7 @@
   window.__jdWordDictate = {
     expandWord: expandWord,
     toggleReaction: toggleReaction,
+    setReaction: setReaction,
     getReaction: getReaction,
     renderReaction: renderReaction,
     openDictionary: openDictionary,

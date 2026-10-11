@@ -4,7 +4,11 @@
 (function () {
   'use strict';
   if (window.__jdReactionAnim) return;
-  window.__jdReactionAnim = true;
+  window.__jdReactionAnim = {
+    float: function(emoji, x, y) {
+      try { floatReaction(emoji, x, y); } catch (e) {}
+    }
+  };
 
   var CSS = [
     /* Remove the second (bubble) reaction - keep only the inline one in action bar */

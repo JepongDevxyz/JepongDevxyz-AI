@@ -357,11 +357,17 @@
       b.setAttribute('aria-label', 'React ' + em);
       b.addEventListener('click', function (ev) {
         ev.stopPropagation();
+        var cx = ev.clientX || 0, cy = ev.clientY || 0;
         closePicker();
         if (msgEl) {
           try {
-            if (window.__jdWordDictate && window.__jdWordDictate.toggleReaction) {
-              window.__jdWordDictate.toggleReaction(msgEl, em);
+            /* SET (not toggle) - ensures switching from one emoji to another works */
+            if (window.__jdWordDictate && window.__jdWordDictate.setReaction) {
+              window.__jdWordDictate.setReaction(msgEl, em, cx, cy);
+            } else if (window.__jdWordDictate && window.__jdWordDictate.toggleReaction) {
+              /* Fallback: if already set to this emoji, toggle off; else set */
+              var cur = window.__jdWordDictate.getReaction ? window.__jdWordDictate.getReaction(msgEl) : '';
+              if (cur !== em) window.__jdWordDictate.toggleReaction(msgEl, em);
             }
           } catch (e) {}
           renderInlineReaction(msgEl);
