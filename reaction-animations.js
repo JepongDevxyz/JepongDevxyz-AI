@@ -82,6 +82,11 @@
 
   function init() {
     injectCSS();
+    /* Listen for float requests from word-dictate.js */
+    document.addEventListener('jd-float-reaction', function(e) {
+      var d = e.detail || {};
+      if (d.emoji) floatReaction(d.emoji, d.x || 0, d.y || 0);
+    });
     // Single trigger: watch for chips being added (user taps AND AI reactions)
     // Using only MutationObserver prevents double animation
     var obs = new MutationObserver(function(muts) {

@@ -218,10 +218,11 @@
     renderReaction(msgEl);
     /* Trigger float animation like Muse app */
     try {
-      if (window.__jdReactionAnim && window.__jdReactionAnim.float) {
-        var rect = msgEl.getBoundingClientRect();
-        window.__jdReactionAnim.float(emoji, x || (rect.left + rect.width/2), y || rect.top);
-      }
+      var rect = msgEl.getBoundingClientRect();
+      var fx = x || (rect.left + rect.width/2), fy = y || rect.top;
+      /* Dispatch event for reaction-animations.js (robust, no direct dependency) */
+      var evt = new CustomEvent('jd-float-reaction', { detail: { emoji: emoji, x: fx, y: fy } });
+      document.dispatchEvent(evt);
     } catch (e) {}
   }
   function renderReaction(msgEl) {
