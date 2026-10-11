@@ -217,6 +217,8 @@
   }
   function showMenu(x, y, ctx) {
     closeMenu();
+    /* Clear native text selection to prevent Android Google overlay */
+    try { window.getSelection().removeAllRanges(); } catch (e) {}
     var menu = document.createElement('div');
     menu.className = 'jd-wordmenu';
     menu.setAttribute('role', 'menu');
