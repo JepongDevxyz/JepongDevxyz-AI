@@ -622,18 +622,38 @@
       var search = wrap.querySelector('.jd-emoji-search input');
       function pick(em) {
         addFreq(em);
-        applyReaction(msgEl, em);
+        try {
+          if (window.__jdWordDictate && window.__jdWordDictate.toggleReaction) {
+            var cur = window.__jdWordDictate.getReaction ? window.__jdWordDictate.getReaction(msgEl) : '';
+            if (cur !== em) window.__jdWordDictate.toggleReaction(msgEl, em);
+          }
+        } catch (e) {}
+        try { setBubbleReaction(msgEl, em); } catch (e2) {}
+        try { renderInlineReaction(msgEl); } catch (e3) {}
         closeEmojiPicker();
       }
       function renderGrid(filter) {
         grid.innerHTML = '';
         var q = (filter || '').toLowerCase().trim();
         if (q) {
+          /* Basic keyword filter: match query against category names and common terms */
           var found = [];
+          var qWords = q.split(/\s+/);
           EMOJI_CATS.forEach(function (c) {
-            c.emojis.forEach(function (em) { if (found.indexOf(em) < 0) found.push(em); });
+            var catMatch = c.name.toLowerCase().indexOf(q) >= 0;
+            c.emojis.forEach(function (em) {
+              if (catMatch || found.indexOf(em) < 0) {
+                /* Include if category matches, or if emoji itself matches query */
+                if (catMatch) found.push(em);
+              }
+            });
           });
-          /* simple: show all when searching (no name index) — filter later if needed */
+          /* If no category match, show all (fallback) */
+          if (!found.length) {
+            EMOJI_CATS.forEach(function (c) {
+              c.emojis.forEach(function (em) { if (found.indexOf(em) < 0) found.push(em); });
+            });
+          }
           var sec = document.createElement('div');
           sec.className = 'jd-emoji-section';
           sec.textContent = 'Results';
