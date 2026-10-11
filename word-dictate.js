@@ -173,7 +173,23 @@
   function sessionId() {
     try { return localStorage.getItem('jepong_last_session_id') || 'default'; } catch (e) { return 'default'; }
   }
-  function msgKey(msgEl) { return msgEl.getAttribute('data-message-index') || ''; }
+  var __jdMsgIdCounter = 0;
+  function msgKey(msgEl) {
+    /* Use stable unique ID - data-message-index doesn't exist on messages (root cause of switching bug) */
+    if (!msgEl) return '';
+    var id = msgEl.getAttribute('data-jd-msgid');
+    if (!id) {
+      /* Generate from content hash + counter for stability */
+      var text = (msgEl.innerText || msgEl.textContent || '').slice(0, 100);
+      var hash = 0;
+      for (var i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+      }
+      id = 'm' + Math.abs(hash).toString(36) + '_' + (__jdMsgIdCounter++);
+      try { msgEl.setAttribute('data-jd-msgid', id); } catch (e) {}
+    }
+    return id;
+  }
   function getReaction(msgEl) {
     var store = getStore();
     return (store[sessionId()] || {})[msgKey(msgEl)] || '';
