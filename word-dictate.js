@@ -213,11 +213,18 @@
     dictate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>'
   };
   function closeMenu() {
-    if (openMenu) { openMenu.remove(); openMenu = null; }
+    if (openMenu) {
+      if (openMenu._reactBar) { openMenu._reactBar.remove(); }
+      openMenu.remove(); openMenu = null;
+    }
     document.removeEventListener('pointerdown', onDocDown, true);
   }
   function onDocDown(e) {
-    if (openMenu && !openMenu.contains(e.target)) closeMenu();
+    if (openMenu) {
+      var inMenu = openMenu.contains(e.target);
+      var inBar = openMenu._reactBar && openMenu._reactBar.contains(e.target);
+      if (!inMenu && !inBar) closeMenu();
+    }
   }
   function showMenu(x, y, ctx) {
     closeMenu();
@@ -254,23 +261,45 @@
         (current === em ? ' data-on="1"' : '') + '>' + em + '</button>';
     }).join('') + '<button type="button" class="jd-wordmenu__react jd-wordmenu__more" data-emoji="+" aria-label="More reactions">+</button>';
     /* Position reaction bar: below menu if space, else above (like Muse app) */
-    reactBar.style.position = 'absolute';
-    reactBar.style.left = '50%';
-    reactBar.style.transform = 'translateX(-50%)';
+    /* Bar as fixed, centered on tap X, clamped to viewport (like Muse app) */
+    reactBar.style.position = 'fixed';
     reactBar.style.whiteSpace = 'nowrap';
+    reactBar.style.zIndex = '10004';
+    document.body.appendChild(reactBar);
+    /* Measure and clamp */
+    var barW = reactBar.offsetWidth;
+    var barLeft = Math.max(10, Math.min(x - barW / 2, window.innerWidth - barW - 10));
+    reactBar.style.left = barLeft + 'px';
     menu.style.position = 'fixed';
-    menu.appendChild(reactBar);
-    /* Check if bar goes off-screen below */
+    /* Keep reference for cleanup */
+    menu._reactBar = reactBar;
+    /* Vertical: below menu if space, else above (like Muse app) */
     var menuRect = menu.getBoundingClientRect();
-    var barH = 56; /* estimated */
+    var barH = reactBar.offsetHeight || 56;
+    var barTop;
     if (menuRect.bottom + 8 + barH > window.innerHeight - 10) {
-      /* Not enough space below - put bar above menu */
-      reactBar.style.bottom = '100%';
-      reactBar.style.marginBottom = '8px';
+      barTop = Math.max(10, menuRect.top - barH - 8);
     } else {
-      reactBar.style.top = '100%';
-      reactBar.style.marginTop = '8px';
+      barTop = menuRect.bottom + 8;
     }
+    reactBar.style.top = barTop + 'px';
+    /* Click handler for separate bar */
+    reactBar.addEventListener('click', function(e) {
+      var rbtn = e.target.closest('.jd-wordmenu__react');
+      if (rbtn && ctx.msgEl) {
+        var em = rbtn.getAttribute('data-emoji');
+        if (em === '+') {
+          closeMenu();
+          try {
+            var evt = new CustomEvent('jd-open-emoji-picker', { detail: { msgEl: ctx.msgEl } });
+            document.dispatchEvent(evt);
+          } catch (err) {}
+          return;
+        }
+        toggleReaction(ctx.msgEl, em);
+        closeMenu();
+      }
+    });
     menu.addEventListener('click', function (e) {
       var rbtn = e.target.closest('.jd-wordmenu__react');
       if (rbtn && ctx.msgEl) {
