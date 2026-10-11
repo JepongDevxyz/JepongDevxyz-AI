@@ -603,4 +603,97 @@
     getAiReaction: getAiReaction,
     setAiReaction: setAiReaction
   };
+
+    function openEmojiPicker(msgEl) {
+      closeEmojiPicker();
+      var wrap = document.createElement('div');
+      wrap.className = 'jd-emoji-modal';
+      wrap.innerHTML =
+        '<div class="jd-emoji-backdrop"></div>' +
+        '<div class="jd-emoji-panel">' +
+          '<div class="jd-emoji-search"><input type="text" placeholder="Search reaction" aria-label="Search reaction" /></div>' +
+          '<div class="jd-emoji-cats"></div>' +
+          '<div class="jd-emoji-grid"></div>' +
+        '</div>';
+      document.body.appendChild(wrap);
+      window.__jdEmojiPicker = wrap;
+      var grid = wrap.querySelector('.jd-emoji-grid');
+      var catsEl = wrap.querySelector('.jd-emoji-cats');
+      var search = wrap.querySelector('.jd-emoji-search input');
+      function pick(em) {
+        addFreq(em);
+        applyReaction(msgEl, em);
+        closeEmojiPicker();
+      }
+      function renderGrid(filter) {
+        grid.innerHTML = '';
+        var q = (filter || '').toLowerCase().trim();
+        if (q) {
+          var found = [];
+          EMOJI_CATS.forEach(function (c) {
+            c.emojis.forEach(function (em) { if (found.indexOf(em) < 0) found.push(em); });
+          });
+          /* simple: show all when searching (no name index) — filter later if needed */
+          var sec = document.createElement('div');
+          sec.className = 'jd-emoji-section';
+          sec.textContent = 'Results';
+          grid.appendChild(sec);
+          found.slice(0, 120).forEach(function (em) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.textContent = em;
+            b.addEventListener('click', function () { pick(em); });
+            grid.appendChild(b);
+          });
+          return;
+        }
+        var freq = getFreq();
+        if (freq.length) {
+          var s0 = document.createElement('div');
+          s0.className = 'jd-emoji-section'; s0.textContent = 'Frequently used';
+          grid.appendChild(s0);
+          freq.forEach(function (em) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.textContent = em;
+            b.addEventListener('click', function () { pick(em); });
+            grid.appendChild(b);
+          });
+        }
+        EMOJI_CATS.forEach(function (c) {
+          var s = document.createElement('div');
+          s.className = 'jd-emoji-section'; s.textContent = c.name;
+          grid.appendChild(s);
+          c.emojis.forEach(function (em) {
+            var b = document.createElement('button');
+            b.type = 'button'; b.textContent = em;
+            b.addEventListener('click', function () { pick(em); });
+            grid.appendChild(b);
+          });
+        });
+      }
+      EMOJI_CATS.forEach(function (c, i) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.textContent = c.icon; b.title = c.name;
+        if (i === 0) b.classList.add('jd-active');
+        b.addEventListener('click', function () {
+          catsEl.querySelectorAll('button').forEach(function (x) { x.classList.remove('jd-active'); });
+          b.classList.add('jd-active');
+          var target = grid.querySelectorAll('.jd-emoji-section')[getFreq().length ? i + 1 : i];
+          if (target) target.scrollIntoView();
+        });
+        catsEl.appendChild(b);
+      });
+      search.addEventListener('input', function () { renderGrid(search.value); });
+      wrap.querySelector('.jd-emoji-backdrop').addEventListener('click', closeEmojiPicker);
+      renderGrid('');
+      setTimeout(function () { try { search.focus(); } catch (e) {} }, 350);
+    }
+    function closeEmojiPicker() {
+      if (window.__jdEmojiPicker) { window.__jdEmojiPicker.remove(); window.__jdEmojiPicker = null; }
+    }
+  
+    /* Listen for (+) from word-dictate.js menu */
+    document.addEventListener('jd-open-emoji-picker', function(e) {
+      var msgEl = e.detail && e.detail.msgEl;
+      if (msgEl && typeof openEmojiPicker === 'function') openEmojiPicker(msgEl);
+    });
 })();
