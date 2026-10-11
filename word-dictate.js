@@ -339,6 +339,12 @@
         /* Use setReaction (not toggle) to ensure switching works - chip handles removal */
         var cx = e.clientX || 0, cy = e.clientY || 0;
         setReaction(ctx.msgEl, em, cx, cy);
+        /* Also update the visible chip (reactions-v2.js) for live UI */
+        try {
+          if (window.__jdReactionsV2 && window.__jdReactionsV2.renderInlineReaction) {
+            window.__jdReactionsV2.renderInlineReaction(ctx.msgEl);
+          }
+        } catch (e2) {}
         closeMenu();
       }
     });
