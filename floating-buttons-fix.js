@@ -19,7 +19,17 @@
     '.floating-scroll-pill{position:fixed!important;left:50%!important;right:auto!important;bottom:96px!important;transform:translateX(-50%)!important;z-index:60!important}',
     '@media (max-width:360px){',
     '  .floating-scroll-pill{bottom:88px!important}',
-    '}'
+    '}',
+    /* 2026-10-11: keep scroll pill above the suggestion chips row when visible */
+    'body:has(.prompt-suggestions .prompt-chip){--jd-pill-lift:56px}',
+    'body:has(.prompt-suggestions .prompt-chip) .floating-scroll-pill{bottom:calc(96px + var(--jd-pill-lift,56px))!important}',
+    '@media (max-width:360px){',
+    '  body:has(.prompt-suggestions .prompt-chip) .floating-scroll-pill{bottom:calc(88px + var(--jd-pill-lift,56px))!important}',
+    '}',
+    /* 2026-10-11: thinking-trace text must not clip behind the suggestions row */
+    '.thought-line__head{position:relative!important;z-index:5!important}',
+    /* 2026-10-11: voice pill must not be squeezed over the input edge */
+    'button#micBtn.voice-pill{flex:none!important;margin-right:2px!important}'
   ].join('\n');
 
   function inject() {

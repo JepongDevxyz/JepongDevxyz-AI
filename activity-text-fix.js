@@ -40,10 +40,16 @@
         return String(v);
     }
 
+    var DOT_PREFIX_RE = /^\[Specialist Dot:[^\]]*\][\s\S]*?---\n/;
+    function stripDotPrefix(s) {
+        if (typeof s !== 'string') return s;
+        return s.replace(DOT_PREFIX_RE, '').trim();
+    }
+
     function sanitize(evt) {
         if (!evt || typeof evt !== 'object') return evt;
-        var label = activityText(evt.label, '');
-        var detail = activityText(evt.detail, '');
+        var label = stripDotPrefix(activityText(evt.label, ''));
+        var detail = stripDotPrefix(activityText(evt.detail, ''));
         if (label === evt.label && detail === evt.detail) return evt;
         var out = {}, k;
         for (k in evt) out[k] = evt[k];
