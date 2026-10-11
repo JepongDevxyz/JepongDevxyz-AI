@@ -294,6 +294,16 @@
       nodes.forEach(function (tn) {
         tn.nodeValue = tn.nodeValue.replace(MARKER_RE, '').replace(/\s{2,}/g, ' ').trim();
       });
+      /* Also clean marker from title/aria-label attributes (accessible names) */
+      var els = scope.querySelectorAll('[title*="[USER_REACTION:"],[aria-label*="[USER_REACTION:"]');
+      for (var j = 0; j < els.length; j++) {
+        ['title', 'aria-label'].forEach(function (attr) {
+          var v = els[j].getAttribute(attr);
+          if (v && v.indexOf('[USER_REACTION:') >= 0) {
+            els[j].setAttribute(attr, v.replace(MARKER_RE, '').replace(/\s{2,}/g, ' ').trim());
+          }
+        });
+      }
     } catch (e) {}
   }
   /* Re-run when the sidebar re-renders */
