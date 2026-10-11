@@ -175,11 +175,15 @@
   }
   function msgKey(msgEl) {
     /* Use stable content-hash ID - data-message-index doesn't exist (root cause of switching bug) */
-    /* No counter: same content = same key, stable across re-renders */
+    /* Exclude reaction chips from hash: chip emoji would change the key after setting! */
     if (!msgEl) return '';
     var id = msgEl.getAttribute('data-jd-msgid');
     if (!id) {
-      var text = (msgEl.innerText || msgEl.textContent || '').slice(0, 200);
+      var clone = msgEl.cloneNode(true);
+      /* Remove chips before hashing */
+      var chips = clone.querySelectorAll('.jd-reaction-chip, .jd-manual-reaction, .jd-inline-reaction');
+      for (var ci = 0; ci < chips.length; ci++) chips[ci].remove();
+      var text = (clone.innerText || clone.textContent || '').slice(0, 200);
       var hash = 0;
       for (var i = 0; i < text.length; i++) {
         hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
