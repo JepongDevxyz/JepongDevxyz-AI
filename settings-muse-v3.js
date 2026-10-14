@@ -143,6 +143,7 @@
       { icon: 'hand',     label: 'Permissions',            fn: 'openJdPermissions' },
       { icon: 'grid',     label: 'Connectors',             fnPath: '__jdConnectors.open' },
       { icon: 'key',      label: 'Custom API Keys',        fn: 'openProviderKeysSettings' },
+      { icon: 'shield',   label: 'Credential Vault',       fn: 'jdVaultOpenSettings' },
       { icon: 'import',   label: 'Import Memory',          fn: 'jdOpenImportMemory' },
       { icon: 'bell',     label: 'Reply Notifications',    fn: 'openJdReplyNotifications' },
       { icon: 'globe',    label: 'Web Search',             toggle: 'webSearch' },
