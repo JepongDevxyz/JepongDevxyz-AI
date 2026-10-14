@@ -177,6 +177,7 @@
       var slopOn = !!(window.jdSlopGateEnabled && window.jdSlopGateEnabled());
       var tideOn = !!(window.jdTidelineEnabled && window.jdTidelineEnabled());
       var browseOn = !!(window.jdBrowseAgentEnabled && window.jdBrowseAgentEnabled());
+      var signupOn = !!(window.jdSignupAgentEnabled && window.jdSignupAgentEnabled());
       var dotsOn = !!(window.jdDotsEnabled && window.jdDotsEnabled());
       var apprOn = !!(window.jdApprovalEnabled && window.jdApprovalEnabled());
       var spacesOn = !!(window.jdSpacesEnabled && window.jdSpacesEnabled());
@@ -217,6 +218,15 @@
         '<span class="squish-switch__track"></span></label></div>' +
         '<div class="jd-browse-status" id="jdSteelStatus" style="font-size:12px;opacity:.75;margin-top:10px">○ checking Steel pool…</div>' +
         '<div style="font-size:11px;opacity:.55;margin-top:4px">Keys: Vercel → STEEL_API_KEYS (comma-separated) → redeploy.</div>' +
+        '</div>' +
+
+        '<div class="jd-extra-ai-card">' +
+        '<h4>Signup Agent <span style="font-size:10px;opacity:.6;font-weight:400">BETA</span></h4>' +
+        '<p>Guided signup automation — creates accounts step by step on sites you name. Type <b>"signup: &lt;site&gt;"</b> in chat. Human-in-the-loop: secrets via your vault, approval before submit, OTP auto-fill. Powered by the shared <b>Steel</b> pool.</p>' +
+        '<div class="jd-extra-ai-toggle"><span>Enable</span>' +
+        '<label class="squish-switch-root" aria-label="Enable Signup Agent">' +
+        '<input type="checkbox" id="jdExtraSignupToggle"' + (signupOn ? ' checked' : '') + '>' +
+        '<span class="squish-switch__track"></span></label></div>' +
         '</div>' +
 
         '<div class="jd-extra-ai-card">' +
@@ -331,6 +341,14 @@
       if (browseT) browseT.addEventListener('change', function () {
         try { window.jdSetBrowseAgent && window.jdSetBrowseAgent(browseT.checked); } catch (_) {}
         try { if (window.showModernToast) window.showModernToast(browseT.checked ? 'Agent Browse ON 🤖 — type "browse: <goal>" in chat' : 'Agent Browse OFF'); } catch (_) {}
+      });
+      var signupT = sheet.querySelector('#jdExtraSignupToggle');
+      if (signupT) signupT.addEventListener('change', function () {
+        try {
+          if (window.jdSetSignupAgent) window.jdSetSignupAgent(signupT.checked);
+          else try { localStorage.setItem('jd_signup_agent', signupT.checked ? '1' : '0'); } catch (_) {}
+        } catch (_) {}
+        try { if (window.showModernToast) window.showModernToast(signupT.checked ? 'Signup Agent ON — type "signup: <site>" in chat' : 'Signup Agent OFF'); } catch (_) {}
       });
       var dotsT = sheet.querySelector('#jdExtraDotsToggle');
       if (dotsT) dotsT.addEventListener('change', function () {
