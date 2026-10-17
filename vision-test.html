@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vision Test</title>
+<style>
+body{font-family:system-ui;background:#111;color:#fff;padding:20px;max-width:600px;margin:0 auto}
+#result{background:#222;padding:15px;border-radius:8px;margin-top:15px;white-space:pre-wrap;min-height:100px}
+button{background:#0a84ff;color:#fff;border:0;padding:12px 24px;border-radius:8px;font-size:16px;cursor:pointer;margin-top:10px}
+input[type=file]{margin:10px 0}
+.status{color:#888;font-size:14px;margin-top:10px}
+</style>
+</head>
+<body>
+<h2>Vision Test</h2>
+<input type="file" id="fileInput" accept="image/*">
+<div><button onclick="testVision()">Test Image Analysis</button></div>
+<div class="status" id="status"></div>
+<div id="result">Result will appear here...</div>
+<script>
+async function testVision(){
+  const file = document.getElementById('fileInput').files[0];
+  if(!file){ alert('Select an image first'); return; }
+  
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+  status.textContent = 'Reading file...';
+  
+  const reader = new FileReader();
+  reader.onload = async function(){
+    const base64 = reader.result.split(',')[1];
+    status.textContent = 'Sending to API...';
+    result.textContent = 'Waiting...';
+    
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          messages: [{role: 'user', content: 'What do you see in this image? Describe it in detail.'}],
+          files: [{name: file.name, mimeType: file.type, data: base64}],
+          stream: false
+        })
+      });
+      const text = await res.text();
+      status.textContent = 'Done! Status: ' + res.status;
+      result.textContent = text.substring(0, 2000);
+    } catch(e) {
+      status.textContent = 'Error!';
+      result.textContent = String(e);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+</body>
+</html>
