@@ -1,5 +1,5 @@
 {
- "version": "20261008a353",
+ "version": "20261008a354",
  "files": [
   "/paymongo-topup.js",
   "/credits.js",
@@ -90,6 +90,7 @@
   "/fullscreen-settings.js",
   "/reaction-animations.js",
   "/affect-ui.js",
-  "/affect-wire.js"
+  "/affect-wire.js",
+  "/artifacts-export.js"
  ]
 }
