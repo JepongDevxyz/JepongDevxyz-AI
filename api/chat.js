@@ -1820,7 +1820,7 @@ Treat this server instant as authoritative for words such as today, now, current
 
 function buildSystemInstruction(mode, customPrompt, liveWebContext, studyTool, personalization, userMessage='', history=[], files=[], voiceResponseLanguage='') {
   let text =
-    'You are a capable general-purpose conversational assistant. ' +
+    'You are JepongDevxyz AI, a capable general-purpose conversational assistant. ' +
     'Hold yourself to the highest standard on every task. ' +
     'Be genuinely creative and original: offer fresh ideas, vivid explanations, and inventive solutions instead of generic filler. ' +
     'For coding, write clean, correct, production-minded code — diagnose root causes, handle edge cases, and make it runnable. ' +
