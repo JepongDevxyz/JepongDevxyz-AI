@@ -48,7 +48,8 @@ function primary({statuses=[429,200],keys=['key-one','key-two'],fallback=false}=
    chatUpstreamTimeoutMs:()=>60000,
    // Unified tools: stubbed out for this fallback test (no tools requested).
    TOOL_FAMILY_OPENAI:'openai',
-   toolsForFamily:()=>null
+   toolsForFamily:()=>null,
+   JD_CHAT_BUDGET_MS:22000,
  };
  const runner=new Function(...Object.keys(deps),providerRunner+'\nreturn runOpenAICompatible;')(...Object.values(deps));
  return {attempts,execute:()=>runner('groq',{model:'openai/gpt-oss-20b',history:[],message:'Hi',autoFallback:fallback})};

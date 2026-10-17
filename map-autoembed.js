@@ -47,7 +47,45 @@
     if ((u.indexOf('route-') !== -1 || u.indexOf('weather-') !== -1) && u.indexOf('.html') !== -1) {
       return true;
     }
+    // O5 FIX: plain map_url links the tools actually produce (map-embed.js
+    // instructs the AI to share these as Markdown links). Previously these
+    // fell through and were never embedded.
+    //  - Google Maps directions: https://www.google.com/maps/dir/?api=1&origin=..&destination=..
+    if ((u.indexOf('google.com/maps') !== -1 || u.indexOf('maps.google.com') !== -1)) {
+      return true;
+    }
+    //  - RainViewer radar: https://www.rainviewer.com/weather-radar-map-live.html?loc=..
+    if (u.indexOf('rainviewer.com') !== -1) {
+      return true;
+    }
+    //  - NASA Worldview satellite: https://worldview.earthdata.nasa.gov/..
+    if (u.indexOf('worldview.earthdata.nasa.gov') !== -1) {
+      return true;
+    }
     return false;
+  }
+
+  /* Rewrite a Google Maps directions URL to the keyless embed form.
+     Plain https://www.google.com/maps/dir/?api=1.. sends X-Frame-Options:
+     SAMEORIGIN, so the iframe would be blocked. The output=embed endpoint
+     is designed for embedding and needs no API key. */
+  function toEmbedUrl(url) {
+    try {
+      var u = new URL(url);
+      var host = String(u.hostname || '').toLowerCase();
+      var isGMaps = host.indexOf('google.com') !== -1 &&
+        (u.pathname.indexOf('/maps') === 0 || host.indexOf('maps.google.') === 0);
+      if (!isGMaps) return url;
+      var saddr = u.searchParams.get('origin') || u.searchParams.get('saddr');
+      var daddr = u.searchParams.get('destination') || u.searchParams.get('daddr');
+      if (saddr && daddr) {
+        return 'https://www.google.com/maps?saddr=' + encodeURIComponent(saddr) +
+          '&daddr=' + encodeURIComponent(daddr) + '&output=embed';
+      }
+      var q = u.searchParams.get('q') || u.searchParams.get('query');
+      if (q) return 'https://maps.google.com/maps?q=' + encodeURIComponent(q) + '&output=embed';
+    } catch (e) {}
+    return url;
   }
 
   function findAssistantMessage(link) {
@@ -206,7 +244,9 @@
         if (html) iframe.srcdoc = html;
         else markError();
       } else {
-        iframe.src = url;
+        // O5: Google Maps dir URLs are rewritten to the keyless embed form
+        // (plain form is X-Frame-Options: SAMEORIGIN and would be blocked).
+        iframe.src = toEmbedUrl(url);
       }
       setTimeout(function () {
         if (settled) return;

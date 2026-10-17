@@ -14,8 +14,9 @@
     /* Remove the second (bubble) reaction - keep only the inline one in action bar */
     '.jd-reaction-chip{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
     '.jd-bubble-react{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
-    /* Hide the React button - long-press menu already has reactions */
-    '.jd-react-btn{display:none!important;visibility:hidden!important;}',
+    /* O3 FIX: do NOT hide .jd-react-btn — that is reactions-v2.js's own
+       tap-to-react button. Hiding it removed the feature; the long-press
+       menu is an additional entry point, not a replacement. */
     /* Base floating animation - smooth like Muse app video */
     '@keyframes jdReactFloat{',
     '  0%{transform:translateY(0) scale(0.3);opacity:0;}',

@@ -18,6 +18,14 @@
   if (window.__jdSteelBackendLoaded) return;
   window.__jdSteelBackendLoaded = true;
 
+  function authToken() {
+    try {
+      var fn = window.JDCloudAuthToken;
+      if (typeof fn !== 'function') return Promise.resolve('');
+      return Promise.resolve(fn()).catch(function () { return ''; });
+    } catch (_) { return Promise.resolve(''); }
+  }
+
   function apiCall(action, params) {
     var body = { action: action };
     if (params) {
@@ -25,11 +33,19 @@
         if (Object.prototype.hasOwnProperty.call(params, k)) body[k] = params[k];
       }
     }
-    return fetch('/api/steel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    }).then(function (res) { return res.json(); });
+    /* P0/A3 FIX: server now requires a signed-in user (Supabase Bearer).
+       Guests fail soft without a network call. */
+    return authToken().then(function (t) {
+      if (!t) {
+        if (action === 'status') return { configured: false, keys: 0 };
+        return { error: 'sign-in-required' };
+      }
+      return fetch('/api/steel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+        body: JSON.stringify(body)
+      }).then(function (res) { return res.json(); });
+    });
   }
   window.__jdSteelApiCall = apiCall; /* for tests */
 
