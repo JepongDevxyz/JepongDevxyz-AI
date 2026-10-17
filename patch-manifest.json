@@ -68,6 +68,7 @@
   "/ai-audio.js",
   "/lyrics.js",
   "/subagents-crew.js",
+  "/backup-repo.js",
   "/followups-restore-fix.js",
   "/desktop-layout.js",
   "/slop-gate.js",
@@ -91,11 +92,6 @@
   "/reaction-animations.js",
   "/affect-ui.js",
   "/affect-wire.js",
-  "/artifacts-export.js",
-  "/credential-vault.js",
-  "/todos.js",
-  "/deep-research.js",
-  "/js-runner.js",
-  "/file-editor.js"
+  "/artifacts-export.js"
  ]
 }
