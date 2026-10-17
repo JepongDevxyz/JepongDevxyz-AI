@@ -103,8 +103,11 @@
             // Only auto-off if it's a new toggle that defaults to checked
             // (we don't want to fight the user turning things on)
             if (cb.checked && !cb.__jdUserSet) {
-              // Check if this is a fresh default (not user-set)
-              // We'll leave it alone if the user interacted with it
+              // v20261008a347 fix: actually turn it off (was missing — the
+              // observer only attached a listener but never unchecked)
+              cb.checked = false;
+              try { cb.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
+              // Track user interaction so we don't fight them afterwards
               cb.addEventListener('change', function () { cb.__jdUserSet = true; }, { once: true });
             }
           });
