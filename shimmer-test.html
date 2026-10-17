@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shimmer Test</title>
+<style>
+body{font-family:system-ui;background:#111;color:#fff;padding:20px;max-width:600px;margin:0 auto}
+.test-section{margin:20px 0;padding:15px;background:#222;border-radius:12px}
+h3{margin-top:0}
+</style>
+</head>
+<body>
+<h2>Shimmer Loader Test</h2>
+
+<div class="test-section">
+<h3>Chat Skeleton</h3>
+<div id="test-chat"></div>
+</div>
+
+<div class="test-section">
+<h3>Card Skeleton</h3>
+<div id="test-card"></div>
+</div>
+
+<div class="test-section">
+<h3>List Skeleton</h3>
+<div id="test-list"></div>
+</div>
+
+<div class="test-section">
+<h3>Shimmer Text</h3>
+<div id="test-text"></div>
+</div>
+
+<script src="/skeleton.js?v=20261008a357"></script>
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (window.jdSkeleton) {
+      jdSkeleton.show(document.getElementById('test-chat'), 'chat');
+      jdSkeleton.show(document.getElementById('test-card'), 'card', 2);
+      jdSkeleton.show(document.getElementById('test-list'), 'list', 3);
+    }
+    if (window.jdShimmer) {
+      document.getElementById('test-text').appendChild(
+        jdShimmer.text('Generating summary...')
+      );
+    }
+  }, 500);
+});
+</script>
+</body>
+</html>
