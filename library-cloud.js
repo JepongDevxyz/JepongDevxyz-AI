@@ -268,13 +268,5 @@
     }, 500);
   });
 
-  // Skeleton loader CSS
-  var skelCss = document.createElement('style');
-  skelCss.textContent = [
-    '.jdlib-skeleton{background:#1e1e1e;border-radius:16px;min-height:120px;',
-    'animation:jdlib-pulse 1.5s ease-in-out infinite}',
-    '@keyframes jdlib-pulse{0%,100%{opacity:.6}50%{opacity:.3}}',
-    'body.theme-light .jdlib-skeleton{background:#e8e8e8}'
-  ].join('\n');
-  document.head.appendChild(skelCss);
+  // Skeleton loaders now use the global affectUI shimmer (skeleton.js)
 })();
