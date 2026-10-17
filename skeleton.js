@@ -1,126 +1,199 @@
-/* JepongDevxyz AI — Global Skeleton Loaders (2026-10-01)
-   Beautiful shimmering skeleton placeholders throughout the app:
-   - Chat: skeleton bubble while AI is generating (replaces plain "thinking")
-   - Model picker: skeletons while models load
-   - Connectors: skeletons while list loads
-   - Plugins: skeletons while plugins load
-   - Library: skeletons (unified with existing)
-   - Image generation: skeleton while generating
-   - Generic: window.jdSkeleton.show(el, type) / .hide(el)
-   Pure addition. Idempotent. */
+/* JepongDevxyz AI — Shimmer Loader (affectUI rebuild, 2026-10-18)
+   Rebuilt from affectUI shimmer-loader (https://www.affectui.com/motion/shimmer-loader)
+   as vanilla JS following the app's patch conventions.
+
+   Key features from the original:
+   - Viewport-pinned shimmer sweep: all skeleton blocks share ONE synchronized
+     light sweep across the viewport (background-attachment: fixed)
+   - ShimmerText: shimmering text for "Thinking..." / AI generating states
+   - Dark mode: follows body.theme-light (app convention)
+   - Reduced motion: static placeholders when prefers-reduced-motion
+   - ARIA: skeletons are aria-hidden, containers get aria-busy="true"
+
+   Public API (backwards compatible):
+   - window.jdSkeleton.show(el, type, count) / .hide(el)
+   - window.jdShimmer.skeleton({width, height, radius, circle}) -> element
+   - window.jdShimmer.text(label, duration) -> element (ShimmerText)
+*/
 (function () {
   'use strict';
-  if (window.__jdSkeleton) return;
-  window.__jdSkeleton = true;
+  if (window.__jdShimmerLoader) return;
+  window.__jdShimmerLoader = true;
 
   var CSS = [
-    /* Base shimmer */
-    '@keyframes jdSkShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}',
-    '.jd-sk{background:linear-gradient(90deg,rgba(128,128,128,.12) 25%,rgba(128,128,128,.22) 37%,rgba(128,128,128,.12) 63%);',
-    'background-size:800px 100%;animation:jdSkShimmer 1.4s ease-in-out infinite;border-radius:8px}',
-    'body.theme-light .jd-sk{background:linear-gradient(90deg,rgba(0,0,0,.06) 25%,rgba(0,0,0,.12) 37%,rgba(0,0,0,.06) 63%);background-size:800px 100%}',
-    /* Chat bubble skeleton */
-    '.jd-sk-chat{display:flex;gap:12px;padding:16px 0;max-width:100%}',
-    '.jd-sk-avatar{width:32px;height:32px;border-radius:50%;flex:0 0 auto}',
-    '.jd-sk-body{flex:1;min-width:0}',
-    '.jd-sk-line{height:14px;margin-bottom:10px}',
-    '.jd-sk-line:last-child{margin-bottom:0}',
-    /* Card skeleton */
-    '.jd-sk-card{border-radius:16px;padding:16px}',
-    /* List row skeleton */
-    '.jd-sk-row{display:flex;align-items:center;gap:12px;padding:12px 0}',
-    '.jd-sk-row .jd-sk{border-radius:12px}',
-    /* Grid skeleton */
-    '.jd-sk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}',
-    /* Image skeleton */
-    '.jd-sk-img{width:100%;aspect-ratio:1;border-radius:12px}',
-    /* Text block skeleton */
-    '.jd-sk-text{padding:4px 0}'
+    /* ---------- affectUI shimmer core ---------- */
+    '.ui-shm,.ui-shm-text{',
+    '  --ui-shm-base:#ececec;',
+    '  --ui-shm-glow:rgba(255,255,255,.9);',
+    '  --ui-shm-text:#a3a3a3;',
+    '  --ui-shm-text-glow:#fff;',
+    '  --ui-shm-dur:2.2s;',
+    '}',
+    /* Skeleton: one fixed gradient for the whole viewport, so all blocks sweep together */
+    '.ui-shm{',
+    '  display:block;flex:none;width:100%;height:12px;max-width:100%;border-radius:6px;',
+    '  background-color:var(--ui-shm-base);',
+    '  background-image:linear-gradient(100deg,transparent 0%,transparent 30%,var(--ui-shm-glow) 50%,transparent 70%,transparent 100%);',
+    '  background-size:150vw 100%;background-repeat:repeat-x;background-attachment:fixed;',
+    '  animation:ui-shm-sweep var(--ui-shm-dur) linear infinite;',
+    '}',
+    '@keyframes ui-shm-sweep{from{background-position:-50vw 0}to{background-position:100vw 0}}',
+    /* ShimmerText: highlight band runs through the letters */
+    '.ui-shm-text{',
+    '  display:inline-block;color:var(--ui-shm-text);',
+    '  background-image:linear-gradient(90deg,var(--ui-shm-text) 0%,var(--ui-shm-text) 40%,var(--ui-shm-text-glow) 50%,var(--ui-shm-text) 60%,var(--ui-shm-text) 100%);',
+    '  background-size:300% 100%;background-position:100% 0;',
+    '  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;',
+    '  animation:ui-shm-text var(--ui-shm-text-dur,2s) linear infinite;',
+    '}',
+    '@keyframes ui-shm-text{from{background-position:100% 0}to{background-position:0% 0}}',
+    '@media (prefers-reduced-motion:reduce){',
+    '  .ui-shm{animation:none;background-image:none}',
+    '  .ui-shm-text{animation:none;background-image:none;-webkit-text-fill-color:currentColor}',
+    '}',
+    /* Dark mode: app uses body.theme-light for light, default is dark */
+    'body.theme-light .ui-shm,body.theme-light .ui-shm-text{',
+    '  --ui-shm-base:#ececec;',
+    '  --ui-shm-glow:rgba(255,255,255,.9);',
+    '  --ui-shm-text:#a3a3a3;',
+    '  --ui-shm-text-glow:#fff;',
+    '}',
+    'body:not(.theme-light) .ui-shm,body:not(.theme-light) .ui-shm-text{',
+    '  --ui-shm-base:#2f2f33;',
+    '  --ui-shm-glow:rgba(255,255,255,.08);',
+    '  --ui-shm-text:#6e6e73;',
+    '  --ui-shm-text-glow:#f5f5f5;',
+    '}',
+    /* ---------- Layout helpers (app-specific) ---------- */
+    '.jd-shm-chat{display:flex;gap:12px;padding:16px 0;max-width:100%}',
+    '.jd-shm-body{flex:1;min-width:0;display:grid;gap:10px}',
+    '.jd-shm-row{display:flex;align-items:center;gap:12px;padding:12px 0}',
+    '.jd-shm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}',
+    '.jd-skeleton-wrap{width:100%}'
   ].join('\n');
 
   function ensureCSS() {
-    if (document.getElementById('jdSkeletonCss')) return;
+    if (document.getElementById('jdShimmerCss')) return;
     var st = document.createElement('style');
-    st.id = 'jdSkeletonCss';
+    st.id = 'jdShimmerCss';
     st.textContent = CSS;
     document.head.appendChild(st);
   }
 
-  /* ---------- Builders ---------- */
+  function len(v) {
+    return typeof v === 'number' ? v + 'px' : v;
+  }
+
+  /* ---------- Skeleton block ---------- */
+  function skeleton(opts) {
+    opts = opts || {};
+    ensureCSS();
+    var el = document.createElement('span');
+    el.className = 'ui-shm' + (opts.className ? ' ' + opts.className : '');
+    el.setAttribute('aria-hidden', 'true');
+    var w = len(opts.width) || '100%';
+    el.style.width = w;
+    el.style.height = opts.circle ? w : (len(opts.height) || '12px');
+    el.style.borderRadius = opts.circle ? '50%' : (len(opts.radius) || '6px');
+    if (opts.style) {
+      for (var k in opts.style) el.style[k] = opts.style[k];
+    }
+    return el;
+  }
+
+  /* ---------- ShimmerText ---------- */
+  function shimmerText(label, duration) {
+    ensureCSS();
+    var el = document.createElement('span');
+    el.className = 'ui-shm-text';
+    el.style.setProperty('--ui-shm-text-dur', (duration || 2) + 's');
+    el.textContent = label;
+    return el;
+  }
+
+  /* ---------- Composite builders ---------- */
   function chatSkeleton() {
-    return '<div class="jd-sk-chat">' +
-      '<div class="jd-sk jd-sk-avatar"></div>' +
-      '<div class="jd-sk-body">' +
-      '<div class="jd-sk jd-sk-line" style="width:92%"></div>' +
-      '<div class="jd-sk jd-sk-line" style="width:78%"></div>' +
-      '<div class="jd-sk jd-sk-line" style="width:85%"></div>' +
-      '<div class="jd-sk jd-sk-line" style="width:60%"></div>' +
-      '</div></div>';
+    var wrap = document.createElement('div');
+    wrap.className = 'jd-shm-chat';
+    wrap.setAttribute('aria-busy', 'true');
+    var avatar = skeleton({ width: 32, height: 32, circle: true });
+    var body = document.createElement('div');
+    body.className = 'jd-shm-body';
+    ['92%', '78%', '85%', '60%'].forEach(function (w) {
+      var line = skeleton({ width: w, height: 14 });
+      body.appendChild(line);
+    });
+    wrap.appendChild(avatar);
+    wrap.appendChild(body);
+    return wrap;
   }
 
   function cardSkeleton(n) {
     n = n || 3;
-    var h = '';
+    var frag = document.createDocumentFragment();
     for (var i = 0; i < n; i++) {
-      h += '<div class="jd-sk jd-sk-card" style="height:80px;margin-bottom:12px"></div>';
+      var c = skeleton({ width: '100%', height: 80, radius: 16, style: { marginBottom: '12px' } });
+      frag.appendChild(c);
     }
-    return h;
+    return frag;
   }
 
   function listSkeleton(n) {
     n = n || 4;
-    var h = '';
+    var frag = document.createDocumentFragment();
     for (var i = 0; i < n; i++) {
-      h += '<div class="jd-sk-row">' +
-        '<div class="jd-sk" style="width:44px;height:44px"></div>' +
-        '<div style="flex:1"><div class="jd-sk jd-sk-line" style="width:70%"></div>' +
-        '<div class="jd-sk jd-sk-line" style="width:45%;height:11px"></div></div></div>';
+      var row = document.createElement('div');
+      row.className = 'jd-shm-row';
+      row.setAttribute('aria-busy', 'true');
+      row.appendChild(skeleton({ width: 44, height: 44, radius: 12 }));
+      var txt = document.createElement('div');
+      txt.style.flex = '1';
+      txt.appendChild(skeleton({ width: '70%', height: 14, style: { marginBottom: '8px' } }));
+      txt.appendChild(skeleton({ width: '45%', height: 11 }));
+      row.appendChild(txt);
+      frag.appendChild(row);
     }
-    return h;
+    return frag;
   }
 
   function gridSkeleton(n) {
     n = n || 6;
-    var h = '<div class="jd-sk-grid">';
-    for (var i = 0; i < n; i++) h += '<div class="jd-sk jd-sk-img"></div>';
-    h += '</div>';
-    return h;
+    var grid = document.createElement('div');
+    grid.className = 'jd-shm-grid';
+    grid.setAttribute('aria-busy', 'true');
+    for (var i = 0; i < n; i++) {
+      grid.appendChild(skeleton({ width: '100%', height: 150, radius: 12 }));
+    }
+    return grid;
   }
 
-  /* ---------- Initial page-load skeleton ---------- */
-  /* Shows immediately on refresh, removed when app is ready. */
+  /* ---------- Page-load skeleton ---------- */
   function showPageSkeleton() {
     ensureCSS();
     if (document.getElementById('jdPageSkeleton')) return;
     var sk = document.createElement('div');
     sk.id = 'jdPageSkeleton';
+    sk.setAttribute('aria-busy', 'true');
     sk.innerHTML =
       '<style>' +
       '#jdPageSkeleton{position:fixed;inset:0;z-index:99999;background:var(--bg,#0a0a0c);' +
-      'display:flex;flex-direction:column;padding:0;transition:opacity .3s}' +
+      'display:flex;flex-direction:column;transition:opacity .3s}' +
       'body.theme-light #jdPageSkeleton{background:#fff}' +
       '#jdPageSkeleton .jdps-head{display:flex;align-items:center;gap:12px;padding:16px}' +
       '#jdPageSkeleton .jdps-chat{flex:1;padding:16px;overflow:hidden}' +
       '#jdPageSkeleton .jdps-comp{padding:16px}' +
       '#jdPageSkeleton.hide{opacity:0;pointer-events:none}' +
       '</style>' +
-      '<div class="jdps-head">' +
-      '<div class="jd-sk" style="width:40px;height:40px;border-radius:50%"></div>' +
-      '<div style="flex:1"><div class="jd-sk jd-sk-line" style="width:40%;height:16px"></div></div>' +
-      '<div class="jd-sk" style="width:40px;height:40px;border-radius:12px"></div>' +
-      '</div>' +
-      '<div class="jdps-chat">' +
-      '<div class="jd-sk-chat"><div class="jd-sk jd-sk-avatar"></div>' +
-      '<div class="jd-sk-body"><div class="jd-sk jd-sk-line" style="width:85%"></div>' +
-      '<div class="jd-sk jd-sk-line" style="width:70%"></div></div></div>' +
-      '<div class="jd-sk-chat" style="flex-direction:row-reverse"><div class="jd-sk-body">' +
-      '<div class="jd-sk jd-sk-line" style="width:75%;margin-left:auto"></div></div></div>' +
-      '<div class="jd-sk-chat"><div class="jd-sk jd-sk-avatar"></div>' +
-      '<div class="jd-sk-body"><div class="jd-sk jd-sk-line" style="width:90%"></div>' +
-      '<div class="jd-sk jd-sk-line" style="width:65%"></div>' +
-      '<div class="jd-sk jd-sk-line" style="width:80%"></div></div></div>' +
-      '</div>' +
-      '<div class="jdps-comp"><div class="jd-sk" style="height:56px;border-radius:28px"></div></div>';
+      '<div class="jdps-head"><span class="ui-shm" style="width:40px;height:40px;border-radius:50%" aria-hidden="true"></span>' +
+      '<div style="flex:1"><span class="ui-shm" style="width:40%;height:16px" aria-hidden="true"></span></div>' +
+      '<span class="ui-shm" style="width:40px;height:40px;border-radius:12px" aria-hidden="true"></span></div>' +
+      '<div class="jdps-chat"></div>' +
+      '<div class="jdps-comp"><span class="ui-shm" style="height:56px;border-radius:28px" aria-hidden="true"></span></div>';
+
+    // Add chat skeletons to the chat area
+    var chatArea = sk.querySelector('.jdps-chat');
+    for (var i = 0; i < 3; i++) chatArea.appendChild(chatSkeleton());
+
     document.documentElement.appendChild(sk);
   }
 
@@ -132,173 +205,55 @@
   }
 
   /* ---------- Public API ---------- */
+  window.jdShimmer = {
+    skeleton: skeleton,
+    text: shimmerText,
+    showPage: showPageSkeleton,
+    hidePage: hidePageSkeleton
+  };
+
+  /* Backwards-compatible wrapper: window.jdSkeleton */
   window.jdSkeleton = {
     show: function (el, type, count) {
       ensureCSS();
       if (!el) return null;
-      var sk = document.createElement('div');
-      sk.className = 'jd-skeleton-wrap';
-      sk.setAttribute('data-jd-sk', '1');
-      if (type === 'chat') sk.innerHTML = chatSkeleton();
-      else if (type === 'card') sk.innerHTML = cardSkeleton(count);
-      else if (type === 'list') sk.innerHTML = listSkeleton(count);
-      else if (type === 'grid') sk.innerHTML = gridSkeleton(count);
-      else sk.innerHTML = '<div class="jd-sk" style="height:60px"></div>';
-      el.appendChild(sk);
-      return sk;
+      var wrap = document.createElement('div');
+      wrap.className = 'jd-skeleton-wrap';
+      wrap.setAttribute('data-jd-sk', '1');
+      wrap.setAttribute('aria-busy', 'true');
+      if (type === 'chat') wrap.appendChild(chatSkeleton());
+      else if (type === 'card') wrap.appendChild(cardSkeleton(count));
+      else if (type === 'list') wrap.appendChild(listSkeleton(count));
+      else if (type === 'grid') wrap.appendChild(gridSkeleton(count));
+      else wrap.appendChild(skeleton({ width: '100%', height: 60 }));
+      el.appendChild(wrap);
+      return wrap;
     },
     hide: function (el) {
       if (!el) return;
-      el.querySelectorAll('[data-jd-sk]').forEach(function (s) { s.remove(); });
+      var sk = el.querySelector('[data-jd-sk]');
+      if (sk) sk.remove();
     },
-    chat: chatSkeleton,
-    card: cardSkeleton,
-    list: listSkeleton,
-    grid: gridSkeleton
+    showPage: showPageSkeleton,
+    hidePage: hidePageSkeleton
   };
 
-  /* ---------- Auto-apply to known loading states ---------- */
-
-  /* 1. Chat: show skeleton bubble when AI starts generating */
-  var chatSkEl = null;
-  function keepLoadingOrder(chatBox) {
-    try {
-      var activeIndicator = document.getElementById('activeAiIndicator');
-      var skeleton = chatBox && chatBox.querySelector('.jd-sk-msg[data-jd-sk="1"]');
-      if (!skeleton || skeleton.parentNode !== chatBox) return;
-      var responses = chatBox.querySelectorAll('.msg.bot:not(.jd-sk-msg)');
-      var responseMessage = responses.length ? responses[responses.length - 1] : null;
-      if (activeIndicator && activeIndicator.parentNode === chatBox && responseMessage && responseMessage.parentNode === chatBox) {
-        var children = Array.prototype.slice.call(chatBox.children || []);
-        if (children.indexOf(activeIndicator) > children.indexOf(responseMessage)) {
-          chatBox.insertBefore(activeIndicator, responseMessage);
-        }
-      }
-      if (responseMessage && responseMessage.parentNode === chatBox) {
-        if (skeleton.previousSibling !== responseMessage) {
-          chatBox.insertBefore(skeleton, responseMessage.nextSibling);
-        }
-      } else if (activeIndicator && activeIndicator.parentNode === chatBox && skeleton.previousSibling !== activeIndicator) {
-        chatBox.insertBefore(skeleton, activeIndicator.nextSibling);
-      }
-    } catch (e) {}
-  }
-
-  function watchChat() {
-    // Watch for the "thinking" indicator or generating state
-    var mo = new MutationObserver(function () {
-      try {
-        var generating = false;
-        if (typeof isAIGenerating !== 'undefined') generating = !!isAIGenerating;
-        var chatBox = document.getElementById('chatBox') || document.querySelector('.chat-box');
-
-        if (generating && chatBox) {
-          if (!chatSkEl) {
-            // Check if there's already a bot message being streamed
-            var lastBot = chatBox.querySelector('.msg.bot:last-child');
-            var isStreaming = lastBot && lastBot.textContent.trim().length > 0;
-            if (!isStreaming) {
-              chatSkEl = document.createElement('div');
-              chatSkEl.className = 'msg bot jd-sk-msg';
-              chatSkEl.setAttribute('data-jd-sk', '1');
-              chatSkEl.innerHTML = chatSkeleton();
-              // The live assistant message owns the three-dot stream cursor.
-              // Keep the skeleton after that message so the cursor stays above it.
-              var responseMessages = chatBox.querySelectorAll('.msg.bot:not(.jd-sk-msg)');
-              var responseMessage = responseMessages.length ? responseMessages[responseMessages.length - 1] : null;
-              var activeIndicator = document.getElementById('activeAiIndicator');
-              if (responseMessage && responseMessage.parentNode === chatBox) {
-                chatBox.insertBefore(chatSkEl, responseMessage.nextSibling);
-              } else if (activeIndicator && activeIndicator.parentNode === chatBox) {
-                chatBox.insertBefore(chatSkEl, activeIndicator.nextSibling);
-              } else {
-                chatBox.appendChild(chatSkEl);
-              }
-            }
-          }
-          // Keep repairing the order for the whole generation, even after the
-          // one skeleton node exists: activity updates can append/move it later.
-          keepLoadingOrder(chatBox);
-        } else if (!generating && chatSkEl) {
-          try { chatSkEl.remove(); } catch (e) {}
-          chatSkEl = null;
-        }
-        // If a real bot message appeared, remove skeleton
-        if (chatSkEl && chatBox) {
-          var bots = chatBox.querySelectorAll('.msg.bot:not(.jd-sk-msg)');
-          if (bots.length) {
-            var lastReal = bots[bots.length - 1];
-            if (lastReal.textContent.trim().length > 10) {
-              try { chatSkEl.remove(); } catch (e2) {}
-              chatSkEl = null;
-            }
-          }
-        }
-      } catch (e) {}
-    });
-    if (document.body) mo.observe(document.body, { childList: true, subtree: true });
-    setInterval(function () {
-      try {
-        var gen = (typeof isAIGenerating !== 'undefined') ? !!isAIGenerating : false;
-        if (!gen && chatSkEl) { try { chatSkEl.remove(); } catch (e) {} chatSkEl = null; }
-      } catch (e2) {}
-    }, 1000);
-  }
-
-  /* 2. Generic: add skeletons to empty containers that are loading */
-  function watchContainers() {
-    var selectors = [
-      { sel: '#modelPagesTrack', type: 'card', count: 3 },
-      { sel: '#connectorsList', type: 'list', count: 4 },
-      { sel: '#pluginsGrid', type: 'grid', count: 6 }
-    ];
-    setInterval(function () {
-      selectors.forEach(function (s) {
-        try {
-          var el = document.querySelector(s.sel);
-          if (!el || el.querySelector('[data-jd-sk]')) return;
-          // If empty and visible, show skeleton briefly
-          if (el.children.length === 0 && el.offsetParent !== null) {
-            window.jdSkeleton.show(el, s.type, s.count);
-            setTimeout(function () { window.jdSkeleton.hide(el); }, 3000);
-          } else if (el.children.length > 0) {
-            window.jdSkeleton.hide(el);
-          }
-        } catch (e) {}
-      });
-    }, 1500);
-  }
-
-  function init() {
-    ensureCSS();
-    // Page skeleton DISABLED (2026-10-02): agent.js initial skeleton is the ONLY page skeleton now
-    // showPageSkeleton(); // <-- disabled per user request
-    watchChat();
-    watchContainers();
-    // Hide when app is ready
-    var hideAttempts = 0;
-    var hideTimer = setInterval(function () {
-      hideAttempts++;
-      // App is ready when chat box exists and has content, or after 5s max
-      // (page skeleton hide logic kept for safety but showPageSkeleton is disabled above)
-      var chatBox = document.getElementById('chatBox') || document.querySelector('.chat-box');
-      var ready = (chatBox && chatBox.children.length > 0) || hideAttempts >= 25;
-      if (ready) {
-        clearInterval(hideTimer);
-        // Small delay for smooth transition
-        setTimeout(hidePageSkeleton, 400);
-      }
-    }, 200);
-    // Failsafe: always hide after 8s
-    setTimeout(function () {
-      clearInterval(hideTimer);
-      hidePageSkeleton();
-    }, 8000);
-  }
-
+  /* Auto-show on page load, hide when app ready */
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    showPageSkeleton();
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(hidePageSkeleton, 800);
+    });
+  }
+
+  /* Legacy CSS cleanup: remove old jd-sk styles if they exist */
+  function cleanupLegacy() {
+    var old = document.getElementById('jdSkeletonCss');
+    if (old) old.remove();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cleanupLegacy);
   } else {
-    init();
+    cleanupLegacy();
   }
 })();
