@@ -1,9 +1,10 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../haptics-notifications.css',import.meta.url),'utf8');
 const worker=readFileSync(new URL('../jd-notification-sw.js',import.meta.url),'utf8');
-const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const backend=readChatSources();
 function segment(begin,end){
  const a=html.indexOf(begin),b=html.indexOf(end,a+begin.length);
  assert(a>=0&&b>a,'Missing source segment '+begin);
