@@ -277,7 +277,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261008a343';
+  var V='?v=20261008a344';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
      CacheStorage and force a fresh navigation on every boot so updates
      appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
@@ -360,9 +360,16 @@ window.JDCodingAgent=Object.freeze({open,close});
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
     if (loadedVer === ver) return;
-    // Remove old patch scripts before loading new version
+    // Remove old patch scripts AND their injected styles before loading new version.
+    // (v20261008a344 fix: old <style id="jd*Css"> tags used to survive upgrades,
+    //  so the new version's CSS guard `if (getElementById(...)) return;` saw the
+    //  old tag and skipped injecting — CSS fixes never applied until hard refresh.)
     if (loadedVer !== null) {
       document.querySelectorAll('script[data-jd-patch]').forEach(function (s) { s.remove(); });
+      document.querySelectorAll('style').forEach(function (st) {
+        var id = st.id || '';
+        if (/^jd.*css$/i.test(id)) st.remove();
+      });
     }
     loadedVer = ver;
     loadPatches(ver);
