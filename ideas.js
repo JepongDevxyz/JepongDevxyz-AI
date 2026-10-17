@@ -98,16 +98,6 @@
   function dismissedKey() { return LS_DISMISSED + ':' + accountId(); }
   function genKey() { return LS_GEN + ':' + accountId(); }
 
-  function userContext() {
-    var parts = [];
-    try {
-      var gs = (window.__jdGoalsList || []).filter(function (g) { return g.status === 'active'; });
-      if (gs.length) parts.push('Active goals: ' + gs.map(function (g) { return g.title; }).join('; '));
-    } catch (e) {}
-    parts.push('User projects: JepongDevxyz AI (AI chatbot web app, needs production polish), DevxyzIDE (Android IDE), DevxyzBrowser (needs VPN + extensions), DevxyzCrate (video editor), Potato Corner POS web app, Website-to-APK builder.');
-    return parts.join('\n');
-  }
-
   var generating = false;
 
   /* Offline fallback ideas — shown when API times out */
