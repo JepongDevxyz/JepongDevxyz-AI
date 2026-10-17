@@ -265,9 +265,12 @@
 
   /* ---------------- agent card UI ---------------- */
   function ensureCss() {
-    if (document.getElementById('jdBrowseCss')) return;
+    // v20261008a346 fix: was 'jdBrowseCss' — collided with connectors-browse.js
+    // which injects a DIFFERENT stylesheet under the same ID. Whichever patch
+    // loaded first won; the other's CSS was silently dropped.
+    if (document.getElementById('jdBrowseLoopCss')) return;
     var st = document.createElement('style');
-    st.id = 'jdBrowseCss';
+    st.id = 'jdBrowseLoopCss';
     st.textContent =
       '.jd-browse-card{margin:10px 12px;padding:12px 14px;border-radius:14px;' +
       'background:rgba(255,255,255,.04);border:1px solid rgba(251,191,36,.35);' +
