@@ -142,6 +142,10 @@
         {
           "key": "Strict-Transport-Security",
           "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; font-src 'self' data: https:; frame-src 'self' https:; object-src 'none'; base-uri 'self'"
         }
       ]
     },
