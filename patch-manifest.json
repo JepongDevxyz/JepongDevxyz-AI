@@ -1,5 +1,5 @@
 {
- "version": "20261008a360",
+ "version": "20261008a361",
  "files": [
   "/paymongo-topup.js",
   "/credits.js",
@@ -28,6 +28,10 @@
   "/library-cloud.js",
   "/skeleton.js",
   "/skeleton-fix.js",
+  "/deep-research.js",
+  "/js-runner.js",
+  "/file-editor.js",
+  "/todos.js",
   "/toggles-off.js",
   "/memory-chatgpt.js",
   "/memory-summary.js",
@@ -68,6 +72,7 @@
   "/ai-audio.js",
   "/lyrics.js",
   "/subagents-crew.js",
+  "/backup-repo.js",
   "/followups-restore-fix.js",
   "/desktop-layout.js",
   "/slop-gate.js",
@@ -91,11 +96,6 @@
   "/reaction-animations.js",
   "/affect-ui.js",
   "/affect-wire.js",
-  "/artifacts-export.js",
-  "/credential-vault.js",
-  "/todos.js",
-  "/deep-research.js",
-  "/js-runner.js",
-  "/file-editor.js"
+  "/artifacts-export.js"
  ]
 }
