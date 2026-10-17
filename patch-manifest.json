@@ -1,5 +1,5 @@
 {
- "version": "20261008a355",
+ "version": "20261008a356",
  "files": [
   "/paymongo-topup.js",
   "/credits.js",
@@ -27,6 +27,7 @@
   "/mode-carousel.js",
   "/library-cloud.js",
   "/skeleton.js",
+  "/skeleton-fix.js",
   "/toggles-off.js",
   "/memory-chatgpt.js",
   "/memory-summary.js",
