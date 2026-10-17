@@ -188,7 +188,14 @@
       for (var i = 0; i < text.length; i++) {
         hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
       }
-      id = 'm' + Math.abs(hash).toString(36);
+      /* v20261008a348 fix: include position among siblings to avoid collision
+         when two messages share identical opening text */
+      var pos = 0;
+      try {
+        var sib = msgEl.previousElementSibling;
+        while (sib) { pos++; sib = sib.previousElementSibling; }
+      } catch (e) {}
+      id = 'm' + Math.abs(hash).toString(36) + 'p' + pos;
       try { msgEl.setAttribute('data-jd-msgid', id); } catch (e) {}
     }
     return id;
