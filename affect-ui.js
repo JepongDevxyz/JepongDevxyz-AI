@@ -684,13 +684,11 @@ function AIAnswer(o) {
   foot.appendChild(cpB); foot.appendChild(rgB); foot.appendChild(stB);
   body.appendChild(foot);
 
-  return {
-    el: root,
-    stream: function (chunk) { ans.insertAdjacentHTML('beforeend', chunk); stB.style.display = ''; },
-    setAnswer: function (html) { ans.innerHTML = html; },
-    stopStreaming: function () { stB.style.display = 'none'; },
-    setFeedback: fb
-  };
+  root.stream = function (chunk) { ans.insertAdjacentHTML('beforeend', chunk); stB.style.display = ''; };
+  root.setAnswer = function (html) { ans.innerHTML = html; };
+  root.stopStreaming = function () { stB.style.display = 'none'; };
+  root.setFeedback = fb;
+  return root;
 }
 
 /* ---------------- 8. CitedAnswer ---------------- */
@@ -820,8 +818,9 @@ function ThinkingState(o) {
       if (idx + 1 < steps.length) next(); else complete();
     }, o.interval || 1600);
   } else { complete(); }
-  return { el: root, next: next, complete: complete,
-    addStep: function (s) { steps.push({ title: s.title || '', detail: s.detail || '', sources: s.sources || [], status: 'pending' }); render(); } };
+  root.next = next; root.complete = complete;
+  root.addStep = function (s) { steps.push({ title: s.title || '', detail: s.detail || '', sources: s.sources || [], status: 'pending' }); render(); };
+  return root;
 }
 
 /* ---------------- 6. AgentSteering ---------------- */
@@ -913,12 +912,13 @@ function AgentSteering(o) {
   });
 
   paintSteps(); paintNotes();
-  return { el: root,
-    setStepStatus: function (i, s) { if (steps[i]) { steps[i].status = s; paintSteps(); } },
-    addNote: addNote, getNotes: function () { return notes.slice(); },
-    pause: function () { if (!paused) pb.click(); },
-    resume: function () { if (paused) pb.click(); },
-    interrupt: function () { ib.click(); } };
+  root.setStepStatus = function (i, s) { if (steps[i]) { steps[i].status = s; paintSteps(); } };
+  root.addNote = addNote;
+  root.getNotes = function () { return notes.slice(); };
+  root.pause = function () { if (!paused) pb.click(); };
+  root.resume = function () { if (paused) pb.click(); };
+  root.interrupt = function () { ib.click(); };
+  return root;
 }
 
 /* ---------------- 7. AgentInbox ---------------- */
@@ -1020,8 +1020,10 @@ function AutonomyDial(o) {
     if (typeof o.onChange === 'function') o.onChange(n, LEVELS[n]);
   }
   paint();
-  return { el: root, setLevel: setLevel, getLevel: function () { return level; },
-    setActions: function (a) { actions = a.map(function (x) { return { label: x.label || '', risk: x.risk || 'low', pinned: !!x.pinned }; }); paint(); } };
+  root.setLevel = setLevel;
+  root.getLevel = function () { return level; };
+  root.setActions = function (a) { actions = a.map(function (x) { return { label: x.label || '', risk: x.risk || 'low', pinned: !!x.pinned }; }); paint(); };
+  return root;
 }
 
 /* ---------------- 10. ContextWindow ---------------- */
@@ -1047,7 +1049,9 @@ function ContextWindow(o) {
     root.title = used.toLocaleString() + ' of ' + total.toLocaleString() + ' tokens used';
   }
   paint();
-  return { el: root, set: function (u, t) { used = u; total = t || total; paint(); }, get: function () { return { used: used, total: total }; } };
+  root.set = function (u, t) { used = u; total = t || total; paint(); };
+  root.get = function () { return { used: used, total: total }; };
+  return root;
 }
 
 /* ---------------- 11. ModelPicker ---------------- */
@@ -1107,9 +1111,10 @@ function ModelPicker(o) {
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
   paintBtn();
   root.appendChild(btn);
-  return { el: root, get: function () { return cur; },
-    set: function (id) { cur = id; paintBtn(); },
-    setModels: function (m) { models = m; if (!cur) cur = m[0] && m[0].id; paintBtn(); } };
+  root.get = function () { return cur; };
+  root.set = function (id) { cur = id; paintBtn(); };
+  root.setModels = function (m) { models = m; if (!cur) cur = m[0] && m[0].id; paintBtn(); };
+  return root;
 }
 
 /* ---------------- 12. AgentPlan ---------------- */
@@ -1161,9 +1166,9 @@ function AgentPlan(o) {
     if (typeof o.onReject === 'function') o.onReject(steps.slice());
   });
   paint();
-  return { el: root,
-    setStep: function (i, s) { if (steps[i]) { steps[i].status = s; paint(); } },
-    getDecision: function () { return decided; } };
+  root.setStep = function (i, s) { if (steps[i]) { steps[i].status = s; paint(); } };
+  root.getDecision = function () { return decided; };
+  return root;
 }
 
 /* ---------------- 13. InlineDiff ---------------- */
@@ -1298,9 +1303,12 @@ function InlineDiff(o) {
     return out;
   }
   paint();
-  return { el: root, getResult: result,
-    getState: function () { return state.slice(); },
-    acceptAll: function () { aa.click(); }, rejectAll: function () { ra.click(); }, undo: function () { un.click(); } };
+  root.getResult = result;
+  root.getState = function () { return state.slice(); };
+  root.acceptAll = function () { aa.click(); };
+  root.rejectAll = function () { ra.click(); };
+  root.undo = function () { un.click(); };
+  return root;
 }
 
 /* ---------------- API ---------------- */
