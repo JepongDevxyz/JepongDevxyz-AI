@@ -1,10 +1,11 @@
+import { readChatSources } from './chat-sources.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
 const voice = fs.readFileSync('voice-mode.js', 'utf8');
 const micro = fs.readFileSync('reactbits-micro.js', 'utf8');
 const app = fs.readFileSync('index.html', 'utf8');
-const api = fs.readFileSync('api/chat.js', 'utf8');
+const api = readChatSources();
 const css = fs.readFileSync('reactbits-micro.css', 'utf8');
 
 assert(app.includes('/reactbits-micro.js?v=20261002a9'), 'voice-slot state fix must ship with a fresh ReactBits cache version');

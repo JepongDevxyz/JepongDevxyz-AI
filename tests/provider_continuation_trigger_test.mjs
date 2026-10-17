@@ -1,7 +1,8 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const api=readChatSources();
 const section=(start,end)=>{
   const a=api.indexOf(start),b=api.indexOf(end,a+start.length);
   assert(a>=0&&b>a,`Missing source section: ${start}`);

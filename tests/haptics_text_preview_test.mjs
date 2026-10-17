@@ -1,9 +1,10 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../account-appearance.css',import.meta.url),'utf8');
-const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const backend=readChatSources();
 assert(html.includes('id="jdHapticsToggle"'),'Settings must include a real haptics toggle');
 assert(html.includes('onchange="setJdHaptics(this.checked)"'));
 assert(html.includes('id="jdHapticsDescription"'));

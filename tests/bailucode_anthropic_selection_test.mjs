@@ -1,8 +1,9 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const api=readChatSources();
 function extract(name,nextName){
   const start=html.indexOf(`function ${name}(`);
   const end=html.indexOf(`\n        function ${nextName}(`,start);

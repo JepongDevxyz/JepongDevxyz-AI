@@ -1,8 +1,9 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const api=readChatSources();
 const css=readFileSync(new URL('../interactive-proposals.css',import.meta.url),'utf8');
 const badge=readFileSync(new URL('../notification-badge.svg',import.meta.url),'utf8');
 

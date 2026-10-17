@@ -1,8 +1,9 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const html=readFileSync('index.html','utf8');
-const api=readFileSync('api/chat.js','utf8');
+const api=readChatSources();
 
 const levels=['Instant','Low','Medium','High','Extra','Max'];
 

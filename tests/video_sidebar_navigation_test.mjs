@@ -1,9 +1,10 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../reference-shell.css',import.meta.url),'utf8');
-const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const backend=readChatSources();
 const before=(s,e)=>{
  const i=html.indexOf(s),j=html.indexOf(e,i+s.length);
  assert(i>=0&&j>i,'Missing UI logic boundary: '+s);

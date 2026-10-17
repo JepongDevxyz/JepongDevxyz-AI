@@ -1,7 +1,8 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
-const source=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const source=readChatSources();
 function extract(start,end){
   const a=source.indexOf(start),b=source.indexOf(end,a);
   assert(a>=0&&b>a,'Source marker missing: '+start);

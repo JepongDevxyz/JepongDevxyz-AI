@@ -1,9 +1,10 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {buildInlineMapDataUrl,buildRouteMapContext} from '../api/location-tools.js';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const api=readChatSources();
 const mapEmbed=readFileSync(new URL('../map-autoembed.js',import.meta.url),'utf8');
 const promptStart=html.indexOf('function isCurrentLocationWeatherPrompt(');
 const promptEnd=html.indexOf('\n        function requestPreciseLocationForWeather(',promptStart);

@@ -1,10 +1,11 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../reference-shell.css',import.meta.url),'utf8');
 const micro=readFileSync(new URL('../reactbits-micro.css',import.meta.url),'utf8');
-const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const backend=readChatSources();
 
 // These existing runtime bindings are essential to the 3-tab UI. The header
 // buttons call their original mode/navigation functions, never stub handlers.
