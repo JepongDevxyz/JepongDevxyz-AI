@@ -74,9 +74,16 @@
     '.jdf-bs-btn:active{transform:scale(.98)}',
     /* Loading */
     '.jdf-loading{text-align:center;padding:50px 20px;color:#888}',
-    '.jdf-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.12);border-top-color:#fff;',
-    'border-radius:50%;margin:0 auto 14px;animation:jdfspin 0.9s linear infinite}',
-    '@keyframes jdfspin{to{transform:rotate(360deg)}}',
+    '.jdf-shimmer{height:12px;border-radius:6px;margin:0 auto 14px;max-width:200px;',
+    'background-color:rgba(128,128,128,.15);',
+    'background-image:linear-gradient(100deg,transparent 10%,rgba(255,255,255,.4) 50%,transparent 90%);',
+    'background-size:200% 100%;animation:jdfshimmer 1.8s ease-in-out infinite}',
+    '@keyframes jdfshimmer{0%{background-position:180% 0}100%{background-position:-80% 0}}',
+    '.jdf-shimmer-text{font-size:.95rem;',
+    'background-image:linear-gradient(90deg,#888 0%,#888 40%,#fff 50%,#888 60%,#888 100%);',
+    'background-size:300% 100%;-webkit-background-clip:text;background-clip:text;',
+    '-webkit-text-fill-color:transparent;animation:jdfshimmertext 2s linear infinite}',
+    '@keyframes jdfshimmertext{from{background-position:100% 0}to{background-position:0% 0}}',
     '.jdf-empty{text-align:center;padding:40px 20px;color:#8e8e93;font-size:.88rem;line-height:1.6}',
     /* Pane styles for Explore embedding — video-exact */
     '.jdf-pane-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}',
@@ -101,7 +108,7 @@
     'body.theme-light .jdf-bs-text{background:#f0f0f2;color:#111}',
     'body.theme-light .jdf-bs-btn.cancel{background:#f0f0f2;color:#111}',
     'body.theme-light .jdf-bs-btn.save{background:#111;color:#fff}',
-    'body.theme-light .jdf-spinner{border-color:rgba(0,0,0,.1);border-top-color:#111}'
+    'body.theme-light .jdf-shimmer{background-color:rgba(0,0,0,.08);background-image:linear-gradient(100deg,transparent 10%,rgba(255,255,255,.9) 50%,transparent 90%)}'
   ].join('\n');
 
   var I = {
@@ -290,7 +297,7 @@
   /* ---------- Rendering ---------- */
   function renderLoading() {
     var box = document.getElementById('jdfBody');
-    if (box) box.innerHTML = '<div class="jdf-loading"><div class="jdf-spinner"></div>Generating your feed…</div>';
+    if (box) box.innerHTML = '<div class="jdf-loading"><div class="jdf-shimmer"></div><div class="jdf-shimmer-text">Generating your feed…</div></div>';
   }
 
   function renderPosts() {
@@ -427,7 +434,7 @@
   }
 
   async function generatePostsInto(postsBox) {
-    if (postsBox) postsBox.innerHTML = '<div class="jdf-loading"><div class="jdf-spinner"></div>Generating your feed…</div>';
+    if (postsBox) postsBox.innerHTML = '<div class="jdf-loading"><div class="jdf-shimmer"></div><div class="jdf-shimmer-text">Generating your feed…</div></div>';
     try {
       await generatePosts();
     } catch (e) {}
