@@ -157,7 +157,7 @@
     { label: 'APP', rows: [
       { icon: 'brush',   label: 'Appearance',     fn: 'openJdAppearance' },
       { icon: 'vibrate', label: 'Haptics',        fn: 'openJdHaptics' },
-      { icon: 'chart',   label: 'Usage & Limits', fn: 'openUsage' }
+      { icon: 'chart',   label: 'Usage & Limits', fn: 'openJdUsageLimits' }
     ]},
     { label: 'EXTRA', rows: [
       { icon: 'bot',   label: 'JepongDevxyz AI', fn: 'jdExtraOpenAiSheet' },

@@ -36,7 +36,6 @@
 
     /* ---------- guest credits (100/day, server-enforced) ---------- */
     var guestBalance = null;  // remaining guest credits today (server is source of truth)
-    var pendingGuestRefund = 0; // cost reserved for the in-flight guest request
     var GUEST_MIRROR = 'jd_guest_credit_mirror'; // phone-side mirror for instant display only
 
     function utcDay() {
@@ -91,8 +90,9 @@
             }
         }).catch(function () {});
     }
-    // Guest gate: reserve credits on the server BEFORE the AI request.
-    // Returns a promise of true when the send may proceed.
+    // Guest gate: the SERVER now deducts after a successful generation
+    // (P0/A2 credit coupling), so the client only checks the balance
+    // here instead of reserving up front. No refund bookkeeping needed.
     function guestEnsure(kind) {
         loadGuestMirror();
         var cost = COSTS[kind] || COSTS.chat;
@@ -102,39 +102,21 @@
             showGuestExhausted();
             return Promise.resolve(false);
         }
-        return guestApi('spend', kind).then(function (res) {
-            var d = res.d;
-            if (res.status === 402 || (d && d.error === 'insufficient')) {
-                guestBalance = 0;
-                saveGuestMirror();
-                renderCredits();
-                showGuestExhausted();
-                return false;
-            }
-            if (d && d.ok === true && typeof d.balance === 'number' && !d.unenforced) {
-                guestBalance = d.balance;
-                saveGuestMirror();
-                renderCredits();
-                pendingGuestRefund = cost; // refund if the AI request itself fails
-                return true;
-            }
-            pendingGuestRefund = 0;
-            return true; // fail open: server not ready yet -> keep current behavior
-        }).catch(function () {
-            pendingGuestRefund = 0;
-            return true; // fail open, never brick the app
-        });
-    }
-    function guestRefund(kind, cost) {
-        if (!cost) return;
-        guestApi('refund', kind).then(function (res) {
+        return guestApi('status').then(function (res) {
             var d = res.d;
             if (d && typeof d.balance === 'number' && !d.unenforced) {
                 guestBalance = d.balance;
                 saveGuestMirror();
                 renderCredits();
+                if (guestBalance < cost) {
+                    showGuestExhausted();
+                    return false;
+                }
             }
-        }).catch(function () {});
+            return true; // fail open: server not ready yet -> keep current behavior
+        }).catch(function () {
+            return true; // fail open, never brick the app
+        });
     }
 
     function token() {
@@ -559,8 +541,34 @@
         return 'chat';
     }
 
-    function gatedChatFetch(kind, doFetch) {
-        pendingGuestRefund = 0;
+    // P0/A2: attach the Supabase Bearer to /api/chat so the server can
+    // couple credits server-side. Handles plain-object, Headers, and
+    // array header forms.
+    function withAuthHeader(headers, t) {
+        var v = 'Bearer ' + t;
+        if (!headers) return { 'Authorization': v };
+        if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+            var h = new Headers(headers);
+            h.set('Authorization', v);
+            return h;
+        }
+        if (Array.isArray(headers)) {
+            var a = [];
+            for (var i = 0; i < headers.length; i++) {
+                if (String(headers[i][0]).toLowerCase() !== 'authorization') a.push(headers[i]);
+            }
+            a.push(['Authorization', v]);
+            return a;
+        }
+        var o = {};
+        for (var k in headers) {
+            if (Object.prototype.hasOwnProperty.call(headers, k)) o[k] = headers[k];
+        }
+        o['Authorization'] = v;
+        return o;
+    }
+
+    function gatedChatFetch(kind, doFetch, idemKey) {
         return JDCredits.ensure(kind).then(function (ok) {
             if (!ok) {
                 // Top-up modal is already open; return a synthetic 402 so
@@ -573,26 +581,19 @@
                 }
                 return Promise.reject(new Error('insufficient_credits'));
             }
-            // Guest credits were reserved server-side in ensure(); refund
-            // them if the AI request itself fails. Signed-in users spend
-            // after success via JDCredits.spend (unchanged).
-            var refundCost = pendingGuestRefund;
-            pendingGuestRefund = 0;
-            var doRefund = function () { guestRefund(kind, refundCost); };
+            // P0/A2: the server deducts idempotently with the SAME
+            // idempotency key, so this spend is a safe no-op when the
+            // server already deducted — and it refreshes the balance UI
+            // from the authoritative response. Guests have no token
+            // (spend is a no-op); refresh the guest mirror instead.
             return doFetch().then(function (res) {
                 if (res && res.ok) {
-                    if (!refundCost) {
-                        var key = kind + ':' + Date.now().toString(36) + ':' +
-                            Math.random().toString(36).slice(2, 10);
-                        JDCredits.spend(kind, key);
-                    }
-                } else {
-                    doRefund();
+                    JDCredits.spend(kind, idemKey);
+                    token().then(function (t) {
+                        if (!t) guestStatusRefresh();
+                    }).catch(function () {});
                 }
                 return res;
-            }, function (err) {
-                doRefund();
-                throw err;
             });
         });
     }
@@ -608,12 +609,34 @@
                 var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
                 if (url.indexOf('/api/chat') !== -1 && method === 'POST' &&
                     init && typeof init.body === 'string') {
-                    var kind = null;
-                    try { kind = classifyChatBody(JSON.parse(init.body)); }
-                    catch (_) { kind = null; }
-                    if (kind) {
-                        return gatedChatFetch(kind, function () { return origFetch(input, init); });
-                    }
+                    var parsed = null;
+                    try { parsed = JSON.parse(init.body); } catch (_) { parsed = null; }
+                    var kind = classifyChatBody(parsed);
+                    // P0/A2: server-side credit coupling needs (a) the
+                    // Supabase Bearer so the server can identify the user,
+                    // and (b) an idempotency key shared with the server.
+                    return token().then(function (t) {
+                        var init2 = {};
+                        for (var f in init) {
+                            if (Object.prototype.hasOwnProperty.call(init, f)) init2[f] = init[f];
+                        }
+                        if (t) init2.headers = withAuthHeader(init.headers, t);
+                        var idemKey = (kind || 'chat') + ':' + Date.now().toString(36) + ':' +
+                            Math.random().toString(36).slice(2, 10);
+                        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) &&
+                            !parsed.idempotency_key) {
+                            var nb = {};
+                            for (var k in parsed) {
+                                if (Object.prototype.hasOwnProperty.call(parsed, k)) nb[k] = parsed[k];
+                            }
+                            nb.idempotency_key = idemKey;
+                            init2.body = JSON.stringify(nb);
+                        }
+                        if (kind) {
+                            return gatedChatFetch(kind, function () { return origFetch(input, init2); }, idemKey);
+                        }
+                        return origFetch(input, init2);
+                    });
                 }
             } catch (_) { /* fall through to the original fetch */ }
             return origFetch(input, init);

@@ -13,6 +13,8 @@
   'use strict';
 
   var G = typeof globalThis !== 'undefined' ? globalThis : this;
+  if (G.__jdVaultLoaded) return;
+  G.__jdVaultLoaded = true;
 
   /* ---------------- constants ---------------- */
   var LS_KEY = 'jd_credential_vault_v1';
