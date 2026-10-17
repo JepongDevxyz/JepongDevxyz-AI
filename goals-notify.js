@@ -89,6 +89,8 @@
     b.style.display = 'block';
     setTimeout(function () { b.style.display = 'none'; }, 8000);
   }
+  // v20261008a347: shared helper (was duplicated in battery-monitor.js)
+  window.jdShowNotifBanner = inAppBanner;
 
   function ensurePermission() {
     try {
@@ -145,19 +147,6 @@
   }
 
   /* Prune old fired log entries (keep last 30 days) */
-  function prune() {
-    try {
-      var log = firedLog();
-      var cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 30);
-      var changed = false;
-      Object.keys(log).forEach(function (k) {
-        var v = String(log[k]).split('@')[0];
-        if (v < todayStr().slice(0, 8) + '00') { /* keep simple: drop if older than this month */ }
-      });
-    } catch (e) {}
-  }
-
   window.__jdGoalsNotify = { reschedule: reschedule };
 
   document.addEventListener('visibilitychange', function () {
