@@ -40,16 +40,23 @@
     '.jdi-row-desc{font-size:.88rem;color:#8e8e93;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;',
     '-webkit-box-orient:vertical;overflow:hidden}',
     '.jdi-loading{text-align:center;padding:50px 20px;color:#888}',
-    '.jdi-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.12);border-top-color:#fff;',
-    'border-radius:50%;margin:0 auto 14px;animation:jdispin 0.9s linear infinite}',
-    '@keyframes jdispin{to{transform:rotate(360deg)}}',
+    '.jdi-shimmer{height:12px;border-radius:6px;margin:0 auto 14px;max-width:200px;',
+    'background-color:rgba(128,128,128,.15);',
+    'background-image:linear-gradient(100deg,transparent 10%,rgba(255,255,255,.4) 50%,transparent 90%);',
+    'background-size:200% 100%;animation:jdishimmer 1.8s ease-in-out infinite}',
+    '@keyframes jdishimmer{0%{background-position:180% 0}100%{background-position:-80% 0}}',
+    '.jdi-shimmer-text{font-size:.95rem;',
+    'background-image:linear-gradient(90deg,#888 0%,#888 40%,#fff 50%,#888 60%,#888 100%);',
+    'background-size:300% 100%;-webkit-background-clip:text;background-clip:text;',
+    '-webkit-text-fill-color:transparent;animation:jdishimmertext 2s linear infinite}',
+    '@keyframes jdishimmertext{from{background-position:100% 0}to{background-position:0% 0}}',
     '.jdi-empty{text-align:center;padding:40px 20px;color:#8e8e93;font-size:.88rem;line-height:1.6}',
     '.jdi-pane-refresh{text-align:center;padding:6px 0 12px}',
     /* Light mode */
     'body.theme-light #jdIdeasPage{background:#f7f7f9;color:#111}',
     'body.theme-light .jdi-back,body.theme-light .jdi-refresh{color:#111}',
     'body.theme-light .jdi-cat{color:#999}',
-    'body.theme-light .jdi-spinner{border-color:rgba(0,0,0,.1);border-top-color:#111}'
+    'body.theme-light .jdi-shimmer{background-color:rgba(0,0,0,.08)}'
   ].join('\n');
 
   var I = {
@@ -186,7 +193,7 @@
 
   function renderLoading() {
     var box = document.getElementById('jdiBody');
-    if (box) box.innerHTML = '<div class="jdi-loading"><div class="jdi-spinner"></div>Finding ideas for you…</div>';
+    if (box) box.innerHTML = '<div class="jdi-loading"><div class="jdi-shimmer"></div><div class="jdi-shimmer-text">Finding ideas for you…</div></div>';
   }
 
   function renderIdeas() {
@@ -233,7 +240,7 @@
     var listBox = container.querySelector('.jdi-pane-list');
     function refresh() {
       if (!getIdeas().length) {
-        listBox.innerHTML = '<div class="jdi-loading"><div class="jdi-spinner"></div>Finding ideas for you…</div>';
+        listBox.innerHTML = '<div class="jdi-loading"><div class="jdi-shimmer"></div><div class="jdi-shimmer-text">Finding ideas for you…</div></div>';
         generateIdeasInto(listBox);
       } else renderIdeasInto(listBox);
     }
