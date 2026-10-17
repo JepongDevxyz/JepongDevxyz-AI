@@ -40,7 +40,7 @@
     '.jd-stagger > *:nth-child(7){animation-delay:.21s}',
     '.jd-stagger > *:nth-child(8){animation-delay:.24s}',
     /* Progress bars */
-    '.jdset-bar-fill,.jduse-fill,.jd-sk{transition:width .6s cubic-bezier(.32,.72,0,1)}',
+    '.jdset-bar-fill,.jduse-fill{transition:width .6s cubic-bezier(.32,.72,0,1)}',
     /* Toggle smooth */
     '.jdset-toggle,.jdmem-toggle,.jdpers-toggle{transition:background .25s ease}',
     '.jdset-toggle::after,.jdmem-toggle::after,.jdpers-toggle::after{transition:left .25s cubic-bezier(.32,.72,0,1),background .25s}',
@@ -48,8 +48,7 @@
     '#jdGuideModal .jd-guide-sheet{animation:jdSheetUp .32s cubic-bezier(.32,.72,0,1)}',
     '@keyframes jdSheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}',
     '#jdpersSheet .jdpers-sheet{animation:jdSheetUp .32s cubic-bezier(.32,.72,0,1)}',
-    /* Skeleton shimmer (already in skeleton.js, ensure smooth) */ 
-    '.jd-sk{animation:jdSkShimmer 1.6s ease-in-out infinite}',
+    /* Shimmer loader styles are in skeleton.js (affectUI rebuild) */
     /* Chat messages */
     '.msg{animation:jdMsgIn .25s ease-out}',
     '@keyframes jdMsgIn{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}',
