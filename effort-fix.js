@@ -105,20 +105,6 @@
     } catch (e) { return false; }
   }
 
-  function isActivityStatusOn() {
-    try {
-      // Activity status shows thinking process; sync effort with it
-      if (typeof window.jdActivityStatusEnabled !== 'undefined') {
-        return !!window.jdActivityStatusEnabled;
-      }
-      try {
-        var v = localStorage.getItem('jepong_activity_status');
-        if (v !== null) return v === 'true' || v === '1';
-      } catch (e) {}
-      return true; // Default: assume on (most users have it on)
-    } catch (e) { return true; }
-  }
-
   function getEffortInstruction() {
     var effort = getEffortLevel();
     var pureMode = isPureModeOn();
