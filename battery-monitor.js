@@ -34,23 +34,10 @@
         return;
       }
     } catch (e) {}
-    /* in-app banner fallback (shared style with goals notifications) */
+    /* in-app banner fallback — v20261008a347: deduplicated, uses shared helper */
+    if (window.jdShowNotifBanner) { window.jdShowNotifBanner(title, body); return; }
     var b = document.getElementById('jdgNotifBanner');
-    if (!b) {
-      b = document.createElement('div');
-      b.id = 'jdgNotifBanner';
-      b.style.cssText = [
-        'position:fixed;top:12px;left:12px;right:12px;z-index:24800;',
-        'background:#1c1c1e;color:#fff;border-radius:16px;padding:14px 16px;',
-        'box-shadow:0 8px 30px rgba(0,0,0,.4);display:none;',
-        'font-family:inherit;cursor:pointer'
-      ].join('');
-      b.innerHTML = '<div id="jdgNbTitle" style="font-weight:700;font-size:.9rem;margin-bottom:4px"></div>' +
-        '<div id="jdgNbBody" style="font-size:.82rem;color:#bbb;line-height:1.4"></div>' +
-        '<div style="font-size:.62rem;color:#777;margin-top:6px;text-align:center">Powered by Jepong Devxyz</div>';
-      document.body.appendChild(b);
-      b.addEventListener('click', function () { b.style.display = 'none'; });
-    }
+    if (!b) { return; }
     b.querySelector('#jdgNbTitle').textContent = title;
     b.querySelector('#jdgNbBody').textContent = body;
     b.style.display = 'block';
