@@ -193,15 +193,6 @@
     return null;
   }
 
-  function skillsHelpText() {
-    var lines = ['**Available Agent Skills:**', ''];
-    Object.keys(SKILLS).forEach(function (k) {
-      lines.push('/' + k + ' — ' + SKILLS[k].desc);
-    });
-    lines.push('', 'Example: /grill gumawa ng login page');
-    return lines.join('\n');
-  }
-
   function showSkillBadge(skillName) {
     try {
       // Remove old badge
