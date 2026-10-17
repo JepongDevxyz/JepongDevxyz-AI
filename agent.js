@@ -204,7 +204,6 @@ window.JDCodingAgent=Object.freeze({open,close});
     }catch(__bfE){}
     /* JD-BOOT-FIT-END */
     /* Use the static first-paint shell in index.html; this script manages its lifecycle. */
-    document.body.classList.add('jd-sk-active');
     /* Proactively fix the effort badge (2026-10-02): update "Instant" to saved value
        BEFORE the skeleton hides, so the old default never shows */
     (function fixEffortBadge(){
@@ -238,7 +237,6 @@ window.JDCodingAgent=Object.freeze({open,close});
     var hidden=false;
     function hide(){
       if(hidden)return; hidden=true;
-      document.body.classList.remove('jd-sk-active');
       document.documentElement.classList.remove('jd-boot-pending');
       sk.classList.add('hide');
       setTimeout(function(){if(sk.parentNode)sk.remove();},260);
@@ -277,7 +275,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261008a355';
+  var V='?v=20261008a356';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
      CacheStorage and force a fresh navigation on every boot so updates
      appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
@@ -304,14 +302,14 @@ window.JDCodingAgent=Object.freeze({open,close});
     }
   } catch (_) {}
   window.__jdExploreMode = true; /* unified Explore replaces Feed/Ideas/Library buttons */
-  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-cloud.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/memory-summary.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/backup-repo.js','/followups-restore-fix.js','/desktop-layout.js','/slop-gate.js','/tideline.js','/extra-settings.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js','/email-guard.js','/unorouter-cooldown.js','/opendots-features.js','/agent-skills.js','/browse-improvements.js','/paperclip-inspired.js','/error-tracking.js','/turnstile-guard.js','/settings-muse-v3.js','/no-copy-global.js','/fullscreen-settings.js','/reaction-animations.js','/affect-ui.js','/affect-wire.js','/artifacts-export.js'];
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-cloud.js','/skeleton.js','/skeleton-fix.js','/toggles-off.js','/memory-chatgpt.js','/memory-summary.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/backup-repo.js','/followups-restore-fix.js','/desktop-layout.js','/slop-gate.js','/tideline.js','/extra-settings.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js','/email-guard.js','/unorouter-cooldown.js','/opendots-features.js','/agent-skills.js','/browse-improvements.js','/paperclip-inspired.js','/error-tracking.js','/turnstile-guard.js','/settings-muse-v3.js','/no-copy-global.js','/fullscreen-settings.js','/reaction-animations.js','/affect-ui.js','/affect-wire.js','/artifacts-export.js'];
   function loadPatches(ver){
     /* Fetch server manifest for current file list (no-store) — ensures stale
        agent.js still loads NEW patch files added after it was cached.
        Falls back to baked-in FILES if manifest is unreachable. */
     var _jdDidLoad = false;
     function doLoad(fileList) {
-      // v20261008a355 fix: guard against double-load race. On slow networks
+      // v20261008a356 fix: guard against double-load race. On slow networks
       // the 5s fallback timeout and the manifest fetch can both fire doLoad(),
       // appending 91 patch scripts twice (only 35/91 have idempotency guards).
       if (_jdDidLoad) return;
@@ -322,7 +320,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       sc.defer=true;
       sc.setAttribute('data-jd-patch', '1');
       // Retry on failure - ensures patches load on first try
-      // v20261008a355 fix: old check `querySelector('script[src="..."]')` always
+      // v20261008a356 fix: old check `querySelector('script[src="..."]')` always
       // found the failed element itself, so retry never fired. Now retry once.
       sc.onerror=function(){
         setTimeout(function(){
@@ -368,7 +366,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
     if (loadedVer === ver) return;
-    // v20261008a355 fix: on version UPGRADE (not first load), do a full page
+    // v20261008a356 fix: on version UPGRADE (not first load), do a full page
     // reload instead of hot-swapping scripts. Hot-swap removes <script> and
     // <style> tags but cannot unload already-executed JS — old event listeners,
     // setInterval timers, and MutationObservers persist alongside the new
