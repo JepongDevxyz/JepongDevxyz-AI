@@ -277,7 +277,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261008a349';
+  var V='?v=20261008a350';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
      CacheStorage and force a fresh navigation on every boot so updates
      appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
@@ -311,7 +311,7 @@ window.JDCodingAgent=Object.freeze({open,close});
        Falls back to baked-in FILES if manifest is unreachable. */
     var _jdDidLoad = false;
     function doLoad(fileList) {
-      // v20261008a349 fix: guard against double-load race. On slow networks
+      // v20261008a350 fix: guard against double-load race. On slow networks
       // the 5s fallback timeout and the manifest fetch can both fire doLoad(),
       // appending 91 patch scripts twice (only 35/91 have idempotency guards).
       if (_jdDidLoad) return;
@@ -322,7 +322,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       sc.defer=true;
       sc.setAttribute('data-jd-patch', '1');
       // Retry on failure - ensures patches load on first try
-      // v20261008a349 fix: old check `querySelector('script[src="..."]')` always
+      // v20261008a350 fix: old check `querySelector('script[src="..."]')` always
       // found the failed element itself, so retry never fired. Now retry once.
       sc.onerror=function(){
         setTimeout(function(){
@@ -368,11 +368,21 @@ window.JDCodingAgent=Object.freeze({open,close});
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
     if (loadedVer === ver) return;
-    // Remove old patch scripts AND their injected styles before loading new version.
-    // (v20261008a349 fix: old <style id="jd*Css"> tags used to survive upgrades,
-    //  so the new version's CSS guard `if (getElementById(...)) return;` saw the
-    //  old tag and skipped injecting — CSS fixes never applied until hard refresh.)
+    // v20261008a350 fix: on version UPGRADE (not first load), do a full page
+    // reload instead of hot-swapping scripts. Hot-swap removes <script> and
+    // <style> tags but cannot unload already-executed JS — old event listeners,
+    // setInterval timers, and MutationObservers persist alongside the new
+    // version's code (patong-patong). Reload guarantees clean state.
     if (loadedVer !== null) {
+      try {
+        // Guard against reload loops: only auto-reload once per session
+        if (!sessionStorage.getItem('jd_auto_reloaded')) {
+          sessionStorage.setItem('jd_auto_reloaded', '1');
+          location.reload();
+          return;
+        }
+      } catch (e) { location.reload(); return; }
+      // Fallback: if already reloaded once, do best-effort hot-swap
       document.querySelectorAll('script[data-jd-patch]').forEach(function (s) { s.remove(); });
       document.querySelectorAll('style').forEach(function (st) {
         var id = st.id || '';
