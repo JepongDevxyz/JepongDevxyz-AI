@@ -22,6 +22,7 @@
 // WebSocket (navigate / snapshot). Each invocation is stateless and
 // short-lived — the phone holds {sessionId, targetId, ki} in memory.
 import { webCompatible } from './_node_web_bridge.js';
+import { getUserId } from '../lib/paymongo/create.js';
 
 const BASE = 'https://api.steel.dev';
 
@@ -328,6 +329,14 @@ async function handleUpload(req) {
 }
 
 async function dispatch(req) {
+  /* P0/A3 FIX: require a signed-in user for EVERYTHING (incl. status).
+     The Steel keys belong to the operator — anonymous calls could burn
+     real money. Same Supabase Bearer pattern as /api/credits & /api/paymongo. */
+  try {
+    await getUserId(req);
+  } catch (e) {
+    return Response.json({ error: 'sign-in-required' }, { status: (e && e.status) || 401 });
+  }
   const qUrl = new URL(req.url, 'http://localhost');
   if (qUrl.searchParams.get('action') === 'upload_file') {
     return handleUpload(req);

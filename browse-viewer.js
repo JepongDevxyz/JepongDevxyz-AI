@@ -19,12 +19,24 @@
     });
   }
 
+  function steelToken() {
+    try {
+      var fn = window.JDCloudAuthToken;
+      if (typeof fn !== 'function') return Promise.resolve('');
+      return Promise.resolve(fn()).catch(function () { return ''; });
+    } catch (_) { return Promise.resolve(''); }
+  }
+
   function apiSteel(payload) {
-    return fetch('/api/steel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(function (res) { return res.json(); });
+    /* P0/A3 FIX: server now requires a signed-in user (Supabase Bearer). */
+    return steelToken().then(function (t) {
+      if (!t) return { error: 'sign-in-required' };
+      return fetch('/api/steel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+        body: JSON.stringify(payload)
+      }).then(function (res) { return res.json(); });
+    });
   }
 
   function closeViewer() {

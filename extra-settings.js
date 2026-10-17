@@ -344,10 +344,19 @@
       });
       var signupT = sheet.querySelector('#jdExtraSignupToggle');
       if (signupT) signupT.addEventListener('change', function () {
-        try {
-          if (window.jdSetSignupAgent) window.jdSetSignupAgent(signupT.checked);
-          else try { localStorage.setItem('jd_signup_agent', signupT.checked ? '1' : '0'); } catch (_) {}
-        } catch (_) {}
+        /* E FIX: signup-agent.js is lazy-loaded (BETA, default OFF). On
+           enable, load it first, then apply the toggle. */
+        function apply() {
+          try {
+            if (window.jdSetSignupAgent) window.jdSetSignupAgent(signupT.checked);
+            else try { localStorage.setItem('jd_signup_agent', signupT.checked ? '1' : '0'); } catch (_) {}
+          } catch (_) {}
+        }
+        if (signupT.checked && !window.jdSetSignupAgent && typeof window.jdLazyLoad === 'function') {
+          window.jdLazyLoad('/signup-agent.js').then(apply, apply);
+        } else {
+          apply();
+        }
         try { if (window.showModernToast) window.showModernToast(signupT.checked ? 'Signup Agent ON — type "signup: <site>" in chat' : 'Signup Agent OFF'); } catch (_) {}
       });
       var dotsT = sheet.querySelector('#jdExtraDotsToggle');
