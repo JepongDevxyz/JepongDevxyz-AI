@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>affect-ui.js Component Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; padding: 20px; background: #111; color: #eee; }
+  #results { white-space: pre-wrap; font-family: monospace; font-size: 14px; line-height: 1.6; }
+  .pass { color: #4ade80; } .fail { color: #f87171; }
+  #demo-mount { margin-top: 20px; }
+  h1 { font-size: 20px; }
+</style>
+</head>
+<body>
+<h1>affect-ui.js — Live Browser Test</h1>
+<div id="results">Running tests...</div>
+<div id="demo-mount"></div>
+<script src="/affect-ui.js?v=20261008a341"></script>
+<script>
+(function () {
+  var out = [];
+  var pass = 0, fail = 0;
+  function t(name, cond) {
+    if (cond) { pass++; out.push('PASS: ' + name); }
+    else { fail++; out.push('FAIL: ' + name); }
+  }
+  function run() {
+    try {
+      var A = window.__jdAffectUI;
+      t('__jdAffectUI exists', !!A);
+      if (!A) return finish();
+      var names = ['AIAnswer','ThinkingState','ThinkingLoader','AgentSteering','AgentInbox','AutonomyDial','CitedAnswer','ContextWindow','ModelPicker','ToolCallCard','ToolCallGroup','AgentPlan','InlineDiff'];
+      var missing = names.filter(function (n) { return typeof A[n] !== 'function'; });
+      t('all 13 functions present', missing.length === 0);
+      if (missing.length) out.push('  missing: ' + missing.join(', '));
+
+      var mount = document.getElementById('demo-mount');
+
+      // ToolCallCard
+      var card = A.ToolCallCard({ name: 'search_web', status: 'running', args: { q: 'test' } });
+      mount.appendChild(card);
+      t('ToolCallCard appends to DOM', card.parentNode === mount);
+      t('ToolCallCard shows name', card.textContent.indexOf('search_web') >= 0);
+      card.setStatus('success');
+      t('ToolCallCard setStatus', card.getStatus() === 'success');
+
+      // InlineDiff
+      var diff = A.InlineDiff({ original: 'the quick fox', suggested: 'the quick red fox' });
+      mount.appendChild(diff);
+      t('InlineDiff appends to DOM', diff.parentNode === mount);
+      t('InlineDiff has buttons', diff.querySelectorAll('button').length > 0);
+      t('InlineDiff getResult is function', typeof diff.getResult === 'function');
+
+      // AutonomyDial
+      var dial = A.AutonomyDial({ level: 1 });
+      mount.appendChild(dial);
+      t('AutonomyDial appends', dial.parentNode === mount);
+      t('AutonomyDial getLevel', dial.getLevel() === 1);
+
+      // ContextWindow
+      var ctx = A.ContextWindow({ used: 7500, total: 10000 });
+      mount.appendChild(ctx);
+      t('ContextWindow appends', ctx.parentNode === mount);
+      t('ContextWindow shows 75%', ctx.textContent.indexOf('75') >= 0);
+
+      // ThinkingLoader
+      var loader = A.ThinkingLoader({});
+      mount.appendChild(loader);
+      t('ThinkingLoader appends', loader.parentNode === mount);
+
+      // AgentInbox
+      var inbox = A.AgentInbox({ runs: [{ id: '1', title: 'Test run', status: 'running' }] });
+      mount.appendChild(inbox);
+      t('AgentInbox appends', inbox.parentNode === mount);
+      t('AgentInbox shows run', inbox.textContent.indexOf('Test run') >= 0);
+
+      // AgentPlan
+      var plan = A.AgentPlan({ steps: [{ title: 'Step 1' }] });
+      mount.appendChild(plan);
+      t('AgentPlan appends', plan.parentNode === mount);
+
+      // CitedAnswer
+      var cited = A.CitedAnswer({ text: 'Paris [1]', citations: [{ id: '1', title: 'Wiki' }] });
+      mount.appendChild(cited);
+      t('CitedAnswer appends', cited.parentNode === mount);
+      t('CitedAnswer has chip button', cited.querySelector('button') !== null);
+
+      // AIAnswer
+      var ans = A.AIAnswer({ question: 'Test?', answer: 'Answer text' });
+      mount.appendChild(ans);
+      t('AIAnswer appends', ans.parentNode === mount);
+      t('AIAnswer shows question', ans.textContent.indexOf('Test') >= 0);
+
+      // ThinkingState
+      var ts = A.ThinkingState({ steps: [{ label: 'Searching' }] });
+      mount.appendChild(ts);
+      t('ThinkingState appends', ts.parentNode === mount);
+
+      // AgentSteering
+      var steer = A.AgentSteering({ title: 'Task', steps: [{ title: 'S1' }] });
+      mount.appendChild(steer);
+      t('AgentSteering appends', steer.parentNode === mount);
+
+      // ModelPicker
+      var picker = A.ModelPicker({ models: [{ id: 'm1', name: 'Model 1' }] });
+      mount.appendChild(picker);
+      t('ModelPicker appends', picker.parentNode === mount);
+
+      // ToolCallGroup
+      var grp = A.ToolCallGroup({});
+      mount.appendChild(grp);
+      t('ToolCallGroup appends', grp.parentNode === mount);
+
+      // Interaction: InlineDiff accept
+      var d2 = A.InlineDiff({ original: 'hello world', suggested: 'hello brave world' });
+      var before = d2.getResult();
+      d2.acceptAll();
+      var after = d2.getResult();
+      t('InlineDiff acceptAll changes text', before !== after && after.indexOf('brave') >= 0);
+      d2.undo();
+      t('InlineDiff undo restores', d2.getResult() === before);
+
+      // Interaction: AutonomyDial setLevel
+      dial.setLevel(2);
+      t('AutonomyDial setLevel', dial.getLevel() === 2);
+
+    } catch (e) {
+      out.push('ERROR: ' + e.message);
+      fail++;
+    }
+    finish();
+  }
+  function finish() {
+    out.push('');
+    out.push('RESULT: ' + pass + ' passed, ' + fail + ' failed');
+    out.push(fail === 0 ? 'VERDICT: ALL WORKING' : 'VERDICT: BROKEN');
+    var el = document.getElementById('results');
+    el.textContent = out.join('\n');
+    el.className = fail === 0 ? 'pass' : 'fail';
+    document.title = 'TEST ' + (fail === 0 ? 'PASSED' : 'FAILED') + ' ' + pass + '/' + (pass + fail);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
+</script>
+</body>
+</html>
