@@ -60,7 +60,7 @@
   border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none
 }
 .thought-line__head:focus-visible{outline:2px solid var(--jd-focus,#8b5cf6);outline-offset:3px;border-radius:8px}
-.thought-cluster{width:18px;height:18px;flex:0 0 18px;display:grid;grid-template-columns:repeat(2,5px);grid-template-rows:repeat(2,5px);place-content:center;gap:2px;color:#22c55e}
+.thought-cluster{width:18px;height:18px;flex:0 0 18px;display:grid;grid-template-columns:repeat(2,5px);grid-template-rows:repeat(2,5px);place-content:center;gap:2px;color:var(--sig-warn,#f59e0b)}
 .thought-cluster__dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.32;transform:scale(.78);animation:thought-dot 1.05s ease-in-out infinite}
 .thought-cluster__dot:nth-child(2){animation-delay:.14s}
 .thought-cluster__dot:nth-child(4){animation-delay:.28s}
@@ -1017,7 +1017,7 @@
 /* No horizontal separator under Thinking. Motion belongs to the ThoughtLine text itself. */
 .thought-line{position:relative}
 .thought-line__label{gap:4px}
-.thought-line__glyph{display:inline-block;flex:0 0 auto;color:var(--rb-success);font-size:.9em;line-height:1;transform-origin:center;opacity:1}
+.thought-line__glyph{display:inline-block;flex:0 0 auto;color:var(--sig-warn,#f59e0b);font-size:.9em;line-height:1;transform-origin:center;opacity:1}
 .ai-activity-card.error .thought-line__glyph{color:var(--rb-error)}
 .thought-line__breath{display:inline-block;min-width:0}
 .thought-line[data-working="true"] .thought-line__glyph{animation:rb-thought-breathe 1.6s cubic-bezier(.77,0,.175,1) infinite}
