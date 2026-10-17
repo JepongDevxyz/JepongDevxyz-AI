@@ -275,7 +275,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261008a359';
+  var V='?v=20261008a360';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
      CacheStorage and force a fresh navigation on every boot so updates
      appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
@@ -302,25 +302,74 @@ window.JDCodingAgent=Object.freeze({open,close});
     }
   } catch (_) {}
   window.__jdExploreMode = true; /* unified Explore replaces Feed/Ideas/Library buttons */
-  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-cloud.js','/skeleton.js','/skeleton-fix.js','/toggles-off.js','/memory-chatgpt.js','/memory-summary.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/backup-repo.js','/followups-restore-fix.js','/desktop-layout.js','/slop-gate.js','/tideline.js','/extra-settings.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js','/email-guard.js','/unorouter-cooldown.js','/opendots-features.js','/agent-skills.js','/browse-improvements.js','/paperclip-inspired.js','/error-tracking.js','/turnstile-guard.js','/settings-muse-v3.js','/no-copy-global.js','/fullscreen-settings.js','/reaction-animations.js','/affect-ui.js','/affect-wire.js','/artifacts-export.js'];
+  /* E FIX (perf): on-demand + idle-deferred loading. jdLazyLoad(src) injects
+     a patch script once (deduped) and resolves when it executes. Used for
+     features that must not block first-interactive. */
+  var _jdLazyCache = Object.create(null);
+  window.jdLazyLoad = function (src) {
+    var key = String(src || '');
+    if (!key) return Promise.reject(new Error('jdLazyLoad: empty src'));
+    if (_jdLazyCache[key]) return _jdLazyCache[key];
+    var ver = '';
+    try { ver = window.__jdPatchVer || ''; } catch (_) {}
+    var p = new Promise(function (resolve, reject) {
+      var sc = document.createElement('script');
+      sc.src = key + ver;
+      sc.async = false; /* ordered like boot patches */
+      sc.setAttribute('data-jd-patch', '1');
+      sc.setAttribute('data-jd-lazy', '1');
+      sc.onload = function () { resolve(true); };
+      sc.onerror = function () { reject(new Error('jdLazyLoad failed: ' + key)); };
+      document.head.appendChild(sc);
+    });
+    _jdLazyCache[key] = p;
+    /* Don't let a rejection linger unhandled if caller ignores it. */
+    p.catch(function () {});
+    return p;
+  };
+  /* E FIX: files removed from the boot FILES list (loaded on-demand or idle).
+     - /signup-agent.js: BETA, toggle default OFF — loaded when enabled.
+     - /backup-repo.js: background auto-backup — idle-deferred below. */
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-cloud.js','/skeleton.js','/skeleton-fix.js','/toggles-off.js','/memory-chatgpt.js','/memory-summary.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/followups-restore-fix.js','/desktop-layout.js','/slop-gate.js','/tideline.js','/extra-settings.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js','/email-guard.js','/unorouter-cooldown.js','/opendots-features.js','/agent-skills.js','/browse-improvements.js','/paperclip-inspired.js','/error-tracking.js','/turnstile-guard.js','/settings-muse-v3.js','/no-copy-global.js','/fullscreen-settings.js','/reaction-animations.js','/affect-ui.js','/affect-wire.js','/artifacts-export.js','/credential-vault.js','/todos.js','/deep-research.js','/js-runner.js','/file-editor.js'];
   function loadPatches(ver){
+    /* Remember the version for jdLazyLoad cache-busting. */
+    try { window.__jdPatchVer = ver; } catch (_) {}
     /* Fetch server manifest for current file list (no-store) — ensures stale
        agent.js still loads NEW patch files added after it was cached.
        Falls back to baked-in FILES if manifest is unreachable. */
     var _jdDidLoad = false;
-    function doLoad(fileList) {
-      // v20261008a359 fix: guard against double-load race. On slow networks
+    var _jdLoadedFromManifest = false;
+    function doLoad(fileList, fromManifest) {
+      // v20261008a360 fix: guard against double-load race. On slow networks
       // the 5s fallback timeout and the manifest fetch can both fire doLoad(),
       // appending 91 patch scripts twice (only 35/91 have idempotency guards).
-      if (_jdDidLoad) return;
+      if (_jdDidLoad) {
+        // R3 FIX: if the manifest arrives LATE (after the 5s baked-in
+        // fallback already loaded), silently running the stale list is
+        // worse than a reload — do one clean reload so the new files load.
+        if (fromManifest && !_jdLoadedFromManifest) {
+          try {
+            if (!sessionStorage.getItem('jd_manifest_reloaded')) {
+              sessionStorage.setItem('jd_manifest_reloaded', '1');
+              location.reload();
+            }
+          } catch (e) {}
+        }
+        return;
+      }
       _jdDidLoad = true;
+      _jdLoadedFromManifest = !!fromManifest;
       fileList.forEach(function(src){
       var sc=document.createElement('script');
       sc.src=src+ver;
-      sc.defer=true;
+      // P1/R1 FIX: guarantee FILES order. Dynamically-created scripts
+      // ignore defer=true (HTML spec) and execute async — 18 patches rely
+      // on cross-file globals. async=false keeps parallel download but
+      // forces in-insertion-order execution.
+      sc.async=false;
       sc.setAttribute('data-jd-patch', '1');
       // Retry on failure - ensures patches load on first try
-      // v20261008a359 fix: old check `querySelector('script[src="..."]')` always
+      // v20261008a360 fix: old check `querySelector('script[src="..."]')` always
       // found the failed element itself, so retry never fired. Now retry once.
       sc.onerror=function(){
         setTimeout(function(){
@@ -328,7 +377,7 @@ window.JDCodingAgent=Object.freeze({open,close});
           sc.setAttribute('data-jd-retried', '1');
           var retry=document.createElement('script');
           retry.src=src+ver+'&retry=1';
-          retry.defer=true;
+          retry.async=false;
           retry.setAttribute('data-jd-patch', '1');
           document.head.appendChild(retry);
         },1000);
@@ -340,13 +389,13 @@ window.JDCodingAgent=Object.freeze({open,close});
       fetch('/patch-manifest.json?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
         .then(function(r){ return r.ok?r.json():null; })
         .then(function(m){
-          if (m && m.files && m.files.length) doLoad(m.files);
-          else doLoad(FILES);
+          if (m && m.files && m.files.length) doLoad(m.files, true);
+          else doLoad(FILES, false);
         })
-        .catch(function(){ doLoad(FILES); });
+        .catch(function(){ doLoad(FILES, false); });
       /* Fallback: if manifest takes too long, use baked-in list */
       setTimeout(function(){
-        if (!document.querySelector('script[data-jd-patch]')) doLoad(FILES);
+        if (!document.querySelector('script[data-jd-patch]')) doLoad(FILES, false);
       }, 5000);
     } catch(e){ doLoad(FILES); }
   }
@@ -366,7 +415,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
     if (loadedVer === ver) return;
-    // v20261008a359 fix: on version UPGRADE (not first load), do a full page
+    // v20261008a360 fix: on version UPGRADE (not first load), do a full page
     // reload instead of hot-swapping scripts. Hot-swap removes <script> and
     // <style> tags but cannot unload already-executed JS — old event listeners,
     // setInterval timers, and MutationObservers persist alongside the new
@@ -394,45 +443,77 @@ window.JDCodingAgent=Object.freeze({open,close});
     loadPatchesVer(ver);
     bustCssCache(ver);
     // Skeleton hides on window.load (not here) to avoid flicker
+    scheduleIdlePatches();
+  }
+  /* E FIX: idle-deferred patches — background-only work that must not
+     delay first-interactive. Runs after window.load + idle (3s fallback). */
+  var _jdIdlePatchesDone = false;
+  function scheduleIdlePatches() {
+    if (_jdIdlePatchesDone) return;
+    _jdIdlePatchesDone = true;
+    function run() {
+      try {
+        /* Background auto-backup — no user trigger, safe to defer. */
+        window.jdLazyLoad('/backup-repo.js');
+        /* Signup Agent: BETA default OFF. If the user left it ON, restore
+           it now (still idle-deferred, not boot-blocking). */
+        var wasOn = false;
+        try { wasOn = localStorage.getItem('jd_signup_agent') === '1'; } catch (_) {}
+        if (wasOn) window.jdLazyLoad('/signup-agent.js');
+      } catch (_) {}
+    }
+    function onLoad() {
+      try {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(function () { run(); }, { timeout: 5000 });
+        } else {
+          setTimeout(run, 3000);
+        }
+      } catch (_) { setTimeout(run, 3000); }
+    }
+    try {
+      if (document.readyState === 'complete') onLoad();
+      else window.addEventListener('load', onLoad);
+    } catch (_) { setTimeout(run, 3000); }
   }
   try{
     var fetchDone = false;
-    /* Update card: centered modal when server has newer version */
-    try {
-      var bakedV = (V || '').replace('?v=', '').replace(/^v/, '');
-      fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
-      .then(function(r){ return r.text(); })
-      .then(function(sv){
-        sv = (sv||'').trim().replace(/^v/, '');
-        if (sv && bakedV && sv !== bakedV && !document.getElementById('jdUpdateCard')) {
-          var ov = document.createElement('div');
-          ov.id = 'jdUpdateCard';
-          ov.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
-          var card = document.createElement('div');
-          card.style.cssText = 'background:#fff;color:#111;border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
-          card.innerHTML = '<div style="font-size:18px;font-weight:700;margin-bottom:8px;">New Update Detected!</div>' +
-            '<div style="font-size:14px;color:#555;margin-bottom:20px;">Update now to try new features</div>' +
-            '<button id="jdUpdateBtn" style="background:#111;color:#fff;border:0;border-radius:10px;padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Update now</button>';
-          ov.appendChild(card);
-          document.body.appendChild(ov);
-          document.getElementById('jdUpdateBtn').onclick = function() {
-            try { sessionStorage.setItem('jd_force_fresh','1'); } catch(e) {}
-            try {
-              if ('caches' in window) {
-                caches.keys().then(function(names) {
-                  return Promise.all(names.map(function(n) { return caches.delete(n); }));
-                }).then(function() { location.reload(); });
-              } else { location.reload(); }
-            } catch(e) { location.reload(); }
-          };
-        }
-      }).catch(function(){});
-    } catch(e) {}
+    /* R5 FIX: single patch-version.txt fetch (was two). It drives both the
+       update card and go(); no short-circuit is possible because the file
+       list still needs the manifest fetch regardless of version. */
     fetch('/patch-version.txt?ts='+Date.now(),{cache:'no-store',credentials:'same-origin'})
       .then(function(r){ return r.ok?r.text():''; })
       .then(function(t){
         fetchDone = true;
         t=(t||'').trim();
+        var ver=(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
+        /* Update card (merged): centered modal when server has newer version */
+        try {
+          var bakedV = (V || '').replace('?v=', '').replace(/^v/, '');
+          var sv = (t||'').replace(/^v/, '');
+          if (sv && bakedV && sv !== bakedV && !document.getElementById('jdUpdateCard')) {
+            var ov = document.createElement('div');
+            ov.id = 'jdUpdateCard';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
+            var card = document.createElement('div');
+            card.style.cssText = 'background:#fff;color:#111;border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+            card.innerHTML = '<div style="font-size:18px;font-weight:700;margin-bottom:8px;">New Update Detected!</div>' +
+              '<div style="font-size:14px;color:#555;margin-bottom:20px;">Update now to try new features</div>' +
+              '<button id="jdUpdateBtn" style="background:#111;color:#fff;border:0;border-radius:10px;padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Update now</button>';
+            ov.appendChild(card);
+            document.body.appendChild(ov);
+            document.getElementById('jdUpdateBtn').onclick = function() {
+              try { sessionStorage.setItem('jd_force_fresh','1'); } catch(e) {}
+              try {
+                if ('caches' in window) {
+                  caches.keys().then(function(names) {
+                    return Promise.all(names.map(function(n) { return caches.delete(n); }));
+                  }).then(function() { location.reload(); });
+                } else { location.reload(); }
+              } catch(e) { location.reload(); }
+            };
+          }
+        } catch(e) {}
         // Force-fresh: after in-app Clear Cache, bypass ALL caches with timestamp
         try {
           if (sessionStorage.getItem('jd_force_fresh') === '1') {
@@ -442,7 +523,7 @@ window.JDCodingAgent=Object.freeze({open,close});
           }
         } catch (e) {}
         // Allow letters+numbers in version (e.g. 20261001g3)
-        go(/^20\d{6}[a-z0-9]+$/.test(t)?('?v='+t):V);
+        go(ver);
       })
       .catch(function(){ if(!fetchDone){ fetchDone=true; go(V); } });
     // Fallback: 8 seconds for slow networks (was 3s - too short for DITO mobile)
