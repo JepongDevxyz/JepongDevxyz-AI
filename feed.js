@@ -164,19 +164,7 @@
   }
   function briefKey() { return LS_BRIEF + ':' + accountId(); }
   function postsKey() { return LS_POSTS + ':' + accountId(); }
-  function genKey() { return LS_GEN + ':' + accountId(); }
-  function userKey() { return accountId(); } /* compat */
-
-  function userContext() {
-    var parts = [];
-    try {
-      var gs = (window.__jdGoalsList || []).filter(function (g) { return g.status === 'active'; });
-      if (gs.length) parts.push('Active goals: ' + gs.map(function (g) { return g.title; }).join('; '));
-    } catch (e) {}
-    parts.push('User is a developer building: JepongDevxyz AI (AI chatbot web app), DevxyzIDE (Android IDE), DevxyzBrowser (Android browser), DevxyzCrate (video editor), Potato Corner POS web app.');
-    parts.push('Interests: Android development, web development, AI assistants, gaming (Spider-Man, Dota 2, GTA V).');
-    return parts.join('\n');
-  }
+  function genKey() { return LS_GEN + ':' + accountId(); } /* compat */
 
   function timeAgo(ts) {
     try {
