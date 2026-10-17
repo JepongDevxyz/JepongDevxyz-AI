@@ -202,14 +202,6 @@
 
   // Add cloud sources to Library UI when it loads
   function injectCloudSources() {
-    // This will be called when Library opens
-    // For now, expose a function to check connected providers
-    window.getConnectedCloudProviders = function () {
-      var providers = [];
-      if (isConnected('gdrive')) providers.push({ id: 'gdrive', name: 'Google Drive' });
-      if (isConnected('dropbox')) providers.push({ id: 'dropbox', name: 'Dropbox' });
-      return providers;
-    };
   }
 
   injectCloudSources();
@@ -285,12 +277,4 @@
     'body.theme-light .jdlib-skeleton{background:#e8e8e8}'
   ].join('\n');
   document.head.appendChild(skelCss);
-
-  // Expose skeleton helper
-  window.showLibrarySkeleton = function () {
-    var grid = document.getElementById('jdLibGrid');
-    if (grid) {
-      grid.innerHTML = '<div class="jdlib-skeleton"></div>'.repeat(6);
-    }
-  };
 })();
