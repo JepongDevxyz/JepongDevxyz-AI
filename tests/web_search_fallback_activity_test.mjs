@@ -1,7 +1,8 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const api=readChatSources();
 const start=api.indexOf('function publicSearchFallbackResultLabel(');
 const end=api.indexOf('\nfunction ',start+10);
 assert(start>=0&&end>start,'Public-search fallback status formatter must exist');

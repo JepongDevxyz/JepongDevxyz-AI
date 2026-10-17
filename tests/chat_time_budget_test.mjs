@@ -32,10 +32,11 @@ test('jdBudgetLeft clamps correctly', () => {
 });
 
 test('upstream timeout defaults are capped under the budget', async () => {
-  // Re-import is cached; instead verify the source constraint directly:
+  // api/chat.js was split into lib/chat/*.js (mechanical, no behavior change);
+  // verify the source constraint across the concatenated chat sources.
   // default upstream cap = budget - 4000 = 18000 < budget.
-  const fs = await import('node:fs');
-  const src = fs.readFileSync(new URL('../api/chat.js', import.meta.url), 'utf8');
+  const { readChatSources } = await import('./chat-sources.mjs');
+  const src = readChatSources();
   assert.ok(src.includes('JD_CHAT_BUDGET_MS-4000'), 'upstream caps derive from the budget');
   assert.ok(src.includes('jdBudgetLeft(body._jdDeadline)<=6000'), 'tool loop + continuations check the deadline');
 });

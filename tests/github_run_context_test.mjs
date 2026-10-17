@@ -1,3 +1,4 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {fetchGitHubRunContext,shouldReadGitHubRunStatus} from '../api/_plugin_execution_context.js';
 import fs from 'node:fs';
@@ -42,7 +43,7 @@ try{
   assert(calls.every(x=>!x.auth),'public repo status lookup must not require a token');
 }finally{globalThis.fetch=original;}
 
-const chat=fs.readFileSync('api/chat.js','utf8');
+const chat=readChatSources();
 assert(chat.includes("fetchGitHubRunContext(body.plugins.github,body._githubAccessToken||'',message)"));
 assert(chat.includes("githubExecutionContext||''"),'status must reach every provider-neutral prompt');
 assert(chat.includes('The user can explicitly approve a GitHub Actions test workflow with /run-tests'));

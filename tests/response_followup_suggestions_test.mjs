@@ -1,5 +1,6 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';import fs from 'node:fs';
-const api=fs.readFileSync('api/chat.js','utf8'),html=fs.readFileSync('index.html','utf8');
+const api=readChatSources(),html=fs.readFileSync('index.html','utf8');
 assert(api.includes('FOLLOW-UP UI IS REQUIRED after every normal completed assistant answer'));
 assert(api.includes('with exactly 2 lines'));
 assert(api.includes('including short greetings and simple factual replies'));

@@ -1,7 +1,8 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const source = fs.readFileSync(new URL('../api/chat.js', import.meta.url), 'utf8');
+const source = readChatSources();
 const handlerStart = source.indexOf('export default async function handler(req)');
 const streamStart = source.indexOf('function activityStreamResponse(');
 assert(handlerStart >= 0, 'Chat handler must exist.');

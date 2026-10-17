@@ -1,7 +1,8 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const api=readFileSync('api/chat.js','utf8');
+const api=readChatSources();
 const start=api.indexOf("const RESPONSE_EFFORT_LEVELS=['Instant'");
 const end=api.indexOf('function effortOutputBudgetFor(',start);
 assert(start>=0&&end>start,'Shared response effort policy must exist');

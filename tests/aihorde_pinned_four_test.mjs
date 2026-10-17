@@ -1,7 +1,8 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
-const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const backend=readChatSources();
 const frontend=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const start=backend.indexOf('function fourResponsiveAIHordeModels(');
 const end=backend.indexOf('\nasync function checkAIHordeCredential(',start);

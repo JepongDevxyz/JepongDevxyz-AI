@@ -1,3 +1,4 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {extractRouteRequest,buildNativeDirectionsAppendix} from '../api/location-tools.js';
@@ -15,7 +16,7 @@ const blockedBlob=buildNativeDirectionsAppendix({...native,map_url:'https://exam
 assert.match(blockedBlob,/Open driving directions in Google Maps/);
 assert.doesNotMatch(blockedBlob,/View route map inside the chat/);
 assert.equal(buildNativeDirectionsAppendix({ok:false,error:'unavailable'}),'');
-const stream=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const stream=readChatSources();
 assert.match(stream,/if\(call\.name==='get_directions'&&toolResult\.ok&&!result\.locationToolAppendix\)/);
 assert.match(stream,/nativeDirectionsAppendix=buildNativeDirectionsAppendix\(toolResult\)/);
 assert.match(stream,/generatedText\+=addition;\s*send\('text',\{text:addition\}\);/);

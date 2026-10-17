@@ -1,3 +1,4 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
@@ -18,7 +19,7 @@ await addSelectedFiles([file],{manualLibrary:true});
 assert.equal(selectedFilesData.length,1,'manually chosen saved file must reach the composer even with automatic Library search OFF');
 assert.match(html,/cloudUser\s*&&\s*!file\.__jdFromLibrary/,'reuse must not save a duplicate Library row');
 assert.match(readFileSync(new URL('../library-chatgpt.js',import.meta.url),'utf8'),/getFile\(item\)[\s\S]*?addSelectedFiles\(\[file\],\{manualLibrary:true\}\)/);
-const api=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const api=readChatSources();
 const gate=api.slice(api.indexOf('function applyChatFeatureSettings(body={}){'),api.indexOf('async function processChat('));
 const applySettings=new Function(gate+'\nreturn applyChatFeatureSettings;')();
 const processed=applySettings({files:[{name:'saved.txt'}],personalization:{librarySearch:false,libraryContext:[{fileName:'private',snippet:'hidden'}]}});

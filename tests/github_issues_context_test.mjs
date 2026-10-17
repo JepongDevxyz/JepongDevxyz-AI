@@ -1,3 +1,4 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import {fetchGitHubIssuesContext,shouldReadGitHubIssues} from '../api/_plugin_issues_context.js';
 import fs from 'node:fs';
@@ -26,7 +27,7 @@ try{
   assert.equal(calls[0].authorization,'Bearer ghs_scoped');
   assert.equal(calls[0].method,'GET');
 }finally{globalThis.fetch=original;}
-const api=fs.readFileSync('api/chat.js','utf8');
+const api=readChatSources();
 assert(api.includes("resolveGitHubAccess(req,{repository:body.plugins.github.repo,permissions:{issues:'read'}})"));
 assert(api.includes("githubIssuesContext||''"));
 assert(api.includes('fetchGitHubIssuesContext(body.plugins.github'));

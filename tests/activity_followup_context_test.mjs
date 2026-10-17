@@ -1,8 +1,9 @@
+import { readChatSources } from './chat-sources.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const api=fs.readFileSync('api/chat.js','utf8');
+const api=readChatSources();
 const html=fs.readFileSync('index.html','utf8');
 
 function between(src,start,end){

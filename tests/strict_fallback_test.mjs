@@ -1,7 +1,8 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
-const chat=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const chat=readChatSources();
 const index=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 function section(start,end){
   const s=chat.indexOf(start),e=chat.indexOf(end,s+start.length);
