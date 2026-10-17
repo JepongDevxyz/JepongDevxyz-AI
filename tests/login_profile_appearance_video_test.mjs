@@ -1,9 +1,10 @@
+import { readChatSources } from './chat-sources.mjs';
 import {readFileSync} from 'node:fs';
 import {strict as assert} from 'node:assert';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../account-appearance.css',import.meta.url),'utf8');
-const backend=readFileSync(new URL('../api/chat.js',import.meta.url),'utf8');
+const backend=readChatSources();
 function getPart(start,end){
  const a=html.indexOf(start),b=html.indexOf(end,a+start.length);
  assert(a>=0&&b>a,'Missing source boundary: '+start);
