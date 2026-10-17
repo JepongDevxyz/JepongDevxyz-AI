@@ -1,7 +1,7 @@
 // Adapt Vercel Node.js IncomingMessage/ServerResponse to Fetch Request/Response.
 // Edge-style route logic stays testable with a native Request in GitHub Actions.
 import { json } from './_github_oauth.js';
-import { CHAT_IDENTITY_INSTRUCTION } from './_identity.js';
+// v20261008a351: identity injection removed per user order (default AI, no custom prompts)
 
 // Scoped identity overlay for the chat endpoint (2026-09-30). The main chat
 // file (api/chat.js, ~370KB) cannot be pushed through the available GitHub
@@ -27,9 +27,7 @@ async function withChatIdentity(request){
       ?body.personalization
       :(body.personalization={});
     const existing=typeof p.customInstructions==='string'?p.customInstructions:'';
-    if(!existing.includes('JepongDevxyz AI')){
-      p.customInstructions=CHAT_IDENTITY_INSTRUCTION+(existing?'\n\n'+existing:'');
-    }
+    // v20261008a351: custom identity prompt removed per user order
     return new Request(request,{body:JSON.stringify(body)});
   }catch(_){return request;}
 }
