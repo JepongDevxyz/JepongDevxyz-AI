@@ -147,24 +147,6 @@ function wireCard(card, lyricsText) {
   } catch (_) {}
 }
 
-function fillCard(card, ok, text) {
-  try {
-    card.classList.remove('is-loading');
-    /* Lyrics are in the AI's message text (like Muse) — wire buttons to use message text */
-    var msg = card.parentElement;
-    var msgText = '';
-    try {
-      if (msg) {
-        /* Get text excluding the card itself */
-        var clone = msg.cloneNode(true);
-        var c = clone.querySelector('[data-jd-lyrics]');
-        if (c) c.remove();
-        msgText = (clone.textContent || '').trim();
-      }
-    } catch (_) {}
-    wireCard(card, msgText);
-  } catch (_) {}
-}
 
 /* fetchLyrics removed 2026-10-05 (her order: "Alisin mo yung API lyrics.ovh") —
    the AI now provides lyrics directly in its response, like Muse. */
