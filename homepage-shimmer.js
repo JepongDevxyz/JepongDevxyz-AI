@@ -31,6 +31,8 @@
   /* Layout CSS only (shimmer effect comes from skeleton.js ui-shm) */
   var layoutCss = [
     '#jdHomepageShimmer{position:fixed;inset:0;z-index:2147483647;display:flex;background:#0f0f0f;transition:opacity .25s ease,visibility .25s ease;}',
+    /* Dark mode is default - ensure shimmer blocks use dark colors */
+    '#jdHomepageShimmer .ui-shm{--ui-shm-base:#2f2f33;--ui-shm-glow:rgba(255,255,255,.08);}',
     '#jdHomepageShimmer.hide{opacity:0;visibility:hidden;pointer-events:none;}',
     /* Force-hide old boot skeleton - never show it */
     '#jdBootSkeleton{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
