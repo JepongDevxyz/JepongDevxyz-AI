@@ -38,7 +38,6 @@
     "/model-tools-ui.js",
     "/word-dictate.js",
     "/reactions-v2.js",
-    "/dictionary.js",
     "/composer-sheet-muse.js",
     "/floating-buttons-fix.js",
     "/history-activity-fix.js",
@@ -51,7 +50,6 @@
     "/effort-fix.js",
     "/map-embed.js",
     "/map-autoembed.js",
-    "/tap-hold-fix.js",
     "/persistence.js",
     "/goals.js",
     "/goals-notify.js",
@@ -94,5 +92,5 @@
     "/affect-wire.js",
     "/artifacts-export.js"
   ],
-  "count": 92
+  "count": 90
 }
