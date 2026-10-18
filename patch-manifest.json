@@ -29,7 +29,7 @@
     "/library-cloud.js",
     "/skeleton.js",
     "/skeleton-fix.js",
-    "/boot-shimmer.js",
+    "/homepage-shimmer.js",
     "/toggles-off.js",
     "/memory-chatgpt.js",
     "/memory-summary.js",
