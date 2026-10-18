@@ -5,10 +5,10 @@
    ========================================================= */
 export const config = { runtime: 'edge' };
 
-import { json, checkApiGuard, API_GUARD } from '../lib/chat/guard.js';
+import { json, checkApiGuard, API_GUARD } from '../lib/chat/feature-settings.js';
 import { processChat, mediaCapabilitySnapshot, dynamicModelCatalog, providerUsageSnapshot, normalizeModelCatalog, MAX_AUTO_CONTINUATIONS } from '../lib/chat/processor.js';
 import { generateImage, generatePetImage, serverTTS, activityStreamResponse } from '../lib/chat/media.js';
-import { liveAIHordePickerModels, applyChatFeatureSettings, sanitizeCustomApiProfile } from '../lib/chat/guard.js';
+import { liveAIHordePickerModels, applyChatFeatureSettings, sanitizeCustomApiProfile } from '../lib/chat/feature-settings.js';
 import { cleanUpstreamError } from '../lib/chat/orchestrator.js';
 import { safeJsonResponse } from '../lib/chat/research.js';
 import { getGitHubSession, resolveGitHubAccess, shouldReadGitHubIssues } from '../lib/chat/shared.js';
