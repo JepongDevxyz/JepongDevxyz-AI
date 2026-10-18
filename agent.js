@@ -309,7 +309,7 @@ window.JDCodingAgent=Object.freeze({open,close});
        Falls back to baked-in FILES if manifest is unreachable. */
     var _jdDidLoad = false;
     function doLoad(fileList) {
-      // v20261008a339 fix: guard against double-load race. On slow networks
+      // v20261008a354 fix: guard against double-load race. On slow networks
       // the 5s fallback timeout and the manifest fetch can both fire doLoad(),
       // appending 91 patch scripts twice (only 35/91 have idempotency guards).
       if (_jdDidLoad) return;
@@ -320,7 +320,7 @@ window.JDCodingAgent=Object.freeze({open,close});
       sc.defer=true;
       sc.setAttribute('data-jd-patch', '1');
       // Retry on failure - ensures patches load on first try
-      // v20261008a339 fix: old check `querySelector('script[src="..."]')` always
+      // v20261008a354 fix: old check `querySelector('script[src="..."]')` always
       // found the failed element itself, so retry never fired. Now retry once.
       sc.onerror=function(){
         setTimeout(function(){
@@ -366,7 +366,7 @@ window.JDCodingAgent=Object.freeze({open,close});
   function loadPatchesVer(ver) {
     // Allow upgrade: if fetch returns newer version after fallback ran, reload with new version
     if (loadedVer === ver) return;
-    // v20261008a339 fix: on version UPGRADE (not first load), do a full page
+    // v20261008a354 fix: on version UPGRADE (not first load), do a full page
     // reload instead of hot-swapping scripts. Hot-swap removes <script> and
     // <style> tags but cannot unload already-executed JS — old event listeners,
     // setInterval timers, and MutationObservers persist alongside the new
@@ -404,7 +404,8 @@ window.JDCodingAgent=Object.freeze({open,close});
       .then(function(r){ return r.text(); })
       .then(function(sv){
         sv = (sv||'').trim().replace(/^v/, '');
-        if (sv && bakedV && sv !== bakedV && !document.getElementById('jdUpdateCard')) {
+        // Only prompt update if server version is NEWER (prevents loop on downgrade)
+        if (sv && bakedV && sv !== bakedV && sv > bakedV && !document.getElementById('jdUpdateCard')) {
           var ov = document.createElement('div');
           ov.id = 'jdUpdateCard';
           ov.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px;';
