@@ -29,6 +29,7 @@
     "/library-cloud.js",
     "/skeleton.js",
     "/skeleton-fix.js",
+    "/boot-shimmer.js",
     "/toggles-off.js",
     "/memory-chatgpt.js",
     "/memory-summary.js",
@@ -93,5 +94,5 @@
     "/affect-wire.js",
     "/artifacts-export.js"
   ],
-  "count": 91
+  "count": 92
 }
