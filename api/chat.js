@@ -5,7 +5,7 @@
    ========================================================= */
 export const config = { runtime: 'edge' };
 
-import { json, checkApiGuard, API_GUARD } from '../lib/chat/feature-settings.js';
+import { json, checkApiGuard, API_GUARD } from '../lib/chat/guard.js';
 import { processChat, mediaCapabilitySnapshot, dynamicModelCatalog, providerUsageSnapshot, normalizeModelCatalog, MAX_AUTO_CONTINUATIONS } from '../lib/chat/processor.js';
 import { generateImage, generatePetImage, serverTTS, activityStreamResponse } from '../lib/chat/media.js';
 import { liveAIHordePickerModels, applyChatFeatureSettings, sanitizeCustomApiProfile } from '../lib/chat/feature-settings.js';
