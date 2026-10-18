@@ -135,6 +135,7 @@
       { icon: 'folder',   label: 'Library',         fn: 'openLibrary' },
       { icon: 'database', label: 'Memory',          fn: 'openSettingsMemory' },
       { icon: 'paw',      label: 'Pet',             fn: 'openSettingsPet' },
+      { icon: 'bot',      label: 'AI Avatar',       fn: 'openRobotAvatarSettings' },
       { icon: 'mic',      label: 'Voice',           fn: 'openSettingsVoice' }
     ]},
     { label: 'AI & TOOLS', rows: [
@@ -157,7 +158,7 @@
     { label: 'APP', rows: [
       { icon: 'brush',   label: 'Appearance',     fn: 'openJdAppearance' },
       { icon: 'vibrate', label: 'Haptics',        fn: 'openJdHaptics' },
-      { icon: 'chart',   label: 'Usage & Limits', fn: 'openJdUsageLimits' }
+      { icon: 'chart',   label: 'Usage & Limits', fn: 'openUsage' }
     ]},
     { label: 'EXTRA', rows: [
       { icon: 'bot',   label: 'JepongDevxyz AI', fn: 'jdExtraOpenAiSheet' },
