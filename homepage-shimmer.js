@@ -32,6 +32,8 @@
   var layoutCss = [
     '#jdHomepageShimmer{position:fixed;inset:0;z-index:2147483647;display:flex;background:#0f0f0f;transition:opacity .25s ease,visibility .25s ease;}',
     '#jdHomepageShimmer.hide{opacity:0;visibility:hidden;pointer-events:none;}',
+    /* Force-hide old boot skeleton - never show it */
+    '#jdBootSkeleton{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}',
     'body.theme-light #jdHomepageShimmer{background:#f6f6f6;}',
     '.jhs-sidebar{display:none;}',
     '@media(min-width:1024px){',

@@ -161,9 +161,11 @@ window.JDCodingAgent=Object.freeze({open,close});
    (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
   if(document.querySelector('script[src^="/credits.js"]'))return;
-  /* INITIAL SKELETON LOADER: Show FIRST before anything else (2026-10-02)
-     Full-screen skeleton that appears immediately on page load, hides when app is ready */
+  /* INITIAL SKELETON LOADER: DISABLED - replaced by homepage-shimmer.js
+     (exact AffectUI shimmer loader matching homepage UI) */
   (function(){
+    // Skip old skeleton - homepage-shimmer.js handles the loading UI
+    return;
     var sk=document.getElementById('jdBootSkeleton');
     if(!sk)return;
     /* Desktop fit (2026-10-05): re-fit the static skeleton to the desktop
