@@ -1,6 +1,7 @@
 {
   "version": "20261008a339",
   "files": [
+    "/fetch-middleware.js",
     "/paymongo-topup.js",
     "/credits.js",
     "/activity-fix.js",
@@ -92,5 +93,5 @@
     "/affect-wire.js",
     "/artifacts-export.js"
   ],
-  "count": 90
+  "count": 91
 }

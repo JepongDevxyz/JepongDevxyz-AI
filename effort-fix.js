@@ -134,27 +134,51 @@
     return EFFORT_INSTRUCTIONS[effort] || EFFORT_INSTRUCTIONS['instant'];
   }
 
-  // Patch fetch to inject effort instructions
-  var origFetch = window.fetch;
-  window.fetch = function (url, opts) {
-    try {
-      var urlStr = String(url || '');
-      if (urlStr.indexOf('/api/chat') !== -1 && opts && opts.body) {
-        var body = null;
-        try { body = JSON.parse(opts.body); } catch (e) {}
-        if (body && typeof body === 'object') {
-          body.personalization = body.personalization || {};
-          var existing = body.personalization.customInstructions || '';
-          var effortInstr = getEffortInstruction();
-          // Append effort instruction if not already present
-          if (existing.indexOf('EFFORT LEVEL:') === -1 && existing.indexOf('EFFORT OVERRIDE:') === -1) {
-            body.personalization.customInstructions =
-              (existing ? existing + '\n\n' : '') + effortInstr;
-            opts.body = JSON.stringify(body);
+  // Use fetch middleware registry (instead of direct window.fetch wrapping)
+  if (window.JDfetch) {
+    window.JDfetch.use('effort-fix', function (url, opts, next) {
+      try {
+        var urlStr = String(url || '');
+        if (urlStr.indexOf('/api/chat') !== -1 && opts && opts.body) {
+          var body = null;
+          try { body = JSON.parse(opts.body); } catch (e) {}
+          if (body && typeof body === 'object') {
+            body.personalization = body.personalization || {};
+            var existing = body.personalization.customInstructions || '';
+            var effortInstr = getEffortInstruction();
+            // Append effort instruction if not already present
+            if (existing.indexOf('EFFORT LEVEL:') === -1 && existing.indexOf('EFFORT OVERRIDE:') === -1) {
+              body.personalization.customInstructions =
+                (existing ? existing + '\n\n' : '') + effortInstr;
+              opts.body = JSON.stringify(body);
+            }
           }
         }
-      }
-    } catch (e) {}
-    return origFetch.apply(this, arguments);
-  };
+      } catch (e) {}
+      return next(url, opts);
+    });
+  } else {
+    // Fallback: direct wrapping if registry not loaded
+    var origFetch = window.fetch;
+    window.fetch = function (url, opts) {
+      try {
+        var urlStr = String(url || '');
+        if (urlStr.indexOf('/api/chat') !== -1 && opts && opts.body) {
+          var body = null;
+          try { body = JSON.parse(opts.body); } catch (e) {}
+          if (body && typeof body === 'object') {
+            body.personalization = body.personalization || {};
+            var existing = body.personalization.customInstructions || '';
+            var effortInstr = getEffortInstruction();
+            if (existing.indexOf('EFFORT LEVEL:') === -1 && existing.indexOf('EFFORT OVERRIDE:') === -1) {
+              body.personalization.customInstructions =
+                (existing ? existing + '\n\n' : '') + effortInstr;
+              opts.body = JSON.stringify(body);
+            }
+          }
+        }
+      } catch (e) {}
+      return origFetch.apply(this, arguments);
+    };
+  }
 })();
