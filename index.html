@@ -4023,38 +4023,6 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
       }
     </style>
     <link rel="stylesheet" href="/motion-ux.css?v=20260927-three-reference-v2">
-    <style id="jdBootSkeletonStyle">
-      #jdBootSkeleton{--boot-base:#171717;--boot-surface:#222;--boot-line:rgba(255,255,255,.075);--boot-hi:rgba(255,255,255,.13);position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;min-height:100dvh;padding:env(safe-area-inset-top) max(16px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px,env(safe-area-inset-left));overflow:hidden;background:var(--boot-base);color:var(--text-main,#f4f4f5);transition:opacity .24s ease,visibility .24s ease;pointer-events:auto}
-      html[data-theme="light"] #jdBootSkeleton,body.theme-light #jdBootSkeleton{--boot-base:#f6f6f6;--boot-surface:#fff;--boot-line:rgba(25,25,35,.055);--boot-hi:rgba(25,25,35,.11);background:var(--boot-base);color:#17171b}
-      body.theme-neon #jdBootSkeleton{--boot-base:#050505;--boot-surface:#141414}
-      body.theme-sunset #jdBootSkeleton{--boot-base:#1a0b2e;--boot-surface:#2d0f40}
-      #jdBootSkeleton.hide{opacity:0;visibility:hidden;pointer-events:none}
-      .jd-boot-shape{position:relative;overflow:hidden;border-radius:999px;background:var(--boot-line)}
-      .jd-boot-shape:after{content:"";position:absolute;inset:0;transform:translateX(-110%);background:linear-gradient(100deg,transparent 20%,var(--boot-hi) 48%,transparent 76%);animation:jdBootShimmer 1.7s ease-in-out infinite}
-      @keyframes jdBootShimmer{to{transform:translateX(110%)}}
-      .jd-boot-header{height:82px;flex:0 0 82px;display:grid;grid-template-columns:50px minmax(0,1fr) 50px;align-items:center;gap:12px}
-      .jd-boot-circle{width:50px;height:50px;border-radius:50%;background:var(--boot-surface);border:1px solid var(--boot-line)}
-      .jd-boot-tabs{display:flex;justify-content:center;align-items:center;gap:clamp(14px,4vw,28px);height:100%}
-      .jd-boot-tab{height:18px;border-radius:9px}
-      .jd-boot-tab:first-child{position:relative}
-      .jd-boot-tab:first-child:before{content:"";position:absolute;left:0;right:0;bottom:-20px;height:4px;border-radius:4px;background:var(--boot-hi)}
-      .jd-boot-controls{height:44px;flex:0 0 44px}
-      .jd-boot-conversation{position:relative;flex:1;min-height:0;overflow:hidden;padding:16px 12px 24px;display:flex;align-items:center;justify-content:center}
-      .jd-boot-search{position:absolute;top:16px;right:15px;width:36px;height:36px;border-radius:50%;background:var(--boot-surface);border:1px solid var(--boot-line)}
-      .jd-boot-welcome{width:min(100%,280px);height:138px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;margin-top:-20px;transform:translateY(-40px)}
-      .jd-boot-welcome-top{width:min(84%,220px);height:46px;border-radius:18px}
-      .jd-boot-welcome-title{width:min(100%,228px);height:21px;border-radius:10px}
-      .jd-boot-welcome-bottom{width:min(100%,96px);height:32px;border-radius:14px}
-      .jd-boot-composer{width:min(100%,820px);min-height:112px;flex:0 0 auto;align-self:center;padding:15px 17px 13px;border:1px solid var(--boot-line);border-radius:27px;background:var(--boot-surface);display:flex;flex-direction:column;justify-content:space-between;gap:14px;margin-bottom:2px}
-      .jd-boot-prompt{height:17px;width:38%;border-radius:9px}
-      .jd-boot-tools{display:flex;align-items:center;gap:10px}
-      .jd-boot-tool{width:40px;height:40px;border-radius:50%;flex:0 0 auto;background:var(--boot-line)}
-      .jd-boot-effort{width:64px;height:20px;border-radius:10px;margin-left:4px}
-      .jd-boot-spacer{flex:1}
-      @media(max-width:520px){#jdBootSkeleton{padding-left:12px;padding-right:12px}.jd-boot-header{height:70px;flex-basis:70px;grid-template-columns:48px minmax(0,1fr) 48px;gap:7px;padding:0 3px}.jd-boot-header>.jd-boot-circle{transform:translateY(8px)}.jd-boot-circle{width:48px;height:48px}.jd-boot-tabs{gap:clamp(7px,2.8vw,17px);transform:translateY(4px)}.jd-boot-tab{height:18px}.jd-boot-tab:first-child:before{bottom:-26px}.jd-boot-tab:nth-child(1){width:42px!important}.jd-boot-tab:nth-child(2){width:58px!important}.jd-boot-tab:nth-child(3){width:44px!important}.jd-boot-conversation{padding:15px 0 24px}.jd-boot-search{top:16px;right:3px;width:36px;height:36px}.jd-boot-welcome{height:110px;gap:7px}.jd-boot-welcome-top{height:40px}.jd-boot-welcome-title{height:21px}.jd-boot-welcome-bottom{height:32px}.jd-boot-composer{min-height:110px;padding:13px 12px;border-radius:25px}.jd-boot-tool{width:36px;height:36px}}
-      @media(max-width:365px){.jd-boot-header{grid-template-columns:41px minmax(0,1fr) 41px;gap:4px}.jd-boot-circle{width:41px;height:41px}}
-      @media(prefers-reduced-motion:reduce){.jd-boot-shape:after{animation:none;transform:none}}
-    </style>
 </head>
 <body>
     <script>
@@ -4066,17 +4034,7 @@ window.sanitizeVisibleAssistantResponse=window.sanitizeVisibleAssistantResponse|
         }
       } catch (_) {} })();
     </script>
-    <div id="jdBootSkeleton" data-jd-boot="true" role="status" aria-label="Loading JepongDevxyz AI">
-      <div class="jd-boot-header" aria-hidden="true">
-        <div class="jd-boot-shape jd-boot-circle"></div>
-        <div class="jd-boot-tabs"><div class="jd-boot-shape jd-boot-tab" style="width:42px"></div><div class="jd-boot-shape jd-boot-tab" style="width:58px"></div><div class="jd-boot-shape jd-boot-tab" style="width:44px"></div></div>
-        <div class="jd-boot-shape jd-boot-circle"></div>
-      </div>
-      <div class="jd-boot-controls" aria-hidden="true"></div>
-      <div class="jd-boot-conversation" aria-hidden="true"><div class="jd-boot-shape jd-boot-search"></div><div class="jd-boot-welcome"><div class="jd-boot-shape jd-boot-welcome-top"></div><div class="jd-boot-shape jd-boot-welcome-title"></div><div class="jd-boot-shape jd-boot-welcome-bottom"></div></div></div>
-      <div class="jd-boot-composer" aria-hidden="true"><div class="jd-boot-shape jd-boot-prompt"></div><div class="jd-boot-tools"><div class="jd-boot-shape jd-boot-tool"></div><div class="jd-boot-shape jd-boot-effort"></div><div class="jd-boot-spacer"></div><div class="jd-boot-shape jd-boot-tool"></div><div class="jd-boot-shape jd-boot-tool"></div></div></div>
-    </div>
-
+    
     <!-- First-run welcome and legal consent. Shown only until the current legal
          version has been accepted on this device. -->
     <section id="jdFirstRunWelcome" class="jd-first-run" aria-labelledby="jdFirstRunTitle" aria-hidden="true">
