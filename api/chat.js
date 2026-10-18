@@ -1,23 +1,22 @@
-/* api/chat.js — Vercel Edge entry. Implementation split into lib/chat/*.js
-   (mechanical move, no behavior change). */
-import { resolveGitHubAccess } from './_github_app.js';
-import { getGitHubSession } from './_github_oauth.js';
-import { shouldReadGitHubIssues } from './_plugin_issues_context.js';
-import { liveAIHordePickerModels } from '../lib/chat/aihorde.js';
-import { API_GUARD, checkApiGuard, jdDeadlineMs } from '../lib/chat/config.js';
-import { jdBill, jdBillKind, jdVerifyCredits } from '../lib/chat/credits.js';
-import { generateImage, generatePetImage } from '../lib/chat/image.js';
-import { dynamicModelCatalog, mediaCapabilitySnapshot, normalizeModelCatalog, providerUsageSnapshot } from '../lib/chat/models.js';
-import { processChat } from '../lib/chat/process.js';
-import { sanitizeCustomApiProfile } from '../lib/chat/providers.js';
-import { applyChatFeatureSettings } from '../lib/chat/refine.js';
-import { cleanUpstreamError } from '../lib/chat/sanitize.js';
-import { safeJsonResponse } from '../lib/chat/search.js';
-import { MAX_AUTO_CONTINUATIONS, activityStreamResponse } from '../lib/chat/sse.js';
-import { serverTTS } from '../lib/chat/tts.js';
-import { json } from '../lib/chat/utils.js';
+/* =========================================================
+   JEPONGDEVXYZ AI — Chat API (thin handler)
+   Refactored: logic split into lib/chat/* modules
+   Original: 7370 lines → now modular (<100KB each)
+========================================================= */
 
 export const config = { runtime: 'edge' };
+
+// External dependencies (used directly by handler)
+import { getGitHubSession } from './_github_oauth.js';
+import { resolveGitHubAccess } from './_github_app.js';
+
+// Lib/chat modules
+import { checkApiGuard, json } from '../lib/chat/guard.js';
+import { activityStreamResponse, generateImage, generatePetImage, serverTTS } from '../lib/chat/media.js';
+import { cleanUpstreamError } from '../lib/chat/orchestrator.js';
+import { dynamicModelCatalog, mediaCapabilitySnapshot, normalizeModelCatalog, processChat, providerUsageSnapshot } from '../lib/chat/processor.js';
+import { safeJsonResponse } from '../lib/chat/research.js';
+import { applyChatFeatureSettings, liveAIHordePickerModels, sanitizeCustomApiProfile } from '../lib/chat/runners.js';
 
 export default async function handler(req){
   if(req.method==='HEAD')return new Response(null,{status:200});
@@ -39,23 +38,9 @@ export default async function handler(req){
   const apiGuard=checkApiGuard(req,body);
   if(!apiGuard.ok)return json({error:apiGuard.error,rateLimited:apiGuard.status===429},apiGuard.status,apiGuard.headers||{});
 
-  // P0/A1: per-request deadline — tool loop + auto-continuations below
-  // degrade gracefully instead of being hard-killed at the Hobby 25s wall.
-  // (applyChatFeatureSettings/processChat spread `body`, so this survives.)
-  body._jdDeadline=jdDeadlineMs();
-  // P0/A2: server-side credit coupling — verify identity + credit
-  // coverage BEFORE any server provider key is used.
-  const billKind=jdBillKind(body);
-  let creditCtx=null;
-  if(billKind){
-    const v=await jdVerifyCredits(req,body,billKind);
-    if(!v.ok)return json({error:v.error},v.status);
-    creditCtx=v.ctx;
-  }
-
   try{
-    if(body.action==='generate-image') return jdBill(generateImage(body,req.signal),creditCtx);
-    if(body.action==='generate-pet-image') return jdBill(generatePetImage(body,req.signal),creditCtx);
+    if(body.action==='generate-image') return generateImage(body,req.signal);
+    if(body.action==='generate-pet-image') return generatePetImage(body,req.signal);
     if(body.action==='tts') return serverTTS(body);
     if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
     if(body.action==='provider-models') return json({providers:await dynamicModelCatalog()});
@@ -100,15 +85,10 @@ export default async function handler(req){
       return json({error:'Message or attachment is required.'},400);
     }
 
-    if(body.activityStream===true) return jdBill(activityStreamResponse(body,req.signal),creditCtx);
+    if(body.activityStream===true) return activityStreamResponse(body,req.signal);
 
     const result=await processChat(body,null);
-    if(result.ok)return jdBill(result.response,creditCtx);
+    if(result.ok)return result.response;
     return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'gemini'});
   }catch(e){return json({error:e?.message||String(e)},500);}
 }
-
-/* Named exports for contract tests (tests/chat_credit_coupling_test.mjs).
-   Vercel Edge uses only the default export; these are ignored at runtime. */
-export { jdBillKind, jdIdemKey, jdVerifyCredits, jdSpendCredits, jdBill, JD_CREDIT_COSTS } from '../lib/chat/credits.js';
-export { JD_CHAT_BUDGET_MS, jdDeadlineMs, jdBudgetLeft } from '../lib/chat/config.js';
