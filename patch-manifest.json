@@ -20,6 +20,7 @@
     "/brand-logo.js",
     "/model-settings.js",
     "/response-ui.js",
+    "/chat-style-cleanup.js",
     "/voice-mode.js",
     "/stopgen-fix.js",
     "/connection-ui.js",
@@ -94,5 +95,5 @@
     "/signup-agent.js",
     "/robot-avatar.js"
   ],
-  "count": 92
+  "count": 93
 }
