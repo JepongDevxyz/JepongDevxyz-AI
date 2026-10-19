@@ -128,7 +128,11 @@
       'background:var(--ra-tray);display:inline-flex;align-items:center;justify-content:center;' +
       'position:absolute;left:0;top:4px}' +
       '.jd-ra-msgava>span{display:block;transform:scale(.34);transform-origin:center}' +
-      '.msg.bot{position:relative;padding-left:44px !important}';
+      '.msg.bot{position:relative;padding-left:44px !important}' +
+      /* Gemini-style AI responses (her order 2026-10-19): no bubble background,
+         plain text like the Gemini app — user bubbles keep theirs */
+      '.msg.bot{background:transparent !important;border:none !important;box-shadow:none !important;' +
+      'border-radius:0 !important}';
     var st = document.createElement('style');
     st.id = CSS_ID;
     st.textContent = css;
