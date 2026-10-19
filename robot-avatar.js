@@ -124,11 +124,6 @@
       '.jd-ra-reset:hover{border-color:var(--ra-accent)}' +
       /* chat message avatars — absolute positioned so the app's own
          .msg.bot flex-column layout is untouched */
-      '.jd-ra-msgava{width:32px;height:32px;border-radius:50%;overflow:hidden;flex:none;' +
-      'background:var(--ra-tray);display:inline-flex;align-items:center;justify-content:center;' +
-      'position:absolute;left:0;top:4px}' +
-      '.jd-ra-msgava>span{display:block;transform:scale(.34);transform-origin:center}' +
-      '.msg.bot{position:relative;padding-left:44px !important}' +
       /* Gemini-style AI responses (her order 2026-10-19): no bubble background,
          plain text like the Gemini app — user bubbles keep theirs */
       '.msg.bot{background:transparent !important;border:none !important;box-shadow:none !important;' +
@@ -489,58 +484,6 @@
   window.openRobotAvatarSettings = openPanel;
 
   /* ---------- boot ---------- */
-  /* ---------- chat message avatars ---------- */
-  var msgAvatarCtls = [];
-  function addMsgAvatar(msgEl) {
-    if (!msgEl || msgEl.querySelector(':scope > .jd-ra-msgava')) return;
-    try {
-      var ava = document.createElement('span');
-      ava.className = 'jd-ra jd-ra-msgava';
-      ava.setAttribute('aria-hidden', 'true');
-      msgEl.insertBefore(ava, msgEl.firstChild);
-      var ctl = mountRobot(ava, { size: 96, seed: 0.42, interactive: false, floorShadow: false, state: 'idle' });
-      if (ctl) msgAvatarCtls.push(ctl);
-    } catch (e) {}
-  }
-  function scanMsgAvatars(root) {
-    try {
-      var els = (root || document).querySelectorAll('.msg.bot');
-      for (var i = 0; i < els.length; i++) addMsgAvatar(els[i]);
-    } catch (e) {}
-  }
-  function watchChat() {
-    scanMsgAvatars(document);
-    /* new AI replies arrive as .msg.bot nodes */
-    new MutationObserver(function (muts) {
-      muts.forEach(function (m) {
-        m.addedNodes.forEach(function (n) {
-          if (n.nodeType !== 1) return;
-          if (n.classList && n.classList.contains('msg') && n.classList.contains('bot')) addMsgAvatar(n);
-          else if (n.querySelectorAll) {
-            var els = n.querySelectorAll('.msg.bot');
-            for (var i = 0; i < els.length; i++) addMsgAvatar(els[i]);
-          }
-        });
-      });
-    }).observe(document.body, { childList: true, subtree: true });
-  }
-
-  /* refresh all mounted avatars (pill + chat) when customization changes */
-  var _origRefresh = refreshPreview;
-  refreshPreview = function () {
-    _origRefresh();
-    msgAvatarCtls = msgAvatarCtls.filter(function (ctl) {
-      try {
-        if (!ctl.el || !document.contains(ctl.el)) return false;
-        ctl.setShape(robot.shape);
-        ctl.setColors({ color: robot.color, trimColor: robot.trimColor, screenColor: robot.screenColor });
-        ctl.setSpeed(robot.speed);
-        ctl.setAntenna(robot.antenna);
-        return true;
-      } catch (e) { return false; }
-    });
-  };
-
   function boot() {
     injectCss();
     /* wait for RobotHead (loaded as a separate patch) */
@@ -549,7 +492,6 @@
       return;
     }
     watchActivity();
-    watchChat();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
