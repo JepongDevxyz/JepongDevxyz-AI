@@ -122,13 +122,13 @@
       '.jd-ra-reset{width:100%;margin-top:18px;padding:12px;border-radius:12px;border:1px solid var(--ra-line);' +
       'background:var(--ra-card);color:var(--ra-ink);font-size:14px;font-weight:600;cursor:pointer}' +
       '.jd-ra-reset:hover{border-color:var(--ra-accent)}' +
-      /* chat message avatars */
+      /* chat message avatars — absolute positioned so the app's own
+         .msg.bot flex-column layout is untouched */
       '.jd-ra-msgava{width:32px;height:32px;border-radius:50%;overflow:hidden;flex:none;' +
       'background:var(--ra-tray);display:inline-flex;align-items:center;justify-content:center;' +
-      'margin-right:8px;vertical-align:top}' +
+      'position:absolute;left:0;top:4px}' +
       '.jd-ra-msgava>span{display:block;transform:scale(.34);transform-origin:center}' +
-      '.msg.bot{display:flex;align-items:flex-start}' +
-      '.msg.bot>.jd-ra-msgava{margin-top:2px}';
+      '.msg.bot{position:relative;padding-left:44px !important}';
     var st = document.createElement('style');
     st.id = CSS_ID;
     st.textContent = css;
