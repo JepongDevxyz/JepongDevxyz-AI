@@ -127,7 +127,17 @@
       /* Gemini-style AI responses (her order 2026-10-19): no bubble background,
          plain text like the Gemini app — user bubbles keep theirs */
       '.msg.bot{background:transparent !important;border:none !important;box-shadow:none !important;' +
-      'border-radius:0 !important}';
+      'border-radius:0 !important}' +
+      /* Gemini-style follow-up chips (her order 2026-10-19) */
+      '.jd-ra-followups{display:flex;gap:10px;margin:14px 0 4px;flex-wrap:wrap}' +
+      '.jd-ra-followup{flex:1 1 0;min-width:140px;background:#1e1e22;border:none;border-radius:16px;' +
+      'padding:14px 16px;color:#e8e8ea;font-size:14px;line-height:1.45;cursor:pointer;text-align:left;' +
+      'display:flex;flex-direction:column;justify-content:space-between;gap:12px;min-height:88px;' +
+      'transition:background .15s ease}' +
+      '.jd-ra-followup:hover{background:#2a2a30}' +
+      '.jd-ra-followup .jd-ra-farrow{font-size:18px;color:#a1a1aa}' +
+      'body.theme-light .jd-ra-followup{background:#f0f0f3;color:#18181b}' +
+      'body.theme-light .jd-ra-followup:hover{background:#e4e4e9}';
     var st = document.createElement('style');
     st.id = CSS_ID;
     st.textContent = css;
@@ -483,6 +493,74 @@
   }
   window.openRobotAvatarSettings = openPanel;
 
+  /* ---------- Gemini-style follow-up chips ---------- */
+  function makeFollowups(text) {
+    var t = (text || '').toLowerCase();
+    var out = [];
+    if (/```|<code|function |const |import /.test(t)) {
+      out = ['Explain this code simply', 'Show me an example usage'];
+    } else if (t.length > 800) {
+      out = ['Summarize this briefly', 'Give me the key takeaways'];
+    } else if (/backup|file|upload/i.test(t)) {
+      out = ['I-paste dito ang mga detalye', 'Gumawa ng bagong backup'];
+    } else if (/\?/.test(t)) {
+      out = ['Tell me more about this', 'What should I do next?'];
+    } else {
+      out = ['Explain this further', 'Give me an example'];
+    }
+    return out.slice(0, 2);
+  }
+  function sendFollowup(text) {
+    try {
+      var input = document.getElementById('userInput');
+      if (!input) return;
+      input.value = text;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      /* use the app's own send path */
+      if (typeof window.handleMainAction === 'function') window.handleMainAction();
+      else {
+        var btn = document.getElementById('mainActionBtn');
+        if (btn) btn.click();
+      }
+    } catch (e) {}
+  }
+  function addFollowups(msgEl) {
+    if (!msgEl || msgEl.querySelector(':scope > .jd-ra-followups')) return;
+    try {
+      var text = (msgEl.innerText || msgEl.textContent || '').trim();
+      if (text.length < 20) return;
+      var sug = makeFollowups(text);
+      var wrap = document.createElement('div');
+      wrap.className = 'jd-ra jd-ra-followups';
+      sug.forEach(function (s) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'jd-ra-followup';
+        b.innerHTML = '<span></span><span class="jd-ra-farrow">↵</span>';
+        b.querySelector('span').textContent = s;
+        b.addEventListener('click', function () { sendFollowup(s); });
+        wrap.appendChild(b);
+      });
+      /* insert before .bot-actions if present, else append */
+      var actions = msgEl.querySelector(':scope > .bot-actions');
+      if (actions) msgEl.insertBefore(wrap, actions);
+      else msgEl.appendChild(wrap);
+    } catch (e) {}
+  }
+  function watchFollowups() {
+    try {
+      document.querySelectorAll('.msg.bot').forEach(function (m) { addFollowups(m); });
+    } catch (e) {}
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        m.addedNodes.forEach(function (n) {
+          if (n.nodeType !== 1) return;
+          if (n.classList && n.classList.contains('msg') && n.classList.contains('bot')) addFollowups(n);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ---------- boot ---------- */
   function boot() {
     injectCss();
@@ -492,6 +570,7 @@
       return;
     }
     watchActivity();
+    watchFollowups();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
