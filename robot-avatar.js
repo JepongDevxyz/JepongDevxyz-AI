@@ -137,7 +137,26 @@
       '.jd-ra-followup:hover{background:#2a2a30}' +
       '.jd-ra-followup .jd-ra-farrow{font-size:18px;color:#a1a1aa}' +
       'body.theme-light .jd-ra-followup{background:#f0f0f3;color:#18181b}' +
-      'body.theme-light .jd-ra-followup:hover{background:#e4e4e9}';
+      'body.theme-light .jd-ra-followup:hover{background:#e4e4e9}' +
+      /* Gemini-style action row (her order 2026-10-19) */
+      '.jd-ra-actions{display:flex;align-items:center;gap:4px;margin-top:10px;flex-wrap:wrap}' +
+      '.jd-ra-act{width:36px;height:36px;border-radius:50%;border:none;background:transparent;' +
+      'color:#a1a1aa;cursor:pointer;display:flex;align-items:center;justify-content:center;' +
+      'transition:background .15s ease,color .15s ease}' +
+      '.jd-ra-act:hover{background:rgba(128,128,128,.15);color:#e8e8ea}' +
+      '.jd-ra-act[data-active="up"]{color:#6d8bff}' +
+      '.jd-ra-act[data-active="down"]{color:#ff6b6b}' +
+      '.jd-ra-act svg{width:20px;height:20px}' +
+      '.jd-ra-act-sp{flex:1}' +
+      '.jd-ra-disclaim{font-size:12px;color:#71717a;margin-top:6px}' +
+      '.jd-ra-menu{position:fixed;z-index:200;background:#1e1e22;border:1px solid #2d2d30;' +
+      'border-radius:14px;padding:6px;min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,.4)}' +
+      '.jd-ra-menu button{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;' +
+      'border:none;background:transparent;color:#e8e8ea;font-size:14px;cursor:pointer;border-radius:9px;text-align:left}' +
+      '.jd-ra-menu button:hover{background:#2a2a30}' +
+      '.jd-ra-menu button svg{width:18px;height:18px;color:#a1a1aa;flex:none}' +
+      '.jd-ra-menu .jd-ra-menusep{height:1px;background:#2d2d30;margin:5px 8px}' +
+      '.jd-ra-menu .jd-ra-menunote{padding:8px 14px;font-size:11px;color:#71717a}';
     var st = document.createElement('style');
     st.id = CSS_ID;
     st.textContent = css;
@@ -561,6 +580,151 @@
     }).observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ---------- Gemini-style action row (complete) ---------- */
+  var JDRA_ICONS = {
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>',
+    regen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="5" cy="12" r="1.6"/></svg>',
+    speaker: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>'
+  };
+  function jdFeedback(msgEl, kind) {
+    try {
+      var key = 'jd.ra.feedback';
+      try {
+        var all = {};
+        try { all = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+        var id = msgEl.getAttribute('data-message-index') || String(Date.now());
+        all[id] = kind;
+        localStorage.setItem(key, JSON.stringify(all));
+      } catch (e) {}
+      var ups = msgEl.querySelectorAll('[data-jdra="up"]');
+      var downs = msgEl.querySelectorAll('[data-jdra="down"]');
+      ups.forEach(function (b) { if (kind === 'up') b.setAttribute('data-active', 'up'); else b.removeAttribute('data-active'); });
+      downs.forEach(function (b) { if (kind === 'down') b.setAttribute('data-active', 'down'); else b.removeAttribute('data-active'); });
+      if (typeof window.showModernToast === 'function') window.showModernToast(kind === 'up' ? 'Thanks for the feedback!' : 'Feedback noted');
+    } catch (e) {}
+  }
+  function jdShare(text) {
+    try {
+      if (navigator.share) {
+        navigator.share({ title: 'JepongDevxyz AI', text: text }).catch(function () {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function () {
+          if (typeof window.showModernToast === 'function') window.showModernToast('Copied — share it anywhere');
+        });
+      }
+    } catch (e) {}
+  }
+  function jdCloseMenu() {
+    var m = document.querySelector('.jd-ra-menu');
+    if (m && m.parentNode) m.parentNode.removeChild(m);
+    document.removeEventListener('click', jdCloseMenu);
+  }
+  function jdMoreMenu(btn, text) {
+    jdCloseMenu();
+    try {
+      var menu = document.createElement('div');
+      menu.className = 'jd-ra jd-ra-menu';
+      menu.innerHTML =
+        '<button data-m="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copy full response</button>' +
+        '<button data-m="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>Share</button>' +
+        '<div class="jd-ra-menusep"></div>' +
+        '<div class="jd-ra-menunote">Jampong is AI and can make mistakes.</div>';
+      document.body.appendChild(menu);
+      var r = btn.getBoundingClientRect();
+      menu.style.left = Math.max(8, Math.min(window.innerWidth - 240, r.left)) + 'px';
+      menu.style.top = Math.max(8, r.top - menu.offsetHeight - 8) + 'px';
+      menu.querySelector('[data-m="copy"]').addEventListener('click', function (e) {
+        e.stopPropagation();
+        try { if (navigator.clipboard) navigator.clipboard.writeText(text); } catch (err) {}
+        if (typeof window.showModernToast === 'function') window.showModernToast('Copied');
+        jdCloseMenu();
+      });
+      menu.querySelector('[data-m="share"]').addEventListener('click', function (e) {
+        e.stopPropagation();
+        jdShare(text);
+        jdCloseMenu();
+      });
+      setTimeout(function () { document.addEventListener('click', jdCloseMenu); }, 50);
+    } catch (e) {}
+  }
+  function enhanceActions(msgEl) {
+    if (!msgEl || msgEl.getAttribute('data-jdra-done')) return;
+    msgEl.setAttribute('data-jdra-done', '1');
+    try {
+      var old = msgEl.querySelector(':scope > .bot-actions');
+      var text = (msgEl.innerText || msgEl.textContent || '').trim();
+      /* build the complete Gemini-style row */
+      var row = document.createElement('div');
+      row.className = 'jd-ra jd-ra-actions';
+      function mkBtn(kind, icon, label, fn) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'jd-ra-act';
+        b.setAttribute('data-jdra', kind);
+        b.innerHTML = icon;
+        b.setAttribute('aria-label', label);
+        b.setAttribute('title', label);
+        b.addEventListener('click', function (e) { e.stopPropagation(); fn(b); });
+        return b;
+      }
+      row.appendChild(mkBtn('up', JDRA_ICONS.up, 'Good response', function () { jdFeedback(msgEl, 'up'); }));
+      row.appendChild(mkBtn('down', JDRA_ICONS.down, 'Bad response', function () { jdFeedback(msgEl, 'down'); }));
+      row.appendChild(mkBtn('regen', JDRA_ICONS.regen, 'Regenerate', function () {
+        try {
+          if (typeof window.regenerateAnswer === 'function') window.regenerateAnswer(null);
+          else if (typeof regenerateAnswer === 'function') regenerateAnswer(null);
+          else if (typeof window.showModernToast === 'function') window.showModernToast('Regenerate is not available right now');
+        } catch (e) {}
+      }));
+      row.appendChild(mkBtn('share', JDRA_ICONS.share, 'Share', function () { jdShare(text); }));
+      row.appendChild(mkBtn('copy', JDRA_ICONS.copy, 'Copy', function () {
+        try {
+          if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () {
+            if (typeof window.showModernToast === 'function') window.showModernToast('Copied');
+          });
+        } catch (e) {}
+      }));
+      row.appendChild(mkBtn('more', JDRA_ICONS.more, 'More', function (b) { jdMoreMenu(b, text); }));
+      var sp = document.createElement('span');
+      sp.className = 'jd-ra-act-sp';
+      row.appendChild(sp);
+      row.appendChild(mkBtn('speak', JDRA_ICONS.speaker, 'Read aloud', function () {
+        try {
+          if (typeof window.speakRawText === 'function') window.speakRawText(text, true);
+          else if (typeof speakRawText === 'function') speakRawText(text, true);
+        } catch (e) {}
+      }));
+      var dis = document.createElement('div');
+      dis.className = 'jd-ra jd-ra-disclaim';
+      dis.textContent = 'Jampong is AI and can make mistakes.';
+      if (old) {
+        old.parentNode.insertBefore(row, old);
+        old.parentNode.insertBefore(dis, old.nextSibling);
+        old.style.display = 'none';
+      } else {
+        msgEl.appendChild(row);
+        msgEl.appendChild(dis);
+      }
+    } catch (e) {}
+  }
+  function watchActions() {
+    try {
+      document.querySelectorAll('.msg.bot').forEach(function (m) { enhanceActions(m); });
+    } catch (e) {}
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        m.addedNodes.forEach(function (n) {
+          if (n.nodeType !== 1) return;
+          if (n.classList && n.classList.contains('msg') && n.classList.contains('bot')) enhanceActions(n);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
   /* ---------- boot ---------- */
   function boot() {
     injectCss();
@@ -571,6 +735,7 @@
     }
     watchActivity();
     watchFollowups();
+    watchActions();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
