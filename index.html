@@ -12294,6 +12294,7 @@ ${m.text || ''}
                             syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                             activePartialResponse=stripJdWorkNotes(fullResponse);
                             if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
+                            renderLiveResponse();
                         },
                         artifact: (payload) => {
                             if(payload?.filename && !pendingArtifacts.some(item=>item?.filename===payload.filename && item?.size===payload.size)){
@@ -12319,6 +12320,7 @@ ${m.text || ''}
                         syncJdWorkNotesFromStream(fullResponse,jdWorkNotesSeen);
                         activePartialResponse=stripJdWorkNotes(fullResponse);
                         if(activeGenerationDraft){activeGenerationDraft.text=activePartialResponse;persistActiveGenerationDraft(false);}
+                        renderLiveResponse();
                     }
                     await revealFinalResponse();
                 }
