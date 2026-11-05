@@ -161,52 +161,18 @@ window.JDCodingAgent=Object.freeze({open,close});
    (activity-fix.js). Pure addition: no existing code above changed. */
 (function(){try{
   if(document.querySelector('script[src^="/credits.js"]'))return;
-  /* INITIAL SKELETON LOADER: Show FIRST before anything else (2026-10-02)
-     Full-screen skeleton that appears immediately on page load, hides when app is ready */
+  /* BOOT HIDE (cleanup 2026-11-06): the old #jdBootSkeleton loader layer
+     (static div + desktop-fit + lifecycle IIFE) was removed — GitHub's
+     index.html already lost the div, and the Qwen shell owns the boot
+     experience now. What remains is the one live duty that IIFE carried:
+     clearing the pre-paint jd-boot-pending overlay (index.html adds it at
+     parse time; nothing else removes it), on the same schedule as before
+     (load + 3s, 15s fallback), plus the early effort-badge fix that was
+     bundled into the old IIFE. window.__jdHideInitSkeleton is kept for
+     compatibility. */
   (function(){
-    var sk=document.getElementById('jdBootSkeleton');
-    if(!sk)return;
-    /* Desktop fit (2026-10-05): re-fit the static skeleton to the desktop
-       homepage from the very first paint — 280px sidebar skeleton +
-       centered 768px header/composer, 900px chat column (860px at 1600px+).
-       Runs synchronously here (deferred script, right after HTML parse, no
-       network wait) so the sidebar version shows immediately instead of
-       snapping in later. Desktop-only (>=1024px), idempotent. */
-    /* JD-BOOT-FIT-START */
-    try{
-      if(window.matchMedia('(min-width:1024px)').matches&&!sk.querySelector('.jd-boot-side')){
-        var __bfCss=document.createElement('style');
-        __bfCss.id='jdBootSkeletonFit';
-        __bfCss.textContent=
-          '@media(min-width:1024px){'+
-          '#jdBootSkeleton{flex-direction:row!important;padding:0!important}'+
-          '.jd-boot-side{flex:0 0 280px!important;width:280px!important;min-height:0;display:flex;flex-direction:column;gap:10px;padding:18px 14px;overflow:hidden;background:var(--boot-surface);border-right:1px solid var(--boot-line)}'+
-          '.jd-boot-main{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column}'+
-          '.jd-boot-main .jd-boot-header{max-width:768px!important;width:100%!important;margin-inline:auto!important}'+
-          '.jd-boot-main .jd-boot-conversation{max-width:900px!important;width:100%!important;margin-inline:auto!important}'+
-          '.jd-boot-main .jd-boot-composer{width:min(100% - 32px,768px)!important}'+
-          '}'+
-          '@media(min-width:1600px){'+
-          '.jd-boot-main .jd-boot-header{max-width:860px!important}'+
-          '.jd-boot-main .jd-boot-composer{width:min(100% - 32px,860px)!important}'+
-          '}';
-        document.head.appendChild(__bfCss);
-        var __bfMain=document.createElement('div');
-        __bfMain.className='jd-boot-main';__bfMain.setAttribute('aria-hidden','true');
-        while(sk.firstChild)__bfMain.appendChild(sk.firstChild);
-        var __bfSide=document.createElement('div');
-        __bfSide.className='jd-boot-side';__bfSide.setAttribute('aria-hidden','true');
-        var __bfRows='';
-        for(var __bfI=0;__bfI<6;__bfI++)__bfRows+='<div class="jd-boot-shape" style="height:38px;border-radius:10px"></div>';
-        __bfSide.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="jd-boot-shape" style="width:36px;height:36px;border-radius:12px;flex:0 0 auto"></div><div class="jd-boot-shape" style="height:16px;width:55%;border-radius:8px"></div></div><div class="jd-boot-shape" style="height:40px;border-radius:12px"></div><div class="jd-boot-shape" style="height:14px;width:42%;border-radius:7px;margin-top:10px"></div>'+__bfRows+'<div style="flex:1"></div><div class="jd-boot-shape" style="height:48px;border-radius:12px"></div>';
-        sk.appendChild(__bfSide);sk.appendChild(__bfMain);
-      }
-    }catch(__bfE){}
-    /* JD-BOOT-FIT-END */
-    /* Use the static first-paint shell in index.html; this script manages its lifecycle. */
-    document.body.classList.add('jd-sk-active');
-    /* Proactively fix the effort badge (2026-10-02): update "Instant" to saved value
-       BEFORE the skeleton hides, so the old default never shows */
+    /* Proactively fix the effort badge: update "Instant" to saved value
+       BEFORE first paint settles, so the old default never shows */
     (function fixEffortBadge(){
       try{
         var saved=null;
@@ -215,13 +181,11 @@ window.JDCodingAgent=Object.freeze({open,close});
           saved=p.intelligence||null;
         }catch(e){}
         if(!saved||saved==='Instant')return;
-        // Watch for the badge element and update it as soon as it appears
         var obs=new MutationObserver(function(){
           var badge=document.querySelector('.prompt-bar__effort-label, [data-effort-label]');
           if(badge&&badge.textContent.trim()==='Instant'){
             badge.textContent=saved;
           }
-          // Also check all elements containing just "Instant" in the prompt bar
           document.querySelectorAll('.prompt-bar').forEach(function(bar){
             bar.querySelectorAll('span,small,badge').forEach(function(el){
               if(el.textContent.trim()==='Instant'&&el.children.length===0){
@@ -234,50 +198,22 @@ window.JDCodingAgent=Object.freeze({open,close});
         setTimeout(function(){obs.disconnect();},10000);
       }catch(e){}
     })();
-    // Hide ONLY when page is truly ready (not on DOM presence which causes flicker)
     var hidden=false;
     function hide(){
       if(hidden)return; hidden=true;
-      document.body.classList.remove('jd-sk-active');
       document.documentElement.classList.remove('jd-boot-pending');
-      sk.classList.add('hide');
-      setTimeout(function(){if(sk.parentNode)sk.remove();},260);
+      var sk=document.getElementById('jdBootSkeleton');
+      if(sk){ sk.classList.add('hide'); setTimeout(function(){if(sk.parentNode)sk.remove();},260); }
     }
     window.__jdHideInitSkeleton=hide;
-    // Smart hide (2026-10-02): wait until the final design is present
-    // Check if the effort badge shows the saved value (not the old "Instant" default)
-    function isDesignReady(){
-      try{
-        var p=JSON.parse(localStorage.getItem('jepong_personalization')||'{}');
-        var expected=p.intelligence||null;
-        if(!expected||expected==='Instant')return true; // No saved value, nothing to wait for
-        // Look for the badge - if it still says "Instant", design isn't ready
-        var found=false, ready=true;
-        document.querySelectorAll('.prompt-bar').forEach(function(bar){
-          bar.querySelectorAll('span,small').forEach(function(el){
-            var t=el.textContent.trim();
-            if(t==='Instant'||t===expected){
-              found=true;
-              if(t==='Instant')ready=false;
-            }
-          });
-        });
-        return !found||ready;
-      }catch(e){return true;}
-    }
-    function tryHide(){
-      if(isDesignReady()){hide();}
-      else{setTimeout(tryHide,500);} // Check again in 500ms
-    }
-    // Hide when window fully loads + 3s, but only if design is ready
-    if(document.readyState==='complete'){ setTimeout(tryHide,3000); }
-    else{ window.addEventListener('load',function(){ setTimeout(tryHide,3000); }); }
-    setTimeout(hide,15000); // Max 15s fallback (was 12s)
+    if(document.readyState==='complete'){ setTimeout(hide,3000); }
+    else{ window.addEventListener('load',function(){ setTimeout(hide,3000); }); }
+    setTimeout(hide,15000); // Max 15s fallback
   })();
   /* Self-healing cache-buster: even if THIS agent.js is stale-cached,
      fetch the current patch version with no-cache and load the patches
      with it. Bump patch-version.txt on every push that changes patches. */
-  var V='?v=20261008a339';
+  var V='?v=20261106a343';
   /* Auto Clear Cache (her order 2026-10-05): if the toggle is ON, wipe
      CacheStorage and force a fresh navigation on every boot so updates
      appear immediately. Loop-safe: skips if ?jd_fresh is already present. */
@@ -304,7 +240,7 @@ window.JDCodingAgent=Object.freeze({open,close});
     }
   } catch (_) {}
   window.__jdExploreMode = true; /* unified Explore replaces Feed/Ideas/Library buttons */
-  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/chat-style-cleanup.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/mode-carousel.js','/library-chatgpt.js','/library-cloud.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/memory-summary.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/profile-pill.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-titles-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/settings-reorg.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/backup-repo.js','/followups-restore-fix.js','/desktop-layout.js','/slop-gate.js','/tideline.js','/extra-settings.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js','/email-guard.js','/unorouter-cooldown.js','/opendots-features.js','/agent-skills.js','/browse-improvements.js','/paperclip-inspired.js','/error-tracking.js','/turnstile-guard.js','/settings-muse-v3.js','/no-copy-global.js','/fullscreen-settings.js','/reaction-animations.js','/credential-vault.js','/signup-agent.js','/robot-avatar.js'];
+  var FILES=['/paymongo-topup.js','/credits.js','/activity-fix.js','/account-delete.js','/onboarding-order.js','/subscription-about.js','/activity-text-fix.js','/effort-auto.js','/pure-mode.js','/connectors.js','/connector-use.js','/permissions.js','/connectors-filter.js','/connectors-browse.js','/keyboard-fix.js','/plugins-inject.js','/brand-logo.js','/model-settings.js','/response-ui.js','/voice-mode.js','/stopgen-fix.js','/connection-ui.js','/back-nav.js','/library-cloud.js','/skeleton.js','/toggles-off.js','/memory-chatgpt.js','/memory-summary.js','/personalization-chatgpt.js','/usage-limits.js','/animations.js','/model-tools-ui.js','/word-dictate.js','/reactions-v2.js','/dictionary.js','/composer-sheet-muse.js','/floating-buttons-fix.js','/history-activity-fix.js','/sidebar-context-menu.js','/mode-system.js','/image-merge.js','/persona-relocate.js','/effort-fix.js','/map-embed.js','/map-autoembed.js','/tap-hold-fix.js','/persistence.js','/goals.js','/goals-notify.js','/goals-chat.js','/battery-monitor.js','/main-chat.js','/proactive.js','/feed.js','/ideas.js','/library.js','/explore.js','/import-memory.js','/model-optimize.js','/ai-audio.js','/lyrics.js','/subagents-crew.js','/backup-repo.js','/followups-restore-fix.js','/slop-gate.js','/tideline.js','/browser-agent.js','/steel-backend.js','/browse-loop.js','/browse-viewer.js','/email-guard.js','/unorouter-cooldown.js','/opendots-features.js','/agent-skills.js','/browse-improvements.js','/paperclip-inspired.js','/error-tracking.js','/turnstile-guard.js','/no-copy-global.js','/fullscreen-settings.js','/reaction-animations.js','/credential-vault.js','/signup-agent.js','/robot-avatar.js','/qwen-settings.js','/qwen-shell.js'];
   function loadPatches(ver){
     /* Fetch server manifest for current file list (no-store) — ensures stale
        agent.js still loads NEW patch files added after it was cached.
