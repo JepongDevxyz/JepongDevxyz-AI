@@ -5,6 +5,91 @@ const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,9);
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+/* Qwen icon set = official Lucide stroke glyphs (lucide-static, ISC) + a few custom glyphs
+   drawn to the same 24x24 / stroke-2 grid (temp chat, agent bot, create video, usage,
+   settings-general, folder-arrow, star4, stop). Sizes follow PIXEL-DIFF.md measurements. */
+const ICONS={
+  'panel-left':'<rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" />',
+  'message-square-plus':'<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" /><path d="M12 8v6" /><path d="M9 11h6" />',
+  'search':'<path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" />',
+  'circle-x':'<circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" />',
+  'layout-grid':'<rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />',
+  'square-terminal':'<path d="m7 11 2-2-2-2" /><path d="M11 13h4" /><rect width="18" height="18" x="3" y="3" rx="2" ry="2" />',
+  'sparkles':'<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" />',
+  'sparkle':'<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />',
+  'chevron-down':'<path d="m6 9 6 6 6-6" />',
+  'chevron-up':'<path d="m18 15-6-6-6 6" />',
+  'chevron-right':'<path d="m9 18 6-6-6-6" />',
+  'plus':'<path d="M5 12h14" /><path d="M12 5v14" />',
+  'circle-plus':'<circle cx="12" cy="12" r="10" /><path d="M8 12h8" /><path d="M12 8v8" />',
+  'ellipsis':'<circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />',
+  'user':'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />',
+  'settings':'<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" />',
+  'archive':'<rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" />',
+  'archive-restore':'<rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h2" /><path d="M20 8v11a2 2 0 0 1-2 2h-2" /><path d="m9 15 3-3 3 3" /><path d="M12 12v9" />',
+  'headset':'<path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z" /><path d="M21 16v2a4 4 0 0 1-4 4h-5" />',
+  'log-out':'<path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />',
+  'info':'<circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />',
+  'monitor':'<rect width="20" height="14" x="2" y="3" rx="2" /><line x1="8" x2="16" y1="21" y2="21" /><line x1="12" x2="12" y1="17" y2="21" />',
+  'layers':'<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />',
+  'message-square':'<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />',
+  'copy':'<rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />',
+  'pencil':'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" />',
+  'pencil-line':'<path d="M13 21h8" /><path d="m15 5 4 4" /><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />',
+  'trash-2':'<path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />',
+  'share':'<path d="M12 2v13" /><path d="m16 6-4-4-4 4" /><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />',
+  'forward':'<path d="m15 17 5-5-5-5" /><path d="M4 18v-2a4 4 0 0 1 4-4h12" />',
+  'rotate-ccw':'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />',
+  'thumbs-up':'<path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /><path d="M7 10v12" />',
+  'thumbs-down':'<path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" /><path d="M17 14V2" />',
+  'volume-2':'<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /><path d="M16 9a5 5 0 0 1 0 6" /><path d="M19.364 18.364a9 9 0 0 0 0-12.728" />',
+  'git-branch':'<path d="M15 6a9 9 0 0 0-9 9V3" /><circle cx="18" cy="6" r="3" /><circle cx="6" cy="18" r="3" />',
+  'lightbulb':'<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" />',
+  'arrow-up':'<path d="m5 12 7-7 7 7" /><path d="M12 19V5" />',
+  'arrow-left':'<path d="m12 19-7-7 7-7" /><path d="M19 12H5" />',
+  'download':'<path d="M12 15V3" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" />',
+  'upload':'<path d="M12 3v12" /><path d="m17 8-5-5-5 5" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />',
+  'image-plus':'<path d="M16 5h6" /><path d="M19 2v6" /><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /><circle cx="9" cy="9" r="2" />',
+  'globe':'<circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" />',
+  'graduation-cap':'<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /><path d="M22 10v6" /><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />',
+  'square-code':'<path d="m10 9-3 3 3 3" /><path d="m14 15 3-3-3-3" /><rect x="3" y="3" width="18" height="18" rx="2" />',
+  'presentation':'<path d="M2 3h20" /><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3" /><path d="m7 21 5-5 5 5" />',
+  'box':'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />',
+  'book-open':'<path d="M12 5v16" /><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" />',
+  'send':'<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" />',
+  'flask-conical':'<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2" /><path d="M6.453 15h11.094" /><path d="M8.5 2h7" />',
+  'pin':'<path d="M12 17v5" /><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />',
+  'list-checks':'<path d="M13 5h8" /><path d="M13 12h8" /><path d="M13 19h8" /><path d="m3 17 2 2 4-4" /><path d="m3 7 2 2 4-4" />',
+  'message-square-warning':'<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" /><path d="M12 15h.01" /><path d="M12 7v4" />',
+  'mic':'<path d="M12 19v3" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><rect x="9" y="2" width="6" height="13" rx="3" />',
+  'audio-lines':'<path d="M2 10v3" /><path d="M6 6v11" /><path d="M10 3v18" /><path d="M14 8v7" /><path d="M18 5v13" /><path d="M22 10v3" />',
+  'check':'<path d="M20 6 9 17l-5-5" />',
+  'x':'<path d="M18 6 6 18" /><path d="m6 6 12 12" />',
+  'temp-chat':'<rect class="temp-rect" x="3.5" y="3.5" width="17" height="15" rx="4" stroke-dasharray="4.5 3.5" /><path d="M8 18.5v2.8L12.2 18.5" />',
+  'agent-bot':'<circle cx="11" cy="10.5" r="7.5" /><circle cx="8.3" cy="10" r="1" fill="currentColor" stroke="none" /><circle cx="13.7" cy="10" r="1" fill="currentColor" stroke="none" /><path d="M8.8 13.8h4.4" /><path d="M16.3 15.8l2.1 3.8-3.9-1.5" />',
+  'create-video':'<rect x="2.5" y="5.5" width="15" height="13" rx="2.5" /><path d="M10 9.4l4.6 2.6-4.6 2.6z" /><path d="M19 2.6v4.8" /><path d="M16.6 5h4.8" />',
+  'usage':'<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M6.5 12.2h2.6l1.4-2.6 2.8 4.8 1.4-2.2h2.8" />',
+  'settings-general':'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><circle cx="12" cy="12" r="3" />',
+  'star4':'<path d="M12 3c.75 4.6 2.15 6.9 9 9-6.85 2.1-8.25 4.4-9 9-.75-4.6-2.15-6.9-9-9C10.85 9.9 12.25 7.6 12 3Z" />',
+  'folder-arrow':'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /><path d="M12.5 15.2h6" /><path d="m16.4 12.9 2.3 2.3-2.3 2.3" />',
+  'stop':'<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" stroke="none" />',
+};
+const _CHEV=new Set(['chevron-down','chevron-up','chevron-right']);
+const _FILL=new Set(['star4']);
+const ic=(name,size=16)=>{ const inner=ICONS[name]||'';
+  if(_FILL.has(name)) return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'+inner+'</svg>';
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(_CHEV.has(name)?1.5:2)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+inner+'</svg>'; };
+/* hydrate static index.html icon slots: <span data-icon="name" data-size="N"></span> */
+function hydrateIcons(root){ (root||document).querySelectorAll('[data-icon]').forEach(el=>{ el.innerHTML=ic(el.dataset.icon, parseFloat(el.dataset.size)||16); }); }
+/* Strip backend follow-up markup ([[JD_FOLLOWUPS]] blocks, stray ITEM: lines) from assistant text. */
+function cleanAssistantText(t){
+  let s=String(t??'');
+  s=s.replace(/\[\[JD_FOLLOWUPS\]\][\s\S]*?\[\[\/JD_FOLLOWUPS\]\]/g,'');
+  s=s.replace(/\[\[JD_FOLLOWUPS\]\][\s\S]*$/g,'');
+  s=s.replace(/\[\[\/?JD_FOLLOWUPS\]\]/g,'');
+  s=s.replace(/^[ \t]*ITEM:[^\n]*$/gm,'');
+  return s.replace(/\n{3,}/g,'\n\n').trim();
+}
 
 const MODELS=[{"provider": "gemini", "id": "gemini-flash-latest", "name": "Gemini Flash Latest", "desc": "Balanced all-around"}, {"provider": "gemini", "id": "gemini-3.8-flash", "name": "Gemini 3.8 Flash", "desc": "Advanced general tasks"}, {"provider": "gemini", "id": "gemini-3.7-flash", "name": "Gemini 3.7 Flash", "desc": "Reasoning"}, {"provider": "gemini", "id": "gemini-3.5-flash-lite", "name": "Gemini 3.5 Flash-Lite", "desc": "Fast/light"}, {"provider": "cloudflare", "id": "@cf/openai/gpt-oss-120b", "name": "GPT-OSS 120B", "desc": "Strong reasoning + coding"}, {"provider": "cloudflare", "id": "@cf/zai-org/glm-4.7-flash", "name": "GLM 4.7 Flash", "desc": "Strong coding + multilingual reasoning"}, {"provider": "cloudflare", "id": "@cf/nvidia/nemotron-3-120b-a12b", "name": "Nemotron 3 Super", "desc": "Agentic reasoning"}, {"provider": "cloudflare", "id": "@cf/qwen/qwen3.8-27b", "name": "Qwen 3.8 27B", "desc": "Vision + reasoning + tools"}, {"provider": "groq", "id": "openai/gpt-oss-120b", "name": "GPT-OSS 120B", "desc": "Strong reasoning + coding"}, {"provider": "groq", "id": "qwen/qwen3.8-27b", "name": "Qwen 3.8 27B", "desc": "Vision + reasoning"}, {"provider": "groq", "id": "groq/compound", "name": "Compound", "desc": "Multi-tool web + code system"}, {"provider": "openrouter", "id": "nvidia/nemotron-3-ultra-550b-a55b:free", "name": "Nemotron 3 Ultra Free", "desc": "1M context · deep reasoning"}, {"provider": "openrouter", "id": "poolside/laguna-s-2.1:free", "name": "Laguna S 2.1 Free", "desc": "Strong coding agent"}, {"provider": "openrouter", "id": "nvidia/nemotron-3-super-120b-a12b:free", "name": "Nemotron 3 Super Free", "desc": "Agentic reasoning"}, {"provider": "mistral", "id": "mistral-small-latest", "name": "Mistral Small Latest", "desc": "General-purpose model"}, {"provider": "mistral", "id": "codestral-latest", "name": "Codestral", "desc": "Coding specialist"}, {"provider": "cohere", "id": "command-a-plus-05-2026", "name": "Command A+", "desc": "Vision + reasoning + agents"}, {"provider": "cohere", "id": "command-a-reasoning-08-2025", "name": "Command A Reasoning", "desc": "Deep reasoning"}, {"provider": "unorouter", "id": "auto", "name": "UnoRouter Auto", "desc": "Best available free-tier route"}, {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "name": "Nemotron 3 Ultra", "desc": "Strong free-tier reasoning"}, {"provider": "nvidia", "id": "nvidia/nemotron-3-super-120b-a12b", "name": "Nemotron 3 Super", "desc": "Strong free-tier agentic reasoning"}, {"provider": "codecraft", "id": "deepseek-v4-pro-max", "name": "DeepSeek V4 Pro Max", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "deepseek-v4-flash-0731", "name": "DeepSeek V4 Flash 0731", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "deepseek-v4-pro-0813", "name": "DeepSeek V4 Pro 0813", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gemma-2-2b", "name": "Gemma 2 2B", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "qwen3.8-max", "name": "Qwen 3.8 Max", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "qwen3.8-27b", "name": "Qwen 3.8 27B", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "qwen3.7-max", "name": "Qwen 3.7 Max", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "glm-5.3", "name": "GLM 5.3", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "glm-5.2", "name": "GLM 5.2", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "muse-spark-1.1", "name": "Muse Spark 1.1", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "seed-2.1-pro", "name": "Seed 2.1 Pro", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "seed-2.1-turbo", "name": "Seed 2.1 Turbo", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gemini-3.6-flash", "name": "Gemini 3.6 Flash", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gemini-3.7-flash", "name": "Gemini 3.7 Flash", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gemini-3.1-pro", "name": "Gemini 3.1 Pro", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "grok-4.5", "name": "Grok 4.5", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "grok-4.6", "name": "Grok 4.6", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "kimi-k3", "name": "Kimi K3", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "kimi-k2.6", "name": "Kimi K2.6", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gpt-5.5", "name": "GPT-5.5", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gpt-5.5-pro", "name": "GPT-5.5 Pro", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gpt-5.6-luna", "name": "GPT-5.6 Luna", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gpt-5.6-terra", "name": "GPT-5.6 Terra", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "gpt-5.6-sol", "name": "GPT-5.6 Sol", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "claude-mythos-preview", "name": "Claude Mythos Preview", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "claude-opus-4.6", "name": "Claude Opus 4.6", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "claude-opus-5.5", "name": "Claude Opus 5.5", "desc": "CodeCraft"}, {"provider": "codecraft", "id": "claude-fable-5.1", "name": "Claude Fable 5.1", "desc": "CodeCraft"}, {"provider": "agentrouter", "id": "deepseek-v4-flash", "name": "DeepSeek V4 Flash", "desc": "AgentRouter"}, {"provider": "hcnsec", "id": "DeepSeek-V4-Flash", "name": "DeepSeek V4 Flash", "desc": "Allowed by API key"}, {"provider": "hcnsec", "id": "DeepSeek-V4.1-Flash", "name": "DeepSeek V4.1 Flash", "desc": "Allowed by API key"}, {"provider": "hcnsec", "id": "glm-5.3-flash", "name": "GLM 5.3 Flash", "desc": "Allowed by API key"}, {"provider": "hcnsec", "id": "sensenova-6.8-flash-lite", "name": "SenseNova 6.8 Flash Lite", "desc": "Allowed by API key"}, {"provider": "hcnsec", "id": "step-3.7-flash", "name": "Step 3.7 Flash", "desc": "Allowed by API key"}, {"provider": "bailucode", "id": "bailu-apex", "name": "BAILU Apex", "desc": "Strongest normal route"}, {"provider": "bailucode", "id": "bailu-2.8-lite", "name": "BAILU 2.8 Lite", "desc": "Light/free route"}, {"provider": "seekai", "id": "deepseek-v4.1-flash", "name": "DeepSeek V4.1 Flash", "desc": "Allowed by SEEKAI key · response subject to live provider access"}, {"provider": "seekai", "id": "glm-5.3-flash", "name": "GLM 5.3 Flash", "desc": "Allowed by SEEKAI key · response subject to live provider access"}, {"provider": "seekai", "id": "mimo-v2.6-flash", "name": "MiMo V2.6 Flash", "desc": "Allowed by SEEKAI key · response subject to live provider access"}, {"provider": "seekai", "id": "deepseek-ai/DeepSeek-V4-Flash-0731", "name": "DeepSeek V4 Flash 0731", "desc": "Allowed by SEEKAI key · response subject to live provider access"}, {"provider": "seekai", "id": "qwen3.8-flash", "name": "Qwen 3.8 Flash", "desc": "Allowed by SEEKAI key · response subject to live provider access"}, {"provider": "seekai", "id": "deepseek-v4-flash", "name": "DeepSeek V4 Flash", "desc": "Allowed by SEEKAI key · response subject to live provider access"}];
 const PROVIDER_NAMES={gemini:'Gemini',cloudflare:'Cloudflare',groq:'Groq',openrouter:'OpenRouter',mistral:'Mistral',cohere:'Cohere',unorouter:'UnoRouter',nvidia:'NVIDIA',codecraft:'CodeCraft',agentrouter:'AgentRouter',hcnsec:'HCNSEC',bailucode:'Bailucode',seekai:'SEEKAI'};
@@ -82,7 +167,7 @@ function closeCtx(){ if(ctxEl){ ctxEl.remove(); ctxEl=null; } }
 function showCtx(x,y,items){
   closeCtx(); ctxEl=document.createElement('div'); ctxEl.className='context-menu'; ctxEl.setAttribute('role','menu');
   items.forEach(it=>{ if(it.sep){ const d=document.createElement('div'); d.className='menu-sep'; ctxEl.appendChild(d); return; }
-    const b=document.createElement('button'); b.type='button'; b.innerHTML=`<span>${esc(it.label)}</span>${it.arrow?'<span>›</span>':''}`; if(it.danger) b.className='danger';
+    const b=document.createElement('button'); b.type='button'; b.innerHTML=`<span class="ctx-main">${it.icon?`<span class="ctx-ic">${ic(it.icon)}</span>`:''}<span>${esc(it.label)}</span></span>${it.arrow?`<span class="ctx-chev">${ic('chevron-right',14)}</span>`:''}`; if(it.danger) b.className='danger';
     b.addEventListener('click',()=>{ if(!it.keepOpen) closeCtx(); it.onClick&&it.onClick(); }); ctxEl.appendChild(b); });
   document.body.appendChild(ctxEl);
   const r=ctxEl.getBoundingClientRect(); ctxEl.style.left=clamp(x,8,innerWidth-r.width-8)+'px'; ctxEl.style.top=clamp(y,8,innerHeight-r.height-8)+'px';
@@ -108,7 +193,7 @@ function chatRow(s,{archived=false,q=''}={}){
   let inner='';
   if(manageMode&&!archived) inner+=`<input class="manage-check" type="checkbox" ${manageSel.has(s.id)?'checked':''} aria-label="Select chat">`;
   inner+=`<button class="chat-open" type="button">${highlight(s.title,q)}${q&&s._snippet?`<span class="snippet">${highlight(s._snippet,q)}</span>`:''}</button>`;
-  if(!manageMode) inner+=`<button class="chat-menu-btn" type="button" aria-label="Chat menu">•••</button>`;
+  if(!manageMode) inner+=`<button class="chat-menu-btn" type="button" aria-label="Chat menu">${ic('ellipsis')}</button>`;
   row.innerHTML=inner;
   const open=()=>{ if(manageMode&&!archived){ toggleManageSel(s.id); } else openSession(s.id); };
   row.querySelector('.chat-open').addEventListener('click',open);
@@ -147,13 +232,13 @@ function renderProjects(){
   const el=$('#projectList'); el.innerHTML='';
   projects.forEach(p=>{
     const row=document.createElement('div'); row.className='project-row'+(p.id===activeProjectId?' selected':'');
-    row.innerHTML=`<button class="project-open" type="button">${esc(p.icon||'▣')} ${esc(p.name)}</button><button class="project-menu-btn" type="button" aria-label="Project menu">•••</button>`;
+    row.innerHTML=`<button class="project-open" type="button">${esc(p.icon||'▣')} ${esc(p.name)}</button><button class="project-menu-btn" type="button" aria-label="Project menu">${ic('ellipsis')}</button>`;
     row.querySelector('.project-open').addEventListener('click',()=>{ activeProjectId=activeProjectId===p.id?null:p.id; renderProjects(); renderAll(); toast(activeProjectId?('Project: '+p.name):'All chats'); });
     row.querySelector('.project-menu-btn').addEventListener('click',e=>{ e.stopPropagation(); const r=e.target.getBoundingClientRect(); showCtx(r.left-160,r.bottom+4,[
-      {label:'Rename', onClick:()=>renameProject(p)},
-      {label:'New Chat in Project', onClick:()=>{ activeProjectId=p.id; newChat(); }},
+      {label:'Rename', icon:'pencil-line', onClick:()=>renameProject(p)},
+      {label:'New Chat in Project', icon:'message-square-plus', onClick:()=>{ activeProjectId=p.id; newChat(); }},
       {sep:true},
-      {label:'Delete', danger:true, onClick:()=>confirmModal('Delete project?','Chats in this project will stay, unassigned.','Delete',()=>{ sessions.forEach(s=>{ if(s.projectId===p.id) delete s.projectId; }); projects=projects.filter(x=>x.id!==p.id); if(activeProjectId===p.id) activeProjectId=null; saveProjects(); saveSessions(); renderProjects(); renderAll(); })}
+      {label:'Delete', icon:'trash-2', danger:true, onClick:()=>confirmModal('Delete project?','Chats in this project will stay, unassigned.','Delete',()=>{ sessions.forEach(s=>{ if(s.projectId===p.id) delete s.projectId; }); projects=projects.filter(x=>x.id!==p.id); if(activeProjectId===p.id) activeProjectId=null; saveProjects(); saveSessions(); renderProjects(); renderAll(); })}
     ]); });
     el.appendChild(row);
   });
@@ -164,9 +249,12 @@ function renderManageBar(){
   if(manageMode){ $('#manageCount').textContent=`Selected ${manageSel.size}/${visibleSessions().length}`; $('#manageSelectAll').checked=manageSel.size>0&&manageSel.size===visibleSessions().length; }
 }
 function setManageMode(on){ manageMode=on; manageSel.clear(); $('#externalRows').style.display=on?'none':''; renderHistory(); }
-function openSession(id){ currentId=id; temporary=false; tempSession=null; exitShareMode(); renderAll(); }
+function closeMobileDrawer(){ const sb=$('#sidebar'); if(sb) sb.classList.remove('mobile-open'); const sc=$('#sidebarScrim'); if(sc) sc.hidden=true; }
+function openSession(id){ currentId=id; temporary=false; tempSession=null; exitShareMode(); closeMobileDrawer(); renderAll(); }
 function newChat(){
-  currentId=null; temporary=false; tempSession=null; exitShareMode(); renderAll(); $('#composerInput').focus();
+  currentId=null; temporary=false; tempSession=null; exitShareMode(); closeMobileDrawer();
+  const inp=$('#composerInput'); inp.value=''; attachments=[]; renderAttachments();
+  renderAll(); autosize(); updateSend(); inp.focus();
 }
 function ensureSession(firstText){
   if(temporary){ if(!tempSession) tempSession={id:'temp', title:'Temporary Chat', messages:[], createdAt:Date.now(), updatedAt:Date.now()}; return tempSession; }
@@ -185,27 +273,27 @@ function download(name, content, type){
 function showChatMenu(s,x,y,archived=false){
   const items=[];
   if(archived){
-    items.push({label:'Unarchive', onClick:()=>{ s.archived=false; s.updatedAt=Date.now(); saveSessions(); renderAll(); }});
-    items.push({label:'Delete', danger:true, onClick:()=>confirmDeleteSession(s)});
+    items.push({label:'Unarchive', icon:'archive-restore', onClick:()=>{ s.archived=false; s.updatedAt=Date.now(); saveSessions(); renderAll(); }});
+    items.push({label:'Delete', icon:'trash-2', danger:true, onClick:()=>confirmDeleteSession(s)});
   } else {
-    items.push({label:s.pinned?'Unpin':'Pin', onClick:()=>{ s.pinned=!s.pinned; s.updatedAt=Date.now(); saveSessions(); renderAll(); }});
-    items.push({label:'Rename', onClick:()=>renameSession(s)});
-    items.push({label:'Clone', onClick:()=>{ const c=JSON.parse(JSON.stringify(s)); c.id=uid(); c.title=s.title+' copy'; c.createdAt=Date.now(); c.updatedAt=Date.now(); sessions.unshift(c); saveSessions(); renderAll(); toast('Chat cloned'); }});
-    items.push({label:'Archive', onClick:()=>{ s.archived=true; if(currentId===s.id) currentId=null; saveSessions(); renderAll(); }});
-    items.push({label:'Share', onClick:()=>{ openSession(s.id); enterShareMode(); }});
-    items.push({label:'Select', onClick:()=>{ setManageMode(true); }});
-    items.push({label:'Download', arrow:true, onClick:()=>{ openModal({title:'Download chat', body:'<p>Choose a format.</p>', actions:[
+    items.push({label:s.pinned?'Unpin':'Pin', icon:'pin', onClick:()=>{ s.pinned=!s.pinned; s.updatedAt=Date.now(); saveSessions(); renderAll(); }});
+    items.push({label:'Rename', icon:'pencil-line', onClick:()=>renameSession(s)});
+    items.push({label:'Clone', icon:'copy', onClick:()=>{ const c=JSON.parse(JSON.stringify(s)); c.id=uid(); c.title=s.title+' copy'; c.createdAt=Date.now(); c.updatedAt=Date.now(); sessions.unshift(c); saveSessions(); renderAll(); toast('Chat cloned'); }});
+    items.push({label:'Archive', icon:'archive', onClick:()=>{ s.archived=true; if(currentId===s.id) currentId=null; saveSessions(); renderAll(); }});
+    items.push({label:'Share', icon:'forward', onClick:()=>{ openSession(s.id); enterShareMode(); }});
+    items.push({label:'Select', icon:'list-checks', onClick:()=>{ setManageMode(true); }});
+    items.push({label:'Download', icon:'download', arrow:true, onClick:()=>{ openModal({title:'Download chat', body:'<p>Choose a format.</p>', actions:[
       {label:'Export chat (.json)', onClick:()=>{ download(s.title.replace(/[^\w-]+/g,'_')+'.json', JSON.stringify(s,null,2),'application/json'); closeModal(); }},
       {label:'Plain text (.txt)', onClick:()=>{ download(s.title.replace(/[^\w-]+/g,'_')+'.txt', s.messages.map(m=>(m.role==='user'?'You: ':'JepongDevxyz AI: ')+m.text).join('\n\n'),'text/plain'); closeModal(); }},
       {label:'Cancel', onClick:()=>closeModal()} ]}); }});
-    items.push({label:'Move to Project', arrow:true, onClick:()=>{ const body=document.createElement('div');
+    items.push({label:'Move to Project', icon:'folder-arrow', arrow:true, onClick:()=>{ const body=document.createElement('div');
       if(!projects.length) body.innerHTML='<p>No projects yet. Create one from the sidebar first.</p>';
       projects.forEach(p=>{ const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=p.name; b.addEventListener('click',()=>{ s.projectId=p.id; saveSessions(); closeModal(); renderAll(); toast('Moved to '+p.name); }); body.appendChild(b); });
       const none=document.createElement('button'); none.type='button'; none.className='chip'; none.textContent='No project'; none.addEventListener('click',()=>{ delete s.projectId; saveSessions(); closeModal(); renderAll(); }); body.appendChild(none);
       openModal({title:'Move to Project', body, actions:[{label:'Cancel', onClick:()=>closeModal()}]}); }});
-    items.push({label:'Delete', danger:true, onClick:()=>confirmDeleteSession(s)});
+    items.push({label:'Delete', icon:'trash-2', danger:true, onClick:()=>confirmDeleteSession(s)});
     items.push({sep:true});
-    items.push({label:'Report Content', onClick:()=>reportContent(s)});
+    items.push({label:'Report Content', icon:'message-square-warning', onClick:()=>reportContent(s)});
   }
   showCtx(x,y,items);
 }
@@ -243,10 +331,10 @@ function newProjectModal(){
   const cats=['Investment','Homework','Writing','Health','Travel'];
   const wrap=document.createElement('div');
   wrap.innerHTML=`
-    <div class="icon-choice"><div class="project-icon" id="npIcon">▣</div><div class="chip-row" id="npIcons">${['▣','💼','📚','✍','❤','✈','💡','🎯'].map((i,ix)=>`<button type="button" class="chip${ix===0?' active':''}" data-icon="${i}">${i}</button>`).join('')}</div></div>
+    <div class="icon-choice"><div class="project-icon" id="npIcon">▣</div><div class="chip-row" id="npIcons">${['▣','◆','●','▲','■','★','⬢','✚'].map((i,ix)=>`<button type="button" class="chip${ix===0?' active':''}" data-icon="${i}">${i}</button>`).join('')}</div></div>
     <div class="field"><label>Project Name</label><input class="text-input" id="npName" maxlength="80" placeholder="Project Name"></div>
     <div class="chip-row" id="npCats">${cats.map(c=>`<button type="button" class="chip" data-cat="${c}">${c}</button>`).join('')}</div>
-    <button type="button" class="outline-btn" id="npAdvBtn">Advanced Settings ⌄</button>
+    <button type="button" class="outline-btn" id="npAdvBtn">Advanced Settings ${ic('chevron-down',12)}</button>
     <div id="npAdv" hidden>
       <div class="field"><label>Memory</label><select class="select-input" id="npMemory"><option value="default">Default</option><option value="project-only">Project only</option><option value="off">Off</option></select></div>
       <div class="field"><label>Instructions <span class="counter" id="npCount">0/1000</span></label><textarea class="textarea-input" id="npInstr" maxlength="1000" placeholder="Instructions for this project"></textarea></div>
@@ -275,7 +363,7 @@ function newProjectModal(){
 /* ---------- Archived Chats modal ---------- */
 function archivedModal(){
   const wrap=document.createElement('div');
-  wrap.innerHTML=`<div class="search-wrap" style="margin-bottom:10px"><span class="search-icon">⌕</span><input id="archSearch" type="search" placeholder="Search Chats" style="flex:1;border:0;background:transparent;outline:0"></div><div class="scroll-area" id="archList"></div>`;
+  wrap.innerHTML=`<div class="search-wrap" style="margin-bottom:10px"><span class="search-icon">${ic('search')}</span><input id="archSearch" type="search" placeholder="Search Chats" style="flex:1;border:0;background:transparent;outline:0"></div><div class="scroll-area" id="archList"></div>`;
   const render=()=>{ const q=wrap.querySelector('#archSearch').value.trim().toLowerCase();
     const list=wrap.querySelector('#archList'); list.innerHTML='';
     const items=sessions.filter(s=>s.archived&&(!q||s.title.toLowerCase().includes(q)));
@@ -297,14 +385,60 @@ function inlineFmt(t){
   return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
     .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
 }
+const CODE_CONTROL=new Set(('if for while switch catch return typeof instanceof new delete await yield function with sizeof').split(' '));
+const CODE_KEYWORDS=new Set(('const let var function return if else elif for while do switch case break continue new class extends super this self typeof instanceof in of try catch finally throw async await yield static get set import from export default delete void true false null undefined None True False and or not is lambda pass def print require include echo fn pub struct impl enum match trait interface go package func var chan map range defer select type').split(' '));
+function highlightCodeLine(line,state){
+  let out='',i=0; const n=line.length;
+  const push=(cls,txt)=>{ out+='<span class="'+cls+'">'+esc(txt)+'</span>'; };
+  while(i<n){
+    if(state.block){ const e=line.indexOf('*/',i); if(e<0){ push('tok-com',line.slice(i)); i=n; } else { push('tok-com',line.slice(i,e+2)); i=e+2; state.block=false; } continue; }
+    const rest=line.slice(i); let m;
+    if(rest.startsWith('//')){ push('tok-com',rest); break; }
+    if(rest.startsWith('/*')){ const e=line.indexOf('*/',i+2); if(e<0){ push('tok-com',rest); state.block=true; i=n; } else { push('tok-com',line.slice(i,e+2)); i=e+2; } continue; }
+    if((m=rest.match(/^(['"`])(?:\\.|(?!\1)[^\\])*\1/))){ push('tok-str',m[0]); i+=m[0].length; continue; }
+    if((m=rest.match(/^\d+(?:\.\d+)?\b/))){ push('tok-num',m[0]); i+=m[0].length; continue; }
+    if((m=rest.match(/^[A-Za-z_$][\w$]*/))){ const w=m[0];
+      const callAfter=/^\s*\(/.test(line.slice(i+w.length));
+      if(CODE_CONTROL.has(w)) push('tok-kw',w);
+      else if(callAfter) push('tok-fn',w);
+      else if(CODE_KEYWORDS.has(w)) push('tok-kw',w);
+      else out+=esc(w);
+      i+=w.length; continue; }
+    out+=esc(line[i]); i++;
+  }
+  return out;
+}
+function codeBlockHTML(code,lang){
+  const state={block:false};
+  const rows=String(code).replace(/\n+$/,'').split('\n').map((ln,ix)=>{
+    const body=(/^\s*#/.test(ln)&&!state.block)?'<span class="tok-com">'+esc(ln)+'</span>':highlightCodeLine(ln,state);
+    return '<span class="cl"><span class="ln">'+(ix+1)+'</span><span class="lc">'+(body||' ')+'</span></span>';
+  }).join('');
+  return '<div class="code-block"><div class="code-head"><span class="code-lang">'+esc(lang||'code')+'</span><span class="code-actions">'
+    +'<button type="button" data-code="copy" title="Copy code">'+ic('copy')+'</button>'
+    +'<button type="button" data-code="download" title="Download code">'+ic('download')+'</button>'
+    +'<button type="button" data-code="collapse" title="Collapse">'+ic('chevron-up',14)+'</button></span></div>'
+    +'<pre class="code-pre"><code>'+rows+'</code></pre></div>';
+}
+function wireCodeBlocks(root){
+  if(!root||!root.querySelectorAll) return;
+  root.querySelectorAll('.code-block').forEach(block=>{
+    if(block.dataset.wired) return; block.dataset.wired='1';
+    const codeText=()=>Array.from(block.querySelectorAll('.lc')).map(x=>x.textContent).join('\n');
+    const copy=block.querySelector('[data-code="copy"]'); if(copy) copy.addEventListener('click',()=>copyText(codeText()));
+    const dl=block.querySelector('[data-code="download"]'); if(dl) dl.addEventListener('click',()=>{ const lang=(block.querySelector('.code-lang')||{}).textContent||'txt'; const ext=({javascript:'js',js:'js',typescript:'ts',ts:'ts',python:'py',py:'py',html:'html',css:'css',json:'json',bash:'sh',shell:'sh',java:'java',c:'c',cpp:'cpp',go:'go',rust:'rs',php:'php',ruby:'rb',sql:'sql',text:'txt',code:'txt'})[String(lang).toLowerCase()]||'txt'; download('code.'+ext, codeText(), 'text/plain'); });
+    const col=block.querySelector('[data-code="collapse"]'); if(col) col.addEventListener('click',()=>{ const pre=block.querySelector('.code-pre'); pre.hidden=!pre.hidden; col.title=pre.hidden?'Expand':'Collapse'; });
+  });
+}
 function richText(text){
-  const lines=String(text||'').split('\n'); let html='', inCode=false, codeBuf=[], inList=false;
+  text=cleanAssistantText(text);
+  const lines=String(text||'').split('\n'); let html='', inCode=false, codeBuf=[], codeLang='', inList=false;
   const closeList=()=>{ if(inList){ html+='</ul>'; inList=false; } };
   const tableCells=line=>{ let t=line.trim(); if(t.startsWith('|')) t=t.slice(1); if(t.endsWith('|')) t=t.slice(0,-1); return t.split('|').map(x=>x.trim()); };
   const isTableSep=line=>{ if(!line.includes('|')) return false; const cells=tableCells(line); return cells.length>0&&cells.every(x=>/^:?-{3,}:?$/.test(x)); };
   for(let idx=0; idx<lines.length; idx++){
     const line=lines[idx];
-    if(line.trim().startsWith('```')){ if(inCode){ html+='<pre><code>'+esc(codeBuf.join('\n'))+'</code></pre>'; codeBuf=[]; inCode=false; } else { closeList(); inCode=true; } continue; }
+    if(line.trim().startsWith('```')){ if(inCode){ html+=codeBlockHTML(codeBuf.join('\n'),codeLang); codeBuf=[]; inCode=false; } else { closeList(); inCode=true; codeLang=line.trim().slice(3).trim(); } continue; }
     if(inCode){ codeBuf.push(line); continue; }
     if(line.includes('|')&&idx+1<lines.length&&isTableSep(lines[idx+1])){
       closeList();
@@ -318,7 +452,7 @@ function richText(text){
     closeList();
     if(!line.trim()){ html+=''; } else html+=`<p>${inlineFmt(line)}</p>`;
   }
-  if(inCode) html+='<pre><code>'+esc(codeBuf.join('\n'))+'</code></pre>';
+  if(inCode) html+=codeBlockHTML(codeBuf.join('\n'),codeLang);
   closeList(); return html||'<p></p>';
 }
 
@@ -333,11 +467,16 @@ function renderMessages(){
   $('#disclaimer').hidden=!has;
   $('#currentChatMenuBtn').hidden=!has;
   document.querySelector('.app-frame').classList.toggle('temp-on',temporary);
-  // composer placement: home slot when empty home, dock otherwise
+  // composer placement: home slot (empty home), centred temp slot (desktop temp), dock otherwise
   const composer=$('#composer');
-  if(!has&&!temporary) $('#homeComposerSlot').appendChild(composer); else $('#dockComposerSlot').appendChild(composer);
-  $('#dock').style.display=(!has&&!temporary)?'none':'';
-  $('#composerInput').placeholder=(has||temporary)?'How can I help you today?':'How can I help you?';
+  const isMobile=window.matchMedia&&window.matchMedia('(max-width: 767px)').matches;
+  if(!has&&temporary&&!isMobile) $('#tempComposerSlot').appendChild(composer);
+  else if(!has&&!temporary) $('#homeComposerSlot').appendChild(composer);
+  else $('#dockComposerSlot').appendChild(composer);
+  $('#dock').style.display=(has||(temporary&&isMobile))?'':'none';
+  $('#topUpgradeBtn').style.display=has?'none':'';
+  const _mbc=document.querySelector('#responseModeBtn .chev'); if(_mbc) _mbc.innerHTML=ic(has?'chevron-down':'chevron-up',12);
+  $('#voiceModeBtn').style.display=(has||$('#composerInput').value.trim())?'none':'';
   const col=$('#messageColumn'); col.innerHTML='';
   document.querySelector('.main-card').classList.toggle('share-mode',shareMode);
   if(!s) return;
@@ -357,7 +496,7 @@ function messageEl(s,m){
     }
     const bub=document.createElement('div'); bub.className='user-bubble'; bub.textContent=m.text; wrap.appendChild(bub);
     const acts=document.createElement('div'); acts.className='hover-actions';
-    acts.innerHTML=`<button type="button" title="Copy" data-a="copy">⧉</button><button type="button" title="Edit" data-a="edit">✎</button><button type="button" title="Delete" data-a="del">🗑</button>`;
+    acts.innerHTML=`<button type="button" title="Copy" data-a="copy">${ic('copy')}</button><button type="button" title="Edit" data-a="edit">${ic('pencil')}</button><button type="button" title="Delete" data-a="del">${ic('trash-2')}</button>`;
     acts.querySelector('[data-a="copy"]').addEventListener('click',()=>copyText(m.text));
     acts.querySelector('[data-a="edit"]').addEventListener('click',()=>{ editingMsgId=m.id; renderMessages(); });
     acts.querySelector('[data-a="del"]').addEventListener('click',()=>{ s.messages=s.messages.filter(x=>x.id!==m.id); s.updatedAt=Date.now(); if(!temporary) saveSessions(); renderAll(); });
@@ -368,45 +507,45 @@ function messageEl(s,m){
   // assistant
   if(m.activity&&m.activity.length){
     const row=document.createElement('button'); row.type='button'; row.className='activity-row';
-    row.innerHTML=`<span class="bulb">💡</span><span>${m.pending?'Working…':'Thinking completed'}</span><span>›</span>`;
+    row.innerHTML=`<span class="bulb">${ic('lightbulb')}</span><span>${m.pending?'Working…':'Thinking completed'}</span><span>${ic('chevron-right',12)}</span>`;
     row.addEventListener('click',()=>openDrawer(m)); wrap.appendChild(row);
   }
   const content=document.createElement('div'); content.className='message-content';
   if(m.image){ const img=document.createElement('img'); img.className='generated-image'; img.src=m.image; img.alt='Generated image'; wrap.appendChild(img); }
-  content.innerHTML=richText(m.text); wrap.appendChild(content);
+  content.innerHTML=richText(m.text); wireCodeBlocks(content); wrap.appendChild(content);
   (m.artifacts||[]).forEach(a=>{ const card=document.createElement('div'); card.className='artifact-card';
-    card.innerHTML=`<span>▤ ${esc(a.filename||'file')} <small class="kbd-note">${esc(a.label||'')} ${a.size?('· '+a.size+' bytes'):''}</small></span>`;
+    card.innerHTML=`<span>${esc(a.filename||'file')} <small class="kbd-note">${esc(a.label||'')} ${a.size?('· '+a.size+' bytes'):''}</small></span>`;
     const b=document.createElement('button'); b.type='button'; b.className='black-pill'; b.textContent='Download';
     b.addEventListener('click',()=>{ if(a.url){ const l=document.createElement('a'); l.href=a.url; l.target='_blank'; l.click(); }
       else if(a.base64){ try{ const bin=atob(a.base64); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); download(a.filename, bytes, a.mimeType||'application/octet-stream'); }catch(e){ toast('Download failed'); } } });
     card.appendChild(b); wrap.appendChild(card); });
-  if(m.pending){ const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML='<i></i><i></i><i></i>'; content.appendChild(cur); }
+  if(m.pending){ const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); content.appendChild(cur); }
   if(!m.pending){
     const row=document.createElement('div'); row.className='action-row';
     row.innerHTML=`
-      <button type="button" title="Copy" data-a="copy">⧉</button>
-      <button type="button" title="Good Response" data-a="good" class="${m.feedback==='good'?'active':''}">👍</button>
-      <button type="button" title="Bad Response" data-a="bad" class="${m.feedback==='bad'?'active':''}">👎</button>
-      <button type="button" title="Share" data-a="share">↗</button>
-      <button type="button" title="Regenerate" data-a="regen">⟳</button>
-      <button type="button" title="More" data-a="more">•••</button>`;
+      <button type="button" title="Copy" data-a="copy">${ic('copy')}</button>
+      <button type="button" title="Good Response" data-a="good" class="${m.feedback==='good'?'active':''}">${ic('thumbs-up')}</button>
+      <button type="button" title="Bad Response" data-a="bad" class="${m.feedback==='bad'?'active':''}">${ic('thumbs-down')}</button>
+      <button type="button" title="Share" data-a="share">${ic('forward')}</button>
+      <button type="button" title="Regenerate" data-a="regen">${ic('rotate-ccw')}</button>
+      <button type="button" title="More" data-a="more">${ic('ellipsis')}</button>`;
     row.querySelector('[data-a="copy"]').addEventListener('click',()=>copyText(m.text));
     row.querySelector('[data-a="good"]').addEventListener('click',()=>{ m.feedback=m.feedback==='good'?null:'good'; if(!temporary) saveSessions(); renderMessages(); });
     row.querySelector('[data-a="bad"]').addEventListener('click',()=>{ m.feedback=m.feedback==='bad'?null:'bad'; if(!temporary) saveSessions(); renderMessages(); });
     row.querySelector('[data-a="share"]').addEventListener('click',()=>{ shareSel.clear(); shareSel.add(m.id); enterShareMode(); });
     row.querySelector('[data-a="regen"]').addEventListener('click',()=>regenerate(s,m));
     row.querySelector('[data-a="more"]').addEventListener('click',e=>{ e.stopPropagation(); const r=e.currentTarget.getBoundingClientRect(); showCtx(r.left-150,r.bottom+4,[
-      {label:'Read aloud', onClick:()=>speak(m.text)},
-      {label:'Branch in new chat', onClick:()=>branchChat(s,m)},
+      {label:'Read aloud', icon:'volume-2', onClick:()=>speak(m.text)},
+      {label:'Branch in new chat', icon:'git-branch', onClick:()=>branchChat(s,m)},
       {sep:true},
-      {label:'Delete', danger:true, onClick:()=>{ s.messages=s.messages.filter(x=>x.id!==m.id); if(!temporary) saveSessions(); renderAll(); }}
+      {label:'Delete', icon:'trash-2', danger:true, onClick:()=>{ s.messages=s.messages.filter(x=>x.id!==m.id); if(!temporary) saveSessions(); renderAll(); }}
     ]); });
     wrap.appendChild(row);
   }
   return wrap;
 }
 function assistantContentEl(id){ const el=document.querySelector(`.message.assistant[data-mid="${id}"] .message-content`); return el; }
-function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(m.text); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML='<i></i><i></i><i></i>'; el.appendChild(cur); if(stickBottom) scrollChat(); }
+function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(m.text); wireCodeBlocks(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); }
   else renderMessages(); }
 function branchChat(s,m){
   const idx=s.messages.findIndex(x=>x.id===m.id);
@@ -440,6 +579,7 @@ function openDrawer(m){
 /* ---------- chat request / streaming ---------- */
 const EFFORT={Fast:'Instant', Auto:'Medium', Thinking:'High'};
 const TOOL_PRESETS={
+  'agent':{instruction:'Work as an agent: break the task into clear steps, use available tools and sources as needed, and carry it through to a completed result.'},
   'research':{instruction:'Research this using web sources and cite what you use.', web:true},
   'deep-research':{instruction:'Do deep research: compare multiple sources, note disagreements, and structure a thorough report.', web:true},
   'report':{instruction:'Write a polished, well-structured report on this.'},
@@ -469,7 +609,7 @@ function historyFor(s, uptoId){
 async function sendCurrent(presetText){
   const input=$('#composerInput'); const text=(presetText!==undefined?presetText:input.value).trim();
   if(streaming) return;
-  if(activeTool==='video'){ openModal({title:'Generative Video', body:'<p>There is no video-generation endpoint in the /api/chat backend contract, so a video cannot be generated from this frontend yet.</p>', actions:[{label:'OK', kind:'primary', onClick:()=>closeModal()}]}); return; }
+  if(activeTool==='video'){ openModal({title:'Create Video', body:'<p>There is no video-generation endpoint in the /api/chat backend contract, so a video cannot be generated from this frontend yet.</p>', actions:[{label:'OK', kind:'primary', onClick:()=>closeModal()}]}); return; }
   if(!text&&!attachments.length) return;
   const s=ensureSession(text);
   const userMsg={id:uid(), role:'user', text, createdAt:Date.now(), attachments:attachments.map(a=>({name:a.name, kind:a.kind}))};
@@ -514,6 +654,7 @@ async function runChatStream(s,userMsg,filePayload){
     if(err&&err.name==='AbortError'){ asst.text+=(asst.text?'\n\n':'')+'_Stopped._'; }
     else { asst.text=(asst.text?asst.text+'\n\n':'')+'⚠ '+(err&&err.message?err.message:'Something went wrong.'); asst.activity.push({label:'Request failed', state:'error', detail:String(err&&err.message||err), at:Date.now()}); }
   }finally{
+    asst.text=cleanAssistantText(asst.text);
     asst.pending=false; s.updatedAt=Date.now(); if(!temporary) saveSessions();
     setStreaming(false); renderAll();
     if(settings.voice.voiceMode&&asst.text) speak(asst.text);
@@ -600,15 +741,14 @@ function toggleMic(){
 
 /* ---------- model picker ---------- */
 function renderModelPanel(){
-  const list=$('#modelList'); const q=($('#modelSearch').value||'').toLowerCase();
+  const list=$('#modelList');
   const cur=modelEntry(); $('#selectedModelName').textContent=cur.name;
-  $('#modelCount').textContent=MODELS.length+' models';
-  const filtered=MODELS.filter(m=>!q||m.name.toLowerCase().includes(q)||m.id.toLowerCase().includes(q)||m.provider.includes(q));
+  const filtered=MODELS;
   const shown=modelsExpanded?filtered:filtered.slice(0,3);
   list.innerHTML=''; let lastProv='';
   shown.forEach(m=>{ if(m.provider!==lastProv){ const g=document.createElement('div'); g.className='model-group'; g.textContent=PROVIDER_NAMES[m.provider]||m.provider; list.appendChild(g); lastProv=m.provider; }
     const b=document.createElement('button'); b.type='button'; b.className='model-option'+(m.provider===settings.provider&&m.id===settings.model?' selected':'');
-    b.innerHTML=`<span class="model-dot">${esc((PROVIDER_NAMES[m.provider]||m.provider).slice(0,2).toUpperCase())}</span><span class="model-copy"><strong>${esc(m.name)}</strong><small>${esc(m.desc)}</small></span><span class="check">✓</span>`;
+    b.innerHTML=`<span class="model-copy"><strong>${esc(m.name)}</strong><small>${esc(m.desc)}</small></span><span class="model-check">${ic('check',11)}</span>`;
     b.addEventListener('click',()=>{ settings.provider=m.provider; settings.model=m.id; if(m.provider!=='bailucode') settings.bailuRoute=''; saveSettings(); renderModelPanel(); toast('Model: '+m.name); });
     list.appendChild(b); });
   if(!shown.length) list.innerHTML='<div class="empty-note">No models match</div>';
@@ -626,12 +766,13 @@ function renderModelPanel(){
 
 /* ---------- settings page ---------- */
 const SECTIONS=['General','Usage & Billing','Interface','Models','Chats','Personalization','Account','About'];
-function openSettings(section){ settingsSection=section||settingsSection||'General'; $('#settingsPage').hidden=false; renderSettings(); }
+function openSettings(section){ settingsSection=section||settingsSection||'General'; $('#settingsPage').hidden=false; if(innerWidth<=767) $('#settingsPage').classList.remove('section-open'); renderSettings(); }
 function closeSettings(){ $('#settingsPage').hidden=true; }
 function renderSettings(){
   const nav=$('#settingsNav'); nav.innerHTML='';
-  SECTIONS.forEach(name=>{ const b=document.createElement('button'); b.type='button'; b.textContent=name; b.className=name===settingsSection?'active':'';
-    b.addEventListener('click',()=>{ settingsSection=name; renderSettings(); }); nav.appendChild(b); });
+  const SECTION_ICONS={'General':'settings-general','Usage & Billing':'usage','Interface':'monitor','Models':'layers','Chats':'message-square','Personalization':'layout-grid','Account':'user','About':'info'};
+  SECTIONS.forEach(name=>{ const b=document.createElement('button'); b.type='button'; b.innerHTML=`<span class="set-ic">${ic(SECTION_ICONS[name]||'info')}</span><span>${esc(name)}</span>`; b.className=name===settingsSection?'active':'';
+    b.addEventListener('click',()=>{ settingsSection=name; renderSettings(); if(innerWidth<=767) $('#settingsPage').classList.add('section-open'); }); nav.appendChild(b); });
   const c=$('#settingsContent'); c.innerHTML='';
   ({General:secGeneral,'Usage & Billing':secUsage,Interface:secInterface,Models:secModels,Chats:secChats,Personalization:secPersonalization,Account:secAccount,About:secAbout}[settingsSection]||secGeneral)(c);
   $('#profileName').textContent=settings.profileName||'Jepong';
@@ -655,7 +796,7 @@ function secGeneral(c){
   const seg=document.createElement('div'); seg.className='segmented';
   ['System','Light','Dark'].forEach(t=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.className=settings.theme===t.toLowerCase()?'active':''; b.addEventListener('click',()=>{ settings.theme=t.toLowerCase(); saveSettings(); applyTheme(); renderSettings(); }); seg.appendChild(b); });
   c.appendChild(rowEl('Theme','Applies instantly and is saved on this device.',seg));
-  const voiceBtn=document.createElement('button'); voiceBtn.type='button'; voiceBtn.className='outline-btn'; voiceBtn.textContent='Voice ›';
+  const voiceBtn=document.createElement('button'); voiceBtn.type='button'; voiceBtn.className='value-btn'; voiceBtn.innerHTML=esc(settings.voice.name||'Default')+' '+ic('chevron-right',12);
   const panel=document.createElement('div');
   voiceBtn.addEventListener('click',()=>{ panel.innerHTML='';
     const vp=document.createElement('div'); vp.className='voice-panel';
@@ -665,7 +806,7 @@ function secGeneral(c){
       const def=document.createElement('option'); def.value=''; def.textContent='Device default'; sel.appendChild(def);
       vs.forEach(v=>{ const o=document.createElement('option'); o.value=v.voiceURI; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o); }); sel.value=settings.voice.voiceURI||''; };
     fill(); if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=fill;
-    sel.addEventListener('change',()=>{ settings.voice.voiceURI=sel.value; saveSettings(); });
+    sel.addEventListener('change',()=>{ settings.voice.voiceURI=sel.value; settings.voice.name=sel.value?(sel.options[sel.selectedIndex].textContent.split(' (')[0]):''; saveSettings(); voiceBtn.innerHTML=esc(settings.voice.name||'Default')+' '+ic('chevron-right',12); });
     vp.appendChild(sel);
     [['Rate','rate',0.5,2],['Pitch','pitch',0,2]].forEach(([label,key,min,max])=>{ const f=document.createElement('div'); f.className='field';
       f.innerHTML=`<label>${label} <span>${settings.voice[key]}</span></label>`; const r=document.createElement('input'); r.type='range'; r.min=min; r.max=max; r.step='0.1'; r.value=settings.voice[key]; r.style.width='100%';
@@ -721,7 +862,7 @@ function secModels(c){
   c.appendChild(el('<p class="kbd-note">The real models available to JepongDevxyz AI. Picking one here also selects it in the chat model picker.</p>'));
   const providers=[...new Set(MODELS.map(m=>m.provider))];
   providers.forEach(pv=>{ const acc=document.createElement('div'); acc.className='accordion';
-    const head=document.createElement('button'); head.type='button'; head.className='accordion-head'; head.innerHTML=`<span>${esc(PROVIDER_NAMES[pv]||pv)}</span><span>⌄</span>`;
+    const head=document.createElement('button'); head.type='button'; head.className='accordion-head'; head.innerHTML=`<span>${esc(PROVIDER_NAMES[pv]||pv)}</span><span class="acc-chev">${ic('chevron-down',12)}</span>`;
     const body=document.createElement('div'); body.className='accordion-body'; body.hidden=true;
     MODELS.filter(m=>m.provider===pv).forEach(m=>{ const r=document.createElement('div'); r.className='meta-card'; r.style.marginTop='8px';
       r.innerHTML=`<strong>${esc(m.name)}</strong><div>${esc(m.desc)}</div><div class="kbd-note">${esc(m.id)}</div>`;
@@ -757,7 +898,7 @@ function secPersonalization(c){
     wrap.appendChild(rowEl('Personalization cookies','Remember personalization choices on this device.',switchEl(settings.cookies.personalization,v=>{ settings.cookies.personalization=v; saveSettings(); })));
     openModal({title:'Manage Cookies', body:wrap, actions:[{label:'Done', kind:'primary', onClick:()=>closeModal()}]}); });
   c.appendChild(rowEl('Manage Cookies','Control optional cookies stored by this frontend.',ckBtn));
-  const advHead=document.createElement('button'); advHead.type='button'; advHead.className='accordion-head'; advHead.innerHTML='<span>Advanced</span><span>⌄</span>';
+  const advHead=document.createElement('button'); advHead.type='button'; advHead.className='accordion-head'; advHead.innerHTML='<span>Advanced</span><span class="acc-chev">'+ic('chevron-down',12)+'</span>';
   const advBody=document.createElement('div'); advBody.hidden=true;
   [['Web Scraping','webScraping'],['Image search','imageSearch'],['Web search','webSearchAdv'],['Image generation','imageGeneration'],['Code Interpreter','codeInterpreter'],['Retrieve historical memory','retrieveMemory'],['Image editing','imageEditing'],['Update memory','updateMemory'],['Local image enlargement','localEnlarge']].forEach(([label,key])=>{
     advBody.appendChild(rowEl(label,'',switchEl(A[key],v=>{ A[key]=v; saveSettings(); if(key==='imageGeneration') syncToolsAvailability(); }))); });
@@ -802,7 +943,7 @@ function secAbout(c){
     <p>JepongDevxyz AI is an AI assistant that helps you research, write, code, and create — with streamed answers, file attachments, and tools for research, images, and documents.</p>
     <p>Chats in this frontend are stored on this device. Replies are generated by the model providers configured on the JepongDevxyz AI backend.</p>
     <p>Created by Jay-Ar Lee Espiritu.</p>`));
-  const sug=document.createElement('button'); sug.type='button'; sug.className='outline-btn'; sug.textContent='Suggestions';
+  const sug=document.createElement('button'); sug.type='button'; sug.className='outline-btn'; sug.innerHTML=ic('headset',14)+' Suggestions';
   sug.addEventListener('click',()=>{ const cats=['Model Quality','Response Speed','Feature Request','UI / Design','Bug / Issue','Other']; let cat='';
     const wrap=document.createElement('div');
     wrap.innerHTML=`<div class="field"><label>* What would you like to suggest?</label><div class="chip-row" id="sgCats">${cats.map(x=>`<button type="button" class="chip" data-cat="${x}">${x}</button>`).join('')}</div></div>
@@ -821,8 +962,8 @@ function secAbout(c){
 }
 
 /* ---------- composer + chrome wiring ---------- */
-function autosize(){ const t=$('#composerInput'); t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,170)+'px'; }
-function updateSend(){ $('#sendBtn').disabled=!($('#composerInput').value.trim()||attachments.length); $('#micBtn').style.display=$('#composerInput').value.trim()?'none':''; }
+function autosize(){ const t=$('#composerInput'); t.style.height='auto'; if(!t.value){ $('#composer').classList.remove('multi'); return; } const sh=t.scrollHeight; t.style.height=Math.min(sh,120)+'px'; $('#composer').classList.toggle('multi',sh>44); }
+function updateSend(){ const hasText=!!$('#composerInput').value.trim(); $('#sendBtn').disabled=!(hasText||attachments.length); $('#micBtn').style.display=hasText?'none':''; const _cs=currentSession(); $('#voiceModeBtn').style.display=(hasText||(_cs&&_cs.messages.length))?'none':''; }
 function syncVoiceBtn(){ $('#voiceModeBtn').setAttribute('aria-pressed',String(!!settings.voice.voiceMode)); }
 function syncToolsAvailability(){ const b=document.querySelector('[data-tool="image"]'); if(b){ b.disabled=!settings.advanced.imageGeneration; b.style.opacity=settings.advanced.imageGeneration?'1':'.45'; } }
 function closePopovers(){ $('#toolsMenu').hidden=true; $('#modeMenu').hidden=true; $('#modelPanel').hidden=true; $('#profileMenu').hidden=true; $('#moreToolsMenu').hidden=true; }
@@ -834,22 +975,26 @@ function renderAll(){ renderHistory(); renderSearch(); renderProjects(); renderM
   $$('#modeMenu [data-response-mode]').forEach(b=>b.classList.toggle('selected',b.dataset.responseMode===settings.responseMode));
   $('#responseModeLabel').textContent=settings.responseMode;
   $('#toolsEnabledToggle').setAttribute('aria-checked',String(!!settings.toolsEnabled));
-  $$('#toolsMenu [data-tool]').forEach(b=>b.classList.toggle('selected',b.dataset.tool===activeTool));
+  $$('#toolsMenu [data-tool]').forEach(b=>b.classList.toggle('selected',b.dataset.tool==='web'?!!settings.webSearch:b.dataset.tool===activeTool));
 }
 
 function init(){
+  hydrateIcons();
   applyTheme();
+  sessions.forEach(s=>{ (s.messages||[]).forEach(m=>{ if(m.role==='assistant'&&m.text) m.text=cleanAssistantText(m.text); }); });
   // sidebar
-  $('#sidebarToggle').addEventListener('click',()=>{ const sb=$('#sidebar'); if(innerWidth<=700) sb.classList.toggle('mobile-open'); else sb.classList.toggle('rail'); });
+  $('#sidebarToggle').addEventListener('click',()=>{ const sb=$('#sidebar'); if(innerWidth<=767){ sb.classList.toggle('mobile-open'); $('#sidebarScrim').hidden=!sb.classList.contains('mobile-open'); } else sb.classList.toggle('rail'); });
+  $('#mobileMenuBtn').addEventListener('click',()=>{ $('#sidebar').classList.add('mobile-open'); $('#sidebarScrim').hidden=false; });
+  $('#sidebarScrim').addEventListener('click',closeMobileDrawer);
   $('#brandHome').addEventListener('click',newChat);
   $('#newChatBtn').addEventListener('click',newChat);
-  $('#railSearchBtn').addEventListener('click',()=>{ $('#sidebar').classList.remove('rail'); $('#sidebar').classList.add('mobile-open'); setTimeout(()=>$('#chatSearch').focus(),30); });
+  $('#railSearchBtn').addEventListener('click',()=>{ const sb=$('#sidebar'); sb.classList.remove('rail'); if(innerWidth<=767){ sb.classList.add('mobile-open'); $('#sidebarScrim').hidden=false; } setTimeout(()=>$('#chatSearch').focus(),30); });
   $('#chatSearch').addEventListener('input',e=>{ clearTimeout(searchTimer); const v=e.target.value; $('#clearSearch').hidden=!v;
     searchTimer=setTimeout(()=>{ searchQuery=v; renderSearch(); },250); });
   $('#clearSearch').addEventListener('click',()=>{ $('#chatSearch').value=''; searchQuery=''; $('#clearSearch').hidden=true; renderSearch(); renderHistory(); });
   $('#projectsToggle').addEventListener('click',e=>{ const b=$('#projectsBody'); b.hidden=!b.hidden; e.currentTarget.setAttribute('aria-expanded',String(!b.hidden)); });
   $('#allChatsToggle').addEventListener('click',e=>{ const b=$('#historyList'); b.hidden=!b.hidden; e.currentTarget.setAttribute('aria-expanded',String(!b.hidden)); });
-  $('#archivedToggle').addEventListener('click',e=>{ const b=$('#archivedList'); b.hidden=!b.hidden; e.currentTarget.setAttribute('aria-expanded',String(!b.hidden)); e.currentTarget.querySelector('.chev').textContent=b.hidden?'›':'⌄'; });
+  $('#archivedToggle').addEventListener('click',e=>{ const b=$('#archivedList'); b.hidden=!b.hidden; e.currentTarget.setAttribute('aria-expanded',String(!b.hidden)); e.currentTarget.querySelector('.chev').innerHTML=ic(b.hidden?'chevron-right':'chevron-down',12); });
   $('#newProjectBtn').addEventListener('click',newProjectModal);
   $('#communityBtn').addEventListener('click',()=>window.open('https://chat.qwen.ai/community','_blank'));
   $('#coderBtn').addEventListener('click',()=>window.open('https://coder.qwen.ai','_blank'));
@@ -873,7 +1018,6 @@ function init(){
   $('#tempChatBtn').addEventListener('click',()=>{ temporary=!temporary; if(temporary) tempSession=null; exitShareMode(); renderAll(); if(temporary) toast('Temporary Chat — nothing will be saved'); });
   $('#currentChatMenuBtn').addEventListener('click',e=>{ e.stopPropagation(); const s=currentSession(); if(s&&!temporary){ const r=e.currentTarget.getBoundingClientRect(); showChatMenu(s,r.left-170,r.bottom+4); } });
   $('#modelBtn').addEventListener('click',e=>{ e.stopPropagation(); const p=$('#modelPanel'); const was=p.hidden; closePopovers(); p.hidden=!was; if(!p.hidden) renderModelPanel(); });
-  $('#modelSearch').addEventListener('input',()=>renderModelPanel());
   $('#expandModelsBtn').addEventListener('click',()=>{ modelsExpanded=true; renderModelPanel(); });
   $('#modelPanel').addEventListener('click',e=>e.stopPropagation());
   // composer
@@ -890,6 +1034,7 @@ function init(){
   $('#toolsMenu').addEventListener('click',e=>e.stopPropagation());
   $$('#toolsMenu [data-tool]').forEach(b=>b.addEventListener('click',()=>{ const t=b.dataset.tool;
     if(t==='upload'){ closePopovers(); $('#fileInput').click(); return; }
+    if(t==='web'){ settings.webSearch=!settings.webSearch; saveSettings(); closePopovers(); renderAll(); toast(settings.webSearch?'Web search on':'Web search off'); return; }
     activeTool=activeTool===t?null:t; closePopovers(); renderAll();
     if(t==='image'&&!settings.advanced.imageGeneration){ toast('Image generation is off in Settings → Personalization → Advanced'); activeTool=null; renderAll(); return; }
     if(activeTool) toast('Mode: '+b.textContent.trim().replace(/\s+/g,' ')); input.focus(); }));
@@ -904,7 +1049,7 @@ function init(){
   $('#shareCopy').addEventListener('click',()=>{ const s=currentSession(); if(!s) return; const txt=s.messages.filter(m=>shareSel.has(m.id)).map(m=>(m.role==='user'?'You: ':'JepongDevxyz AI: ')+m.text).join('\n\n'); if(!txt){ toast('Select messages first'); return; } copyText(txt); exitShareMode(); });
   // drawer + settings chrome
   $('#drawerClose').addEventListener('click',()=>{ $('#activityDrawer').hidden=true; });
-  $('#settingsBack').addEventListener('click',closeSettings);
+  $('#settingsBack').addEventListener('click',()=>{ const p=$('#settingsPage'); if(innerWidth<=767&&p.classList.contains('section-open')){ p.classList.remove('section-open'); return; } closeSettings(); });
   // import
   $('#importInput').addEventListener('change',e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
     const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(String(r.result)); const arr=Array.isArray(data)?data:data.sessions; if(!Array.isArray(arr)) throw new Error('bad format');
