@@ -50,10 +50,6 @@
           <button class="section-head" id="allChatsToggle" type="button" aria-expanded="true"><span>All chats</span><span class="chev"><span data-icon="chevron-down" data-size="12"></span></span></button>
           <div id="historyList" class="history-list"></div>
         </div>
-        <div id="archivedSection">
-          <button class="section-head" id="archivedToggle" type="button" aria-expanded="false"><span>Archived</span><span class="chev"><span data-icon="chevron-right" data-size="12"></span></span></button>
-          <div id="archivedList" class="history-list" hidden></div>
-        </div>
       </div>
 
       <div class="profile-block">
@@ -143,7 +139,7 @@
         <button id="toolsBtn" class="round-btn plus" type="button" aria-label="Select mode and tools" aria-haspopup="menu" aria-expanded="false"><span data-icon="circle-plus" data-size="18"></span></button>
         <textarea id="composerInput" rows="1" placeholder="How can I help you today?" aria-label="Message JepongDevxyz AI"></textarea>
         <div class="composer-right">
-          <button id="responseModeBtn" class="mode-btn" type="button" aria-haspopup="menu" aria-expanded="false"><span id="responseModeLabel">Auto</span><span class="chev"><span data-icon="chevron-up" data-size="12"></span></span></button>
+          <button id="responseModeBtn" class="mode-btn" type="button" aria-haspopup="menu" aria-expanded="false"><span id="responseModeLabel">Auto</span><span class="chev"><span data-icon="chevron-down" data-size="12"></span></span></button>
           <button id="micBtn" class="round-btn mic" type="button" aria-label="Voice input" title="Voice input"><span data-icon="mic" data-size="18"></span></button>
           <button id="voiceModeBtn" class="round-btn voice-mode" type="button" aria-label="Read replies aloud" aria-pressed="false" title="Read replies aloud"><span data-icon="audio-lines" data-size="16"></span></button>
           <button id="sendBtn" class="send-btn" type="submit" aria-label="Send" disabled><span data-icon="arrow-up" data-size="16"></span></button>
@@ -152,7 +148,7 @@
       </div>
       <div id="toolsMenu" class="tools-menu" role="menu" hidden>
         <button type="button" data-tool="upload"><span class="tool-ic"><span data-icon="upload" data-size="18"></span></span>Upload</button>
-        <button type="button" data-tool="agent"><span class="tool-ic"><span data-icon="agent-bot" data-size="18"></span></span>Agent Mode</button>
+        <button type="button" data-tool="agent" data-mode-label="Agent Mode"><span class="tool-ic"><span data-icon="agent-bot" data-size="18"></span></span><span class="tool-copy"><span>Agent Mode</span><span class="tool-desc">Plans the work and gets it done</span></span></button>
         <button type="button" data-tool="image"><span class="tool-ic"><span data-icon="image-plus" data-size="18"></span></span>Create Image</button>
         <button type="button" data-tool="video"><span class="tool-ic"><span data-icon="create-video" data-size="18"></span></span>Create Video</button>
         <button type="button" data-tool="web"><span class="tool-ic"><span data-icon="globe" data-size="18"></span></span>Web search</button>
