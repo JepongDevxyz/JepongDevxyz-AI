@@ -56,59 +56,18 @@ function inlineMapPageUrl(html){
 }
 
 const PROVIDERS = {
-  gemini: {
-    label: 'Gemini',
-    models: ['gemini-flash-latest','gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-flash-lite','gemini-3.5-flash-lite'],
-    defaultModel: 'gemini-3.5-flash-lite'
-  },
-  cloudflare: {
-    label: 'Cloudflare',
-    models: ['@cf/zai-org/glm-4.7-flash','@cf/nvidia/nemotron-3-120b-a12b','@cf/openai/gpt-oss-120b','@cf/qwen/qwen3.8-27b'],
-    defaultModel: '@cf/openai/gpt-oss-120b'
-  },
-  groq: {
-    label: 'Groq',
-    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.8-27b'],
-    defaultModel: 'openai/gpt-oss-120b'
-  },
-  openrouter: {
-    label: 'OpenRouter',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','nvidia/nemotron-3.5-lightning:free','inclusionai/ling-3.0-flash-sante:free','nvidia/nemotron-3-super-120b-a12b:free'],
-    defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b:free'
-  },
-  mistral: {
-    label: 'Mistral',
-    models: ['mistral-small-latest','ministral-8b-latest','codestral-latest'],
-    defaultModel: 'ministral-8b-latest'
-  },
-  cohere: {
-    label: 'Cohere',
-    models: ['command-a-plus-05-2026','command-a-reasoning-08-2025'],
-    defaultModel: 'command-a-plus-05-2026'
-  },
-  aihorde: {
-    label: 'AI Horde',
-    models: ['auto'],
-    defaultModel: 'auto'
-  },
-  nvidia: {
-    label: 'NVIDIA',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b'],
-    defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b'
-  },
-  hcnsec: {
-    label: 'HCNSEC',
-    models: ['kimi-k3'],
-    defaultModel: 'kimi-k3'
-  },
   bailucode: {
     label: 'Bailucode',
-    models: ['bailu-apex'],
+    models: ['bailu-apex','bailu-2.8','bailu-2.7-1m'],
     defaultModel: 'bailu-apex'
   }
 };
 
-// Registered AI Horde and then public AI Horde are emergency-only, never picker providers.
+// Bailu-only backend: Bailucode is the sole chat provider. Every other chat
+// provider was unwired (PROVIDERS, dispatch, fallback) — a failed Bailu
+// request walks its route key pool, then the other Bailu route, then
+// surfaces an honest error. No other provider ever answers a chat request.
+
 const RETRYABLE = new Set([401,402,403,408,409,425,429,500,502,503,504]);
 
 // Central chat-model timeout policy. New/future model IDs inherit this automatically
@@ -215,8 +174,8 @@ function sanitizeCustomProviderKeys(body,provider){
 
 
 // Configured keys belong to the SAME selected provider. Exhaust each key
-// before switching models/providers; the emergency fallback switch controls
-// cross-provider/anonymous routing, not key rotation.
+// before any route switch; the fallback switch controls the Bailu
+// cross-route retry, not key rotation.
 function providerCredentials(keys,autoFallback=false){
   const list=Array.isArray(keys)?keys:[];
   // Cloudflare supplies account objects; preserve those alongside string keys.
@@ -231,7 +190,6 @@ function getProviderKeys(provider,rotate=true) {
     openrouter:['OPENROUTER_API_KEYS','OPENROUTER_API_KEY'],
     mistral:['MISTRAL_API_KEYS','MISTRAL_API_KEY'],
     cohere:['COHERE_API_KEYS','COHERE_API_KEY'],
-    aihorde:['AIHORDE_API_KEYS','AIHORDE_API_KEY'],
     nvidia:['NVIDIA_API_KEYS','NVIDIA_API_KEY'],
     hcnsec:['HCNSEC_API_KEYS','HCNSEC_API_KEY'],
     bailucode:['BAILUCODE_API_KEYS','BAILUCODE_API_KEY']
@@ -297,7 +255,6 @@ function configured(provider) {
 }
 
 function providerLabel(provider) {
-  if(provider==='aihorde-public') return 'AI Horde Anonymous';
   return PROVIDERS[provider]?.label || provider;
 }
 
@@ -454,15 +411,6 @@ function nativeEffortFields(provider,model,effort='Instant'){
   return {};
 }
 
-function geminiThinkingConfig(model,effort='Instant'){
-  const target=String(model||'').toLowerCase();
-  // The configured Gemini family is 3.x/current-latest; Gemini 3+ exposes
-  // thinkingLevel. Do not request thought text.
-  if(target==='gemini-flash-latest'||/^gemini-3\./.test(target)){
-    return {includeThoughts:false,thinkingLevel:responseEffortPolicy(effort).gemini};
-  }
-  return null;
-}
 
 function outputBudgetFor(message='') {
   // Dynamic response budget: short requests stay efficient, while complex
@@ -2544,14 +2492,6 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
   const media=mediaAttachments(files);
   if(!media.length)return '';
 
-  // Gemini and the dedicated Cloudflare vision selection receive the original
-  // media directly in the final request, so a bridge analysis would only
-  // duplicate cost and context.
-  if(selectedProvider==='gemini'||selectedProvider==='cloudflare-vision'){
-    activity(emit,'attachment-media',`Prepared ${media.length} visual/media part${media.length===1?'':'s'} for ${providerLabel(selectedProvider)}`,'completed','file');
-    return '';
-  }
-
   const imageOnly=media.filter(f=>String(f.mimeType||'').startsWith('image/'));
   const videoFrames=media.filter(f=>f.mediaRole==='video-frame').length;
   const rootNames=[...new Set(media.map(f=>attachmentRootName(f)).filter(Boolean))];
@@ -2570,7 +2510,7 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
   // First try the user's selected OpenAI-compatible model with image/frame
   // parts. If that exact model supports vision, no provider switch is needed.
   // A refusal or unsupported multimodal response is not accepted as evidence.
-  const openAICompatibleVision=new Set(['groq','openrouter','mistral','nvidia','hcnsec','bailucode']);
+  const openAICompatibleVision=new Set(['bailucode']);
   if(imageOnly.length && openAICompatibleVision.has(selectedProvider) &&
      ((Array.isArray(customApiKeys)&&customApiKeys.length)||configured(selectedProvider))){
     activity(emit,'attachment-media-selected',`Checking attached media with ${providerLabel(selectedProvider)} • ${modelLabel(selectedModel||'selected model')}`,'running','image');
@@ -2598,65 +2538,6 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
       activity(emit,'attachment-media-selected','Selected model did not return grounded visual evidence — trying a configured vision analyzer','warning','image');
     }catch(_){
       activity(emit,'attachment-media-selected','Selected model could not read the visual payload directly — trying a configured vision analyzer','warning','image');
-    }
-  }
-
-  // Gemini is the strongest general bridge here because it can receive both
-  // image frames and a small native video payload. This does not change the
-  // model/provider that writes the final answer.
-  if(configured('gemini')){
-    activity(emit,'attachment-media-bridge','Using Gemini to read attachment evidence for the selected model','running','image');
-    try{
-      const r=await runGemini({
-        model:'gemini-flash-latest',
-        history:[],
-        files:media,
-        message:prompt,
-        systemInstruction:system,
-        emit:null,
-        autoFallback:false,
-        responseEffort
-      });
-      if(r.ok){
-        const text=await readInternalProviderText(r.response,16000);
-        if(usableMediaAnalysis(text)){
-          activity(emit,'attachment-media-bridge','Gemini finished reading the attachment evidence','completed','image');
-          activity(emit,'attachment-media','Attachment evidence is ready for the selected response model','completed','file');
-          return `\n\n[MEDIA ATTACHMENT ANALYSIS — Gemini]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
-        }
-      }
-      activity(emit,'attachment-media-bridge','Gemini did not return grounded attachment evidence','warning','image');
-    }catch(_){
-      activity(emit,'attachment-media-bridge','Gemini attachment analysis was unavailable','warning','image');
-    }
-  }
-
-  // Cloudflare is a second vision bridge for photos, screenshots, PDF page
-  // renders, and sampled video frames.
-  if(imageOnly.length && configured('cloudflare')){
-    activity(emit,'attachment-media-cloudflare','Trying Cloudflare vision for the attachment evidence','running','image');
-    try{
-      const r=await runCloudflare({
-        model:'@cf/google/gemma-4-26b-a4b-it',
-        history:[],
-        files:imageOnly,
-        message:mediaGroundingPrompt(message,imageOnly),
-        systemInstruction:system,
-        emit:null,
-        autoFallback:false,
-        responseEffort
-      });
-      if(r.ok){
-        const text=await readInternalProviderText(r.response,16000);
-        if(usableMediaAnalysis(text)){
-          activity(emit,'attachment-media-cloudflare','Cloudflare vision finished reading the attachment evidence','completed','image');
-          activity(emit,'attachment-media','Attachment evidence is ready for the selected response model','completed','file');
-          return `\n\n[MEDIA ATTACHMENT ANALYSIS — Cloudflare]\n${text}\nUse this only as evidence about the supplied media; the original user request still controls the task.`;
-        }
-      }
-      activity(emit,'attachment-media-cloudflare','Cloudflare did not return grounded attachment evidence','warning','image');
-    }catch(_){
-      activity(emit,'attachment-media-cloudflare','Cloudflare attachment analysis was unavailable','warning','image');
     }
   }
 
@@ -4000,34 +3881,9 @@ function buildOpenAIVisionMessages(history, message, systemInstruction, files=[]
 }
 
 function smartRoute(mode, files, message) {
-  const intentText=normalizeIntentText(message);
-  const hasImage = Array.isArray(files) && files.some(f => f?.mimeType?.startsWith('image/') && f?.data);
-  if (hasImage) {
-    if (configured('cloudflare')) return {provider:'cloudflare',model:'@cf/google/gemma-4-26b-a4b-it',reason:'vision'};
-    if (configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'vision'};
-  }
-  const coding = mode === 'coder' || /\b(code|coding|debug|javascript|javscript|html|hmtl|css|python|pyton|node|api|bug|error|typescript|php|java|react|sql|github|vercel|deploy|backend|frontend)\b/i.test(intentText);
-  if (coding) {
-    if (configured('groq')) return {provider:'groq',model:'openai/gpt-oss-120b',reason:'coding'};
-    if (configured('mistral')) return {provider:'mistral',model:'codestral-latest',reason:'coding'};
-  }
-  if (mode === 'school') {
-    if (configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'school'};
-    if (configured('cohere')) return {provider:'cohere',model:'command-a-03-2025',reason:'school'};
-  }
-
-  const research=shouldAutoResearch(message) || /\b(research|verify online|check online|source search|web research)\b/i.test(intentText);
-  if(research){
-    if(configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'research synthesis'};
-    if(configured('groq')) return {provider:'groq',model:'openai/gpt-oss-120b',reason:'research synthesis'};
-  }
-
-  const reasoning=/\b(reason|reasoning|logic|strategy|plan|complex|architecture|decision|tradeoff)\b/i.test(intentText);
-  if(reasoning){
-    if(configured('groq')) return {provider:'groq',model:'openai/gpt-oss-120b',reason:'complex reasoning'};
-    if(configured('gemini')) return {provider:'gemini',model:'gemini-flash-latest',reason:'complex reasoning'};
-  }
-
+  // Bailu-only: the Smart Router has no other provider to route to. It keeps
+  // the caller's selected Bailu model for every intent (vision, coding,
+  // school, research, reasoning).
   return null;
 }
 
@@ -4158,170 +4014,7 @@ function retryLabel(provider, status, hasNext) {
   return `${providerLabel(provider)} request failed${hasNext ? ' — retrying' : ''}`;
 }
 
-async function runGemini({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant',unifiedTools=null,toolContents=null}) {
-  const keys = providerCredentials(getProviderKeys('gemini',autoFallback),autoFallback);
-  if (!keys.length) return {ok:false,status:500,error:'Gemini API key is not configured.'};
-  const target = PROVIDERS.gemini.models.includes(model) ? model : PROVIDERS.gemini.defaultModel;
 
-  const currentParts=[];
-  if(Array.isArray(files)){
-    for(const f of files){
-      if(!f?.data||!f?.mimeType)continue;
-      const mime=String(f.mimeType).toLowerCase();
-      if(mime.startsWith('image/')||mime.startsWith('video/')){
-        currentParts.push({inline_data:{mime_type:f.mimeType,data:f.data}});
-      }
-    }
-  }
-  if(message?.trim()) currentParts.push({text:message.trim()});
-  const contents=[];
-  for(const h of history||[]) {
-    const role=h.role==='bot'||h.role==='model'?'model':'user';
-    const text=h.text || (Array.isArray(h.parts) ? h.parts.map(p=>p.text||'').join('\n') : '');
-    if(text?.trim()) contents.push({role,parts:[{text:text.trim()}]});
-  }
-  if(currentParts.length && contents.at(-1)?.role==='user') contents.pop();
-  if(currentParts.length) contents.push({role:'user',parts:currentParts});
-  const requestContents=toolContents||contents;
-  if(!requestContents.length) return {ok:false,status:400,error:'No prompt provided.'};
-  // Unified tools: same canonical tools, translated to Gemini functionDeclarations.
-  const nativeTools=unifiedTools?toolsForFamily(TOOL_FAMILY_GEMINI,unifiedTools):null;
-
-  const generationConfig={
-    maxOutputTokens:effortOutputBudgetFor(message,responseEffort),
-    temperature:temperatureFor(message,files)
-  };
-  const thinkingConfig=geminiThinkingConfig(target,responseEffort);
-  if(thinkingConfig)generationConfig.thinkingConfig=thinkingConfig;
-
-  let last=''; let status=500;
-  for(let i=0;i<keys.length;i++) {
-    providerLifecycleActivity(emit,{
-      provider:'gemini',model:target,state:'running',phase:'connecting',
-      attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-    });
-    try {
-      const geminiBody={system_instruction:{parts:[{text:systemInstruction}]},contents:requestContents,generationConfig};
-      if(nativeTools) geminiBody.tools=nativeTools;
-      let res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(geminiBody),signal:AbortSignal.timeout(90000)
-      });
-      // Current Gemini 3 models support thinkingLevel. If a future alias/model
-      // rejects the native knob, keep the selected Jepong effort via the shared
-      // system instruction and retry once without thinkingConfig.
-      if(!res.ok && [400,422].includes(res.status) && generationConfig.thinkingConfig){
-        const compatibleConfig={...generationConfig};
-        delete compatibleConfig.thinkingConfig;
-        const retryBody={system_instruction:{parts:[{text:systemInstruction}]},contents:requestContents,generationConfig:compatibleConfig};
-        if(nativeTools) retryBody.tools=nativeTools;
-        res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(target)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(keys[i])}`,{
-          method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(retryBody),signal:AbortSignal.timeout(90000)
-        });
-      }
-      if(res.ok) {
-        providerLifecycleActivity(emit,{
-          provider:'gemini',model:target,state:'completed',phase:'connected',
-          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-        });
-        const decoder=new TextDecoder(), encoder=new TextEncoder();
-        const finishState={reason:'',toolFamily:TOOL_FAMILY_GEMINI,nativeMessages:requestContents};
-        const stream=res.body.pipeThrough(new TransformStream({
-          start(){this.buffer='';},
-          transform(chunk,controller){
-            this.buffer+=decoder.decode(chunk,{stream:true});
-            const lines=this.buffer.split('\n');this.buffer=lines.pop()||'';
-            for(const line of lines){
-              const t=line.trim();if(!t.startsWith('data:'))continue;
-              try{
-                const p=JSON.parse(t.slice(5).trim());
-                if(p?.error){captureProviderStreamError(finishState,p.error);continue;}
-                const candidate=p.candidates?.[0];
-                if(candidate?.finishReason) finishState.reason=String(candidate.finishReason).toLowerCase();
-                for(const part of candidate?.content?.parts||[]){
-                  if(part.text) controller.enqueue(encoder.encode(part.text));
-                  // Unified tools: capture native function calls.
-                  if(part.functionCall) recordGeminiFunctionCall(finishState,part.functionCall);
-                }
-              }catch(_){}
-            }
-          },
-          flush(){if(!finishState.reason)finishState.reason='unknown';}
-        }));
-        return {ok:true,response:new Response(stream,{headers:passthroughHeaders(res,'gemini',target,fallbackFrom,routedReason,i,keys.length)}),finishState};
-      }
-      status=res.status; last=await res.text().catch(()=>`Gemini ${status}`);
-      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
-      providerLifecycleActivity(emit,{
-        provider:'gemini',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:retryLabel('gemini',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-      });
-      if(!shouldRetryProviderCredential(status,last)) break;
-    } catch(e) {
-      status=502; last=e?.message||String(e);
-      const canRetry=i<keys.length-1;
-      providerLifecycleActivity(emit,{
-        provider:'gemini',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:`Gemini connection timed out${canRetry?' — trying another credential':''}`,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-      });
-    }
-  }
-  return {ok:false,status,error:last||'Gemini unavailable'};
-}
-
-async function runCloudflare({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'}) {
-  const accounts = providerCredentials(autoFallback?shuffle(getCloudflareAccounts()):getCloudflareAccounts(),autoFallback);
-  if(!accounts.length) return {ok:false,status:500,error:'Cloudflare credentials are not configured.'};
-  let target=PROVIDERS.cloudflare.models.includes(model)?model:PROVIDERS.cloudflare.defaultModel;
-  const hasImage=Array.isArray(files)&&files.some(f=>f?.data&&f?.mimeType?.startsWith('image/'));
-  if(hasImage&&target!=='@cf/google/gemma-4-26b-a4b-it'){
-    if(!autoFallback)return {ok:false,status:415,error:'The selected Cloudflare model does not support this image request. Fallback is OFF; choose a vision-capable model manually.'};
-    target='@cf/google/gemma-4-26b-a4b-it';
-  }
-  const messages=buildOpenAIMessages(history,message,systemInstruction);
-  if(hasImage){
-    const last=messages.pop();
-    const content=[{type:'text',text:last?.content||message||'Analyze this image.'}];
-    for(const f of files)if(f?.data&&f?.mimeType?.startsWith('image/'))content.push({type:'image_url',image_url:{url:`data:${f.mimeType};base64,${f.data}`}});
-    messages.push({role:'user',content});
-  }
-
-  let last=''; let status=500;
-  for(let i=0;i<accounts.length;i++) {
-    providerLifecycleActivity(emit,{
-      provider:'cloudflare',model:target,state:'running',phase:'connecting',
-      attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
-    });
-    try {
-      const a=accounts[i];
-      const res=await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(a.accountId)}/ai/v1/chat/completions`,{
-        method:'POST',headers:{Authorization:`Bearer ${a.apiToken}`,'Content-Type':'application/json'},body:JSON.stringify({model:target,messages,stream:true,max_completion_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,files)}),signal:AbortSignal.timeout(chatUpstreamTimeoutMs('generic'))
-      });
-      if(res.ok){
-        providerLifecycleActivity(emit,{
-          provider:'cloudflare',model:target,state:'completed',phase:'connected',
-          attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
-        });
-        const finishState={reason:''};
-        return {ok:true,response:new Response(openAIStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'cloudflare',target,fallbackFrom,routedReason,i,accounts.length)}),finishState};
-      }
-      status=res.status; last=await res.text().catch(()=>`Cloudflare ${status}`);
-      const canRetry=isRetryableStatus(status)&&i<accounts.length-1;
-      providerLifecycleActivity(emit,{
-        provider:'cloudflare',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:retryLabel('cloudflare',status,canRetry),attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
-      });
-      if(!isRetryableStatus(status)) break;
-    }catch(e){
-      status=502;last=e?.message||String(e);
-      const canRetry=i<accounts.length-1;
-      providerLifecycleActivity(emit,{
-        provider:'cloudflare',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:`Cloudflare connection timed out${canRetry?' — trying another account':''}`,attemptIndex:i,attemptCount:accounts.length,attemptNoun:'account'
-      });
-    }
-  }
-  return {ok:false,status,error:last||'Cloudflare unavailable'};
-}
 
 function sanitizeCustomApiProfile(body){
   const p=body?.customApiProfile;if(!p||typeof p!=='object')return null;
@@ -4363,11 +4056,6 @@ function chatCompletionsUrl(base,fallback){
 // a request successful after validating actual assistant text, not HTTP 200 alone.
 async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false,responseEffort='Instant',unifiedTools=null,toolMessages=null}) {
   const cfg={
-    groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
-    openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
-    mistral:{url:'https://api.mistral.ai/v1/chat/completions'},
-    nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
-    hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
     bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
@@ -4390,27 +4078,6 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
   const nativeTools=unifiedTools?toolsForFamily(TOOL_FAMILY_OPENAI,unifiedTools):null;
   let modelCandidates=[requested];
 
-  // Compatible model substitution is allowed only when the user enabled fallback.
-  if(autoFallback){
-    if(provider==='groq' && requested==='qwen/qwen3.8-27b'){
-      modelCandidates=['qwen/qwen3.8-27b','openai/gpt-oss-120b'];
-    } else if(provider==='groq' && requested==='openai/gpt-oss-120b'){
-      modelCandidates=['openai/gpt-oss-120b','qwen/qwen3.8-27b'];
-    }
-
-    if(provider==='mistral' && requested==='mistral-small-latest'){
-      modelCandidates=['mistral-small-latest','ministral-14b-latest','ministral-8b-latest'];
-    } else if(provider==='mistral' && requested==='ministral-14b-latest'){
-      modelCandidates=['ministral-14b-latest','mistral-small-latest'];
-    } else if(provider==='mistral' && requested==='codestral-latest'){
-      modelCandidates=['codestral-latest','mistral-small-latest'];
-    }
-
-    if(provider==='openrouter' && requested!=='openrouter/free'){
-      modelCandidates=[requested,'openrouter/free'];
-    }
-  }
-
   let last='';
   let status=500;
   let lastTarget=requested;
@@ -4432,11 +4099,6 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
         'Content-Type':'application/json',
         'Accept':'text/event-stream'
       };
-      if(provider==='openrouter'){
-        headers['HTTP-Referer']=process.env.SITE_URL || 'https://jepongdevxyz.ai';
-        headers['X-Title']='JepongDevxyz AI';
-      }
-
       const upstreamTimeoutMs=chatUpstreamTimeoutMs(provider);
       try{
         const payload={
@@ -4448,11 +4110,6 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
           ...nativeEffortFields(provider,target,responseEffort)
         };
         if(nativeTools) payload.tools=nativeTools;
-        if(provider==='groq' && /^(?:openai\/gpt-oss-(?:20b|120b)|qwen\/qwen3\.8-27b)$/i.test(target)){
-          payload.max_completion_tokens=payload.max_tokens;
-          delete payload.max_tokens;
-        }
-
         // Keep the upstream request inside the serverless execution budget.
         // A 120s provider timeout can outlive the hosting request and surface as a
         // generic "operation was aborted" after the model has already done work.
@@ -4538,468 +4195,6 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
   }
 
   return {ok:false,status,error:last||`${providerLabel(provider)} unavailable for ${modelLabel(lastTarget)}`};
-}
-
-async function runCohere({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'}) {
-  const keys=providerCredentials(autoFallback?shuffle(getProviderKeys('cohere')):getProviderKeys('cohere',false),autoFallback);
-  if(!keys.length)return {ok:false,status:500,error:'Cohere API key is not configured.'};
-  const target=PROVIDERS.cohere.models.includes(model)?model:PROVIDERS.cohere.defaultModel;
-  const messages=buildOpenAIMessages(history,message,systemInstruction);
-  let last='';let status=500;
-  for(let i=0;i<keys.length;i++) {
-    providerLifecycleActivity(emit,{
-      provider:'cohere',model:target,state:'running',phase:'connecting',
-      attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-    });
-    try{
-      const res=await fetch('https://api.cohere.com/v2/chat',{method:'POST',headers:{Authorization:`Bearer ${keys[i]}`,'Content-Type':'application/json',Accept:'text/event-stream'},body:JSON.stringify({model:target,messages,stream:true,max_tokens:effortOutputBudgetFor(message,responseEffort),temperature:temperatureFor(message,[])}),signal:AbortSignal.timeout(chatUpstreamTimeoutMs('generic'))});
-      if(res.ok){
-        providerLifecycleActivity(emit,{
-          provider:'cohere',model:target,state:'completed',phase:'connected',
-          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-        });
-        const finishState={reason:''};
-        return {ok:true,response:new Response(cohereStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'cohere',target,fallbackFrom,routedReason,i,keys.length)}),finishState};
-      }
-      status=res.status;last=await res.text().catch(()=>`Cohere ${status}`);
-      const canRetry=isRetryableStatus(status)&&i<keys.length-1;
-      providerLifecycleActivity(emit,{
-        provider:'cohere',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:retryLabel('cohere',status,canRetry),attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-      });
-      if(!shouldRetryProviderCredential(status,last))break;
-    }catch(e){
-      status=502;last=e?.message||String(e);
-      const canRetry=i<keys.length-1;
-      providerLifecycleActivity(emit,{
-        provider:'cohere',model:target,state:canRetry?'warning':'error',phase:canRetry?'retry':'failed',
-        detail:`Cohere connection timed out${canRetry?' — rotating credential':''}`,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-      });
-    }
-  }
-  return {ok:false,status,error:last||'Cohere unavailable'};
-}
-
-const AIHORDE_ANONYMOUS_KEY='0000000000';
-const AIHORDE_CLIENT_AGENT='JepongDevxyz-AI:1.0:https://github.com/JepongDevxyz/JepongDevxyz-AI';
-const AIHORDE_BLOCKED_MODEL_PATTERNS=[/nsfw/i,/hentai/i,/porn/i,/erotic/i,/sexual/i,/\bsex\b/i,/\badult\b/i,/\berp\b/i,/explicit/i,/fetish/i];
-
-function isAllowedAIHordeModelName(name=''){
-  const value=String(name||'').trim();
-  return Boolean(value) && !AIHORDE_BLOCKED_MODEL_PATTERNS.some(rx=>rx.test(value));
-}
-
-function numericModelSizeHint(name=''){
-  const values=[...String(name).matchAll(/(?:^|[^0-9])(\d{1,3})\s*[bB](?:\b|[^a-z])/g)]
-    .map(m=>Number(m[1]))
-    .filter(Number.isFinite);
-  return values.length?Math.max(...values):0;
-}
-
-async function getAIHordeActiveModels(signal){
-  const res=await fetch('https://aihorde.net/api/v2/status/models?type=text',{
-    signal,
-    headers:{Accept:'application/json','Client-Agent':AIHORDE_CLIENT_AGENT}
-  });
-  if(!res.ok) throw new Error(`AI Horde model status returned HTTP ${res.status}`);
-  const data=await res.json();
-  if(!Array.isArray(data)) throw new Error('Unexpected AI Horde model status response');
-  return data
-    .filter(item=>item&&isAllowedAIHordeModelName(item.name))
-    .map(item=>({
-      name:String(item.name),
-      workers:Number(item.count??item.workers??item.threads??0)||0,
-      queued:Number(item.queued??0)||0,
-      jobs:Number(item.jobs??0)||0,
-      eta:item.eta!=null&&Number.isFinite(Number(item.eta))?Number(item.eta):null,
-      performance:Number(item.performance??0)||0
-    }));
-}
-
-function scoreAIHordeModel(item,message='',sourceModel=''){
-  const name=String(item?.name||'');
-  const lower=name.toLowerCase();
-  const prompt=`${normalizeIntentText(message)} ${String(sourceModel||'').toLowerCase()}`;
-  const coding=/\b(code|coding|debug|javascript|html|css|python|node|api|typescript|php|java|react|sql|github|vercel|backend|frontend)\b/i.test(prompt);
-  const reasoning=/\b(reason|reasoning|logic|strategy|plan|complex|architecture|analysis|research|compare|math)\b/i.test(prompt);
-  const size=numericModelSizeHint(name);
-  const workers=Math.max(0,Number(item?.workers)||0);
-  const eta=Math.max(0,Number(item?.eta)||0); // AI Horde publishes queue-clear ETA in seconds.
-  const queued=Math.max(0,Number(item?.queued)||0);
-  const throughput=Math.max(0,Number(item?.performance)||0);
-  // Prior formula rewarded worker count 25x more than ETA; it selected huge queues.
-  // Prefer workers already available, lower queue ETA, and adequate model capability.
-  let score=Math.log2(workers+1)*38 + Math.min(throughput,250)*0.34;
-  score-=Math.min(eta,240)*4.2;
-  score-=Math.min(queued/Math.max(1,workers),150)*1.6;
-  if(coding && /(qwen|coder|code|deepseek|nemotron|llama)/i.test(lower))score+=48;
-  if(reasoning && /(qwen|gemma|nemotron|llama|anubis|behemoth)/i.test(lower))score+=40;
-  if(size>=70)score+=coding||reasoning?40:12;
-  else if(size>=24)score+=28;
-  else if(size>=7)score+=18;
-  else if(size>0)score+=4;
-  return score;
-}
-
-// Live four-slot AI Horde picker: no static model IDs or hidden Auto entry.
-// A current worker count and low published ETA are availability estimates,
-// NOT a guarantee that a particular generation will finish quickly.
-function fourResponsiveAIHordeModels(models,preferred=[]){
-  const list=(Array.isArray(models)?models:[])
-    .filter(m=>isAllowedAIHordeModelName(m?.name)&&Number(m?.workers)>0&&
-      m?.eta!=null&&Number.isFinite(Number(m.eta))&&Number(m.eta)>=0&&Number(m.eta)<=60);
-  const deduped=[...new Map(list.map(m=>[String(m.name),m])).values()];
-  const ranked=deduped.sort((a,b)=>
-    scoreAIHordeModel(b,'Hi')-scoreAIHordeModel(a,'Hi')||
-    Number(a.eta)-Number(b.eta)||String(a.name).localeCompare(String(b.name))
-  );
-  // Keep the same four named slots between picker visits while each model
-  // still has a live worker and a short reported queue. Replace only offline
-  // or slow entries; never display a stale model just to fill four slots.
-  const pinned=[...new Set((Array.isArray(preferred)?preferred:[])
-    .slice(0,4).filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean))];
-  const retained=pinned.map(name=>ranked.find(m=>m.name===name)).filter(Boolean);
-  return [...retained,...ranked.filter(m=>!retained.some(old=>old.name===m.name))].slice(0,4);
-}
-
-async function checkAIHordeCredential(key){
-  if(!key)return 'missing';
-  if(key===AIHORDE_ANONYMOUS_KEY)return 'anonymous';
-  try{
-    // Native first-party credential lookup: do not return the account, key, or raw error.
-    const result=await fetch('https://aihorde.net/api/v2/find_user',{
-      method:'GET',headers:{apikey:key,Accept:'application/json','Client-Agent':AIHORDE_CLIENT_AGENT},
-      signal:AbortSignal.timeout(7500)
-    });
-    if(result.ok)return 'valid';
-    if([401,403,404].includes(result.status))return 'rejected';
-    return 'unverified';
-  }catch(_){return 'unverified';}
-}
-
-async function liveAIHordePickerModels(preferred=[]){
-  const firstKey=getProviderKeys('aihorde',false).find(key=>key!==AIHORDE_ANONYMOUS_KEY)||'';
-  const [keyStatus,modelsResult]=await Promise.all([
-    checkAIHordeCredential(firstKey),
-    getAIHordeActiveModels(AbortSignal.timeout(9000))
-      .then(active=>({ok:true,active})).catch(()=>({ok:false,active:[]}))
-  ]);
-  const models=fourResponsiveAIHordeModels(modelsResult.active,preferred).map(item=>({
-    id:item.name,name:item.name,workers:item.workers,etaSeconds:item.eta,
-    queued:item.queued,online:true
-  }));
-  return {status:modelsResult.ok?(models.length?'ready':'no-fast-workers'):'unavailable',
-    models,keyStatus,checkedAt:new Date().toISOString(),source:'AI Horde native text worker status',
-    error:modelsResult.ok?'':'Could not verify live AI Horde worker availability. Please retry.'};
-}
-
-function summarizeAIHordeError(status, data, raw=''){
-  const combined=`${data?.error?.message||''} ${data?.message||''} ${raw||''}`.replace(/\s+/g,' ').trim();
-  const lower=combined.toLowerCase();
-  if(/no user matching sent api key/.test(lower)) return 'AI Horde rejected this credential.';
-  if(/api key is not configured/.test(lower)) return 'AI Horde is not configured on the server yet.';
-  if(status===401||status===403) return 'AI Horde rejected the current credential.';
-  if(status===429) return 'AI Horde rate limit reached.';
-  if(status>=500) return 'AI Horde is temporarily unavailable.';
-  return combined || `AI Horde ${status}`;
-}
-
-function isAIHordeCredentialFailure(status,error=''){
-  const code=Number(status)||0;
-  const text=String(error||'').toLowerCase();
-  return [401,403,406].includes(code) || /no user matching sent api key|invalid api key|credential was rejected|unauthorized|forbidden/.test(text);
-}
-
-async function resolveAIHordeModels(requested='auto',message='',signal){
-  const models=await getAIHordeActiveModels(signal);
-  if(!models.length) return [];
-  if(requested && requested!=='auto'){
-    const exact=models.find(x=>x.name===requested);
-    return exact?[exact]:[];
-  }
-  // Auto selects active models using real queue ETA/worker data, not hard-coded IDs.
-  // Avoid long queues when at least one model has a short published ETA; retain
-  // a small fallback shortlist inside AI Horde for transient worker failures.
-  const active=models.filter(x=>(Number(x.workers)||0)>0);
-  const shortQueue=active.filter(x=>(Number(x.eta)||0)<=35);
-  const ranked=[...(shortQueue.length?shortQueue:active)]
-    .sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested));
-  // Keep a slower candidate only if there are fewer than three low-queue models.
-  if(shortQueue.length){
-    for(const item of active.sort((a,b)=>scoreAIHordeModel(b,message,requested)-scoreAIHordeModel(a,message,requested))){
-      if(ranked.length>=3)break;
-      if(!ranked.some(x=>x.name===item.name))ranked.push(item);
-    }
-  }
-  return ranked.slice(0,3);
-}
-
-function isAIHordeGenerationFailure(status,error=''){
-  const code=Number(status)||0;
-  const text=String(error||'').toLowerCase();
-  return code===408 || code===429 || code>=500 ||
-    /not enough generations|no generations|no generation|worker|queue|timed? ?out|timeout|unavailable|busy|faulted|aborted/.test(text);
-}
-
-function aiHordeNativePrompt(messages){
-  const transcript=(Array.isArray(messages)?messages:[]).map(m=>{
-    const role=m?.role==='system'?'System':m?.role==='assistant'?'Assistant':'User';
-    return role+': '+(typeof m?.content==='string'?m.content:'');
-  }).join('\n\n');
-  return transcript.slice(-14000)+'\n\nAssistant:';
-}
-
-async function aiHordeNativeTextRequest({key,model,messages,maxTokens=256,timeoutMs=44000}){
-  const base='https://aihorde.net/api/v2/generate/text/';
-  const headers={apikey:key,Accept:'application/json','Content-Type':'application/json','Client-Agent':AIHORDE_CLIENT_AGENT};
-  const deadline=Date.now()+timeoutMs;
-  let id='',complete=false;
-  try{
-    const submit=await fetch(base+'async',{
-      method:'POST',headers,body:JSON.stringify({
-        prompt:aiHordeNativePrompt(messages),
-        models:[model],nsfw:false,slow_workers:false,
-        params:{max_context_length:2048,max_length:Math.max(32,Math.min(640,Number(maxTokens)||256)),n:1}
-      }),signal:AbortSignal.timeout(Math.min(12000,timeoutMs))
-    });
-    const data=await submit.json().catch(()=>({}));
-    if(!submit.ok)return {ok:false,status:submit.status,error:summarizeAIHordeError(submit.status,data,'')};
-    id=String(data?.id||'');
-    if(!/^[a-z0-9-]{8,80}$/i.test(id))return {ok:false,status:502,error:'AI Horde accepted the request without a valid job ID.'};
-    while(Date.now()<deadline-1500){
-      const remain=deadline-Date.now();
-      const statusResponse=await fetch(base+'status/'+encodeURIComponent(id),{
-        method:'GET',headers:{apikey:key,Accept:'application/json','Client-Agent':AIHORDE_CLIENT_AGENT},
-        signal:AbortSignal.timeout(Math.min(8000,Math.max(1000,remain-800)))
-      });
-      const result=await statusResponse.json().catch(()=>({}));
-      if(!statusResponse.ok)return {ok:false,status:statusResponse.status,
-        error:summarizeAIHordeError(statusResponse.status,result,'')};
-      if(result?.done===true){
-        complete=true;
-        const text=typeof result?.generations?.[0]?.text==='string'?result.generations[0].text.trim():'';
-        return text?{ok:true,status:200,text:text.replace(/^(?:Assistant\s*:\s*)/i,'').trim()}:
-          {ok:false,status:502,error:'AI Horde finished without assistant text.'};
-      }
-      if(result?.faulted===true||result?.is_possible===false)
-        return {ok:false,status:503,error:'The selected AI Horde model is unable to complete this request right now.'};
-      const ms=Math.min(1800,Math.max(0,deadline-Date.now()-1500));
-      if(ms>0)await new Promise(resolve=>setTimeout(resolve,ms));
-    }
-    return {ok:false,status:504,error:'AI Horde model did not finish within the response time limit.'};
-  }catch(error){
-    return {ok:false,status:504,error:error?.name==='TimeoutError'?'AI Horde model timed out.':'AI Horde native text API request failed.'};
-  }finally{
-    if(id&&!complete){
-      // Prevent slow queued jobs from consuming resources after the chat has timed out.
-      try{await fetch(base+'status/'+encodeURIComponent(id),{method:'DELETE',
-        headers:{apikey:key,'Client-Agent':AIHORDE_CLIENT_AGENT},signal:AbortSignal.timeout(1800)});}
-      catch(_){}
-    }
-  }
-}
-
-async function runAIHordeNativeSelected({model,history,files,message,systemInstruction,
-    fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'},{anonymous=false}={}){
-  const stored=anonymous?[]:getProviderKeys('aihorde',autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
-  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:stored;
-  if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
-  if(Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data))
-    return {ok:false,status:415,error:'AI Horde text models cannot directly process image attachments.'};
-  let initial;
-  try{initial=await resolveAIHordeModels(model,message,AbortSignal.timeout(9000));}
-  catch(_){return {ok:false,status:503,error:'Cannot verify the selected AI Horde model is online.'};}
-  if(!initial.length||Number(initial[0]?.workers)<=0)
-    return {ok:false,status:503,error:'The selected AI Horde model is not currently online. Reopen the model picker.'};
-  const models=[initial[0]];
-  if(autoFallback){
-    try{
-      const fallbackModels=await resolveAIHordeModels('auto',message,AbortSignal.timeout(7000));
-      for(const m of fallbackModels){
-        if(models.length>=3)break;
-        if(m.name!==model&&!models.some(x=>x.name===m.name))models.push(m);
-      }
-    }catch(_){}
-  }
-  const messages=buildOpenAIMessages(history,message,systemInstruction);
-  const runtimeProvider=anonymous?'aihorde-public':'aihorde';
-  let last={ok:false,status:503,error:'AI Horde did not complete this request.'};
-  for(let m=0;m<models.length;m++){
-    for(let i=0;i<keys.length;i++){
-      const key=keys[i],isAnonymous=key===AIHORDE_ANONYMOUS_KEY;
-      providerLifecycleActivity(emit,{provider:runtimeProvider,model:models[m].name,
-        state:'running',phase:'connecting',attemptIndex:i,attemptCount:keys.length,
-        attemptNoun:isAnonymous?'anonymous route':'credential'});
-      const auth=await checkAIHordeCredential(key);
-      if(auth==='rejected'||auth==='missing'){
-        last={ok:false,status:401,error:'AI Horde rejected the configured API key. Verify the first AIHORDE_API_KEYS entry in Vercel.'};
-      }else{
-        const ms=Math.max(18000,Math.min(47000,Number(models[m].eta||0)*1000+18000));
-        const outcome=await aiHordeNativeTextRequest({key,model:models[m].name,messages,
-          maxTokens:Math.min(
-            effortOutputBudgetFor(message,responseEffort),
-            [180,320,512,768,1024,1400][responseEffortRank(responseEffort)]||512
-          ),timeoutMs:ms});
-        if(outcome.ok&&outcome.text){
-          providerLifecycleActivity(emit,{provider:runtimeProvider,model:models[m].name,
-            state:'completed',phase:'connected',attemptIndex:i,attemptCount:keys.length,
-            attemptNoun:isAnonymous?'anonymous route':'credential'});
-          const headers=passthroughHeaders(null,runtimeProvider,models[m].name,fallbackFrom,
-            isAnonymous?(routedReason||'aihorde-anonymous'):routedReason,i,keys.length);
-          return {ok:true,response:new Response(outcome.text,{headers}),finishState:{reason:'stop'}};
-        }
-        last=outcome;
-      }
-      if(!autoFallback){
-        providerLifecycleActivity(emit,{provider:runtimeProvider,model:models[m].name,
-          state:'error',phase:'failed',detail:last.error,attemptIndex:i,attemptCount:keys.length});
-        return last;
-      }
-    }
-  }
-  return last;
-}
-
-async function runAIHorde({model,history,files,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,responseEffort='Instant'},{anonymous=false}={}){
-  if(model&&model!=='auto')return runAIHordeNativeSelected({model,history,files,message,systemInstruction,fallbackFrom,routedReason,emit,autoFallback,responseEffort},{anonymous});
-  const configuredKeys=anonymous?[]:providerCredentials(autoFallback?shuffle(getProviderKeys('aihorde')):getProviderKeys('aihorde',false),autoFallback).filter(k=>k!==AIHORDE_ANONYMOUS_KEY);
-  // Anonymous is an independent, last-resort attempt invoked only by the
-  // emergency fallback coordinator AFTER every registered Horde key fails.
-  const keys=anonymous?[AIHORDE_ANONYMOUS_KEY]:configuredKeys;
-  if(!keys.length)return {ok:false,status:503,error:'AI Horde API key is not configured. Anonymous fallback is OFF.'};
-  const runtimeProvider=anonymous?'aihorde-public':'aihorde';
-  const autoMode=!model||model==='auto';
-  // A bounded overall budget avoids 70-80 second waits per anonymous/key attempt.
-  // Explicitly chosen models keep the existing timeouts.
-  const autoDeadline=autoMode?Date.now()+56000:Infinity;
-
-  const hasImage=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
-  if(hasImage) return {ok:false,status:415,error:'AI Horde text route does not directly process image attachments.'};
-
-  let candidates;
-  try{
-    candidates=await resolveAIHordeModels(model||'auto',message,AbortSignal.timeout(autoMode?7000:12000));
-  }catch(e){
-    return {ok:false,status:503,error:e?.message||'AI Horde model list is unavailable.'};
-  }
-  if(!candidates.length) return {ok:false,status:503,error:'No suitable AI Horde text model is currently active.'};
-  if(!autoFallback)candidates=candidates.slice(0,1); // Auto chooses ONE active model; never switches on failure.
-
-  const messages=buildOpenAIMessages(history,message,systemInstruction);
-  let last='AI Horde could not complete a generation.'; let status=503;
-
-  for(let m=0;m<candidates.length;m++){
-    const resolved=candidates[m];
-    for(let i=0;i<keys.length;i++){
-      const remaining=autoDeadline-Date.now();
-      if(autoMode&&remaining<3000){
-        return {ok:false,status:504,error:'AI Horde Auto reached its quick-response time budget. No worker finished in time; retry shortly.'};
-      }
-      const attemptMs=autoMode
-        ?Math.max(3000,Math.min(26000,remaining-1500))
-        :null;
-      const isAnonymousKey=keys[i]===AIHORDE_ANONYMOUS_KEY;
-      providerLifecycleActivity(emit,{
-        provider:runtimeProvider,model:resolved.name,state:'running',phase:'connecting',
-        detail:m>0?`Trying another active AI Horde model: ${resolved.name}`:'',
-        attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
-      });
-      try{
-        const res=await fetch('https://oai.aihorde.net/v1/chat/completions',{
-          method:'POST',
-          headers:{
-            apikey:keys[i],
-            Authorization:`Bearer ${keys[i]}`,
-            'Content-Type':'application/json',
-            'Client-Agent':AIHORDE_CLIENT_AGENT
-          },
-          body:JSON.stringify({
-            model:resolved.name,
-            stream:false,
-            messages,
-            max_tokens:autoMode
-              ?Math.min(effortOutputBudgetFor(message,responseEffort),isAnonymousKey?768:(responseEffortRank(responseEffort)>=4?1536:1024),
-                String(message||'').length<=150&&!/\b(code|program|source|implementation|essay|explain in detail|detalyado|mahaba)\b/i.test(String(message||''))?Math.max(320,320+responseEffortRank(responseEffort)*96):1536)
-              :Math.min(effortOutputBudgetFor(message,responseEffort),isAnonymousKey?1024:(responseEffortRank(responseEffort)>=4?3072:2048)),
-            temperature:temperatureFor(message,files),
-            timeout:autoMode?Math.max(3,Math.floor(attemptMs/1000)-1):isAnonymousKey?55:65
-          }),
-          signal:AbortSignal.timeout(autoMode?attemptMs:isAnonymousKey?70000:80000)
-        });
-        status=res.status;
-        const raw=await res.text();
-        let data;
-        try{data=JSON.parse(raw);}catch(_){data={raw};}
-        const text=data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.text ?? '';
-        if(res.ok&&typeof text==='string'&&text.trim()){
-          providerLifecycleActivity(emit,{
-            provider:runtimeProvider,model:resolved.name,state:'completed',phase:'connected',
-            detail:`${providerLabel(runtimeProvider)} connected with ${resolved.name}${isAnonymousKey?' via anonymous route':''}`,
-            attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
-          });
-          const headers=passthroughHeaders(res,runtimeProvider,data?.model||resolved.name,fallbackFrom,
-            isAnonymousKey?(routedReason||'aihorde-anonymous'):routedReason,i,keys.length);
-          return {ok:true,response:new Response(text.trim(),{headers}),finishState:{reason:'stop'}};
-        }
-
-        last=summarizeAIHordeError(status,data,raw);
-        const credentialFailure=isAIHordeCredentialFailure(status,last);
-        const generationFailure=(res.ok&&!String(text||'').trim())||isAIHordeGenerationFailure(status,last);
-        const hasNextKey=i<keys.length-1;
-        const hasNextModel=m<candidates.length-1;
-
-        // Credential errors rotate credentials. Generation/worker errors rotate
-        // models after credentials are exhausted. Both remain entirely in AI Horde.
-        if(credentialFailure && hasNextKey){
-          providerLifecycleActivity(emit,{
-            provider:runtimeProvider,model:resolved.name,state:'warning',phase:'retry',
-            detail:`AI Horde route unavailable — trying the next Horde route`,
-            attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
-          });
-          continue;
-        }
-        if(generationFailure && hasNextKey && !isAnonymousKey){
-          // A registered key can have different priority/kudos; try Horde's public
-          // route before abandoning a currently active model.
-          providerLifecycleActivity(emit,{
-            provider:runtimeProvider,model:resolved.name,state:'warning',phase:'retry',
-            detail:`AI Horde did not complete this generation — retrying within AI Horde`,
-            attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'
-          });
-          continue;
-        }
-        if(generationFailure && hasNextModel){
-          providerLifecycleActivity(emit,{
-            provider:runtimeProvider,model:resolved.name,state:'warning',phase:'retry',
-            detail:`AI Horde model did not return a generation — trying another active model`,
-            attemptIndex:m,attemptCount:candidates.length,attemptNoun:'model'
-          });
-          break;
-        }
-
-        providerLifecycleActivity(emit,{
-          provider:runtimeProvider,model:resolved.name,state:'error',phase:'failed',
-          detail:generationFailure?'AI Horde could not complete a generation with the available active models.':last,
-          attemptIndex:i,attemptCount:keys.length,attemptNoun:isAnonymousKey?'anonymous route':'credential'
-        });
-        return {ok:false,status,error:generationFailure?'AI Horde is currently unable to complete this generation. Please retry shortly.':last};
-      }catch(e){
-        status=503;last=e?.message||String(e);
-        const hasNextKey=i<keys.length-1;
-        const hasNextModel=m<candidates.length-1;
-        if(autoMode&&autoDeadline-Date.now()<3000){
-          return {ok:false,status:504,error:'AI Horde Auto reached its quick-response time budget. No worker finished in time; retry shortly.'};
-        }
-        if(hasNextKey) continue;
-        if(hasNextModel) break;
-        return {ok:false,status,error:'AI Horde timed out before a generation completed. Please retry shortly.'};
-      }
-    }
-  }
-  return {ok:false,status,error:last||`${providerLabel(runtimeProvider)} unavailable`};
-}
-async function runAnonymousAIHordeFallback(args){
-  return runAIHorde({...args,routedReason:'fallback-public'},{anonymous:true});
 }
 
 
@@ -5089,75 +4284,33 @@ async function runBailucode(args){
   return anthropic.ok?anthropic:openai;
 }
 
-function fallbackProviderCandidates(selectedProvider,{
-  providers=PROVIDERS,isConfigured=configured,limit=API_GUARD.maxFallbackProviders,files=[]
-}={}){
-  const hasImage=Array.isArray(files)&&files.some(file=>String(file?.mimeType||'').startsWith('image/')&&file?.data);
-  const hasVideo=Array.isArray(files)&&files.some(file=>String(file?.mimeType||'').startsWith('video/')&&file?.data);
-  const order=['gemini','cloudflare','groq','openrouter','mistral','cohere','nvidia','hcnsec','bailucode'];
-  return order
-    .filter(provider=>provider!==selectedProvider&&providers[provider]&&isConfigured(provider))
-    .filter(provider=>!hasVideo||provider==='gemini')
-    .filter(provider=>!hasImage||provider==='gemini'||provider==='cloudflare')
-    .slice(0,Math.max(0,Number(limit)||0))
-    .map(provider=>({provider,model:providers[provider].defaultModel}));
-}
 
 async function runAvailableProviderFallback(selectedProvider,args,{
-  body={},files=args?.files||[],providers=PROVIDERS,limit=API_GUARD.maxFallbackProviders,
-  runner=runProvider,includeEmergencyFallback=false,runRegistered=runAIHorde,
-  runAnonymous=runAnonymousAIHordeFallback
+  body={}
 }={}){
   if(args?.autoFallback!==true)return {ok:false,status:403,error:'Provider fallback is disabled.'};
-  const sameProviderModels=(providers[selectedProvider]?.models||[])
-    .filter(model=>model&&model!==args.model)
-    .slice(0,2);
-  let last={ok:false,status:503,error:'No other configured model provider is available.'};
-  for(const model of sameProviderModels){
-    const attempt=await runner(selectedProvider,{
-      ...args,
-      model,
-      customApiKeys:sanitizeCustomProviderKeys(body,selectedProvider),
-      autoFallback:true,
-      fallbackFrom:selectedProvider,
-      routedReason:'credit-model-fallback'
-    });
-    if(attempt?.ok)return {...attempt,fallbackProvider:selectedProvider,fallbackModel:model};
-    last=attempt||last;
+  // Bailu-only fallback semantics: there is no other chat provider to fall
+  // back to. runBailucode already walks the selected route's shuffled key
+  // pool and, with fallback on, crosses to the other route internally. This
+  // layer serves callers whose primary attempt ran with a pinned route or a
+  // completed-but-empty stream (continuations, zero-text hardening): force
+  // the SAME Bailu model on the OTHER route (Normal<->Anthropic) as the last
+  // resort, then surface the honest error. Another provider never answers.
+  if(selectedProvider!=='bailucode'){
+    return {ok:false,status:503,error:'No fallback is available: Bailucode is the only chat provider.'};
   }
-  const candidates=fallbackProviderCandidates(selectedProvider,{
-    providers,limit,files,
-    isConfigured:provider=>configured(provider)||sanitizeCustomProviderKeys(body,provider).length>0
+  const currentRoute=args?.bailuRoute==='anthropic'?'anthropic':'normal';
+  const otherRoute=currentRoute==='anthropic'?'normal':'anthropic';
+  const attempt=await runBailucode({
+    ...args,
+    bailuRoute:otherRoute,
+    autoFallback:true,
+    fallbackFrom:selectedProvider,
+    routedReason:args?.routedReason||'bailu-cross-route-fallback',
+    customApiKeys:sanitizeCustomProviderKeys(body,'bailucode')
   });
-  for(const candidate of candidates){
-    const attempt=await runner(candidate.provider,{
-      ...args,
-      model:candidate.model,
-      customApiKeys:sanitizeCustomProviderKeys(body,candidate.provider),
-      customApiProfile:null,
-      autoFallback:true,
-      fallbackFrom:selectedProvider,
-      routedReason:'credit-exhaustion-fallback'
-    });
-    if(attempt?.ok)return {...attempt,fallbackProvider:candidate.provider,fallbackModel:candidate.model};
-    last=attempt||last;
-  }
-  const hasUnsupportedMedia=Array.isArray(files)&&files.some(file=>
-    file?.data&&/^(?:image|video)\//i.test(String(file?.mimeType||''))
-  );
-  if(includeEmergencyFallback&&!hasUnsupportedMedia){
-    const emergencyArgs={
-      ...args,model:'auto',fallbackFrom:selectedProvider,
-      autoFallback:true,routedReason:'credit-continuation-emergency'
-    };
-    const registered=await runRegistered(emergencyArgs);
-    if(registered?.ok)return {...registered,fallbackProvider:'aihorde',fallbackModel:'auto'};
-    last=registered||last;
-    const anonymous=await runAnonymous(emergencyArgs);
-    if(anonymous?.ok)return {...anonymous,fallbackProvider:'aihorde-public',fallbackModel:'auto'};
-    last=anonymous||last;
-  }
-  return last;
+  if(attempt?.ok)return {...attempt,fallbackProvider:'bailucode',fallbackModel:args.model};
+  return attempt||{ok:false,status:503,error:'Bailucode is unavailable on both routes.'};
 }
 
 async function runProvider(provider,args){
@@ -5171,12 +4324,7 @@ async function runProvider(provider,args){
       responseEffort:args.responseEffort||'Instant'
     });
   }
-  if(provider==='gemini')return runGemini(args);
-  if(provider==='cloudflare')return runCloudflare(args);
-  if(provider==='cohere')return runCohere(args);
-  if(provider==='aihorde')return runAIHorde(args);
   if(provider==='bailucode')return runBailucode(args);
-  if(['groq','openrouter','mistral','nvidia','hcnsec'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
@@ -5286,7 +4434,7 @@ function applyChatFeatureSettings(body={}){
 }
 async function processChat(body, emit) {
   body=applyChatFeatureSettings(body);
-  let {message,history=[],files=[],provider='gemini',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone,bailuRoute,voiceResponseLanguage} = body;
+  let {message,history=[],files=[],provider='bailucode',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone,bailuRoute,voiceResponseLanguage} = body;
   bailuRoute=bailuRoute==='anthropic'?'anthropic':'normal';
   // Strict routing contract: fallback/router are opt-in only. Truthy strings,
   // missing fields, or stale client values must never silently enable them.
@@ -5324,15 +4472,15 @@ async function processChat(body, emit) {
     provider='custom-api';model=customApiProfile.model;
   }else{
     if(!PROVIDERS[provider]){
+      // Bailu-only: an unknown or retired provider id (e.g. a stale client
+      // selection from the multi-provider era) resolves to Bailucode when
+      // fallback is on, and is an honest error when it is off.
       if(!autoFallback)return {ok:false,status:400,error:'The selected provider is not available; fallback is OFF.',provider,startedAt};
-      provider='gemini';
+      provider='bailucode';
     }
     const selected=String(model||'').trim();
-    // Auto remains an internal fallback route for other failed providers, but
-    // must never be a user-selectable AI Horde chat model.
-    if(provider==='aihorde')return {ok:false,status:400,error:'AI Horde is emergency fallback only. Select your normal provider and enable Auto Provider Fallback in settings.',provider,startedAt};
     const allowed=PROVIDERS[provider].models.includes(selected);
-    const dynamic=selected&&(DYNAMIC_MODEL_PROVIDERS.has(provider)||provider==='aihorde');
+    const dynamic=selected&&DYNAMIC_MODEL_PROVIDERS.has(provider);
     if(selected&&!allowed&&!dynamic&&!autoFallback){
       return {ok:false,status:400,error:'The selected model '+selected+' is not configured for '+providerLabel(provider)+'. Fallback is OFF; select a supported model manually.',provider,startedAt};
     }
@@ -5441,13 +4589,15 @@ async function processChat(body, emit) {
     activity(emit,'attachment-media','Uploaded media has no readable image/video data','warning','file');
     return {ok:false,status:422,error:`The uploaded media "${attachmentRootName(missingMedia).slice(0,80)}" could not be prepared for visual analysis. Try a supported image or a video format the browser can decode.`,provider,startedAt};
   }
-  const directVision=provider==='gemini' ||
-    (provider==='cloudflare'&&model==='@cf/google/gemma-4-26b-a4b-it');
+  // Bailu-only: no provider receives media directly as a "vision model" in
+  // the main request; attachment evidence is extracted by the Bailu vision
+  // attempt inside analyzeMediaForNonVisionProvider and passed as text.
+  const directVision=false;
   const mediaAnalysisContext=visualParts.length
     ? await analyzeMediaForNonVisionProvider(
         files,
         taskMessage,
-        directVision?(provider==='gemini'?'gemini':'cloudflare-vision'):provider,
+        provider,
         model,
         emit,
         requestCustomKeys,
@@ -5455,7 +4605,7 @@ async function processChat(body, emit) {
       )
     : '';
   if(visualParts.length&&!directVision&&mediaAnalysisContext===null){
-    return {ok:false,status:415,error:'The attached image/video frames could not be visually read by the configured vision analyzers. Your selected response model was not changed. Check the Gemini or Cloudflare vision configuration, or choose a vision-capable model.',provider,startedAt};
+    return {ok:false,status:415,error:'The attached image/video frames could not be visually read by Bailucode. Your selected response model was not changed.',provider,startedAt};
   }
   // Every non-vision response model receives the evidence-bearing analysis
   // as text in its system context, never unsupported raw media parts.
@@ -5854,7 +5004,7 @@ async function processChat(body, emit) {
   // has already tried ALL of its configured keys (and any supported same-
   // provider model alternatives) before returning a quota/auth failure here.
   if(autoFallback&&fallbackable){
-    activity(emit,'fallback','Selected provider exhausted — checking other configured models','running','fallback');
+    activity(emit,'fallback','Bailucode route exhausted — retrying on the other Bailu route','running','fallback');
     const providerFallback=await runAvailableProviderFallback(provider,{
       model,history,files,message,systemInstruction,emit,autoFallback:true,
       responseEffort,customApiKeys:requestCustomKeys,customApiProfile,unifiedTools:UNIFIED_TOOLS
@@ -5871,48 +5021,6 @@ async function processChat(body, emit) {
         resolvedModel:fallbackModel,systemInstruction,
         activityTaskLabel:'Thinking',activityTaskKind:'process',locationToolAppendix
       };
-    }
-
-    const hasImageForPublicFallback=Array.isArray(files)&&files.some(f=>f?.mimeType?.startsWith('image/')&&f?.data);
-    if(!hasImageForPublicFallback){
-      activity(emit,'fallback','Selected provider exhausted — checking registered AI Horde','running','fallback');
-      const registeredHorde=await runAIHorde({
-        model:'auto',history,files,message,systemInstruction,fallbackFrom:provider,
-        routedReason:'fallback-aihorde-registered',emit,autoFallback:true,responseEffort
-      });
-      if(registeredHorde.ok){
-        activity(emit,'fallback','Registered AI Horde connected','completed','fallback');
-        activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
-        return {
-          ok:true,response:registeredHorde.response,
-          finishState:registeredHorde.finishState||{reason:'stop'},startedAt,
-          resolvedProvider:registeredHorde.response.headers.get('x-ai-provider')||'aihorde',
-          resolvedModel:registeredHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
-          activityTaskLabel:'Thinking',
-          activityTaskKind:'process',locationToolAppendix
-        };
-      }
-      activity(emit,'fallback','Registered AI Horde unavailable — trying anonymous AI Horde','running','fallback');
-      const publicHorde=await runAnonymousAIHordeFallback({
-        model:'auto',history,files,message,systemInstruction,fallbackFrom:provider,
-        routedReason:'fallback-public',emit,autoFallback:true,responseEffort
-      });
-      if(publicHorde.ok){
-        activity(emit,'fallback','Anonymous AI Horde connected','completed','fallback');
-        activity(emit,'generation',taskGeneration.label,'running',taskGeneration.kind);
-        return {
-          ok:true,response:publicHorde.response,
-          finishState:publicHorde.finishState||{reason:'stop'},startedAt,
-          resolvedProvider:publicHorde.response.headers.get('x-ai-provider')||'aihorde-public',
-          resolvedModel:publicHorde.response.headers.get('x-ai-model')||'auto',systemInstruction,
-          activityTaskLabel:'Thinking',
-          activityTaskKind:'process',locationToolAppendix
-        };
-      }
-      activity(emit,'fallback','Both emergency AI Horde routes are unavailable','error','fallback');
-      return {ok:false,status:publicHorde.status||503,
-        error:'All configured keys for the selected provider failed, and both AI Horde fallback routes are unavailable. '+String(publicHorde.error||'').slice(0,170),
-        provider,startedAt};
     }
   }
 
@@ -5944,7 +5052,7 @@ async function mediaCapabilitySnapshot(){
 }
 
 
-const DYNAMIC_MODEL_PROVIDERS = new Set(['nvidia','hcnsec','bailucode']);
+const DYNAMIC_MODEL_PROVIDERS = new Set(['bailucode']);
 
 function providerModelsUrl(provider){
   const envName=provider.toUpperCase()+'_BASE_URL';
@@ -5955,8 +5063,6 @@ function providerModelsUrl(provider){
     return custom+'/v1/models';
   }
   return ({
-    nvidia:'https://integrate.api.nvidia.com/v1/models',
-    hcnsec:'https://api.hcnsec.cn/v1/models',
     bailucode:'https://bailucode.com/openapi/v1/models'
   })[provider] || '';
 }
@@ -6018,16 +5124,6 @@ async function providerUsageSnapshot(){
   for(const p of Object.keys(PROVIDERS)) providers[p]={configured:configured(p),status:configured(p)?'ready':'not-configured',credentials:credentialCount(p)};
   providers.cloudflare.freeDailyNeurons=10000;
 
-  const openRouterKeys=getProviderKeys('openrouter');
-  if(openRouterKeys.length){
-    try{
-      const r=await fetch('https://openrouter.ai/api/v1/key',{headers:{Authorization:`Bearer ${openRouterKeys[0]}`},signal:AbortSignal.timeout(5000)});
-      if(r.ok){
-        const d=(await r.json()).data||{};
-        providers.openrouter.usage={limit:d.limit,limit_remaining:d.limit_remaining,limit_reset:d.limit_reset,usage:d.usage,usage_daily:d.usage_daily,usage_weekly:d.usage_weekly,usage_monthly:d.usage_monthly,is_free_tier:d.is_free_tier};
-      }
-    }catch(_){}
-  }
   return providers;
 }
 
@@ -6355,7 +5451,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
           const activityContextMessage=contextualTaskMessage(body.message||'',body.history||[]);
           const result=await processChat(body,emit);
           if(!result.ok){
-            send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'gemini'});
+            send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'bailucode'});
             clearInterval(keepAlive);
             controller.close();
             return;
@@ -6368,7 +5464,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
           let activeResponse=result.response;
           let activeFinishState=result.finishState||{reason:'unknown'};
           let continuationCount=0;
-          let resolvedProvider=result.resolvedProvider||meta.provider||body.provider||'gemini';
+          let resolvedProvider=result.resolvedProvider||meta.provider||body.provider||'bailucode';
           let resolvedModel=result.resolvedModel||meta.model||body.model||PROVIDERS[resolvedProvider]?.defaultModel;
           const continuationSystemInstruction=(result.systemInstruction||'') +
             ' AUTOMATIC CONTINUATION MODE: When continuing a previous answer, continue seamlessly without repeating earlier text. Do not add "Part 2", "Continuation", or a new introduction.';
@@ -6475,11 +5571,11 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
             if(!continuation.ok&&body.autoFallback===true&&isFallbackableProviderFailure(continuation.status,continuation.error)){
               send('activity',{
                 type:'activity',id:`auto-continue-${continuationCount}`,
-                label:'Continuation key exhausted — checking other configured models',
+                label:'Continuation key exhausted — retrying Bailucode on the other route',
                 state:'warning',kind:'generate',at:Date.now()
               });
               continuation=await runAvailableProviderFallback(resolvedProvider,continuationArgs,{
-                body,files:continuationArgs.files,includeEmergencyFallback:true
+                body,files:continuationArgs.files
               });
             }
 
@@ -6617,7 +5713,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
           // keep telling the truth. Only a zero-length result after trimming
           // counts as empty — a short reply such as "OK" is a real answer.
           if(!cancelled&&body.autoFallback===true&&!generatedText.trim()&&!nativeDirectionsAppendix){
-            send('activity',{type:'activity',id:'empty-response-fallback',label:'The selected model returned an empty response — trying another configured model',state:'warning',kind:'fallback',at:Date.now()});
+            send('activity',{type:'activity',id:'empty-response-fallback',label:'The selected model returned an empty response — retrying Bailucode on the other route',state:'warning',kind:'fallback',at:Date.now()});
             const emptyFallbackArgs={
               model:resolvedModel,
               history:Array.isArray(body.history)?body.history:[],
@@ -6634,7 +5730,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
             };
             let emptyFallback=null;
             try{
-              emptyFallback=await runAvailableProviderFallback(resolvedProvider,emptyFallbackArgs,{body,files:emptyFallbackArgs.files,includeEmergencyFallback:true});
+              emptyFallback=await runAvailableProviderFallback(resolvedProvider,emptyFallbackArgs,{body,files:emptyFallbackArgs.files});
             }catch(_){ emptyFallback=null; }
             if(emptyFallback?.ok&&emptyFallback.response?.body){
               activeResponse=emptyFallback.response;
@@ -6657,7 +5753,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
               }catch(_){/* an unreadable fallback stream leaves the text empty; the failure return below reports it */}
             }
             if(!generatedText.trim()){
-              send('error',{message:'The selected model returned an empty response, and no fallback model could answer. Please try again.',status:502,provider:resolvedProvider});
+              send('error',{message:'The selected model returned an empty response, and Bailucode could not answer on either route. Please try again.',status:502,provider:resolvedProvider});
               clearInterval(keepAlive);
               try{controller.close();}catch(_){}
               return;
@@ -7467,7 +6563,6 @@ export default async function handler(req){
     if(body.action==='tts') return serverTTS(body);
     if(body.action==='media-capability-status') return json({media:await mediaCapabilitySnapshot()});
     if(body.action==='provider-models') return json({providers:await dynamicModelCatalog()});
-    if(body.action==='aihorde-live-models') return json(await liveAIHordePickerModels(body.preferredModels));
     if(body.action==='custom-api-models'){
       const p=sanitizeCustomApiProfile(body);
       if(!p)return json({error:'Valid API key and HTTPS Base URL are required.'},400);
@@ -7493,6 +6588,6 @@ export default async function handler(req){
 
     const result=await processChat(body,null);
     if(result.ok)return result.response;
-    return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'gemini'});
+    return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'bailucode'});
   }catch(e){return json({error:e?.message||String(e)},500);}
 }
