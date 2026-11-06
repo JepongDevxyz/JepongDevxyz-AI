@@ -15,22 +15,22 @@
           <span class="brand-mark" aria-hidden="true">J</span>
           <span class="brand-name">JepongDevxyz AI</span>
         </button>
-        <button class="icon-btn sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar" title="Toggle sidebar">☰</button>
+        <button class="icon-btn sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar" title="Toggle sidebar"><span data-icon="panel-left" data-size="16"></span></button>
       </div>
 
-      <button class="nav-row new-chat" id="newChatBtn" type="button"><span class="nav-icon">＋</span><span class="nav-label">New Chat</span></button>
+      <button class="nav-row new-chat" id="newChatBtn" type="button"><span class="nav-icon"><span data-icon="message-square-plus" data-size="18"></span></span><span class="nav-label">New Chat</span></button>
 
       <div class="search-wrap" id="searchWrap">
-        <span class="search-icon" aria-hidden="true">⌕</span>
+        <span class="search-icon" aria-hidden="true"><span data-icon="search" data-size="16"></span></span>
         <input id="chatSearch" type="search" placeholder="Search Chats" aria-label="Search chats" autocomplete="off">
-        <button id="clearSearch" class="clear-search" type="button" aria-label="Clear search" hidden>×</button>
+        <button id="clearSearch" class="clear-search" type="button" aria-label="Clear search" hidden><span data-icon="circle-x" data-size="14"></span></button>
       </div>
-      <button class="nav-row rail-search" id="railSearchBtn" type="button" aria-label="Search chats"><span class="nav-icon">⌕</span></button>
+      <button class="nav-row rail-search" id="railSearchBtn" type="button" aria-label="Search chats"><span class="nav-icon"><span data-icon="search" data-size="16"></span></span></button>
 
       <div id="externalRows">
-        <button class="nav-row" id="communityBtn" type="button"><span class="nav-icon">◎</span><span class="nav-label">Community</span></button>
-        <button class="nav-row" id="coderBtn" type="button"><span class="nav-icon">⌘</span><span class="nav-label">Coder</span></button>
-        <button class="nav-row" id="createBtn" type="button"><span class="nav-icon">✦</span><span class="nav-label">Create</span></button>
+        <button class="nav-row" id="communityBtn" type="button"><span class="nav-icon"><span data-icon="layout-grid" data-size="18"></span></span><span class="nav-label">Community</span></button>
+        <button class="nav-row" id="coderBtn" type="button"><span class="nav-icon"><span data-icon="square-terminal" data-size="18"></span></span><span class="nav-label">Coder</span></button>
+        <button class="nav-row" id="createBtn" type="button"><span class="nav-icon"><span data-icon="sparkles" data-size="18"></span></span><span class="nav-label">Create</span></button>
       </div>
 
       <div class="sidebar-scroll" id="sidebarScroll">
@@ -42,16 +42,16 @@
         </div>
         <div id="searchResults" class="history-list"></div>
         <div id="historySections">
-          <button class="section-head" id="projectsToggle" type="button" aria-expanded="true"><span>Projects</span><span class="chev">⌄</span></button>
+          <button class="section-head" id="projectsToggle" type="button" aria-expanded="true"><span>Projects</span><span class="chev"><span data-icon="chevron-down" data-size="12"></span></span></button>
           <div id="projectsBody">
             <div id="projectList"></div>
-            <button class="nav-row subtle" id="newProjectBtn" type="button"><span class="nav-icon">＋</span><span class="nav-label">New Project</span></button>
+            <button class="nav-row subtle" id="newProjectBtn" type="button"><span class="nav-icon"><span data-icon="plus" data-size="16"></span></span><span class="nav-label">New Project</span></button>
           </div>
-          <button class="section-head" id="allChatsToggle" type="button" aria-expanded="true"><span>All chats</span><span class="chev">⌄</span></button>
+          <button class="section-head" id="allChatsToggle" type="button" aria-expanded="true"><span>All chats</span><span class="chev"><span data-icon="chevron-down" data-size="12"></span></span></button>
           <div id="historyList" class="history-list"></div>
         </div>
         <div id="archivedSection">
-          <button class="section-head" id="archivedToggle" type="button" aria-expanded="false"><span>Archived</span><span class="chev">›</span></button>
+          <button class="section-head" id="archivedToggle" type="button" aria-expanded="false"><span>Archived</span><span class="chev"><span data-icon="chevron-right" data-size="12"></span></span></button>
           <div id="archivedList" class="history-list" hidden></div>
         </div>
       </div>
@@ -63,36 +63,36 @@
         </button>
         <button id="upgradeBtn" class="upgrade-pill" type="button">Upgrade</button>
         <div id="profileMenu" class="profile-menu" role="menu" hidden>
-          <div class="menu-header" id="profileMenuHeader">Local profile</div>
-          <button type="button" data-profile-action="upgrade">Upgrade Plan</button>
-          <button type="button" data-profile-action="usage">Usage</button>
-          <button type="button" data-profile-action="settings">Settings</button>
-          <button type="button" data-profile-action="archived">Archived Chats</button>
-          <button type="button" data-profile-action="support">Customer Service Center</button>
+          <div class="menu-header"><span class="pm-ic"><span data-icon="user" data-size="16"></span></span><span id="profileMenuHeader">Local profile</span></div>
+          <button type="button" data-profile-action="upgrade"><span class="pm-ic"><span data-icon="sparkles" data-size="16"></span></span>Upgrade Plan</button>
+          <button type="button" data-profile-action="usage"><span class="pm-ic"><span data-icon="usage" data-size="16"></span></span>Usage</button>
+          <button type="button" data-profile-action="settings"><span class="pm-ic"><span data-icon="settings" data-size="16"></span></span>Settings</button>
+          <button type="button" data-profile-action="archived"><span class="pm-ic"><span data-icon="archive" data-size="16"></span></span>Archived Chats</button>
+          <button type="button" data-profile-action="support"><span class="pm-ic"><span data-icon="headset" data-size="16"></span></span>Customer Service Center</button>
           <div class="menu-sep"></div>
-          <button type="button" class="danger-text" data-profile-action="logout">Log out</button>
+          <button type="button" class="danger-text" data-profile-action="logout"><span class="pm-ic"><span data-icon="log-out" data-size="16"></span></span>Log out</button>
         </div>
       </div>
     </aside>
+    <div id="sidebarScrim" class="sidebar-scrim" hidden></div>
 
     <main class="main-card" id="mainCard">
       <header class="topbar">
+        <button id="mobileMenuBtn" class="icon-btn mobile-menu-btn" type="button" aria-label="Open menu"><span data-icon="panel-left" data-size="16"></span></button>
         <div class="model-wrap">
           <button id="modelBtn" class="model-btn" type="button" aria-haspopup="dialog" aria-expanded="false">
-            <span id="selectedModelName">Gemini Flash Latest</span><span class="chev">⌄</span>
+            <span id="selectedModelName">Gemini Flash Latest</span><span class="chev"><span data-icon="chevron-down" data-size="12"></span></span>
           </button>
           <div id="modelPanel" class="model-panel" hidden>
-            <div class="model-panel-head"><strong>Current Model</strong><span id="modelCount"></span></div>
-            <input id="modelSearch" type="search" placeholder="Search models" aria-label="Search models">
+            <div class="model-panel-head"><span class="mp-title">Model <span class="mp-info"><span data-icon="info" data-size="16"></span></span></span><span class="mp-compare"><span>Model Comparison</span><button id="modelCompareToggle" class="switch wide" type="button" role="switch" aria-checked="false" aria-label="Model Comparison"></button></span></div>
             <div id="modelList" class="model-list"></div>
-            <button id="expandModelsBtn" class="expand-models" type="button">Expand more models ⌄</button>
-            <div class="model-compare"><span>Model Comparison</span><button id="modelCompareToggle" class="switch" type="button" role="switch" aria-checked="false" aria-label="Model Comparison"></button></div>
+            <button id="expandModelsBtn" class="expand-models" type="button"><span>Expand more models</span><span data-icon="chevron-right" data-size="14"></span></button>
           </div>
         </div>
         <div class="top-actions">
-          <button id="topUpgradeBtn" class="black-pill" type="button">Upgrade</button>
-          <button id="tempChatBtn" class="temp-btn" type="button" aria-pressed="false" title="Temporary Chat — This won't appear in your chat history.">▦</button>
-          <button id="currentChatMenuBtn" class="icon-btn" type="button" aria-label="Current chat menu" hidden>•••</button>
+          <button id="topUpgradeBtn" class="black-pill" type="button"><span data-icon="star4" data-size="14"></span><span>Upgrade</span></button>
+          <button id="tempChatBtn" class="temp-btn" type="button" aria-pressed="false" title="Temporary Chat — This won't appear in your chat history."><span data-icon="temp-chat" data-size="20"></span></button>
+          <button id="currentChatMenuBtn" class="icon-btn" type="button" aria-label="Current chat menu" hidden><span data-icon="ellipsis" data-size="20"></span></button>
         </div>
       </header>
 
@@ -100,8 +100,10 @@
         <div id="temporaryBanner" class="temporary-banner" hidden>
           <h1>Temporary Chat</h1>
           <p>This chat won't appear in history and your messages will not be saved.</p>
+          <div id="tempComposerSlot" class="temp-composer-slot"></div>
         </div>
         <div id="homeView" class="home-view">
+          <div class="home-logo" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9h22"/><path d="M29 9v21a9 9 0 0 1-18 0v-3"/></svg></div>
           <h1 id="homeGreeting">How can I help you?</h1>
           <div id="homeComposerSlot" class="home-composer-slot"></div>
         </div>
@@ -121,12 +123,12 @@
     </main>
 
     <aside id="activityDrawer" class="activity-drawer" aria-label="Activity and search" hidden>
-      <div class="drawer-head"><h2>Activity and Search</h2><button id="drawerClose" class="icon-btn" type="button" aria-label="Close activity">×</button></div>
+      <div class="drawer-head"><h2>Activity and Search</h2><button id="drawerClose" class="icon-btn" type="button" aria-label="Close activity"><span data-icon="x" data-size="12"></span></button></div>
       <div id="activityList" class="activity-list"></div>
     </aside>
 
     <section id="settingsPage" class="settings-page" hidden aria-label="Settings">
-      <header class="settings-top"><button id="settingsBack" class="back-btn" type="button">← Settings</button></header>
+      <header class="settings-top"><button id="settingsBack" class="back-btn" type="button"><span data-icon="arrow-left" data-size="16"></span><span>Settings</span></button></header>
       <div class="settings-layout">
         <nav id="settingsNav" class="settings-nav" aria-label="Settings sections"></nav>
         <div class="settings-content-wrap"><div id="settingsContent" class="settings-content"></div></div>
@@ -137,44 +139,41 @@
   <div id="composerMount">
     <form id="composer" class="composer" autocomplete="off">
       <div id="attachmentChips" class="attachment-chips" hidden></div>
-      <textarea id="composerInput" rows="1" placeholder="How can I help you?" aria-label="Message JepongDevxyz AI"></textarea>
-      <div class="composer-row">
-        <div class="composer-left">
-          <button id="toolsBtn" class="round-btn plus" type="button" aria-label="Select mode and tools" aria-haspopup="menu" aria-expanded="false">＋</button>
-        </div>
+      <div class="composer-main">
+        <button id="toolsBtn" class="round-btn plus" type="button" aria-label="Select mode and tools" aria-haspopup="menu" aria-expanded="false"><span data-icon="circle-plus" data-size="18"></span></button>
+        <textarea id="composerInput" rows="1" placeholder="How can I help you today?" aria-label="Message JepongDevxyz AI"></textarea>
         <div class="composer-right">
-          <button id="responseModeBtn" class="mode-btn" type="button" aria-haspopup="menu" aria-expanded="false"><span id="responseModeLabel">Auto</span><span class="chev">⌄</span></button>
-          <button id="micBtn" class="round-btn mic" type="button" aria-label="Voice input" title="Voice input">🎙</button>
-          <button id="voiceModeBtn" class="round-btn voice-mode" type="button" aria-label="Read replies aloud" aria-pressed="false" title="Read replies aloud">≋</button>
-          <button id="sendBtn" class="send-btn" type="submit" aria-label="Send" disabled>↑</button>
-          <button id="stopBtn" class="send-btn stop" type="button" aria-label="Stop generating" hidden>■</button>
+          <button id="responseModeBtn" class="mode-btn" type="button" aria-haspopup="menu" aria-expanded="false"><span id="responseModeLabel">Auto</span><span class="chev"><span data-icon="chevron-up" data-size="12"></span></span></button>
+          <button id="micBtn" class="round-btn mic" type="button" aria-label="Voice input" title="Voice input"><span data-icon="mic" data-size="18"></span></button>
+          <button id="voiceModeBtn" class="round-btn voice-mode" type="button" aria-label="Read replies aloud" aria-pressed="false" title="Read replies aloud"><span data-icon="audio-lines" data-size="16"></span></button>
+          <button id="sendBtn" class="send-btn" type="submit" aria-label="Send" disabled><span data-icon="arrow-up" data-size="16"></span></button>
+          <button id="stopBtn" class="send-btn stop" type="button" aria-label="Stop generating" hidden><span data-icon="stop" data-size="24"></span></button>
         </div>
       </div>
       <div id="toolsMenu" class="tools-menu" role="menu" hidden>
-        <button type="button" data-tool="upload">⇪ Upload</button>
-        <button type="button" data-tool="research">⌕ Research</button>
-        <button type="button" data-tool="image">▦ Create Image</button>
-        <button type="button" data-tool="video">▶ Generative Video</button>
-        <button type="button" data-tool="report">▤ Write Report</button>
-        <button type="button" data-tool="deep-research">◎ Deep Research</button>
-        <button type="button" data-tool="code">&lt;/&gt; Code</button>
-        <button type="button" data-tool="ppt">▣ PPT</button>
+        <button type="button" data-tool="upload"><span class="tool-ic"><span data-icon="upload" data-size="18"></span></span>Upload</button>
+        <button type="button" data-tool="agent"><span class="tool-ic"><span data-icon="agent-bot" data-size="18"></span></span>Agent Mode</button>
+        <button type="button" data-tool="image"><span class="tool-ic"><span data-icon="image-plus" data-size="18"></span></span>Create Image</button>
+        <button type="button" data-tool="video"><span class="tool-ic"><span data-icon="create-video" data-size="18"></span></span>Create Video</button>
+        <button type="button" data-tool="web"><span class="tool-ic"><span data-icon="globe" data-size="18"></span></span>Web search</button>
+        <button type="button" data-tool="deep-research"><span class="tool-ic"><span data-icon="graduation-cap" data-size="18"></span></span>Deep Research</button>
+        <button type="button" data-tool="code"><span class="tool-ic"><span data-icon="square-code" data-size="18"></span></span>Web Dev</button>
         <div class="more-wrap">
-          <button type="button" id="moreToolsBtn" aria-expanded="false">••• More <span>›</span></button>
+          <button type="button" id="moreToolsBtn" aria-expanded="false"><span class="tool-ic"><span data-icon="ellipsis" data-size="18"></span></span>More <span class="more-chev"><span data-icon="chevron-right" data-size="14"></span></span></button>
           <div id="moreToolsMenu" class="more-menu" hidden>
-            <button type="button" data-tool="slides">▣ Slides</button>
-            <button type="button" data-tool="artifacts">▤ Artifacts</button>
-            <button type="button" data-tool="learn">🎓 Learn</button>
-            <button type="button" data-tool="travel">✈ Travel Planner</button>
+            <button type="button" data-tool="slides"><span class="tool-ic"><span data-icon="presentation" data-size="18"></span></span>Slides</button>
+            <button type="button" data-tool="artifacts"><span class="tool-ic"><span data-icon="box" data-size="18"></span></span>Artifacts</button>
+            <button type="button" data-tool="learn"><span class="tool-ic"><span data-icon="book-open" data-size="18"></span></span>Learn</button>
+            <button type="button" data-tool="travel"><span class="tool-ic"><span data-icon="send" data-size="18"></span></span>Travel Planner</button>
           </div>
         </div>
         <div class="menu-sep"></div>
-        <label class="tools-toggle"><span>Tools</span><button id="toolsEnabledToggle" class="switch" type="button" role="switch" aria-checked="true" aria-label="Tools"></button></label>
+        <label class="tools-toggle"><span class="tools-label"><span class="tool-ic"><span data-icon="flask-conical" data-size="18"></span></span>Tools<span class="tool-spark"><span data-icon="sparkle" data-size="12"></span></span></span><button id="toolsEnabledToggle" class="switch wide" type="button" role="switch" aria-checked="true" aria-label="Tools"></button></label>
       </div>
       <div id="modeMenu" class="mode-menu" role="menu" hidden>
-        <button type="button" data-response-mode="Auto">Auto <span class="check">✓</span></button>
-        <button type="button" data-response-mode="Thinking">Thinking <span class="check">✓</span></button>
-        <button type="button" data-response-mode="Fast">Fast <span class="check">✓</span></button>
+        <button type="button" data-response-mode="Auto">Auto <span class="check"><span data-icon="check" data-size="14"></span></span></button>
+        <button type="button" data-response-mode="Thinking">Thinking <span class="check"><span data-icon="check" data-size="14"></span></span></button>
+        <button type="button" data-response-mode="Fast">Fast <span class="check"><span data-icon="check" data-size="14"></span></span></button>
       </div>
       <input id="fileInput" type="file" multiple hidden>
     </form>
