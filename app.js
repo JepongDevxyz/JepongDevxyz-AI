@@ -99,8 +99,8 @@ function cleanAssistantText(t){
   return s.replace(/\n{3,}/g,'\n\n').trim();
 }
 
-const MODELS=[{"provider": "gemini", "id": "gemini-flash-latest", "name": "Gemini Flash Latest", "desc": "Balanced all-around"}, {"provider": "gemini", "id": "gemini-3.8-flash", "name": "Gemini 3.8 Flash", "desc": "Advanced general tasks"}, {"provider": "gemini", "id": "gemini-3.7-flash", "name": "Gemini 3.7 Flash", "desc": "Reasoning"}, {"provider": "gemini", "id": "gemini-3.5-flash-lite", "name": "Gemini 3.5 Flash-Lite", "desc": "Fast/light"}, {"provider": "cloudflare", "id": "@cf/openai/gpt-oss-120b", "name": "GPT-OSS 120B", "desc": "Strong reasoning + coding"}, {"provider": "cloudflare", "id": "@cf/zai-org/glm-4.7-flash", "name": "GLM 4.7 Flash", "desc": "Strong coding + multilingual reasoning"}, {"provider": "cloudflare", "id": "@cf/nvidia/nemotron-3-120b-a12b", "name": "Nemotron 3 Super", "desc": "Agentic reasoning"}, {"provider": "cloudflare", "id": "@cf/qwen/qwen3.8-27b", "name": "Qwen 3.8 27B", "desc": "Vision + reasoning + tools"}, {"provider": "groq", "id": "openai/gpt-oss-120b", "name": "GPT-OSS 120B", "desc": "Strong reasoning + coding"}, {"provider": "groq", "id": "qwen/qwen3.8-27b", "name": "Qwen 3.8 27B", "desc": "Vision + reasoning"}, {"provider": "openrouter", "id": "nvidia/nemotron-3-ultra-550b-a55b:free", "name": "Nemotron 3 Ultra Free", "desc": "1M context \u00b7 deep reasoning"}, {"provider": "openrouter", "id": "nvidia/nemotron-3-super-120b-a12b:free", "name": "Nemotron 3 Super Free", "desc": "Agentic reasoning"}, {"provider": "mistral", "id": "mistral-small-latest", "name": "Mistral Small Latest", "desc": "General-purpose model"}, {"provider": "mistral", "id": "codestral-latest", "name": "Codestral", "desc": "Coding specialist"}, {"provider": "cohere", "id": "command-a-plus-05-2026", "name": "Command A+", "desc": "Vision + reasoning + agents"}, {"provider": "cohere", "id": "command-a-reasoning-08-2025", "name": "Command A Reasoning", "desc": "Deep reasoning"}, {"provider": "nvidia", "id": "nvidia/nemotron-3-ultra-550b-a55b", "name": "Nemotron 3 Ultra", "desc": "Strong free-tier reasoning"}, {"provider": "hcnsec", "id": "kimi-k3", "name": "Kimi K3", "desc": "Allowed by API key"}, {"provider": "bailucode", "id": "bailu-apex", "name": "BAILU Apex", "desc": "Strongest normal route"}, {"provider": "bailucode", "id": "bailu-2.8", "name": "BAILU 2.8", "desc": "Normal + Anthropic routes"}, {"provider": "bailucode", "id": "bailu-2.7-1m", "name": "BaiLu 2.7 1M", "desc": "Normal + Anthropic routes \u00b7 1M context"}];
-const PROVIDER_NAMES={gemini:'Gemini',cloudflare:'Cloudflare',groq:'Groq',openrouter:'OpenRouter',mistral:'Mistral',cohere:'Cohere',unorouter:'UnoRouter',nvidia:'NVIDIA',codecraft:'CodeCraft',agentrouter:'AgentRouter',hcnsec:'HCNSEC',bailucode:'Bailucode',seekai:'SEEKAI'};
+const MODELS=[{"provider": "bailucode", "id": "bailu-apex", "name": "BAILU Apex", "desc": "Strongest normal route"}, {"provider": "bailucode", "id": "bailu-2.8", "name": "BAILU 2.8", "desc": "Normal + Anthropic routes"}, {"provider": "bailucode", "id": "bailu-2.7-1m", "name": "BaiLu 2.7 1M", "desc": "Normal + Anthropic routes \u00b7 1M context"}];
+const PROVIDER_NAMES={bailucode:'Bailucode'};
 
 const SESS_KEY='jepongQwenReset.sessions.v1', SET_KEY='jepongQwenReset.settings.v1', PROJ_KEY='jepongQwenReset.projects.v1', EXTRA_KEY='jepongQwenReset.extra.v1';
 function loadJSON(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch(e){ return f; } }
@@ -108,7 +108,7 @@ function saveJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e
 
 const defaultSettings=()=>({
   theme:'system', profileName:'Jepong', profileEmail:'', profilePhoto:'',
-  provider:'gemini', model:'gemini-flash-latest', bailuRoute:'',
+  provider:'bailucode', model:'bailu-apex', bailuRoute:'',
   responseMode:'Auto', webSearch:false, toolsEnabled:true, advancedEnabled:true,
   responseLang:{code:'auto', label:'Auto'},
   interface:{titleAuto:true, autoCopy:false, pasteAsFile:true},
@@ -124,6 +124,12 @@ settings.advanced=Object.assign(defaultSettings().advanced, settings.advanced||{
 settings.cookies=Object.assign(defaultSettings().cookies, settings.cookies||{});
 settings.voice=Object.assign(defaultSettings().voice, settings.voice||{});
 settings.responseLang=Object.assign(defaultSettings().responseLang, settings.responseLang||{});
+/* Bailu-only: a saved selection from the multi-provider era (or any pair not
+   in MODELS) resolves to the default Bailu model at boot, so a stale Gemini
+   selection lands on BAILU Apex instead of being sent to the backend. */
+if(!MODELS.some(m=>m.provider===settings.provider&&m.id===settings.model)){
+  settings.provider='bailucode'; settings.model='bailu-apex';
+}
 let sessions=loadJSON(SESS_KEY,[]); if(!Array.isArray(sessions)) sessions=[];
 let projects=loadJSON(PROJ_KEY,[]); if(!Array.isArray(projects)) projects=[];
 let extra=loadJSON(EXTRA_KEY,{feedback:[],reports:[]});
@@ -793,7 +799,7 @@ async function generateTitle(sessionId){
   if(!settings.interface.titleAuto) return; /* live gate: switch turned off after the chat was created */
   if(streaming){ setTimeout(()=>{ generateTitle(sessionId).catch(()=>{}); },2000); return; }
   s.titleRequested=true; saveSessions();
-  const fast=MODELS.find(m=>m.id==='gemini-3.5-flash-lite')||MODELS.find(m=>/flash-lite|gemma/i.test(m.id))||MODELS[0];
+  const fast=MODELS.find(m=>m.id==='bailu-2.8')||MODELS[0];
   const u=s.messages.find(m=>m.role==='user'), a=s.messages.find(m=>m.role==='assistant');
   if(!u||!a) return;
   const prompt='Write a 3-6 word Title Case title for this conversation. Reply with only the title, no quotes, no punctuation at the end.\n\nUser: '+String(u.text||'').slice(0,500)+'\nAssistant: '+String(a.text||'').slice(0,500);
@@ -1510,7 +1516,7 @@ const LEGAL_PRIVACY=[
   [null,["This Privacy Policy explains what information JepongDevxyz AI (“JepongDevxyz”, “we”, “us”) collects, uses, and shares when you use the app and related services (the “Service”). Our contact email is businessdevgithubjepong@gmail.com."]],
   ["1. Information we collect",["Account and profile: name, email, profile photo, and optional phone number.","Usage and device information: model picks, settings, diagnostics, crash data, and (where enabled) analytics.","Content from integrated services (email, calendar, files, and similar) only with your permission, processed to answer your request and not stored longer than needed.","Payment information handled by payment providers such as PayMongo or Stripe; we receive references, not full card numbers.","Guest use stores data locally in your browser (such as chat history) and may associate it with an anonymous identifier."]],
   ["2. How we use information",["To operate and provide the Service, including account features and personalization.","To improve reliability, safety, and model quality.","To secure accounts and prevent fraud or abuse.","To communicate service notices and, with your consent, marketing.","To comply with legal obligations."]],
-  ["3. Model providers",["To answer your request we share the necessary conversation context with the model provider you selected (such as Google Gemini, Groq, OpenRouter, Mistral, Cohere, NVIDIA, Meta AI, Cloudflare, AI Horde, and others offered in the app). Each provider processes data under its own terms and privacy policy."]],
+  ["3. Model providers",["To answer your request we share the necessary conversation context with the model provider offered in the app (Bailucode). The provider processes data under its own terms and privacy policy."]],
   ["4. Cookies and local storage",["Strictly necessary cookies keep you signed in and remember preferences such as theme, orientation, wallpaper, and navigation bar style and order. Optional analytics cookies apply only if you enable them. Guest-mode data can be cleared from Account settings, and we honor browser-level clearing of site data."]],
   ["5. Sharing",["We do not sell personal information. We share data only with service providers that help us operate the app (hosting, storage, payments, analytics), when required by law, or to protect rights and safety."]],
   ["6. Retention",["Chat data is kept until you delete it or it is removed automatically under our data minimization policy for deleted content. Backups are rotated and expire."]],
