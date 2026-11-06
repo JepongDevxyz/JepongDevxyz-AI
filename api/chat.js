@@ -68,12 +68,12 @@ const PROVIDERS = {
   },
   groq: {
     label: 'Groq',
-    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.8-27b','groq/compound'],
+    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.8-27b'],
     defaultModel: 'openai/gpt-oss-120b'
   },
   openrouter: {
     label: 'OpenRouter',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','poolside/laguna-s-2.1:free','nvidia/nemotron-3.5-lightning:free','inclusionai/ling-3.0-flash-sante:free','nvidia/nemotron-3-super-120b-a12b:free'],
+    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','nvidia/nemotron-3.5-lightning:free','inclusionai/ling-3.0-flash-sante:free','nvidia/nemotron-3-super-120b-a12b:free'],
     defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b:free'
   },
   mistral: {
@@ -91,28 +91,10 @@ const PROVIDERS = {
     models: ['auto'],
     defaultModel: 'auto'
   },
-  unorouter: {
-    label: 'UnoRouter',
-    models: ['auto'],
-    defaultModel: 'auto'
-  },
   nvidia: {
     label: 'NVIDIA',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b','nvidia/nemotron-3-super-120b-a12b'],
+    models: ['nvidia/nemotron-3-ultra-550b-a55b'],
     defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b'
-  },
-  codecraft: {
-    label: 'CodeCraft API',
-    // Explicit CodeCraft catalog requested for JepongDevxyz AI. The live
-    // /v1/models sync can still refresh/replace this bootstrap list when the
-    // provider catalog is reachable.
-    models: ["deepseek-v4-pro-max","deepseek-v4-flash-0731","deepseek-v4-pro-0813","gemma-2-2b","qwen3.8-max","qwen3.8-27b","qwen3.7-max","glm-5.3","glm-5.2","muse-spark-1.1","seed-2.1-pro","seed-2.1-turbo","gemini-3.6-flash","gemini-3.7-flash","gemini-3.1-pro","grok-4.5","grok-4.6","kimi-k3","kimi-k2.6","gpt-5.5","gpt-5.5-pro","gpt-5.6-luna","gpt-5.6-terra","gpt-5.6-sol","claude-mythos-preview","claude-opus-4.6","claude-opus-5.5","claude-fable-5.1"],
-    defaultModel: 'gpt-5.6-sol'
-  },
-  agentrouter: {
-    label: 'AgentRouter',
-    models: ['deepseek-v4-pro','deepseek-v4-flash'],
-    defaultModel: 'deepseek-v4-pro'
   },
   hcnsec: {
     label: 'HCNSEC',
@@ -123,11 +105,6 @@ const PROVIDERS = {
     label: 'Bailucode',
     models: ['bailu-apex'],
     defaultModel: 'bailu-apex'
-  },
-  seekai: {
-    label: 'SEEKAI',
-    models: ['deepseek-v4.1-flash','glm-5.3-flash','mimo-v2.6-flash','deepseek-ai/DeepSeek-V4-Flash-0731','qwen3.8-flash','deepseek-v4-flash'],
-    defaultModel: 'deepseek-v4-flash'
   }
 };
 
@@ -137,11 +114,8 @@ const RETRYABLE = new Set([401,402,403,408,409,425,429,500,502,503,504]);
 // Central chat-model timeout policy. New/future model IDs inherit this automatically
 // because timeout selection is provider/route based, never tied to a hard-coded model list.
 const CHAT_UPSTREAM_TIMEOUT_MS=Math.max(30_000,Number(process.env.CHAT_UPSTREAM_TIMEOUT_MS||270_000));
-const CHAT_FAST_UPSTREAM_TIMEOUT_MS=Math.max(30_000,Number(process.env.CHAT_FAST_UPSTREAM_TIMEOUT_MS||270_000));
 function chatUpstreamTimeoutMs(provider=''){
-  return String(provider||'').toLowerCase()==='codecraft'
-    ? CHAT_FAST_UPSTREAM_TIMEOUT_MS
-    : CHAT_UPSTREAM_TIMEOUT_MS;
+  return CHAT_UPSTREAM_TIMEOUT_MS;
 }
 
 
@@ -258,13 +232,9 @@ function getProviderKeys(provider,rotate=true) {
     mistral:['MISTRAL_API_KEYS','MISTRAL_API_KEY'],
     cohere:['COHERE_API_KEYS','COHERE_API_KEY'],
     aihorde:['AIHORDE_API_KEYS','AIHORDE_API_KEY'],
-    unorouter:['UNOROUTER_API_KEYS','UNOROUTER_API_KEY'],
     nvidia:['NVIDIA_API_KEYS','NVIDIA_API_KEY'],
-    codecraft:['CODECRAFT_API_KEYS','CODECRAFT_API_KEY'],
-    agentrouter:['AGENTROUTER_API_KEYS','AGENTROUTER_API_KEY'],
     hcnsec:['HCNSEC_API_KEYS','HCNSEC_API_KEY'],
-    bailucode:['BAILUCODE_API_KEYS','BAILUCODE_API_KEY'],
-    seekai:['SEEKAI_API_KEYS','SEEKAI_API_KEY']
+    bailucode:['BAILUCODE_API_KEYS','BAILUCODE_API_KEY']
   }[provider];
   if(!envNames)return [];
   const keys=parseKeys(envNames[0],envNames[1]);
@@ -2580,7 +2550,7 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
   // First try the user's selected OpenAI-compatible model with image/frame
   // parts. If that exact model supports vision, no provider switch is needed.
   // A refusal or unsupported multimodal response is not accepted as evidence.
-  const openAICompatibleVision=new Set(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec','seekai','bailucode']);
+  const openAICompatibleVision=new Set(['groq','openrouter','mistral','nvidia','hcnsec','bailucode']);
   if(imageOnly.length && openAICompatibleVision.has(selectedProvider) &&
      ((Array.isArray(customApiKeys)&&customApiKeys.length)||configured(selectedProvider))){
     activity(emit,'attachment-media-selected',`Checking attached media with ${providerLabel(selectedProvider)} • ${modelLabel(selectedModel||'selected model')}`,'running','image');
@@ -4369,98 +4339,15 @@ function chatCompletionsUrl(base,fallback){
 }
 
 
-// SEEKAI may return either a buffered OpenAI JSON response or SSE. Only mark a
-// request successful after validating actual assistant text, not HTTP 200 alone.
-function seekaiExtractReply(raw,contentType=''){
-  const input=String(raw||'');
-  if(/text\/html/i.test(contentType)||/^\s*(?:<!doctype|<html\b)/i.test(input))return {kind:'html',text:'',reason:''};
-  const asText=entry=>typeof entry==='string'?entry:
-    Array.isArray(entry)?entry.map(part=>typeof part==='string'?part:(typeof part?.text==='string'?part.text:typeof part?.content==='string'?part.content:'')).join(''):
-    '';
-  if(/^\s*data:/m.test(input)||/text\/event-stream/i.test(contentType)){
-    let output='',finishReason='',errored=false;
-    for(const line of input.split(/\r?\n/)){
-      const part=line.trim();
-      if(!part.startsWith('data:'))continue;
-      const data=part.slice(5).trim();if(!data||data==='[DONE]')continue;
-      let event;try{event=JSON.parse(data);}catch{continue;}
-      if(event?.error){errored=true;break;}
-      const choice=event?.choices?.[0];
-      output+=asText(choice?.delta?.content??choice?.message?.content??event?.delta?.text);
-      if(choice?.finish_reason)finishReason=String(choice.finish_reason);
-    }
-    return {kind:'sse',text:errored?'':output.trim(),reason:finishReason,errored};
-  }
-  let parsed;try{parsed=JSON.parse(input);}catch{return {kind:'invalid-json',text:'',reason:''};}
-  const choice=parsed?.choices?.[0];
-  return {kind:'json',text:asText(choice?.message?.content??choice?.text??parsed?.output_text).trim(),
-    reason:String(choice?.finish_reason||''),errored:!!parsed?.error};
-}
-
-async function runSeekAI({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant'}){
-  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getProviderKeys('seekai',autoFallback),autoFallback);
-  if(!keys.length)return {ok:false,status:503,error:'SEEKAI_API_KEYS is not configured in Vercel.'};
-  const selected=String(model||'').trim();
-  const target=!selected||selected==='agent'?PROVIDERS.seekai.defaultModel:selected;
-  if(!PROVIDERS.seekai.models.includes(target))return {ok:false,status:400,error:'This SEEKAI model is not in the six models allowed for the configured key: '+target};
-  const endpoint=chatCompletionsUrl(process.env.SEEKAI_BASE_URL,'https://seekai.cc/v1/chat/completions');
-  const messages=buildOpenAIMessages(history,message,systemInstruction);
-  let status=502,last='SEEKAI did not return an assistant response.';
-  for(let i=0;i<keys.length;i++){
-    providerLifecycleActivity(emit,{provider:'seekai',model:target,state:'running',
-      phase:'connecting',attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-    try{
-      // Buffered JSON avoids treating a 200 HTML page or an empty SSE stream as a reply.
-      const upstream=await fetch(endpoint,{method:'POST',headers:{
-        Authorization:'Bearer '+keys[i],'Content-Type':'application/json',Accept:'application/json'
-      },body:JSON.stringify({model:target,messages,stream:false,max_tokens:Math.min(effortOutputBudgetFor(message,responseEffort),8192)}),
-      signal:AbortSignal.timeout(85000)});
-      status=upstream.status;
-      const raw=await upstream.text();
-      const parsed=seekaiExtractReply(raw,upstream.headers.get('content-type')||'');
-      if(upstream.ok&&parsed.text){
-        providerLifecycleActivity(emit,{provider:'seekai',model:target,state:'completed',phase:'connected',
-          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-        return {ok:true,response:new Response(parsed.text,{headers:passthroughHeaders(
-          upstream,'seekai',target,fallbackFrom,routedReason,i,keys.length
-        )}),finishState:{reason:parsed.reason||'stop'}};
-      }
-      if(parsed.kind==='html')last='SEEKAI returned an HTML page instead of an API response (HTTP '+status+').';
-      else if(status===401||status===403)last='SEEKAI rejected the API credential (HTTP '+status+').';
-      else if(status===402)last='SEEKAI account or model access is unavailable (HTTP 402).';
-      else if(status===429)last='SEEKAI rate limit reached (HTTP 429).';
-      else if(status===400||status===404||status===422)last='SEEKAI rejected model '+target+' or the request (HTTP '+status+'). Verify the model is in your live SEEKAI catalog.';
-      else if(parsed.errored)last='SEEKAI returned an API error (HTTP '+status+').';
-      else if(upstream.ok)last='SEEKAI returned HTTP 200 but no assistant text for '+target+'.';
-      else last='SEEKAI API returned HTTP '+status+'.';
-      // Retry only credential-specific or transient errors, never invent another model.
-      const retry=i<keys.length-1 && ([401,403,408,429,500,502,503,504].includes(status));
-      providerLifecycleActivity(emit,{provider:'seekai',model:target,state:retry?'warning':'error',
-        phase:retry?'retry':'failed',detail:last,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-      if(!retry)break;
-    }catch(error){
-      status=502;last=error?.name==='TimeoutError'
-        ?'SEEKAI request timed out before returning assistant text.'
-        :'SEEKAI request failed due to a network or response error.';
-      const retry=i<keys.length-1;
-      providerLifecycleActivity(emit,{provider:'seekai',model:target,state:retry?'warning':'error',
-        phase:retry?'retry':'failed',detail:last,attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-      if(!retry)break;
-    }
-  }
-  return {ok:false,status,error:last};
-}
-
+// Providers may return either a buffered OpenAI JSON response or SSE. Only mark
+// a request successful after validating actual assistant text, not HTTP 200 alone.
 async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false,responseEffort='Instant',unifiedTools=null,toolMessages=null}) {
   const cfg={
     groq:{url:'https://api.groq.com/openai/v1/chat/completions'},
     openrouter:{url:'https://openrouter.ai/api/v1/chat/completions'},
     mistral:{url:'https://api.mistral.ai/v1/chat/completions'},
-    unorouter:{url:chatCompletionsUrl(process.env.UNOROUTER_BASE_URL,'https://api.unorouter.com/v1/chat/completions')},
     nvidia:{url:'https://integrate.api.nvidia.com/v1/chat/completions'},
-    codecraft:{url:'https://www.codecraftapi.com/v1/chat/completions'},
     hcnsec:{url:'https://api.hcnsec.cn/v1/chat/completions'},
-    seekai:{url:chatCompletionsUrl(process.env.SEEKAI_BASE_URL,'https://seekai.cc/v1/chat/completions')},
     bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
@@ -4525,7 +4412,6 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
         'Content-Type':'application/json',
         'Accept':'text/event-stream'
       };
-      if(provider==='codecraft') headers['x-api-key']=keys[i];
       if(provider==='openrouter'){
         headers['HTTP-Referer']=process.env.SITE_URL || 'https://jepongdevxyz.ai';
         headers['X-Title']='JepongDevxyz AI';
@@ -5124,78 +5010,6 @@ function anthropicStreamToText(body,finishState={reason:''}){
   }));
 }
 
-async function runAgentRouter({model,history,message,systemInstruction,emit,autoFallback=false,customApiKeys=null,responseEffort='Instant'}){
-  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:
-    getProviderKeys('agentrouter',autoFallback),autoFallback);
-  if(!keys.length)return {ok:false,status:500,error:'AGENTROUTER_API_KEYS is not configured.'};
-  const target=String(model||PROVIDERS.agentrouter.defaultModel).trim()||PROVIDERS.agentrouter.defaultModel;
-  const base=String(process.env.AGENTROUTER_BRIDGE_URL||'https://agentrouter-isolated-production.up.railway.app').trim().replace(/\/+$/,'');
-  let endpoint;
-  try{
-    const u=new URL(base);
-    if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Invalid URL');
-    endpoint=u.origin+u.pathname.replace(/\/+$/,'')+'/chat';
-  }catch{return {ok:false,status:500,error:'AGENTROUTER_BRIDGE_URL must be an HTTPS URL.'};}
-  const messages=[];
-  for(const h of (Array.isArray(history)?history:[]).slice(-15)){
-    const role=['bot','model','assistant'].includes(h?.role)?'assistant':'user';
-    const content=String(h?.text||h?.content||'').trim();
-    if(content)messages.push({role,content:content.slice(0,8000)});
-  }
-  if(String(message||'').trim())messages.push({role:'user',content:String(message).trim().slice(0,8000)});
-  if(!messages.length)return {ok:false,status:400,error:'AgentRouter requires a text message.'};
-  const effort=responseEffortPolicy(responseEffort).level;
-  const body=JSON.stringify({
-    model:target,
-    messages,
-    system:(String(systemInstruction||'')+'\nSelected response effort: '+effort+'.').slice(0,18000),
-    max_tokens:effortOutputBudgetFor(message,responseEffort)
-  });
-  const timestamp=String(Date.now()),encoder=new TextEncoder();
-  let last='Railway AgentRouter bridge did not return a model response.',status=502;
-  for(let i=0;i<keys.length;i++){
-    providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'running',phase:'connecting',
-      attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-    try{
-      const secret=await crypto.subtle.importKey('raw',encoder.encode(keys[i]),
-        {name:'HMAC',hash:'SHA-256'},false,['sign']);
-      const digest=new Uint8Array(await crypto.subtle.sign('HMAC',secret,encoder.encode(timestamp+'.'+body)));
-      const signature=Array.from(digest,byte=>byte.toString(16).padStart(2,'0')).join('');
-      const upstream=await fetch(endpoint,{method:'POST',headers:{
-        'content-type':'application/json','x-bridge-timestamp':timestamp,'x-bridge-signature':signature
-      },body,signal:AbortSignal.timeout(62000)});
-      let data={};
-      try{data=await upstream.json();}catch{}
-      const answer=typeof data?.response==='string'?data.response.trim():'';
-      if(upstream.ok&&answer){
-        providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'completed',phase:'connected',
-          attemptIndex:i,attemptCount:keys.length,attemptNoun:'credential'});
-        return {ok:true,response:new Response(answer,{status:200,headers:{
-          'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-cache, no-transform',
-          'X-AI-Provider':'agentrouter','X-AI-Model':target,
-          'X-AI-Key-Index':String(Number(data.keyIndex)||1),
-          'X-AI-Key-Count':String(Number(data.keyCount)||keys.length)
-        }}),finishState:{reason:'end_turn'}};
-      }
-      status=upstream.status||502;
-      last=upstream.status===401
-        ?'Railway bridge authentication failed: AGENTROUTER_API_KEYS must match between Vercel and Railway.'
-        :typeof data?.error==='string'?data.error.slice(0,240):'AgentRouter CLI returned no model response.';
-      // Exhaust same-provider keys on access/quota errors before emergency fallback.
-      if(i<keys.length-1&&([401,402,403,429].includes(status)||isProviderQuotaFailure(status,last)))continue;
-      break;
-    }catch(error){
-      status=502;
-      last=error?.name==='TimeoutError'
-        ?'AgentRouter CLI timed out generating a response.'
-        :'Railway AgentRouter bridge is unreachable or returned an invalid response.';
-      break;
-    }
-  }
-  providerLifecycleActivity(emit,{provider:'agentrouter',model:target,state:'error',phase:'failed',detail:last});
-  return {ok:false,status,error:last};
-}
-
 async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant',unifiedTools=null,toolMessages=null}){
   const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys(autoFallback),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
@@ -5249,7 +5063,7 @@ function fallbackProviderCandidates(selectedProvider,{
 }={}){
   const hasImage=Array.isArray(files)&&files.some(file=>String(file?.mimeType||'').startsWith('image/')&&file?.data);
   const hasVideo=Array.isArray(files)&&files.some(file=>String(file?.mimeType||'').startsWith('video/')&&file?.data);
-  const order=['gemini','cloudflare','groq','openrouter','mistral','cohere','unorouter','nvidia','codecraft','agentrouter','hcnsec','bailucode','seekai'];
+  const order=['gemini','cloudflare','groq','openrouter','mistral','cohere','nvidia','hcnsec','bailucode'];
   return order
     .filter(provider=>provider!==selectedProvider&&providers[provider]&&isConfigured(provider))
     .filter(provider=>!hasVideo||provider==='gemini')
@@ -5331,9 +5145,7 @@ async function runProvider(provider,args){
   if(provider==='cohere')return runCohere(args);
   if(provider==='aihorde')return runAIHorde(args);
   if(provider==='bailucode')return runBailucode(args);
-  if(provider==='agentrouter')return runAgentRouter(args);
-  if(provider==='seekai')return runSeekAI(args);
-  if(['groq','openrouter','mistral','unorouter','nvidia','codecraft','hcnsec'].includes(provider))return runOpenAICompatible(provider,args);
+  if(['groq','openrouter','mistral','nvidia','hcnsec'].includes(provider))return runOpenAICompatible(provider,args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
@@ -6079,9 +5891,7 @@ async function processChat(body, emit) {
 async function mediaCapabilitySnapshot(){
   const result={};
   const add=(provider,image,video,detail='')=>{result[provider]={image,video,detail};};
-  add('codecraft','unsupported','unsupported','Public API documents vision input, not image/video generation.');
-  add('agentrouter',configured('agentrouter')?'available':'not-configured','gated','Image generation is documented; video generation remains gated upstream.');
-  for(const p of ['unorouter','hcnsec','bailucode','seekai']) add(p,'unverified','unverified','No verified media-generation contract is configured yet.');
+  for(const p of ['hcnsec','bailucode']) add(p,'unverified','unverified','No verified media-generation contract is configured yet.');
 
   if(!configured('nvidia')){
     add('nvidia','not-configured','not-configured','NVIDIA_API_KEY is not configured.');
@@ -6103,7 +5913,7 @@ async function mediaCapabilitySnapshot(){
 }
 
 
-const DYNAMIC_MODEL_PROVIDERS = new Set(['unorouter','nvidia','codecraft','hcnsec','bailucode','seekai']);
+const DYNAMIC_MODEL_PROVIDERS = new Set(['nvidia','hcnsec','bailucode']);
 
 function providerModelsUrl(provider){
   const envName=provider.toUpperCase()+'_BASE_URL';
@@ -6114,13 +5924,9 @@ function providerModelsUrl(provider){
     return custom+'/v1/models';
   }
   return ({
-    unorouter:'https://api.unorouter.com/v1/models',
     nvidia:'https://integrate.api.nvidia.com/v1/models',
-    codecraft:'https://codecraftapi.com/v1/models',
-    agentrouter:'https://co.agentrouter.org/v1/models',
     hcnsec:'https://api.hcnsec.cn/v1/models',
-    bailucode:'https://bailucode.com/openapi/v1/models',
-    seekai:'https://seekai.cc/v1/models'
+    bailucode:'https://bailucode.com/openapi/v1/models'
   })[provider] || '';
 }
 
@@ -6156,13 +5962,12 @@ async function discoverProviderModels(provider){
   for(const key of keys){
     try{
       const headers={Authorization:'Bearer '+key,Accept:'application/json'};
-      if(provider==='codecraft')headers['x-api-key']=key;
       const res=await fetch(url,{headers,signal:AbortSignal.timeout(8000)});
       lastStatus=res.status;
       if(res.ok){
         const data=await safeJsonResponse(res);
         const allModels=normalizeModelCatalog(data);
-        const models=provider==='seekai' ? allModels.filter(item=>PROVIDERS.seekai.models.includes(item.id)) : allModels;
+        const models=allModels;
         return {provider,models,status:models.length?'ready':'empty',httpStatus:res.status,source:url};
       }
       if(!isRetryableStatus(res.status))break;
