@@ -58,7 +58,7 @@ function inlineMapPageUrl(html){
 const PROVIDERS = {
   gemini: {
     label: 'Gemini',
-    models: ['gemini-3.1-flash-lite','gemini-3.5-flash-lite'],
+    models: ['gemini-flash-latest','gemini-3.8-flash','gemini-3.7-flash','gemini-3.1-flash-lite','gemini-3.5-flash-lite'],
     defaultModel: 'gemini-3.5-flash-lite'
   },
   cloudflare: {
@@ -68,17 +68,17 @@ const PROVIDERS = {
   },
   groq: {
     label: 'Groq',
-    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.8-27b'],
+    models: ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.8-27b','groq/compound'],
     defaultModel: 'openai/gpt-oss-120b'
   },
   openrouter: {
     label: 'OpenRouter',
-    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','nvidia/nemotron-3.5-lightning:free','inclusionai/ling-3.0-flash-sante:free','nvidia/nemotron-3-super-120b-a12b:free'],
-    defaultModel: 'nvidia/nemotron-3-super-120b-a12b:free'
+    models: ['nvidia/nemotron-3-ultra-550b-a55b:free','poolside/laguna-s-2.1:free','nvidia/nemotron-3.5-lightning:free','inclusionai/ling-3.0-flash-sante:free','nvidia/nemotron-3-super-120b-a12b:free'],
+    defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b:free'
   },
   mistral: {
     label: 'Mistral',
-    models: ['ministral-8b-latest','codestral-latest'],
+    models: ['mistral-small-latest','ministral-8b-latest','codestral-latest'],
     defaultModel: 'ministral-8b-latest'
   },
   cohere: {
@@ -116,8 +116,8 @@ const PROVIDERS = {
   },
   hcnsec: {
     label: 'HCNSEC',
-    models: ['DeepSeek-V4-Flash','MiMo-V2.6-Flash','MiniMax-M3.1-Flash','Qwen3.8-Flash-Next'],
-    defaultModel: 'DeepSeek-V4-Flash'
+    models: ['kimi-k3'],
+    defaultModel: 'kimi-k3'
   },
   bailucode: {
     label: 'Bailucode',
@@ -4486,11 +4486,9 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
   // Compatible model substitution is allowed only when the user enabled fallback.
   if(autoFallback){
     if(provider==='groq' && requested==='qwen/qwen3.8-27b'){
-      modelCandidates=['qwen/qwen3.8-27b','qwen/qwen3.6-27b','openai/gpt-oss-120b'];
-    } else if(provider==='groq' && requested==='qwen/qwen3.6-27b'){
-      modelCandidates=['qwen/qwen3.6-27b','openai/gpt-oss-120b'];
+      modelCandidates=['qwen/qwen3.8-27b','openai/gpt-oss-120b'];
     } else if(provider==='groq' && requested==='openai/gpt-oss-120b'){
-      modelCandidates=['openai/gpt-oss-120b','qwen/qwen3.6-27b'];
+      modelCandidates=['openai/gpt-oss-120b','qwen/qwen3.8-27b'];
     }
 
     if(provider==='mistral' && requested==='mistral-small-latest'){
@@ -4503,10 +4501,6 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
 
     if(provider==='openrouter' && requested!=='openrouter/free'){
       modelCandidates=[requested,'openrouter/free'];
-    }
-
-    if(provider==='mistral' && requested==='mistral-small-latest'){
-      modelCandidates=['mistral-small-latest','mistral-small-3.2-24b-instruct-2506'];
     }
   }
 
