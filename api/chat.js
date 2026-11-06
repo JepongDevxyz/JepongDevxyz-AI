@@ -266,6 +266,26 @@ function getBailuAnthropicKeys(rotate=true){
   return (rotate?rotateProviderKeys('bailucode-anthropic',keys):keys).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
+// Bailu pools are drawn FRESH-SHUFFLED on every request (the standing
+// rotational rule: a random key goes first, and on a key-level failure the
+// caller walks the remaining shuffled keys of the SAME route's pool). This
+// replaces the deterministic round-robin cursor draw for Bailucode, whose
+// pool mixes in IP-bound keys that Vercel's rotating egress IPs can reject —
+// a fixed draw order keeps presenting the same bad keys first. A key that
+// fails is never retried within the same request (the walk is a single pass
+// over this shuffled list).
+function shuffledBailuKeys(route){
+  const pool=route==='anthropic'?getBailuAnthropicKeys(false):getProviderKeys('bailucode',false);
+  return shuffle([...new Set(pool.map(x=>String(x||'').trim()).filter(Boolean))])
+    .slice(0,API_GUARD.maxProviderCredentialsPerRequest);
+}
+
+// A failure OF THE KEY (rejected, IP-bound, or rate-limited), as opposed to a
+// failure of the request/model: another key from the same pool may succeed.
+function isKeyLevelFailure(status,error=''){
+  return [401,403,429].includes(Number(status))||isProviderQuotaFailure(status,error);
+}
+
 function credentialCount(provider) {
   if(provider==='cloudflare')return getCloudflareAccounts().length;
   if(provider==='bailucode')return getProviderKeys(provider).length+getBailuAnthropicKeys().length;
@@ -5011,7 +5031,7 @@ function anthropicStreamToText(body,finishState={reason:''}){
 }
 
 async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant',unifiedTools=null,toolMessages=null}){
-  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:getBailuAnthropicKeys(autoFallback),autoFallback);
+  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:shuffledBailuKeys('anthropic'),autoFallback);
   if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
   const target=model||PROVIDERS.bailucode.defaultModel;
   const messages=[];
@@ -5039,20 +5059,31 @@ async function runBailuAnthropic({model,history,message,systemInstruction,fallba
         return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'bailucode',target,fallbackFrom,routedReason||'bailu-anthropic',i,keys.length)}),finishState};
       }
       status=res.status;last=cleanUpstreamError(await res.text().catch(()=>''),status,'bailucode',target);
-      if(!shouldRetryProviderCredential(status,last))break;
+      // Key-level failures (401/403/429 — including the "too many different
+      // IP addresses" 403 that IP-bound pool keys return from Vercel's
+      // rotating egress IPs) always walk to the next shuffled key; only a
+      // request/model-level failure stops the walk early.
+      if(!isKeyLevelFailure(status,last)&&!shouldRetryProviderCredential(status,last))break;
     }catch(e){status=502;last=e?.message||String(e);}
   }
   return {ok:false,status,error:last||'Bailucode Anthropic route unavailable'};
 }
 
 async function runBailucode(args){
+  // Caller-supplied keys (the user's own keys) keep their given order.
+  // Otherwise the Normal-route pool is drawn fresh-shuffled for this request
+  // and handed to runOpenAICompatible as the credential list, so its key
+  // loop walks the shuffled pool on failure instead of the round-robin
+  // cursor order from getProviderKeys.
+  const suppliedKeys=Array.isArray(args.customApiKeys)&&args.customApiKeys.length?args.customApiKeys:null;
+  const openaiArgs=suppliedKeys?args:{...args,customApiKeys:shuffledBailuKeys('normal')};
   if(args.bailuRoute==='anthropic'){
     const anthropic=await runBailuAnthropic(args);
     if(anthropic.ok||args.autoFallback!==true)return anthropic;
-    const openai=await runOpenAICompatible('bailucode',args);
+    const openai=await runOpenAICompatible('bailucode',openaiArgs);
     return openai.ok?openai:anthropic;
   }
-  const openai=await runOpenAICompatible('bailucode',args);
+  const openai=await runOpenAICompatible('bailucode',openaiArgs);
   if(openai.ok||args.autoFallback!==true)return openai;
   const anthropic=await runBailuAnthropic(args);
   return anthropic.ok?anthropic:openai;
@@ -6574,6 +6605,63 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
               const tail=toolDecoder.decode();
               if(tail){ generatedText+=tail; send('text',{text:tail}); }
             }catch(_){ break; }
+          }
+
+          // Zero-text hardening (shared completion layer): a provider that
+          // finishes with NO text at all has not answered — an empty bubble
+          // must not count as success. When fallback is enabled (the app's
+          // normal mode), continue the fallback chain to the next configured
+          // provider and stream its answer instead. Diagnostic mode
+          // (autoFallback off) is deliberately untouched: the empty
+          // completion surfaces exactly as the provider sent it, so probes
+          // keep telling the truth. Only a zero-length result after trimming
+          // counts as empty — a short reply such as "OK" is a real answer.
+          if(!cancelled&&body.autoFallback===true&&!generatedText.trim()&&!nativeDirectionsAppendix){
+            send('activity',{type:'activity',id:'empty-response-fallback',label:'The selected model returned an empty response — trying another configured model',state:'warning',kind:'fallback',at:Date.now()});
+            const emptyFallbackArgs={
+              model:resolvedModel,
+              history:Array.isArray(body.history)?body.history:[],
+              files:sanitizeIncomingAttachments(body.files||[]),
+              message:body.message,
+              systemInstruction:result.systemInstruction,
+              routedReason:'empty-response-fallback',
+              emit,
+              autoFallback:true,
+              customApiKeys:sanitizeCustomProviderKeys(body,resolvedProvider),
+              customApiProfile:resolvedProvider==='custom-api'?sanitizeCustomApiProfile(body):null,
+              responseEffort:normalizeResponseEffort(body?.personalization?.intelligence,body?.personalization?.fastAnswers),
+              unifiedTools:UNIFIED_TOOLS
+            };
+            let emptyFallback=null;
+            try{
+              emptyFallback=await runAvailableProviderFallback(resolvedProvider,emptyFallbackArgs,{body,files:emptyFallbackArgs.files,includeEmergencyFallback:true});
+            }catch(_){ emptyFallback=null; }
+            if(emptyFallback?.ok&&emptyFallback.response?.body){
+              activeResponse=emptyFallback.response;
+              activeFinishState=emptyFallback.finishState||{reason:'unknown'};
+              resolvedProvider=activeResponse.headers.get('x-ai-provider')||emptyFallback.fallbackProvider||resolvedProvider;
+              resolvedModel=activeResponse.headers.get('x-ai-model')||emptyFallback.fallbackModel||resolvedModel;
+              send('meta',responseMeta(activeResponse));
+              try{
+                const emptyReader=activeResponse.body.getReader();
+                activeReader=emptyReader;
+                const emptyDecoder=new TextDecoder();
+                while(!cancelled){
+                  const {done,value}=await emptyReader.read();
+                  if(done)break;
+                  const text=emptyDecoder.decode(value,{stream:true});
+                  if(text){generatedText+=text;send('text',{text});}
+                }
+                const tail=emptyDecoder.decode();
+                if(tail){generatedText+=tail;send('text',{text:tail});}
+              }catch(_){/* an unreadable fallback stream leaves the text empty; the failure return below reports it */}
+            }
+            if(!generatedText.trim()){
+              send('error',{message:'The selected model returned an empty response, and no fallback model could answer. Please try again.',status:502,provider:resolvedProvider});
+              clearInterval(keepAlive);
+              try{controller.close();}catch(_){}
+              return;
+            }
           }
 
           if(finishReasonNeedsContinuation(activeFinishState?.reason)&&generatedText.trim()){
