@@ -81,12 +81,14 @@ const ic=(name,size=16)=>{ const inner=ICONS[name]||'';
   return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(_CHEV.has(name)?1.5:2)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+inner+'</svg>'; };
 /* hydrate static index.html icon slots: <span data-icon="name" data-size="N"></span> */
 function hydrateIcons(root){ (root||document).querySelectorAll('[data-icon]').forEach(el=>{ el.innerHTML=ic(el.dataset.icon, parseFloat(el.dataset.size)||16); }); }
-/* Strip backend follow-up markup ([[JD_FOLLOWUPS]] blocks, stray ITEM: lines) from assistant text. */
+/* Strip ALL backend internal-marker blocks ([[JD_FOLLOWUPS]], [[JD_WORK_NOTE]], any
+   [[JD_*]] ... [[/JD_*]] pair), unterminated trailing blocks, stray lone JD tags and
+   ITEM: lines from assistant text. Applied in the renderer, on save and at load. */
 function cleanAssistantText(t){
   let s=String(t??'');
-  s=s.replace(/\[\[JD_FOLLOWUPS\]\][\s\S]*?\[\[\/JD_FOLLOWUPS\]\]/g,'');
-  s=s.replace(/\[\[JD_FOLLOWUPS\]\][\s\S]*$/g,'');
-  s=s.replace(/\[\[\/?JD_FOLLOWUPS\]\]/g,'');
+  s=s.replace(/\[\[JD_[A-Z_]+\]\][\s\S]*?\[\[\/JD_[A-Z_]+\]\]/g,'');
+  s=s.replace(/\[\[JD_[A-Z_]+\]\][\s\S]*$/g,'');
+  s=s.replace(/\[\[\/?JD_[A-Z_]+\]\]/g,'');
   s=s.replace(/^[ \t]*ITEM:[^\n]*$/gm,'');
   return s.replace(/\n{3,}/g,'\n\n').trim();
 }
@@ -209,15 +211,13 @@ function renderHistory(){
   vis.forEach(s=>{ const g=s.pinned?'Pinned':dateGroup(s.updatedAt);
     if(g!==lastGroup){ const l=document.createElement('div'); l.className='group-label'; l.textContent=g; list.appendChild(l); lastGroup=g; }
     list.appendChild(chatRow(s)); });
-  const arch=$('#archivedList'); arch.innerHTML='';
-  const archived=sessions.filter(s=>s.archived).sort((a,b)=>b.updatedAt-a.updatedAt);
-  if(!archived.length) arch.innerHTML='<div class="empty-note">No archived chats</div>';
-  archived.forEach(s=>arch.appendChild(chatRow(s,{archived:true})));
+  /* No Archived section in the sidebar (Qwen has none) — archived chats live in the
+     Archived Chats modal (profile menu / Settings > Chats). */
   renderManageBar();
 }
 function renderSearch(){
   const box=$('#searchResults'); const q=searchQuery.trim();
-  $('#historySections').hidden=!!q; $('#archivedSection').hidden=!!q; box.innerHTML='';
+  $('#historySections').hidden=!!q; box.innerHTML='';
   if(!q) return;
   const hits=sessions.filter(s=>!s.archived).map(s=>{
     const inTitle=s.title.toLowerCase().includes(q.toLowerCase());
@@ -259,7 +259,7 @@ function newChat(){
 function ensureSession(firstText){
   if(temporary){ if(!tempSession) tempSession={id:'temp', title:'Temporary Chat', messages:[], createdAt:Date.now(), updatedAt:Date.now()}; return tempSession; }
   let s=getSession(currentId);
-  if(!s){ s={id:uid(), title:settings.interface.titleAuto? (firstText||'New Chat').slice(0,60)||'New Chat':'New Chat', createdAt:Date.now(), updatedAt:Date.now(), pinned:false, archived:false, messages:[]};
+  if(!s){ s={id:uid(), title:settings.interface.titleAuto? (firstText||'New Chat').slice(0,60)||'New Chat':'New Chat', createdAt:Date.now(), updatedAt:Date.now(), pinned:false, archived:false, messages:[], titleAutoPending:!!settings.interface.titleAuto, titleRequested:false};
     if(activeProjectId) s.projectId=activeProjectId;
     sessions.unshift(s); currentId=s.id; }
   return s;
@@ -278,7 +278,7 @@ function showChatMenu(s,x,y,archived=false){
   } else {
     items.push({label:s.pinned?'Unpin':'Pin', icon:'pin', onClick:()=>{ s.pinned=!s.pinned; s.updatedAt=Date.now(); saveSessions(); renderAll(); }});
     items.push({label:'Rename', icon:'pencil-line', onClick:()=>renameSession(s)});
-    items.push({label:'Clone', icon:'copy', onClick:()=>{ const c=JSON.parse(JSON.stringify(s)); c.id=uid(); c.title=s.title+' copy'; c.createdAt=Date.now(); c.updatedAt=Date.now(); sessions.unshift(c); saveSessions(); renderAll(); toast('Chat cloned'); }});
+    items.push({label:'Clone', icon:'copy', onClick:()=>{ const c=JSON.parse(JSON.stringify(s)); c.id=uid(); c.title=s.title+' copy'; c.createdAt=Date.now(); c.updatedAt=Date.now(); c.titleRequested=true; delete c.titleAutoPending; sessions.unshift(c); saveSessions(); renderAll(); toast('Chat cloned'); }});
     items.push({label:'Archive', icon:'archive', onClick:()=>{ s.archived=true; if(currentId===s.id) currentId=null; saveSessions(); renderAll(); }});
     items.push({label:'Share', icon:'forward', onClick:()=>{ openSession(s.id); enterShareMode(); }});
     items.push({label:'Select', icon:'list-checks', onClick:()=>{ setManageMode(true); }});
@@ -307,7 +307,7 @@ function renameSession(s){
   const wrap=document.createElement('div'); wrap.innerHTML=`<div class="field"><label>Chat name</label><input class="text-input" id="renameInput" value="${esc(s.title)}" maxlength="120"></div>`;
   openModal({title:'Rename chat', body:wrap, actions:[
     {label:'Cancel', onClick:()=>closeModal()},
-    {label:'Save', kind:'primary', onClick:()=>{ const v=wrap.querySelector('#renameInput').value.trim(); if(v){ s.title=v; s.updatedAt=Date.now(); saveSessions(); renderAll(); } closeModal(); }}
+    {label:'Save', kind:'primary', onClick:()=>{ const v=wrap.querySelector('#renameInput').value.trim(); if(v){ s.title=v; s.titleAutoPending=false; s.updatedAt=Date.now(); saveSessions(); renderAll(); } closeModal(); }}
   ]});
   setTimeout(()=>{ const i=wrap.querySelector('#renameInput'); i&&i.focus(); i&&i.select(); },30);
 }
@@ -386,6 +386,8 @@ function inlineFmt(t){
     .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
 }
 const CODE_CONTROL=new Set(('if for while switch catch return typeof instanceof new delete await yield function with sizeof').split(' '));
+/* Builtins highlight like keywords in One Dark (Qwen): print/len/etc. are purple, not function-blue. */
+const CODE_BUILTINS=new Set(('print len range str int float bool list dict set frozenset tuple type open input enumerate zip map filter reversed sorted sum min max abs round isinstance issubclass hasattr getattr setattr delattr repr id hash chr ord hex bin oct pow divmod iter next super Exception ValueError TypeError KeyError IndexError AttributeError RuntimeError len require console Math JSON Object Array String Number Boolean Promise Error parseInt parseFloat isNaN encodeURIComponent decodeURIComponent setTimeout setInterval fetch alert document window').split(' '));
 const CODE_KEYWORDS=new Set(('const let var function return if else elif for while do switch case break continue new class extends super this self typeof instanceof in of try catch finally throw async await yield static get set import from export default delete void true false null undefined None True False and or not is lambda pass def print require include echo fn pub struct impl enum match trait interface go package func var chan map range defer select type').split(' '));
 function highlightCodeLine(line,state){
   let out='',i=0; const n=line.length;
@@ -400,6 +402,7 @@ function highlightCodeLine(line,state){
     if((m=rest.match(/^[A-Za-z_$][\w$]*/))){ const w=m[0];
       const callAfter=/^\s*\(/.test(line.slice(i+w.length));
       if(CODE_CONTROL.has(w)) push('tok-kw',w);
+      else if(CODE_BUILTINS.has(w)) push('tok-kw',w);
       else if(callAfter) push('tok-fn',w);
       else if(CODE_KEYWORDS.has(w)) push('tok-kw',w);
       else out+=esc(w);
@@ -430,6 +433,22 @@ function wireCodeBlocks(root){
     const col=block.querySelector('[data-code="collapse"]'); if(col) col.addEventListener('click',()=>{ const pre=block.querySelector('.code-pre'); pre.hidden=!pre.hidden; col.title=pre.hidden?'Expand':'Collapse'; });
   });
 }
+/* Qwen-style table download: export THAT table as a .csv file. */
+function wireTables(root){
+  if(!root||!root.querySelectorAll) return;
+  root.querySelectorAll('[data-table-dl]').forEach(btn=>{
+    if(btn.dataset.wired) return; btn.dataset.wired='1';
+    btn.addEventListener('click',()=>{
+      const wrap=btn.closest('.md-table-wrap'); const table=wrap&&wrap.querySelector('table'); if(!table) return;
+      const cellText=el=>el.textContent.replace(/\s+/g,' ').trim();
+      const csvEsc=v=>/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+      const rows=[];
+      table.querySelectorAll('tr').forEach(tr=>{ rows.push(Array.from(tr.querySelectorAll('th,td')).map(c=>csvEsc(cellText(c))).join(',')); });
+      if(!rows.length){ toast('Nothing to download'); return; }
+      download('table.csv', rows.join('\n'), 'text/csv');
+    });
+  });
+}
 function richText(text){
   text=cleanAssistantText(text);
   const lines=String(text||'').split('\n'); let html='', inCode=false, codeBuf=[], codeLang='', inList=false;
@@ -443,11 +462,15 @@ function richText(text){
     if(line.includes('|')&&idx+1<lines.length&&isTableSep(lines[idx+1])){
       closeList();
       const head=tableCells(line); idx++;
-      html+='<table><thead><tr>'+head.map(x=>`<th>${inlineFmt(x)}</th>`).join('')+'</tr></thead><tbody>';
+      html+='<div class="md-table-wrap"><button type="button" class="table-dl" data-table-dl title="Download table as CSV" aria-label="Download table as CSV">'+ic('download',14)+'</button><table><thead><tr>'+head.map(x=>`<th>${inlineFmt(x)}</th>`).join('')+'</tr></thead><tbody>';
       while(idx+1<lines.length&&lines[idx+1].includes('|')&&lines[idx+1].trim()){ idx++; const cells=tableCells(lines[idx]); html+='<tr>'+head.map((_,ci)=>`<td>${inlineFmt(cells[ci]||'')}</td>`).join('')+'</tr>'; }
-      html+='</tbody></table>'; continue;
+      html+='</tbody></table></div>'; continue;
     }
-    const h=line.match(/^(#{1,3})\s+(.*)/); if(h){ closeList(); html+=`<h${h[1].length+2}>${inlineFmt(h[2])}</h${h[1].length+2}>`; continue; }
+    if(/^\s*>/.test(line)){ closeList(); const qlines=[];
+      while(idx<lines.length&&/^\s*>/.test(lines[idx])){ qlines.push(lines[idx].replace(/^\s*>\s?/,'')); idx++; }
+      idx--;
+      html+='<blockquote>'+qlines.filter(q=>q.trim()).map(q=>`<p>${inlineFmt(q)}</p>`).join('')+'</blockquote>'; continue; }
+    const h=line.match(/^(#{1,6})\s+(.*)/); if(h){ closeList(); const lvl=h[1].length; html+='<h'+lvl+'>'+inlineFmt(h[2])+'</h'+lvl+'>'; continue; }
     const li=line.match(/^\s*[-*]\s+(.*)/); if(li){ if(!inList){ html+='<ul>'; inList=true; } html+=`<li>${inlineFmt(li[1])}</li>`; continue; }
     closeList();
     if(!line.trim()){ html+=''; } else html+=`<p>${inlineFmt(line)}</p>`;
@@ -475,7 +498,13 @@ function renderMessages(){
   else $('#dockComposerSlot').appendChild(composer);
   $('#dock').style.display=(has||(temporary&&isMobile))?'':'none';
   $('#topUpgradeBtn').style.display=has?'none':'';
-  const _mbc=document.querySelector('#responseModeBtn .chev'); if(_mbc) _mbc.innerHTML=ic(has?'chevron-down':'chevron-up',12);
+  /* In-chat top bar (Qwen): only model name + More — hide the Temporary Chat icon
+     while a normal chat is open; it stays on home/new-chat and in Temporary Chat. */
+  $('#tempChatBtn').style.display=(has&&!temporary)?'none':'';
+  /* "+" tools menu: opens DOWNWARD from the centred (desktop home/temp) composer,
+     upward — with max-height + scroll — from the docked/bottom-anchored composer. */
+  composer.classList.toggle('menu-down', !has && !isMobile);
+  const _mbc=document.querySelector('#responseModeBtn .chev'); if(_mbc) _mbc.innerHTML=ic('chevron-down',12);
   $('#voiceModeBtn').style.display=(has||$('#composerInput').value.trim())?'none':'';
   const col=$('#messageColumn'); col.innerHTML='';
   document.querySelector('.main-card').classList.toggle('share-mode',shareMode);
@@ -512,7 +541,7 @@ function messageEl(s,m){
   }
   const content=document.createElement('div'); content.className='message-content';
   if(m.image){ const img=document.createElement('img'); img.className='generated-image'; img.src=m.image; img.alt='Generated image'; wrap.appendChild(img); }
-  content.innerHTML=richText(m.text); wireCodeBlocks(content); wrap.appendChild(content);
+  content.innerHTML=richText(m.text); wireCodeBlocks(content); wireTables(content); wrap.appendChild(content);
   (m.artifacts||[]).forEach(a=>{ const card=document.createElement('div'); card.className='artifact-card';
     card.innerHTML=`<span>${esc(a.filename||'file')} <small class="kbd-note">${esc(a.label||'')} ${a.size?('· '+a.size+' bytes'):''}</small></span>`;
     const b=document.createElement('button'); b.type='button'; b.className='black-pill'; b.textContent='Download';
@@ -545,11 +574,11 @@ function messageEl(s,m){
   return wrap;
 }
 function assistantContentEl(id){ const el=document.querySelector(`.message.assistant[data-mid="${id}"] .message-content`); return el; }
-function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(m.text); wireCodeBlocks(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); }
+function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(cleanAssistantText(m.text)); wireCodeBlocks(el); wireTables(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); }
   else renderMessages(); }
 function branchChat(s,m){
   const idx=s.messages.findIndex(x=>x.id===m.id);
-  const c={id:uid(), title:s.title+' (branch)', createdAt:Date.now(), updatedAt:Date.now(), pinned:false, archived:false, messages:JSON.parse(JSON.stringify(s.messages.slice(0,idx+1)))};
+  const c={id:uid(), title:s.title+' (branch)', createdAt:Date.now(), updatedAt:Date.now(), pinned:false, archived:false, titleRequested:true, messages:JSON.parse(JSON.stringify(s.messages.slice(0,idx+1)))};
   if(s.projectId) c.projectId=s.projectId;
   sessions.unshift(c); saveSessions(); openSession(c.id); toast('Branched in new chat');
 }
@@ -639,6 +668,7 @@ async function runChatStream(s,userMsg,filePayload){
     clientUtcOffsetMinutes:-new Date().getTimezoneOffset(),
     personalization:Object.assign(buildPersonalization(),{intelligence:EFFORT[settings.responseMode]||'Medium', fastAnswers:settings.responseMode==='Fast', advancedWebSearch:web}) };
   if(settings.provider==='bailucode'&&settings.bailuRoute) body.bailuRoute=settings.bailuRoute;
+  trackRequest();
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:aborter?aborter.signal:undefined});
     if(!res.ok) throw new Error('Request failed ('+res.status+')');
@@ -659,7 +689,48 @@ async function runChatStream(s,userMsg,filePayload){
     setStreaming(false); renderAll();
     if(settings.voice.voiceMode&&asst.text) speak(asst.text);
     if(settings.interface.autoCopy&&asst.text) copyText(asst.text);
+    /* Qwen-style AI title: after the FIRST exchange of a new chat, one silent
+       background request replaces the truncated-prompt title. Never blocks the UI. */
+    if(!temporary&&s.titleAutoPending&&!s.titleRequested&&s.messages.length===2&&s.messages[0].role==='user'&&asst.text&&!asst.activity.some(a=>a.state==='error')&&getSession(s.id)===s){
+      const sid=s.id; setTimeout(()=>{ generateTitle(sid).catch(()=>{}); },3000);
+    }
   }
+}
+/* One title request per chat, ever (titleRequested persists). Silent fallback:
+   any failure keeps the default truncation title. */
+async function generateTitle(sessionId){
+  const s=getSession(sessionId);
+  if(!s||s.titleRequested||!s.titleAutoPending||s.messages.length<2) return;
+  if(streaming){ setTimeout(()=>{ generateTitle(sessionId).catch(()=>{}); },2000); return; }
+  s.titleRequested=true; saveSessions();
+  const fast=MODELS.find(m=>m.id==='gemini-3.5-flash-lite')||MODELS.find(m=>/flash-lite|gemma/i.test(m.id))||MODELS[0];
+  const u=s.messages.find(m=>m.role==='user'), a=s.messages.find(m=>m.role==='assistant');
+  if(!u||!a) return;
+  const prompt='Write a 3-6 word Title Case title for this conversation. Reply with only the title, no quotes, no punctuation at the end.\n\nUser: '+String(u.text||'').slice(0,500)+'\nAssistant: '+String(a.text||'').slice(0,500);
+  let text='';
+  try{
+    const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message:prompt, history:[], files:[], provider:fast.provider, model:fast.id, mode:'general', customPrompt:'You generate short chat titles. Reply with only the title.', webSearch:false, forceWebSearch:false, autoFallback:false, smartRouter:false, activityStream:false, autoTools:false, personalization:{intelligence:'Instant', fastAnswers:true} })});
+    if(!res.ok) return;
+    const ct=(res.headers&&res.headers.get&&res.headers.get('content-type'))||'';
+    if(res.body&&res.body.getReader&&ct.includes('text/event-stream')){
+      const reader=res.body.getReader(); const decoder=('TextDecoder' in window)?new TextDecoder():null; let buf='';
+      const drain=block=>{ block.split('\n').forEach(line=>{ if(line.startsWith('data:')){ try{ const o=JSON.parse(line.slice(5).trim()); if(o&&typeof o.text==='string') text+=o.text; }catch(e){} } }); };
+      for(;;){ const {done,value}=await reader.read(); if(done) break; buf+=decoder?decoder.decode(value,{stream:true}):String(value);
+        let idx; while((idx=buf.indexOf('\n\n'))>=0){ const block=buf.slice(0,idx); buf=buf.slice(idx+2); drain(block); } }
+      if(buf.trim()) drain(buf);
+    } else {
+      const raw=await res.text(); let data=null; try{ data=JSON.parse(raw); }catch(e){}
+      text=(data&&typeof data==='object'?(data.text||data.reply||data.message||data.content||''):raw)||'';
+    }
+  }catch(e){ return; }
+  let title=cleanAssistantText(text).split('\n').map(x=>x.trim()).find(x=>x)||'';
+  title=title.replace(/^title\s*:\s*/i,'').replace(/^["'`]+|["'`]+$/g,'').replace(/\s+/g,' ').trim();
+  if(title.split(' ').length>8) title=title.split(' ').slice(0,8).join(' ');
+  if(title.length>60) title=title.slice(0,60).trim();
+  if(!title||title.includes('[[JD_')||title.startsWith('⚠')) return;
+  const cur=getSession(sessionId);
+  if(!cur||!cur.titleAutoPending) return; /* user renamed meanwhile — keep theirs */
+  cur.title=title; cur.titleAutoPending=false; saveSessions(); renderHistory(); renderSearch();
 }
 async function readSSE(reader,s,asst){
   const decoder=('TextDecoder' in window)?new TextDecoder():null;
@@ -683,6 +754,7 @@ async function readSSE(reader,s,asst){
 async function runImageGeneration(s,userMsg){
   const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true};
   s.messages.push(asst); renderMessages(); setStreaming(true);
+  trackRequest();
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'generate-image', prompt:userMsg.text, model:'auto'})});
     const data=await res.json().catch(()=>({}));
@@ -749,11 +821,11 @@ function renderModelPanel(){
   shown.forEach(m=>{ if(m.provider!==lastProv){ const g=document.createElement('div'); g.className='model-group'; g.textContent=PROVIDER_NAMES[m.provider]||m.provider; list.appendChild(g); lastProv=m.provider; }
     const b=document.createElement('button'); b.type='button'; b.className='model-option'+(m.provider===settings.provider&&m.id===settings.model?' selected':'');
     b.innerHTML=`<span class="model-copy"><strong>${esc(m.name)}</strong><small>${esc(m.desc)}</small></span><span class="model-check">${ic('check',11)}</span>`;
-    b.addEventListener('click',()=>{ settings.provider=m.provider; settings.model=m.id; if(m.provider!=='bailucode') settings.bailuRoute=''; saveSettings(); renderModelPanel(); toast('Model: '+m.name); });
+    b.addEventListener('click',()=>{ settings.provider=m.provider; settings.model=m.id; if(m.provider!=='bailucode') settings.bailuRoute=''; saveSettings(); renderModelPanel(); $('#modelPanel').hidden=true; toast('Model: '+m.name); });
     list.appendChild(b); });
   if(!shown.length) list.innerHTML='<div class="empty-note">No models match</div>';
   $('#expandModelsBtn').style.display=(!modelsExpanded&&filtered.length>3)?'':'none';
-  const cmp=$('#modelCompareToggle'); cmp.setAttribute('aria-checked','false'); cmp.disabled=true; cmp.title='Model Comparison is unavailable in the backend contract';
+  const cmp=$('#modelCompareToggle'); cmp.setAttribute('aria-checked','false'); cmp.disabled=true;
   // Bailu route row (real contract field) when a Bailu model is selected
   if(settings.provider==='bailucode'){
     const row=document.createElement('div'); row.className='field'; row.innerHTML='<label>Bailu route</label>';
@@ -817,27 +889,26 @@ function secGeneral(c){
   c.appendChild(rowEl('Voice','Choose the voice used for Read aloud.',voiceBtn));
   c.appendChild(panel);
 }
+/* Local usage tracking: count real chat/image requests per day (title generation excluded). */
+function trackRequest(){
+  const day=new Date().toLocaleDateString('en-CA');
+  if(!extra.usage||extra.usage.day!==day) extra.usage={day, count:0};
+  extra.usage.count++; saveExtra();
+}
+function requestsToday(){ const day=new Date().toLocaleDateString('en-CA'); return (extra.usage&&extra.usage.day===day)?extra.usage.count:0; }
 function secUsage(c){
   c.appendChild(h2('Usage & Billing'));
   const totalMsgs=sessions.reduce((n,s)=>n+s.messages.length,0);
-  const chars=sessions.reduce((n,s)=>n+s.messages.reduce((a,m)=>a+(m.text||'').length,0),0);
-  const grid=document.createElement('div'); grid.className='usage-grid';
-  grid.innerHTML=`<div class="usage-card"><strong>Free</strong><span>Current plan (local profile)</span></div><div class="usage-card"><strong>${sessions.length}</strong><span>Chats on this device</span></div><div class="usage-card"><strong>${totalMsgs}</strong><span>Messages · ~${Math.round(chars/4)} tokens of text</span></div>`;
-  c.appendChild(grid);
-  const up=document.createElement('button'); up.type='button'; up.className='primary-btn'; up.textContent='Upgrade'; up.style.marginTop='14px'; up.addEventListener('click',openUpgrade); c.appendChild(up);
-  const tabs=document.createElement('div'); tabs.className='segmented'; tabs.style.marginTop='22px';
-  const area=document.createElement('div');
-  const draw=async(which)=>{
-    area.innerHTML='';
-    if(which==='Agent usage'){
-      const b=document.createElement('button'); b.type='button'; b.className='outline-btn'; b.textContent='Refresh provider status'; area.appendChild(b);
-      const pre=document.createElement('pre'); pre.className='kbd-note'; pre.style.whiteSpace='pre-wrap'; area.appendChild(pre);
-      const load=async()=>{ pre.textContent='Loading…'; try{ const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'provider-status'})}); const d=await r.json(); pre.textContent=JSON.stringify(d,null,2).slice(0,4000); }catch(e){ pre.textContent='Provider status unavailable: '+(e&&e.message||e); } };
-      b.addEventListener('click',load); load();
-    } else area.innerHTML='<p class="kbd-note" style="margin-top:14px">No video credits — this backend has no video-credit system. Generative Video is listed as a gap in the build report.</p>';
-  };
-  ['Agent usage','Video credits'].forEach((t,i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.className=i===0?'active':''; b.addEventListener('click',()=>{ tabs.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); draw(t); }); tabs.appendChild(b); });
-  c.appendChild(tabs); c.appendChild(area); draw('Agent usage');
+  const archivedCount=sessions.filter(s=>s.archived).length;
+  const plan=document.createElement('div'); plan.className='usage-card';
+  plan.innerHTML='<strong>Free</strong><span>Current plan · JepongDevxyz AI on this device</span>';
+  const up=document.createElement('button'); up.type='button'; up.className='primary-btn'; up.textContent='Upgrade'; up.style.marginTop='10px'; up.addEventListener('click',openUpgrade); plan.appendChild(up);
+  c.appendChild(plan);
+  const val=t=>{ const v=document.createElement('span'); v.className='usage-value'; v.textContent=t; return v; };
+  c.appendChild(rowEl('Chats','Chats stored on this device.',val(String(sessions.length))));
+  c.appendChild(rowEl('Messages','Messages across all chats on this device.',val(String(totalMsgs))));
+  c.appendChild(rowEl('Requests today','Chat and image requests sent from this device today.',val(String(requestsToday()))));
+  c.appendChild(rowEl('Archived chats','Chats you have archived.',val(String(archivedCount))));
 }
 function openUpgrade(){
   const plans=[['Free','$0','Current plan on this device',true],['Lite','$4/mo','For light everyday use',false],['Plus','$19/mo','Recommended',false],['Pro','$99/mo','For heavy use',false]];
@@ -994,7 +1065,6 @@ function init(){
   $('#clearSearch').addEventListener('click',()=>{ $('#chatSearch').value=''; searchQuery=''; $('#clearSearch').hidden=true; renderSearch(); renderHistory(); });
   $('#projectsToggle').addEventListener('click',e=>{ const b=$('#projectsBody'); b.hidden=!b.hidden; e.currentTarget.setAttribute('aria-expanded',String(!b.hidden)); });
   $('#allChatsToggle').addEventListener('click',e=>{ const b=$('#historyList'); b.hidden=!b.hidden; e.currentTarget.setAttribute('aria-expanded',String(!b.hidden)); });
-  $('#archivedToggle').addEventListener('click',e=>{ const b=$('#archivedList'); b.hidden=!b.hidden; e.currentTarget.setAttribute('aria-expanded',String(!b.hidden)); e.currentTarget.querySelector('.chev').innerHTML=ic(b.hidden?'chevron-right':'chevron-down',12); });
   $('#newProjectBtn').addEventListener('click',newProjectModal);
   $('#communityBtn').addEventListener('click',()=>window.open('https://chat.qwen.ai/community','_blank'));
   $('#coderBtn').addEventListener('click',()=>window.open('https://coder.qwen.ai','_blank'));
@@ -1015,7 +1085,7 @@ function init(){
   $('#upgradeBtn').addEventListener('click',openUpgrade);
   $('#topUpgradeBtn').addEventListener('click',openUpgrade);
   // top bar
-  $('#tempChatBtn').addEventListener('click',()=>{ temporary=!temporary; if(temporary) tempSession=null; exitShareMode(); renderAll(); if(temporary) toast('Temporary Chat — nothing will be saved'); });
+  $('#tempChatBtn').addEventListener('click',()=>{ temporary=!temporary; if(temporary) tempSession=null; exitShareMode(); renderAll(); /* Qwen shows no toast/pill for Temporary Chat — the banner explains it. */ });
   $('#currentChatMenuBtn').addEventListener('click',e=>{ e.stopPropagation(); const s=currentSession(); if(s&&!temporary){ const r=e.currentTarget.getBoundingClientRect(); showChatMenu(s,r.left-170,r.bottom+4); } });
   $('#modelBtn').addEventListener('click',e=>{ e.stopPropagation(); const p=$('#modelPanel'); const was=p.hidden; closePopovers(); p.hidden=!was; if(!p.hidden) renderModelPanel(); });
   $('#expandModelsBtn').addEventListener('click',()=>{ modelsExpanded=true; renderModelPanel(); });
@@ -1030,14 +1100,17 @@ function init(){
   $('#micBtn').addEventListener('click',toggleMic);
   $('#voiceModeBtn').addEventListener('click',()=>{ settings.voice.voiceMode=!settings.voice.voiceMode; saveSettings(); syncVoiceBtn(); toast(settings.voice.voiceMode?'Voice mode on':'Voice mode off'); });
   $('#toolsBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#toolsMenu'); const was=m.hidden; closePopovers(); m.hidden=!was; });
-  $('#moreToolsBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#moreToolsMenu'); m.hidden=!m.hidden; e.currentTarget.setAttribute('aria-expanded',String(!m.hidden)); });
+  $('#moreToolsBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#moreToolsMenu'); m.hidden=!m.hidden; e.currentTarget.setAttribute('aria-expanded',String(!m.hidden));
+    if(!m.hidden){ m.style.left=''; m.style.right=''; const r=m.getBoundingClientRect();
+      if(r.right>innerWidth-8){ m.style.left='auto'; m.style.right='calc(100% + 8px)'; }
+      if(r.left<8){ m.style.left='auto'; m.style.right='0'; } } });
   $('#toolsMenu').addEventListener('click',e=>e.stopPropagation());
   $$('#toolsMenu [data-tool]').forEach(b=>b.addEventListener('click',()=>{ const t=b.dataset.tool;
     if(t==='upload'){ closePopovers(); $('#fileInput').click(); return; }
     if(t==='web'){ settings.webSearch=!settings.webSearch; saveSettings(); closePopovers(); renderAll(); toast(settings.webSearch?'Web search on':'Web search off'); return; }
     activeTool=activeTool===t?null:t; closePopovers(); renderAll();
     if(t==='image'&&!settings.advanced.imageGeneration){ toast('Image generation is off in Settings → Personalization → Advanced'); activeTool=null; renderAll(); return; }
-    if(activeTool) toast('Mode: '+b.textContent.trim().replace(/\s+/g,' ')); input.focus(); }));
+    if(activeTool) toast('Mode: '+(b.dataset.modeLabel||b.textContent.trim().replace(/\s+/g,' '))); input.focus(); }));
   $('#toolsEnabledToggle').addEventListener('click',e=>{ e.stopPropagation(); settings.toolsEnabled=!settings.toolsEnabled; saveSettings(); e.currentTarget.setAttribute('aria-checked',String(settings.toolsEnabled)); });
   $('#responseModeBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#modeMenu'); const was=m.hidden; closePopovers(); m.hidden=!was; });
   $('#modeMenu').addEventListener('click',e=>e.stopPropagation());
