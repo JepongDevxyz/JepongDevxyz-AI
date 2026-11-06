@@ -18,6 +18,7 @@ const ICONS={
   'sparkles':'<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" />',
   'sparkle':'<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />',
   'chevron-down':'<path d="m6 9 6 6 6-6" />',
+  'chevron-left':'<path d="m15 18-6-6 6-6" />',
   'chevron-up':'<path d="m18 15-6-6-6 6" />',
   'chevron-right':'<path d="m9 18 6-6-6-6" />',
   'plus':'<path d="M5 12h14" /><path d="M12 5v14" />',
@@ -534,10 +535,15 @@ function messageEl(s,m){
     return wrap;
   }
   // assistant
-  if(m.activity&&m.activity.length){
-    const row=document.createElement('button'); row.type='button'; row.className='activity-row';
-    row.innerHTML=`<span class="bulb">${ic('lightbulb')}</span><span>${m.pending?'Working…':'Thinking completed'}</span><span>${ic('chevron-right',12)}</span>`;
-    row.addEventListener('click',()=>openDrawer(m)); wrap.appendChild(row);
+  if(m.activity&&m.activity.length&&!(m.pending&&m.skipActivity)){
+    const row=document.createElement('div'); row.className='activity-row'+(m.pending?'':' done');
+    const cur=[...m.activity].reverse().find(a=>a.state==='running')||m.activity[m.activity.length-1];
+    const main=document.createElement('button'); main.type='button'; main.className='activity-main';
+    main.innerHTML=`<span class="bulb">${ic('lightbulb')}</span><span class="activity-label">${esc(m.pending?(cur.label||cur.kind||'Working…'):'Thinking completed')}</span><span class="chev">${ic('chevron-right',12)}</span>`;
+    main.addEventListener('click',()=>openDrawer(m)); row.appendChild(main);
+    if(m.pending){ const sk=document.createElement('button'); sk.type='button'; sk.className='activity-skip'; sk.textContent='Skip';
+      sk.addEventListener('click',()=>{ m.skipActivity=true; row.remove(); }); row.appendChild(sk); }
+    wrap.appendChild(row);
   }
   const content=document.createElement('div'); content.className='message-content';
   if(m.image){ const img=document.createElement('img'); img.className='generated-image'; img.src=m.image; img.alt='Generated image'; wrap.appendChild(img); }
@@ -569,13 +575,33 @@ function messageEl(s,m){
       {sep:true},
       {label:'Delete', icon:'trash-2', danger:true, onClick:()=>{ s.messages=s.messages.filter(x=>x.id!==m.id); if(!temporary) saveSessions(); renderAll(); }}
     ]); });
+    if(m.versions&&m.versions.length>1){
+      const pg=document.createElement('span'); pg.className='version-pager';
+      pg.innerHTML=`<button type="button" data-a="vprev" title="Previous version" ${(m.vIndex||0)<=0?'disabled':''}>${ic('chevron-left')}</button><span class="vp-label">${(m.vIndex||0)+1}/${m.versions.length}</span><button type="button" data-a="vnext" title="Next version" ${(m.vIndex||0)>=m.versions.length-1?'disabled':''}>${ic('chevron-right')}</button>`;
+      pg.querySelector('[data-a="vprev"]').addEventListener('click',()=>switchVersion(s,m,-1));
+      pg.querySelector('[data-a="vnext"]').addEventListener('click',()=>switchVersion(s,m,1));
+      row.appendChild(pg);
+    }
     wrap.appendChild(row);
   }
   return wrap;
 }
 function assistantContentEl(id){ const el=document.querySelector(`.message.assistant[data-mid="${id}"] .message-content`); return el; }
-function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(cleanAssistantText(m.text)); wireCodeBlocks(el); wireTables(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); }
+function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(cleanAssistantText(m.text)); wireCodeBlocks(el); wireTables(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); syncActivityRow(m); if(drawerMsgId===m.id&&!$('#activityDrawer').hidden) fillDrawer(m); }
   else renderMessages(); }
+/* Keep the Qwen activity row in sync while streaming: it appears with the
+   first activity event, its label follows the running step, and Skip hides
+   it for the rest of that generation. */
+function syncActivityRow(m){
+  const wrap=document.querySelector(`.message.assistant[data-mid="${m.id}"]`); if(!wrap) return;
+  const row=wrap.querySelector('.activity-row');
+  if(!(m.activity&&m.activity.length)){ if(row) row.remove(); return; }
+  if(m.pending&&m.skipActivity){ if(row) row.remove(); return; }
+  if(!row){ renderMessages(); return; }
+  const lab=row.querySelector('.activity-label'); if(!lab) return;
+  const cur=[...m.activity].reverse().find(a=>a.state==='running')||m.activity[m.activity.length-1];
+  lab.textContent=m.pending?(cur.label||cur.kind||'Working…'):'Thinking completed';
+}
 function branchChat(s,m){
   const idx=s.messages.findIndex(x=>x.id===m.id);
   const c={id:uid(), title:s.title+' (branch)', createdAt:Date.now(), updatedAt:Date.now(), pinned:false, archived:false, titleRequested:true, messages:JSON.parse(JSON.stringify(s.messages.slice(0,idx+1)))};
@@ -594,15 +620,42 @@ function enterShareMode(){ shareMode=true; $('#shareBar').hidden=false; renderMe
 function exitShareMode(){ if(!shareMode) return; shareMode=false; shareSel.clear(); $('#shareBar').hidden=true; renderMessages(); }
 function updateShareBar(){ $('#shareCount').textContent=shareSel.size+' selected'; $('#shareSelectAll').checked=shareSel.size>0&&currentSession()&&shareSel.size===currentSession().messages.length; }
 
-/* ---------- activity drawer ("Thinking and Search") ---------- */
+/* ---------- activity steps (Qwen timeline; bottom sheet on mobile, drawer on desktop) ---------- */
+let drawerMsgId=null;
 function openDrawer(m){
+  drawerMsgId=m.id; fillDrawer(m);
+  $('#activityDrawer').hidden=false;
+  const sc=$('#drawerScrim'); if(sc) sc.hidden=false;
+}
+function closeDrawer(){
+  $('#activityDrawer').hidden=true;
+  const sc=$('#drawerScrim'); if(sc) sc.hidden=true;
+  drawerMsgId=null;
+}
+/* Steps come straight from the /api/chat activity stream: label = step title,
+   detail (only when the backend sent one) = the grey description. Completed
+   steps get the check; the running step pulses; a finished reply closes the
+   timeline with the lightbulb "Thinking completed" row, like Qwen. */
+function fillDrawer(m){
   const d=$('#activityDrawer'); d.querySelector('h2').textContent='Thinking and Search';
   const list=$('#activityList'); list.innerHTML='';
-  (m.activity||[]).forEach(a=>{ const it=document.createElement('div'); it.className='activity-item '+(a.state||'');
-    it.innerHTML=`<span class="activity-status">${a.state==='completed'?'✓':a.state==='error'?'!':'…'}</span><div><div>${esc(a.label||a.kind||'Activity')}</div>${a.detail?`<small>${esc(a.detail)}</small>`:''}<small>${a.at?new Date(a.at).toLocaleTimeString():''}</small></div>`;
+  (m.activity||[]).forEach(a=>{ const st=a.state||'completed'; const it=document.createElement('div'); it.className='activity-item '+st;
+    const icHtml=st==='completed'?`<span class="step-check">${ic('check',11)}</span>`:st==='error'?ic('circle-x',18):'<span class="step-dot"></span>';
+    it.innerHTML=`<span class="step-ic">${icHtml}</span><div class="step-copy"><div class="step-title">${esc(a.label||a.kind||'Activity')}</div>${a.detail?`<small class="step-desc">${esc(a.detail)}</small>`:''}</div>`;
     list.appendChild(it); });
+  if(!m.pending&&(m.activity||[]).length){ const f=document.createElement('div'); f.className='activity-item final';
+    f.innerHTML=`<span class="step-ic">${ic('lightbulb',16)}</span><div class="step-copy"><div class="step-title">Thinking completed</div></div>`; list.appendChild(f); }
   if(!list.children.length) list.innerHTML='<p class="kbd-note">No activity recorded for this reply.</p>';
-  d.hidden=false;
+}
+
+/* ---------- reply versions (Qwen pager: < n/n >) ---------- */
+function snapshotOf(m){ return { text:m.text||'', activity:JSON.parse(JSON.stringify(m.activity||[])), artifacts:m.artifacts?JSON.parse(JSON.stringify(m.artifacts)):undefined, image:m.image||undefined }; }
+function applyVersion(m,v){ m.text=v.text||''; m.activity=JSON.parse(JSON.stringify(v.activity||[])); if(v.artifacts) m.artifacts=JSON.parse(JSON.stringify(v.artifacts)); else delete m.artifacts; if(v.image) m.image=v.image; else delete m.image; delete m.skipActivity; }
+function switchVersion(s,m,dir){
+  if(!m.versions||streaming) return;
+  const cur=m.vIndex||0, n=cur+dir; if(n<0||n>=m.versions.length) return;
+  m.versions[cur]=snapshotOf(m); m.vIndex=n; applyVersion(m,m.versions[n]);
+  if(!temporary) saveSessions(); renderMessages();
 }
 
 /* ---------- chat request / streaming ---------- */
@@ -657,6 +710,12 @@ function setStreaming(on){ streaming=on; $('#stopBtn').hidden=!on; $('#sendBtn')
 async function runChatStream(s,userMsg,filePayload){
   const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true};
   s.messages.push(asst); renderMessages();
+  await streamInto(s,userMsg,asst,filePayload);
+}
+/* Streams one generation into an existing assistant message (fresh reply or a
+   Regenerate version). On completion the message's current version snapshot
+   is refreshed so the version pager always shows what was generated. */
+async function streamInto(s,userMsg,asst,filePayload){
   setStreaming(true); aborter=('AbortController' in window)?new AbortController():null;
   const preset=TOOL_PRESETS[activeToolLast]||{};
   const web=!!(settings.webSearch||preset.web||activeToolLast==='research'||activeToolLast==='deep-research')&&settings.advanced.webSearchAdv;
@@ -685,8 +744,11 @@ async function runChatStream(s,userMsg,filePayload){
     else { asst.text=(asst.text?asst.text+'\n\n':'')+'⚠ '+(err&&err.message?err.message:'Something went wrong.'); asst.activity.push({label:'Request failed', state:'error', detail:String(err&&err.message||err), at:Date.now()}); }
   }finally{
     asst.text=cleanAssistantText(asst.text);
-    asst.pending=false; s.updatedAt=Date.now(); if(!temporary) saveSessions();
+    asst.pending=false;
+    if(asst.versions&&asst.versions.length) asst.versions[asst.vIndex||0]=snapshotOf(asst);
+    s.updatedAt=Date.now(); if(!temporary) saveSessions();
     setStreaming(false); renderAll();
+    if(drawerMsgId===asst.id&&!$('#activityDrawer').hidden) fillDrawer(asst);
     if(settings.voice.voiceMode&&asst.text) speak(asst.text);
     if(settings.interface.autoCopy&&asst.text) copyText(asst.text);
     /* Qwen-style AI title: after the FIRST exchange of a new chat, one silent
@@ -767,8 +829,13 @@ function regenerate(s,m){
   if(streaming) return;
   const idx=s.messages.findIndex(x=>x.id===m.id); if(idx<0) return;
   const userMsg=[...s.messages.slice(0,idx)].reverse().find(x=>x.role==='user'); if(!userMsg) return;
-  s.messages=s.messages.slice(0,idx); if(!temporary) saveSessions(); renderAll();
-  runChatStream(s,userMsg,[]);
+  /* Qwen keeps the previous reply as a version instead of discarding it. */
+  if(!m.versions){ m.versions=[snapshotOf(m)]; m.vIndex=0; }
+  else m.versions[m.vIndex||0]=snapshotOf(m);
+  m.versions.push({text:'', activity:[]}); m.vIndex=m.versions.length-1;
+  applyVersion(m,m.versions[m.vIndex]); m.pending=true; m.feedback=null;
+  if(!temporary) saveSessions(); renderAll();
+  streamInto(s,userMsg,m,[]);
 }
 
 /* ---------- attachments ---------- */
@@ -1101,9 +1168,12 @@ function init(){
   $('#voiceModeBtn').addEventListener('click',()=>{ settings.voice.voiceMode=!settings.voice.voiceMode; saveSettings(); syncVoiceBtn(); toast(settings.voice.voiceMode?'Voice mode on':'Voice mode off'); });
   $('#toolsBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#toolsMenu'); const was=m.hidden; closePopovers(); m.hidden=!was; });
   $('#moreToolsBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#moreToolsMenu'); m.hidden=!m.hidden; e.currentTarget.setAttribute('aria-expanded',String(!m.hidden));
-    if(!m.hidden){ m.style.left=''; m.style.right=''; const r=m.getBoundingClientRect();
-      if(r.right>innerWidth-8){ m.style.left='auto'; m.style.right='calc(100% + 8px)'; }
-      if(r.left<8){ m.style.left='auto'; m.style.right='0'; } } });
+    if(!m.hidden){ m.style.left=''; m.style.right=''; let r=m.getBoundingClientRect();
+      if(r.right>innerWidth-8){ m.style.left='auto'; m.style.right='calc(100% + 8px)'; r=m.getBoundingClientRect();
+        /* Flipping left only helps when the flipped menu stays on screen;
+           on narrow screens fall back to the in-menu placement (right:0). */
+        if(r.left<8){ m.style.left='auto'; m.style.right='0'; } }
+      else if(r.left<8){ m.style.left='0'; m.style.right='auto'; } } });
   $('#toolsMenu').addEventListener('click',e=>e.stopPropagation());
   $$('#toolsMenu [data-tool]').forEach(b=>b.addEventListener('click',()=>{ const t=b.dataset.tool;
     if(t==='upload'){ closePopovers(); $('#fileInput').click(); return; }
@@ -1121,7 +1191,8 @@ function init(){
   $('#shareCancel').addEventListener('click',exitShareMode);
   $('#shareCopy').addEventListener('click',()=>{ const s=currentSession(); if(!s) return; const txt=s.messages.filter(m=>shareSel.has(m.id)).map(m=>(m.role==='user'?'You: ':'JepongDevxyz AI: ')+m.text).join('\n\n'); if(!txt){ toast('Select messages first'); return; } copyText(txt); exitShareMode(); });
   // drawer + settings chrome
-  $('#drawerClose').addEventListener('click',()=>{ $('#activityDrawer').hidden=true; });
+  $('#drawerClose').addEventListener('click',closeDrawer);
+  $('#drawerScrim').addEventListener('click',closeDrawer);
   $('#settingsBack').addEventListener('click',()=>{ const p=$('#settingsPage'); if(innerWidth<=767&&p.classList.contains('section-open')){ p.classList.remove('section-open'); return; } closeSettings(); });
   // import
   $('#importInput').addEventListener('change',e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
