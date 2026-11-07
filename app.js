@@ -162,7 +162,19 @@ try{ window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').addEve
 
 /* ---------- toast ---------- */
 let toastTimer=null;
-function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ t.hidden=true; },2600); }
+/* Toast placement (overlap fix, 2026-11-07): the fixed bottom:24px toast sat
+   ON the docked composer — the overlap audit measured it covering the
+   textarea by 119x17.5px and the mode button by 16.7x12.5px at 390x844.
+   Anchor it 12px above the composer's top edge instead, measured on every
+   call so it follows composer growth and the home/dock/temp placements.
+   If the tools/mode menu is already open (it grows upward from the
+   composer, into exactly that space), anchor above the menu instead; and
+   any next tap dismisses the toast, so it can never sit on a menu the
+   user opens right after the toast appears (measured: it covered the
+   Tools toggle row by 139.7x35px in that sequence). */
+function anchorToast(){ const t=$('#toast'); if(!t) return; const tm=$('#toolsMenu'), mm=$('#modeMenu'); const anchor=(tm&&!tm.hidden)?tm:((mm&&!mm.hidden)?mm:$('#composer')); if(!anchor) return; const r=anchor.getBoundingClientRect(); if(r.height>0) t.style.bottom=Math.max(24, Math.round(window.innerHeight-r.top+12))+'px'; }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; anchorToast(); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ t.hidden=true; },2600); }
+document.addEventListener('pointerdown',()=>{ const t=$('#toast'); if(t&&!t.hidden){ t.hidden=true; clearTimeout(toastTimer); } },true);
 
 /* ---------- generic modal / context menu ---------- */
 function closeModal(){ $('#modalRoot').innerHTML=''; }
