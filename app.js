@@ -50,6 +50,7 @@ const ICONS={
   'git-branch':'<path d="M15 6a9 9 0 0 0-9 9V3" /><circle cx="18" cy="6" r="3" /><circle cx="6" cy="18" r="3" />',
   'lightbulb':'<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" />',
   'arrow-up':'<path d="m5 12 7-7 7 7" /><path d="M12 19V5" />',
+  'arrow-down':'<path d="M12 5v14" /><path d="m19 12-7 7-7-7" />',
   'arrow-left':'<path d="m12 19-7-7 7-7" /><path d="M19 12H5" />',
   'download':'<path d="M12 15V3" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" />',
   'upload':'<path d="M12 3v12" /><path d="m17 8-5-5-5 5" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />',
@@ -173,11 +174,11 @@ let toastTimer=null;
    user opens right after the toast appears (measured: it covered the
    Tools toggle row by 139.7x35px in that sequence). */
 function anchorToast(){ const t=$('#toast'); if(!t) return; const tm=$('#toolsMenu'), mm=$('#modeMenu'); const anchor=(tm&&!tm.hidden)?tm:((mm&&!mm.hidden)?mm:$('#composer')); if(!anchor) return; const r=anchor.getBoundingClientRect(); if(r.height>0) t.style.bottom=Math.max(24, Math.round(window.innerHeight-r.top+12))+'px'; }
-function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; anchorToast(); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ t.hidden=true; },2600); }
-document.addEventListener('pointerdown',()=>{ const t=$('#toast'); if(t&&!t.hidden){ t.hidden=true; clearTimeout(toastTimer); } },true);
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; anchorToast(); updateScrollBtn(); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ t.hidden=true; updateScrollBtn(); },2600); }
+document.addEventListener('pointerdown',()=>{ const t=$('#toast'); if(t&&!t.hidden){ t.hidden=true; clearTimeout(toastTimer); updateScrollBtn(); } },true);
 
 /* ---------- generic modal / context menu ---------- */
-function closeModal(){ $('#modalRoot').innerHTML=''; }
+function closeModal(){ $('#modalRoot').innerHTML=''; updateScrollBtn(); }
 function openModal({title='',body='',actions=[],wide=false}={}){
   const root=$('#modalRoot');
   root.innerHTML=`<div class="modal-backdrop"><div class="modal${wide?' wide':''}" role="dialog" aria-modal="true"><h2>${esc(title)}</h2><div class="modal-body"></div><div class="modal-actions"></div></div></div>`;
@@ -185,6 +186,7 @@ function openModal({title='',body='',actions=[],wide=false}={}){
   const actEl=root.querySelector('.modal-actions');
   actions.forEach(a=>{ const b=document.createElement('button'); b.type='button'; b.textContent=a.label; b.className=a.kind==='danger'?'danger-btn':a.kind==='primary'?'primary-btn':'white-pill'; b.addEventListener('click',()=>a.onClick&&a.onClick(b)); actEl.appendChild(b); });
   root.querySelector('.modal-backdrop').addEventListener('mousedown',e=>{ if(e.target.classList.contains('modal-backdrop')) closeModal(); });
+  updateScrollBtn();
   return {bodyEl, actEl, close:closeModal};
 }
 function confirmModal(title,text,confirmLabel,onConfirm){
@@ -529,7 +531,20 @@ function richText(text){
 }
 
 /* ---------- messages ---------- */
-function scrollChat(){ const sc=$('#chatScroller'); sc.scrollTop=sc.scrollHeight; }
+function scrollChat(){ const sc=$('#chatScroller'); sc.scrollTop=sc.scrollHeight; updateScrollBtn(); }
+/* Qwen scroll-to-bottom button: a circular ↓ floated above the composer at the
+   right edge of the chat column. Visible only while a chat is open and the
+   user is >240px from the bottom; it yields to transient UI (Settings, the
+   tools/mode menus, any modal, the toast) so it can never overlap them. While
+   streaming at the bottom auto-stick keeps distance ~0, so it stays hidden. */
+function updateScrollBtn(){
+  const btn=$('#scrollBottomBtn'); if(!btn) return;
+  const sc=$('#chatScroller'), dock=$('#dock');
+  btn.style.bottom=(dock.offsetHeight+12)+'px';
+  const dist=sc.scrollHeight-sc.scrollTop-sc.clientHeight;
+  const covered=!$('#settingsPage').hidden||!$('#toolsMenu').hidden||!$('#modeMenu').hidden||!$('#toast').hidden||$('#modalRoot').childElementCount>0;
+  btn.hidden=!(!$('#messageColumn').hidden&&!covered&&dist>240);
+}
 function renderMessages(){
   const s=currentSession();
   const has=s&&s.messages.length>0;
@@ -564,9 +579,11 @@ function renderMessages(){
   const _mbc=document.querySelector('#responseModeBtn .chev'); if(_mbc) _mbc.innerHTML=ic('chevron-down',12);
   const col=$('#messageColumn'); col.innerHTML='';
   document.querySelector('.main-card').classList.toggle('share-mode',shareMode);
+  updateScrollBtn();
   if(!s) return;
   s.messages.forEach(m=>col.appendChild(messageEl(s,m)));
   if(stickBottom) scrollChat();
+  updateScrollBtn();
 }
 function messageEl(s,m){
   const wrap=document.createElement('div'); wrap.className='message '+m.role; wrap.dataset.mid=m.id;
@@ -641,7 +658,7 @@ function messageEl(s,m){
   return wrap;
 }
 function assistantContentEl(id){ const el=document.querySelector(`.message.assistant[data-mid="${id}"] .message-content`); return el; }
-function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(cleanAssistantText(m.text)); wireCodeBlocks(el); wireTables(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); syncActivityRow(m); if(drawerMsgId===m.id&&!$('#activityDrawer').hidden) fillDrawer(m); }
+function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(cleanAssistantText(m.text)); wireCodeBlocks(el); wireTables(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); syncActivityRow(m); if(drawerMsgId===m.id&&!$('#activityDrawer').hidden) fillDrawer(m); updateScrollBtn(); }
   else renderMessages(); }
 /* Qwen thinking-row semantics (2026-11-07 behavior spec):
    - Auto / Thinking: the row appears on EVERY turn, even before the backend
@@ -1101,11 +1118,11 @@ function openSettings(page){
   if(page==='Usage & Billing') page='usage';
   if(page && PAGE_TITLES[page]){ settingsPageKey=page; settingsStack.length=0; settingsStack.push(page); }
   $('#settingsPage').hidden=false;
-  renderSettings();
+  renderSettings(); updateScrollBtn();
 }
-function openSettingsPage(key){ settingsPageKey=key; settingsStack.length=0; settingsStack.push(key); $('#settingsPage').hidden=false; renderSettings(); }
+function openSettingsPage(key){ settingsPageKey=key; settingsStack.length=0; settingsStack.push(key); $('#settingsPage').hidden=false; renderSettings(); updateScrollBtn(); }
 function openUpgrade(){ openSettingsPage('upgrade'); }
-function closeSettings(){ $('#settingsPage').hidden=true; $('#settingsPage').classList.remove('section-open'); }
+function closeSettings(){ $('#settingsPage').hidden=true; $('#settingsPage').classList.remove('section-open'); updateScrollBtn(); }
 function enterPage(key){ settingsPageKey=key; settingsStack.length=0; settingsStack.push(key); renderSettings(); }
 function gotoPage(key){ settingsPageKey=key; settingsStack.push(key); renderSettings(); }
 function settingsGoBack(){
@@ -1766,10 +1783,10 @@ function pageContact(c){
 const PAGE_RENDER={profile:pageProfile, account:pageAccount, upgrade:pageUpgrade, usage:pageUsage, language:pageLanguage, theme:pageTheme, personalization:pagePersonalization, voice:pageVoice, interface:pageInterface, model:pageModel, terms:legalPage(LEGAL_TERMS), privacy:legalPage(LEGAL_PRIVACY), cookie:pageCookieNotice, cookies:pageCookies, about:pageAbout, contact:pageContact};
 
 /* ---------- composer + chrome wiring ---------- */
-function autosize(){ const t=$('#composerInput'); t.style.height='auto'; if(!t.value){ $('#composer').classList.remove('multi'); return; } const sh=t.scrollHeight; t.style.height=Math.min(sh,120)+'px'; $('#composer').classList.toggle('multi',sh>44); }
+function autosize(){ const t=$('#composerInput'); t.style.height='auto'; if(!t.value){ $('#composer').classList.remove('multi'); updateScrollBtn(); return; } const sh=t.scrollHeight; t.style.height=Math.min(sh,120)+'px'; $('#composer').classList.toggle('multi',sh>44); updateScrollBtn(); }
 function updateSend(){ const hasText=!!$('#composerInput').value.trim(); $('#sendBtn').disabled=!(hasText||attachments.length); $('#micBtn').style.display=hasText?'none':''; }
 function syncToolsAvailability(){ const on=settings.advancedEnabled!==false&&settings.advanced.imageGeneration; const b=document.querySelector('[data-tool="image"]'); if(b){ b.disabled=!on; b.style.opacity=on?'1':'.45'; } }
-function closePopovers(){ $('#toolsMenu').hidden=true; $('#modeMenu').hidden=true; $('#modelPanel').hidden=true; $('#profileMenu').hidden=true; $('#moreToolsMenu').hidden=true; }
+function closePopovers(){ $('#toolsMenu').hidden=true; $('#modeMenu').hidden=true; $('#modelPanel').hidden=true; $('#profileMenu').hidden=true; $('#moreToolsMenu').hidden=true; updateScrollBtn(); }
 function renderAll(){ renderHistory(); renderSearch(); renderProjects(); renderMessages(); renderModelPanel(); syncToolsAvailability();
   $('#tempChatBtn').setAttribute('aria-pressed',String(temporary));
   $('#profileName').textContent=settings.profileName||'Jepong';
@@ -1835,7 +1852,7 @@ function init(){
        home composer, the CSS cap (100dvh - 110px) ignores the menu's top offset and
        lets its bottom run past the viewport. Clamp to the space actually available;
        the menu's own overflow-y:auto then scrolls (e.g. with More expanded). */
-    if(!m.hidden){ const r=m.getBoundingClientRect(); const cap=parseFloat(getComputedStyle(m).maxHeight)||480; const avail=innerHeight-r.top-8; m.style.maxHeight=Math.max(180,Math.min(cap,avail))+'px'; } });
+    if(!m.hidden){ const r=m.getBoundingClientRect(); const cap=parseFloat(getComputedStyle(m).maxHeight)||480; const avail=innerHeight-r.top-8; m.style.maxHeight=Math.max(180,Math.min(cap,avail))+'px'; } updateScrollBtn(); });
   $('#moreToolsBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#moreToolsMenu'); m.hidden=!m.hidden; e.currentTarget.setAttribute('aria-expanded',String(!m.hidden));
     if(!m.hidden){ m.style.left=''; m.style.right=''; let r=m.getBoundingClientRect();
       if(r.right>innerWidth-8){ m.style.left='auto'; m.style.right='calc(100% + 8px)'; r=m.getBoundingClientRect();
@@ -1851,7 +1868,7 @@ function init(){
     if(t==='image'&&!(settings.advancedEnabled!==false&&settings.advanced.imageGeneration)){ toast('Image generation is off in Settings → Personalization → Advanced'); activeTool=null; renderAll(); return; }
     if(activeTool) toast('Mode: '+(b.dataset.modeLabel||b.textContent.trim().replace(/\s+/g,' '))); input.focus(); }));
   $('#toolsEnabledToggle').addEventListener('click',e=>{ e.stopPropagation(); settings.toolsEnabled=!settings.toolsEnabled; saveSettings(); e.currentTarget.setAttribute('aria-checked',String(settings.toolsEnabled)); });
-  $('#responseModeBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#modeMenu'); const was=m.hidden; closePopovers(); m.hidden=!was; });
+  $('#responseModeBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#modeMenu'); const was=m.hidden; closePopovers(); m.hidden=!was; updateScrollBtn(); });
   $('#modeMenu').addEventListener('click',e=>e.stopPropagation());
   $$('#modeMenu [data-response-mode]').forEach(b=>b.addEventListener('click',()=>{ settings.responseMode=b.dataset.responseMode; saveSettings(); closePopovers(); renderAll(); }));
   $('#fileInput').addEventListener('change',e=>{ addFiles(e.target.files); e.target.value=''; });
@@ -1880,7 +1897,9 @@ function init(){
       saveSessions(); renderAll(); toast('Imported '+n+' chat(s)'); }catch(err){ toast('Import failed: not a valid chats file'); } };
     r.readAsText(f); });
   // scroller stickiness + global close
-  $('#chatScroller').addEventListener('scroll',e=>{ const sc=e.target; stickBottom=sc.scrollHeight-sc.scrollTop-sc.clientHeight<120; });
+  $('#chatScroller').addEventListener('scroll',e=>{ const sc=e.target; stickBottom=sc.scrollHeight-sc.scrollTop-sc.clientHeight<120; updateScrollBtn(); });
+  $('#scrollBottomBtn').addEventListener('click',()=>{ stickBottom=true; const sc=$('#chatScroller'); sc.scrollTo({top:sc.scrollHeight,behavior:'smooth'}); updateScrollBtn(); });
+  window.addEventListener('resize',updateScrollBtn);
   document.addEventListener('click',e=>{ if(!e.target.closest('.model-wrap')&&!e.target.closest('#toolsMenu')&&!e.target.closest('#composer')&&!e.target.closest('.profile-block')) closePopovers(); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closePopovers(); closeCtx(); } });
   renderAll(); updateSend(); autosize();
