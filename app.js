@@ -562,7 +562,6 @@ function renderMessages(){
      upward — with max-height + scroll — from the docked/bottom-anchored composer. */
   composer.classList.toggle('menu-down', !has && !isMobile);
   const _mbc=document.querySelector('#responseModeBtn .chev'); if(_mbc) _mbc.innerHTML=ic('chevron-down',12);
-  $('#voiceModeBtn').style.display=(has||$('#composerInput').value.trim())?'none':'';
   const col=$('#messageColumn'); col.innerHTML='';
   document.querySelector('.main-card').classList.toggle('share-mode',shareMode);
   if(!s) return;
@@ -1010,14 +1009,16 @@ function speak(text){
   }catch(e){ toast('Speech is not available in this browser'); }
 }
 let recog=null;
+function micUi(on){ const b=$('#micBtn'); if(b){ b.classList.toggle('listening',!!on); b.setAttribute('aria-pressed',String(!!on)); } }
 function toggleMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ toast('Voice input is not available in this browser'); return; }
-  if(recog){ try{ recog.stop(); }catch(e){} recog=null; return; }
+  if(recog){ try{ recog.stop(); }catch(e){} recog=null; micUi(false); return; }
   recog=new SR(); recog.lang='en-US'; recog.interimResults=true;
   recog.onresult=e=>{ let t=''; for(const r of e.results) t+=r[0].transcript; const inp=$('#composerInput'); inp.value=t; autosize(); updateSend(); };
-  recog.onend=()=>{ recog=null; };
-  try{ recog.start(); toast('Listening…'); }catch(e){ recog=null; }
+  recog.onerror=e=>{ if(e&&(e.error==='not-allowed'||e.error==='service-not-allowed')) toast('Permission denied when accessing microphone'); recog=null; micUi(false); };
+  recog.onend=()=>{ recog=null; micUi(false); };
+  try{ recog.start(); micUi(true); toast('Listening…'); }catch(e){ recog=null; micUi(false); }
 }
 
 /* ---------- model picker ---------- */
@@ -1561,7 +1562,7 @@ function pageVoice(c){
   test.addEventListener('click',()=>speak('Hello, this is JepongDevxyz AI.'));
   inner.appendChild(test);
   ctl.appendChild(inner); c.appendChild(ctl);
-  c.appendChild(cardRow('Voice mode','Read new replies aloud automatically.',switchEl(V.voiceMode,v=>{ V.voiceMode=v; saveSettings(); syncVoiceBtn(); },'Voice mode')));
+  c.appendChild(cardRow('Voice mode','Read new replies aloud automatically.',switchEl(V.voiceMode,v=>{ V.voiceMode=v; saveSettings(); },'Voice mode')));
 }
 
 /* ----- Model page ----- */
@@ -1715,11 +1716,10 @@ const PAGE_RENDER={profile:pageProfile, account:pageAccount, upgrade:pageUpgrade
 
 /* ---------- composer + chrome wiring ---------- */
 function autosize(){ const t=$('#composerInput'); t.style.height='auto'; if(!t.value){ $('#composer').classList.remove('multi'); return; } const sh=t.scrollHeight; t.style.height=Math.min(sh,120)+'px'; $('#composer').classList.toggle('multi',sh>44); }
-function updateSend(){ const hasText=!!$('#composerInput').value.trim(); $('#sendBtn').disabled=!(hasText||attachments.length); $('#micBtn').style.display=hasText?'none':''; const _cs=currentSession(); $('#voiceModeBtn').style.display=(hasText||(_cs&&_cs.messages.length))?'none':''; }
-function syncVoiceBtn(){ $('#voiceModeBtn').setAttribute('aria-pressed',String(!!settings.voice.voiceMode)); }
+function updateSend(){ const hasText=!!$('#composerInput').value.trim(); $('#sendBtn').disabled=!(hasText||attachments.length); $('#micBtn').style.display=hasText?'none':''; }
 function syncToolsAvailability(){ const on=settings.advancedEnabled!==false&&settings.advanced.imageGeneration; const b=document.querySelector('[data-tool="image"]'); if(b){ b.disabled=!on; b.style.opacity=on?'1':'.45'; } }
 function closePopovers(){ $('#toolsMenu').hidden=true; $('#modeMenu').hidden=true; $('#modelPanel').hidden=true; $('#profileMenu').hidden=true; $('#moreToolsMenu').hidden=true; }
-function renderAll(){ renderHistory(); renderSearch(); renderProjects(); renderMessages(); renderModelPanel(); syncVoiceBtn(); syncToolsAvailability();
+function renderAll(){ renderHistory(); renderSearch(); renderProjects(); renderMessages(); renderModelPanel(); syncToolsAvailability();
   $('#tempChatBtn').setAttribute('aria-pressed',String(temporary));
   $('#profileName').textContent=settings.profileName||'Jepong';
   paintAvatars();
@@ -1779,7 +1779,6 @@ function init(){
   input.addEventListener('paste',e=>{ if(!settings.interface.pasteAsFile) return; const t=(e.clipboardData||window.clipboardData); const txt=t&&t.getData?t.getData('text'):''; if(txt&&txt.length>1000){ e.preventDefault(); attachments.push({name:'pasted-text.txt', mimeType:'text/plain', kind:'text/plain', size:txt.length, extractedText:txt.slice(0,200000)}); renderAttachments(); updateSend(); toast('Large text attached as a file'); } });
   $('#stopBtn').addEventListener('click',()=>{ if(aborter) aborter.abort(); });
   $('#micBtn').addEventListener('click',toggleMic);
-  $('#voiceModeBtn').addEventListener('click',()=>{ settings.voice.voiceMode=!settings.voice.voiceMode; saveSettings(); syncVoiceBtn(); toast(settings.voice.voiceMode?'Voice mode on':'Voice mode off'); });
   $('#toolsBtn').addEventListener('click',e=>{ e.stopPropagation(); const m=$('#toolsMenu'); const was=m.hidden; closePopovers(); m.hidden=!was;
     /* Keep the open menu fully on screen: when it opens downward from the centred
        home composer, the CSS cap (100dvh - 110px) ignores the menu's top offset and
