@@ -513,12 +513,13 @@ svg{display:inline-block;vertical-align:middle;flex:0 0 auto}
 .more-menu{position:static;width:auto;background:transparent;border:0;border-radius:0;box-shadow:none;padding:2px 0 4px 28px;max-height:none;overflow:visible}
 .more-menu button{display:flex;width:100%;height:40px;border:0;background:transparent;border-radius:8px;padding:0 11px;align-items:center;gap:10px;text-align:left;font-size:14px}
 .more-menu button:hover{background:var(--surface-2)}
-/* Mobile More submenu: popover above the More row, right-aligned INSIDE the
-   tools menu (inside the scroll container's box, so it is not clipped).
-   Placed after the base .more-menu rule so it actually wins the cascade. */
-@media(max-width:767px){
-  .more-menu{position:absolute;left:auto;right:0;bottom:calc(100% + 6px);width:190px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:75;max-height:min(320px,calc(100dvh - 24px));overflow-y:auto}
-}
+/* Mobile More submenu: ALSO in flow (overlap fix, 2026-11-07). The previous
+   mobile-only absolute popover (bottom:100%+6px, right:0, 190px) opened
+   upward over the tools menu and covered the right half of the five rows
+   above More (Create Image..Web Dev) by up to 176x35px per row — measured
+   by the overlap audit at 390x844 and 360x800. In-flow expansion cannot
+   overlap anything: the bottom-anchored menu simply grows upward and
+   scrolls internally past its max-height, exactly like desktop. */
 @media(min-width:768px){
   .drawer-scrim{display:none}
 }
