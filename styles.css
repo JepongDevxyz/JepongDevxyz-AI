@@ -141,19 +141,20 @@ svg{display:inline-block;vertical-align:middle;flex:0 0 auto}
 .composer{position:relative;background:var(--panel);border:1px solid var(--composer-line);border-radius:29px;box-shadow:var(--composer-shadow);padding:9px 10px}
 .composer.multi{border-radius:24px}
 .composer-main{display:flex;align-items:flex-end;gap:6px}
-.composer textarea{flex:1;width:auto;border:0;outline:0;resize:none;background:transparent;min-height:40px;max-height:120px;padding:10px 4px;font-size:15px;line-height:20px;display:block}
-.composer textarea::placeholder{color:var(--placeholder)}
+.composer textarea{flex:1;min-width:0;width:auto;border:0;outline:0;resize:none;background:transparent;min-height:40px;max-height:120px;padding:10px 4px;font-size:15px;line-height:20px;display:block}
+.composer textarea::placeholder{color:var(--placeholder);white-space:nowrap;text-overflow:ellipsis}
+.composer textarea:placeholder-shown{white-space:nowrap;overflow:hidden}
 .composer-right{display:flex;align-items:center;gap:5px;padding-bottom:5px}
 .round-btn{width:30px;height:30px;border-radius:50%;border:0;background:var(--surface-2);display:grid;place-items:center;color:var(--ink);flex:0 0 auto}
 .composer-main>.round-btn.plus{margin-bottom:5px;background:var(--surface-2)}
 .round-btn.mic{background:var(--surface-2)}
-.round-btn.voice-mode{background:var(--black);color:var(--black-ink)}
-.round-btn.voice-mode[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+.round-btn.mic.listening{background:var(--accent-soft);color:var(--accent)}
 .mode-btn{border:0;background:transparent;display:flex;align-items:center;gap:4px;padding:6px 5px;font-size:14px;border-radius:8px}
 .mode-btn:hover{background:var(--surface-2)}
 .mode-btn .chev{color:var(--muted)}
 .send-btn{width:30px;height:30px;border:0;border-radius:50%;background:var(--surface-3);color:#fff;display:grid;place-items:center;flex:0 0 auto}
 .send-btn:not(:disabled){background:var(--black);color:var(--black-ink)}
+.send-btn:disabled{color:var(--grey-13)}
 .send-btn.stop{background:var(--black);color:var(--black-ink)}
 .attachment-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px 7px}
 .file-chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 10px;font-size:13px;max-width:100%}
