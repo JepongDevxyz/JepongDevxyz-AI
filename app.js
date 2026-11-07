@@ -32,6 +32,9 @@ const ICONS={
   'log-out':'<path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />',
   'info':'<circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />',
   'monitor':'<rect width="20" height="14" x="2" y="3" rx="2" /><line x1="8" x2="16" y1="21" y2="21" /><line x1="12" x2="12" y1="17" y2="21" />',
+  'eye':'<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" />',
+  'maximize':'<path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />',
+  'smartphone':'<rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" />',
   'layers':'<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />',
   'message-square':'<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />',
   'copy':'<rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />',
@@ -431,11 +434,13 @@ function codeBlockHTML(code,lang){
     const body=(/^\s*#/.test(ln)&&!state.block)?'<span class="tok-com">'+esc(ln)+'</span>':highlightCodeLine(ln,state);
     return '<span class="cl"><span class="ln">'+(ix+1)+'</span><span class="lc">'+(body||' ')+'</span></span>';
   }).join('');
+  const isHtml=/^(html|xml|xhtml)$/i.test(String(lang||'').trim());
   return '<div class="code-block"><div class="code-head"><span class="code-lang">'+esc(lang||'code')+'</span><span class="code-actions">'
     +'<button type="button" data-code="copy" title="Copy code">'+ic('copy')+'</button>'
     +'<button type="button" data-code="download" title="Download code">'+ic('download')+'</button>'
     +'<button type="button" data-code="collapse" title="Collapse">'+ic('chevron-up',14)+'</button></span></div>'
-    +'<pre class="code-pre"><code>'+rows+'</code></pre></div>';
+    +'<pre class="code-pre"><code>'+rows+'</code></pre></div>'
+    +(isHtml?'<button type="button" class="code-preview-btn" data-code="preview">'+ic('eye',15)+'<span>Preview</span></button>':'');
 }
 function wireCodeBlocks(root){
   if(!root||!root.querySelectorAll) return;
@@ -445,6 +450,7 @@ function wireCodeBlocks(root){
     const copy=block.querySelector('[data-code="copy"]'); if(copy) copy.addEventListener('click',()=>copyText(codeText()));
     const dl=block.querySelector('[data-code="download"]'); if(dl) dl.addEventListener('click',()=>{ const lang=(block.querySelector('.code-lang')||{}).textContent||'txt'; const ext=({javascript:'js',js:'js',typescript:'ts',ts:'ts',python:'py',py:'py',html:'html',css:'css',json:'json',bash:'sh',shell:'sh',java:'java',c:'c',cpp:'cpp',go:'go',rust:'rs',php:'php',ruby:'rb',sql:'sql',text:'txt',code:'txt'})[String(lang).toLowerCase()]||'txt'; download('code.'+ext, codeText(), 'text/plain'); });
     const col=block.querySelector('[data-code="collapse"]'); if(col) col.addEventListener('click',()=>{ const pre=block.querySelector('.code-pre'); pre.hidden=!pre.hidden; col.title=pre.hidden?'Expand':'Collapse'; });
+    const pv=block.nextElementSibling; if(pv&&pv.dataset&&pv.dataset.code==='preview'&&!pv.dataset.wired){ pv.dataset.wired='1'; pv.addEventListener('click',()=>openWebDev(codeText())); }
   });
 }
 /* Qwen-style table download: export THAT table as a .csv file. */
@@ -518,7 +524,7 @@ function renderMessages(){
   $('#temporaryBanner').hidden=!(temporary&&!has);
   $('#homeView').hidden=has||temporary;
   $('#messageColumn').hidden=!has;
-  $('#disclaimer').hidden=!has;
+  /* disclaimer visibility handled after composer placement below */
   $('#currentChatMenuBtn').hidden=!has;
   document.querySelector('.app-frame').classList.toggle('temp-on',temporary);
   // composer placement: home slot (empty home), centred temp slot (desktop temp), dock otherwise
@@ -527,6 +533,14 @@ function renderMessages(){
   if(!has&&temporary&&!isMobile) $('#tempComposerSlot').appendChild(composer);
   else if(!has&&!temporary) $('#homeComposerSlot').appendChild(composer);
   else $('#dockComposerSlot').appendChild(composer);
+  /* Qwen footer: the disclaimer sits directly under the composer in the
+     docked and temporary placements (it follows the composer element).
+     On the plain home view it stays in the dock as before — the home
+     composer block is vertically centred, and moving the line under it
+     would shift the calibrated home geometry. */
+  const disc=$('#disclaimer');
+  if(!has&&!temporary){ disc.hidden=true; const dk=$('#dock'); if(disc.parentElement!==dk) dk.appendChild(disc); }
+  else { disc.hidden=false; if(composer.parentElement&&disc.parentElement!==composer.parentElement) composer.parentElement.appendChild(disc); }
   $('#dock').style.display=(has||(temporary&&isMobile))?'':'none';
   $('#topUpgradeBtn').style.display=has?'none':'';
   /* In-chat top bar (Qwen): only model name + More — hide the Temporary Chat icon
@@ -565,14 +579,13 @@ function messageEl(s,m){
     return wrap;
   }
   // assistant
-  if(m.activity&&m.activity.length&&!(m.pending&&m.skipActivity)){
+  if(rowWanted(m)){
     const row=document.createElement('div'); row.className='activity-row'+(m.pending?'':' done');
-    const cur=[...m.activity].reverse().find(a=>a.state==='running')||m.activity[m.activity.length-1];
     const main=document.createElement('button'); main.type='button'; main.className='activity-main';
-    main.innerHTML=`<span class="bulb">${ic('lightbulb')}</span><span class="activity-label">${esc(m.pending?(cur.label||cur.kind||'Working…'):'Thinking completed')}</span><span class="chev">${ic('chevron-right',12)}</span>`;
+    main.innerHTML=`<span class="bulb">${ic('lightbulb')}</span><span class="activity-label">${esc(rowLabelFor(m))}</span><span class="chev">${ic('chevron-right',12)}</span>`;
     main.addEventListener('click',()=>openDrawer(m)); row.appendChild(main);
     if(m.pending){ const sk=document.createElement('button'); sk.type='button'; sk.className='activity-skip'; sk.textContent='Skip';
-      sk.addEventListener('click',()=>{ m.skipActivity=true; row.remove(); }); row.appendChild(sk); }
+      sk.addEventListener('click',()=>skipActivityStep(m)); row.appendChild(sk); }
     wrap.appendChild(row);
   }
   const content=document.createElement('div'); content.className='message-content';
@@ -610,7 +623,7 @@ function messageEl(s,m){
       pg.innerHTML=`<button type="button" data-a="vprev" title="Previous version" ${(m.vIndex||0)<=0?'disabled':''}>${ic('chevron-left')}</button><span class="vp-label">${(m.vIndex||0)+1}/${m.versions.length}</span><button type="button" data-a="vnext" title="Next version" ${(m.vIndex||0)>=m.versions.length-1?'disabled':''}>${ic('chevron-right')}</button>`;
       pg.querySelector('[data-a="vprev"]').addEventListener('click',()=>switchVersion(s,m,-1));
       pg.querySelector('[data-a="vnext"]').addEventListener('click',()=>switchVersion(s,m,1));
-      row.appendChild(pg);
+      row.insertBefore(pg,row.firstChild); /* spec order: paginator first, then Copy/Good/Bad/Share/Regenerate/More */
     }
     wrap.appendChild(row);
   }
@@ -619,18 +632,53 @@ function messageEl(s,m){
 function assistantContentEl(id){ const el=document.querySelector(`.message.assistant[data-mid="${id}"] .message-content`); return el; }
 function paintAssistant(s,m){ const el=assistantContentEl(m.id); if(el){ el.innerHTML=richText(cleanAssistantText(m.text)); wireCodeBlocks(el); wireTables(el); const cur=document.createElement('span'); cur.className='stream-cursor'; cur.innerHTML=ic('sparkle',14); el.appendChild(cur); if(stickBottom) scrollChat(); syncActivityRow(m); if(drawerMsgId===m.id&&!$('#activityDrawer').hidden) fillDrawer(m); }
   else renderMessages(); }
-/* Keep the Qwen activity row in sync while streaming: it appears with the
-   first activity event, its label follows the running step, and Skip hides
-   it for the rest of that generation. */
+/* Qwen thinking-row semantics (2026-11-07 behavior spec):
+   - Auto / Thinking: the row appears on EVERY turn, even before the backend
+     emits any activity step (live label "Thinking..."). Fast: NO row, ever.
+   - Steps shown come only from real backend activity events; the client
+     never invents step text.
+   - Skip advances the displayed step label by one step only. It never ends
+     thinking, never hides the row and never jumps to the answer.
+   - Completed label is exactly "Thinking completed"; a turn stopped during
+     the thinking phase (no answer text received) reads "Thought stopped". */
+function rowWanted(m){
+  if(!m||m.role!=='assistant') return false;
+  if(m.thinkMode==='Fast') return false;
+  if(m.thinkMode==='Auto'||m.thinkMode==='Thinking') return true;
+  if(m.thoughtStopped) return true;
+  return !!(m.activity&&m.activity.length); /* legacy messages without a recorded mode */
+}
+function labelStepIdx(m){
+  const steps=m.activity||[]; if(!steps.length) return -1;
+  let run=steps.findIndex(a=>a.state==='running'); if(run<0) run=steps.length-1;
+  if(m.skipIdx!=null) return Math.max(Math.min(m.skipIdx,steps.length-1), run);
+  return run;
+}
+function rowLabelFor(m){
+  if(m.thoughtStopped&&!m.pending) return 'Thought stopped';
+  if(!m.pending) return 'Thinking completed';
+  const steps=m.activity||[]; if(!steps.length) return 'Thinking...';
+  const st=steps[labelStepIdx(m)]||steps[steps.length-1];
+  return (st&&(st.label||st.kind))||'Thinking...';
+}
+function skipActivityStep(m){
+  const steps=m.activity||[]; if(!steps.length) return;
+  m.skipIdx=Math.min(labelStepIdx(m)+1, steps.length-1);
+  syncActivityRow(m);
+}
+function searchRanIn(m){
+  return (m.activity||[]).some(a=>/search|web/i.test(String((a&&a.kind)||'')+' '+String((a&&a.label)||'')));
+}
+/* Keep the Qwen activity row in sync while streaming: it appears at the
+   start of the turn (Auto/Thinking), its label follows the running step,
+   and Skip only advances the displayed step label. */
 function syncActivityRow(m){
   const wrap=document.querySelector(`.message.assistant[data-mid="${m.id}"]`); if(!wrap) return;
   const row=wrap.querySelector('.activity-row');
-  if(!(m.activity&&m.activity.length)){ if(row) row.remove(); return; }
-  if(m.pending&&m.skipActivity){ if(row) row.remove(); return; }
+  if(!rowWanted(m)){ if(row) row.remove(); return; }
   if(!row){ renderMessages(); return; }
   const lab=row.querySelector('.activity-label'); if(!lab) return;
-  const cur=[...m.activity].reverse().find(a=>a.state==='running')||m.activity[m.activity.length-1];
-  lab.textContent=m.pending?(cur.label||cur.kind||'Working…'):'Thinking completed';
+  lab.textContent=rowLabelFor(m);
 }
 function branchChat(s,m){
   const idx=s.messages.findIndex(x=>x.id===m.id);
@@ -662,6 +710,44 @@ function closeDrawer(){
   const sc=$('#drawerScrim'); if(sc) sc.hidden=true;
   drawerMsgId=null;
 }
+/* ---------- Web Dev panel (Qwen: HTML code blocks get a Preview button) ----------
+   Side panel on desktop, full-screen sheet on mobile (CSS). Deploy is shown
+   DISABLED — there is no deploy endpoint in the /api/chat contract. */
+let webdevCodeText='';
+function openWebDev(code){
+  webdevCodeText=String(code||'');
+  const p=$('#webdevPanel'); if(!p) return;
+  p.hidden=false; const sc=$('#webdevScrim'); if(sc) sc.hidden=false;
+  setWebDevTab('preview'); setWebDevDevice('desktop'); paintWebDevCode(); refreshWebDev();
+}
+function closeWebDev(){ const p=$('#webdevPanel'); if(p) p.hidden=true; const sc=$('#webdevScrim'); if(sc) sc.hidden=true; }
+function refreshWebDev(){ const f=$('#webdevFrame'); if(f) f.srcdoc=webdevCodeText; }
+function paintWebDevCode(){
+  const c=$('#webdevCode'); if(!c) return;
+  const state={block:false};
+  c.innerHTML=String(webdevCodeText).replace(/\n+$/,'').split('\n').map((ln,ix)=>'<span class="cl"><span class="ln">'+(ix+1)+'</span><span class="lc">'+(highlightCodeLine(ln,state)||' ')+'</span></span>').join('');
+}
+function setWebDevTab(t){
+  $$('#webdevPanel .wd-tab').forEach(b=>b.classList.toggle('active',b.dataset.wdTab===t));
+  const pw=$('#webdevPreviewWrap'); if(pw) pw.hidden=t!=='preview';
+  const cw=$('#webdevCodeWrap'); if(cw) cw.hidden=t!=='code';
+  const foot=$('#webdevFoot'); if(foot) foot.style.visibility=t==='preview'?'':'hidden';
+}
+function setWebDevDevice(dev){
+  const pw=$('#webdevPreviewWrap'); if(pw) pw.classList.toggle('mobile',dev==='mobile');
+  const bd=$('#webdevDesktop'), bm=$('#webdevMobile');
+  if(bd) bd.classList.toggle('active',dev==='desktop');
+  if(bm) bm.classList.toggle('active',dev==='mobile');
+}
+function webdevFullscreen(){
+  const p=$('#webdevPanel');
+  try{
+    if(document.fullscreenElement){ document.exitFullscreen(); return; }
+    if(p&&p.requestFullscreen){ p.requestFullscreen(); return; }
+  }catch(e){}
+  toast('Fullscreen is not available here');
+}
+
 /* Steps come straight from the /api/chat activity stream: label = step title,
    detail (only when the backend sent one) = the grey description. Completed
    steps get the check; the running step pulses; a finished reply closes the
@@ -673,14 +759,15 @@ function fillDrawer(m){
     const icHtml=st==='completed'?`<span class="step-check">${ic('check',11)}</span>`:st==='error'?ic('circle-x',18):'<span class="step-dot"></span>';
     it.innerHTML=`<span class="step-ic">${icHtml}</span><div class="step-copy"><div class="step-title">${esc(a.label||a.kind||'Activity')}</div>${a.detail?`<small class="step-desc">${esc(a.detail)}</small>`:''}</div>`;
     list.appendChild(it); });
-  if(!m.pending&&(m.activity||[]).length){ const f=document.createElement('div'); f.className='activity-item final';
-    f.innerHTML=`<span class="step-ic">${ic('lightbulb',16)}</span><div class="step-copy"><div class="step-title">Thinking completed</div></div>`; list.appendChild(f); }
+  if(!m.pending&&rowWanted(m)){ const f=document.createElement('div'); f.className='activity-item final';
+    const fin=m.thoughtStopped?'Thought stopped':(searchRanIn(m)?'Thinking and Searching Completed':'Thinking completed');
+    f.innerHTML=`<span class="step-ic">${ic('lightbulb',16)}</span><div class="step-copy"><div class="step-title">${fin}</div></div>`; list.appendChild(f); }
   if(!list.children.length) list.innerHTML='<p class="kbd-note">No activity recorded for this reply.</p>';
 }
 
 /* ---------- reply versions (Qwen pager: < n/n >) ---------- */
-function snapshotOf(m){ return { text:m.text||'', activity:JSON.parse(JSON.stringify(m.activity||[])), artifacts:m.artifacts?JSON.parse(JSON.stringify(m.artifacts)):undefined, image:m.image||undefined }; }
-function applyVersion(m,v){ m.text=v.text||''; m.activity=JSON.parse(JSON.stringify(v.activity||[])); if(v.artifacts) m.artifacts=JSON.parse(JSON.stringify(v.artifacts)); else delete m.artifacts; if(v.image) m.image=v.image; else delete m.image; delete m.skipActivity; }
+function snapshotOf(m){ return { text:m.text||'', activity:JSON.parse(JSON.stringify(m.activity||[])), artifacts:m.artifacts?JSON.parse(JSON.stringify(m.artifacts)):undefined, image:m.image||undefined, thinkMode:m.thinkMode, thoughtStopped:!!m.thoughtStopped }; }
+function applyVersion(m,v){ m.text=v.text||''; m.activity=JSON.parse(JSON.stringify(v.activity||[])); if(v.artifacts) m.artifacts=JSON.parse(JSON.stringify(v.artifacts)); else delete m.artifacts; if(v.image) m.image=v.image; else delete m.image; if(v.thinkMode) m.thinkMode=v.thinkMode; m.thoughtStopped=!!v.thoughtStopped; delete m.skipIdx; delete m.skipActivity; }
 function switchVersion(s,m,dir){
   if(!m.versions||streaming) return;
   const cur=m.vIndex||0, n=cur+dir; if(n<0||n>=m.versions.length) return;
@@ -741,7 +828,7 @@ let activeToolLast=null;
 function activeToolConsumed(){ activeToolLast=activeTool; if(activeTool&&activeTool!=='image') { /* keep tool until changed */ } }
 function setStreaming(on){ streaming=on; $('#stopBtn').hidden=!on; $('#sendBtn').hidden=on; }
 async function runChatStream(s,userMsg,filePayload){
-  const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true};
+  const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true, thinkMode:settings.responseMode};
   s.messages.push(asst); renderMessages();
   await streamInto(s,userMsg,asst,filePayload);
 }
@@ -750,6 +837,7 @@ async function runChatStream(s,userMsg,filePayload){
    is refreshed so the version pager always shows what was generated. */
 async function streamInto(s,userMsg,asst,filePayload){
   setStreaming(true); aborter=('AbortController' in window)?new AbortController():null;
+  asst.thinkMode=settings.responseMode; asst.thoughtStopped=false; asst.textReceived=false; delete asst.skipIdx;
   const preset=TOOL_PRESETS[activeToolLast]||{};
   const web=!!(settings.webSearch||preset.web||activeToolLast==='research'||activeToolLast==='deep-research')&&settings.advancedEnabled!==false&&settings.advanced.webSearchAdv;
   const body={ message:userMsg.text, history:historyFor(s,userMsg.id), files:filePayload||[],
@@ -771,9 +859,16 @@ async function streamInto(s,userMsg,asst,filePayload){
       const raw=await res.text();
       let data=null; try{ data=JSON.parse(raw); }catch(e){}
       asst.text=(data&&typeof data==='object'?(data.text||data.reply||data.message||data.content||''):raw)||'';
+      if(asst.text) asst.textReceived=true;
     }
   }catch(err){
-    if(err&&err.name==='AbortError'){ asst.text+=(asst.text?'\n\n':'')+'_Stopped._'; }
+    if(err&&err.name==='AbortError'){
+      /* Stopped during the thinking phase (no answer text received yet):
+         the turn ends empty with the row reading "Thought stopped".
+         Stopped mid-answer: the partial text stays with a Stopped note. */
+      if(!asst.textReceived&&!asst.text){ asst.thoughtStopped=true; asst.text=''; }
+      else asst.text+=(asst.text?'\n\n':'')+'_Stopped._';
+    }
     else { asst.text=(asst.text?asst.text+'\n\n':'')+'⚠ '+(err&&err.message?err.message:'Something went wrong.'); asst.activity.push({label:'Request failed', state:'error', detail:String(err&&err.message||err), at:Date.now()}); }
   }finally{
     asst.text=cleanAssistantText(asst.text);
@@ -835,7 +930,7 @@ async function readSSE(reader,s,asst){
     let ev='message', data='';
     block.split('\n').forEach(line=>{ if(line.startsWith(':')) return; if(line.startsWith('event:')) ev=line.slice(6).trim(); else if(line.startsWith('data:')) data+=line.slice(5).trim(); });
     if(!data) return; let obj=null; try{ obj=JSON.parse(data); }catch(e){}
-    if(ev==='text'&&obj&&typeof obj.text==='string'){ asst.text+=obj.text; paintAssistant(s,asst); }
+    if(ev==='text'&&obj&&typeof obj.text==='string'){ asst.text+=obj.text; if(obj.text) asst.textReceived=true; paintAssistant(s,asst); }
     else if(ev==='activity'&&obj){ const ex=asst.activity.find(a=>a.id&&obj.id&&a.id===obj.id); if(ex) Object.assign(ex,obj); else asst.activity.push(obj); paintAssistant(s,asst); }
     else if(ev==='artifact'&&obj){ asst.artifacts=asst.artifacts||[]; asst.artifacts.push(obj); }
     else if(ev==='error'&&obj){ throw new Error(obj.message||'Stream error'); }
@@ -1705,6 +1800,14 @@ function init(){
   // drawer + settings chrome
   $('#drawerClose').addEventListener('click',closeDrawer);
   $('#drawerScrim').addEventListener('click',closeDrawer);
+  // Web Dev panel chrome
+  $('#webdevClose').addEventListener('click',closeWebDev);
+  $('#webdevScrim').addEventListener('click',closeWebDev);
+  $$('#webdevPanel .wd-tab').forEach(b=>b.addEventListener('click',()=>setWebDevTab(b.dataset.wdTab)));
+  $('#webdevRefresh').addEventListener('click',refreshWebDev);
+  $('#webdevFull').addEventListener('click',webdevFullscreen);
+  $('#webdevDesktop').addEventListener('click',()=>setWebDevDevice('desktop'));
+  $('#webdevMobile').addEventListener('click',()=>setWebDevDevice('mobile'));
   $('#settingsBack').addEventListener('click',()=>settingsGoBack());
   $('#settingsClose').addEventListener('click',()=>settingsGoBack());
   if('speechSynthesis' in window){ try{ speechSynthesis.addEventListener('voiceschanged',()=>{ if(!$('#settingsPage').hidden && settingsPageKey==='voice') renderSettings(); }); }catch(e){} }
