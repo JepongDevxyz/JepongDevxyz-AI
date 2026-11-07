@@ -1003,7 +1003,7 @@ function speak(text){
     if(!('speechSynthesis' in window)){ toast('Speech is not available in this browser'); return; }
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(String(text).replace(/[#*_`>]/g,'').slice(0,1200));
-    const v=speechSynthesis.getVoices().find(x=>x.voiceURI===settings.voice.voiceURI); if(v) u.voice=v;
+    const selE=resolveVoiceEntry(voiceCatalog()); const v=selE?selE.voice:null; if(v) u.voice=v;
     if(settings.voice.lang) u.lang=settings.voice.lang; else if(v) u.lang=v.lang;
     u.rate=settings.voice.rate||1; u.pitch=settings.voice.pitch||1; speechSynthesis.speak(u);
   }catch(e){ toast('Speech is not available in this browser'); }
@@ -1048,7 +1048,7 @@ function renderModelPanel(){
 
 /* ---------- settings page (Qwen structure: grouped list -> dedicated pages) ---------- */
 const PAGE_TITLES={profile:'Profile', account:'Account', upgrade:'Upgrade Plan', usage:'Credits Usage', language:'Language', theme:'Theme', personalization:'Personalization', voice:'Voice', interface:'Interface', model:'Model', terms:'Terms of Service', privacy:'Privacy Policy', cookie:'Cookie Notice', cookies:'Manage Cookies', about:'About', contact:'Contact Us'};
-let usageTab='usage', voiceTab='all', langDropOpen=false;
+let usageTab='usage', langDropOpen=false;
 function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!==undefined&&text!==null) e.textContent=text; return e; }
 function h2(t){ return el('h2',null,t); }
 function rowEl(title, desc, control){
@@ -1500,11 +1500,75 @@ function pageCookies(c){
 /* ----- Voice page ----- */
 const SPOKEN_LANGS=[['en-US','English'],['de-DE','Deutsch'],['es-ES','Español'],['fr-FR','France'],['it-IT','Italiano'],['ja-JP','日本語'],['ko-KR','한국어'],['pt-PT','Portugal'],['ru-RU','Russia'],['zh-CN','中文'],['yue-Hant-HK','中文方言'],['id-ID','Indonesian'],['fil-PH','Filipino']];
 function getVoices(){ try{ return ('speechSynthesis' in window)?speechSynthesis.getVoices():[]; }catch(e){ return []; } }
-function voiceGender(v){
-  const n=(v.name||'').toLowerCase();
-  if(/female|zira|samantha|victoria|karen|moira|fiona|tessa|veena|susan|catherine|joanna|salli|kimberly|amy|emma|aria|jenny|michelle|lucia|elena|sofia|camille|amelie|yuki|kyoko|xiaoxiao|tingting|sin-ji|yuna|heami|paulina|monica|luciana|marisol|esperanza|penelope|laura|silvia|paola|alice|hannah|leah|aubrey|ashley|jessica|sarah|nicole|lisa|ana|rosa|hjortdis|hulda|ingrid|astrid|liv|ida|sigrid|freja|wilma|agnes|alva|ebba|otilia|kerstin|margareta|berit|gunilla|annika|sofie|mette|nynke|lotte|femke|sanne|lieke|eva/.test(n)) return 'f';
-  if(/\bmale\b|david|daniel|alex|fred|thomas|guy|christopher|eric|roger|george|james|william|richard|stefan|klaus|jorge|diego|carlos|kenji|ichiro|pablo|miguel|hugo|arthur|theo|hamza|salim|tarik|dmitry|pavel|yuri|henrik|lars|pieter|tomasz|jakub|mads|kalle|juhani|anthony|brian|kevin|mark|paul|andrew|joshua|ryan|aaron|adam|nathan|owen|liam|noah|lucas|mateo|enrique|fernando|ricardo|alberto|juan|luis|manuel|antonio|francisco|rafael|sergio|andres|felipe|santiago|alejandro|roberto|eduardo|gonzalo|ignacio|marcos|adrian|ruben|oscar|hector|raul|victor|emilio|gustavo|leonardo|mauricio|flavio|bruno|filipe|goncalo|nuno|diogo|tiago|marco|luca|matteo|alessandro|lorenzo|stefano|francesco|giovanni|giuseppe|salvatore|mario|luigi|angelo|vincenzo|domenico|raffaele|pasquale|nicola|michele|pavel/.test(n)) return 'm';
-  return null;
+const SCRIPT_WORDS={Cyrl:'Cyrillic',Latn:'Latin',Hans:'Simplified Chinese script',Hant:'Traditional Chinese script',Arab:'Arabic script',Hebr:'Hebrew script',Deva:'Devanagari script',Grek:'Greek script',Armn:'Armenian script',Geor:'Georgian script',Thai:'Thai script'};
+function dnName(code,type){ try{ return new Intl.DisplayNames(['en'],{type}).of(code)||''; }catch(e){ return ''; } }
+/* Clean one raw engine voice into a human {title, sub} pair. Raw locale codes and
+   #script suffixes are turned into words via Intl.DisplayNames; a name that is just
+   "<Language> <Region>" (Android engine style) becomes "Language (Region)". */
+function cleanVoice(v){
+  const rawLang=String(v.lang||'').replace(/_/g,'-');
+  let script='', base=rawLang;
+  const h=rawLang.indexOf('#'); if(h>=0){ script=rawLang.slice(h+1); base=rawLang.slice(0,h); }
+  const parts=base.split('-').filter(Boolean);
+  let langName='', regionName='';
+  if(parts.length){
+    langName=dnName(parts[0],'language');
+    let i=1;
+    if(parts[1]&&/^[A-Za-z]{4}$/.test(parts[1])){ if(!script) script=parts[1]; i=2; }
+    if(parts[i]) regionName=dnName(parts[i].toUpperCase(),'region');
+  }
+  const scriptWord=script?(dnName(script,'script')||SCRIPT_WORDS[script]||script):'';
+  const nameTidied=String(v.name||'').replace(/_/g,' ').replace(/\s+/g,' ').trim();
+  const langRegion=langName?(regionName?langName+' '+regionName:langName):'';
+  /* Engine names are "<Language> <Region>" verbatim. Prefer the engine's own
+     language word (Intl may disagree, e.g. bn -> "Bangla" vs engine "Bengali"). */
+  const engPrefix=(regionName&&nameTidied.endsWith(' '+regionName))?nameTidied.slice(0,nameTidied.length-regionName.length-1).trim():'';
+  let langWord=langName, title;
+  if(engPrefix&&engPrefix.split(' ').length<=3&&!/[^A-Za-z\u00C0-\u024F' -]/.test(engPrefix)){ title=engPrefix+' ('+regionName+')'; langWord=engPrefix; }
+  else if(langRegion&&nameTidied.toLowerCase()===langRegion.toLowerCase()) title=regionName?langName+' ('+regionName+')':langName;
+  else if(nameTidied&&!/#/.test(nameTidied)&&!/[a-z]{2,3}-[A-Z]{2}/.test(nameTidied)) title=nameTidied;
+  else title=langRegion||nameTidied||'Voice';
+  let sub=langWord?(regionName?langWord+' \u00B7 '+regionName:langWord):'';
+  if(scriptWord) sub+=(sub?' \u00B7 ':'')+scriptWord;
+  if(v.default) sub+=(sub?' \u00B7 ':'')+'Default';
+  return { uri:String(v.voiceURI||''), title, sub, voice:v };
+}
+/* Deduped (by URI and by identical cleaned label), alphabetically sorted catalog.
+   uriToEntry also maps a deduped twin's URI to the kept entry so a stored pick
+   still resolves to the voice the user sees. */
+function voiceCatalog(){
+  const entries=[], byKey=new Map(), uriToEntry=new Map();
+  getVoices().forEach(v=>{
+    const e=cleanVoice(v);
+    const key=(e.title+'|'+e.sub).toLowerCase();
+    if(byKey.has(key)){ if(!uriToEntry.has(e.uri)) uriToEntry.set(e.uri,byKey.get(key)); return; }
+    byKey.set(key,e); entries.push(e); if(!uriToEntry.has(e.uri)) uriToEntry.set(e.uri,e);
+  });
+  entries.sort((a,b)=>a.title.localeCompare(b.title)||a.sub.localeCompare(b.sub));
+  return { entries, uriToEntry };
+}
+/* The stored pick is honoured only while the live list still contains that voice
+   AND the name stored with its URI still matches that voice (raw or cleaned name).
+   A drifted pair (engine update re-assigning URIs, stale persisted state) falls
+   back to Device default and self-heals, instead of checking an arbitrary voice. */
+function resolveVoiceEntry(cat){
+  const V=settings.voice, stored=V.voiceURI||'';
+  if(!stored) return null;
+  const e=cat.uriToEntry.get(stored);
+  if(!e) return null;
+  if(V.name&&V.name!==e.title&&V.name!==String(e.voice.name||'')){
+    V.voiceURI=''; V.name=''; saveSettings();
+    return null;
+  }
+  if(V.name!==e.title){ V.name=e.title; saveSettings(); }
+  return e;
+}
+const VOICE_SAMPLE='Hello, this is JepongDevxyz AI.';
+function pickVoice(entry){
+  const V=settings.voice;
+  V.voiceURI=entry?entry.uri:''; V.name=entry?entry.title:'';
+  saveSettings(); renderSettings();
+  if('speechSynthesis' in window){ try{ speak(VOICE_SAMPLE); }catch(e){} }
 }
 function rangeRow(label, val, min, max, step, onChange){
   const r=el('div','range-row');
@@ -1532,27 +1596,14 @@ function pageVoice(c){
     wrap.appendChild(dd);
   }
   c.appendChild(wrap);
-  const voices=getVoices();
-  const genders=voices.map(voiceGender);
-  const anyClassified=genders.some(Boolean);
-  let shown=voices;
-  if(anyClassified){
-    const seg=el('div','segmented'); seg.style.margin='0 0 14px';
-    [['all','All'],['f','Female'],['m','Male']].forEach(([k,l])=>{
-      const b=el('button',voiceTab===k?'active':'',l); b.type='button';
-      b.addEventListener('click',()=>{ voiceTab=k; renderSettings(); });
-      seg.appendChild(b);
-    });
-    c.appendChild(seg);
-    if(voiceTab!=='all') shown=voices.filter((v,i)=>genders[i]===voiceTab);
-  }
+  const cat=voiceCatalog();
+  const selEntry=resolveVoiceEntry(cat);
   const card=setCard([]);
-  card.appendChild(pickRow('Device default','System voice', !V.voiceURI, ()=>{ V.voiceURI=''; V.name=''; saveSettings(); renderSettings(); }));
-  shown.forEach(v=>{
-    card.appendChild(pickRow(v.name, v.lang+(v.default?' · Default':''), V.voiceURI===v.voiceURI, ()=>{ V.voiceURI=v.voiceURI; V.name=v.name; saveSettings(); renderSettings(); }));
+  card.appendChild(pickRow('Device default','System voice', !selEntry, ()=>pickVoice(null)));
+  cat.entries.forEach(e=>{
+    card.appendChild(pickRow(e.title, e.sub, selEntry===e, ()=>pickVoice(e)));
   });
-  if(!voices.length) card.appendChild(el('div','empty-note','No voices reported by this device yet — the list fills in when the browser provides them.'));
-  else if(!shown.length) card.appendChild(el('div','empty-note','No voices in this group on this device.'));
+  if(!cat.entries.length) card.appendChild(el('div','empty-note','No voices reported by this device yet \u2014 the list fills in when the browser provides them.'));
   c.appendChild(card);
   const ctl=setCard([]);
   const inner=el('div'); inner.style.padding='8px 0';
