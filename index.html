@@ -124,6 +124,19 @@
       <div id="activityList" class="activity-list"></div>
     </aside>
 
+    <div id="webdevScrim" class="drawer-scrim webdev-scrim" hidden></div>
+    <aside id="webdevPanel" class="webdev-panel" aria-label="Web Dev" hidden>
+      <div class="drawer-head"><h2><span class="wd-ic" data-icon="box" data-size="16"></span>Web Dev</h2><div class="wd-head-actions"><button type="button" class="wd-deploy" disabled>Deploy</button><button id="webdevClose" class="icon-btn" type="button" aria-label="Close Web Dev"><span data-icon="x" data-size="12"></span></button></div></div>
+      <div class="wd-tabs"><button type="button" class="wd-tab active" data-wd-tab="preview">Preview</button><button type="button" class="wd-tab" data-wd-tab="code">Code</button></div>
+      <div id="webdevPreviewWrap" class="wd-preview-wrap"><iframe id="webdevFrame" class="wd-frame" title="HTML preview" sandbox="allow-scripts"></iframe></div>
+      <div id="webdevCodeWrap" class="wd-code-wrap" hidden><pre class="wd-code"><code id="webdevCode"></code></pre></div>
+      <div id="webdevFoot" class="wd-foot">
+        <button type="button" id="webdevRefresh" class="wd-foot-btn"><span data-icon="rotate-ccw" data-size="13"></span>Refresh</button>
+        <button type="button" id="webdevFull" class="wd-foot-btn"><span data-icon="maximize" data-size="13"></span>Fullscreen</button>
+        <span class="wd-device"><button type="button" id="webdevDesktop" class="wd-foot-btn active"><span data-icon="monitor" data-size="13"></span>Desktop</button><button type="button" id="webdevMobile" class="wd-foot-btn"><span data-icon="smartphone" data-size="13"></span>Mobile</button></span>
+      </div>
+    </aside>
+
     <section id="settingsPage" class="settings-page" hidden aria-label="Settings">
       <header class="settings-top"><button id="settingsBack" class="back-btn icon-only" type="button" aria-label="Back"><span data-icon="chevron-left" data-size="22"></span></button><h1 id="settingsTitle" class="settings-title">Settings</h1><button id="settingsClose" class="back-btn icon-only" type="button" aria-label="Close" hidden><span data-icon="x" data-size="20"></span></button></header>
       <div class="settings-layout">

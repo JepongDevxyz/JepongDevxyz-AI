@@ -5,7 +5,7 @@
   --line:#ededed; --line-strong:#e5e5e5; --composer-line:#e5e5e5;
   --black:#1b1b1e; --black-ink:#ffffff; --accent:#2563eb; --accent-soft:#eaf2ff; --user-bubble:#ebf5ff; --user-bubble-ink:#1a1a1a;
   --placeholder:#a0a0a0; --seg-active:#ffffff; --scroll-thumb:#c9c9c9;
-  --code-bg:#f6f8fa; --code-head:#eff1f3; --code-line:#e5e5e5; --code-ink:#383a42; --code-num:#9aa0a6;
+  --code-bg:#f6f8fa; --code-head:#eff1f3; --code-line:#e5e5e5; --code-ink:#383a42; --code-num:#9aa0a6; --preview-bg:#ffffff;
   --syn-kw:#a626a4; --syn-str:#50a14f; --syn-fn:#4078f2; --syn-num:#986801; --syn-com:#a0a1a7;
   --danger:#dc2626; --danger-soft:#fef2f2; --good:#16a34a; --shadow:0 16px 48px rgba(0,0,0,.13);
   --qblue:#2e6bf0;
@@ -19,7 +19,7 @@
   --line:#2e2e2e; --line-strong:#424242; --composer-line:#424242;
   --black:#f4f4f5; --black-ink:#171717; --accent:#7db4ff; --accent-soft:#263750; --user-bubble:#293652; --user-bubble-ink:#fafbff;
   --placeholder:#8e8e8e; --seg-active:#424242; --scroll-thumb:#424242;
-  --code-bg:#2c2c2c; --code-head:#26262a; --code-line:#3a3a3a; --code-ink:#abb2bf; --code-num:#7d7d84;
+  --code-bg:#2c2c2c; --code-head:#26262a; --code-line:#3a3a3a; --code-ink:#abb2bf; --code-num:#7d7d84; --preview-bg:#ffffff;
   --syn-kw:#c678dd; --syn-str:#98c379; --syn-fn:#61afef; --syn-num:#d19a66; --syn-com:#7f848e;
   --danger:#f87171; --danger-soft:#3b2023; --good:#4ade80; --shadow:0 16px 48px rgba(0,0,0,.45);
   --qblue:#2e6bf0;
@@ -196,7 +196,7 @@ svg{display:inline-block;vertical-align:middle;flex:0 0 auto}
 .activity-row .chev{color:var(--muted);display:inline-grid;place-items:center;flex:0 0 auto}
 .activity-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .activity-skip{border:0;background:transparent;color:var(--muted);font-size:14px;padding:2px 4px;margin-left:auto;flex:0 0 auto;cursor:pointer}
-.version-pager{display:inline-flex;align-items:center;gap:1px;margin-left:2px;color:var(--ink-2);font-size:13px}
+.version-pager{display:inline-flex;align-items:center;gap:1px;margin-right:2px;color:var(--ink-2);font-size:13px}
 .version-pager button:disabled{opacity:.32;pointer-events:none}
 .version-pager .vp-label{min-width:30px;text-align:center}
 .action-row{display:flex;align-items:center;gap:8px;margin-top:8px;opacity:1}
@@ -228,6 +228,8 @@ svg{display:inline-block;vertical-align:middle;flex:0 0 auto}
 .cl{display:flex;white-space:pre}
 .cl .ln{flex:0 0 44px;text-align:right;padding-right:14px;font-size:13px;line-height:25px;color:var(--code-num);user-select:none}
 .cl .lc{flex:1;padding-right:16px}
+.code-preview-btn{display:inline-flex;align-items:center;gap:6px;margin:-4px 0 1em;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font-size:13.5px;cursor:pointer}
+.code-preview-btn:hover{background:var(--surface-2)}
 .tok-kw{color:var(--syn-kw)}.tok-str{color:var(--syn-str)}.tok-fn{color:var(--syn-fn)}.tok-num{color:var(--syn-num)}.tok-com{color:var(--syn-com);font-style:italic}
 .message-content ul,.message-content ol{margin:4px 0 12px;padding-left:24px}
 .message-content li>ul,.message-content li>ol{margin:4px 0 4px}
@@ -251,6 +253,27 @@ svg{display:inline-block;vertical-align:middle;flex:0 0 auto}
 
 .drawer-scrim{position:absolute;inset:0;background:rgba(0,0,0,.38);z-index:79}
 .activity-drawer{position:absolute;right:8px;top:8px;bottom:8px;width:min(410px,calc(100% - 16px));background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:80;padding:16px;overflow-y:auto}
+.webdev-scrim{z-index:83}
+.webdev-panel{position:absolute;right:8px;top:8px;bottom:8px;width:min(600px,calc(100% - 16px));background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:84;padding:16px;display:flex;flex-direction:column;overflow:hidden}
+.webdev-panel .wd-ic{display:inline-grid;place-items:center;vertical-align:-3px;margin-right:7px;color:var(--ink-2)}
+.webdev-panel .drawer-head h2{display:flex;align-items:center}
+.wd-head-actions{display:flex;align-items:center;gap:8px}
+.wd-deploy{border:1px solid var(--line-strong);background:var(--surface-3);color:var(--muted);border-radius:999px;padding:6px 16px;font-size:13.5px;cursor:not-allowed;opacity:.65}
+.wd-tabs{display:flex;gap:4px;margin:12px 0 10px;border-bottom:1px solid var(--line)}
+.wd-tab{border:0;background:transparent;color:var(--muted);font-size:14px;padding:7px 12px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.wd-tab.active{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+.wd-preview-wrap{flex:1;min-height:0;display:flex;justify-content:center;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.wd-preview-wrap[hidden]{display:none}
+.wd-frame{border:0;background:var(--preview-bg);width:100%;height:100%}
+.wd-preview-wrap.mobile .wd-frame{width:390px;max-width:100%;flex:0 0 auto}
+.wd-code-wrap{flex:1;min-height:0;overflow:auto;background:var(--code-bg);border:1px solid var(--code-line);border-radius:10px}
+.wd-code{margin:0;padding:10px 0}
+.wd-code code{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:24px;color:var(--code-ink)}
+.wd-foot{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.wd-foot-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:6px 13px;font-size:13px;cursor:pointer}
+.wd-foot-btn:hover{background:var(--surface-2);color:var(--ink)}
+.wd-foot-btn.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.wd-device{display:inline-flex;gap:6px;margin-left:auto}
 .drawer-head{display:flex;justify-content:space-between;align-items:center}
 .drawer-head h2{font-size:16px;margin:0}
 .activity-list{margin-top:16px;display:flex;flex-direction:column}
@@ -474,6 +497,7 @@ svg{display:inline-block;vertical-align:middle;flex:0 0 auto}
   .activity-drawer .drawer-head{justify-content:flex-end}
   .activity-drawer .drawer-head h2{display:none}
   .activity-list{margin-top:6px}
+  .webdev-panel{left:0;right:0;top:0;bottom:0;width:auto;border-radius:0;border:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px))}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
