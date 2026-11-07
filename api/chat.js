@@ -87,6 +87,7 @@ const API_GUARD = {
   windowMs: Math.max(10_000, Number(process.env.API_RATE_WINDOW_MS || 60_000)),
   maxRequests: Math.max(1, Number(process.env.API_RATE_MAX_REQUESTS || 20)),
   maxHeavyRequests: Math.max(1, Number(process.env.API_RATE_MAX_HEAVY_REQUESTS || 6)),
+  maxChatRequests: Math.max(1, Number(process.env.API_RATE_MAX_CHAT_REQUESTS || 30)),
   maxBodyChars: Math.max(20_000, Number(process.env.API_MAX_BODY_CHARS || 2_200_000)),
   maxDailyEstimatedTokens: Math.max(10_000, Number(process.env.API_DAILY_ESTIMATED_TOKEN_BUDGET || 600_000)),
   // Comma/newline-separated provider keys are rotated on retry. Keep the cap configurable; default 8.
@@ -113,19 +114,34 @@ function estimatedTokensFromBody(body){
   return Math.max(1,Math.ceil(chars/4));
 }
 function isHeavyApiRequest(body){
+  /* Genuinely expensive requests only: media-generation actions, very deep
+     response effort, or multi-file payloads. activityStream is deliberately
+     NOT a heavy signal: it is the standard chat transport (every ordinary
+     chat send sets it), so counting it here throttled normal chatting at
+     6/min/IP (stress test 2026-11-07, defect D1). */
   const effort=normalizeResponseEffort(body?.responseEffort||body?.personalization?.intelligence,body?.personalization?.fastAnswers);
-  return responseEffortRank(effort)>=3||body?.activityStream===true||body?.action==='generate-image'||body?.action==='generate-pet-image'||(Array.isArray(body?.files)&&body.files.length>2);
+  return responseEffortRank(effort)>=3||body?.action==='generate-image'||body?.action==='generate-pet-image'||(Array.isArray(body?.files)&&body.files.length>2);
+}
+function isChatApiRequest(body){
+  /* The standard message flow: exactly the requests the handler routes to the
+     chat pipeline (no action, or action 'chat'). These draw on their own
+     bucket (API_GUARD.maxChatRequests), never on the heavy quota. */
+  return !body?.action||body.action==='chat';
 }
 function checkApiGuard(req,body){
   const now=Date.now(); pruneGuardMaps(now);
-  const key=stableClientKey(req), heavy=isHeavyApiRequest(body);
+  const key=stableClientKey(req), chat=isChatApiRequest(body), heavy=!chat&&isHeavyApiRequest(body);
   let w=apiGuardWindows.get(key);
-  if(!w||now-w.startedAt>=API_GUARD.windowMs) w={startedAt:now,count:0,heavy:0};
-  w.count++; if(heavy)w.heavy++; apiGuardWindows.set(key,w);
-  if(w.count===API_GUARD.abnormalBurst) console.warn('[API-GUARD] abnormal request burst', {client:key,count:w.count,windowMs:API_GUARD.windowMs});
-  if(w.count>API_GUARD.maxRequests||w.heavy>API_GUARD.maxHeavyRequests){
+  if(!w||now-w.startedAt>=API_GUARD.windowMs) w={startedAt:now,count:0,heavy:0,chat:0};
+  if(typeof w.chat!=='number')w.chat=0;
+  if(chat)w.chat++; else { w.count++; if(heavy)w.heavy++; }
+  apiGuardWindows.set(key,w);
+  if(!chat&&w.count===API_GUARD.abnormalBurst) console.warn('[API-GUARD] abnormal request burst', {client:key,count:w.count,windowMs:API_GUARD.windowMs});
+  const overLimit=chat? w.chat>API_GUARD.maxChatRequests : (w.count>API_GUARD.maxRequests||w.heavy>API_GUARD.maxHeavyRequests);
+  if(overLimit){
     const retry=Math.max(1,Math.ceil((API_GUARD.windowMs-(now-w.startedAt))/1000));
-    return {ok:false,status:429,error:'Too many requests. Please wait before trying again.',headers:{'Retry-After':String(retry),'X-App-RateLimit-Limit':String(API_GUARD.maxRequests),'X-App-RateLimit-Remaining':'0'}};
+    const limit=chat?API_GUARD.maxChatRequests:API_GUARD.maxRequests;
+    return {ok:false,status:429,error:'Too many requests. Please wait before trying again.',headers:{'Retry-After':String(retry),'X-App-RateLimit-Limit':String(limit),'X-App-RateLimit-Remaining':'0'}};
   }
   let d=apiGuardDaily.get(key);
   if(!d||now-d.startedAt>=86_400_000)d={startedAt:now,estimatedTokens:0,requests:0};
@@ -134,7 +150,7 @@ function checkApiGuard(req,body){
     console.warn('[API-GUARD] estimated daily token budget reached',{client:key,estimatedTokens:d.estimatedTokens});
     return {ok:false,status:429,error:'Daily usage limit reached for this device/session. Please try again later.',headers:{'Retry-After':'3600'}};
   }
-  return {ok:true,key,estimate,remaining:Math.max(0,API_GUARD.maxRequests-w.count)};
+  return {ok:true,key,estimate,remaining:chat?Math.max(0,API_GUARD.maxChatRequests-w.chat):Math.max(0,API_GUARD.maxRequests-w.count)};
 }
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
@@ -6572,7 +6588,7 @@ export default async function handler(req){
         return json({models,status:models.length?'ready':'empty',source:modelsUrl});
       }catch(e){return json({error:e?.message||'Could not load models.'},502);}
     }
-    if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
+    if(body.action==='provider-status') return json({providers:await providerUsageSnapshot(),cloudflare:{freeDailyNeurons:10000,reset:'00:00 UTC'},costGuard:{rateWindowMs:API_GUARD.windowMs,maxRequests:API_GUARD.maxRequests,maxHeavyRequests:API_GUARD.maxHeavyRequests,maxChatRequests:API_GUARD.maxChatRequests,maxFallbackProviders:API_GUARD.maxFallbackProviders,maxAutoContinuations:MAX_AUTO_CONTINUATIONS}});
 
     const hasMessage=typeof body.message==='string'&&body.message.trim().length>0;
     const hasFiles=Array.isArray(body.files)&&body.files.length>0;
