@@ -1097,7 +1097,7 @@ async function requestFollowups(sessionId,mid){
   const fast=MODELS[0];
   const u=[...s.messages].reverse().find(x=>x.role==='user');
   if(!u) return;
-  const prompt='Suggest 2 short follow-up questions the user might ask next. Reply with only the two questions, one per line, no numbering, no quotes.\n\nUser: '+String(u.text||'').slice(0,400)+'\nAssistant: '+String(m.text||'').slice(0,400);
+  const prompt='Suggest 2 short follow-up questions the user might ask next IN THIS APP. Only suggest things this app can actually do: answer questions, write text or code, translate, solve math, explain its own features and models, or discuss an attached file or image. Never suggest directions, weather, maps, locations, news, or anything needing live data, an account, or tools this app does not have. Reply with only the two questions, one per line, no numbering, no quotes.\n\nUser: '+String(u.text||'').slice(0,400)+'\nAssistant: '+String(m.text||'').slice(0,400);
   let text='';
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message:prompt, history:[], files:[], provider:fast.provider, model:fast.id, mode:'general', customPrompt:'You suggest follow-up questions. Reply with only the questions.', webSearch:false, forceWebSearch:false, autoFallback:false, smartRouter:false, activityStream:false, autoTools:false, personalization:{intelligence:'Instant', fastAnswers:true} })});
