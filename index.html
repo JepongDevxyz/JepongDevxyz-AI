@@ -13,9 +13,11 @@
   <aside id="sidebar" aria-label="Sidebar">
     <div class="sb-top">
       <div class="sb-search"><span data-icon="search" data-size="16"></span><input id="chatSearch" type="text" placeholder="Search conversations" autocomplete="off"><button id="chatSearchClear" class="icon-btn sm" hidden aria-label="Clear search"><span data-icon="x" data-size="14"></span></button></div>
-      <button id="newChatBtn" class="sb-new"><span data-icon="message-square-plus" data-size="18"></span><span>New chat</span></button>
+      <button id="newChatBtn" class="sb-new"><span class="sb-new-plus"><span data-icon="plus" data-size="14"></span></span><span>New chat</span></button>
     </div>
     <div id="chatList" class="sb-list"></div>
+    <div class="sb-sec-row"><span class="sb-sec">Projects</span><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></div>
+    <div id="projList" class="sb-list"></div>
     <div class="sb-explore">
       <div class="sb-sec">Explore</div>
       <button class="sb-row" data-explore="help"><span data-icon="circle-help" data-size="18"></span><span>Help</span></button>
@@ -24,6 +26,7 @@
       <button class="sb-row" data-explore="upgrade"><span data-icon="zap" data-size="18"></span><span>Upgrade</span></button>
     </div>
     <div class="sb-bottom">
+      <button class="sb-upgrade" id="sbUpgradeBtn" data-explore="upgrade"><span data-icon="zap" data-size="16"></span><span>Upgrade to Premium</span></button>
       <button class="sb-row" data-explore="settings"><span data-icon="settings" data-size="18"></span><span>Settings</span></button>
       <button class="sb-profile" id="profileBtn"><span class="sb-avatar" id="profileAvatar">J</span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span><span class="sb-profile-sub" id="profileEmailLabel">Free plan</span></span></button>
     </div>
@@ -33,7 +36,9 @@
   <main id="main">
     <header id="topbar">
       <button id="menuBtn" class="icon-btn" aria-label="Open sidebar"><span data-icon="menu" data-size="20"></span></button>
-      <div id="topTitle" class="top-title">JepongDevxyz AI</div>
+      <div id="topTitle" class="top-title" role="button" tabindex="0" aria-label="Conversation options">JepongDevxyz AI</div>
+      <button id="privateBtn" class="icon-btn" aria-label="Private chat" aria-pressed="false"><span data-icon="lock" data-size="18"></span></button>
+      <button id="topSearchBtn" class="icon-btn" aria-label="Search chats"><span data-icon="search" data-size="20"></span></button>
       <button id="topNewBtn" class="icon-btn" aria-label="New chat"><span data-icon="square-pen" data-size="20"></span></button>
     </header>
 
@@ -53,7 +58,7 @@
       <div id="composer" class="composer">
         <div class="comp-row1">
           <button id="modelBtn" class="model-btn" type="button"><span class="model-mark" id="modelMark"></span><span id="modelName">DeepSeek V4.1 Flash</span><span data-icon="chevron-down" data-size="14"></span></button>
-          <textarea id="composerInput" rows="1" placeholder="How can I help?" aria-label="Message"></textarea>
+          <textarea id="composerInput" rows="1" placeholder="Ask anything..." aria-label="Ask anything..."></textarea>
         </div>
         <div class="comp-row2">
           <button id="plusBtn" class="tool-chip" type="button" aria-label="Attachments"><span data-icon="plus" data-size="18"></span></button>

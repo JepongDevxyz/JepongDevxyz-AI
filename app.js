@@ -53,7 +53,13 @@ file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><pat
 pin:'<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16h14v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/>',
 shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
 gauge:'<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
-layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>'
+layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+code:'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+'file-down':'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m8 14 4 4 4-4"/>',
+lightbulb:'<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+'book-open':'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+calendar:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+'graduation-cap':'<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>'
 };
 const J_MARK='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9h22"/><path d="M29 9v21a9 9 0 0 1-18 0v-3"/></svg>';
 function icon(name,size){ size=size||18; const p=ICONS[name]||ICONS.info; return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>'; }
@@ -97,7 +103,7 @@ const MODELS=[
 // APINEX-only (2026-11-24): Bailu removed completely. These 9 free models
 // passed a live retest the same day; the other free/ models are
 // subscription-gated (402) despite the prefix and are NOT listed.
-const SESS_KEY='jepongQwenReset.sessions.v1', SET_KEY='jepongQwenReset.settings.v1', PROJ_KEY='jepongQwenReset.projects.v1', EXTRA_KEY='jepongQwenReset.extra.v1';
+const SESS_KEY='jepongQwenReset.sessions.v1', SET_KEY='jepongQwenReset.settings.v1', PROJ_KEY='jepongQwenReset.projects.v1', EXTRA_KEY='jepongQwenReset.extra.v1', DRAFT_KEY='jepongQwenReset.drafts.v1', PENDING_KEY='jepongQwenReset.pending.v1';
 const EFFORT={Auto:'Medium',Thinking:'High',Fast:'Instant'};
 const defaultSettings=()=>({
   theme:'light', profileName:'Jepong', profileEmail:'', profilePhoto:'',
@@ -120,12 +126,101 @@ settings.responseLang=Object.assign(defaultSettings().responseLang, settings.res
 if(!MODELS.some(m=>m.provider===settings.provider&&m.id===settings.model)){ settings.provider='apinex'; settings.model='free/deepseek-v4.1-flash'; }
 function saveSettings(){ saveJSON(SET_KEY, settings); }
 let sessions=loadJSON(SESS_KEY,[]); if(!Array.isArray(sessions)) sessions=[];
+sessions=sessions.filter(s=>!s.temporary); /* a private chat never reaches storage */
 let projects=loadJSON(PROJ_KEY,[]); if(!Array.isArray(projects)) projects=[];
 let extra=loadJSON(EXTRA_KEY,{feedback:[],reports:[]}); if(!extra||typeof extra!=='object') extra={feedback:[],reports:[]};
 if(!extra.usage) extra.usage={chat:0, image:0, voice:0};
-function saveSessions(){ saveJSON(SESS_KEY, sessions); }
+function saveSessions(){ saveJSON(SESS_KEY, sessions.filter(s=>!s.temporary)); }
 function saveProjects(){ saveJSON(PROJ_KEY, projects); }
 function saveExtra(){ saveJSON(EXTRA_KEY, extra); }
+/* Refresh-proofing (her order: "Dapat walang mawawala kahit mag refresh").
+   Three things used to vanish on reload: the composer draft, the open chat,
+   and any reply still streaming or queued (its pending assistant message was
+   never saved — save happens at stream end — so the user message sat
+   orphaned with no reply and no retry). All three now survive:
+   - drafts: composer text + staged attachments, per session (or 'home')
+   - extra.lastSessionId: the chat she was in
+   - pendingWork: user messages still waiting for a reply, re-sent on boot
+   Attachment bytes are kept only while the record stays under the cap;
+   otherwise the text survives and the user is told to re-attach. */
+const DRAFT_MAX_JSON=2000000, PENDING_MAX_ENTRY=1500000;
+let drafts=loadJSON(DRAFT_KEY,{}); if(!drafts||typeof drafts!=='object') drafts={};
+function draftKey(){ return currentId||'home'; }
+function saveDraft(){
+  const input=$('#composerInput'); if(!input) return;
+  const text=input.value||'';
+  const rec={text, attachments:attachments.map(a=>({name:a.name, kind:a.kind, mimeType:a.mimeType||'', size:a.size||0, data:a.data||undefined}))};
+  if(JSON.stringify(rec).length>DRAFT_MAX_JSON){
+    rec.attachments=rec.attachments.map(a=>({name:a.name, kind:a.kind, mimeType:a.mimeType||'', size:a.size||0}));
+    rec.attachmentsDropped=true;
+  }
+  if(!text&&!rec.attachments.length){ delete drafts[draftKey()]; }
+  else drafts[draftKey()]=rec;
+  saveJSON(DRAFT_KEY, drafts);
+}
+function restoreDraft(){
+  const input=$('#composerInput'); if(!input) return;
+  const rec=drafts[draftKey()];
+  if(!rec){ input.value=''; attachments=[]; autosize(); renderAttachBar(); return; }
+  input.value=rec.text||'';
+  attachments=(rec.attachments||[]).map(a=>({name:a.name, kind:a.kind, mimeType:a.mimeType||'', size:a.size||0, data:a.data||undefined}));
+  autosize(); renderAttachBar();
+  if(rec.attachmentsDropped) toast('Your message was restored — please re-attach your files.');
+}
+let pendingWork=loadJSON(PENDING_KEY,[]); if(!Array.isArray(pendingWork)) pendingWork=[];
+function savePending(){ saveJSON(PENDING_KEY, pendingWork); }
+function addPending(sessionId,userMsgId,tool,filePayload){
+  if(pendingWork.some(p=>p.userMsgId===userMsgId)) return;
+  const e={sessionId, userMsgId, tool:tool||null};
+  if(filePayload&&filePayload.length){
+    const fp=filePayload.map(a=>({name:a.name, kind:a.kind, mimeType:a.mimeType||'', size:a.size||0, data:a.data||undefined}));
+    if(JSON.stringify(fp).length<=PENDING_MAX_ENTRY) e.filePayload=fp;
+    else e.filesMissing=true;
+  }
+  pendingWork.push(e); savePending();
+}
+function clearPending(userMsgId){ const n=pendingWork.length; pendingWork=pendingWork.filter(p=>p.userMsgId!==userMsgId); if(pendingWork.length!==n) savePending(); }
+function recoverPending(){
+  /* Boot: re-send every user message that never got its reply. Entries whose
+     session or message is gone, or that already have an assistant reply
+     after them, are dropped silently. */
+  if(!pendingWork.length){ resetFallbackTitles(); return; }
+  let filesMissing=false, resumed=0;
+  const entries=pendingWork.slice(); pendingWork=[];
+  for(const e of entries){
+    const s=getSession(e.sessionId);
+    const um=s&&s.messages.find(m=>m.id===e.userMsgId);
+    if(!s||!um) continue;
+    const idx=s.messages.findIndex(m=>m.id===e.userMsgId);
+    if(s.messages.slice(idx+1).some(m=>m.role==='assistant')) continue;
+    if(e.filesMissing) filesMissing=true;
+    pendingWork.push(e);
+    sendQueue.push({s, userMsg:um, filePayload:e.filePayload||[], tool:e.tool||null});
+    resumed++;
+  }
+  savePending();
+  resetFallbackTitles();
+  if(filesMissing) toast('Your messages were restored — please re-attach any missing images.');
+  if(resumed) drainSendQueue();
+}
+function resetFallbackTitles(){
+  /* A refresh before the title call landed left titleRequested=true with the
+     raw-prompt fallback stuck forever. Reset it wherever the title is still
+     the fallback, and re-run the title call for chats that already have a
+     reply. */
+  let changed=false;
+  for(const s of sessions){
+    if(!s.titleAutoPending) continue;
+    const first=s.messages.find(m=>m.role==='user');
+    if(first&&s.title===titleCase(first.text||'')){
+      s.titleRequested=false; changed=true;
+      if(s.messages.length>=2&&s.messages.some(m=>m.role==='assistant')){
+        const sid=s.id; setTimeout(()=>{ generateTitle(sid).catch(()=>{}); },1500);
+      }
+    }
+  }
+  if(changed) saveSessions();
+}
 function trackRequest(kind){ try{ extra.usage[kind]=(extra.usage[kind]||0)+1; saveExtra(); }catch(e){} }
 
 let currentId=null, temporary=false;
@@ -151,8 +246,10 @@ function titleCase(t){
 }
 function ensureSession(firstText){
   if(currentId){ const s=getSession(currentId); if(s) return s; }
-  const s={id:uid(), title:titleCase(firstText)||'New chat', createdAt:Date.now(), updatedAt:Date.now(), messages:[], titleAutoPending:true, titleRequested:false, projectId:activeProjectId||null};
-  sessions.unshift(s); currentId=s.id; saveSessions(); return s;
+  const s={id:uid(), title:titleCase(firstText)||'New chat', createdAt:Date.now(), updatedAt:Date.now(), messages:[], titleAutoPending:true, titleRequested:false, projectId:activeProjectId||null, temporary:!!temporary};
+  sessions.unshift(s); currentId=s.id; saveSessions();
+  try{ extra.lastSessionId=s.id; saveExtra(); }catch(e){}
+  return s;
 }
 function historyFor(s,beforeId){ const out=[]; for(const m of s.messages){ if(m.id===beforeId) break; if(m.role==='user') out.push({role:'user', content:m.text||''}); else if(m.role==='assistant'&&m.text) out.push({role:'assistant', content:m.text||''}); } return out.slice(-20); }
 function cleanAssistantText(t){
@@ -212,14 +309,31 @@ function inlineMd(s){
   s=s.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>');
   return s;
 }
+function highlightCode(code){
+  /* Lightweight syntax tint (Grok colors its code; ours was plain mono).
+     One regex pass over the raw code: comments, strings, numbers, keywords.
+     Each token is escaped separately, so markup can never leak into output. */
+  const re=/(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)|('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`)|\b(\d+(?:\.\d+)?)\b|\b(const|let|var|function|return|if|else|elif|for|while|do|switch|case|break|continue|class|extends|new|try|catch|finally|throw|import|from|export|default|async|await|typeof|instanceof|def|print|and|or|not|None|True|False|lambda|with|as|pass|raise|yield|public|private|static|void|null|true|false|this|self|fn|struct|impl|use|pub|match|loop|int|str|float|bool)\b/g;
+  let out='', last=0, m;
+  while((m=re.exec(code))){
+    out+=esc(code.slice(last,m.index));
+    const t=m[0];
+    if(m[1]) out+='<span class="tk-c">'+esc(t)+'</span>';
+    else if(m[2]) out+='<span class="tk-s">'+esc(t)+'</span>';
+    else if(m[3]) out+='<span class="tk-n">'+esc(t)+'</span>';
+    else out+='<span class="tk-k">'+esc(t)+'</span>';
+    last=m.index+t.length;
+  }
+  return out+esc(code.slice(last));
+}
 function codeBlockHtml(lang,code){
   const lines=String(code).replace(/\n$/,'').split('\n');
   const lns=lines.map((_,i)=>'<div>'+(i+1)+'</div>').join('');
-  return '<div class="code-block" data-code="'+esc(code)+'"><div class="code-head"><span class="code-lang">'+esc(lang||'code')+'</span>'
+  return '<div class="code-block" data-code="'+esc(code)+'"><div class="code-head"><span class="code-lang">'+icon('code',14)+'<span>'+esc(lang||'code')+'</span></span>'
     +'<button type="button" data-code-act="copy" aria-label="Copy code">'+icon('copy',15)+'</button>'
     +'<button type="button" data-code-act="download" aria-label="Download code">'+icon('download',15)+'</button>'
     +'<button type="button" data-code-act="collapse" aria-label="Collapse code">'+icon('chevron-up',14)+'</button></div>'
-    +'<div class="code-body"><div class="code-lns">'+lns+'</div><pre><code>'+esc(code)+'</code></pre></div></div>';
+    +'<div class="code-body"><div class="code-lns">'+lns+'</div><pre><code>'+highlightCode(code)+'</code></pre></div></div>';
 }
 function mdToHtml(text){
   const src=String(text||'');
@@ -240,7 +354,7 @@ function mdToHtml(text){
       const parseRow=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
       const head=parseRow(line); i+=2; let rows='';
       while(i<lines.length&&/^\s*\|.*\|\s*$/.test(lines[i])){ const cells=parseRow(lines[i]); rows+='<tr>'+cells.map(c=>'<td>'+inlineMd(c)+'</td>').join('')+'</tr>'; i++; }
-      html+='<div class="table-wrap"><div class="table-head"><button type="button" data-table-copy>'+icon('copy',14)+'<span>Copy table</span></button></div><table><thead><tr>'+head.map(c=>'<th>'+inlineMd(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'; continue; }
+      html+='<div class="table-wrap"><div class="table-head"><button type="button" data-table-copy>'+icon('copy',14)+'<span>Copy table</span></button><button type="button" data-table-open>'+icon('file-down',14)+'<span>Open as file</span></button></div><table><thead><tr>'+head.map(c=>'<th>'+inlineMd(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'; continue; }
     if(/^\s*([-*]|\d+\.)\s+/.test(line)){
       flushPara(); const ordered=/^\s*\d+\.\s+/.test(line); const items=[];
       while(i<lines.length&&/^\s*([-*]|\d+\.)\s+/.test(lines[i])){ items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s+/,'')); i++; }
@@ -272,7 +386,10 @@ function stripSourcesBlock(text){
   let i=end;
   while(i>0){
     const l=lines[i-1].trim();
-    if(/^([-*•]|\d+\.)\s+(\[[^\]]+\]\([^)]+\)|https?:\/\/\S+)\s*$/.test(l)){ i--; continue; }
+    /* A sources list line: a list marker plus a link or bare URL anywhere
+       in the line (the model also writes "- [Python docs](url) — official"
+       and "- Python docs — https://…", not just link-only lines). */
+    if(/^([-*•]|\d+\.)\s+.*(https?:\/\/|\[[^\]]+\]\()/.test(l)){ i--; continue; }
     break;
   }
   if(i<end){
@@ -396,7 +513,8 @@ function groupOf(ts){
 let showAllChats=false; /* sidebar "Show more" state (Grok parity) */
 function renderSidebar(){
   const list=$('#chatList');
-  let items=sessions.slice();
+  /* Private chats never appear in history — in-memory only, gone on refresh. */
+  let items=sessions.filter(s=>!s.temporary);
   if(activeProjectId) items=items.filter(s=>s.projectId===activeProjectId);
   if(searchQuery){ const q=searchQuery.toLowerCase(); items=items.filter(s=>(s.title||'').toLowerCase().includes(q)||(s.messages||[]).some(m=>(m.text||'').toLowerCase().includes(q))); }
   const pinned=items.filter(s=>s.pinned), rest=items.filter(s=>!s.pinned);
@@ -404,6 +522,7 @@ function renderSidebar(){
   if(activeProjectId){ const p=projects.find(p=>p.id===activeProjectId); html+='<div class="sb-group">'+esc(p?p.name:'Project')+' · <a href="#" id="clearProj" style="color:var(--accent)">All chats</a></div>'; }
   /* Grok's history is a flat list — no Today / Previous 7 Days / Older
      headings. Pinned chats stay first. "Show more" reveals the rest. */
+  if(!searchQuery&&!activeProjectId) html+='<div class="sb-sec-row"><span class="sb-sec">Chats</span><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat">'+icon('plus',16)+'</button></div>';
   html+=pinned.map(itemHtml).join('');
   const shown=(searchQuery||showAllChats)?rest:rest.slice(0,5);
   html+=shown.map(itemHtml).join('');
@@ -411,6 +530,12 @@ function renderSidebar(){
   if(!items.length) html+='<div class="sb-empty">'+(searchQuery?'No chats match your search.':'No chats yet. Start a new one.')+'</div>';
   list.innerHTML=html;
   const more=$('#sbMore'); if(more) more.addEventListener('click',()=>{ showAllChats=true; renderSidebar(); });
+  const np=$('#sbNewPlus'); if(np) np.addEventListener('click',()=>newChat());
+  const pl=$('#projList');
+  if(pl){
+    pl.innerHTML=projects.map(p=>'<button class="sb-item" data-proj="'+p.id+'"><span class="sb-item-title">'+esc(p.name)+'</span></button>').join('');
+    pl.querySelectorAll('[data-proj]').forEach(el=>el.addEventListener('click',()=>{ activeProjectId=el.getAttribute('data-proj'); renderSidebar(); toast('Showing project chats'); }));
+  }
   const cp=$('#clearProj'); if(cp) cp.addEventListener('click',e=>{ e.preventDefault(); activeProjectId=null; renderSidebar(); });
   list.querySelectorAll('.sb-item').forEach(el=>{
     el.addEventListener('click',e=>{ if(e.target.closest('.sb-item-menu')) return; openSession(el.dataset.id); });
@@ -422,18 +547,28 @@ function renderSidebar(){
 function itemHtml(s){
   return '<button class="sb-item'+(s.id===currentId?' active':'')+'" data-id="'+s.id+'"><span class="sb-item-title">'+esc(s.title||'New chat')+'</span><span class="sb-item-menu" role="button" aria-label="Chat options">'+icon('ellipsis',16)+'</span></button>';
 }
-function chatItemMenu(id,anchor){
-  const s=getSession(id); if(!s) return;
-  const r=anchor.getBoundingClientRect();
+function sessionMenuItems(s){
+  const id=s.id;
   const projItems=projects.map(p=>({icon:'folder', label:'Move to '+p.name, onClick:()=>{ s.projectId=p.id; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); toast('Moved to '+p.name); }}));
-  showMenu(r.left, r.bottom+4, [
+  return [
     {icon:'pin', label:s.pinned?'Unpin':'Pin', onClick:()=>{ s.pinned=!s.pinned; saveSessions(); renderSidebar(); }},
     {icon:'share', label:'Share', onClick:()=>{ copyText(location.origin+location.pathname).then(()=>toast('Link copied')); }},
+    {icon:'git-branch', label:'Branch in new chat', onClick:()=>branchSession(id)},
     {icon:'copy', label:'Copy conversation ID', onClick:()=>{ copyText(id).then(()=>toast('Conversation ID copied')); }},
     {icon:'pencil', label:'Rename', onClick:()=>renameChat(id)},
     ...projItems,
     {icon:'trash-2', label:'Delete', danger:true, onClick:()=>deleteChat(id)}
-  ]);
+  ];
+}
+function branchSession(id){
+  const s=getSession(id); if(!s) return;
+  const copy={id:uid(), title:(s.title||'New chat')+' (branch)', createdAt:Date.now(), updatedAt:Date.now(), messages:JSON.parse(JSON.stringify(s.messages)), titleAutoPending:false, titleRequested:true, projectId:s.projectId||null, temporary:!!s.temporary};
+  sessions.unshift(copy); saveSessions(); openSession(copy.id); toast('Branched into a new chat');
+}
+function chatItemMenu(id,anchor){
+  const s=getSession(id); if(!s) return;
+  const r=anchor.getBoundingClientRect();
+  showMenu(r.left, r.bottom+4, sessionMenuItems(s));
 }
 async function renameChat(id){
   const s=getSession(id); if(!s) return;
@@ -469,17 +604,35 @@ function promptDialog(title,label,initial){
   });
 }
 function openSession(id){
-  currentId=id; temporary=false; showAllChats=false;
-  closeSidebarMobile(); renderAll();
+  const os=getSession(id);
+  currentId=id; temporary=!!(os&&os.temporary); showAllChats=false;
+  try{ extra.lastSessionId=id; saveExtra(); }catch(e){}
+  closeSidebarMobile(); renderAll(); restoreDraft();
   const cv=$('#chatView'); cv.scrollTop=cv.scrollHeight; stickToBottom=true; updateScrollBtn();
+  /* Backfill follow-up pills for the last reply of an older chat (replies
+     made before pills existed never got them; one silent call, then saved). */
+  if(os&&!streaming){
+    const lastAsst=[...os.messages].reverse().find(m=>m.role==='assistant'&&m.text&&!m.followups&&!m.pending&&!m.errorCard);
+    if(lastAsst){ const sid=os.id, mid=lastAsst.id; setTimeout(()=>{ requestFollowups(sid,mid).catch(()=>{}); },1200); }
+  }
 }
 function newChat(){
-  currentId=null; temporary=false; showAllChats=false;
-  closeSidebarMobile(); renderAll();
+  currentId=null; showAllChats=false;
+  try{ extra.lastSessionId=null; saveExtra(); }catch(e){}
+  closeSidebarMobile(); renderAll(); restoreDraft();
   $('#composerInput').focus();
 }
+function setPrivate(on){
+  /* Grok's Private toggle: the current chat becomes private (never saved,
+     never in history) or returns to normal; new chats inherit the mode. */
+  temporary=!!on;
+  const s=curSession();
+  if(s){ s.temporary=temporary; saveSessions(); renderSidebar(); }
+  renderAll();
+  if(temporary) toast('Private chat — this chat will not be saved');
+}
 function closeSidebarMobile(){ if(window.innerWidth<1024){ $('#sidebar').classList.remove('open'); $('#scrim').hidden=true; } }
-const SUGGESTIONS=['Create an image','Write or edit','Search the web','Make a website','Explain a concept','Write a story','Plan my day','Help me learn something new'];
+const SUGGESTIONS=[{t:'Create an image',icon:'image'},{t:'Write or edit',icon:'pencil'},{t:'Search the web',icon:'globe'},{t:'Make a website',icon:'code'},{t:'Explain a concept',icon:'lightbulb'},{t:'Write a story',icon:'book-open'},{t:'Plan my day',icon:'calendar'},{t:'Help me learn something new',icon:'graduation-cap'}];
 function renderHomeSugg(){
   /* Grok home shows three rotating suggestion rows under the composer.
      Every row does something real: image opens the image sheet, search turns
@@ -490,7 +643,7 @@ function renderHomeSugg(){
   const pool=SUGGESTIONS.slice();
   for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
   box.hidden=false;
-  box.innerHTML=pool.slice(0,3).map(t=>'<button type="button" data-sugg="'+esc(t)+'"><span>'+esc(t)+'</span></button>').join('');
+  box.innerHTML=pool.slice(0,3).map(o=>'<button type="button" data-sugg="'+esc(o.t)+'"><span class="sugg-ic">'+icon(o.icon,16)+'</span><span>'+esc(o.t)+'</span></button>').join('');
   box.querySelectorAll('[data-sugg]').forEach(b=>b.addEventListener('click',()=>{
     const t=b.getAttribute('data-sugg');
     if(t==='Create an image'){ activeTool='image'; openSheet('#imageSheet'); setTimeout(()=>$('#imagePrompt').focus(),60); return; }
@@ -510,6 +663,7 @@ function renderAll(){
   $('#profileNameLabel').textContent=settings.profileName||'Jepong';
   $('#profileAvatar').textContent=(settings.profileName||'J')[0].toUpperCase();
   $('#topTitle').textContent=hasChat?(s.title||'New chat'):'JepongDevxyz AI';
+  const pb=$('#privateBtn'); if(pb){ pb.classList.toggle('on', !!temporary); pb.setAttribute('aria-pressed', temporary?'true':'false'); }
   $('#modelName').textContent=modelOf().short||modelOf().name;
   $('#modelMark').innerHTML=J_MARK;
   $('#composerInput').placeholder='Ask anything...';
@@ -535,7 +689,7 @@ function renderComposerState(){
   if(attachments.length){
     bar.hidden=false;
     bar.innerHTML=attachments.map((a,i)=>'<span class="att-chip">'+esc(a.name)+'<button type="button" data-att-del="'+i+'" aria-label="Remove attachment">'+icon('x',13)+'</button></span>').join('');
-    bar.querySelectorAll('[data-att-del]').forEach(b=>b.addEventListener('click',()=>{ attachments.splice(parseInt(b.getAttribute('data-att-del'),10),1); renderComposerState(); renderAttachBar(); }));
+    bar.querySelectorAll('[data-att-del]').forEach(b=>b.addEventListener('click',()=>{ attachments.splice(parseInt(b.getAttribute('data-att-del'),10),1); renderComposerState(); renderAttachBar(); saveDraft(); }));
   } else { bar.hidden=true; bar.innerHTML=''; }
   const st=$('#attachState'); if(st) st.textContent=attachments.length? attachments.length+' file(s) selected':'No file selected';
 }
@@ -562,6 +716,7 @@ function renderMessages(){
   box.querySelectorAll('[data-a-act]').forEach(b=>b.addEventListener('click',()=>asstAction(b.getAttribute('data-a-act'), b.getAttribute('data-mid'))));
   box.querySelectorAll('[data-code-act]').forEach(b=>b.addEventListener('click',()=>codeAction(b)));
   box.querySelectorAll('[data-table-copy]').forEach(b=>b.addEventListener('click',()=>tableCopy(b)));
+  box.querySelectorAll('[data-table-open]').forEach(b=>b.addEventListener('click',()=>tableOpen(b)));
   box.querySelectorAll('[data-fu]').forEach(b=>b.addEventListener('click',()=>{ const t=b.getAttribute('data-fu-text'); if(t) sendMessage(t); }));
   box.querySelectorAll('.think-row').forEach(r=>r.addEventListener('click',()=>{ const steps=r.parentElement.querySelector('.think-steps'); if(steps) steps.hidden=!steps.hidden; const ch=r.querySelector('.think-chev'); if(ch) ch.innerHTML=icon(steps&&!steps.hidden?'chevron-up':'chevron-right',13); }));
   box.querySelectorAll('[data-src-open]').forEach(b=>b.addEventListener('click',()=>openSources(b.getAttribute('data-src-open'))));
@@ -583,30 +738,39 @@ function assistantHtml(s,m){
     const t0=m.streamStartedAt||m.createdAt||Date.now();
     const t1=live?Date.now():(m.streamEndedAt||m.createdAt||t0);
     const secs=Math.max(0,Math.round((t1-t0)/1000));
-    const label=m.thoughtStopped?'Stopped':(live?('Working for '+secs+'s'):('Thought for '+secs+'s'));
+    const hasTimes=!!(m.streamStartedAt||m.streamEndedAt);
+    const label=m.thoughtStopped?'Stopped':(live?('Working for '+secs+'s'):((hasTimes)?('Thought for '+secs+'s'):'Thought'));
     const lastLine=live?(notes.length?notes[notes.length-1].label:(steps.length?steps[steps.length-1].label:'')):'';
-    h+='<div class="think-row" role="button"><span class="'+(live?'spin':'')+'">'+(live?'':'<span style="display:inline-flex;color:var(--muted)">'+icon('brain',15)+'</span>')+'</span><span class="think-label">'+esc(label)+'</span><span class="think-chev">'+icon('chevron-right',13)+'</span></div>';
+    h+='<div class="think-row" role="button">'+(live?'<span class="spin"></span>':'')+'<span class="think-label">'+esc(label)+'</span><span class="think-chev">'+icon('chevron-right',13)+'</span></div>';
     if(live&&lastLine) h+='<div class="think-step-line">'+esc(shortStep(lastLine))+'</div>';
     if(allSteps.length){
-      h+='<div class="think-steps"'+(live?'':' hidden')+'>'+allSteps.map(a=>'<div class="think-step'+(a.state==='completed'?' done':'')+'"><span class="st-ic">'+(a.state==='completed'?icon('check',13):icon('gauge',13))+'</span><span>'+esc(shortStep(a.label||''))+(a.detail?'<span class="st-detail">'+esc(a.detail)+'</span>':'')+'</span></div>').join('')+'</div>';
+      /* The full step list stays collapsed (tap the row to expand) — while
+         live it used to render open, so the latest step showed twice: once
+         in the single step line and once in the list. */
+      h+='<div class="think-steps" hidden>'+allSteps.map(a=>'<div class="think-step'+(a.state==='completed'?' done':'')+'"><span class="st-ic">'+(a.state==='completed'?icon('check',13):icon('gauge',13))+'</span><span>'+esc(shortStep(a.label||''))+(a.detail?'<span class="st-detail">'+esc(a.detail)+'</span>':'')+'</span></div>').join('')+'</div>';
     }
   }
   if(m.image){ h+='<div class="img-card"><img src="'+esc(m.image)+'" alt="Generated image"></div>'; }
   if(m.text){ h+='<div class="msg-asst">'+mdToHtml(stripSourcesBlock(m.text))+'</div>'; }
   if(m.errorCard){ h+='<div class="err-card"><div class="err-title">Image generation limit</div><div>'+esc(m.errorCard)+'</div><button type="button" class="btn-primary" data-a-act="upgrade" data-mid="'+m.id+'">Upgrade</button></div>'; }
   const urls=extractUrls(m.text||'');
+  const footParts=[];
   if(urls.length||m.image){
-    h+='<div><button type="button" class="sources-btn" data-src-open="'+m.id+'">'+icon('globe',14)+'<span>'+(urls.length?urls.length+' source'+(urls.length>1?'s':''):'Sources')+'</span></button> '
-      +urls.slice(0,3).map(u=>'<a class="src-chip" href="#" data-src-chip="'+m.id+'">'+esc(hostOf(u))+'</a>').join('')+'</div>';
+    footParts.push('<button type="button" class="sources-btn" data-src-open="'+m.id+'">'+icon('globe',14)+'<span>'+(urls.length?urls.length+' source'+(urls.length>1?'s':''):'Sources')+'</span></button>'
+      +urls.slice(0,3).map(u=>'<a class="src-chip" href="#" data-src-chip="'+m.id+'">'+esc(hostOf(u))+'</a>').join(''));
   }
   if(!m.pending){
     const fb=m.feedback||'';
-    h+='<div class="action-bar">'
+    footParts.push('<div class="action-bar">'
       +'<button type="button" data-a-act="copy" data-mid="'+m.id+'" aria-label="Copy">'+icon('copy',15)+'</button>'
       +'<button type="button" data-a-act="good" data-mid="'+m.id+'" aria-label="Good response" class="'+(fb==='good'?'active':'')+'">'+icon('thumbs-up',15)+'</button>'
       +'<button type="button" data-a-act="bad" data-mid="'+m.id+'" aria-label="Bad response" class="'+(fb==='bad'?'active':'')+'">'+icon('thumbs-down',15)+'</button>'
       +'<button type="button" data-a-act="more" data-mid="'+m.id+'" aria-label="More">'+icon('ellipsis',15)+'</button>'
-      +'</div>';
+      +'</div>');
+  }
+  /* Grok puts the sources button and the action bar on ONE row. */
+  if(footParts.length) h+='<div class="reply-foot">'+footParts.join('')+'</div>';
+  if(!m.pending){
     if(Array.isArray(m.followups)&&m.followups.length){
       h+='<div class="followups">'+m.followups.slice(0,2).map((f,i)=>'<button type="button" class="followup-btn'+(i===0?' first':'')+'" data-fu="'+m.id+'" data-fu-text="'+esc(f)+'">'+(i===0?'<span class="fu-play">'+icon('play',14)+'</span>':'')+'<span>'+esc(f)+'</span></button>').join('')+'</div>';
     }
@@ -628,6 +792,20 @@ function tableCopy(btn){
   const wrap=btn.closest('.table-wrap'); if(!wrap) return;
   const table=wrap.querySelector('table'); if(!table) return;
   copyText(table.innerText||'').then(()=>toast('Table copied'));
+}
+function tableOpen(btn){
+  /* Grok's "Open as file": the table as a downloadable .md file. */
+  const wrap=btn.closest('.table-wrap'); if(!wrap) return;
+  const table=wrap.querySelector('table'); if(!table) return;
+  const rowText=tr=>Array.from(tr.querySelectorAll('th,td')).map(c=>(c.textContent||'').trim().replace(/\|/g,'\\|')).join(' | ');
+  const head=table.querySelector('thead tr'), bodyRows=Array.from(table.querySelectorAll('tbody tr'));
+  const cols=head?head.querySelectorAll('th,td').length:(bodyRows[0]?bodyRows[0].querySelectorAll('td').length:0);
+  let md='';
+  if(head) md+='| '+rowText(head)+' |\n| '+Array.from({length:cols},()=>'---').join(' | ')+' |\n';
+  md+=bodyRows.map(tr=>'| '+rowText(tr)+' |').join('\n');
+  const blob=new Blob([md],{type:'text/markdown'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='table.md'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('Table opened as file');
 }
 function userMsgAction(act,mid){
   const s=curSession(); if(!s) return;
@@ -743,22 +921,23 @@ let sendQueue=[]; /* Bug 1 fix: messages sent while a reply streams are queued, 
 async function sendMessage(presetText){
   const input=$('#composerInput'); const text=(presetText!==undefined?presetText:input.value).trim();
   if(!text&&!attachments.length) return;
+  const dk=draftKey(); /* capture before ensureSession can change currentId */
   const s=ensureSession(text);
   const userMsg={id:uid(), role:'user', text, createdAt:Date.now(), attachments:attachments.map(a=>({name:a.name, kind:a.kind}))};
   const filePayload=attachments.slice();
   const tool=activeTool; activeTool=null;
   s.messages.push(userMsg); s.updatedAt=Date.now(); if(!temporary) saveSessions();
   attachments=[]; renderAttachBar();
-  if(presetText===undefined){ input.value=''; autosize(); renderComposerState(); }
+  if(presetText===undefined){ input.value=''; autosize(); renderComposerState(); delete drafts[dk]; saveJSON(DRAFT_KEY, drafts); }
   renderAll();
-  if(streaming){ sendQueue.push({s,userMsg,filePayload,tool}); return; }
+  if(streaming){ sendQueue.push({s,userMsg,filePayload,tool}); addPending(s.id,userMsg.id,tool,filePayload); return; }
   if(tool==='image'){ try{ await runImageGeneration(s,userMsg); }finally{ drainSendQueue(); } return; }
   try{ await runChatStream(s,userMsg,filePayload); }finally{ drainSendQueue(); }
 }
 function drainSendQueue(){
   if(streaming||!sendQueue.length) return;
   const next=sendQueue.shift();
-  if(!getSession(next.s.id)){ drainSendQueue(); return; }
+  if(!getSession(next.s.id)){ clearPending(next.userMsg.id); drainSendQueue(); return; }
   if(next.tool==='image'){ runImageGeneration(next.s,next.userMsg).then(drainSendQueue,drainSendQueue); return; }
   runChatStream(next.s,next.userMsg,next.filePayload).then(drainSendQueue,drainSendQueue);
 }
@@ -766,6 +945,7 @@ let activeTool=null;
 async function runChatStream(s,userMsg,filePayload){
   const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true, thinkMode:settings.responseMode};
   s.messages.push(asst); renderMessages();
+  if(!temporary) addPending(s.id,userMsg.id,null,filePayload);
   /* Title sooner: the summary title used to wait for the whole reply, so the
      raw-prompt fallback sat in the top bar and sidebar for a long slow reply.
      The title call retries itself while a stream is running, so scheduling it
@@ -811,6 +991,7 @@ async function streamInto(s,userMsg,asst,filePayload){
     asst.text=cleanAssistantText(asst.text);
     asst.pending=false;
     s.updatedAt=Date.now(); if(!temporary) saveSessions();
+    clearPending(userMsg.id);
     setStreaming(false); renderAll();
     if(settings.voice.voiceMode&&asst.text&&!vmOpen) speak(asst.text);
     if(settings.interface.autoCopy&&asst.text) copyText(asst.text);
@@ -851,6 +1032,7 @@ function paintAssistant(s,asst){
   fresh.querySelectorAll('[data-a-act]').forEach(b=>b.addEventListener('click',()=>asstAction(b.getAttribute('data-a-act'), b.getAttribute('data-mid'))));
   fresh.querySelectorAll('[data-code-act]').forEach(b=>b.addEventListener('click',()=>codeAction(b)));
   fresh.querySelectorAll('[data-table-copy]').forEach(b=>b.addEventListener('click',()=>tableCopy(b)));
+  fresh.querySelectorAll('[data-table-open]').forEach(b=>b.addEventListener('click',()=>tableOpen(b)));
   fresh.querySelectorAll('[data-fu]').forEach(b=>b.addEventListener('click',()=>{ const t=b.getAttribute('data-fu-text'); if(t) sendMessage(t); }));
   fresh.querySelectorAll('.think-row').forEach(r=>r.addEventListener('click',()=>{ const steps=r.parentElement.querySelector('.think-steps'); if(steps) steps.hidden=!steps.hidden; }));
   fresh.querySelectorAll('[data-src-open]').forEach(b=>b.addEventListener('click',()=>openSources(b.getAttribute('data-src-open'))));
@@ -918,6 +1100,7 @@ async function requestFollowups(sessionId,mid){
 async function runImageGeneration(s,userMsg){
   const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true};
   s.messages.push(asst); renderMessages(); setStreaming(true);
+  if(!temporary) addPending(s.id,userMsg.id,'image',null);
   trackRequest('image');
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'generate-image', prompt:userMsg.text, model:'auto'})});
@@ -925,7 +1108,7 @@ async function runImageGeneration(s,userMsg){
     if(data&&data.imageDataUrl){ asst.image=data.imageDataUrl; asst.text='Here is your image.'; }
     else throw new Error((data&&(data.error||data.detail))||'Image generation failed');
   }catch(err){ asst.errorCard=String(err&&err.message?err.message:'Image generation failed.'); asst.text=''; }
-  asst.pending=false; s.updatedAt=Date.now(); if(!temporary) saveSessions(); setStreaming(false); renderAll();
+  asst.pending=false; s.updatedAt=Date.now(); if(!temporary) saveSessions(); clearPending(userMsg.id); setStreaming(false); renderAll();
 }
 
 /* ---------- voice dictation ---------- */
@@ -1164,13 +1347,14 @@ function pickFile(kind){
 /* ---------- settings pages ---------- */
 let settingsPageKey='list';
 const SETTING_ROWS=[
+ {key:'account', icon:'user', label:'Account', value:()=>''},
  {key:'appearance', icon:'monitor', label:'Appearance', value:()=>cap(settings.theme||'light')},
- {key:'profile', icon:'user', label:'Profile', value:()=>settings.profileName||'Jepong'},
- {key:'usage', icon:'gauge', label:'Usage', value:()=>''},
+ {key:'behavior', icon:'brain', label:'Behavior', value:()=>cap(settings.responseMode||'Auto')},
  {key:'voice', icon:'volume-2', label:'Voice', value:()=>voiceLabel()},
  {key:'data', icon:'shield', label:'Data controls', value:()=>''},
- {key:'account', icon:'user', label:'Account', value:()=>''},
  {key:'subscription', icon:'zap', label:'Subscription', value:()=>'Free'},
+ {key:'profile', icon:'user', label:'Profile', value:()=>settings.profileName||'Jepong'},
+ {key:'usage', icon:'gauge', label:'Usage', value:()=>''},
  {key:'help', icon:'circle-help', label:'Help', value:()=>''},
  {key:'about', icon:'info', label:'About', value:()=>''},
  {key:'privacy', icon:'shield', label:'Privacy', value:()=>''},
@@ -1205,14 +1389,38 @@ function renderSettingsPage(){
   if(settingsPageKey==='appearance'){
     title.textContent='Appearance';
     const cur=settings.theme||'light';
-    body.innerHTML='<div class="set-list">'+['light','dark','system'].map(t=>'<button class="radio-row'+(cur===t?' sel':'')+'" data-theme-opt="'+t+'"><span class="radio"></span><span class="radio-label">'+cap(t)+'</span>'+(cur===t?icon('check',16):'')+'</button>').join('')+'</div><p class="set-note">System follows your device setting.</p>'
-      +'<div class="set-card"><h3>Wrap long code blocks</h3><p>Wrap code onto the next line instead of scrolling sideways.</p><button id="wrapCodeSw" class="switch'+(settings.interface.wrapCode?' on':'')+'" type="button" aria-label="Wrap long code blocks"></button></div>'
-      +'<div class="set-card"><h3>Reduce motion</h3><p>Turn off animations and transitions.</p><button id="reduceMotionSw" class="switch'+(settings.interface.reduceMotion?' on':'')+'" type="button" aria-label="Reduce motion"></button></div>'
-      +'<div class="set-card"><h3>Show suggestions</h3><p>Show suggestion rows under the composer on the home screen.</p><button id="showSuggSw" class="switch'+(settings.interface.showSuggestions!==false?' on':'')+'" type="button" aria-label="Show suggestions"></button></div>';
-    body.querySelectorAll('[data-theme-opt]').forEach(b=>b.addEventListener('click',()=>{ settings.theme=b.getAttribute('data-theme-opt'); saveSettings(); applyTheme(); renderSettingsPage(); }));
+    body.innerHTML='<div class="set-list"><button class="set-row" id="themeRow"><span class="set-ic">'+icon('monitor',18)+'</span><span class="set-label">Theme</span><span class="set-value">'+esc(cap(cur))+'</span><span class="chev">'+icon('chevron-right',16)+'</span></button></div>'
+      +'<div class="set-card">'
+      +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Wrap long code blocks</h3><p>Wrap long lines in code blocks by default.</p></div><button id="wrapCodeSw" class="switch'+(settings.interface.wrapCode?' on':'')+'" type="button" aria-label="Wrap long code blocks"></button></div>'
+      +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Reduce motion</h3></div><button id="reduceMotionSw" class="switch'+(settings.interface.reduceMotion?' on':'')+'" type="button" aria-label="Reduce motion"></button></div>'
+      +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Show suggestions</h3><p>Starter prompts on new chats and follow-ups under replies.</p></div><button id="showSuggSw" class="switch'+(settings.interface.showSuggestions!==false?' on':'')+'" type="button" aria-label="Show suggestions"></button></div>'
+      +'</div>'
+      +'<button class="upgrade-band" id="appearanceUpgrade"><span><span class="ub-title">Premium</span><span class="ub-sub">Unlock extended capabilities</span></span><span class="ub-pill">Upgrade</span></button>';
+    body.querySelector('#themeRow').addEventListener('click',e=>{
+      const r=e.currentTarget.getBoundingClientRect();
+      showMenu(Math.max(8,Math.min(r.left,window.innerWidth-200)), r.bottom+4, ['light','dark','system'].map(t=>({label:cap(t)+(cur===t?' ✓':''), onClick:()=>{ settings.theme=t; saveSettings(); applyTheme(); renderSettingsPage(); }})));
+    });
     body.querySelector('#wrapCodeSw').addEventListener('click',e=>{ settings.interface.wrapCode=!settings.interface.wrapCode; saveSettings(); applyTheme(); e.currentTarget.classList.toggle('on', settings.interface.wrapCode); });
     body.querySelector('#reduceMotionSw').addEventListener('click',e=>{ settings.interface.reduceMotion=!settings.interface.reduceMotion; saveSettings(); applyTheme(); e.currentTarget.classList.toggle('on', settings.interface.reduceMotion); });
     body.querySelector('#showSuggSw').addEventListener('click',e=>{ settings.interface.showSuggestions=settings.interface.showSuggestions===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.interface.showSuggestions!==false); renderAll(); });
+    body.querySelector('#appearanceUpgrade').addEventListener('click',()=>{ settingsPageKey='subscription'; renderSettingsPage(); });
+    return;
+  }
+  if(settingsPageKey==='behavior'){
+    title.textContent='Behavior';
+    body.innerHTML='<div class="set-card">'
+      +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Default response mode</h3><p>'+esc(cap(settings.responseMode||'Auto'))+'</p></div><button id="behModeBtn" class="btn-primary" type="button" style="flex:none">Change</button></div>'
+      +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Auto-generate chat titles</h3><p>Give each chat a short summary title.</p></div><button id="behTitleSw" class="switch'+(settings.interface.titleAuto!==false?' on':'')+'" type="button" aria-label="Auto-generate chat titles"></button></div>'
+      +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Auto-copy replies</h3><p>Copy each reply to the clipboard automatically.</p></div><button id="behCopySw" class="switch'+(settings.interface.autoCopy?' on':'')+'" type="button" aria-label="Auto-copy replies"></button></div>'
+      +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Paste images as files</h3><p>Images pasted into the composer attach as files.</p></div><button id="behPasteSw" class="switch'+(settings.interface.pasteAsFile!==false?' on':'')+'" type="button" aria-label="Paste images as files"></button></div>'
+      +'</div>';
+    body.querySelector('#behModeBtn').addEventListener('click',e=>{
+      const r=e.currentTarget.getBoundingClientRect();
+      showMenu(Math.max(8,Math.min(r.left,window.innerWidth-200)), r.bottom+4, ['Auto','Thinking','Fast'].map(m=>({label:m+(settings.responseMode===m?' ✓':''), onClick:()=>{ settings.responseMode=m; saveSettings(); renderComposerState(); renderSettingsPage(); toast('Default mode: '+m); }})));
+    });
+    body.querySelector('#behTitleSw').addEventListener('click',e=>{ settings.interface.titleAuto=settings.interface.titleAuto===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.interface.titleAuto!==false); });
+    body.querySelector('#behCopySw').addEventListener('click',e=>{ settings.interface.autoCopy=!settings.interface.autoCopy; saveSettings(); e.currentTarget.classList.toggle('on', !!settings.interface.autoCopy); });
+    body.querySelector('#behPasteSw').addEventListener('click',e=>{ settings.interface.pasteAsFile=settings.interface.pasteAsFile===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.interface.pasteAsFile!==false); });
     return;
   }
   if(settingsPageKey==='profile'){
@@ -1401,6 +1609,15 @@ function wire(){
   $('#scrim').addEventListener('click',closeSidebarMobile);
   $('#newChatBtn').addEventListener('click',newChat);
   $('#topNewBtn').addEventListener('click',newChat);
+  $('#privateBtn').addEventListener('click',()=>{ setPrivate(!temporary); });
+  $('#topSearchBtn').addEventListener('click',()=>{ if(window.innerWidth<1024){ $('#sidebar').classList.add('open'); $('#scrim').hidden=false; } setTimeout(()=>$('#chatSearch').focus(),80); });
+  $('#topTitle').addEventListener('click',()=>{ const s=curSession(); if(!s) return; const r=$('#topTitle').getBoundingClientRect(); showMenu(Math.max(8,Math.min(r.left,window.innerWidth-220)), r.bottom+4, sessionMenuItems(s)); });
+  $('#sbNewProj').addEventListener('click',async()=>{
+    const name=await promptDialog('New project','Project name','');
+    if(name===null||!name.trim()) return;
+    projects.unshift({id:uid(), name:name.trim(), createdAt:Date.now()});
+    saveProjects(); renderSidebar(); toast('Project created');
+  });
   $('#profileBtn').addEventListener('click',()=>{ settingsPageKey='profile'; renderSettingsPage(); $('#settingsPage').hidden=false; closeSidebarMobile(); });
   $('#chatSearch').addEventListener('input',e=>{ searchQuery=e.target.value; $('#chatSearchClear').hidden=!searchQuery; renderSidebar(); });
   $('#chatSearchClear').addEventListener('click',()=>{ $('#chatSearch').value=''; searchQuery=''; $('#chatSearchClear').hidden=true; renderSidebar(); });
@@ -1413,7 +1630,7 @@ function wire(){
     else if(k==='invite'){ copyText(location.origin+location.pathname).then(()=>toast('Invite link copied')); }
   }));
   const input=$('#composerInput');
-  input.addEventListener('input',()=>{ autosize(); renderComposerState(); });
+  input.addEventListener('input',()=>{ autosize(); renderComposerState(); saveDraft(); });
   input.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); }
   });
@@ -1460,7 +1677,7 @@ function wire(){
        name+kind only, so an attached image never reached the model. */
     const MAX_BYTES=1100000; /* ~1.47M base64 chars, under the server 1.5M/file cap */
     let pending=files.length, attached=0;
-    const finish=()=>{ pending--; if(!pending){ renderComposerState(); if(attached) toast(attached+' file(s) attached'); } };
+    const finish=()=>{ pending--; if(!pending){ renderComposerState(); saveDraft(); if(attached) toast(attached+' file(s) attached'); } };
     files.forEach(f=>{
       const isImage=f.type&&f.type.startsWith('image/');
       const entry={name:f.name, kind:isImage?'image':'file', mimeType:f.type||'', size:f.size||0};
@@ -1496,4 +1713,10 @@ function wire(){
 }
 document.addEventListener('DOMContentLoaded',()=>{
   applyTheme(); wire(); renderAll();
+  /* Refresh-proofing: reopen the chat she was in (with its draft), then
+     resume any reply that was still streaming or queued when she refreshed.
+     Nothing is lost on reload. */
+  if(extra.lastSessionId&&getSession(extra.lastSessionId)){ openSession(extra.lastSessionId); }
+  else restoreDraft();
+  recoverPending();
 });
