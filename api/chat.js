@@ -56,17 +56,19 @@ function inlineMapPageUrl(html){
 }
 
 const PROVIDERS = {
-  bailucode: {
-    label: 'Bailucode',
-    models: ['bailu-apex','bailu-2.8','bailu-2.7-1m'],
-    defaultModel: 'bailu-apex'
+  apinex: {
+    label: 'APINEX',
+    models: ['free/deepseek-v4.1-flash','free/deepseek-v4-flash-0731','free/deepseek-v4-pro-0813','free/gemini-4-hydrogen','free/glm-5.3-flash','free/glm-5.3-flashx','free/gpt-6-luna','free/minimax-m3.1-flash','free/qwen-3.8-max'],
+    defaultModel: 'free/deepseek-v4.1-flash'
   }
 };
 
-// Bailu-only backend: Bailucode is the sole chat provider. Every other chat
-// provider was unwired (PROVIDERS, dispatch, fallback) — a failed Bailu
-// request walks its route key pool, then the other Bailu route, then
-// surfaces an honest error. No other provider ever answers a chat request.
+// APINEX-only backend: APINEX is the sole chat provider. A failed APINEX
+// request walks its fresh-shuffled key pool, then surfaces an honest error.
+// No other provider ever answers a chat request. (Bailu was removed
+// 2026-11-24: Bailucode keys went 401/403 IP-locked and the pool never
+// recovered. The 9 free APINEX models above passed a live retest the same
+// day; the other free/ models are subscription-gated 402 despite the prefix.)
 
 const RETRYABLE = new Set([401,402,403,408,409,425,429,500,502,503,504]);
 
@@ -189,9 +191,9 @@ function sanitizeCustomProviderKeys(body,provider){
 }
 
 
-// Configured keys belong to the SAME selected provider. Exhaust each key
-// before any route switch; the fallback switch controls the Bailu
-// cross-route retry, not key rotation.
+// Configured keys belong to the SAME selected provider. Exhaust each key;
+// there is no cross-provider fallback (APINEX-only), so key rotation is the
+// only retry layer before an honest error.
 function providerCredentials(keys,autoFallback=false){
   const list=Array.isArray(keys)?keys:[];
   // Cloudflare supplies account objects; preserve those alongside string keys.
@@ -208,7 +210,7 @@ function getProviderKeys(provider,rotate=true) {
     cohere:['COHERE_API_KEYS','COHERE_API_KEY'],
     nvidia:['NVIDIA_API_KEYS','NVIDIA_API_KEY'],
     hcnsec:['HCNSEC_API_KEYS','HCNSEC_API_KEY'],
-    bailucode:['BAILUCODE_API_KEYS','BAILUCODE_API_KEY']
+    apinex:['APINEX_API_KEYS','APINEX_API_KEY']
   }[provider];
   if(!envNames)return [];
   const keys=parseKeys(envNames[0],envNames[1]);
@@ -234,35 +236,23 @@ function getCloudflareAccounts() {
   return accounts.slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
-function getBailuAnthropicKeys(rotate=true){
-  const dedicated=parseKeys('BAILUCODE_ANTHROPIC_API_KEYS','BAILUCODE_ANTHROPIC_API_KEY');
-  const keys=dedicated.length?dedicated:parseKeys('BAILUCODE_API_KEYS','BAILUCODE_API_KEY');
-  return (rotate?rotateProviderKeys('bailucode-anthropic',keys):keys).slice(0,API_GUARD.maxProviderCredentialsPerRequest);
-}
-
-// Bailu pools are drawn FRESH-SHUFFLED on every request (the standing
+// APINEX keys are drawn FRESH-SHUFFLED on every request (the standing
 // rotational rule: a random key goes first, and on a key-level failure the
-// caller walks the remaining shuffled keys of the SAME route's pool). This
-// replaces the deterministic round-robin cursor draw for Bailucode, whose
-// pool mixes in IP-bound keys that Vercel's rotating egress IPs can reject —
-// a fixed draw order keeps presenting the same bad keys first. A key that
-// fails is never retried within the same request (the walk is a single pass
-// over this shuffled list).
-function shuffledBailuKeys(route){
-  const pool=route==='anthropic'?getBailuAnthropicKeys(false):getProviderKeys('bailucode',false);
+// caller walks the remaining shuffled keys of the SAME provider's pool). A
+// key that fails is never retried within the same request (the walk is a
+// single pass over this shuffled list).
+function shuffledApinexKeys(){
+  const pool=getProviderKeys('apinex',false);
   return shuffle([...new Set(pool.map(x=>String(x||'').trim()).filter(Boolean))])
     .slice(0,API_GUARD.maxProviderCredentialsPerRequest);
 }
 
-// A failure OF THE KEY (rejected, IP-bound, or rate-limited), as opposed to a
-// failure of the request/model: another key from the same pool may succeed.
 function isKeyLevelFailure(status,error=''){
   return [401,403,429].includes(Number(status))||isProviderQuotaFailure(status,error);
 }
 
 function credentialCount(provider) {
   if(provider==='cloudflare')return getCloudflareAccounts().length;
-  if(provider==='bailucode')return getProviderKeys(provider).length+getBailuAnthropicKeys().length;
   return getProviderKeys(provider).length;
 }
 
@@ -281,6 +271,7 @@ function modelLabel(model = '') {
     .replace(/^google\//,'')
     .replace(/^deepseek\//,'')
     .replace(/^groq\//,'')
+    .replace(/^free\//,'')
     .replace(/[-_]/g,' ')
     .replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -2524,7 +2515,7 @@ async function analyzeMediaForNonVisionProvider(files=[], message='', selectedPr
   // First try the user's selected OpenAI-compatible model with image/frame
   // parts. If that exact model supports vision, no provider switch is needed.
   // A refusal or unsupported multimodal response is not accepted as evidence.
-  const openAICompatibleVision=new Set(['bailucode']);
+  const openAICompatibleVision=new Set(['apinex']);
   if(imageOnly.length && openAICompatibleVision.has(selectedProvider) &&
      ((Array.isArray(customApiKeys)&&customApiKeys.length)||configured(selectedProvider))){
     activity(emit,'attachment-media-selected',`Checking attached media with ${providerLabel(selectedProvider)} • ${modelLabel(selectedModel||'selected model')}`,'running','image');
@@ -3895,8 +3886,8 @@ function buildOpenAIVisionMessages(history, message, systemInstruction, files=[]
 }
 
 function smartRoute(mode, files, message) {
-  // Bailu-only: the Smart Router has no other provider to route to. It keeps
-  // the caller's selected Bailu model for every intent (vision, coding,
+  // APINEX-only: the Smart Router has no other provider to route to. It keeps
+  // the caller's selected APINEX model for every intent (vision, coding,
   // school, research, reasoning).
   return null;
 }
@@ -4070,7 +4061,7 @@ function chatCompletionsUrl(base,fallback){
 // a request successful after validating actual assistant text, not HTTP 200 alone.
 async function runOpenAICompatible(provider,{model,history,files=[],message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,visionPayload=false,responseEffort='Instant',unifiedTools=null,toolMessages=null}) {
   const cfg={
-    bailucode:{url:'https://bailucode.com/openapi/v1/chat/completions'}
+    apinex:{url:'https://api.apinex.bond/v1/chat/completions'}
   }[provider];
   if(!cfg) return {ok:false,status:400,error:'Unsupported provider.'};
 
@@ -4212,90 +4203,29 @@ async function runOpenAICompatible(provider,{model,history,files=[],message,syst
 }
 
 
-function anthropicStreamToText(body,finishState={reason:''}){
-  const decoder=new TextDecoder(),encoder=new TextEncoder();
-  return body.pipeThrough(new TransformStream({
-    start(){this.buffer='';},
-    transform(chunk,controller){
-      this.buffer+=decoder.decode(chunk,{stream:true});
-      const lines=this.buffer.split('\n');this.buffer=lines.pop()||'';
-      for(const line of lines){
-        const t=line.trim();if(!t.startsWith('data:'))continue;
-        const raw=t.slice(5).trim();if(!raw||raw==='[DONE]')continue;
-        try{
-          const p=JSON.parse(raw);
-          if(p?.error||p?.type==='error'){captureProviderStreamError(finishState,p.error||p);continue;}
-          // Unified tools: capture native tool_use blocks.
-          accumulateAnthropicEvent(finishState,p);
-          const text=p?.delta?.text ?? p?.content_block?.text;
-          const reason=p?.delta?.stop_reason ?? p?.message?.stop_reason;
-          if(reason)finishState.reason=String(reason).toLowerCase();
-          if(p?.type==='message_stop'&&!finishState.reason)finishState.reason='stop';
-          if(typeof text==='string'&&text)controller.enqueue(encoder.encode(text));
-        }catch(_){}
-      }
-    },
-    flush(){if(!finishState.reason)finishState.reason='unknown';}
-  }));
-}
-
-async function runBailuAnthropic({model,history,message,systemInstruction,fallbackFrom='',routedReason='',emit,autoFallback=false,customApiKeys=null,responseEffort='Instant',unifiedTools=null,toolMessages=null}){
-  const keys=providerCredentials(Array.isArray(customApiKeys)&&customApiKeys.length?customApiKeys:shuffledBailuKeys('anthropic'),autoFallback);
-  if(!keys.length)return {ok:false,status:500,error:'Bailucode Anthropic API key is not configured.'};
-  const target=model||PROVIDERS.bailucode.defaultModel;
-  const messages=[];
-  for(const h of history||[]){
-    const role=h.role==='bot'||h.role==='model'?'assistant':'user';
-    const text=String(h.text||'').trim();if(text)messages.push({role,content:text});
-  }
-  if(String(message||'').trim())messages.push({role:'user',content:String(message).trim()});
-  const requestMessages=toolMessages||messages;
-  // Unified tools: same canonical tools, translated to Anthropic format.
-  const nativeTools=unifiedTools?toolsForFamily(TOOL_FAMILY_ANTHROPIC,unifiedTools):null;
-  let last='',status=500;
-  for(let i=0;i<keys.length;i++){
-    try{
-      const anthropicBody={model:target,max_tokens:effortOutputBudgetFor(message,responseEffort),system:systemInstruction,messages:requestMessages,stream:true};
-      if(nativeTools) anthropicBody.tools=nativeTools;
-      const res=await fetch('https://bailucode.com/openapi/v1/messages',{
-        method:'POST',
-        headers:{'x-api-key':keys[i],Authorization:'Bearer '+keys[i],'anthropic-version':'2023-06-01','content-type':'application/json','accept':'text/event-stream'},
-        body:JSON.stringify(anthropicBody),
-        signal:AbortSignal.timeout(chatUpstreamTimeoutMs('generic'))
-      });
-      if(res.ok){
-        const finishState={reason:'',toolFamily:TOOL_FAMILY_ANTHROPIC,nativeMessages:requestMessages};
-        return {ok:true,response:new Response(anthropicStreamToText(res.body,finishState),{headers:passthroughHeaders(res,'bailucode',target,fallbackFrom,routedReason||'bailu-anthropic',i,keys.length)}),finishState};
-      }
-      status=res.status;last=cleanUpstreamError(await res.text().catch(()=>''),status,'bailucode',target);
-      // Key-level failures (401/403/429 — including the "too many different
-      // IP addresses" 403 that IP-bound pool keys return from Vercel's
-      // rotating egress IPs) always walk to the next shuffled key; only a
-      // request/model-level failure stops the walk early.
-      if(!isKeyLevelFailure(status,last)&&!shouldRetryProviderCredential(status,last))break;
-    }catch(e){status=502;last=e?.message||String(e);}
-  }
-  return {ok:false,status,error:last||'Bailucode Anthropic route unavailable'};
-}
-
-async function runBailucode(args){
+async function runApinex(args){
   // Caller-supplied keys (the user's own keys) keep their given order.
-  // Otherwise the Normal-route pool is drawn fresh-shuffled for this request
-  // and handed to runOpenAICompatible as the credential list, so its key
-  // loop walks the shuffled pool on failure instead of the round-robin
-  // cursor order from getProviderKeys.
+  // Otherwise the pool is drawn fresh-shuffled for this request and handed
+  // to runOpenAICompatible as the credential list, so its key loop walks the
+  // shuffled pool on failure instead of the round-robin cursor order from
+  // getProviderKeys.
   const suppliedKeys=Array.isArray(args.customApiKeys)&&args.customApiKeys.length?args.customApiKeys:null;
-  const openaiArgs=suppliedKeys?args:{...args,customApiKeys:shuffledBailuKeys('normal')};
-  if(args.bailuRoute==='anthropic'){
-    const anthropic=await runBailuAnthropic(args);
-    if(anthropic.ok||args.autoFallback!==true)return anthropic;
-    const openai=await runOpenAICompatible('bailucode',openaiArgs);
-    return openai.ok?openai:anthropic;
+  const openaiArgs=suppliedKeys?args:{...args,customApiKeys:shuffledApinexKeys()};
+  const first=await runOpenAICompatible('apinex',openaiArgs);
+  if(first.ok||args.autoFallback!==true)return first;
+  // Stale-model healing (Bailu-era ids, typos, retired ids): APINEX answers
+  // 404 "Model '<id>' not found" for an id it does not serve. With fallback
+  // ON (the app's normal mode) retry ONCE with the provider default instead
+  // of surfacing the 404 — the caller asked for a model, not a dead id.
+  // Fallback OFF keeps the honest 404. Only a 404 heals; auth/quota/rate
+  // failures never trigger a second key walk.
+  if(first.status===404&&/not found/i.test(first.error||'')){
+    const target=PROVIDERS.apinex.defaultModel;
+    if(String(args.model||'').trim()&&String(args.model).trim()!==target){
+      return runOpenAICompatible('apinex',{...openaiArgs,model:target,fallbackFrom:'apinex',routedReason:'stale-model-default'});
+    }
   }
-  const openai=await runOpenAICompatible('bailucode',openaiArgs);
-  if(openai.ok||args.autoFallback!==true)return openai;
-  const anthropic=await runBailuAnthropic(args);
-  return anthropic.ok?anthropic:openai;
+  return first;
 }
 
 
@@ -4303,28 +4233,11 @@ async function runAvailableProviderFallback(selectedProvider,args,{
   body={}
 }={}){
   if(args?.autoFallback!==true)return {ok:false,status:403,error:'Provider fallback is disabled.'};
-  // Bailu-only fallback semantics: there is no other chat provider to fall
-  // back to. runBailucode already walks the selected route's shuffled key
-  // pool and, with fallback on, crosses to the other route internally. This
-  // layer serves callers whose primary attempt ran with a pinned route or a
-  // completed-but-empty stream (continuations, zero-text hardening): force
-  // the SAME Bailu model on the OTHER route (Normal<->Anthropic) as the last
-  // resort, then surface the honest error. Another provider never answers.
-  if(selectedProvider!=='bailucode'){
-    return {ok:false,status:503,error:'No fallback is available: Bailucode is the only chat provider.'};
-  }
-  const currentRoute=args?.bailuRoute==='anthropic'?'anthropic':'normal';
-  const otherRoute=currentRoute==='anthropic'?'normal':'anthropic';
-  const attempt=await runBailucode({
-    ...args,
-    bailuRoute:otherRoute,
-    autoFallback:true,
-    fallbackFrom:selectedProvider,
-    routedReason:args?.routedReason||'bailu-cross-route-fallback',
-    customApiKeys:sanitizeCustomProviderKeys(body,'bailucode')
-  });
-  if(attempt?.ok)return {...attempt,fallbackProvider:'bailucode',fallbackModel:args.model};
-  return attempt||{ok:false,status:503,error:'Bailucode is unavailable on both routes.'};
+  // APINEX-only fallback semantics: there is no other chat provider to fall
+  // back to, and no second route. runApinex already walks the selected
+  // model's fresh-shuffled key pool; once it is exhausted, the honest error
+  // surfaces. Another provider never answers.
+  return {ok:false,status:503,error:'No fallback is available: APINEX is the only chat provider.'};
 }
 
 async function runProvider(provider,args){
@@ -4338,7 +4251,7 @@ async function runProvider(provider,args){
       responseEffort:args.responseEffort||'Instant'
     });
   }
-  if(provider==='bailucode')return runBailucode(args);
+  if(provider==='apinex')return runApinex(args);
   return {ok:false,status:400,error:'Unknown provider'};
 }
 
@@ -4448,8 +4361,7 @@ function applyChatFeatureSettings(body={}){
 }
 async function processChat(body, emit) {
   body=applyChatFeatureSettings(body);
-  let {message,history=[],files=[],provider='bailucode',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone,bailuRoute,voiceResponseLanguage} = body;
-  bailuRoute=bailuRoute==='anthropic'?'anthropic':'normal';
+  let {message,history=[],files=[],provider='apinex',model,mode,customPrompt,webSearch,autoFallback=false,smartRouter=false,studyTool,personalization,clientTimeZone,voiceResponseLanguage} = body;
   // Strict routing contract: fallback/router are opt-in only. Truthy strings,
   // missing fields, or stale client values must never silently enable them.
   autoFallback = body.autoFallback === true;
@@ -4486,11 +4398,11 @@ async function processChat(body, emit) {
     provider='custom-api';model=customApiProfile.model;
   }else{
     if(!PROVIDERS[provider]){
-      // Bailu-only: an unknown or retired provider id (e.g. a stale client
-      // selection from the multi-provider era) resolves to Bailucode when
+      // APINEX-only: an unknown or retired provider id (e.g. a stale client
+      // selection from the Bailu era) resolves to APINEX when
       // fallback is on, and is an honest error when it is off.
       if(!autoFallback)return {ok:false,status:400,error:'The selected provider is not available; fallback is OFF.',provider,startedAt};
-      provider='bailucode';
+      provider='apinex';
     }
     const selected=String(model||'').trim();
     const allowed=PROVIDERS[provider].models.includes(selected);
@@ -4603,8 +4515,8 @@ async function processChat(body, emit) {
     activity(emit,'attachment-media','Uploaded media has no readable image/video data','warning','file');
     return {ok:false,status:422,error:`The uploaded media "${attachmentRootName(missingMedia).slice(0,80)}" could not be prepared for visual analysis. Try a supported image or a video format the browser can decode.`,provider,startedAt};
   }
-  // Bailu-only: no provider receives media directly as a "vision model" in
-  // the main request; attachment evidence is extracted by the Bailu vision
+  // APINEX-only: no provider receives media directly as a "vision model" in
+  // the main request; attachment evidence is extracted by the APINEX vision
   // attempt inside analyzeMediaForNonVisionProvider and passed as text.
   const directVision=false;
   const mediaAnalysisContext=visualParts.length
@@ -4619,7 +4531,7 @@ async function processChat(body, emit) {
       )
     : '';
   if(visualParts.length&&!directVision&&mediaAnalysisContext===null){
-    return {ok:false,status:415,error:'The attached image/video frames could not be visually read by Bailucode. Your selected response model was not changed.',provider,startedAt};
+    return {ok:false,status:415,error:'The attached image/video frames could not be visually read by APINEX. Your selected response model was not changed.',provider,startedAt};
   }
   // Every non-vision response model receives the evidence-bearing analysis
   // as text in its system context, never unsupported raw media parts.
@@ -4991,7 +4903,7 @@ async function processChat(body, emit) {
   const taskGeneration=taskGenerationActivity(contextPlan);
   if(activityTrace.length)advanceActivityTrace('completed');
   activity(emit,'thinking','Thinking','running','process','');
-  let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort,unifiedTools:UNIFIED_TOOLS,bailuRoute});
+  let first=await runProvider(provider,{model,history,files,message,systemInstruction,routedReason,emit,autoFallback,customApiKeys:requestCustomKeys,customApiProfile,responseEffort,unifiedTools:UNIFIED_TOOLS});
   if(first.ok){
     first=await maybeRefineVisualUiResponse({
       first,provider,model,history,files,message,systemInstruction,routedReason,emit,
@@ -5018,7 +4930,7 @@ async function processChat(body, emit) {
   // has already tried ALL of its configured keys (and any supported same-
   // provider model alternatives) before returning a quota/auth failure here.
   if(autoFallback&&fallbackable){
-    activity(emit,'fallback','Bailucode route exhausted — retrying on the other Bailu route','running','fallback');
+    activity(emit,'fallback','APINEX key pool exhausted — no fallback provider is configured','running','fallback');
     const providerFallback=await runAvailableProviderFallback(provider,{
       model,history,files,message,systemInstruction,emit,autoFallback:true,
       responseEffort,customApiKeys:requestCustomKeys,customApiProfile,unifiedTools:UNIFIED_TOOLS
@@ -5044,7 +4956,7 @@ async function processChat(body, emit) {
 async function mediaCapabilitySnapshot(){
   const result={};
   const add=(provider,image,video,detail='')=>{result[provider]={image,video,detail};};
-  for(const p of ['hcnsec','bailucode']) add(p,'unverified','unverified','No verified media-generation contract is configured yet.');
+  for(const p of ['hcnsec','apinex']) add(p,'unverified','unverified','No verified media-generation contract is configured yet.');
 
   if(!configured('nvidia')){
     add('nvidia','not-configured','not-configured','NVIDIA_API_KEY is not configured.');
@@ -5066,7 +4978,7 @@ async function mediaCapabilitySnapshot(){
 }
 
 
-const DYNAMIC_MODEL_PROVIDERS = new Set(['bailucode']);
+const DYNAMIC_MODEL_PROVIDERS = new Set(['apinex']);
 
 function providerModelsUrl(provider){
   const envName=provider.toUpperCase()+'_BASE_URL';
@@ -5077,7 +4989,7 @@ function providerModelsUrl(provider){
     return custom+'/v1/models';
   }
   return ({
-    bailucode:'https://bailucode.com/openapi/v1/models'
+    apinex:'https://api.apinex.bond/v1/models'
   })[provider] || '';
 }
 
@@ -5105,7 +5017,7 @@ function normalizeModelCatalog(data){
 
 async function discoverProviderModels(provider){
   if(!DYNAMIC_MODEL_PROVIDERS.has(provider))return {provider,models:[],status:'unsupported'};
-  const keys=provider==='bailucode' ? [...new Set([...getProviderKeys(provider),...getBailuAnthropicKeys()])] : getProviderKeys(provider);
+  const keys=getProviderKeys(provider);
   if(!keys.length)return {provider,models:[],status:'not-configured'};
   const url=providerModelsUrl(provider);
   if(!url)return {provider,models:[],status:'endpoint-not-configured'};
@@ -5465,7 +5377,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
           const activityContextMessage=contextualTaskMessage(body.message||'',body.history||[]);
           const result=await processChat(body,emit);
           if(!result.ok){
-            send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'bailucode'});
+            send('error',{message:result.error||'AI provider unavailable.',status:result.status||500,provider:result.provider||body.provider||'apinex'});
             clearInterval(keepAlive);
             controller.close();
             return;
@@ -5478,7 +5390,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
           let activeResponse=result.response;
           let activeFinishState=result.finishState||{reason:'unknown'};
           let continuationCount=0;
-          let resolvedProvider=result.resolvedProvider||meta.provider||body.provider||'bailucode';
+          let resolvedProvider=result.resolvedProvider||meta.provider||body.provider||'apinex';
           let resolvedModel=result.resolvedModel||meta.model||body.model||PROVIDERS[resolvedProvider]?.defaultModel;
           const continuationSystemInstruction=(result.systemInstruction||'') +
             ' AUTOMATIC CONTINUATION MODE: When continuing a previous answer, continue seamlessly without repeating earlier text. Do not add "Part 2", "Continuation", or a new introduction.';
@@ -5585,7 +5497,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
             if(!continuation.ok&&body.autoFallback===true&&isFallbackableProviderFailure(continuation.status,continuation.error)){
               send('activity',{
                 type:'activity',id:`auto-continue-${continuationCount}`,
-                label:'Continuation key exhausted — retrying Bailucode on the other route',
+                label:'Continuation key exhausted — APINEX key pool exhausted',
                 state:'warning',kind:'generate',at:Date.now()
               });
               continuation=await runAvailableProviderFallback(resolvedProvider,continuationArgs,{
@@ -5727,7 +5639,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
           // keep telling the truth. Only a zero-length result after trimming
           // counts as empty — a short reply such as "OK" is a real answer.
           if(!cancelled&&body.autoFallback===true&&!generatedText.trim()&&!nativeDirectionsAppendix){
-            send('activity',{type:'activity',id:'empty-response-fallback',label:'The selected model returned an empty response — retrying Bailucode on the other route',state:'warning',kind:'fallback',at:Date.now()});
+            send('activity',{type:'activity',id:'empty-response-fallback',label:'The selected model returned an empty response — no fallback provider is configured',state:'warning',kind:'fallback',at:Date.now()});
             const emptyFallbackArgs={
               model:resolvedModel,
               history:Array.isArray(body.history)?body.history:[],
@@ -5767,7 +5679,7 @@ function activityStreamResponse(body, requestSignal=null, request=null) {
               }catch(_){/* an unreadable fallback stream leaves the text empty; the failure return below reports it */}
             }
             if(!generatedText.trim()){
-              send('error',{message:'The selected model returned an empty response, and Bailucode could not answer on either route. Please try again.',status:502,provider:resolvedProvider});
+              send('error',{message:'The selected model returned an empty response, and APINEX could not answer. Please try again.',status:502,provider:resolvedProvider});
               clearInterval(keepAlive);
               try{controller.close();}catch(_){}
               return;
@@ -6602,6 +6514,6 @@ export default async function handler(req){
 
     const result=await processChat(body,null);
     if(result.ok)return result.response;
-    return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'bailucode'});
+    return json({error:result.error||'AI provider unavailable',provider:result.provider,status:result.status,rateLimited:result.status===429},result.status||500,{'X-AI-Provider':result.provider||body.provider||'apinex'});
   }catch(e){return json({error:e?.message||String(e)},500);}
 }
