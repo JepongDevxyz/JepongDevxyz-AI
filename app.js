@@ -91,15 +91,15 @@ function warnToast(html,link){
 
 /* ---------- models / settings (same keys as the Qwen build) ---------- */
 const MODELS=[
- {provider:'apinex', id:'free/deepseek-v4.1-flash', name:'DeepSeek V4.1 Flash', short:'DeepSeek V4.1', desc:'Default · Free'},
- {provider:'apinex', id:'free/deepseek-v4-flash-0731', name:'DeepSeek V4 Flash', short:'DeepSeek V4', desc:'Free'},
- {provider:'apinex', id:'free/deepseek-v4-pro-0813', name:'DeepSeek V4 Pro', short:'DeepSeek V4 Pro', desc:'Free'},
- {provider:'apinex', id:'free/gemini-4-hydrogen', name:'Gemini 4 Hydrogen', short:'Gemini 4', desc:'Free'},
- {provider:'apinex', id:'free/glm-5.3-flash', name:'GLM 5.3 Flash', short:'GLM 5.3', desc:'Free'},
- {provider:'apinex', id:'free/glm-5.3-flashx', name:'GLM 5.3 FlashX', short:'GLM 5.3X', desc:'Free'},
- {provider:'apinex', id:'free/gpt-6-luna', name:'GPT-6 Luna', short:'GPT-6 Luna', desc:'Free'},
- {provider:'apinex', id:'free/minimax-m3.1-flash', name:'MiniMax M3.1 Flash', short:'MiniMax M3.1', desc:'Free'},
- {provider:'apinex', id:'free/qwen-3.8-max', name:'Qwen 3.8 Max', short:'Qwen 3.8', desc:'Free'}
+ {provider:'apinex', id:'free/deepseek-v4.1-flash', name:'DeepSeek V4.1 Flash', short:'DeepSeek V4.1', tiny:'V4.1 Flash', badge:'DS', desc:'Default · Free'},
+ {provider:'apinex', id:'free/deepseek-v4-flash-0731', name:'DeepSeek V4 Flash', short:'DeepSeek V4', tiny:'V4 Flash', badge:'DS', desc:'Free'},
+ {provider:'apinex', id:'free/deepseek-v4-pro-0813', name:'DeepSeek V4 Pro', short:'DeepSeek V4 Pro', tiny:'V4 Pro', badge:'DS', desc:'Free'},
+ {provider:'apinex', id:'free/gemini-4-hydrogen', name:'Gemini 4 Hydrogen', short:'Gemini 4', tiny:'Gemini 4', badge:'GE', desc:'Free'},
+ {provider:'apinex', id:'free/glm-5.3-flash', name:'GLM 5.3 Flash', short:'GLM 5.3', tiny:'GLM 5.3', badge:'GL', desc:'Free'},
+ {provider:'apinex', id:'free/glm-5.3-flashx', name:'GLM 5.3 FlashX', short:'GLM 5.3X', tiny:'GLM 5.3X', badge:'GL', desc:'Free'},
+ {provider:'apinex', id:'free/gpt-6-luna', name:'GPT-6 Luna', short:'GPT-6 Luna', tiny:'Luna', badge:'GP', desc:'Free'},
+ {provider:'apinex', id:'free/minimax-m3.1-flash', name:'MiniMax M3.1 Flash', short:'MiniMax M3.1', tiny:'M3.1 Flash', badge:'MM', desc:'Free'},
+ {provider:'apinex', id:'free/qwen-3.8-max', name:'Qwen 3.8 Max', short:'Qwen 3.8', tiny:'Qwen 3.8', badge:'QW', desc:'Free'}
 ];
 // APINEX-only (2026-11-24): Bailu removed completely. These 9 free models
 // passed a live retest the same day; the other free/ models are
@@ -289,7 +289,9 @@ function showMenu(x,y,items,opts){
       b.addEventListener('click',()=>{ closeMenu(); it.onClick&&it.onClick(); }); pop.appendChild(b); return; }
     const b=document.createElement('button'); if(it.danger) b.className='danger';
     b.innerHTML=(it.icon===null?'':'<span class="menu-ic">'+icon(it.icon||'info',16)+'</span>')
+      +(it.badge?'<span class="menu-badge">'+esc(it.badge)+'</span>':'')
       +'<span class="menu-row-tx"><span>'+esc(it.label)+'</span>'+(it.sub?'<span class="menu-row-sub">'+esc(it.sub)+'</span>':'')+'</span>'
+      +(it.tag?'<span class="menu-tag">'+esc(it.tag)+'</span>':'')
       +(it.checked?'<span class="menu-check">'+icon('check',18)+'</span>':'');
     b.addEventListener('click',()=>{ closeMenu(); it.onClick&&it.onClick(); });
     pop.appendChild(b);
@@ -556,7 +558,11 @@ function renderSidebar(){
   const more=$('#sbMore'); if(more) more.addEventListener('click',()=>{ showAllChats=true; renderSidebar(); });
   const np=$('#sbNewPlus'); if(np) np.addEventListener('click',()=>newChat());
   const pl=$('#projList');
+  /* Empty Projects section is dead space — hide its header + list until
+     the user creates a project. */
+  const ps=$('#sbProjSec'); if(ps) ps.hidden=!projects.length;
   if(pl){
+    pl.hidden=!projects.length;
     pl.innerHTML=projects.map(p=>'<button class="sb-item" data-proj="'+p.id+'"><span class="sb-item-title">'+esc(p.name)+'</span></button>').join('');
     pl.querySelectorAll('[data-proj]').forEach(el=>el.addEventListener('click',()=>{ activeProjectId=el.getAttribute('data-proj'); renderSidebar(); toast('Showing project chats'); }));
   }
@@ -688,7 +694,7 @@ function renderAll(){
   $('#profileAvatar').textContent=(settings.profileName||'J')[0].toUpperCase();
   $('#topTitle').innerHTML='<span class="top-logo">'+J_MARK+'</span><span>'+esc(hasChat?(s.title||'New chat'):'JepongDevxyz AI')+'</span>';
   const pb=$('#privateBtn'); if(pb){ pb.classList.toggle('on', !!temporary); pb.setAttribute('aria-pressed', temporary?'true':'false'); }
-  $('#modelName').textContent=modelOf().short||modelOf().name;
+  $('#modelName').textContent=modelOf().tiny||modelOf().short||modelOf().name;
   $('#modelMark').innerHTML=J_MARK;
   $('#composerInput').placeholder='Ask anything...';
   renderSidebar(); renderMessages(); renderComposerState(); renderHomeSugg();
@@ -792,7 +798,7 @@ function assistantHtml(s,m){
   if(footParts.length) h+='<div class="reply-foot">'+footParts.join('')+'</div>';
   if(!m.pending){
     if(Array.isArray(m.followups)&&m.followups.length){
-      h+='<div class="followups">'+m.followups.slice(0,2).map((f,i)=>'<button type="button" class="followup-btn'+(i===0?' first':'')+'" data-fu="'+m.id+'" data-fu-text="'+esc(f)+'">'+(i===0?'<span class="fu-play">'+icon('play',14)+'</span>':'')+'<span>'+esc(f)+'</span></button>').join('')+'</div>';
+      h+='<div class="followups">'+m.followups.slice(0,2).map(f=>'<button type="button" class="followup-btn" data-fu="'+m.id+'" data-fu-text="'+esc(f)+'"><span>'+esc(f)+'</span></button>').join('')+'</div>';
     }
   }
   return h+'</div>';
@@ -921,9 +927,12 @@ async function regenerate(s,m){
   await streamInto(s,userMsg||{text:''},m,[]);
 }
 function updateScrollBtn(){
+  /* Grok's home has no scroll button — show it only inside a chat, and
+     only once the user has scrolled up from the bottom. */
   const cv=$('#chatView'); if(!cv) return;
   const dist=cv.scrollHeight-cv.scrollTop-cv.clientHeight;
-  $('#scrollBottom').hidden=!(curSession()&&dist>240);
+  const hv=$('#homeView'); const onHome=hv&&!hv.hidden;
+  $('#scrollBottom').hidden=!(curSession()&&!onHome&&dist>240);
 }
 
 /* ---------- composer / send / streaming ---------- */
@@ -1346,7 +1355,9 @@ function openModelSheet(){
   /* Grok's picker is a small popup anchored ABOVE the composer, not a
      bottom sheet — same 9 real models, same checkmark, Premium band last. */
   const c=$('#composer').getBoundingClientRect();
-  const items=[{header:modelOf().name+' · Default'}].concat(MODELS.map(m=>({icon:null,label:m.name,sub:m.desc,checked:m.id===settings.model,onClick:()=>{
+  /* One-line rows (badge + name + Free tag + check) — grok's picker is
+     ~730px tall; the old two-line rows made ours ~1,420px. */
+  const items=[{header:modelOf().name+' · Default'}].concat(MODELS.map(m=>({icon:null,badge:m.badge,label:m.name,tag:'Free',checked:m.id===settings.model,onClick:()=>{
     settings.provider=m.provider; settings.model=m.id; saveSettings(); renderAll(); toast(m.name+' selected');
   }})));
   items.push({band:true,title:'Premium',sub:'Unlock extended capabilities',pill:'Upgrade',onClick:()=>{ settingsPageKey='subscription'; renderSettingsPage(); $('#settingsPage').hidden=false; }});
@@ -1407,6 +1418,10 @@ function openSettings(){
 }
 function renderSettingsPage(){
   const body=$('#settingsBody'), title=$('#settingsTitle');
+  /* Grok's settings header has ONE exit: on the list page the back arrow
+     closes the page exactly like the X, so hide it there; sub-pages keep
+     it (there it means "back to the list", not "close"). */
+  const sb=$('#settingsBack'); if(sb) sb.style.display=settingsPageKey==='list'?'none':'';
   const back=()=>{ settingsPageKey='list'; renderSettingsPage(); };
   const rowHtml=r=>'<button class="set-row" data-set="'+r.key+'"><span class="set-ic">'+icon(r.icon,18)+'</span><span class="set-label">'+esc(r.label)+'</span>'+(r.value()?'<span class="set-value">'+esc(r.value())+'</span>':'')+'<span class="chev">'+icon('chevron-right',16)+'</span></button>';
   if(settingsPageKey==='list'){
