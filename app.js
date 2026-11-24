@@ -314,7 +314,7 @@ function renderSidebar(){
   const list=$('#chatList');
   let items=sessions.slice();
   if(activeProjectId) items=items.filter(s=>s.projectId===activeProjectId);
-  if(searchQuery){ const q=searchQuery.toLowerCase(); items=items.filter(s=>(s.title||'').toLowerCase().includes(q)); }
+  if(searchQuery){ const q=searchQuery.toLowerCase(); items=items.filter(s=>(s.title||'').toLowerCase().includes(q)||(s.messages||[]).some(m=>(m.text||'').toLowerCase().includes(q))); }
   const pinned=items.filter(s=>s.pinned), rest=items.filter(s=>!s.pinned);
   let html='';
   if(activeProjectId){ const p=projects.find(p=>p.id===activeProjectId); html+='<div class="sb-group">'+esc(p?p.name:'Project')+' · <a href="#" id="clearProj" style="color:var(--accent)">All chats</a></div>'; }
@@ -370,10 +370,14 @@ function promptDialog(title,label,initial){
     const lab=document.createElement('label'); lab.className='field-label'; lab.textContent=label;
     const inp=document.createElement('input'); inp.className='field'; inp.value=initial||''; inp.maxLength=60;
     body.appendChild(lab); body.appendChild(inp);
-    const ok=$('#infoModalOk'); m.hidden=false;
-    const done=v=>{ ok.removeEventListener('click',onOk); m.hidden=true; body.innerHTML=''; res(v); };
+    const ok=$('#infoModalOk'); const cancel=$('#infoModalCancel');
+    if(cancel) cancel.hidden=false;
+    m.hidden=false;
+    const done=v=>{ ok.removeEventListener('click',onOk); if(cancel) cancel.removeEventListener('click',onCancel); if(cancel) cancel.hidden=true; m.hidden=true; body.innerHTML=''; res(v); };
     const onOk=()=>done(inp.value);
+    const onCancel=()=>done(null);
     ok.addEventListener('click',onOk);
+    if(cancel) cancel.addEventListener('click',onCancel);
     setTimeout(()=>inp.focus(),50);
   });
 }
@@ -409,8 +413,10 @@ function renderComposerState(){
   /* Grok rule: ONE slot on the right. Empty composer (no text, no
      attachments, not streaming) shows the Voice-mode waveform ONLY; the
      Send arrow appears only once there is text or an attachment. */
-  $('#sendBtn').disabled=!hasText||streaming;
-  $('#sendBtn').hidden=streaming||!hasText;
+  /* Queued sends (Bug 1 fix): Send stays enabled while streaming so a tap
+     queues the message instead of dropping it — see sendQueue. */
+  $('#sendBtn').disabled=!hasText;
+  $('#sendBtn').hidden=!hasText;
   $('#sendBtn').classList.toggle('home', !curSession());
   $('#voiceBtn').hidden=streaming||hasText;
   $('#micBtn').hidden=streaming;
@@ -502,14 +508,29 @@ function userMsgAction(act,mid){
   else if(act==='edit'){ editUserMessage(s,m); }
 }
 async function editUserMessage(s,m){
-  const next=await promptDialog('Edit message','Message', m.text||'');
-  if(next===null) return;
-  const idx=s.messages.indexOf(m);
-  s.messages=s.messages.slice(0,idx);
-  s.updatedAt=Date.now(); saveSessions();
-  const userMsg={id:uid(), role:'user', text:next.trim(), createdAt:Date.now(), attachments:[]};
-  s.messages.push(userMsg); saveSessions(); renderAll();
-  await runChatStream(s,userMsg,[]);
+  /* Bug 2 fix (same guard as Janna e39ffcb): editing an early message used to
+     silently delete every later turn. Now the user is warned first; Cancel
+     returns to the editor with the draft kept and nothing deleted. */
+  let draft=m.text||'';
+  for(;;){
+    const next=await promptDialog('Edit message','Message', draft);
+    if(next===null||next===undefined) return;
+    const idx=s.messages.indexOf(m);
+    if(idx<0) return;
+    const trimmed=next.trim();
+    if(!trimmed) return;
+    const laterUsers=s.messages.slice(idx+1).filter(x=>x.role==='user').length;
+    if(laterUsers>0){
+      const ok=await showConfirm({title:'Edit this message?', text:'There are '+laterUsers+' more exchange'+(laterUsers>1?'s':'')+' after this one. Editing will remove them and start a new answer from here.', okLabel:'Edit anyway'});
+      if(!ok){ draft=trimmed; continue; }
+    }
+    s.messages=s.messages.slice(0,idx);
+    s.updatedAt=Date.now(); saveSessions();
+    const userMsg={id:uid(), role:'user', text:trimmed, createdAt:Date.now(), attachments:[]};
+    s.messages.push(userMsg); saveSessions(); renderAll();
+    await runChatStream(s,userMsg,[]);
+    return;
+  }
 }
 function asstAction(act,mid){
   const s=curSession(); if(!s) return;
@@ -584,19 +605,28 @@ function setStreaming(on){
   $('#stopBtn').hidden=!on; $('#sendBtn').hidden=on;
   renderComposerState();
 }
+let sendQueue=[]; /* Bug 1 fix: messages sent while a reply streams are queued, never dropped */
 async function sendMessage(presetText){
   const input=$('#composerInput'); const text=(presetText!==undefined?presetText:input.value).trim();
-  if(streaming) return;
   if(!text&&!attachments.length) return;
   const s=ensureSession(text);
   const userMsg={id:uid(), role:'user', text, createdAt:Date.now(), attachments:attachments.map(a=>({name:a.name, kind:a.kind}))};
   const filePayload=attachments.slice();
+  const tool=activeTool; activeTool=null;
   s.messages.push(userMsg); s.updatedAt=Date.now(); if(!temporary) saveSessions();
   attachments=[]; renderAttachBar();
   if(presetText===undefined){ input.value=''; autosize(); renderComposerState(); }
   renderAll();
-  if(activeTool==='image'){ activeTool=null; await runImageGeneration(s,userMsg); return; }
-  await runChatStream(s,userMsg,filePayload);
+  if(streaming){ sendQueue.push({s,userMsg,filePayload,tool}); return; }
+  if(tool==='image'){ try{ await runImageGeneration(s,userMsg); }finally{ drainSendQueue(); } return; }
+  try{ await runChatStream(s,userMsg,filePayload); }finally{ drainSendQueue(); }
+}
+function drainSendQueue(){
+  if(streaming||!sendQueue.length) return;
+  const next=sendQueue.shift();
+  if(!getSession(next.s.id)){ drainSendQueue(); return; }
+  if(next.tool==='image'){ runImageGeneration(next.s,next.userMsg).then(drainSendQueue,drainSendQueue); return; }
+  runChatStream(next.s,next.userMsg,next.filePayload).then(drainSendQueue,drainSendQueue);
 }
 let activeTool=null;
 async function runChatStream(s,userMsg,filePayload){
@@ -1211,8 +1241,24 @@ function wire(){
   document.querySelectorAll('[data-attach]').forEach(b=>b.addEventListener('click',()=>{ closeSheet('#attachSheet'); pickFile(b.getAttribute('data-attach')); }));
   $('#fileInput').addEventListener('change',e=>{
     const files=Array.from(e.target.files||[]);
-    files.forEach(f=>attachments.push({name:f.name, kind:f.type&&f.type.startsWith('image/')?'image':'file'}));
-    e.target.value=''; renderComposerState(); if(files.length) toast(files.length+' file(s) attached');
+    e.target.value='';
+    if(!files.length) return;
+    /* Bug 5 fix: read real bytes. The backend vision/text paths need
+       {mimeType, data} (raw base64, no data: prefix); the old code sent
+       name+kind only, so an attached image never reached the model. */
+    const MAX_BYTES=1100000; /* ~1.47M base64 chars, under the server 1.5M/file cap */
+    let pending=files.length, attached=0;
+    const finish=()=>{ pending--; if(!pending){ renderComposerState(); if(attached) toast(attached+' file(s) attached'); } };
+    files.forEach(f=>{
+      const isImage=f.type&&f.type.startsWith('image/');
+      const entry={name:f.name, kind:isImage?'image':'file', mimeType:f.type||'', size:f.size||0};
+      if(f.size>MAX_BYTES){ toast('"'+f.name+'" is too large (max ~1 MB)'); finish(); return; }
+      if(!window.FileReader){ attachments.push(entry); attached++; finish(); return; }
+      const rd=new FileReader();
+      rd.onload=()=>{ try{ const url=String(rd.result||''); entry.data=url.indexOf(',')>=0?url.split(',')[1]:url; }catch(err){} attachments.push(entry); attached++; finish(); };
+      rd.onerror=()=>{ toast('Could not read "'+f.name+'"'); finish(); };
+      rd.readAsDataURL(f);
+    });
   });
   document.querySelectorAll('[data-close-sheet]').forEach(b=>b.addEventListener('click',()=>{ const sh=b.closest('.sheet'); if(sh) sh.hidden=true; }));
   document.querySelectorAll('.sheet').forEach(sh=>sh.addEventListener('click',e=>{ if(e.target===sh) sh.hidden=true; }));
