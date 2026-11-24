@@ -30,7 +30,9 @@ zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
 copy:'<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
 'volume-2':'<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>',
 'rotate-ccw':'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
-share:'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
+'play':'<polygon points="6 3 20 12 6 21 6 3"/>',
+'thumbs-up':'<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',
+'thumbs-down':'<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>',
 ellipsis:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
 'trash-2':'<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
 pencil:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
@@ -67,18 +69,30 @@ function copyText(t){ if(navigator.clipboard&&navigator.clipboard.writeText){ re
 function fallbackCopy(t){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }catch(e){} }
 let toastTimer=null;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ t.hidden=true; },2600); }
+function warnToast(html,link){
+  /* Grok-style warning: a white card at the top with an X (and an optional
+     action link), auto-dismissed — not the black pill. */
+  const stack=$('#warnStack'); if(!stack) return;
+  const el=document.createElement('div'); el.className='warn-toast';
+  el.innerHTML='<span aria-hidden="true">⚠</span><span>'+html+(link?' <a href="#" data-warn-link>'+esc(link.label)+'</a>':'')+'</span><button type="button" class="warn-x" aria-label="Dismiss">'+icon('x',15)+'</button>';
+  el.querySelector('.warn-x').addEventListener('click',()=>el.remove());
+  const a=el.querySelector('[data-warn-link]');
+  if(a&&link) a.addEventListener('click',e=>{ e.preventDefault(); el.remove(); link.onClick(); });
+  stack.appendChild(el);
+  setTimeout(()=>{ el.remove(); },6000);
+}
 
 /* ---------- models / settings (same keys as the Qwen build) ---------- */
 const MODELS=[
- {provider:'apinex', id:'free/deepseek-v4.1-flash', name:'DeepSeek V4.1 Flash', desc:'Default · Free'},
- {provider:'apinex', id:'free/deepseek-v4-flash-0731', name:'DeepSeek V4 Flash', desc:'Free'},
- {provider:'apinex', id:'free/deepseek-v4-pro-0813', name:'DeepSeek V4 Pro', desc:'Free'},
- {provider:'apinex', id:'free/gemini-4-hydrogen', name:'Gemini 4 Hydrogen', desc:'Free'},
- {provider:'apinex', id:'free/glm-5.3-flash', name:'GLM 5.3 Flash', desc:'Free'},
- {provider:'apinex', id:'free/glm-5.3-flashx', name:'GLM 5.3 FlashX', desc:'Free'},
- {provider:'apinex', id:'free/gpt-6-luna', name:'GPT-6 Luna', desc:'Free'},
- {provider:'apinex', id:'free/minimax-m3.1-flash', name:'MiniMax M3.1 Flash', desc:'Free'},
- {provider:'apinex', id:'free/qwen-3.8-max', name:'Qwen 3.8 Max', desc:'Free'}
+ {provider:'apinex', id:'free/deepseek-v4.1-flash', name:'DeepSeek V4.1 Flash', short:'DeepSeek V4.1', desc:'Default · Free'},
+ {provider:'apinex', id:'free/deepseek-v4-flash-0731', name:'DeepSeek V4 Flash', short:'DeepSeek V4', desc:'Free'},
+ {provider:'apinex', id:'free/deepseek-v4-pro-0813', name:'DeepSeek V4 Pro', short:'DeepSeek V4 Pro', desc:'Free'},
+ {provider:'apinex', id:'free/gemini-4-hydrogen', name:'Gemini 4 Hydrogen', short:'Gemini 4', desc:'Free'},
+ {provider:'apinex', id:'free/glm-5.3-flash', name:'GLM 5.3 Flash', short:'GLM 5.3', desc:'Free'},
+ {provider:'apinex', id:'free/glm-5.3-flashx', name:'GLM 5.3 FlashX', short:'GLM 5.3X', desc:'Free'},
+ {provider:'apinex', id:'free/gpt-6-luna', name:'GPT-6 Luna', short:'GPT-6 Luna', desc:'Free'},
+ {provider:'apinex', id:'free/minimax-m3.1-flash', name:'MiniMax M3.1 Flash', short:'MiniMax M3.1', desc:'Free'},
+ {provider:'apinex', id:'free/qwen-3.8-max', name:'Qwen 3.8 Max', short:'Qwen 3.8', desc:'Free'}
 ];
 // APINEX-only (2026-11-24): Bailu removed completely. These 9 free models
 // passed a live retest the same day; the other free/ models are
@@ -90,7 +104,7 @@ const defaultSettings=()=>({
   provider:'apinex', model:'free/deepseek-v4.1-flash',
   responseMode:'Auto', webSearch:false, toolsEnabled:true, advancedEnabled:true,
   responseLang:{code:'auto', label:'Auto'},
-  interface:{titleAuto:true, autoCopy:false, pasteAsFile:true},
+  interface:{titleAuto:true, autoCopy:false, pasteAsFile:true, wrapCode:false, reduceMotion:false, showSuggestions:true},
   personalization:{nickname:'', about:'', style:'Default', custom:'', enableNew:true, refMemory:true, refHistory:true, savedMemory:''},
   advanced:{webScraping:true, imageSearch:true, webSearchAdv:true, imageGeneration:true, codeInterpreter:true, retrieveMemory:true, imageEditing:true, updateMemory:true, localEnlarge:true},
   cookies:{analytics:false, personalization:true},
@@ -122,12 +136,19 @@ let streaming=false, aborter=null;
 let stickToBottom=true;
 let activeMenu=null;
 let suppressMenuClose=false;
-function applyTheme(){ document.documentElement.setAttribute('data-theme', settings.theme||'light'); const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content',(settings.theme==='dark')?'#101011':'#fafaf8'); }
+function applyTheme(){ document.documentElement.setAttribute('data-theme', settings.theme||'light'); const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content',(settings.theme==='dark')?'#101011':'#fafaf8'); document.body.classList.toggle('wrap-code', !!(settings.interface&&settings.interface.wrapCode)); document.body.classList.toggle('reduce-motion', !!(settings.interface&&settings.interface.reduceMotion)); }
 function modelOf(){ return MODELS.find(m=>m.id===settings.model)||MODELS[0]; }
 function getSession(id){ return sessions.find(s=>s.id===id)||null; }
 function curSession(){ return currentId?getSession(currentId):null; }
 function timeGreeting(){ const h=new Date().getHours(); return h<12?'Good morning':(h<18?'Good afternoon':'Good evening'); }
-function titleCase(t){ return String(t||'').trim().split(/\s+/).map(w=>w? w[0].toUpperCase()+w.slice(1):w).join(' ').slice(0,48); }
+function titleCase(t){
+  /* Fallback titles come from the raw prompt: cut at a word boundary and strip
+     trailing punctuation, so a title never ends mid-word with a stray comma
+     ("Compare Python And JavaScript In A Short Table,"). */
+  const s=String(t||'').trim().split(/\s+/).map(w=>w? w[0].toUpperCase()+w.slice(1):w).join(' ');
+  if(s.length<=48) return s.replace(/[,.;:!?]+$/,'');
+  return s.slice(0,48).replace(/\s+\S*$/,'').replace(/[,.;:!?]+$/,'');
+}
 function ensureSession(firstText){
   if(currentId){ const s=getSession(currentId); if(s) return s; }
   const s={id:uid(), title:titleCase(firstText)||'New chat', createdAt:Date.now(), updatedAt:Date.now(), messages:[], titleAutoPending:true, titleRequested:false, projectId:activeProjectId||null};
@@ -163,6 +184,7 @@ function showMenu(x,y,items){
   closeMenu();
   const pop=document.createElement('div'); pop.className='menu-pop'; pop.id='menuPop';
   items.forEach(it=>{
+    if(it.header){ const d=document.createElement('div'); d.className='menu-head'; d.textContent=it.header; pop.appendChild(d); return; }
     const b=document.createElement('button'); if(it.danger) b.className='danger';
     b.innerHTML='<span class="menu-ic">'+icon(it.icon||'info',16)+'</span><span>'+esc(it.label)+'</span>';
     b.addEventListener('click',()=>{ closeMenu(); it.onClick&&it.onClick(); });
@@ -218,7 +240,7 @@ function mdToHtml(text){
       const parseRow=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
       const head=parseRow(line); i+=2; let rows='';
       while(i<lines.length&&/^\s*\|.*\|\s*$/.test(lines[i])){ const cells=parseRow(lines[i]); rows+='<tr>'+cells.map(c=>'<td>'+inlineMd(c)+'</td>').join('')+'</tr>'; i++; }
-      html+='<table><thead><tr>'+head.map(c=>'<th>'+inlineMd(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table>'; continue; }
+      html+='<div class="table-wrap"><div class="table-head"><button type="button" data-table-copy>'+icon('copy',14)+'<span>Copy table</span></button></div><table><thead><tr>'+head.map(c=>'<th>'+inlineMd(c)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'; continue; }
     if(/^\s*([-*]|\d+\.)\s+/.test(line)){
       flushPara(); const ordered=/^\s*\d+\.\s+/.test(line); const items=[];
       while(i<lines.length&&/^\s*([-*]|\d+\.)\s+/.test(lines[i])){ items.push(lines[i].replace(/^\s*([-*]|\d+\.)\s+/,'')); i++; }
@@ -239,6 +261,67 @@ function extractUrls(text){
   return found;
 }
 function hostOf(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
+function stripSourcesBlock(text){
+  /* The model sometimes ends its answer with a raw "Sources:" list of bare
+     URLs. Grok never shows that inline — sources live only in the sources
+     row/sheet. Cut the trailing block from the body; extractUrls() still
+     feeds the row, so nothing is lost. */
+  const lines=String(text||'').split('\n');
+  let end=lines.length;
+  while(end>0&&lines[end-1].trim()==='') end--;
+  let i=end;
+  while(i>0){
+    const l=lines[i-1].trim();
+    if(/^([-*•]|\d+\.)\s+(\[[^\]]+\]\([^)]+\)|https?:\/\/\S+)\s*$/.test(l)){ i--; continue; }
+    break;
+  }
+  if(i<end){
+    const head=(lines[i-1]||'').trim();
+    if(/^#{0,3}\s*\*{0,2}sources:?\*{0,2}\s*$/i.test(head)) return lines.slice(0,i-1).join('\n').replace(/\s+$/,'');
+    if(end-i>=2) return lines.slice(0,i).join('\n').replace(/\s+$/,'');
+  }
+  return text;
+}
+const WN_OPEN='[[JD_WORK_NOTE]]', WN_CLOSE='[[/JD_WORK_NOTE]]';
+function absorbWorkNotes(asst,chunk){
+  /* The backend asks the model to emit [[JD_WORK_NOTE]]…[[/JD_WORK_NOTE]]
+     progress notes. They are UI metadata: they become the live thinking
+     step (Grok's one-short-line-at-a-time) instead of leaking the wrapper
+     into the reply. A chunk can split a note, so an open fragment buffers. */
+  asst.workNotes=asst.workNotes||[];
+  asst._nb=(asst._nb||'')+String(chunk||'');
+  let buf=asst._nb, out='';
+  for(;;){
+    const open=buf.indexOf(WN_OPEN);
+    if(open<0){ out+=buf; buf=''; break; }
+    out+=buf.slice(0,open);
+    const close=buf.indexOf(WN_CLOSE,open);
+    if(close<0){ buf=buf.slice(open); break; }
+    const note=buf.slice(open+WN_OPEN.length,close).trim();
+    if(note&&!asst.workNotes.includes(note)) asst.workNotes.push(note);
+    buf=buf.slice(close+WN_CLOSE.length);
+  }
+  asst._nb=buf;
+  asst.text=(asst.text||'')+out;
+}
+function isInternalStep(a){
+  /* Backend activity labels that expose internals — provider/model names and
+     the "Connecting to …" line — never reach the UI. */
+  const l=String((a&&a.label)||'');
+  if(!l.trim()) return true;
+  return /connecting to|apinex|bailu|deepseek|gemini|\bglm\b|gpt-6|minimax|qwen|kimi|muse-spark|provider|model not found/i.test(l);
+}
+function shortStep(l){
+  const s=String(l||'').trim();
+  if(s.length<=90) return s;
+  return s.slice(0,87).replace(/\s+\S*$/,'')+'…';
+}
+function fmtStamp(ts){
+  const d=new Date(ts||Date.now()), now=new Date();
+  const t=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  const day=d.toDateString()===now.toDateString()?'Today':d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return day+' '+t;
+}
 
 /* ---------- voice (device voices, cleaned labels, validated selection) ---------- */
 const SPOKEN_LANGS=['Auto Detect','English','Filipino','Spanish','French','German','Italian','Portuguese','Japanese','Korean','Chinese','Hindi','Indonesian'];
@@ -310,6 +393,7 @@ function groupOf(ts){
   if(Date.now()-ts<7*86400000) return 'Previous 7 Days';
   return 'Older';
 }
+let showAllChats=false; /* sidebar "Show more" state (Grok parity) */
 function renderSidebar(){
   const list=$('#chatList');
   let items=sessions.slice();
@@ -318,14 +402,15 @@ function renderSidebar(){
   const pinned=items.filter(s=>s.pinned), rest=items.filter(s=>!s.pinned);
   let html='';
   if(activeProjectId){ const p=projects.find(p=>p.id===activeProjectId); html+='<div class="sb-group">'+esc(p?p.name:'Project')+' · <a href="#" id="clearProj" style="color:var(--accent)">All chats</a></div>'; }
-  if(pinned.length){ html+='<div class="sb-group">Pinned</div>'+pinned.map(itemHtml).join(''); }
-  const groups=['Today','Previous 7 Days','Older'];
-  groups.forEach(g=>{
-    const gItems=rest.filter(s=>groupOf(s.updatedAt||s.createdAt)===g);
-    if(gItems.length) html+='<div class="sb-group">'+g+'</div>'+gItems.map(itemHtml).join('');
-  });
+  /* Grok's history is a flat list — no Today / Previous 7 Days / Older
+     headings. Pinned chats stay first. "Show more" reveals the rest. */
+  html+=pinned.map(itemHtml).join('');
+  const shown=(searchQuery||showAllChats)?rest:rest.slice(0,5);
+  html+=shown.map(itemHtml).join('');
+  if(!searchQuery&&!showAllChats&&rest.length>5) html+='<button class="sb-more" id="sbMore" type="button">Show more</button>';
   if(!items.length) html+='<div class="sb-empty">'+(searchQuery?'No chats match your search.':'No chats yet. Start a new one.')+'</div>';
   list.innerHTML=html;
+  const more=$('#sbMore'); if(more) more.addEventListener('click',()=>{ showAllChats=true; renderSidebar(); });
   const cp=$('#clearProj'); if(cp) cp.addEventListener('click',e=>{ e.preventDefault(); activeProjectId=null; renderSidebar(); });
   list.querySelectorAll('.sb-item').forEach(el=>{
     el.addEventListener('click',e=>{ if(e.target.closest('.sb-item-menu')) return; openSession(el.dataset.id); });
@@ -343,6 +428,8 @@ function chatItemMenu(id,anchor){
   const projItems=projects.map(p=>({icon:'folder', label:'Move to '+p.name, onClick:()=>{ s.projectId=p.id; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); toast('Moved to '+p.name); }}));
   showMenu(r.left, r.bottom+4, [
     {icon:'pin', label:s.pinned?'Unpin':'Pin', onClick:()=>{ s.pinned=!s.pinned; saveSessions(); renderSidebar(); }},
+    {icon:'share', label:'Share', onClick:()=>{ copyText(location.origin+location.pathname).then(()=>toast('Link copied')); }},
+    {icon:'copy', label:'Copy conversation ID', onClick:()=>{ copyText(id).then(()=>toast('Conversation ID copied')); }},
     {icon:'pencil', label:'Rename', onClick:()=>renameChat(id)},
     ...projItems,
     {icon:'trash-2', label:'Delete', danger:true, onClick:()=>deleteChat(id)}
@@ -382,30 +469,51 @@ function promptDialog(title,label,initial){
   });
 }
 function openSession(id){
-  currentId=id; temporary=false;
+  currentId=id; temporary=false; showAllChats=false;
   closeSidebarMobile(); renderAll();
   const cv=$('#chatView'); cv.scrollTop=cv.scrollHeight; stickToBottom=true; updateScrollBtn();
 }
 function newChat(){
-  currentId=null; temporary=false;
+  currentId=null; temporary=false; showAllChats=false;
   closeSidebarMobile(); renderAll();
   $('#composerInput').focus();
 }
 function closeSidebarMobile(){ if(window.innerWidth<1024){ $('#sidebar').classList.remove('open'); $('#scrim').hidden=true; } }
+const SUGGESTIONS=['Create an image','Write or edit','Search the web','Make a website','Explain a concept','Write a story','Plan my day','Help me learn something new'];
+function renderHomeSugg(){
+  /* Grok home shows three rotating suggestion rows under the composer.
+     Every row does something real: image opens the image sheet, search turns
+     web search on, the rest send as starter messages. */
+  const box=$('#homeSugg'); if(!box) return;
+  const show=!curSession()&&settings.interface.showSuggestions!==false;
+  if(!show){ box.hidden=true; box.innerHTML=''; return; }
+  const pool=SUGGESTIONS.slice();
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+  box.hidden=false;
+  box.innerHTML=pool.slice(0,3).map(t=>'<button type="button" data-sugg="'+esc(t)+'"><span>'+esc(t)+'</span></button>').join('');
+  box.querySelectorAll('[data-sugg]').forEach(b=>b.addEventListener('click',()=>{
+    const t=b.getAttribute('data-sugg');
+    if(t==='Create an image'){ activeTool='image'; openSheet('#imageSheet'); setTimeout(()=>$('#imagePrompt').focus(),60); return; }
+    if(t==='Search the web'){ settings.webSearch=true; saveSettings(); renderComposerState(); toast('Web search on'); $('#composerInput').focus(); return; }
+    sendMessage(t);
+  }));
+}
 function renderAll(){
   applyTheme();
   const s=curSession();
   const hasChat=!!s;
   $('#homeView').hidden=hasChat;
   $('#chatView').hidden=!hasChat;
-  $('#greetLine1').textContent=timeGreeting()+', '+(settings.profileName||'Jepong');
+  $('#greetLine1').textContent="What's on the agenda today?";
+  $('#greetLine2').hidden=true;
+  const pel=$('#profileEmailLabel'); if(pel){ pel.textContent=settings.profileEmail||''; pel.style.display=settings.profileEmail?'':'none'; }
   $('#profileNameLabel').textContent=settings.profileName||'Jepong';
   $('#profileAvatar').textContent=(settings.profileName||'J')[0].toUpperCase();
   $('#topTitle').textContent=hasChat?(s.title||'New chat'):'JepongDevxyz AI';
-  $('#modelName').textContent=modelOf().name;
+  $('#modelName').textContent=modelOf().short||modelOf().name;
   $('#modelMark').innerHTML=J_MARK;
-  $('#composerInput').placeholder=hasChat?'Ask JepongDevxyz AI anything':'Ask anything...';
-  renderSidebar(); renderMessages(); renderComposerState();
+  $('#composerInput').placeholder='Ask anything...';
+  renderSidebar(); renderMessages(); renderComposerState(); renderHomeSugg();
 }
 function renderComposerState(){
   const input=$('#composerInput');
@@ -453,6 +561,8 @@ function renderMessages(){
   box.querySelectorAll('[data-u-act]').forEach(b=>b.addEventListener('click',()=>userMsgAction(b.getAttribute('data-u-act'), b.getAttribute('data-mid'))));
   box.querySelectorAll('[data-a-act]').forEach(b=>b.addEventListener('click',()=>asstAction(b.getAttribute('data-a-act'), b.getAttribute('data-mid'))));
   box.querySelectorAll('[data-code-act]').forEach(b=>b.addEventListener('click',()=>codeAction(b)));
+  box.querySelectorAll('[data-table-copy]').forEach(b=>b.addEventListener('click',()=>tableCopy(b)));
+  box.querySelectorAll('[data-fu]').forEach(b=>b.addEventListener('click',()=>{ const t=b.getAttribute('data-fu-text'); if(t) sendMessage(t); }));
   box.querySelectorAll('.think-row').forEach(r=>r.addEventListener('click',()=>{ const steps=r.parentElement.querySelector('.think-steps'); if(steps) steps.hidden=!steps.hidden; const ch=r.querySelector('.think-chev'); if(ch) ch.innerHTML=icon(steps&&!steps.hidden?'chevron-up':'chevron-right',13); }));
   box.querySelectorAll('[data-src-open]').forEach(b=>b.addEventListener('click',()=>openSources(b.getAttribute('data-src-open'))));
   box.querySelectorAll('[data-src-chip]').forEach(c=>c.addEventListener('click',()=>openSources(c.getAttribute('data-src-chip'))));
@@ -460,32 +570,46 @@ function renderMessages(){
 }
 function assistantHtml(s,m){
   let h='<div class="msg asst" data-mid="'+m.id+'">';
-  const showThink=m.thinkMode&&m.thinkMode!=='Fast';
+  /* Grok-style thinking: one short step line at a time + a live seconds timer,
+     collapsing to "Thought for Ns". Backend activity is filtered — provider /
+     model names and the "Connecting to …" line never reach the UI — and the
+     model's own [[JD_WORK_NOTE]] progress notes are the step lines. */
+  const steps=(m.activity||[]).filter(a=>!isInternalStep(a));
+  const notes=(m.workNotes||[]).map(n=>({label:n,state:'completed'}));
+  const allSteps=steps.concat(notes);
+  const showThink=(m.thinkMode&&m.thinkMode!=='Fast')||allSteps.length>0;
   if(showThink||m.thoughtStopped){
     const live=!!m.pending;
-    const label=m.thoughtStopped?'Stopped':(live?'Thinking…':'Thinking');
-    const steps=(m.activity||[]);
+    const t0=m.streamStartedAt||m.createdAt||Date.now();
+    const t1=live?Date.now():(m.streamEndedAt||m.createdAt||t0);
+    const secs=Math.max(0,Math.round((t1-t0)/1000));
+    const label=m.thoughtStopped?'Stopped':(live?('Working for '+secs+'s'):('Thought for '+secs+'s'));
+    const lastLine=live?(notes.length?notes[notes.length-1].label:(steps.length?steps[steps.length-1].label:'')):'';
     h+='<div class="think-row" role="button"><span class="'+(live?'spin':'')+'">'+(live?'':'<span style="display:inline-flex;color:var(--muted)">'+icon('brain',15)+'</span>')+'</span><span class="think-label">'+esc(label)+'</span><span class="think-chev">'+icon('chevron-right',13)+'</span></div>';
-    if(steps.length){
-      h+='<div class="think-steps"'+(live?'':' hidden')+'>'+steps.map(a=>'<div class="think-step'+(a.state==='completed'?' done':'')+'"><span class="st-ic">'+(a.state==='completed'?icon('check',13):icon('gauge',13))+'</span><span>'+esc(a.label||'')+(a.detail?'<span class="st-detail">'+esc(a.detail)+'</span>':'')+'</span></div>').join('')+'</div>';
+    if(live&&lastLine) h+='<div class="think-step-line">'+esc(shortStep(lastLine))+'</div>';
+    if(allSteps.length){
+      h+='<div class="think-steps"'+(live?'':' hidden')+'>'+allSteps.map(a=>'<div class="think-step'+(a.state==='completed'?' done':'')+'"><span class="st-ic">'+(a.state==='completed'?icon('check',13):icon('gauge',13))+'</span><span>'+esc(shortStep(a.label||''))+(a.detail?'<span class="st-detail">'+esc(a.detail)+'</span>':'')+'</span></div>').join('')+'</div>';
     }
   }
   if(m.image){ h+='<div class="img-card"><img src="'+esc(m.image)+'" alt="Generated image"></div>'; }
-  if(m.text){ h+='<div class="msg-asst">'+mdToHtml(m.text)+'</div>'; }
+  if(m.text){ h+='<div class="msg-asst">'+mdToHtml(stripSourcesBlock(m.text))+'</div>'; }
   if(m.errorCard){ h+='<div class="err-card"><div class="err-title">Image generation limit</div><div>'+esc(m.errorCard)+'</div><button type="button" class="btn-primary" data-a-act="upgrade" data-mid="'+m.id+'">Upgrade</button></div>'; }
   const urls=extractUrls(m.text||'');
   if(urls.length||m.image){
-    h+='<div><button type="button" class="sources-btn" data-src-open="'+m.id+'">'+icon('globe',14)+'<span>Sources</span></button> '
+    h+='<div><button type="button" class="sources-btn" data-src-open="'+m.id+'">'+icon('globe',14)+'<span>'+(urls.length?urls.length+' source'+(urls.length>1?'s':''):'Sources')+'</span></button> '
       +urls.slice(0,3).map(u=>'<a class="src-chip" href="#" data-src-chip="'+m.id+'">'+esc(hostOf(u))+'</a>').join('')+'</div>';
   }
   if(!m.pending){
+    const fb=m.feedback||'';
     h+='<div class="action-bar">'
-      +'<button type="button" data-a-act="copy" data-mid="'+m.id+'">'+icon('copy',15)+'<span>Copy</span></button>'
-      +'<button type="button" data-a-act="read" data-mid="'+m.id+'">'+icon('volume-2',15)+'<span>Read aloud</span></button>'
-      +'<button type="button" data-a-act="regen" data-mid="'+m.id+'">'+icon('rotate-ccw',15)+'<span>Regenerate</span></button>'
-      +'<button type="button" data-a-act="share" data-mid="'+m.id+'">'+icon('share',15)+'<span>Share</span></button>'
-      +'<button type="button" data-a-act="more" data-mid="'+m.id+'">'+icon('ellipsis',15)+'</button>'
+      +'<button type="button" data-a-act="copy" data-mid="'+m.id+'" aria-label="Copy">'+icon('copy',15)+'</button>'
+      +'<button type="button" data-a-act="good" data-mid="'+m.id+'" aria-label="Good response" class="'+(fb==='good'?'active':'')+'">'+icon('thumbs-up',15)+'</button>'
+      +'<button type="button" data-a-act="bad" data-mid="'+m.id+'" aria-label="Bad response" class="'+(fb==='bad'?'active':'')+'">'+icon('thumbs-down',15)+'</button>'
+      +'<button type="button" data-a-act="more" data-mid="'+m.id+'" aria-label="More">'+icon('ellipsis',15)+'</button>'
       +'</div>';
+    if(Array.isArray(m.followups)&&m.followups.length){
+      h+='<div class="followups">'+m.followups.slice(0,2).map((f,i)=>'<button type="button" class="followup-btn'+(i===0?' first':'')+'" data-fu="'+m.id+'" data-fu-text="'+esc(f)+'">'+(i===0?'<span class="fu-play">'+icon('play',14)+'</span>':'')+'<span>'+esc(f)+'</span></button>').join('')+'</div>';
+    }
   }
   return h+'</div>';
 }
@@ -499,6 +623,11 @@ function codeAction(btn){
     a.href=URL.createObjectURL(blob); a.download='code.txt'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   }
   else if(act==='collapse'){ const body=block.querySelector('.code-body'); if(body){ body.hidden=!body.hidden; btn.innerHTML=icon(body.hidden?'chevron-down':'chevron-up',14); } }
+}
+function tableCopy(btn){
+  const wrap=btn.closest('.table-wrap'); if(!wrap) return;
+  const table=wrap.querySelector('table'); if(!table) return;
+  copyText(table.innerText||'').then(()=>toast('Table copied'));
 }
 function userMsgAction(act,mid){
   const s=curSession(); if(!s) return;
@@ -536,6 +665,7 @@ function asstAction(act,mid){
   const s=curSession(); if(!s) return;
   const m=s.messages.find(x=>x.id===mid); if(!m) return;
   if(act==='copy'){ copyText(m.text||'').then(()=>toast('Copied')); }
+  else if(act==='good'||act==='bad'){ m.feedback=(m.feedback===act)?null:act; s.updatedAt=Date.now(); saveSessions(); renderMessages(); if(m.feedback) toast('Thanks for the feedback'); }
   else if(act==='read'){ readAloud(m); }
   else if(act==='regen'){ regenerate(s,m); }
   else if(act==='share'){ copyText(location.origin+location.pathname).then(()=>toast('Link copied')); }
@@ -546,10 +676,14 @@ function asstMoreMenu(m,mid){
   const btn=document.querySelector('[data-a-act="more"][data-mid="'+mid+'"]');
   const r=btn?btn.getBoundingClientRect():{left:120,bottom:200};
   showMenu(Math.min(r.left,window.innerWidth-210), r.top-190, [
-    {icon:'trash-2', label:'Delete', danger:true, onClick:async()=>{ const ok=await showConfirm({title:'Delete message?', text:'This answer will be deleted.', okLabel:'Delete'}); if(!ok) return; const s=curSession(); if(!s) return; s.messages=s.messages.filter(x=>x.id!==mid); s.updatedAt=Date.now(); saveSessions(); renderMessages(); }},
-    {icon:'git-branch', label:'Branch conversation', onClick:()=>branchFrom(mid)},
+    {header:fmtStamp(m.createdAt||Date.now())},
+    {icon:'git-branch', label:'Branch in new chat', onClick:()=>branchFrom(mid)},
+    {icon:'share', label:'Share', onClick:()=>{ copyText(location.origin+location.pathname).then(()=>toast('Link copied')); }},
+    {icon:'volume-2', label:'Read aloud', onClick:()=>readAloud(m)},
+    {icon:'download', label:'Export to PDF', onClick:()=>{ try{ window.print(); }catch(e){ toast('Print is not available'); } }},
+    {icon:'rotate-ccw', label:'Regenerate', onClick:()=>{ const s2=curSession(); if(s2) regenerate(s2,m); }},
     {icon:'image', label:'Create image', onClick:()=>{ const s=curSession(); if(!s) return; const userMsg={id:uid(), role:'user', text:String(m.text||'').slice(0,500), createdAt:Date.now(), attachments:[]}; s.messages.push(userMsg); saveSessions(); runImageGeneration(s,userMsg); }},
-    {icon:'volume-2', label:'Listen', onClick:()=>readAloud(m)}
+    {icon:'trash-2', label:'Delete', danger:true, onClick:async()=>{ const ok=await showConfirm({title:'Delete message?', text:'This answer will be deleted.', okLabel:'Delete'}); if(!ok) return; const s=curSession(); if(!s) return; s.messages=s.messages.filter(x=>x.id!==mid); s.updatedAt=Date.now(); saveSessions(); renderMessages(); }}
   ]);
 }
 function readAloud(m){
@@ -632,11 +766,18 @@ let activeTool=null;
 async function runChatStream(s,userMsg,filePayload){
   const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true, thinkMode:settings.responseMode};
   s.messages.push(asst); renderMessages();
+  /* Title sooner: the summary title used to wait for the whole reply, so the
+     raw-prompt fallback sat in the top bar and sidebar for a long slow reply.
+     The title call retries itself while a stream is running, so scheduling it
+     now lands the real title as soon as the stream ends. */
+  if(!temporary&&s.titleAutoPending&&!s.titleRequested){ const sid=s.id; setTimeout(()=>{ generateTitle(sid).catch(()=>{}); },1500); }
   await streamInto(s,userMsg,asst,filePayload);
 }
 async function streamInto(s,userMsg,asst,filePayload){
   setStreaming(true); aborter=('AbortController' in window)?new AbortController():null;
   asst.thinkMode=settings.responseMode; asst.thoughtStopped=false; asst.textReceived=false;
+  asst.streamStartedAt=Date.now();
+  const thinkTick=setInterval(()=>{ if(getSession(s.id)===s&&asst.pending) paintAssistant(s,asst); },1000);
   const web=!!settings.webSearch&&settings.advancedEnabled!==false&&settings.advanced.webSearchAdv;
   const body={ message:userMsg.text, history:historyFor(s,userMsg.id), files:filePayload||[],
     provider:settings.provider, model:settings.model, mode:'general',
@@ -655,7 +796,8 @@ async function streamInto(s,userMsg,asst,filePayload){
     } else {
       const raw=await res.text();
       let data=null; try{ data=JSON.parse(raw); }catch(e){}
-      asst.text=(data&&typeof data==='object'?(data.text||data.reply||data.message||data.content||''):raw)||'';
+      const rawText=(data&&typeof data==='object'?(data.text||data.reply||data.message||data.content||''):raw)||'';
+      asst._nb=''; asst.workNotes=asst.workNotes||[]; absorbWorkNotes(asst,rawText);
       if(asst.text) asst.textReceived=true;
     }
   }catch(err){
@@ -665,6 +807,7 @@ async function streamInto(s,userMsg,asst,filePayload){
     }
     else { asst.text=(asst.text?asst.text+'\n\n':'')+'⚠ '+(err&&err.message?err.message:'Something went wrong.'); asst.activity.push({label:'Request failed', state:'error', detail:String(err&&err.message||err), at:Date.now()}); }
   }finally{
+    asst.streamEndedAt=Date.now(); try{ clearInterval(thinkTick); }catch(e){}
     asst.text=cleanAssistantText(asst.text);
     asst.pending=false;
     s.updatedAt=Date.now(); if(!temporary) saveSessions();
@@ -673,6 +816,9 @@ async function streamInto(s,userMsg,asst,filePayload){
     if(settings.interface.autoCopy&&asst.text) copyText(asst.text);
     if(!temporary&&s.titleAutoPending&&!s.titleRequested&&s.messages.length===2&&s.messages[0].role==='user'&&asst.text&&!asst.activity.some(a=>a.state==='error')&&getSession(s.id)===s){
       const sid=s.id; setTimeout(()=>{ generateTitle(sid).catch(()=>{}); },3000);
+    }
+    if(!temporary&&asst.text&&!asst.activity.some(a=>a.state==='error')&&getSession(s.id)===s){
+      const sid=s.id, mid=asst.id; setTimeout(()=>{ requestFollowups(sid,mid).catch(()=>{}); },1200);
     }
   }
 }
@@ -683,7 +829,7 @@ async function readSSE(reader,s,asst){
     let ev='message', data='';
     block.split('\n').forEach(line=>{ if(line.startsWith(':')) return; if(line.startsWith('event:')) ev=line.slice(6).trim(); else if(line.startsWith('data:')) data+=line.slice(5).trim(); });
     if(!data) return; let obj=null; try{ obj=JSON.parse(data); }catch(e){}
-    if(ev==='text'&&obj&&typeof obj.text==='string'){ asst.text+=obj.text; if(obj.text) asst.textReceived=true; paintAssistant(s,asst); }
+    if(ev==='text'&&obj&&typeof obj.text==='string'){ absorbWorkNotes(asst,obj.text); if(obj.text) asst.textReceived=true; paintAssistant(s,asst); }
     else if(ev==='activity'&&obj){ const ex=asst.activity.find(a=>a.id&&obj.id&&a.id===obj.id); if(ex) Object.assign(ex,obj); else asst.activity.push(obj); paintAssistant(s,asst); }
     else if(ev==='artifact'&&obj){ asst.artifacts=asst.artifacts||[]; asst.artifacts.push(obj); }
     else if(ev==='error'&&obj){ throw new Error(obj.message||'Stream error'); }
@@ -704,6 +850,8 @@ function paintAssistant(s,asst){
   el.replaceWith(fresh);
   fresh.querySelectorAll('[data-a-act]').forEach(b=>b.addEventListener('click',()=>asstAction(b.getAttribute('data-a-act'), b.getAttribute('data-mid'))));
   fresh.querySelectorAll('[data-code-act]').forEach(b=>b.addEventListener('click',()=>codeAction(b)));
+  fresh.querySelectorAll('[data-table-copy]').forEach(b=>b.addEventListener('click',()=>tableCopy(b)));
+  fresh.querySelectorAll('[data-fu]').forEach(b=>b.addEventListener('click',()=>{ const t=b.getAttribute('data-fu-text'); if(t) sendMessage(t); }));
   fresh.querySelectorAll('.think-row').forEach(r=>r.addEventListener('click',()=>{ const steps=r.parentElement.querySelector('.think-steps'); if(steps) steps.hidden=!steps.hidden; }));
   fresh.querySelectorAll('[data-src-open]').forEach(b=>b.addEventListener('click',()=>openSources(b.getAttribute('data-src-open'))));
   fresh.querySelectorAll('[data-src-chip]').forEach(c=>c.addEventListener('click',()=>openSources(c.getAttribute('data-src-chip'))));
@@ -737,6 +885,36 @@ async function generateTitle(sessionId){
   const t=titleCase(text);
   if(t&&t.length>1){ s.title=t; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); const cur=curSession(); if(cur&&cur.id===s.id) $('#topTitle').textContent=t; }
 }
+async function requestFollowups(sessionId,mid){
+  /* Grok shows two follow-up pills under a reply. Ours are generated by the
+     model (same lightweight title-call pattern); if the call fails or returns
+     nothing usable, no pills render — never a fake suggestion. */
+  const s=getSession(sessionId); if(!s) return;
+  const m=s.messages.find(x=>x.id===mid); if(!m||m.followups||m.pending||!m.text) return;
+  if(streaming) return;
+  const fast=MODELS[0];
+  const u=[...s.messages].reverse().find(x=>x.role==='user');
+  if(!u) return;
+  const prompt='Suggest 2 short follow-up questions the user might ask next. Reply with only the two questions, one per line, no numbering, no quotes.\n\nUser: '+String(u.text||'').slice(0,400)+'\nAssistant: '+String(m.text||'').slice(0,400);
+  let text='';
+  try{
+    const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message:prompt, history:[], files:[], provider:fast.provider, model:fast.id, mode:'general', customPrompt:'You suggest follow-up questions. Reply with only the questions.', webSearch:false, forceWebSearch:false, autoFallback:false, smartRouter:false, activityStream:false, autoTools:false, personalization:{intelligence:'Instant', fastAnswers:true} })});
+    const ct=(res.headers&&res.headers.get&&res.headers.get('content-type'))||'';
+    if(res.body&&res.body.getReader&&ct.includes('text/event-stream')){
+      const reader=res.body.getReader(); const decoder=('TextDecoder' in window)?new TextDecoder():null; let buf='';
+      const drain=block=>{ block.split('\n').forEach(line=>{ if(line.startsWith('data:')){ try{ const o=JSON.parse(line.slice(5).trim()); if(o&&typeof o.text==='string') text+=o.text; }catch(e){} } }); };
+      for(;;){ const {done,value}=await reader.read(); if(done) break; buf+=decoder?decoder.decode(value,{stream:true}):String(value);
+        let idx; while((idx=buf.indexOf('\n\n'))>=0){ const block=buf.slice(0,idx); buf=buf.slice(idx+2); drain(block); } }
+      if(buf.trim()) drain(buf);
+    } else {
+      const raw=await res.text(); let data=null; try{ data=JSON.parse(raw); }catch(e){}
+      text=(data&&typeof data==='object'?(data.text||data.reply||data.message||data.content||''):raw)||'';
+    }
+  }catch(e){ return; }
+  text=cleanAssistantText(text);
+  const qs=text.split('\n').map(l=>l.replace(/^\s*(?:[-*•\d.)\]]+\s*)/,'').replace(/^["“”']+|["“”']+$/g,'').trim()).filter(l=>l.length>3&&l.length<=90&&/\?$/.test(l)).slice(0,2);
+  if(qs.length){ m.followups=qs; s.updatedAt=Date.now(); saveSessions(); if(curSession()&&curSession().id===s.id) renderMessages(); }
+}
 async function runImageGeneration(s,userMsg){
   const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true};
   s.messages.push(asst); renderMessages(); setStreaming(true);
@@ -766,7 +944,7 @@ function toggleVoice(){
     };
     recog.onerror=e=>{
       listening=false; $('#micBtn').classList.remove('listening');
-      if(e&&e.error==='not-allowed') toast('Permission denied when accessing microphone');
+      if(e&&e.error==='not-allowed'){ warnToast('Microphone access denied. Check your browser settings.'); warnToast('Customize how much your dictation is cleaned up in settings.', {label:'Settings', onClick:()=>openSettings()}); }
       else if(e&&e.error==='no-speech') toast('No speech detected');
       else toast('Voice input failed');
     };
@@ -845,7 +1023,7 @@ function vmStartRecog(){
       if(final&&final.trim()) vmHandleHeard(final.trim());
     };
     vmRecog.onerror=e=>{
-      if(e&&e.error==='not-allowed'){ toast('Permission denied when accessing microphone'); closeVoiceMode(); }
+      if(e&&e.error==='not-allowed'){ warnToast('Microphone access denied. Check your browser settings.'); closeVoiceMode(); }
     };
     vmRecog.onend=()=>{ vmListening=false; if(vmOpen&&!vmSpeaking&&!vmMuted&&!vmHandling){ try{ vmRecog.start(); vmListening=true; }catch(e){} } };
     vmRecog.start(); vmListening=true;
@@ -878,7 +1056,7 @@ async function openVoiceMode(){
   if(!SR){ toast('Voice input is not supported in this browser'); return; }
   try{ await vmAcquireMic(); }
   catch(e){
-    if(e&&e.name==='NotAllowedError'){ toast('Permission denied when accessing microphone'); return; }
+    if(e&&e.name==='NotAllowedError'){ warnToast('Microphone access denied. Check your browser settings.'); return; }
     vmStream=null; vmAnalyser=null;
   }
   vmOpen=true; vmMuted=false;
@@ -970,6 +1148,7 @@ function openModelSheet(){
     settings.provider=m.provider; settings.model=m.id; saveSettings();
     closeSheet('#modelSheet'); renderAll(); toast(m.name+' selected');
   }));
+  const band=$('#modelUpgradeBand'); if(band) band.onclick=()=>{ closeSheet('#modelSheet'); settingsPageKey='subscription'; renderSettingsPage(); $('#settingsPage').hidden=false; };
   openSheet('#modelSheet');
 }
 function openAttachSheet(){ renderComposerState(); openSheet('#attachSheet'); }
@@ -1026,8 +1205,14 @@ function renderSettingsPage(){
   if(settingsPageKey==='appearance'){
     title.textContent='Appearance';
     const cur=settings.theme||'light';
-    body.innerHTML='<div class="set-list">'+['light','dark','system'].map(t=>'<button class="radio-row'+(cur===t?' sel':'')+'" data-theme-opt="'+t+'"><span class="radio"></span><span class="radio-label">'+cap(t)+'</span>'+(cur===t?icon('check',16):'')+'</button>').join('')+'</div><p class="set-note">System follows your device setting.</p>';
+    body.innerHTML='<div class="set-list">'+['light','dark','system'].map(t=>'<button class="radio-row'+(cur===t?' sel':'')+'" data-theme-opt="'+t+'"><span class="radio"></span><span class="radio-label">'+cap(t)+'</span>'+(cur===t?icon('check',16):'')+'</button>').join('')+'</div><p class="set-note">System follows your device setting.</p>'
+      +'<div class="set-card"><h3>Wrap long code blocks</h3><p>Wrap code onto the next line instead of scrolling sideways.</p><button id="wrapCodeSw" class="switch'+(settings.interface.wrapCode?' on':'')+'" type="button" aria-label="Wrap long code blocks"></button></div>'
+      +'<div class="set-card"><h3>Reduce motion</h3><p>Turn off animations and transitions.</p><button id="reduceMotionSw" class="switch'+(settings.interface.reduceMotion?' on':'')+'" type="button" aria-label="Reduce motion"></button></div>'
+      +'<div class="set-card"><h3>Show suggestions</h3><p>Show suggestion rows under the composer on the home screen.</p><button id="showSuggSw" class="switch'+(settings.interface.showSuggestions!==false?' on':'')+'" type="button" aria-label="Show suggestions"></button></div>';
     body.querySelectorAll('[data-theme-opt]').forEach(b=>b.addEventListener('click',()=>{ settings.theme=b.getAttribute('data-theme-opt'); saveSettings(); applyTheme(); renderSettingsPage(); }));
+    body.querySelector('#wrapCodeSw').addEventListener('click',e=>{ settings.interface.wrapCode=!settings.interface.wrapCode; saveSettings(); applyTheme(); e.currentTarget.classList.toggle('on', settings.interface.wrapCode); });
+    body.querySelector('#reduceMotionSw').addEventListener('click',e=>{ settings.interface.reduceMotion=!settings.interface.reduceMotion; saveSettings(); applyTheme(); e.currentTarget.classList.toggle('on', settings.interface.reduceMotion); });
+    body.querySelector('#showSuggSw').addEventListener('click',e=>{ settings.interface.showSuggestions=settings.interface.showSuggestions===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.interface.showSuggestions!==false); renderAll(); });
     return;
   }
   if(settingsPageKey==='profile'){
@@ -1061,8 +1246,18 @@ function renderSettingsPage(){
       +'<button class="radio-row'+(!settings.voice.voiceURI?' sel':'')+'" data-voice-uri=""><span class="radio"></span><span class="radio-label">Device default</span><span class="set-value">System voice</span></button>'
       +cat.map(c=>'<button class="radio-row'+(sel&&sel.uri===c.uri?' sel':'')+'" data-voice-uri="'+esc(c.uri)+'" data-voice-name="'+esc(c.name)+'"><span class="radio"></span><span class="radio-label">'+esc(c.title)+'</span><span class="set-value">'+esc(c.sub)+'</span></button>').join('')
       +'</div>'
+      +'<button class="set-row" id="voiceSpeedRow"><span class="set-ic">'+icon('gauge',18)+'</span><span class="set-label">Speed</span><span class="set-value">'+esc(vmSpeedLabel())+'</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
+      +'<button class="set-row" id="voicePersRow"><span class="set-ic">'+icon('user',18)+'</span><span class="set-label">Personality</span><span class="set-value">'+esc(vmPersonalityLabel())+'</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
       +'<div class="set-card"><h3>Read replies aloud</h3><p>Speak each answer automatically with the selected voice.</p><button id="voiceModeSw" class="switch'+(settings.voice.voiceMode?' on':'')+'" type="button" aria-label="Read replies aloud"></button></div>';
     body.querySelector('[data-voice-page="lang"]').addEventListener('click',()=>{ settingsPageKey='voice-lang'; renderSettingsPage(); });
+    body.querySelector('#voiceSpeedRow').addEventListener('click',e=>{
+      const r=e.currentTarget.getBoundingClientRect();
+      showMenu(Math.min(r.left,window.innerWidth-220), r.bottom+4, VM_SPEEDS.map(sp=>({label:sp.l+((settings.voice.rate||1)===sp.v?' ✓':''), onClick:()=>{ settings.voice.rate=sp.v; saveSettings(); renderSettingsPage(); toast('Speed updated'); }})));
+    });
+    body.querySelector('#voicePersRow').addEventListener('click',e=>{
+      const r=e.currentTarget.getBoundingClientRect();
+      showMenu(Math.min(r.left,window.innerWidth-220), r.bottom+4, VM_PERSONALITIES.map(p=>({label:p+(vmPersonalityLabel()===p?' ✓':''), onClick:()=>{ settings.personalization.style=p==='Custom…'?'Custom':(p==='Assistant'?'Default':p); saveSettings(); renderSettingsPage(); toast('Personality updated'); }})));
+    });
     body.querySelectorAll('[data-voice-uri]').forEach(b=>b.addEventListener('click',()=>{
       const uri=b.getAttribute('data-voice-uri');
       settings.voice.voiceURI=uri; settings.voice.name=b.getAttribute('data-voice-name')||'';
@@ -1088,21 +1283,38 @@ function renderSettingsPage(){
   if(settingsPageKey==='data'){
     title.textContent='Data controls';
     body.innerHTML='<div class="set-card"><h3>Your data lives on this device</h3><p>Chats, settings and projects are stored in this browser only. Deleting them cannot be undone.</p></div>'
+      +'<button class="set-row" data-data="export"><span class="set-ic">'+icon('download',18)+'</span><span class="set-label">Export chats</span></button>'
+      +'<div class="set-card"><h3>Personalize with conversation history</h3><p>Let replies use what you talked about before.</p><button id="refHistSw" class="switch'+(settings.personalization.refHistory!==false?' on':'')+'" type="button" aria-label="Personalize with conversation history"></button></div>'
+      +'<div class="set-card"><h3>Use saved memory</h3><p>Let replies use your saved notes and preferences.</p><button id="refMemSw" class="switch'+(settings.personalization.refMemory!==false?' on':'')+'" type="button" aria-label="Use saved memory"></button></div>'
       +'<button class="set-row danger" data-data="chats"><span class="set-ic">'+icon('trash-2',18)+'</span><span class="set-label">Delete all chats</span></button>'
       +'<button class="set-row danger" data-data="all"><span class="set-ic">'+icon('trash-2',18)+'</span><span class="set-label">Delete all data</span></button>';
     body.querySelectorAll('[data-data]').forEach(b=>b.addEventListener('click',async()=>{
       const kind=b.getAttribute('data-data');
+      if(kind==='export'){
+        const payload={exportedAt:new Date().toISOString(), app:'JepongDevxyz AI', sessions, projects};
+        const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='jepongdevxyz-ai-export.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+        toast('Chats exported'); return;
+      }
       const ok=await showConfirm({title:kind==='all'?'Delete all data?':'Delete all chats?', text:kind==='all'?'Chats, settings, projects and usage counters will be deleted.':'All chats will be permanently deleted.', okLabel:'Delete'});
       if(!ok) return;
       if(kind==='all'){ localStorage.removeItem(SESS_KEY); localStorage.removeItem(SET_KEY); localStorage.removeItem(PROJ_KEY); localStorage.removeItem(EXTRA_KEY); location.reload(); return; }
       sessions=[]; currentId=null; saveSessions(); renderAll(); toast('All chats deleted');
     }));
+    body.querySelector('#refHistSw').addEventListener('click',e=>{ settings.personalization.refHistory=settings.personalization.refHistory===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.personalization.refHistory!==false); });
+    body.querySelector('#refMemSw').addEventListener('click',e=>{ settings.personalization.refMemory=settings.personalization.refMemory===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.personalization.refMemory!==false); });
     return;
   }
   if(settingsPageKey==='account'){
     title.textContent='Account';
     body.innerHTML='<div class="set-card"><h3>'+esc(settings.profileName||'Jepong')+'</h3><p>'+esc(settings.profileEmail||'No email set')+' · Free plan</p></div>'
+      +'<button class="set-row" id="accLangRow"><span class="set-ic">'+icon('globe',18)+'</span><span class="set-label">Language</span><span class="set-value">'+esc((settings.responseLang&&settings.responseLang.label)||'Auto')+'</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
       +'<button class="set-row danger" data-acc="data"><span class="set-ic">'+icon('trash-2',18)+'</span><span class="set-label">Delete all data</span></button>';
+    body.querySelector('#accLangRow').addEventListener('click',e=>{
+      const r=e.currentTarget.getBoundingClientRect();
+      const langs=[{code:'auto',label:'Auto'},{code:'en',label:'English'},{code:'fil',label:'Filipino'},{code:'es',label:'Spanish'},{code:'fr',label:'French'},{code:'de',label:'German'},{code:'ja',label:'Japanese'},{code:'ko',label:'Korean'},{code:'zh',label:'Chinese'}];
+      showMenu(Math.min(r.left,window.innerWidth-220), r.bottom+4, langs.map(l=>({label:l.label+(((settings.responseLang&&settings.responseLang.code)||'auto')===l.code?' ✓':''), onClick:()=>{ settings.responseLang={code:l.code,label:l.label}; saveSettings(); renderSettingsPage(); toast('Language updated'); }})));
+    });
     body.querySelector('[data-acc="data"]').addEventListener('click',async()=>{
       const ok=await showConfirm({title:'Delete all data?', text:'Chats, settings, projects and usage counters will be deleted.', okLabel:'Delete'});
       if(!ok) return;

@@ -99,15 +99,30 @@ svg{display:block}
 .msg-asst code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:var(--chip);border-radius:6px;padding:1px 5px}
 .msg-asst pre{margin:0 0 12px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;overflow:hidden}
 .msg-asst pre code{background:none;padding:0;border-radius:0}
-.code-head{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--code-line);font-size:12.5px;color:#b9b9b6}
+/* Grok-style code card: light surface card with a header row. (The old dark pill
+   had no card background on its header, so the label row floated detached above
+   the dark body and line numbers clipped at the left edge.) */
+.code-block{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:0 0 12px}
+.code-head{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted);background:var(--surface)}
 .code-head .code-lang{flex:1;font-family:ui-monospace,Menlo,monospace}
-.code-head button{color:#b9b9b6;padding:4px;border-radius:6px;display:inline-flex}
-.code-head button:hover{background:#262628;color:#fff}
-.code-body{display:flex;overflow-x:auto}
-.code-lns{flex:none;padding:10px 0 10px 12px;text-align:right;color:#6a6a6d;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;user-select:none}
-.code-body pre{flex:1;margin:0}
-.code-body code{display:block;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;white-space:pre}
-.msg-asst table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:14px;display:block;overflow-x:auto}
+.code-head button{color:var(--muted);padding:4px;border-radius:6px;display:inline-flex}
+.code-head button:hover{background:var(--chip);color:var(--ink)}
+.code-body{display:flex;overflow-x:auto;background:var(--surface)}
+.code-lns{flex:none;flex-shrink:0;padding:10px 0 10px 12px;text-align:right;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;user-select:none}
+.code-lns div{padding-right:10px}
+.code-body pre{flex:1;min-width:0;margin:0;background:none;border-radius:0}
+.code-body code{display:block;padding:10px 12px 10px 2px;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;white-space:pre;background:none;color:var(--ink)}
+/* Grok-style table card: the table keeps its natural column widths and scrolls
+   horizontally instead of squeezing until words break mid-token. */
+.table-wrap{position:relative;overflow-x:auto;margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.table-head{display:flex;justify-content:flex-end;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line)}
+.table-head button{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:12.5px;padding:4px 8px;border-radius:8px}
+.table-head button:hover{background:var(--chip);color:var(--ink)}
+.table-wrap table{border-collapse:collapse;width:max-content;min-width:100%;margin:0;font-size:14px}
+.table-wrap th,.table-wrap td{border:1px solid var(--line);padding:7px 10px;text-align:left;word-break:normal;overflow-wrap:normal}
+.table-wrap th{background:var(--chip);font-weight:600}
+.table-wrap td code,.table-wrap th code{white-space:nowrap}
+.msg-asst table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:14px}
 .msg-asst th,.msg-asst td{border:1px solid var(--line);padding:7px 10px;text-align:left}
 .msg-asst th{background:var(--chip);font-weight:600}
 .msg-asst img{max-width:100%;border-radius:12px}
@@ -120,10 +135,42 @@ svg{display:block}
 .think-step .st-ic{flex:none}
 .think-step.done{color:var(--ink)}
 .think-step .st-detail{display:block;font-size:12.5px;color:var(--muted)}
-.action-bar{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+.action-bar{display:flex;align-items:center;gap:2px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
 .action-bar button{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:13px;padding:5px 7px;border-radius:8px}
 .action-bar button:hover{background:var(--chip);color:var(--ink)}
 .action-bar button.active{color:var(--accent)}
+.action-bar::-webkit-scrollbar{display:none}
+/* Grok parity additions: menu timestamp header, live think step line,
+   home suggestion rows, follow-up pills, sidebar Show more. */
+.menu-head{padding:10px 12px 6px;font-size:12.5px;color:var(--muted);text-align:center}
+.think-step-line{font-size:13.5px;color:var(--muted);padding:0 0 4px 23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Grok-style warning toasts: white card at the top with an X, not the black
+   pill. Used for microphone denials (and the dictation-settings follow-up). */
+.warn-stack{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-direction:column;gap:8px;width:min(92vw,420px)}
+.warn-toast{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px;box-shadow:var(--shadow);font-size:14px;line-height:1.45}
+.warn-toast .warn-x{margin-left:auto;flex:none;color:var(--muted);display:inline-flex;padding:2px;border-radius:6px}
+.warn-toast .warn-x:hover{background:var(--chip);color:var(--ink)}
+.warn-toast a{color:var(--accent);text-decoration:none}
+.upgrade-band{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:10px;background:var(--chip);border-radius:12px;padding:12px 14px;text-align:left}
+.upgrade-band .ub-title{display:block;font-weight:700;font-size:14.5px}
+.upgrade-band .ub-sub{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.upgrade-band .ub-pill{background:var(--black-btn);color:var(--black-btn-ink);font-weight:600;font-size:13px;padding:7px 14px;border-radius:999px;flex:none}
+/* Appearance toggles: wrap long code blocks instead of scrolling, reduce motion. */
+.wrap-code .code-body{overflow-x:hidden}
+.wrap-code .code-body code{white-space:pre-wrap;overflow-wrap:anywhere}
+.reduce-motion .spin{animation:none!important}
+.reduce-motion *{transition-duration:.01ms!important}
+.home-sugg{display:flex;flex-direction:column;gap:2px;margin:18px auto 0;max-width:520px;padding:0 16px}
+.home-sugg button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font-size:15px;color:var(--ink);padding:11px 12px;border-radius:12px}
+.home-sugg button:hover{background:var(--chip)}
+.home-sugg button .sugg-ic{color:var(--muted);flex:none;display:inline-flex}
+.followups{display:flex;flex-direction:column;gap:8px;margin:10px 0 4px}
+.followup-btn{display:flex;align-items:center;gap:8px;text-align:left;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.followup-btn:hover{background:var(--chip)}
+.followup-btn.first{background:var(--chip);border-color:transparent}
+.followup-btn .fu-play{color:var(--accent);flex:none;display:inline-flex}
+.sb-more{display:block;width:100%;text-align:left;font-size:13.5px;color:var(--muted);padding:8px 12px;border-radius:8px}
+.sb-more:hover{background:var(--chip);color:var(--ink)}
 .err-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:14px}
 .err-card .err-title{font-weight:600;margin-bottom:4px}
 .img-card{margin:4px 0}
@@ -158,13 +205,13 @@ svg{display:block}
 .send-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;flex:none}
 .send-btn:disabled{background:var(--send-disabled);cursor:default}
 .send-btn.home{background:var(--black-btn);color:var(--black-btn-ink)}
-.send-btn.stop{background:var(--black-btn);color:var(--black-btn-ink)}
+.send-btn.stop{background:var(--chip);color:var(--ink)}
 .stop-sq{width:10px;height:10px;background:currentColor;border-radius:2px}
 .disclaimer{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--muted);margin:7px 0 0;text-align:center}
 .attach-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .attach-bar .att-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:13px}
 .attach-bar .att-chip button{color:var(--muted);display:inline-flex}
-.scroll-bottom{position:absolute;right:16px;bottom:118px;width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:20;color:var(--ink)}
+.scroll-bottom{position:absolute;left:50%;transform:translateX(-50%);bottom:118px;width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:20;color:var(--ink)}
 
 /* ---------- sheets / dialogs ---------- */
 .sheet{position:fixed;inset:0;background:var(--scrim);z-index:80;display:flex;align-items:flex-end;justify-content:center}

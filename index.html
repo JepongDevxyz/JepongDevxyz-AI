@@ -68,6 +68,7 @@
           <button id="stopBtn" class="send-btn stop" type="button" aria-label="Stop" hidden><span class="stop-sq"></span></button>
         </div>
       </div>
+      <div id="homeSugg" class="home-sugg" hidden></div>
       <p class="disclaimer"><span data-icon="lock" data-size="12"></span><span>JepongDevxyz AI can make mistakes. Verify its responses.</span></p>
     </div>
     <button id="scrollBottom" class="scroll-bottom" type="button" aria-label="Scroll to bottom" hidden><span data-icon="arrow-down" data-size="16"></span></button>
@@ -79,6 +80,7 @@
   <div class="sheet-card">
     <div class="sheet-head"><div><div class="sheet-title">JepongDevxyz AI</div><div class="sheet-sub" id="modelSheetSub">DeepSeek V4.1 Flash · Default</div></div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div id="modelList" class="sheet-list"></div>
+    <button class="upgrade-band" id="modelUpgradeBand" type="button"><span><span class="ub-title">Premium</span><span class="ub-sub">Unlock extended capabilities</span></span><span class="ub-pill">Upgrade</span></button>
   </div>
 </div>
 
@@ -173,6 +175,7 @@
 </div>
 
 <div id="toast" role="status" hidden></div>
+<div id="warnStack" class="warn-stack" aria-live="polite"></div>
 <input type="file" id="fileInput" hidden>
 <script src="app.js"></script>
 </body>
