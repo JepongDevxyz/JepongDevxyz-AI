@@ -53,6 +53,7 @@ file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><pat
 pin:'<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16h14v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/>',
 shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
 gauge:'<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+'rocket':'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
 layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
 code:'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
 'file-down':'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m8 14 4 4 4-4"/>',
@@ -226,6 +227,7 @@ function trackRequest(kind){ try{ extra.usage[kind]=(extra.usage[kind]||0)+1; sa
 let currentId=null, temporary=false;
 let activeProjectId=null;
 let searchQuery='';
+let collapsedSecs={chats:false,projects:false}; /* sidebar section collapse (Grok parity) */
 let attachments=[];
 let streaming=false, aborter=null;
 let stickToBottom=true;
@@ -277,13 +279,18 @@ function showInfo(title,text){ $('#infoModalTitle').textContent=title; $('#infoM
 function closeSheet(sel){ const el=$(sel); if(el) el.hidden=true; }
 function openSheet(sel){ document.querySelectorAll('.sheet').forEach(s=>{ if(s.id!==sel.slice(1)) s.hidden=true; }); $(sel).hidden=false; }
 function closeAllSheets(){ document.querySelectorAll('.sheet').forEach(s=>s.hidden=true); }
-function showMenu(x,y,items){
+function showMenu(x,y,items,opts){
   closeMenu();
   const pop=document.createElement('div'); pop.className='menu-pop'; pop.id='menuPop';
   items.forEach(it=>{
     if(it.header){ const d=document.createElement('div'); d.className='menu-head'; d.textContent=it.header; pop.appendChild(d); return; }
+    if(it.band){ const b=document.createElement('button'); b.className='menu-band';
+      b.innerHTML='<span class="menu-band-tx"><span class="ub-title">'+esc(it.title||'')+'</span><span class="ub-sub">'+esc(it.sub||'')+'</span></span><span class="ub-pill">'+esc(it.pill||'Upgrade')+'</span>';
+      b.addEventListener('click',()=>{ closeMenu(); it.onClick&&it.onClick(); }); pop.appendChild(b); return; }
     const b=document.createElement('button'); if(it.danger) b.className='danger';
-    b.innerHTML='<span class="menu-ic">'+icon(it.icon||'info',16)+'</span><span>'+esc(it.label)+'</span>';
+    b.innerHTML=(it.icon===null?'':'<span class="menu-ic">'+icon(it.icon||'info',16)+'</span>')
+      +'<span class="menu-row-tx"><span>'+esc(it.label)+'</span>'+(it.sub?'<span class="menu-row-sub">'+esc(it.sub)+'</span>':'')+'</span>'
+      +(it.checked?'<span class="menu-check">'+icon('check',18)+'</span>':'');
     b.addEventListener('click',()=>{ closeMenu(); it.onClick&&it.onClick(); });
     pop.appendChild(b);
   });
@@ -293,7 +300,9 @@ function showMenu(x,y,items){
   const vw=window.innerWidth, vh=window.innerHeight;
   const w=pop.offsetWidth||200, h=pop.offsetHeight||items.length*40;
   pop.style.left=Math.max(8,Math.min(x,vw-w-8))+'px';
-  pop.style.top=Math.max(8,Math.min(y,vh-h-8))+'px';
+  /* opts.above: the popup opens ABOVE the anchor (Grok's model picker sits
+     above the composer) — its bottom edge lands at y. */
+  pop.style.top=(opts&&opts.above)?Math.max(8,y-h)+'px':Math.max(8,Math.min(y,vh-h-8))+'px';
   activeMenu=pop;
 }
 function closeMenu(){ if(activeMenu){ activeMenu.remove(); activeMenu=null; } }
@@ -326,14 +335,21 @@ function highlightCode(code){
   }
   return out+esc(code.slice(last));
 }
+function langBadge(lang){
+  /* Grok shows a real language mark in the code header; ours was a generic
+     </> icon. A two-letter badge in the language's color is the honest
+     equivalent — no fake brand logo. */
+  const l=String(lang||'code').toLowerCase();
+  const map={python:['Py','#3572a5'],javascript:['JS','#b59a00'],typescript:['TS','#3178c6'],html:['<>','#e34c26'],css:['#','#563d7c'],json:['{}','#6e6e6a'],bash:['$','#4e9a06'],shell:['$','#4e9a06'],java:['Ja','#b07219'],kotlin:['Kt','#7f52ff'],go:['Go','#00add8'],rust:['Rs','#dea584'],ruby:['Rb','#cc342d'],php:['Ph','#777bb3'],swift:['Sw','#f05138'],c:['C','#555555'],'c++':['C+','#649ad2']};
+  const b=map[l]||[l.slice(0,2).toUpperCase(),'#6e6e6a'];
+  return '<span class="code-badge" style="background:'+b[1]+'">'+esc(b[0])+'</span>';
+}
 function codeBlockHtml(lang,code){
-  const lines=String(code).replace(/\n$/,'').split('\n');
-  const lns=lines.map((_,i)=>'<div>'+(i+1)+'</div>').join('');
-  return '<div class="code-block" data-code="'+esc(code)+'"><div class="code-head"><span class="code-lang">'+icon('code',14)+'<span>'+esc(lang||'code')+'</span></span>'
+  return '<div class="code-block" data-code="'+esc(code)+'"><div class="code-head">'+langBadge(lang)+'<span class="code-lang">'+esc(lang||'code')+'</span>'
     +'<button type="button" data-code-act="copy" aria-label="Copy code">'+icon('copy',15)+'</button>'
     +'<button type="button" data-code-act="download" aria-label="Download code">'+icon('download',15)+'</button>'
     +'<button type="button" data-code-act="collapse" aria-label="Collapse code">'+icon('chevron-up',14)+'</button></div>'
-    +'<div class="code-body"><div class="code-lns">'+lns+'</div><pre><code>'+highlightCode(code)+'</code></pre></div></div>';
+    +'<div class="code-body"><pre><code>'+highlightCode(code)+'</code></pre></div></div>';
 }
 function mdToHtml(text){
   const src=String(text||'');
@@ -423,10 +439,14 @@ function absorbWorkNotes(asst,chunk){
 }
 function isInternalStep(a){
   /* Backend activity labels that expose internals — provider/model names and
-     the "Connecting to …" line — never reach the UI. */
+     the "Connecting to …" line — never reach the UI. Round 3: the audit /
+     verification lines ("Checked the response against your request", "2
+     static checks passed", "Response complete in …s") are server-side
+     self-checks, not work the user asked to see — Grok's expanded thinking
+     shows no step lines at all, so these go too. */
   const l=String((a&&a.label)||'');
   if(!l.trim()) return true;
-  return /connecting to|apinex|bailu|deepseek|gemini|\bglm\b|gpt-6|minimax|qwen|kimi|muse-spark|provider|model not found/i.test(l);
+  return /connecting to|apinex|bailu|deepseek|gemini|\bglm\b|gpt-6|minimax|qwen|kimi|muse-spark|provider|model not found|audit|static check|response complete|checked the response|response structure|^thinking$/i.test(l);
 }
 function shortStep(l){
   const s=String(l||'').trim();
@@ -515,6 +535,8 @@ function renderSidebar(){
   const list=$('#chatList');
   /* Private chats never appear in history — in-memory only, gone on refresh. */
   let items=sessions.filter(s=>!s.temporary);
+  /* Dedupe by id — a session must never render twice, whatever the array holds. */
+  const seenIds=new Set(); items=items.filter(s=>{ if(seenIds.has(s.id)) return false; seenIds.add(s.id); return true; });
   if(activeProjectId) items=items.filter(s=>s.projectId===activeProjectId);
   if(searchQuery){ const q=searchQuery.toLowerCase(); items=items.filter(s=>(s.title||'').toLowerCase().includes(q)||(s.messages||[]).some(m=>(m.text||'').toLowerCase().includes(q))); }
   const pinned=items.filter(s=>s.pinned), rest=items.filter(s=>!s.pinned);
@@ -522,13 +544,15 @@ function renderSidebar(){
   if(activeProjectId){ const p=projects.find(p=>p.id===activeProjectId); html+='<div class="sb-group">'+esc(p?p.name:'Project')+' · <a href="#" id="clearProj" style="color:var(--accent)">All chats</a></div>'; }
   /* Grok's history is a flat list — no Today / Previous 7 Days / Older
      headings. Pinned chats stay first. "Show more" reveals the rest. */
-  if(!searchQuery&&!activeProjectId) html+='<div class="sb-sec-row"><span class="sb-sec">Chats</span><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat">'+icon('plus',16)+'</button></div>';
+  if(!searchQuery&&!activeProjectId) html+='<div class="sb-sec-row"><span class="sb-sec">Chats</span><span class="sb-sec-actions"><button class="icon-btn sb-sec-chev'+(collapsedSecs.chats?' closed':'')+'" id="sbChatsChev" type="button" aria-label="Collapse chats">'+icon('chevron-down',16)+'</button><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat">'+icon('plus',16)+'</button></span></div>';
   html+=pinned.map(itemHtml).join('');
   const shown=(searchQuery||showAllChats)?rest:rest.slice(0,5);
   html+=shown.map(itemHtml).join('');
   if(!searchQuery&&!showAllChats&&rest.length>5) html+='<button class="sb-more" id="sbMore" type="button">Show more</button>';
   if(!items.length) html+='<div class="sb-empty">'+(searchQuery?'No chats match your search.':'No chats yet. Start a new one.')+'</div>';
   list.innerHTML=html;
+  list.classList.toggle('collapsed', !!collapsedSecs.chats);
+  const cc=$('#sbChatsChev'); if(cc) cc.addEventListener('click',()=>{ collapsedSecs.chats=!collapsedSecs.chats; renderSidebar(); });
   const more=$('#sbMore'); if(more) more.addEventListener('click',()=>{ showAllChats=true; renderSidebar(); });
   const np=$('#sbNewPlus'); if(np) np.addEventListener('click',()=>newChat());
   const pl=$('#projList');
@@ -632,7 +656,7 @@ function setPrivate(on){
   if(temporary) toast('Private chat — this chat will not be saved');
 }
 function closeSidebarMobile(){ if(window.innerWidth<1024){ $('#sidebar').classList.remove('open'); $('#scrim').hidden=true; } }
-const SUGGESTIONS=[{t:'Create an image',icon:'image'},{t:'Write or edit',icon:'pencil'},{t:'Search the web',icon:'globe'},{t:'Make a website',icon:'code'},{t:'Explain a concept',icon:'lightbulb'},{t:'Write a story',icon:'book-open'},{t:'Plan my day',icon:'calendar'},{t:'Help me learn something new',icon:'graduation-cap'}];
+const SUGGESTIONS=[{t:'Create an image',icon:'image'},{t:'Write or edit',icon:'pencil'},{t:'Search the web',icon:'globe'},{t:'Make a website',icon:'code'},{t:'Explain a concept',icon:'lightbulb'},{t:'Design a presentation',icon:'book-open'},{t:'Plan my day',icon:'calendar'},{t:'Help me learn something new',icon:'graduation-cap'}];
 function renderHomeSugg(){
   /* Grok home shows three rotating suggestion rows under the composer.
      Every row does something real: image opens the image sheet, search turns
@@ -662,7 +686,7 @@ function renderAll(){
   const pel=$('#profileEmailLabel'); if(pel){ pel.textContent=settings.profileEmail||''; pel.style.display=settings.profileEmail?'':'none'; }
   $('#profileNameLabel').textContent=settings.profileName||'Jepong';
   $('#profileAvatar').textContent=(settings.profileName||'J')[0].toUpperCase();
-  $('#topTitle').textContent=hasChat?(s.title||'New chat'):'JepongDevxyz AI';
+  $('#topTitle').innerHTML='<span class="top-logo">'+J_MARK+'</span><span>'+esc(hasChat?(s.title||'New chat'):'JepongDevxyz AI')+'</span>';
   const pb=$('#privateBtn'); if(pb){ pb.classList.toggle('on', !!temporary); pb.setAttribute('aria-pressed', temporary?'true':'false'); }
   $('#modelName').textContent=modelOf().short||modelOf().name;
   $('#modelMark').innerHTML=J_MARK;
@@ -679,12 +703,9 @@ function renderComposerState(){
      queues the message instead of dropping it — see sendQueue. */
   $('#sendBtn').disabled=!hasText;
   $('#sendBtn').hidden=!hasText;
-  $('#sendBtn').classList.toggle('home', !curSession());
   $('#voiceBtn').hidden=streaming||hasText;
   $('#micBtn').hidden=streaming;
   $('#stopBtn').hidden=!streaming;
-  $('#searchToolBtn').classList.toggle('active', !!settings.webSearch);
-  $('#thinkToolBtn').classList.toggle('active', settings.responseMode==='Thinking');
   const bar=$('#attachBar');
   if(attachments.length){
     bar.hidden=false;
@@ -729,8 +750,7 @@ function assistantHtml(s,m){
      collapsing to "Thought for Ns". Backend activity is filtered — provider /
      model names and the "Connecting to …" line never reach the UI — and the
      model's own [[JD_WORK_NOTE]] progress notes are the step lines. */
-  const steps=(m.activity||[]).filter(a=>!isInternalStep(a));
-  const notes=(m.workNotes||[]).map(n=>({label:n,state:'completed'}));
+  const steps=(m.activity||[]).filter(a=>!isInternalStep(a));  const notes=(m.workNotes||[]).map(n=>({label:n,state:'completed'}));
   const allSteps=steps.concat(notes);
   const showThink=(m.thinkMode&&m.thinkMode!=='Fast')||allSteps.length>0;
   if(showThink||m.thoughtStopped){
@@ -1065,7 +1085,7 @@ async function generateTitle(sessionId){
     }
   }catch(e){}
   const t=titleCase(text);
-  if(t&&t.length>1){ s.title=t; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); const cur=curSession(); if(cur&&cur.id===s.id) $('#topTitle').textContent=t; }
+  if(t&&t.length>1){ s.title=t; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); const cur=curSession(); if(cur&&cur.id===s.id) $('#topTitle').innerHTML='<span class="top-logo">'+J_MARK+'</span><span>'+esc(t)+'</span>'; }
 }
 async function requestFollowups(sessionId,mid){
   /* Grok shows two follow-up pills under a reply. Ours are generated by the
@@ -1323,16 +1343,30 @@ async function vmMicMenu(anchor){
 
 /* ---------- sheets: model / attach / image ---------- */
 function openModelSheet(){
-  const list=$('#modelList');
-  $('#modelSheetSub').textContent=modelOf().name+' · Default';
-  list.innerHTML=MODELS.map(m=>'<button class="sheet-list-btn" data-model="'+m.id+'"><span class="row-main"><span>'+esc(m.name)+'</span><span class="row-sub">'+esc(m.desc)+'</span></span>'+(m.id===settings.model?'<span class="check">'+icon('check',18)+'</span>':'')+'</button>').join('');
-  list.querySelectorAll('[data-model]').forEach(b=>b.addEventListener('click',()=>{
-    const m=MODELS.find(x=>x.id===b.getAttribute('data-model')); if(!m) return;
-    settings.provider=m.provider; settings.model=m.id; saveSettings();
-    closeSheet('#modelSheet'); renderAll(); toast(m.name+' selected');
-  }));
-  const band=$('#modelUpgradeBand'); if(band) band.onclick=()=>{ closeSheet('#modelSheet'); settingsPageKey='subscription'; renderSettingsPage(); $('#settingsPage').hidden=false; };
-  openSheet('#modelSheet');
+  /* Grok's picker is a small popup anchored ABOVE the composer, not a
+     bottom sheet — same 9 real models, same checkmark, Premium band last. */
+  const c=$('#composer').getBoundingClientRect();
+  const items=[{header:modelOf().name+' · Default'}].concat(MODELS.map(m=>({icon:null,label:m.name,sub:m.desc,checked:m.id===settings.model,onClick:()=>{
+    settings.provider=m.provider; settings.model=m.id; saveSettings(); renderAll(); toast(m.name+' selected');
+  }})));
+  items.push({band:true,title:'Premium',sub:'Unlock extended capabilities',pill:'Upgrade',onClick:()=>{ settingsPageKey='subscription'; renderSettingsPage(); $('#settingsPage').hidden=false; }});
+  showMenu(Math.max(8,c.left), c.top-8, items, {above:true});
+}
+function openPlusMenu(){
+  /* Grok's "+" opens one menu: attach/create actions plus the Search/Think/
+     Build modes that used to be labeled chips in the composer row. Nothing
+     is removed — the modes just live behind the "+" now, with checkmarks. */
+  const r=$('#plusBtn').getBoundingClientRect();
+  const c=$('#composer').getBoundingClientRect();
+  showMenu(Math.max(8,r.left), c.top-8, [
+    {icon:'file',label:'Attach files',onClick:()=>pickFile('files')},
+    {icon:'camera',label:'Take a photo',onClick:()=>pickFile('camera')},
+    {icon:'image',label:'Choose from library',onClick:()=>pickFile('library')},
+    {icon:'zap',label:'Create image',onClick:()=>{ activeTool='image'; openSheet('#imageSheet'); setTimeout(()=>$('#imagePrompt').focus(),60); }},
+    {icon:'globe',label:'Search the web',checked:!!settings.webSearch,onClick:()=>{ settings.webSearch=!settings.webSearch; saveSettings(); renderComposerState(); toast(settings.webSearch?'Web search on':'Web search off'); }},
+    {icon:'brain',label:'Think',checked:settings.responseMode==='Thinking',onClick:()=>{ settings.responseMode=settings.responseMode==='Thinking'?'Auto':'Thinking'; saveSettings(); renderComposerState(); toast(settings.responseMode==='Thinking'?'Thinking mode on':'Thinking mode off'); }},
+    {icon:'wrench',label:'Build',onClick:()=>openModelSheet()}
+  ], {above:true});
 }
 function openAttachSheet(){ renderComposerState(); openSheet('#attachSheet'); }
 function pickFile(kind){
@@ -1377,8 +1411,13 @@ function renderSettingsPage(){
   const rowHtml=r=>'<button class="set-row" data-set="'+r.key+'"><span class="set-ic">'+icon(r.icon,18)+'</span><span class="set-label">'+esc(r.label)+'</span>'+(r.value()?'<span class="set-value">'+esc(r.value())+'</span>':'')+'<span class="chev">'+icon('chevron-right',16)+'</span></button>';
   if(settingsPageKey==='list'){
     title.textContent='Settings';
-    body.innerHTML='<div class="set-list">'+SETTING_ROWS.map(rowHtml).join('')+'</div>'
+    body.innerHTML='<div class="set-search"><span>'+icon('search',16)+'</span><input id="setSearch" type="text" placeholder="Search settings" autocomplete="off"></div>'
+      +'<div class="set-list">'+SETTING_ROWS.map(rowHtml).join('')+'</div>'
       +'<button class="set-row danger" data-set="signout"><span class="set-ic">'+icon('log-out',18)+'</span><span class="set-label">Sign out</span></button>';
+    body.querySelector('#setSearch').addEventListener('input',e=>{
+      const q=e.target.value.toLowerCase();
+      body.querySelectorAll('.set-list [data-set], .set-row.danger').forEach(b=>{ b.style.display=!q||(b.textContent||'').toLowerCase().includes(q)?'':'none'; });
+    });
     body.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click',()=>{
       const k=b.getAttribute('data-set');
       if(k==='signout'){ signOut(); return; }
@@ -1395,7 +1434,7 @@ function renderSettingsPage(){
       +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Reduce motion</h3></div><button id="reduceMotionSw" class="switch'+(settings.interface.reduceMotion?' on':'')+'" type="button" aria-label="Reduce motion"></button></div>'
       +'<div class="set-toggle-row"><div class="set-toggle-text"><h3>Show suggestions</h3><p>Starter prompts on new chats and follow-ups under replies.</p></div><button id="showSuggSw" class="switch'+(settings.interface.showSuggestions!==false?' on':'')+'" type="button" aria-label="Show suggestions"></button></div>'
       +'</div>'
-      +'<button class="upgrade-band" id="appearanceUpgrade"><span><span class="ub-title">Premium</span><span class="ub-sub">Unlock extended capabilities</span></span><span class="ub-pill">Upgrade</span></button>';
+      +'<button class="upgrade-band sticky" id="appearanceUpgrade"><span><span class="ub-title">Premium</span><span class="ub-sub">Unlock extended capabilities</span></span><span class="ub-pill">Upgrade</span></button>';
     body.querySelector('#themeRow').addEventListener('click',e=>{
       const r=e.currentTarget.getBoundingClientRect();
       showMenu(Math.max(8,Math.min(r.left,window.innerWidth-200)), r.bottom+4, ['light','dark','system'].map(t=>({label:cap(t)+(cur===t?' ✓':''), onClick:()=>{ settings.theme=t; saveSettings(); applyTheme(); renderSettingsPage(); }})));
@@ -1618,7 +1657,19 @@ function wire(){
     projects.unshift({id:uid(), name:name.trim(), createdAt:Date.now()});
     saveProjects(); renderSidebar(); toast('Project created');
   });
-  $('#profileBtn').addEventListener('click',()=>{ settingsPageKey='profile'; renderSettingsPage(); $('#settingsPage').hidden=false; closeSidebarMobile(); });
+  $('#profileBtn').addEventListener('click',e=>{
+    /* Grok's profile row opens an account menu — Settings/Help/Upgrade/
+       Sign out all already exist, they just live behind this menu now. */
+    const r=e.currentTarget.getBoundingClientRect(); closeSidebarMobile();
+    showMenu(Math.max(8,Math.min(r.left,window.innerWidth-220)), r.top-8, [
+      {header:(settings.profileName||'Jepong')+(settings.profileEmail?' · '+settings.profileEmail:'')},
+      {icon:'settings',label:'Settings',onClick:()=>openSettings()},
+      {icon:'circle-help',label:'Help',onClick:()=>openInfoPage('help')},
+      {icon:'rocket',label:'Upgrade to Premium',onClick:()=>openInfoPage('upgrade')},
+      {icon:'log-out',label:'Sign out',danger:true,onClick:()=>signOut()}
+    ], {above:true});
+  });
+  $('#sbProjChev').addEventListener('click',()=>{ collapsedSecs.projects=!collapsedSecs.projects; $('#projList').classList.toggle('collapsed', collapsedSecs.projects); $('#sbProjChev').classList.toggle('closed', collapsedSecs.projects); });
   $('#chatSearch').addEventListener('input',e=>{ searchQuery=e.target.value; $('#chatSearchClear').hidden=!searchQuery; renderSidebar(); });
   $('#chatSearchClear').addEventListener('click',()=>{ $('#chatSearch').value=''; searchQuery=''; $('#chatSearchClear').hidden=true; renderSidebar(); });
   document.querySelectorAll('[data-explore]').forEach(b=>b.addEventListener('click',()=>{
@@ -1637,14 +1688,7 @@ function wire(){
   $('#sendBtn').addEventListener('click',()=>sendMessage());
   $('#stopBtn').addEventListener('click',()=>{ if(aborter){ try{ aborter.abort(); }catch(e){} } });
   $('#modelBtn').addEventListener('click',openModelSheet);
-  $('#buildToolBtn').addEventListener('click',openModelSheet);
-  $('#plusBtn').addEventListener('click',openAttachSheet);
-  $('#imageToolBtn').addEventListener('click',()=>{ activeTool='image'; openSheet('#imageSheet'); setTimeout(()=>$('#imagePrompt').focus(),60); });
-  $('#searchToolBtn').addEventListener('click',()=>{ settings.webSearch=!settings.webSearch; saveSettings(); renderComposerState(); toast(settings.webSearch?'Web search on':'Web search off'); });
-  $('#thinkToolBtn').addEventListener('click',()=>{
-    settings.responseMode=settings.responseMode==='Thinking'?'Auto':'Thinking'; saveSettings(); renderComposerState();
-    toast(settings.responseMode==='Thinking'?'Thinking mode on':'Thinking mode off');
-  });
+  $('#plusBtn').addEventListener('click',openPlusMenu);
   $('#micBtn').addEventListener('click',toggleVoice);
   $('#voiceBtn').addEventListener('click',openVoiceMode);
   $('#vmStop').addEventListener('click',closeVoiceMode);
@@ -1699,7 +1743,9 @@ function wire(){
     else if(settingsPageKey==='voice-lang'){ settingsPageKey='voice'; renderSettingsPage(); }
     else { settingsPageKey='list'; renderSettingsPage(); }
   });
+  $('#settingsClose').addEventListener('click',()=>{ $('#settingsPage').hidden=true; });
   $('#infoBack').addEventListener('click',()=>{ $('#infoPage').hidden=true; });
+  $('#infoClose').addEventListener('click',()=>{ $('#infoPage').hidden=true; });
   const cv=$('#chatView');
   cv.addEventListener('scroll',()=>{
     const dist=cv.scrollHeight-cv.scrollTop-cv.clientHeight;
@@ -1708,7 +1754,7 @@ function wire(){
   });
   $('#scrollBottom').addEventListener('click',()=>{ cv.scrollTo({top:cv.scrollHeight, behavior:'smooth'}); stickToBottom=true; updateScrollBtn(); });
   document.addEventListener('click',e=>{ if(suppressMenuClose){ suppressMenuClose=false; return; } if(activeMenu&&!e.target.closest('.menu-pop')) closeMenu(); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(vmOpen){ closeVoiceMode(); return; } closeAllSheets(); closeMenu(); } });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(vmOpen){ closeVoiceMode(); return; } closeAllSheets(); closeMenu(); if($('#sidebar').classList.contains('open')) closeSidebarMobile(); } });
   if('speechSynthesis' in window){ loadVoices(); try{ speechSynthesis.onvoiceschanged=()=>{ loadVoices(); }; }catch(e){} }
 }
 document.addEventListener('DOMContentLoaded',()=>{

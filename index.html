@@ -16,7 +16,7 @@
       <button id="newChatBtn" class="sb-new"><span class="sb-new-plus"><span data-icon="plus" data-size="14"></span></span><span>New chat</span></button>
     </div>
     <div id="chatList" class="sb-list"></div>
-    <div class="sb-sec-row"><span class="sb-sec">Projects</span><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></div>
+    <div class="sb-sec-row"><span class="sb-sec">Projects</span><span class="sb-sec-actions"><button class="icon-btn sb-sec-chev" id="sbProjChev" type="button" aria-label="Collapse projects"><span data-icon="chevron-down" data-size="16"></span></button><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></span></div>
     <div id="projList" class="sb-list"></div>
     <div class="sb-explore">
       <div class="sb-sec">Explore</div>
@@ -26,7 +26,7 @@
       <button class="sb-row" data-explore="upgrade"><span data-icon="zap" data-size="18"></span><span>Upgrade</span></button>
     </div>
     <div class="sb-bottom">
-      <button class="sb-upgrade" id="sbUpgradeBtn" data-explore="upgrade"><span data-icon="zap" data-size="16"></span><span>Upgrade to Premium</span></button>
+      <button class="sb-upgrade" id="sbUpgradeBtn" data-explore="upgrade"><span data-icon="rocket" data-size="16"></span><span>Upgrade to Premium</span></button>
       <button class="sb-row" data-explore="settings"><span data-icon="settings" data-size="18"></span><span>Settings</span></button>
       <button class="sb-profile" id="profileBtn"><span class="sb-avatar" id="profileAvatar">J</span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span><span class="sb-profile-sub" id="profileEmailLabel">Free plan</span></span></button>
     </div>
@@ -56,37 +56,18 @@
     <div id="composerDock">
       <div id="attachBar" class="attach-bar" hidden></div>
       <div id="composer" class="composer">
-        <div class="comp-row1">
-          <button id="modelBtn" class="model-btn" type="button"><span class="model-mark" id="modelMark"></span><span id="modelName">DeepSeek V4.1 Flash</span><span data-icon="chevron-down" data-size="14"></span></button>
-          <textarea id="composerInput" rows="1" placeholder="Ask anything..." aria-label="Ask anything..."></textarea>
-        </div>
-        <div class="comp-row2">
-          <button id="plusBtn" class="tool-chip" type="button" aria-label="Attachments"><span data-icon="plus" data-size="18"></span></button>
-          <button id="imageToolBtn" class="tool-chip" type="button"><span data-icon="image" data-size="16"></span><span>Image</span></button>
-          <button id="searchToolBtn" class="tool-chip" type="button"><span data-icon="globe" data-size="16"></span><span>Search</span></button>
-          <button id="thinkToolBtn" class="tool-chip" type="button"><span data-icon="brain" data-size="16"></span><span>Think</span></button>
-          <button id="buildToolBtn" class="tool-chip" type="button"><span data-icon="wrench" data-size="16"></span><span>Build</span></button>
-          <span class="comp-spacer"></span>
-          <button id="micBtn" class="mic-btn" type="button" aria-label="Dictate"><span data-icon="mic" data-size="18"></span></button>
-          <button id="voiceBtn" class="voice-btn" type="button" aria-label="Voice mode"><span data-icon="audio-lines" data-size="18"></span></button>
-          <button id="sendBtn" class="send-btn" type="button" aria-label="Send" disabled><span data-icon="arrow-up" data-size="18"></span></button>
-          <button id="stopBtn" class="send-btn stop" type="button" aria-label="Stop" hidden><span class="stop-sq"></span></button>
-        </div>
+        <button id="plusBtn" class="plus-btn" type="button" aria-label="Attachments"><span data-icon="plus" data-size="18"></span></button>
+        <textarea id="composerInput" rows="1" placeholder="Ask anything..." aria-label="Ask anything..."></textarea>
+        <button id="modelBtn" class="model-btn" type="button"><span class="model-mark" id="modelMark"></span><span id="modelName">DeepSeek V4.1 Flash</span><span data-icon="chevron-down" data-size="14"></span></button>
+        <button id="micBtn" class="mic-btn" type="button" aria-label="Dictate"><span data-icon="mic" data-size="18"></span></button>
+        <button id="voiceBtn" class="voice-btn" type="button" aria-label="Voice mode"><span data-icon="audio-lines" data-size="18"></span></button>
+        <button id="sendBtn" class="send-btn" type="button" aria-label="Send" disabled><span data-icon="arrow-up" data-size="18"></span></button>
+        <button id="stopBtn" class="send-btn stop" type="button" aria-label="Stop" hidden><span class="stop-sq"></span></button>
       </div>
       <div id="homeSugg" class="home-sugg" hidden></div>
-      <p class="disclaimer"><span data-icon="lock" data-size="12"></span><span>JepongDevxyz AI can make mistakes. Verify its responses.</span></p>
     </div>
     <button id="scrollBottom" class="scroll-bottom" type="button" aria-label="Scroll to bottom" hidden><span data-icon="arrow-down" data-size="16"></span></button>
   </main>
-</div>
-
-<!-- Model picker bottom sheet -->
-<div id="modelSheet" class="sheet" hidden>
-  <div class="sheet-card">
-    <div class="sheet-head"><div><div class="sheet-title">JepongDevxyz AI</div><div class="sheet-sub" id="modelSheetSub">DeepSeek V4.1 Flash · Default</div></div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div id="modelList" class="sheet-list"></div>
-    <button class="upgrade-band" id="modelUpgradeBand" type="button"><span><span class="ub-title">Premium</span><span class="ub-sub">Unlock extended capabilities</span></span><span class="ub-pill">Upgrade</span></button>
-  </div>
 </div>
 
 <!-- Attachments sheet -->
@@ -122,13 +103,13 @@
 
 <!-- Settings page layer -->
 <div id="settingsPage" class="page-layer" hidden>
-  <header class="page-head"><button id="settingsBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="settingsTitle">Settings</h2></header>
+  <header class="page-head"><button id="settingsBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="settingsTitle">Settings</h2><button id="settingsClose" class="icon-btn" aria-label="Close settings"><span data-icon="x" data-size="18"></span></button></header>
   <div id="settingsBody" class="page-body"></div>
 </div>
 
 <!-- Generic page layer (Help / Projects / Upgrade / Privacy / Terms) -->
 <div id="infoPage" class="page-layer" hidden>
-  <header class="page-head"><button id="infoBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="infoTitle">Page</h2></header>
+  <header class="page-head"><button id="infoBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="infoTitle">Page</h2><button id="infoClose" class="icon-btn" aria-label="Close"><span data-icon="x" data-size="18"></span></button></header>
   <div id="infoBody" class="page-body"></div>
 </div>
 

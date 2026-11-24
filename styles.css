@@ -41,13 +41,21 @@ svg{display:block}
 .sb-search{display:flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:7px 10px;color:var(--muted)}
 .sb-search input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:14px;color:var(--ink)}
 .sb-search input::placeholder{color:var(--muted)}
-.sb-new{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;font-size:14.5px;font-weight:600;text-align:left;background:var(--chip)}
-.sb-new:hover{background:var(--chip-active)}
+.sb-new{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;font-size:14.5px;font-weight:600;text-align:left;background:var(--surface);border:1px solid var(--line)}
+.sb-new:hover{background:var(--chip)}
 .sb-new-plus{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .sb-sec-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 2px}
 .sb-sec-row .sb-sec{padding:0}
 .sb-sec-row .icon-btn{width:26px;height:26px}
-.sb-upgrade{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:999px;font-size:14px;font-weight:600;text-align:left;background:var(--chip);width:100%;margin:2px 0 6px}
+.sb-sec-actions{display:flex;align-items:center;gap:2px}
+.sb-sec-chev svg{transition:transform .15s}
+.top-title{display:flex;align-items:center;gap:7px;min-width:0}
+.top-logo{width:20px;height:20px;flex:none;color:var(--ink);display:inline-flex}
+.top-logo svg{width:20px;height:20px}
+.top-title span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chatList.collapsed .sb-item,#chatList.collapsed .sb-more,#projList.collapsed .sb-item{display:none}
+.sb-sec-chev.closed svg{transform:rotate(-90deg)}
+.sb-upgrade{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:999px;font-size:14px;font-weight:600;text-align:left;background:var(--surface);border:1px solid var(--line);width:100%;margin:2px 0 6px}
 .sb-upgrade:hover{background:var(--chip-active)}
 .sb-list{flex:1;overflow-y:auto;padding:4px 8px}
 .sb-group{font-size:12px;font-weight:600;color:var(--muted);padding:10px 8px 4px}
@@ -112,15 +120,14 @@ svg{display:block}
 .code-block{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:0 0 12px}
 .code-head{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted);background:var(--surface)}
 .code-head .code-lang{flex:1;font-family:ui-monospace,Menlo,monospace;text-transform:capitalize;display:inline-flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.code-badge{flex:none;width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-style:normal;color:#fff;text-transform:none;letter-spacing:.2px}
 .tk-k{color:#a626a4}.tk-s{color:#50a14f}.tk-c{color:#a0a1a7;font-style:italic}.tk-n{color:#b76b01}
 html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:#98c379}html[data-theme="dark"] .tk-c{color:#7f848e}html[data-theme="dark"] .tk-n{color:#d19a66}
 .code-head button{color:var(--muted);padding:4px;border-radius:6px;display:inline-flex}
 .code-head button:hover{background:var(--chip);color:var(--ink)}
-.code-body{display:flex;overflow-x:auto;background:var(--surface)}
-.code-lns{flex:none;flex-shrink:0;padding:10px 0 10px 12px;text-align:right;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;user-select:none}
-.code-lns div{padding-right:10px}
-.code-body pre{flex:1;min-width:0;margin:0;background:none;border-radius:0}
-.code-body code{display:block;padding:10px 12px 10px 2px;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;white-space:pre;background:none;color:var(--ink)}
+.code-body{overflow-x:auto;background:var(--surface)}
+.code-body pre{margin:0;background:none;border-radius:0}
+.code-body code{display:block;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;white-space:pre;background:none;color:var(--ink)}
 /* Grok-style table card: the table keeps its natural column widths and scrolls
    horizontally instead of squeezing until words break mid-token. */
 .table-wrap{position:relative;overflow-x:auto;margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
@@ -196,20 +203,16 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 
 /* ---------- composer ---------- */
 #composerDock{flex:none;padding:0 12px calc(8px + env(safe-area-inset-bottom));max-width:768px;width:100%;margin:0 auto}
-.composer{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px 6px;box-shadow:0 1px 4px rgba(17,17,16,.05)}
-.comp-row1{display:flex;align-items:flex-start;gap:6px}
-.model-btn{display:inline-flex;align-items:center;gap:5px;flex:none;padding:7px 6px;border-radius:10px;font-size:13px;font-weight:600;max-width:190px}
+.composer{display:flex;align-items:flex-end;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:6px 8px;box-shadow:0 1px 4px rgba(17,17,16,.05)}
+.plus-btn{width:32px;height:32px;border-radius:50%;background:var(--chip);display:inline-flex;align-items:center;justify-content:center;color:var(--ink);flex:none}
+.plus-btn:hover{background:var(--chip-active);color:var(--chip-active-ink)}
+.model-btn{display:inline-flex;align-items:center;gap:5px;flex:none;padding:7px 6px;border-radius:10px;font-size:13px;font-weight:600;max-width:132px}
 .model-btn:hover{background:var(--chip)}
 .model-btn .model-mark{width:20px;height:20px;flex:none;color:var(--ink)}
 .model-btn .model-mark svg{width:20px;height:20px}
 .model-btn span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #composerInput{flex:1;min-width:0;border:0;outline:0;resize:none;background:none;font-size:16px;line-height:1.5;padding:7px 2px;max-height:140px}
 #composerInput::placeholder{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.comp-row2{display:flex;align-items:center;gap:2px;margin-top:2px}
-.tool-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border-radius:999px;font-size:13.5px;color:var(--ink)}
-.tool-chip:hover{background:var(--chip)}
-.tool-chip.active{background:var(--chip-active);color:var(--chip-active-ink)}
-.comp-spacer{flex:1}
 .voice-btn{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--accent);flex:none;margin-right:4px}
 .voice-btn:hover{background:var(--chip)}
 .voice-btn.listening{background:var(--accent);color:var(--accent-ink)}
@@ -218,10 +221,8 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .mic-btn.listening{background:var(--accent);color:var(--accent-ink)}
 .send-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;flex:none}
 .send-btn:disabled{background:var(--send-disabled);cursor:default}
-.send-btn.home{background:var(--black-btn);color:var(--black-btn-ink)}
 .send-btn.stop{background:var(--chip);color:var(--ink)}
 .stop-sq{width:10px;height:10px;background:currentColor;border-radius:2px}
-.disclaimer{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--muted);margin:7px 0 0;text-align:center}
 .attach-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .attach-bar .att-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:13px}
 .attach-bar .att-chip button{color:var(--muted);display:inline-flex}
@@ -265,9 +266,8 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 /* ---------- page layers (settings / info) ---------- */
 .page-layer{position:fixed;inset:0;background:var(--bg);z-index:70;display:flex;flex-direction:column}
 .page-head{flex:none;height:52px;display:flex;align-items:center;gap:4px;padding:0 10px;border-bottom:1px solid var(--line)}
-.page-head h2{flex:1;text-align:center;font-size:16px;font-weight:700;margin:0}
+.page-head h2{flex:1;text-align:left;font-size:16px;font-weight:700;margin:0}
 .page-head .icon-btn{flex:none}
-.page-head::after{content:"";width:36px;flex:none}
 .page-body{flex:1;overflow-y:auto;max-width:640px;width:100%;margin:0 auto;padding:12px 16px 32px}
 .set-list{display:flex;flex-direction:column}
 .set-row{display:flex;align-items:center;gap:12px;width:100%;padding:13px 4px;border-bottom:1px solid var(--line);font-size:15px;text-align:left}
@@ -290,7 +290,7 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .set-toggle-row p{margin:0;font-size:13px;color:var(--muted)}
 .switch{position:relative;width:36px;height:22px;flex:none;border-radius:999px;background:#c9c9c5;transition:background .15s}
 .switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .15s}
-.switch.on{background:var(--accent)}
+.switch.on{background:var(--black-btn)}
 .switch.on::after{left:16px}
 .seg{display:flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px;margin:8px 0}
 .seg button{flex:1;padding:7px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--muted)}
@@ -309,10 +309,19 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .plan-card ul{margin:0 0 12px;padding-left:20px;font-size:14px}
 .plan-card li{margin:3px 0}
 .usage-num{font-size:26px;font-weight:700}
-.menu-pop{position:fixed;z-index:90;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:4px;min-width:190px}
+.menu-pop{position:fixed;z-index:90;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:4px;min-width:190px;max-width:min(340px,calc(100vw - 16px))}
 .menu-pop button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:8px;font-size:14px;text-align:left}
 .menu-pop button:hover{background:var(--chip)}
 .menu-pop button.danger{color:var(--danger)}
+.menu-row-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.menu-row-tx>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-row-sub{font-size:12.5px;color:var(--muted)}
+.menu-check{color:var(--ink);flex:none;display:inline-flex}
+.menu-band{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border-top:1px solid var(--line);margin-top:4px;text-align:left}
+.menu-band-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.set-search{display:flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:7px 10px;color:var(--muted);margin-bottom:4px}
+.set-search input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:14px;color:var(--ink)}
+.upgrade-band.sticky{position:sticky;bottom:0;margin:16px -16px -32px;padding:14px 16px;border-top:1px solid var(--line);border-radius:0;background:var(--surface)}
 
 /* ---------- voice mode (Grok-style Listening screen) ---------- */
 .voice-layer{position:fixed;inset:0;background:var(--bg);z-index:70;display:flex;flex-direction:column}
@@ -349,13 +358,10 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 #toast{position:fixed;left:50%;bottom:132px;transform:translateX(-50%);background:var(--black-btn);color:var(--black-btn-ink);padding:9px 16px;border-radius:999px;font-size:13.5px;z-index:100;max-width:88vw;text-align:center;box-shadow:var(--shadow)}
 
 @media (max-width:420px){
-  /* 390px phones (incl. her Honor 400 5G, ~393 CSS px): the five labeled
-     tool chips + voice + send need ~400px in a 346px row, and rig fonts
-     measure ~25% narrower than her phone — labels would overflow there.
-     Chips go icon-only below 420px (labels stay in the accessibility tree);
-     the 443px study layout keeps its labels exactly. */
-  .tool-chip span:last-child:not([data-icon]){position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  .tool-chip{padding:6px 7px}
+  /* 390px phones (incl. her Honor 400 5G, ~393 CSS px): the single-row
+     composer keeps the model button compact so the placeholder still fits. */
+  .model-btn{max-width:108px}
+  .model-btn .model-mark{display:none}
 }
 @media (min-width:1024px){
   #sidebar{position:static;transform:none;flex:none}
