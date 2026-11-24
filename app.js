@@ -14,6 +14,7 @@ globe:'<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 
 brain:'<path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/>',
 wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
 'audio-lines':'<path d="M2 10v4"/><path d="M6 6v12"/><path d="M10 3v18"/><path d="M14 8v8"/><path d="M18 5v14"/><path d="M22 10v4"/>',
+mic:'<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',
 'arrow-up':'<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
 'arrow-down':'<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
 'chevron-down':'<path d="m6 9 6 6 6-6"/>',
@@ -69,22 +70,31 @@ function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; cle
 
 /* ---------- models / settings (same keys as the Qwen build) ---------- */
 const MODELS=[
- {provider:'bailucode', id:'bailu-apex', name:'BAILU Apex', desc:'Strongest normal route'},
- {provider:'bailucode', id:'bailu-2.8', name:'BAILU 2.8', desc:'Normal + Anthropic routes'},
- {provider:'bailucode', id:'bailu-2.7-1m', name:'BaiLu 2.7 1M', desc:'Normal + Anthropic routes · 1M context'}
+ {provider:'apinex', id:'free/deepseek-v4.1-flash', name:'DeepSeek V4.1 Flash', desc:'Default · Free'},
+ {provider:'apinex', id:'free/deepseek-v4-flash-0731', name:'DeepSeek V4 Flash', desc:'Free'},
+ {provider:'apinex', id:'free/deepseek-v4-pro-0813', name:'DeepSeek V4 Pro', desc:'Free'},
+ {provider:'apinex', id:'free/gemini-4-hydrogen', name:'Gemini 4 Hydrogen', desc:'Free'},
+ {provider:'apinex', id:'free/glm-5.3-flash', name:'GLM 5.3 Flash', desc:'Free'},
+ {provider:'apinex', id:'free/glm-5.3-flashx', name:'GLM 5.3 FlashX', desc:'Free'},
+ {provider:'apinex', id:'free/gpt-6-luna', name:'GPT-6 Luna', desc:'Free'},
+ {provider:'apinex', id:'free/minimax-m3.1-flash', name:'MiniMax M3.1 Flash', desc:'Free'},
+ {provider:'apinex', id:'free/qwen-3.8-max', name:'Qwen 3.8 Max', desc:'Free'}
 ];
+// APINEX-only (2026-11-24): Bailu removed completely. These 9 free models
+// passed a live retest the same day; the other free/ models are
+// subscription-gated (402) despite the prefix and are NOT listed.
 const SESS_KEY='jepongQwenReset.sessions.v1', SET_KEY='jepongQwenReset.settings.v1', PROJ_KEY='jepongQwenReset.projects.v1', EXTRA_KEY='jepongQwenReset.extra.v1';
 const EFFORT={Auto:'Medium',Thinking:'High',Fast:'Instant'};
 const defaultSettings=()=>({
   theme:'light', profileName:'Jepong', profileEmail:'', profilePhoto:'',
-  provider:'bailucode', model:'bailu-apex', bailuRoute:'',
+  provider:'apinex', model:'free/deepseek-v4.1-flash',
   responseMode:'Auto', webSearch:false, toolsEnabled:true, advancedEnabled:true,
   responseLang:{code:'auto', label:'Auto'},
   interface:{titleAuto:true, autoCopy:false, pasteAsFile:true},
   personalization:{nickname:'', about:'', style:'Default', custom:'', enableNew:true, refMemory:true, refHistory:true, savedMemory:''},
   advanced:{webScraping:true, imageSearch:true, webSearchAdv:true, imageGeneration:true, codeInterpreter:true, retrieveMemory:true, imageEditing:true, updateMemory:true, localEnlarge:true},
   cookies:{analytics:false, personalization:true},
-  voice:{voiceURI:'', name:'', lang:'', rate:1, pitch:1, voiceMode:false}
+  voice:{voiceURI:'', name:'', lang:'', rate:1, pitch:1, voiceMode:false, micDeviceId:''}
 });
 let settings=Object.assign(defaultSettings(), loadJSON(SET_KEY,{}));
 settings.interface=Object.assign(defaultSettings().interface, settings.interface||{});
@@ -93,7 +103,7 @@ settings.advanced=Object.assign(defaultSettings().advanced, settings.advanced||{
 settings.cookies=Object.assign(defaultSettings().cookies, settings.cookies||{});
 settings.voice=Object.assign(defaultSettings().voice, settings.voice||{});
 settings.responseLang=Object.assign(defaultSettings().responseLang, settings.responseLang||{});
-if(!MODELS.some(m=>m.provider===settings.provider&&m.id===settings.model)){ settings.provider='bailucode'; settings.model='bailu-apex'; }
+if(!MODELS.some(m=>m.provider===settings.provider&&m.id===settings.model)){ settings.provider='apinex'; settings.model='free/deepseek-v4.1-flash'; }
 function saveSettings(){ saveJSON(SET_KEY, settings); }
 let sessions=loadJSON(SESS_KEY,[]); if(!Array.isArray(sessions)) sessions=[];
 let projects=loadJSON(PROJ_KEY,[]); if(!Array.isArray(projects)) projects=[];
@@ -111,6 +121,7 @@ let attachments=[];
 let streaming=false, aborter=null;
 let stickToBottom=true;
 let activeMenu=null;
+let suppressMenuClose=false;
 function applyTheme(){ document.documentElement.setAttribute('data-theme', settings.theme||'light'); const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content',(settings.theme==='dark')?'#101011':'#fafaf8'); }
 function modelOf(){ return MODELS.find(m=>m.id===settings.model)||MODELS[0]; }
 function getSession(id){ return sessions.find(s=>s.id===id)||null; }
@@ -158,6 +169,8 @@ function showMenu(x,y,items){
     pop.appendChild(b);
   });
   document.body.appendChild(pop);
+  suppressMenuClose=true; /* the click that opened this menu bubbles to the
+    document closer afterwards — it must not close what it just opened */
   const vw=window.innerWidth, vh=window.innerHeight;
   const w=pop.offsetWidth||200, h=pop.offsetHeight||items.length*40;
   pop.style.left=Math.max(8,Math.min(x,vw-w-8))+'px';
@@ -262,16 +275,30 @@ function resolveVoiceEntry(){
   return hit;
 }
 function speak(text,voiceURI){
+  /* Fire-and-forget wrapper; speakAsync() is the awaitable form used by
+     voice mode. Returns true when a synthesis attempt was made. */
   if(!('speechSynthesis' in window)) return false;
-  try{
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(String(text||'').slice(0,1200));
-    const uri=voiceURI!==undefined?voiceURI:(resolveVoiceEntry()?resolveVoiceEntry().uri:'');
-    if(uri){ const v=_voices.find(v=>v.voiceURI===uri); if(v) u.voice=v; }
-    if(settings.voice.lang) u.lang=settings.voice.lang;
-    u.rate=settings.voice.rate||1; u.pitch=settings.voice.pitch||1;
-    speechSynthesis.speak(u); return true;
-  }catch(e){ return false; }
+  speakAsync(text,voiceURI);
+  return true;
+}
+function speakAsync(text,voiceURI){
+  return new Promise(res=>{
+    if(!('speechSynthesis' in window)){ res(false); return; }
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(String(text||'').slice(0,1200));
+      const uri=voiceURI!==undefined?voiceURI:(resolveVoiceEntry()?resolveVoiceEntry().uri:'');
+      if(uri){ const v=_voices.find(v=>v.voiceURI===uri); if(v) u.voice=v; }
+      if(settings.voice.lang) u.lang=settings.voice.lang;
+      u.rate=settings.voice.rate||1; u.pitch=settings.voice.pitch||1;
+      let done=false; const fin=v=>{ if(!done){ done=true; res(v); } };
+      u.onend=()=>fin(true); u.onerror=()=>fin(false);
+      speechSynthesis.speak(u);
+      /* Safety net: a speech engine that never fires onend/onerror must not
+         hang a voice conversation forever. */
+      setTimeout(()=>fin(false), 90000);
+    }catch(e){ res(false); }
+  });
 }
 function stopSpeak(){ try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch(e){} }
 
@@ -373,13 +400,20 @@ function renderAll(){
   $('#topTitle').textContent=hasChat?(s.title||'New chat'):'JepongDevxyz AI';
   $('#modelName').textContent=modelOf().name;
   $('#modelMark').innerHTML=J_MARK;
+  $('#composerInput').placeholder=hasChat?'Ask JepongDevxyz AI anything':'Ask anything...';
   renderSidebar(); renderMessages(); renderComposerState();
 }
 function renderComposerState(){
   const input=$('#composerInput');
   const hasText=input.value.trim().length>0||attachments.length>0;
+  /* Grok rule: ONE slot on the right. Empty composer (no text, no
+     attachments, not streaming) shows the Voice-mode waveform ONLY; the
+     Send arrow appears only once there is text or an attachment. */
   $('#sendBtn').disabled=!hasText||streaming;
-  $('#sendBtn').hidden=streaming;
+  $('#sendBtn').hidden=streaming||!hasText;
+  $('#sendBtn').classList.toggle('home', !curSession());
+  $('#voiceBtn').hidden=streaming||hasText;
+  $('#micBtn').hidden=streaming;
   $('#stopBtn').hidden=!streaming;
   $('#searchToolBtn').classList.toggle('active', !!settings.webSearch);
   $('#thinkToolBtn').classList.toggle('active', settings.responseMode==='Thinking');
@@ -581,7 +615,6 @@ async function streamInto(s,userMsg,asst,filePayload){
     clientTimeZone:(Intl&&Intl.DateTimeFormat&&Intl.DateTimeFormat().resolvedOptions().timeZone)||'Asia/Manila',
     clientUtcOffsetMinutes:-new Date().getTimezoneOffset(),
     personalization:Object.assign(buildPersonalization(),{intelligence:EFFORT[settings.responseMode]||'Medium', fastAnswers:settings.responseMode==='Fast', advancedWebSearch:web}) };
-  if(settings.provider==='bailucode'&&settings.bailuRoute) body.bailuRoute=settings.bailuRoute;
   trackRequest('chat');
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:aborter?aborter.signal:undefined});
@@ -606,7 +639,7 @@ async function streamInto(s,userMsg,asst,filePayload){
     asst.pending=false;
     s.updatedAt=Date.now(); if(!temporary) saveSessions();
     setStreaming(false); renderAll();
-    if(settings.voice.voiceMode&&asst.text) speak(asst.text);
+    if(settings.voice.voiceMode&&asst.text&&!vmOpen) speak(asst.text);
     if(settings.interface.autoCopy&&asst.text) copyText(asst.text);
     if(!temporary&&s.titleAutoPending&&!s.titleRequested&&s.messages.length===2&&s.messages[0].role==='user'&&asst.text&&!asst.activity.some(a=>a.state==='error')&&getSession(s.id)===s){
       const sid=s.id; setTimeout(()=>{ generateTitle(sid).catch(()=>{}); },3000);
@@ -652,7 +685,7 @@ async function generateTitle(sessionId){
   if(!settings.interface.titleAuto) return;
   if(streaming){ setTimeout(()=>{ generateTitle(sessionId).catch(()=>{}); },2000); return; }
   s.titleRequested=true; saveSessions();
-  const fast=MODELS.find(m=>m.id==='bailu-2.8')||MODELS[0];
+  const fast=MODELS[0];
   const u=s.messages.find(m=>m.role==='user'), a=s.messages.find(m=>m.role==='assistant');
   if(!u||!a) return;
   const prompt='Write a 3-6 word Title Case title for this conversation. Reply with only the title, no quotes, no punctuation at the end.\n\nUser: '+String(u.text||'').slice(0,500)+'\nAssistant: '+String(a.text||'').slice(0,500);
@@ -702,14 +735,199 @@ function toggleVoice(){
       if(txt){ const input=$('#composerInput'); input.value=(input.value?input.value+' ':'')+txt; autosize(); renderComposerState(); input.focus(); }
     };
     recog.onerror=e=>{
-      listening=false; $('#voiceBtn').classList.remove('listening');
+      listening=false; $('#micBtn').classList.remove('listening');
       if(e&&e.error==='not-allowed') toast('Permission denied when accessing microphone');
       else if(e&&e.error==='no-speech') toast('No speech detected');
       else toast('Voice input failed');
     };
-    recog.onend=()=>{ listening=false; $('#voiceBtn').classList.remove('listening'); };
-    recog.start(); listening=true; $('#voiceBtn').classList.add('listening');
+    recog.onend=()=>{ listening=false; $('#micBtn').classList.remove('listening'); };
+    recog.start(); listening=true; $('#micBtn').classList.add('listening');
   }catch(e){ toast('Voice input failed'); }
+}
+
+/* ---------- voice mode (Grok-style full Listening screen) ----------
+   Real conversation: mic audio via getUserMedia (selected mic device, live
+   level meter) + SpeechRecognition for the transcript; the transcript is
+   sent as a real chat message and the reply is spoken with the selected
+   device voice. Nothing here is canned: if the browser has no speech
+   recognition, voice mode refuses to open (toast) instead of faking it. */
+let vmOpen=false, vmRecog=null, vmListening=false, vmSpeaking=false, vmMuted=false, vmHandling=false;
+let vmStream=null, vmAnalyser=null, vmAudioCtx=null, vmRaf=0, vmState='listening';
+const VM_SPEEDS=[{v:0.5,l:'0.5×'},{v:0.75,l:'0.75×'},{v:0.9,l:'0.9×'},{v:1,l:'Normal'},{v:1.1,l:'1.1×'},{v:1.25,l:'1.25×'},{v:1.5,l:'1.5×'},{v:2,l:'2×'}];
+const VM_PERSONALITIES=['Custom…','Assistant','Storyteller','Kids Story Time','Kids Trivia Game','Meditation','Conspiracy'];
+function vmVoiceTitle(){ const e=resolveVoiceEntry(); return e?e.title:'Device default'; }
+function vmPersonalityLabel(){ const s=settings.personalization.style||'Default'; if(s==='Default') return 'Assistant'; if(s==='Custom') return 'Custom…'; return s; }
+function vmSpeedLabel(){ const r=settings.voice.rate||1; const hit=VM_SPEEDS.find(x=>x.v===r); return hit?hit.l:'Normal'; }
+function vmUpdateSel(){ const el=$('#vmVoiceLabel'); if(el) el.textContent=vmVoiceTitle()+' · '+vmPersonalityLabel(); }
+function vmSetState(state, transcript){
+  vmState=state;
+  const st=$('#vmState'); if(!st) return;
+  st.textContent=state==='listening'?(vmMuted?'Muted':'Listening'):state==='thinking'?'Thinking':state==='speaking'?'Speaking':'Listening';
+  const tr=$('#vmTranscript'); if(tr) tr.textContent=transcript||'';
+  /* Dots animate while speaking (the reply being spoken) and while
+     listening when there is no live mic analyser; with an analyser the
+     rAF loop drives the heights from real mic levels instead. */
+  const anim=state==='speaking'||(state==='listening'&&!vmMuted);
+  ['#vmDots','#vmDotsMini'].forEach(sel=>{ const d=$(sel); if(d) d.classList.toggle('auto', anim&&!vmAnalyser); });
+}
+function vmTickDots(){
+  if(!vmOpen) return;
+  if(vmAnalyser&&vmState==='listening'){
+    const data=new Uint8Array(vmAnalyser.frequencyBinCount);
+    vmAnalyser.getByteFrequencyData(data);
+    ['#vmDots','#vmDotsMini'].forEach(sel=>{
+      const d=$(sel); if(!d) return;
+      const spans=d.querySelectorAll('span');
+      spans.forEach((sp,i)=>{
+        const v=data[Math.floor(i*data.length/spans.length)]||0;
+        sp.style.height=Math.max(4, Math.round(4+v/255*22))+'px';
+      });
+    });
+  }
+  vmRaf=requestAnimationFrame(vmTickDots);
+}
+async function vmAcquireMic(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) return;
+  const tryGet=async cons=>{ vmStream=await navigator.mediaDevices.getUserMedia(cons); };
+  try{
+    if(settings.voice.micDeviceId) await tryGet({audio:{deviceId:{exact:settings.voice.micDeviceId}}});
+    else await tryGet({audio:true});
+  }catch(e){
+    if(e&&e.name==='OverconstrainedError'){ try{ await tryGet({audio:true}); }catch(e2){ if(e2&&e2.name==='NotAllowedError') throw e2; } }
+    else throw e;
+  }
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(AC&&vmStream){ vmAudioCtx=new AC(); const src=vmAudioCtx.createMediaStreamSource(vmStream); vmAnalyser=vmAudioCtx.createAnalyser(); vmAnalyser.fftSize=256; src.connect(vmAnalyser); }
+  }catch(e){ vmAnalyser=null; }
+}
+function vmStartRecog(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR||!vmOpen||vmMuted) return;
+  try{
+    vmRecog=new SR();
+    vmRecog.lang=(settings.voice.lang&&settings.voice.lang!=='auto')?settings.voice.lang:(settings.responseLang&&settings.responseLang.code!=='auto'?settings.responseLang.code:'en-US');
+    vmRecog.continuous=true; vmRecog.interimResults=true; vmRecog.maxAlternatives=1;
+    vmRecog.onresult=e=>{
+      let interim='', final='';
+      for(let i=e.resultIndex||0;i<e.results.length;i++){ const r=e.results[i]; if(!r||!r[0]) continue; if(r.isFinal) final+=r[0].transcript; else interim+=r[0].transcript; }
+      if(interim) vmSetState('listening', interim);
+      if(final&&final.trim()) vmHandleHeard(final.trim());
+    };
+    vmRecog.onerror=e=>{
+      if(e&&e.error==='not-allowed'){ toast('Permission denied when accessing microphone'); closeVoiceMode(); }
+    };
+    vmRecog.onend=()=>{ vmListening=false; if(vmOpen&&!vmSpeaking&&!vmMuted&&!vmHandling){ try{ vmRecog.start(); vmListening=true; }catch(e){} } };
+    vmRecog.start(); vmListening=true;
+  }catch(e){ toast('Voice input failed'); }
+}
+async function vmHandleHeard(text){
+  if(!vmOpen) return;
+  vmHandling=true;
+  try{ vmRecog&&vmRecog.stop(); }catch(e){}
+  vmListening=false;
+  vmSetState('thinking', text);
+  await sendMessage(text);
+  if(!vmOpen){ vmHandling=false; return; }
+  const s=curSession();
+  const last=s?[...s.messages].reverse().find(m=>m.role==='assistant'&&m.text):null;
+  if(last&&last.text){
+    vmSetState('speaking', last.text);
+    vmSpeaking=true;
+    await speakAsync(last.text);
+    vmSpeaking=false;
+  }
+  if(!vmOpen){ vmHandling=false; return; }
+  vmHandling=false;
+  vmSetState('listening');
+  vmStartRecog();
+}
+async function openVoiceMode(){
+  if(vmOpen) return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast('Voice input is not supported in this browser'); return; }
+  try{ await vmAcquireMic(); }
+  catch(e){
+    if(e&&e.name==='NotAllowedError'){ toast('Permission denied when accessing microphone'); return; }
+    vmStream=null; vmAnalyser=null;
+  }
+  vmOpen=true; vmMuted=false;
+  $('#voiceMode').hidden=false;
+  vmUpdateSel(); vmSetState('listening');
+  vmStartRecog(); vmTickDots();
+}
+function closeVoiceMode(){
+  if(!vmOpen) return;
+  vmOpen=false; vmSpeaking=false; vmMuted=false; vmHandling=false;
+  try{ vmRecog&&vmRecog.stop(); }catch(e){} vmRecog=null; vmListening=false;
+  stopSpeak();
+  if(vmStream){ try{ vmStream.getTracks().forEach(t=>{ try{ t.stop(); }catch(e){} }); }catch(e){} vmStream=null; }
+  if(vmRaf) cancelAnimationFrame(vmRaf); vmRaf=0;
+  if(vmAudioCtx){ try{ vmAudioCtx.close(); }catch(e){} vmAudioCtx=null; vmAnalyser=null; }
+  $('#voiceMode').hidden=true;
+  renderComposerState();
+}
+function openVoiceSheet(){
+  const list=$('#voiceSheetList');
+  const cat=voiceCatalog(); const sel=resolveVoiceEntry();
+  list.innerHTML='<button class="radio-row'+(!settings.voice.voiceURI?' sel':'')+'" data-vs-voice=""><span class="radio"></span><span class="radio-label">Device default</span><span class="set-value">System voice</span></button>'
+    +cat.map(c=>'<button class="radio-row'+(sel&&sel.uri===c.uri?' sel':'')+'" data-vs-voice="'+esc(c.uri)+'" data-vs-name="'+esc(c.name)+'"><span class="radio"></span><span class="radio-label">'+esc(c.title)+'</span><span class="set-value">'+esc(c.sub)+'</span></button>').join('');
+  list.querySelectorAll('[data-vs-voice]').forEach(b=>b.addEventListener('click',()=>{
+    const uri=b.getAttribute('data-vs-voice');
+    settings.voice.voiceURI=uri; settings.voice.name=b.getAttribute('data-vs-name')||'';
+    saveSettings(); vmUpdateSel(); openVoiceSheet();
+    if(uri){ const e=resolveVoiceEntry(); speak('Hello, this is a preview of the selected voice.', uri); }
+    else speak('Hello, this is the device default voice.', '');
+    toast('Voice selected');
+  }));
+  const setPill=(id,label)=>{ const el=$(id); if(el) el.innerHTML=esc(label)+icon('chevron-down',14); };
+  setPill('#vsPersonality', esc(vmPersonalityLabel()));
+  setPill('#vsSpeed', esc(vmSpeedLabel()));
+  setPill('#vsMic', esc(vmMicLabel()));
+  openSheet('#voiceSheet');
+}
+function vmMicLabel(){
+  if(settings.voice.micDeviceId){ const d=(vmMicCache||[]).find(x=>x.deviceId===settings.voice.micDeviceId); if(d&&d.label) return d.label; }
+  return 'Microphone';
+}
+let vmMicCache=null;
+async function vmListMics(){
+  try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices) return [];
+    const devs=await navigator.mediaDevices.enumerateDevices();
+    vmMicCache=devs.filter(d=>d.kind==='audioinput');
+    return vmMicCache;
+  }catch(e){ return []; }
+}
+function vmPersonalityMenu(anchor){
+  const r=anchor.getBoundingClientRect();
+  showMenu(r.left, r.bottom+4, VM_PERSONALITIES.map(p=>({icon:'check', label:p+(vmPersonalityLabel()===p?' ✓':''), onClick:async()=>{
+    if(p==='Custom…'){
+      const cur=settings.personalization.custom||'';
+      const next=await promptDialog('Custom personality','Custom instruction', cur);
+      if(next===null) return;
+      settings.personalization.custom=next.trim(); settings.personalization.style='Custom';
+    } else {
+      settings.personalization.style=(p==='Assistant'?'Default':p);
+    }
+    saveSettings(); vmUpdateSel(); openVoiceSheet();
+  }})));
+}
+function vmSpeedMenu(anchor){
+  const r=anchor.getBoundingClientRect();
+  showMenu(r.left, r.bottom+4, VM_SPEEDS.map(s=>({icon:'check', label:s.l+(vmSpeedLabel()===s.l?' ✓':''), onClick:()=>{
+    settings.voice.rate=s.v; saveSettings(); vmUpdateSel(); openVoiceSheet();
+  }})));
+}
+async function vmMicMenu(anchor){
+  const mics=await vmListMics();
+  const r=anchor.getBoundingClientRect();
+  const items=[{icon:'check', label:'Microphone'+(!settings.voice.micDeviceId?' ✓':''), onClick:()=>{ settings.voice.micDeviceId=''; saveSettings(); openVoiceSheet(); toast('Microphone updated — applies next voice session'); }}];
+  mics.forEach(d=>{
+    if(!d.deviceId) return;
+    items.push({icon:'check', label:(d.label||'Microphone')+(settings.voice.micDeviceId===d.deviceId?' ✓':''), onClick:()=>{ settings.voice.micDeviceId=d.deviceId; saveSettings(); openVoiceSheet(); toast('Microphone updated — applies next voice session'); }});
+  });
+  showMenu(r.left, r.bottom+4, items);
 }
 
 /* ---------- sheets: model / attach / image ---------- */
@@ -886,7 +1104,7 @@ function langCodeOf(label){
   return map[label]||'';
 }
 const PLANS=[
- {name:'Free', price:'$0', per:'forever', feats:['Chat with Bailu models','Image generation','Voice input & read aloud'], current:true},
+ {name:'Free', price:'$0', per:'forever', feats:['Chat with free APINEX models','Image generation','Voice input & read aloud'], current:true},
  {name:'Lite', price:'$4', per:'per month', feats:['Everything in Free','Priority responses','More image generations']},
  {name:'Plus', price:'$19', per:'per month', feats:['Everything in Lite','Fastest responses','Highest image limits']},
  {name:'Pro', price:'$99', per:'per month', feats:['Everything in Plus','Maximum limits','Early access to new features']}
@@ -900,7 +1118,7 @@ function renderUpgrade(body){
   }));
 }
 function renderHelp(body){
-  body.innerHTML='<div class="set-card"><h3>How to use JepongDevxyz AI</h3><p>Type a message and tap Send. Use the + button to attach files, Image to generate an image, Search to look up current facts, and Think for step-by-step reasoning. Tap the model name to switch between the three Bailu models. Your chats are saved on this device.</p></div>'
+  body.innerHTML='<div class="set-card"><h3>How to use JepongDevxyz AI</h3><p>Type a message and tap Send. Use the + button to attach files, Image to generate an image, Search to look up current facts, and Think for step-by-step reasoning. Tap the model name to switch between the nine free APINEX models. Your chats are saved on this device.</p></div>'
     +'<div class="set-card"><h3>Contact</h3><p>Email: businessdevgithubjepong@gmail.com</p></div>';
 }
 async function signOut(){
@@ -968,7 +1186,22 @@ function wire(){
     settings.responseMode=settings.responseMode==='Thinking'?'Auto':'Thinking'; saveSettings(); renderComposerState();
     toast(settings.responseMode==='Thinking'?'Thinking mode on':'Thinking mode off');
   });
-  $('#voiceBtn').addEventListener('click',toggleVoice);
+  $('#micBtn').addEventListener('click',toggleVoice);
+  $('#voiceBtn').addEventListener('click',openVoiceMode);
+  $('#vmStop').addEventListener('click',closeVoiceMode);
+  $('#vmMic').addEventListener('click',()=>{
+    vmMuted=!vmMuted;
+    $('#vmMic').classList.toggle('muted', vmMuted);
+    $('#vmMic').setAttribute('aria-label', vmMuted?'Unmute microphone':'Mute microphone');
+    if(vmMuted){ try{ vmRecog&&vmRecog.stop(); }catch(e){} vmListening=false; }
+    else vmStartRecog();
+    vmSetState('listening');
+  });
+  $('#vmPlus').addEventListener('click',openAttachSheet);
+  $('#vmVoiceSel').addEventListener('click',openVoiceSheet);
+  $('#vsPersonalityRow').addEventListener('click',e=>vmPersonalityMenu(e.currentTarget));
+  $('#vsSpeedRow').addEventListener('click',e=>vmSpeedMenu(e.currentTarget));
+  $('#vsMicRow').addEventListener('click',e=>vmMicMenu(e.currentTarget));
   $('#imageGenerateBtn').addEventListener('click',()=>{
     const p=$('#imagePrompt').value.trim();
     if(!p){ toast('Describe the image first'); return; }
@@ -999,8 +1232,8 @@ function wire(){
     updateScrollBtn();
   });
   $('#scrollBottom').addEventListener('click',()=>{ cv.scrollTo({top:cv.scrollHeight, behavior:'smooth'}); stickToBottom=true; updateScrollBtn(); });
-  document.addEventListener('click',e=>{ if(activeMenu&&!e.target.closest('.menu-pop')) closeMenu(); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeAllSheets(); closeMenu(); } });
+  document.addEventListener('click',e=>{ if(suppressMenuClose){ suppressMenuClose=false; return; } if(activeMenu&&!e.target.closest('.menu-pop')) closeMenu(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(vmOpen){ closeVoiceMode(); return; } closeAllSheets(); closeMenu(); } });
   if('speechSynthesis' in window){ loadVoices(); try{ speechSynthesis.onvoiceschanged=()=>{ loadVoices(); }; }catch(e){} }
 }
 document.addEventListener('DOMContentLoaded',()=>{

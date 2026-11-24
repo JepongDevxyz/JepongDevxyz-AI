@@ -52,7 +52,7 @@
       <div id="attachBar" class="attach-bar" hidden></div>
       <div id="composer" class="composer">
         <div class="comp-row1">
-          <button id="modelBtn" class="model-btn" type="button"><span class="model-mark" id="modelMark"></span><span id="modelName">BAILU Apex</span><span data-icon="chevron-down" data-size="14"></span></button>
+          <button id="modelBtn" class="model-btn" type="button"><span class="model-mark" id="modelMark"></span><span id="modelName">DeepSeek V4.1 Flash</span><span data-icon="chevron-down" data-size="14"></span></button>
           <textarea id="composerInput" rows="1" placeholder="How can I help?" aria-label="Message"></textarea>
         </div>
         <div class="comp-row2">
@@ -62,7 +62,8 @@
           <button id="thinkToolBtn" class="tool-chip" type="button"><span data-icon="brain" data-size="16"></span><span>Think</span></button>
           <button id="buildToolBtn" class="tool-chip" type="button"><span data-icon="wrench" data-size="16"></span><span>Build</span></button>
           <span class="comp-spacer"></span>
-          <button id="voiceBtn" class="voice-btn" type="button" aria-label="Record voice"><span data-icon="audio-lines" data-size="18"></span></button>
+          <button id="micBtn" class="mic-btn" type="button" aria-label="Dictate"><span data-icon="mic" data-size="18"></span></button>
+          <button id="voiceBtn" class="voice-btn" type="button" aria-label="Voice mode"><span data-icon="audio-lines" data-size="18"></span></button>
           <button id="sendBtn" class="send-btn" type="button" aria-label="Send" disabled><span data-icon="arrow-up" data-size="18"></span></button>
           <button id="stopBtn" class="send-btn stop" type="button" aria-label="Stop" hidden><span class="stop-sq"></span></button>
         </div>
@@ -76,7 +77,7 @@
 <!-- Model picker bottom sheet -->
 <div id="modelSheet" class="sheet" hidden>
   <div class="sheet-card">
-    <div class="sheet-head"><div><div class="sheet-title">JepongDevxyz AI</div><div class="sheet-sub" id="modelSheetSub">BAILU Apex · Default</div></div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div class="sheet-head"><div><div class="sheet-title">JepongDevxyz AI</div><div class="sheet-sub" id="modelSheetSub">DeepSeek V4.1 Flash · Default</div></div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div id="modelList" class="sheet-list"></div>
   </div>
 </div>
@@ -139,6 +140,35 @@
     <div class="dialog-title" id="infoModalTitle">Notice</div>
     <p class="dialog-text" id="infoModalText"></p>
     <div class="dialog-actions"><button id="infoModalOk" class="btn-primary" type="button">OK</button></div>
+  </div>
+</div>
+
+<!-- Voice mode layer (Grok-style: full Listening state) -->
+<div id="voiceMode" class="voice-layer" hidden>
+  <div class="vm-status">
+    <div class="vm-dots auto" id="vmDots" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="vm-state-col">
+      <div class="vm-state" id="vmState">Listening</div>
+      <div class="vm-transcript" id="vmTranscript"></div>
+    </div>
+  </div>
+  <div class="vm-bar">
+    <button id="vmPlus" class="vm-plus" type="button" aria-label="Attachments"><span data-icon="plus" data-size="18"></span></button>
+    <button id="vmVoiceSel" class="vm-sel" type="button"><span id="vmVoiceLabel">Device default · Assistant</span><span data-icon="chevron-down" data-size="14"></span></button>
+    <div class="vm-dots mini auto" id="vmDotsMini" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <button id="vmMic" class="vm-mic" type="button" aria-label="Mute microphone"><span data-icon="mic" data-size="18"></span></button>
+    <button id="vmStop" class="vm-stop" type="button" aria-label="Stop voice mode"><span class="stop-sq"></span></button>
+  </div>
+</div>
+
+<!-- Voice settings sheet (opened from the voice-mode bar) -->
+<div id="voiceSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-head"><div class="sheet-title">Voice</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div id="voiceSheetList" class="set-list"></div>
+    <button class="set-row" id="vsPersonalityRow" type="button"><span class="set-label">Personality</span><span class="vs-pill" id="vsPersonality">Assistant<span data-icon="chevron-down" data-size="14"></span></span></button>
+    <button class="set-row" id="vsSpeedRow" type="button"><span class="set-label">Speed</span><span class="vs-pill" id="vsSpeed">Normal<span data-icon="chevron-down" data-size="14"></span></span></button>
+    <button class="set-row" id="vsMicRow" type="button"><span class="set-label">Microphone</span><span class="vs-pill" id="vsMic">Microphone<span data-icon="chevron-down" data-size="14"></span></span></button>
   </div>
 </div>
 
