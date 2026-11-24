@@ -6474,6 +6474,70 @@ async function generatePetImage(body={},requestSignal=null){
 }
 
 
+/* Deterministic self-answer (2026-11-25, round 4). The APP KNOWLEDGE system
+   block steers the model only sometimes: the same "Ano ang kaya mong gawin
+   dito sa app na ito?" returned the real features twice and a generic list
+   three times, and one good answer even miscounted ("Sampung model" for 9).
+   A soft instruction cannot guarantee 100%. So questions about the app
+   itself are answered from this fixed, accurate text — no model call, no
+   guessing, correct count (9). The knowledge block stays for follow-ups
+   (e.g. how to pick a model or use voice mode), which still go to the
+   model. The detector is deliberately narrow: it must not hijack normal
+   questions ("Ano ang kaya mong gawin sa Python?" stays with the model). */
+const APP_SELF_ANSWER_TL =
+'Sa JepongDevxyz AI app na ito, ito ang magagawa mo:\n\n' +
+'**9 na model.** Pumili sa model picker sa composer: DeepSeek V4.1 Flash (default), DeepSeek V4 Flash, DeepSeek V4 Pro, Gemini 4 Hydrogen, GLM 5.3 Flash, GLM 5.3 FlashX, GPT-6 Luna, MiniMax M3.1 Flash, at Qwen 3.8 Max.\n\n' +
+'**Composer at plus menu.** Isang row ang composer — plus button, text field, model button, microphone, at voice-mode button. Sa plus menu: Attach files, Take a photo, Choose from library, Create image, Search the web, Think, at Build.\n\n' +
+'**Private chats.** I-lock ang isang chat para hindi ito ma-save at mawala pagka-refresh.\n\n' +
+'**Projects.** I-group ang mga chat para mas madaling hanapin.\n\n' +
+'**Sidebar search.** Maghanap sa mga title at sa mismong mensahe.\n\n' +
+'**Reply actions.** Copy, edit, regenerate, share, branch sa bagong chat, rename, move sa project, o delete.\n\n' +
+'**Settings.** Theme (Light, Dark, o System), voice at personality, default response mode (Auto, Thinking, o Fast), at iba pa.\n\n' +
+'**Mga limitasyon.** Walang account o sign-in — nasa browser mo lang ang chats at settings, at binubura lahat ng Sign out. Walang email o calendar, walang Library o Connect Apps. Minsan umaabot ng ~30 segundo ang reply dahil live itong ginagawa.';
+const APP_SELF_ANSWER_EN =
+'In this JepongDevxyz AI app, here is what you can do:\n\n' +
+'**9 models.** Pick one in the composer model picker: DeepSeek V4.1 Flash (default), DeepSeek V4 Flash, DeepSeek V4 Pro, Gemini 4 Hydrogen, GLM 5.3 Flash, GLM 5.3 FlashX, GPT-6 Luna, MiniMax M3.1 Flash, and Qwen 3.8 Max.\n\n' +
+'**Composer and plus menu.** One composer row — plus button, text field, model button, microphone, and voice-mode button. The plus menu holds: Attach files, Take a photo, Choose from library, Create image, Search the web, Think, and Build.\n\n' +
+'**Private chats.** Lock a chat so it is never saved and disappears on refresh.\n\n' +
+'**Projects.** Group chats to find them more easily.\n\n' +
+'**Sidebar search.** Search chat titles and message text.\n\n' +
+'**Reply actions.** Copy, edit, regenerate, share, branch into a new chat, rename, move to a project, or delete.\n\n' +
+'**Settings.** Theme (Light, Dark, or System), voice and personality, default response mode (Auto, Thinking, or Fast), and more.\n\n' +
+'**Limits.** No account or sign-in — chats and settings live only in this browser, and Sign out clears all local data. No email or calendar, no Library or Connect Apps. Replies sometimes take ~30 seconds because each one is generated live.';
+function isAppSelfQuestion(message){
+  const m=String(message||'').trim().toLowerCase();
+  if(!m||m.length>220) return null;
+  if(m.includes('title case')||m.startsWith('suggest 2 short')) return null;
+  const isTl=/(^|[^a-z])(ano|anong|paano|kaya|meron|ipaliwanag|ikaw|mo|dito|mga|ang)\b/.test(m);
+  const aboutApp=/dito sa app|sa app|this app|in this app|ng app\b|app na (ito|to)\b/.test(m);
+  const modelsQ=/(anong|ano ang|what|which)\s+(mga\s+)?(model|models)\b/.test(m)||/meron ka(ng)?\s+(mga\s+)?model/.test(m);
+  const comparative=/(pinakamabilis|fastest|best|pinakamahusay|magaling|gamitin|\buse\b|piliin|choose|recommend|suggest|dapat kong)/.test(m);
+  const canDoQ=/(ano|anong)\s+(ang\s+)?kaya(n|ng)?\s+(mong\s+)?gawin|what can you do/.test(m);
+  const featuresQ=/(ano|anong)\s+(ang\s+)?(mga\s+)?(feature|features|kayang gawin|magagawa)/.test(m)||/(ipaliwanag|explain).*(feature|features)/.test(m)||/what (features|can you do)/.test(m);
+  const whatHaveQ=/^(anong meron ka|what do you have)/.test(m);
+  const bareDo=/^(ano|anong)\s+(ang\s+)?kaya.*gawin\??$/.test(m)||/^what can you do\??$/.test(m);
+  if(/meron ka(ng)?/.test(m)&&/\bmodel/.test(m)&&!comparative) return isTl?'tl':'en';
+  if(modelsQ&&!comparative) return isTl?'tl':'en';
+  if(whatHaveQ) return isTl?'tl':'en';
+  if((canDoQ||featuresQ)&&(aboutApp||bareDo)) return isTl?'tl':'en';
+  return null;
+}
+function appSelfAnswerResponse(body,lang){
+  const text=lang==='tl'?APP_SELF_ANSWER_TL:APP_SELF_ANSWER_EN;
+  if(body.activityStream===true){
+    const encoder=new TextEncoder();
+    const chunks=text.split('\n\n');
+    return new Response(new ReadableStream({
+      start(controller){
+        try{controller.enqueue(encoder.encode(': stream-open\n\n'));}catch(_){}
+        for(const c of chunks){ try{controller.enqueue(encoder.encode(sseEvent('text',{text:c+'\n\n'})));}catch(_){break;} }
+        try{controller.close();}catch(_){}
+      }
+    }),{headers:{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-cache'}});
+  }
+  return json({text});
+}
+
 export default async function handler(req){
   if(req.method==='HEAD')return new Response(null,{status:200});
   if(req.method!=='POST')return json({error:'Method not allowed'},405);
@@ -6518,6 +6582,11 @@ export default async function handler(req){
     if(!hasMessage&&!hasFiles){
       return json({error:'Message or attachment is required.'},400);
     }
+
+    /* Deterministic self-answer: questions about the app itself never reach
+       the model — they get the fixed accurate answer (see isAppSelfQuestion). */
+    const selfLang=isAppSelfQuestion(body.message||'');
+    if(selfLang) return appSelfAnswerResponse(body,selfLang);
 
     if(body.activityStream===true) return activityStreamResponse(body,req.signal,req);
 
