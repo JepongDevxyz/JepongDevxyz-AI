@@ -691,7 +691,9 @@ function setPrivate(on){
   const s=curSession();
   if(s){ s.temporary=temporary; saveSessions(); renderSidebar(); }
   renderAll();
-  if(temporary) toast('Private chat — this chat will not be saved');
+  /* ROUND 7: NO toast on entering Private mode (her screenshot: the white
+     pill over the composer). Grok shows the state inline instead — see
+     renderAll/renderComposerState. */
 }
 function closeSidebarMobile(){ if(window.innerWidth<1024){ $('#sidebar').classList.remove('open'); $('#scrim').hidden=true; } }
 /* ROUND 6: grok's 8-label suggestion pool — all three rows rotate per load
@@ -702,7 +704,7 @@ function renderHomeSugg(){
      Every row does something real: image opens the image sheet, the rest
      send as starter messages. Hidden when "Show suggestions" is off. */
   const box=$('#homeSugg'); if(!box) return;
-  const show=!curSession()&&settings.interface.showSuggestions!==false;
+  const show=!curSession()&&settings.interface.showSuggestions!==false&&!temporary;
   if(!show){ box.hidden=true; box.innerHTML=''; return; }
   const pool=SUGGESTIONS.slice();
   for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
@@ -720,8 +722,14 @@ function renderAll(){
   const hasChat=!!s;
   $('#homeView').hidden=hasChat;
   $('#chatView').hidden=!hasChat;
-  $('#greetLine1').textContent="What's on the agenda today?";
+  $('#greetLine1').textContent=temporary?"What's on your mind today?":"What's on the agenda today?";
   $('#greetLine2').hidden=true;
+  /* ROUND 7: grok's Private H1 wraps "What's on your / mind today?" — the
+     private greeting needs a narrower container than the normal one. */
+  const hg=document.querySelector('.home-greet'); if(hg) hg.classList.toggle('priv',temporary);
+  /* ROUND 7: grok's grey note under the composer, exact wording, only in
+     Private mode (home and chat — the composer dock is shared). */
+  const pn=$('#privateNote'); if(pn) pn.hidden=!temporary;
   $('#profileNameLabel').textContent=settings.profileName||'Jepong';
   /* ROUND 6: grey silhouette avatar (grok), not a black "J" circle. */
   const pav=$('#profileAvatar'); if(pav) pav.innerHTML=icon('user',20);
@@ -750,11 +758,21 @@ function renderComposerState(){
   /* Grok rule: ONE slot on the right. Empty composer (no text, no
      attachments, not streaming) shows the Voice-mode waveform ONLY; the
      Send arrow appears only once there is text or an attachment. */
+  /* ROUND 7: in Private mode grok swaps the blue Voice waveform for a grey
+     up-arrow Send (no circle) at the right end, and the model label loses
+     its pill background (plain text + chevron). Dictate mic is untouched.
+     The grey arrow IS the real Send button, restyled — disabled while the
+     composer is empty, blue circle again once there is text. */
+  const privateEmpty=temporary&&!hasText&&!streaming;
+  /* ROUND 7: grok's composer gets a DASHED border in Private mode. */
+  $('#composer').classList.toggle('private',temporary);
   /* Queued sends (Bug 1 fix): Send stays enabled while streaming so a tap
      queues the message instead of dropping it — see sendQueue. */
   $('#sendBtn').disabled=!hasText;
-  $('#sendBtn').hidden=!hasText;
-  $('#voiceBtn').hidden=streaming||hasText;
+  $('#sendBtn').hidden=!(hasText||privateEmpty);
+  $('#sendBtn').classList.toggle('private-send',privateEmpty);
+  $('#voiceBtn').hidden=streaming||hasText||temporary;
+  $('#modelBtn').classList.toggle('private',temporary);
   $('#micBtn').hidden=streaming;
   $('#stopBtn').hidden=!streaming;
   const bar=$('#attachBar');

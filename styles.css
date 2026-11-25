@@ -462,6 +462,43 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
 .private-badge.on .pb-tx{color:var(--ink)}
 .top-title.chat-title{font-weight:500;font-size:14px}
 
+/* ================= ROUND 7 (2026-11-25): Private-mode inline state (grok) +
+   banner fit + top-bar badge guarantee ================= */
+/* A. The Private toast is deleted (app.js) — grok shows the state inline.
+   B1. Private pill gets a GREY FILLED background when active. */
+.private-badge.on{background:var(--chip);border-radius:999px;padding:4px 8px}
+/* B2. Private H1 needs a narrower container so it wraps "What's on your /
+   mind today?" like grok's (the normal 250px would wrap after "mind"). */
+.home-greet.priv h1{max-width:210px}
+/* B3. Composer gets a DASHED border in Private mode. */
+.composer.private{border-style:dashed}
+/* B4. Suggestions are hidden in Private mode (app.js renderHomeSugg). */
+/* B5. Grey note under the composer in Private mode, grok's exact wording,
+   with the small dashed-circle icon before it. */
+.private-note{display:flex;align-items:center;justify-content:center;gap:7px;margin:10px auto 0;font-size:12.5px;color:var(--muted);text-align:center;padding:0 8px}
+.private-note .pn-ring{width:14px;height:14px;border-radius:50%;border:1.5px dashed var(--muted);flex:none}
+/* B6. Grok's model label sits in a light-grey pill in normal mode; in
+   Private mode it loses the pill (plain text + chevron). */
+.model-btn{background:var(--chip);border-radius:999px;padding:7px 10px}
+.model-btn.private,.model-btn.private:hover{background:none}
+/* B7. In Private mode the blue Voice waveform is replaced by a grey up-arrow
+   Send (no circle) — the real Send button, restyled; disabled while the
+   composer is empty, blue circle again once there is text. */
+.send-btn.private-send,.send-btn.private-send:disabled{background:none;color:var(--muted);border-radius:8px}
+/* C. Banner fits at 360/390/443: the pill is J mark + "Open" only (index.html)
+   and never shrinks; the title is 14px and truncates only if truly out of
+   room (verified whole at all three widths — see grok-verify). */
+.app-banner-title{font-size:14px}
+.app-banner-open{flex-shrink:0}
+/* D. The Private badge can NEVER be pushed out of #topTitle now: the title
+   text is capped at the container width minus a reserved badge slot
+   (badge at 125% font scale is ~88px wide incl. its on-state pill padding,
+   + 7px gap + margin). The badge's right edge used to sit exactly flush
+   with the container edge at 125% scale — 0px of margin — so any further
+   font inflation clipped the word while getBoundingClientRect still
+   reported the full rect (why the round-6 check could not see it). */
+.top-title .top-title-tx{max-width:calc(100% - 100px)}
+
 /* ---------- bottom sheets: drag grip ---------- */
 .sheet-grip{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
 
