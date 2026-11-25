@@ -12,39 +12,50 @@
 <div id="app">
   <aside id="sidebar" aria-label="Sidebar">
     <div class="sb-top">
-      <div class="sb-search"><span data-icon="search" data-size="16"></span><input id="chatSearch" type="text" placeholder="Search conversations" autocomplete="off"><button id="chatSearchClear" class="icon-btn sm" hidden aria-label="Clear search"><span data-icon="x" data-size="14"></span></button></div>
-      <button id="newChatBtn" class="sb-new"><span class="sb-new-plus"><span data-icon="plus" data-size="14"></span></span><span>New chat</span></button>
+      <button id="sbClose" class="icon-btn" type="button" aria-label="Close sidebar"><span data-icon="menu" data-size="20"></span></button>
+      <button id="sbSearchIcon" class="icon-btn" type="button" aria-label="Search"><span data-icon="search" data-size="20"></span></button>
+      <button id="newChatBtn" class="sb-new" type="button"><span class="sb-new-plus"><span data-icon="plus" data-size="14"></span></span><span>New chat</span></button>
     </div>
-    <div id="chatList" class="sb-list"></div>
-    <div class="sb-sec-row" id="sbProjSec"><span class="sb-sec">Projects</span><span class="sb-sec-actions"><button class="icon-btn sb-sec-chev" id="sbProjChev" type="button" aria-label="Collapse projects"><span data-icon="chevron-down" data-size="16"></span></button><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></span></div>
-    <div id="projList" class="sb-list"></div>
-    <div class="sb-explore">
-      <div class="sb-sec">Explore</div>
-      <button class="sb-row" data-explore="help"><span data-icon="circle-help" data-size="18"></span><span>Help</span></button>
-      <button class="sb-row" data-explore="projects"><span data-icon="folder" data-size="18"></span><span>Projects</span></button>
-      <button class="sb-row" data-explore="invite"><span data-icon="user-plus" data-size="18"></span><span>Invite</span></button>
+    <div class="sb-scroll">
+      <div class="bot-card" id="botCard">
+        <button class="bot-card-head" id="botCardHead" type="button"><span class="bot-smiley" data-icon="smile" data-size="18"></span><span class="bot-card-name">JepongDevxyz AI</span><span class="bot-chev" id="botChev"><span data-icon="chevron-down" data-size="16"></span></span></button>
+        <div class="bot-card-body" id="botCardBody">
+          <button class="sb-row" id="botCreate" type="button"><span data-icon="plus" data-size="18"></span><span>Create a bot</span></button>
+        </div>
+      </div>
+      <button class="sb-row sb-lib" id="sbLibraryRow" type="button"><span data-icon="layout-grid" data-size="18"></span><span>Library</span></button>
+      <div class="sb-sec-row" id="sbProjSec"><span class="sb-sec">Projects</span><span class="sb-sec-actions"><button class="icon-btn" id="sbProjMore" type="button" aria-label="Project options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></span></div>
+      <div id="projList" class="sb-list"></div>
+      <div class="sb-sec-row" id="sbChatsSec"><span class="sb-sec">Chats</span><span class="sb-sec-actions"><button class="icon-btn" id="sbChatsMore" type="button" aria-label="Chat options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat"><span data-icon="plus" data-size="16"></span></button></span></div>
+      <div id="chatList" class="sb-list"></div>
     </div>
     <div class="sb-bottom">
-      <button class="sb-upgrade" id="sbUpgradeBtn" data-explore="upgrade"><span data-icon="rocket" data-size="16"></span><span>Upgrade to Premium</span></button>
-      <button class="sb-row" data-explore="settings"><span data-icon="settings" data-size="18"></span><span>Settings</span></button>
-      <button class="sb-profile" id="profileBtn"><span class="sb-avatar" id="profileAvatar">J</span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span><span class="sb-profile-sub" id="profileEmailLabel">Free plan</span></span></button>
+      <button class="sb-blackfriday" id="sbBlackFriday" type="button"><span data-icon="tag" data-size="16"></span><span>Get Black Friday Offer</span></button>
+      <div class="sb-profile-wrap">
+        <button class="sb-profile" id="profileBtn" type="button"><span class="sb-avatar" id="profileAvatar">J</span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span><span class="sb-profile-sub" id="profileEmailLabel">Free plan</span></span></button>
+        <button id="sbConnectApps" class="icon-btn" type="button" aria-label="Connect apps"><span data-icon="layout-grid" data-size="18"></span></button>
+      </div>
     </div>
   </aside>
   <div id="scrim" hidden></div>
 
   <main id="main">
+    <div id="appBanner" class="app-banner" hidden>
+      <div class="app-banner-tx"><span class="app-banner-title">Get the JepongDevxyz AI app</span><span class="app-banner-sub">Faster, more powerful, and ready when you are.</span></div>
+      <button id="bannerOpen" class="app-banner-open" type="button">Open</button>
+      <button id="bannerClose" class="icon-btn sm" type="button" aria-label="Dismiss"><span data-icon="x" data-size="16"></span></button>
+    </div>
     <header id="topbar">
       <button id="menuBtn" class="icon-btn" aria-label="Open sidebar"><span data-icon="menu" data-size="20"></span></button>
-      <div id="topTitle" class="top-title" role="button" tabindex="0" aria-label="Conversation options">JepongDevxyz AI</div>
-      <button id="privateBtn" class="icon-btn" aria-label="Private chat" aria-pressed="false"><span data-icon="lock" data-size="18"></span></button>
-      <button id="topSearchBtn" class="icon-btn" aria-label="Search chats"><span data-icon="search" data-size="20"></span></button>
-      <button id="topNewBtn" class="icon-btn" aria-label="New chat"><span data-icon="square-pen" data-size="20"></span></button>
+      <button id="topSearchBtn" class="icon-btn" aria-label="Search"><span data-icon="search" data-size="20"></span></button>
+      <div id="topTitle" class="top-title" role="button" tabindex="0" aria-label="Conversation options"></div>
+      <button id="paneBtn" class="icon-btn" aria-label="Toggle right pane"><span data-icon="panel-right" data-size="20"></span></button>
     </header>
 
     <div id="homeView">
       <div class="home-greet">
-        <h1 id="greetLine1">Good morning, Jepong</h1>
-        <p id="greetLine2">How can I help?</p>
+        <h1 id="greetLine1">What's on the agenda today?</h1>
+        <p id="greetLine2" hidden>How can I help?</p>
       </div>
     </div>
 
@@ -53,6 +64,7 @@
     </div>
 
     <div id="composerDock">
+      <div id="autoComplete" class="auto-complete" hidden></div>
       <div id="attachBar" class="attach-bar" hidden></div>
       <div id="composer" class="composer">
         <button id="plusBtn" class="plus-btn" type="button" aria-label="Attachments"><span data-icon="plus" data-size="18"></span></button>
@@ -69,9 +81,34 @@
   </main>
 </div>
 
+<!-- Right pane (App preview / files) -->
+<div id="rightPane" class="right-pane" hidden>
+  <header class="pane-head"><span class="pane-title" id="paneTitle">App preview</span><button id="paneClose" class="icon-btn" type="button" aria-label="Hide pane"><span data-icon="x" data-size="18"></span></button></header>
+  <div id="paneBody" class="pane-body"></div>
+</div>
+
+<!-- Plus menu bottom sheet -->
+<div id="plusSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head"><div class="sheet-title">Attachments</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div id="plusSheetList" class="sheet-list"></div>
+  </div>
+</div>
+
+<!-- Model picker bottom sheet -->
+<div id="modelSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head"><div class="sheet-title">Models</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div id="modelSheetList" class="sheet-list"></div>
+  </div>
+</div>
+
 <!-- Attachments sheet -->
 <div id="attachSheet" class="sheet" hidden>
   <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Attachments</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div class="sheet-row" id="attachState">No file selected</div>
     <button class="sheet-list-btn" data-attach="camera"><span data-icon="camera" data-size="18"></span><span>Camera</span></button>
@@ -83,6 +120,7 @@
 <!-- Image prompt sheet -->
 <div id="imageSheet" class="sheet" hidden>
   <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Create Image</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <label class="field-label" for="imagePrompt">Image prompt</label>
     <textarea id="imagePrompt" rows="3" placeholder="Describe the image you want…"></textarea>
@@ -93,20 +131,90 @@
 <!-- Sources dialog -->
 <div id="sourcesDialog" class="sheet" hidden>
   <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Sources</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="tabs"><button class="tab active" data-src-tab="web">Web</button><button class="tab" data-src-tab="images">Images</button></div>
-    <div id="sourcesWeb" class="sources-list"></div>
-    <div id="sourcesImages" class="sources-list" hidden></div>
+    <div id="sourcesList" class="sources-list"></div>
   </div>
+</div>
+
+<!-- Command palette -->
+<div id="paletteSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="palette-top"><span data-icon="search" data-size="18"></span><input id="paletteInput" type="text" placeholder="Search library" autocomplete="off" aria-label="Search or type an action"><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div class="tabs" id="paletteTabs"><button class="tab active" data-pal-tab="all">All</button><button class="tab" data-pal-tab="imagine">Imagine</button><button class="tab" data-pal-tab="apps">Apps</button><button class="tab" data-pal-tab="automations">Automations</button><button class="tab" data-pal-tab="files">Files</button></div>
+    <div id="paletteResults" class="palette-results"></div>
+  </div>
+</div>
+
+<!-- Grok Bot upsell sheet -->
+<div id="botSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head"><div class="sheet-title">Meet JepongDevxyz AI Bot</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <p class="dialog-text">Your personal assistant for life and work.</p>
+    <div class="bot-bubbles"><span class="bot-bubble">What's the weather in Paris?</span><span class="bot-bubble">Summarize my emails from this morning</span></div>
+    <ul class="bot-points">
+      <li>Ask about anything in your email, drive, and calendar</li>
+      <li>See it all in one place with no extra setup</li>
+      <li>Set it once, and it just handles it</li>
+    </ul>
+    <p class="set-note">Connecting email, drive, and calendar needs an app account — this app runs on your device only, so the bot works with your chats, files, and projects here instead.</p>
+    <button id="botUpgradeBtn" class="btn-primary" type="button">Upgrade to Premium</button>
+  </div>
+</div>
+
+<!-- New Project dialog -->
+<div id="projectDialog" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head"><div class="sheet-title">New Project</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div class="proj-icon-wrap"><button id="projIconBtn" class="proj-icon" type="button" aria-label="Project icon color"><span data-icon="folder" data-size="26"></span></button></div>
+    <input id="projNameInput" class="proj-name" type="text" placeholder="Untitled Project" maxlength="60" autocomplete="off">
+    <textarea id="projDescInput" class="proj-desc" rows="2" placeholder="What's this project about?"></textarea>
+    <div class="proj-folders" id="projFolders"><button id="projAddFolder" class="proj-add-folder" type="button">Add Folder</button></div>
+    <button id="projCreateBtn" class="btn-primary" type="button">Create</button>
+  </div>
+</div>
+
+<!-- Upgrade dialog -->
+<div id="upgradeSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head"><div class="sheet-title">The Ultimate AI Subscription</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div class="upg-promo">Pay for 1 month, get 1 free</div>
+    <div class="upg-countdown" id="upgCountdown"></div>
+    <div class="upg-offer-end">Offer ends Dec 2, 2026, 4:00 PM</div>
+    <div class="tabs" id="upgTabs"><button class="tab" data-upg-tab="Plus">Plus</button><button class="tab active" data-upg-tab="Premium">Premium</button><button class="tab" data-upg-tab="Super">Super</button><button class="tab" data-upg-tab="Ultra">Ultra</button></div>
+    <div id="upgBody" class="upg-body"></div>
+    <p class="set-note">Prices include taxes. Free on this device — no payment is taken. Cancel anytime.</p>
+  </div>
+</div>
+
+<!-- Library page layer -->
+<div id="libraryPage" class="page-layer" hidden>
+  <header class="page-head"><button id="libraryBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="libraryTitle">Library</h2><button id="libraryUpload" class="btn-ghost" type="button">Upload files</button><button id="libraryClose" class="icon-btn" aria-label="Close library"><span data-icon="x" data-size="18"></span></button></header>
+  <div class="page-body">
+    <div class="set-search"><span data-icon="search" data-size="16"></span><input id="libSearch" type="text" placeholder="Search library" autocomplete="off"><button id="libViewBtn" class="icon-btn sm" type="button" aria-label="View options"><span data-icon="sliders" data-size="16"></span></button></div>
+    <div class="tabs" id="libTabs"><button class="tab active" data-lib-tab="all">All</button><button class="tab" data-lib-tab="media">Media</button><button class="tab" data-lib-tab="projects">Projects</button><button class="tab" data-lib-tab="apps">Apps</button><button class="tab" data-lib-tab="files">Files</button></div>
+    <div id="libBody" class="lib-body"></div>
+  </div>
+</div>
+
+<!-- Project page layer -->
+<div id="projectPage" class="page-layer" hidden>
+  <header class="page-head"><button id="projectBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="projectTitle">Project</h2><button id="projectClose" class="icon-btn" aria-label="Close project"><span data-icon="x" data-size="18"></span></button></header>
+  <div id="projectBody" class="page-body"></div>
 </div>
 
 <!-- Settings page layer -->
 <div id="settingsPage" class="page-layer" hidden>
   <header class="page-head"><button id="settingsBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="settingsTitle">Settings</h2><button id="settingsClose" class="icon-btn" aria-label="Close settings"><span data-icon="x" data-size="18"></span></button></header>
   <div id="settingsBody" class="page-body"></div>
+  <button id="settingsBanner" class="settings-banner" type="button"><span><span class="ub-title">Get 50% off Premium</span><span class="ub-sub">Free on this device</span></span><span class="ub-pill">Upgrade</span></button>
 </div>
 
-<!-- Generic page layer (Help / Projects / Upgrade / Privacy / Terms) -->
+<!-- Generic page layer (FAQ / Changelog / Feedback / Shared Links / Legal / Archived / Deleted) -->
 <div id="infoPage" class="page-layer" hidden>
   <header class="page-head"><button id="infoBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="infoTitle">Page</h2><button id="infoClose" class="icon-btn" aria-label="Close"><span data-icon="x" data-size="18"></span></button></header>
   <div id="infoBody" class="page-body"></div>
@@ -151,6 +259,7 @@
 <!-- Voice settings sheet (opened from the voice-mode bar) -->
 <div id="voiceSheet" class="sheet" hidden>
   <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Voice</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div id="voiceSheetList" class="set-list"></div>
     <button class="set-row" id="vsPersonalityRow" type="button"><span class="set-label">Personality</span><span class="vs-pill" id="vsPersonality">Assistant<span data-icon="chevron-down" data-size="14"></span></span></button>
@@ -162,6 +271,7 @@
 <div id="toast" role="status" hidden></div>
 <div id="warnStack" class="warn-stack" aria-live="polite"></div>
 <input type="file" id="fileInput" hidden>
+<input type="file" id="libFileInput" hidden>
 <script src="app.js"></script>
 </body>
 </html>

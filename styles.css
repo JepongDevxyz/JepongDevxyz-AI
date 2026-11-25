@@ -37,12 +37,22 @@ svg{display:block}
 #sidebar{position:fixed;inset:0 auto 0 0;width:280px;max-width:66vw;background:var(--surface);border-right:1px solid var(--line);z-index:60;display:flex;flex-direction:column;transform:translateX(-102%);transition:transform .22s ease}
 #sidebar.open{transform:translateX(0)}
 #scrim{position:fixed;inset:0;background:var(--scrim);z-index:55}
-.sb-top{padding:12px 12px 6px;display:flex;flex-direction:column;gap:8px}
-.sb-search{display:flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:7px 10px;color:var(--muted)}
-.sb-search input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:14px;color:var(--ink)}
-.sb-search input::placeholder{color:var(--muted)}
-.sb-new{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;font-size:14.5px;font-weight:600;text-align:left;background:var(--surface);border:1px solid var(--line)}
-.sb-new:hover{background:var(--chip)}
+.sb-top{padding:12px 12px 6px;display:flex;align-items:center;gap:4px}
+.sb-new{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;font-size:14.5px;font-weight:600;text-align:left;background:var(--chip);border:0;flex:1;margin-left:4px}
+.sb-new:hover{background:var(--line)}
+.sb-scroll{flex:1;min-height:0;overflow-y:auto;padding:2px 8px}
+.bot-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:6px 0}
+.bot-card-head{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;text-align:left;font-size:14.5px;font-weight:600}
+.bot-smiley{color:var(--ink);flex:none;display:inline-flex}
+.bot-card-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bot-chev{color:var(--muted);flex:none;display:inline-flex;transition:transform .15s}
+.bot-card.closed .bot-chev{transform:rotate(-90deg)}
+.bot-card.closed .bot-card-body{display:none}
+.bot-card-body{border-top:1px solid var(--line);padding:2px 4px 4px}
+.sb-lib{margin:2px 0}
+.sb-list{overflow-y:visible;padding:4px 0}
+.sb-sec-row .sb-sec{padding:0}
+.sb-sec-row .icon-btn{width:26px;height:26px}
 .sb-new-plus{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .sb-sec-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 2px}
 .sb-sec-row .sb-sec{padding:0}
@@ -55,9 +65,9 @@ svg{display:block}
 .top-title span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #chatList.collapsed .sb-item,#chatList.collapsed .sb-more,#projList.collapsed .sb-item{display:none}
 .sb-sec-chev.closed svg{transform:rotate(-90deg)}
-.sb-upgrade{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:999px;font-size:14px;font-weight:600;text-align:left;background:var(--surface);border:1px solid var(--line);width:100%;margin:2px 0 6px}
-.sb-upgrade:hover{background:var(--chip-active)}
-.sb-list{flex:1;overflow-y:auto;padding:4px 8px}
+.sb-blackfriday{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 12px;border-radius:999px;font-size:14px;font-weight:700;text-align:center;background:var(--black-btn);color:var(--black-btn-ink);width:100%;margin:2px 0 8px}
+.sb-profile-wrap{display:flex;align-items:center;gap:2px}
+.sb-profile-wrap .sb-profile{flex:1;min-width:0}
 .sb-group{font-size:12px;font-weight:600;color:var(--muted);padding:10px 8px 4px}
 .sb-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:10px;font-size:14px;text-align:left;position:relative}
 .sb-item:hover{background:var(--chip)}
@@ -66,7 +76,6 @@ svg{display:block}
 .sb-item .sb-item-menu{flex:none;color:var(--muted);padding:4px;border-radius:6px}
 .sb-item .sb-item-menu:hover{background:var(--surface)}
 .sb-empty{padding:18px 12px;color:var(--muted);font-size:13.5px;text-align:center}
-.sb-explore{border-top:1px solid var(--line);padding:8px}
 .sb-sec{font-size:12px;font-weight:600;color:var(--muted);padding:6px 10px}
 .sb-row{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:10px;font-size:14px;text-align:left}
 .sb-row:hover{background:var(--chip)}
@@ -98,8 +107,8 @@ svg{display:block}
 #messages{max-width:768px;margin:0 auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:18px}
 .msg{display:flex;flex-direction:column;gap:6px}
 .msg.user{align-items:flex-end}
-.msg-bubble{background:var(--bubble);border-radius:18px;padding:10px 14px;max-width:72%;white-space:pre-wrap;word-break:break-word;font-size:15.5px;line-height:1.6}
-.msg-bubble .att-chip{display:inline-block;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12.5px;margin:0 4px 4px 0}
+.msg-user-text{text-align:right;max-width:88%;white-space:pre-wrap;word-break:break-word;font-size:15.5px;line-height:1.6}
+.msg-user-text .att-chip{display:inline-block;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12.5px;margin:0 4px 4px 0}
 .msg-user-actions{display:flex;gap:2px}
 .msg-user-actions .icon-btn{width:30px;height:30px;color:var(--muted)}
 .msg-asst{font-size:15.5px;line-height:1.65;word-break:break-word}
@@ -128,21 +137,20 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .code-body{overflow-x:auto;background:var(--surface)}
 .code-body pre{margin:0;background:none;border-radius:0}
 .code-body code{display:block;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;white-space:pre;background:none;color:var(--ink)}
-/* Grok-style table card — round 5: the table FITS the viewport width and
-   wraps long cells instead of scrolling with clipped columns. The old
-   width:max-content scrolled horizontally, so at rest the last column read
-   "JavaScrip…" — the round-5 live study ranked that the #1 defect. Grok
-   itself overflows worse; fitting beats grok here and nothing clips.
-   overflow-x:auto stays on the wrapper as a safety net only. */
+/* Grok-style table card — REBUILD: grok does NOT squeeze the table to fit.
+   It scrolls horizontally and keeps cell text intact. Round 5's wrap broke
+   words mid-token ("console.lo g") — that was a regression, reverted here.
+   width:max-content + min-width:100% means narrow tables still fill the card
+   and wide tables scroll with every word intact. */
 .table-wrap{position:relative;overflow-x:auto;margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
-.table-head{display:flex;justify-content:flex-end;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line)}
-.table-head button{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:12.5px;padding:4px 8px;border-radius:8px}
-.table-head button:hover{background:var(--chip);color:var(--ink)}
-.table-wrap table{border-collapse:collapse;width:100%;margin:0;font-size:14px}
-.table-wrap th,.table-wrap td{border:1px solid var(--line);padding:7px 10px;text-align:left;overflow-wrap:break-word}
+.table-foot{display:flex;justify-content:flex-start;gap:6px;padding:8px;border-top:1px solid var(--line)}
+.table-foot button{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:12.5px;padding:6px 10px;border-radius:999px;background:var(--chip)}
+.table-foot button:hover{color:var(--ink)}
+.table-wrap table{border-collapse:collapse;width:max-content;min-width:100%;margin:0;font-size:14px}
+.table-wrap th,.table-wrap td{border:1px solid var(--line);padding:7px 10px;text-align:left;white-space:normal}
 .table-wrap th:first-child,.table-wrap td:first-child{min-width:140px}
 .table-wrap th{background:var(--chip);font-weight:600}
-.table-wrap td code,.table-wrap th code{white-space:normal;overflow-wrap:anywhere}
+.table-wrap td code,.table-wrap th code{white-space:pre}
 .msg-asst table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:14px}
 .msg-asst th,.msg-asst td{border:1px solid var(--line);padding:7px 10px;text-align:left}
 .msg-asst th{background:var(--chip);font-weight:600}
@@ -151,11 +159,7 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .think-row .spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--muted);border-radius:50%;animation:spin 1s linear infinite;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .think-row .think-label{flex:1}
-.think-steps{margin:2px 0 6px 4px;padding:6px 0 6px 12px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:6px}
-.think-step{font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:baseline}
-.think-step .st-ic{flex:none}
-.think-step.done{color:var(--ink)}
-.think-step .st-detail{display:block;font-size:12.5px;color:var(--muted)}
+.think-divider{border-top:1px solid var(--line);margin:2px 0 6px}
 .action-bar{display:flex;align-items:center;gap:2px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
 .action-bar button{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:13px;padding:5px 7px;border-radius:8px}
 .action-bar button:hover{background:var(--chip);color:var(--ink)}
@@ -169,7 +173,6 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 /* Grok parity additions: menu timestamp header, live think step line,
    home suggestion rows, follow-up pills, sidebar Show more. */
 .menu-head{padding:10px 12px 6px;font-size:12.5px;color:var(--muted);text-align:center}
-.think-step-line{font-size:13.5px;color:var(--muted);padding:0 0 4px 23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Grok-style warning toasts: white card at the top with an X, not the black
    pill. Used for microphone denials (and the dictation-settings follow-up). */
 .warn-stack{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-direction:column;gap:8px;width:min(92vw,420px)}
@@ -181,29 +184,21 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .upgrade-band .ub-title{display:block;font-weight:700;font-size:14.5px}
 .upgrade-band .ub-sub{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
 .upgrade-band .ub-pill{background:var(--black-btn);color:var(--black-btn-ink);font-weight:600;font-size:13px;padding:7px 14px;border-radius:999px;flex:none}
-/* Appearance toggles: wrap long code blocks instead of scrolling, reduce motion. */
-.wrap-code .code-body{overflow-x:hidden}
-.wrap-code .code-body code{white-space:pre-wrap;overflow-wrap:anywhere}
-.reduce-motion .spin{animation:none!important}
-.reduce-motion *{transition-duration:.01ms!important}
 .home-sugg{display:flex;flex-direction:column;gap:2px;margin:18px auto 0;max-width:520px;padding:0 16px}
-.home-sugg button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font-size:15px;color:var(--muted);padding:11px 12px;border-radius:12px}
+.home-sugg button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;text-align:center;font-size:15px;color:var(--muted);padding:11px 12px;border-radius:12px}
 .home-sugg button:hover{background:var(--chip)}
 .home-sugg button .sugg-ic{color:var(--muted);flex:none;display:inline-flex}
-.followups{display:flex;flex-direction:column;gap:8px;margin:10px 0 4px}
-.followup-btn{display:flex;align-items:center;gap:8px;text-align:left;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.followup-btn:hover{background:var(--chip)}
-.followup-btn .fu-play{color:var(--accent);flex:none;display:inline-flex}
 .sb-more{display:block;width:100%;text-align:left;font-size:13.5px;color:var(--muted);padding:8px 12px;border-radius:8px}
 .sb-more:hover{background:var(--chip);color:var(--ink)}
 .err-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:14px}
 .err-card .err-title{font-weight:600;margin-bottom:4px}
 .img-card{margin:4px 0}
 .img-card img{max-width:100%;border-radius:12px;display:block}
-.sources-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;background:var(--surface);margin:2px 0 4px}
-.sources-btn:hover{background:var(--chip)}
-.src-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;font-size:12.5px;margin:0 6px 6px 0;color:var(--muted);text-decoration:none}
-.src-chip:hover{background:var(--chip);color:var(--ink)}
+.sources-btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:5px 11px 5px 5px;font-size:13px;background:none;color:var(--muted);margin:2px 0 4px}
+.sources-btn:hover{background:var(--chip);color:var(--ink)}
+.src-favicons{display:inline-flex;align-items:center}
+.src-fav{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;border:2px solid var(--surface);margin-left:-6px}
+.src-fav:first-child{margin-left:0}
 
 /* ---------- composer ---------- */
 #composerDock{flex:none;padding:0 12px calc(8px + env(safe-area-inset-bottom));max-width:768px;width:100%;margin:0 auto}
@@ -384,3 +379,160 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
   .sheet-card{border-radius:20px}
   .dialog-card{border-radius:20px}
 }
+
+/* ================= REBUILD (2026-11-25): grok shell per GROK-FULL-REVIEW ================= */
+
+/* ---------- app banner ---------- */
+.app-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.app-banner-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.app-banner-title{font-size:14.5px;font-weight:700}
+.app-banner-sub{font-size:12.5px;color:var(--muted)}
+.app-banner-open{font-size:14px;font-weight:700;color:var(--accent);padding:6px 10px;flex:none}
+
+/* ---------- top bar: centred pill + private badge ---------- */
+#topbar{justify-content:flex-start}
+.top-title{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.top-title .top-pill{display:inline-flex;align-items:center;gap:7px;background:var(--chip);border-radius:999px;padding:6px 12px;max-width:100%;min-width:0}
+.top-title .top-pill span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-smiley{color:var(--ink);flex:none;display:inline-flex}
+.private-badge{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--muted);color:var(--muted);font-size:8.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;letter-spacing:.2px}
+.private-badge.on{border-style:solid;border-color:var(--ink);color:var(--ink)}
+.top-title.chat-title .top-pill{background:var(--chip);font-weight:500;font-size:14px}
+
+/* ---------- bottom sheets: drag grip ---------- */
+.sheet-grip{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+
+/* ---------- autocomplete rows (typing replaces suggestions) ---------- */
+.auto-complete{margin:0 0 6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.auto-complete button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 12px;font-size:14.5px}
+.auto-complete button:hover{background:var(--chip)}
+.auto-complete .ac-typed{color:var(--muted)}
+.auto-complete .ac-rest{color:var(--ink)}
+.auto-complete .ac-tag{margin-left:auto;font-size:12px;color:var(--muted);flex:none}
+
+/* ---------- right pane ---------- */
+.right-pane{position:fixed;top:0;right:0;bottom:0;width:min(420px,94vw);background:var(--surface);border-left:1px solid var(--line);z-index:65;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.pane-head{flex:none;height:52px;display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--line)}
+.pane-title{flex:1;font-size:16px;font-weight:700}
+.pane-body{flex:1;overflow-y:auto;padding:14px 16px}
+.pane-empty{color:var(--muted);font-size:14px;text-align:center;padding:40px 16px}
+.pane-file{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border-radius:12px;text-align:left;font-size:14.5px}
+.pane-file:hover{background:var(--chip)}
+.pane-file .pane-file-ic{color:var(--muted);flex:none;display:inline-flex}
+.pane-file span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pane-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:8px 0}
+.pane-table-wrap table{border-collapse:collapse;width:max-content;min-width:100%;font-size:14px}
+.pane-table-wrap th,.pane-table-wrap td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+.pane-table-wrap th{background:var(--chip);font-weight:600}
+
+/* ---------- sources sheet (grok: title + domain, no tabs) ---------- */
+.src-row{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:12px;text-decoration:none;color:var(--ink);width:100%;text-align:left}
+.src-row:hover{background:var(--chip)}
+.src-row .src-title{font-size:14px;font-weight:600;display:block}
+.src-row .src-host{font-size:12.5px;color:var(--muted);display:block;word-break:break-all}
+
+/* ---------- command palette ---------- */
+.palette-top{display:flex;align-items:center;gap:10px;color:var(--muted);margin-bottom:6px}
+.palette-top input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:15.5px;color:var(--ink)}
+.palette-results{display:flex;flex-direction:column;gap:2px}
+.pal-sec{font-size:12px;font-weight:600;color:var(--muted);padding:10px 10px 4px}
+.pal-row{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border-radius:12px;font-size:14.5px;text-align:left}
+.pal-row:hover{background:var(--chip)}
+.pal-row .pal-ic{color:var(--muted);flex:none;display:inline-flex}
+.pal-row .pal-tx{flex:1;min-width:0}
+.pal-row .pal-tx span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal-row .pal-sub{font-size:12.5px;color:var(--muted)}
+.pal-row .pal-kbd{font-size:12px;color:var(--muted);flex:none}
+
+/* ---------- bot sheet ---------- */
+.bot-bubbles{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.bot-bubble{background:var(--chip);border-radius:14px;padding:10px 12px;font-size:14px}
+.bot-points{margin:0 0 10px;padding-left:20px;font-size:14px;line-height:1.7}
+.bot-points li{margin:2px 0}
+
+/* ---------- new project dialog ---------- */
+.proj-icon-wrap{display:flex;justify-content:center;margin:8px 0 4px}
+.proj-icon{width:64px;height:64px;border-radius:16px;background:var(--chip);color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.proj-name{width:100%;border:0;outline:0;background:none;text-align:center;font-size:20px;font-weight:700;padding:8px 0}
+.proj-desc{width:100%;border:0;outline:0;background:none;resize:none;text-align:center;font-size:14.5px;color:var(--muted);padding:4px 0 10px}
+.proj-folders{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.proj-folder-chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border-radius:999px;padding:5px 10px;font-size:13px}
+.proj-folder-chip button{color:var(--muted);display:inline-flex}
+.proj-add-folder{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600}
+
+/* ---------- upgrade dialog ---------- */
+.upg-promo{font-size:15px;font-weight:700;text-align:center;margin:4px 0 2px}
+.upg-countdown{font-size:15px;font-weight:700;text-align:center;letter-spacing:.5px}
+.upg-offer-end{font-size:13px;color:var(--muted);text-align:center;margin-bottom:8px}
+.upg-body{padding:6px 0}
+.upg-plan-sub{font-size:14px;color:var(--muted);margin:2px 0 10px}
+.upg-deal{display:inline-block;background:var(--black-btn);color:var(--black-btn-ink);font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;margin-bottom:8px}
+.upg-price{font-size:22px;font-weight:700}
+.upg-price .upg-was{font-size:14px;color:var(--muted);font-weight:400;text-decoration:line-through;margin-left:6px}
+.upg-price-sub{font-size:13px;color:var(--muted);margin:2px 0 10px}
+.upg-benefits{font-size:14px;font-weight:700;margin:12px 0 4px}
+.upg-benefits-list{margin:0 0 10px;padding-left:20px;font-size:14px;line-height:1.7}
+
+/* ---------- settings banner (under every section) ---------- */
+.settings-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none;width:100%;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));text-align:left}
+.settings-banner .ub-title{display:block;font-weight:700;font-size:14.5px}
+.settings-banner .ub-sub{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.settings-banner .ub-pill{background:var(--black-btn);color:var(--black-btn-ink);font-weight:600;font-size:13px;padding:7px 14px;border-radius:999px;flex:none}
+
+/* ---------- library ---------- */
+.lib-body{display:flex;flex-direction:column;gap:4px}
+.lib-empty{text-align:center;padding:44px 16px;color:var(--muted)}
+.lib-empty .lib-empty-ic{width:56px;height:56px;border-radius:50%;background:var(--chip);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;color:var(--muted)}
+.lib-empty h3{margin:0 0 4px;font-size:16px;color:var(--ink)}
+.lib-empty p{margin:0;font-size:14px}
+.lib-file{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border-radius:12px;text-align:left;font-size:14.5px}
+.lib-file:hover{background:var(--chip)}
+.lib-file .lib-file-ic{color:var(--muted);flex:none;display:inline-flex}
+.lib-file .lib-file-tx{flex:1;min-width:0}
+.lib-file .lib-file-tx span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lib-file .lib-file-sub{font-size:12.5px;color:var(--muted)}
+.lib-file .lib-del{color:var(--muted);flex:none;padding:4px;border-radius:6px;display:inline-flex}
+.lib-file .lib-del:hover{color:var(--danger);background:var(--chip)}
+.lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 0}
+.lib-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left}
+.lib-card:hover{background:var(--chip)}
+.lib-card .lib-card-tag{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.lib-card .lib-card-title{font-size:14.5px;font-weight:700;margin-top:6px;line-height:1.35}
+.lib-sec{font-size:13px;font-weight:700;margin:14px 0 6px}
+.lib-img{width:100%;border-radius:12px;display:block;margin:4px 0}
+
+/* ---------- connect apps / automations / skills ---------- */
+.conn-search{display:flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:7px 10px;color:var(--muted);margin-bottom:10px}
+.conn-search input{flex:1;min-width:0;border:0;outline:0;background:none;font-size:14px;color:var(--ink)}
+.conn-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.conn-chips::-webkit-scrollbar{display:none}
+.conn-chip{flex:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600}
+.conn-chip.active{background:var(--black-btn);color:var(--black-btn-ink);border-color:var(--black-btn)}
+.conn-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left}
+.conn-logo{width:36px;height:36px;border-radius:10px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff}
+.conn-row .conn-tx{flex:1;min-width:0}
+.conn-row .conn-name{font-size:15px;font-weight:600}
+.conn-row .conn-desc{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conn-pill{flex:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:600}
+.conn-pill.requested{color:var(--muted)}
+.auto-card{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left}
+.auto-ic{width:38px;height:38px;border-radius:10px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.auto-card .auto-tx{flex:1;min-width:0}
+.auto-card .auto-name{font-size:15px;font-weight:600}
+.auto-card .auto-desc{font-size:13px;color:var(--muted)}
+.skill-row{display:flex;align-items:center;gap:12px;width:100%;padding:13px 4px;border-bottom:1px solid var(--line);text-align:left}
+.skill-row .skill-ic{color:var(--muted);flex:none;display:inline-flex}
+.skill-row .skill-name{flex:1;font-size:15px}
+.skill-on{flex:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--muted)}
+.skill-on.on{color:var(--ink)}
+.empty-dash{border:1.5px dashed var(--line);border-radius:14px;padding:26px 14px;text-align:center;color:var(--muted);font-size:14px;margin:10px 0}
+
+/* ---------- data controls helpers ---------- */
+.set-subhead{font-size:13px;font-weight:700;color:var(--muted);margin:18px 4px 6px;text-transform:uppercase;letter-spacing:.4px}
+.set-subhead:first-child{margin-top:6px}
+.trash-row{display:flex;align-items:center;gap:10px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:14.5px}
+.trash-row .trash-tx{flex:1;min-width:0}
+.trash-row .trash-tx span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trash-row .trash-sub{font-size:12.5px;color:var(--muted)}
+.mini-btn{flex:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600}
+.mini-btn.danger{color:var(--danger);border-color:var(--danger)}
