@@ -63,6 +63,8 @@ calendar:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3
 'graduation-cap':'<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
 smile:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>',
 'panel-right':'<rect width="18" height="18" x="3" y="3" rx="2"/><line x1="15" x2="15" y1="3" y2="21"/>',
+'panel-left':'<rect width="18" height="18" x="3" y="3" rx="2"/><line x1="9" x2="9" y1="3" y2="21"/>',
+'external-link':'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
 tag:'<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
 'layout-grid':'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
 sliders:'<line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/>',
@@ -120,7 +122,7 @@ const MODELS=[
 const SESS_KEY='jepongQwenReset.sessions.v1', SET_KEY='jepongQwenReset.settings.v1', PROJ_KEY='jepongQwenReset.projects.v1', EXTRA_KEY='jepongQwenReset.extra.v1', DRAFT_KEY='jepongQwenReset.drafts.v1', PENDING_KEY='jepongQwenReset.pending.v1', LIB_KEY='jepongQwenReset.library.v1';
 const EFFORT={Auto:'Medium',Thinking:'High',Fast:'Instant'};
 const defaultSettings=()=>({
-  theme:'light', profileName:'Jepong', profileEmail:'', profilePhoto:'',
+  theme:'system', profileName:'Jepong', profileEmail:'', profilePhoto:'',
   provider:'apinex', model:'free/deepseek-v4.1-flash',
   responseMode:'Auto', webSearch:false, toolsEnabled:true, advancedEnabled:true,
   responseLang:{code:'auto', label:'Auto'},
@@ -158,7 +160,6 @@ if(!Array.isArray(extra.sharedLinks)) extra.sharedLinks=[];
 if(!Array.isArray(extra.skills)) extra.skills=[];
 if(!Array.isArray(extra.connectRequested)) extra.connectRequested=[];
 if(!Array.isArray(extra.customConnectors)) extra.customConnectors=[];
-if(extra.bannerDismissed!==true) extra.bannerDismissed=false;
 if(typeof extra.seenVersion!=='string') extra.seenVersion='';
 let library=loadJSON(LIB_KEY,[]); if(!Array.isArray(library)) library=[];
 function saveLibrary(){ saveJSON(LIB_KEY, library); }
@@ -265,7 +266,11 @@ let streaming=false, aborter=null;
 let stickToBottom=true;
 let activeMenu=null;
 let suppressMenuClose=false;
-function applyTheme(){ document.documentElement.setAttribute('data-theme', settings.theme||'light'); const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content',(settings.theme==='dark')?'#101011':'#fafaf8'); }
+function applyTheme(){ document.documentElement.setAttribute('data-theme', settings.theme||'system'); const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content',(settings.theme==='dark')?'#101011':'#fafaf8');
+  /* ROUND 6: real Appearance prefs live on <html> so they apply everywhere. */
+  document.documentElement.classList.toggle('wrap-code', !!(settings.interface&&settings.interface.wrapCode));
+  document.documentElement.classList.toggle('reduce-motion', !!(settings.interface&&settings.interface.reduceMotion));
+}
 function modelOf(){ return MODELS.find(m=>m.id===settings.model)||MODELS[0]; }
 function getSession(id){ return sessions.find(s=>s.id===id)||null; }
 function curSession(){ return currentId?getSession(currentId):null; }
@@ -316,6 +321,7 @@ function showMenu(x,y,items,opts){
   const pop=document.createElement('div'); pop.className='menu-pop'; pop.id='menuPop';
   items.forEach(it=>{
     if(it.header){ const d=document.createElement('div'); d.className='menu-head'; d.textContent=it.header; pop.appendChild(d); return; }
+    if(it.account){ const d=document.createElement('div'); d.className='menu-account'; d.innerHTML='<strong>'+esc(it.name||'')+'</strong><span>'+esc(it.sub||'')+'</span>'; pop.appendChild(d); return; }
     if(it.band){ const b=document.createElement('button'); b.className='menu-band';
       b.innerHTML='<span class="menu-band-tx"><span class="ub-title">'+esc(it.title||'')+'</span><span class="ub-sub">'+esc(it.sub||'')+'</span></span><span class="ub-pill">'+esc(it.pill||'Upgrade')+'</span>';
       b.addEventListener('click',()=>{ closeMenu(); it.onClick&&it.onClick(); }); pop.appendChild(b); return; }
@@ -688,16 +694,25 @@ function setPrivate(on){
   if(temporary) toast('Private chat — this chat will not be saved');
 }
 function closeSidebarMobile(){ if(window.innerWidth<1024){ $('#sidebar').classList.remove('open'); $('#scrim').hidden=true; } }
-const SUGGESTIONS=[{t:'Explain a concept',icon:'lightbulb'},{t:'Make a website',icon:'code'},{t:'Search the web',icon:'globe'}];
+/* ROUND 6: grok's 8-label suggestion pool — all three rows rotate per load
+   (grok-spec). The 3 grok-order labels stay in the pool. */
+const SUGGESTIONS=[{t:'Create an image',icon:'image'},{t:'Write or edit',icon:'pencil'},{t:'Search the web',icon:'globe'},{t:'Make a website',icon:'code'},{t:'Explain a concept',icon:'lightbulb'},{t:'Design a presentation',icon:'book-open'},{t:'Plan my day',icon:'calendar'},{t:'Help me learn something new',icon:'graduation-cap'}];
 function renderHomeSugg(){
-  /* Grok home shows exactly these 3 rows under the composer, in this order,
-     centred, grey. Each sends its text as a real message (web search is a
-     backend behavior now, not a toggle). */
+  /* Grok home shows three rotating suggestion rows under the composer.
+     Every row does something real: image opens the image sheet, the rest
+     send as starter messages. Hidden when "Show suggestions" is off. */
   const box=$('#homeSugg'); if(!box) return;
-  if(curSession()){ box.hidden=true; box.innerHTML=''; return; }
+  const show=!curSession()&&settings.interface.showSuggestions!==false;
+  if(!show){ box.hidden=true; box.innerHTML=''; return; }
+  const pool=SUGGESTIONS.slice();
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
   box.hidden=false;
-  box.innerHTML=SUGGESTIONS.map(o=>'<button type="button" data-sugg="'+esc(o.t)+'"><span class="sugg-ic">'+icon(o.icon,16)+'</span><span>'+esc(o.t)+'</span></button>').join('');
-  box.querySelectorAll('[data-sugg]').forEach(b=>b.addEventListener('click',()=>sendMessage(b.getAttribute('data-sugg'))));
+  box.innerHTML=pool.slice(0,3).map(o=>'<button type="button" data-sugg="'+esc(o.t)+'"><span class="sugg-ic">'+icon(o.icon,16)+'</span><span>'+esc(o.t)+'</span></button>').join('');
+  box.querySelectorAll('[data-sugg]').forEach(b=>b.addEventListener('click',()=>{
+    const t=b.getAttribute('data-sugg');
+    if(t==='Create an image'){ openSheet('#imageSheet'); setTimeout(()=>$('#imagePrompt').focus(),60); return; }
+    sendMessage(t);
+  }));
 }
 function renderAll(){
   applyTheme();
@@ -707,20 +722,23 @@ function renderAll(){
   $('#chatView').hidden=!hasChat;
   $('#greetLine1').textContent="What's on the agenda today?";
   $('#greetLine2').hidden=true;
-  const pel=$('#profileEmailLabel'); if(pel){ pel.textContent=settings.profileEmail||'Free plan'; }
   $('#profileNameLabel').textContent=settings.profileName||'Jepong';
-  $('#profileAvatar').textContent=(settings.profileName||'J')[0].toUpperCase();
-  /* Grok top bar: centred pill. Home = smiley + "JepongDevxyz AI"; in a
-     chat = the chat title, truncated. The dashed "Private" badge sits right
-     of the pill (grok shows it); tapping it toggles Private mode. */
+  /* ROUND 6: grey silhouette avatar (grok), not a black "J" circle. */
+  const pav=$('#profileAvatar'); if(pav) pav.innerHTML=icon('user',20);
+  /* ROUND 6: grok's top bar has NO pill behind the title — plain smiley +
+     app name (or truncated chat title). The pill's width is what clipped
+     "Private" on her phone. "Private" is a dashed circle + the word, as
+     two parts; it and the pane toggle never shrink or clip. */
   const tt=$('#topTitle');
   const label=hasChat?(s.title||'New chat'):'JepongDevxyz AI';
   tt.classList.toggle('chat-title', hasChat);
-  tt.innerHTML='<span class="top-pill">'+(hasChat?'':'<span class="top-smiley">'+icon('smile',18)+'</span>')+'<span>'+esc(label)+'</span></span>'
-    +'<button type="button" class="private-badge'+(temporary?' on':'')+'" id="topPrivateBadge" aria-label="Private chat" aria-pressed="'+(temporary?'true':'false')+'">Private</button>';
+  tt.innerHTML='<span class="top-title-tx">'+(hasChat?'':'<span class="top-smiley">'+icon('smile',18)+'</span>')+'<span>'+esc(label)+'</span></span>'
+    +'<button type="button" class="private-badge'+(temporary?' on':'')+'" id="topPrivateBadge" aria-label="Private chat" aria-pressed="'+(temporary?'true':'false')+'"><span class="pb-ring"></span><span class="pb-tx">Private</span></button>';
   const badge=$('#topPrivateBadge');
   if(badge) badge.addEventListener('click',e=>{ e.stopPropagation(); setPrivate(!temporary); });
-  const banner=$('#appBanner'); if(banner) banner.hidden=!!extra.bannerDismissed;
+  /* ROUND 6: the banner shows on every fresh load — dismiss does NOT
+     persist (grok-spec); X hides it until reload only. */
+  const banner=$('#appBanner'); if(banner) banner.hidden=false;
   $('#modelName').textContent=modelOf().tiny||modelOf().short||modelOf().name;
   $('#modelMark').innerHTML=J_MARK;
   $('#composerInput').placeholder='Ask anything...';
@@ -754,8 +772,10 @@ function renderMessages(){
   let html='';
   s.messages.forEach(m=>{
     if(m.role==='user'){
-      /* Grok: NO bubble — plain dark text, right-aligned, toolbar Copy/Edit
-         only beneath it. Delete is gone per the rebuild order. */
+      /* ROUND 6: grok's user message IS a light-grey rounded bubble,
+         right-aligned (grok-spec §10). The Copy/Edit row is hidden until
+         the bubble is tapped — grok shows no toolbar under the bubble
+         until interacted with. Delete is gone per the rebuild order. */
       html+='<div class="msg user" data-mid="'+m.id+'"><div class="msg-user-text">'
         +((m.attachments||[]).map(a=>'<span class="att-chip">'+esc(a.name)+'</span>').join(''))
         +esc(m.text)+'</div><div class="msg-user-actions">'
@@ -768,6 +788,8 @@ function renderMessages(){
   });
   box.innerHTML=html;
   box.querySelectorAll('[data-u-act]').forEach(b=>b.addEventListener('click',()=>userMsgAction(b.getAttribute('data-u-act'), b.getAttribute('data-mid'))));
+  /* ROUND 6: tapping the user bubble toggles its Copy/Edit row. */
+  box.querySelectorAll('.msg-user-text').forEach(el=>el.addEventListener('click',()=>{ const m2=el.closest('.msg.user'); if(m2) m2.classList.toggle('show-actions'); }));
   box.querySelectorAll('[data-a-act]').forEach(b=>b.addEventListener('click',()=>asstAction(b.getAttribute('data-a-act'), b.getAttribute('data-mid'))));
   box.querySelectorAll('[data-code-act]').forEach(b=>b.addEventListener('click',()=>codeAction(b)));
   box.querySelectorAll('[data-table-copy]').forEach(b=>b.addEventListener('click',()=>tableCopy(b)));
@@ -1113,7 +1135,7 @@ async function generateTitle(sessionId){
        the sidebar ended up with two identical rows. Suffix " 2", " 3"... */
     let unique=t, n=2;
     while(sessions.some(x=>x.id!==s.id&&(x.title||'').toLowerCase()===unique.toLowerCase())){ unique=t+' '+n; n++; }
-    s.title=unique; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); const cur=curSession(); if(cur&&cur.id===s.id) $('#topTitle').innerHTML='<span class="top-logo">'+J_MARK+'</span><span>'+esc(unique)+'</span>'; }
+    s.title=unique; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); const cur=curSession(); if(cur&&cur.id===s.id) renderAll(); /* ROUND 6: the old code wrote a bare logo+title into #topTitle here, which CLOBBERED the Private badge (and the .top-title-tx structure) the moment the first title generated — the badge vanished after the first reply. renderAll() re-renders the full top bar. */ }
 }
 async function runImageGeneration(s,userMsg){
   const asst={id:uid(), role:'assistant', text:'', createdAt:Date.now(), activity:[], pending:true};
@@ -1343,14 +1365,20 @@ async function vmMicMenu(anchor){
 
 /* ---------- sheets: model / attach / image ---------- */
 function openModelSheet(){
-  /* Grok's picker is a bottom sheet at phone width: name + sub-label +
-     checkmark, no icons, no premium band. Real names per Q1. */
+  /* ROUND 6: grok's picker is a bottom sheet at phone width: name +
+     sub-label + checkmark, no icons, no title, no X — just the drag
+     handle, then the rows. Bottom row is Premium ("Unlock extended
+     capabilities") with a black pill; grok's pill says "Save 50%", ours
+     says "Free" (all plans are free per her Q2 decision). Real names. */
   const list=$('#modelSheetList');
-  list.innerHTML=MODELS.map(m=>'<button class="sheet-list-btn" data-model="'+m.id+'" type="button"><span class="row-main"><span>'+esc(m.name)+'</span><span class="row-sub">'+esc(m.sub||m.desc||'')+'</span></span>'+(m.id===settings.model?'<span class="check">'+icon('check',18)+'</span>':'')+'</button>').join('');
+  list.innerHTML=MODELS.map(m=>'<button class="sheet-list-btn" data-model="'+m.id+'" type="button"><span class="row-main"><span>'+esc(m.name)+'</span><span class="row-sub">'+esc(m.sub||m.desc||'')+'</span></span>'+(m.id===settings.model?'<span class="check">'+icon('check',18)+'</span>':'')+'</button>').join('')
+    +'<button class="sheet-list-btn" data-premium-row type="button"><span class="row-main"><span>Premium</span><span class="row-sub">Unlock extended capabilities</span></span><span class="ub-pill">Free</span></button>';
   list.querySelectorAll('[data-model]').forEach(b=>b.addEventListener('click',()=>{
     const m=MODELS.find(x=>x.id===b.getAttribute('data-model')); if(!m) return;
     settings.provider=m.provider; settings.model=m.id; saveSettings(); renderAll(); closeSheet('#modelSheet'); toast(m.name+' selected');
   }));
+  const pr=list.querySelector('[data-premium-row]');
+  if(pr) pr.addEventListener('click',()=>{ closeSheet('#modelSheet'); openUpgradeSheet(); });
   openSheet('#modelSheet');
 }
 function renderPlusList(items){
@@ -1490,15 +1518,17 @@ function renderSettingsPage(){
      it (there it means "back to the list", not "close"). */
   const sb=$('#settingsBack'); if(sb) sb.style.display=settingsPageKey==='list'?'none':'';
   const back=()=>{ settingsPageKey='list'; renderSettingsPage(); };
-  const rowHtml=r=>'<button class="set-row" data-set="'+r.key+'"><span class="set-ic">'+icon(r.icon,18)+'</span><span class="set-label">'+esc(r.label)+'</span>'+(r.value()?'<span class="set-value">'+esc(r.value())+'</span>':'')+'<span class="chev">'+icon('chevron-right',16)+'</span></button>';
+  const rowHtml=r=>'<button class="set-row" data-set="'+r.key+'"><span class="set-ic">'+icon(r.icon,18)+'</span><span class="set-label">'+esc(r.label)+'</span><span class="chev">'+icon('chevron-right',16)+'</span></button>';
   if(settingsPageKey==='list'){
     title.textContent='Settings';
+    /* ROUND 6: grok's list has no value labels, no divider lines, and no
+       Sign out row at the bottom (Sign out lives in the account menu and
+       the Account page). */
     body.innerHTML='<div class="set-search"><span>'+icon('search',16)+'</span><input id="setSearch" type="text" placeholder="Search settings" autocomplete="off"></div>'
-      +'<div class="set-list">'+SETTING_ROWS.map(rowHtml).join('')+'</div>'
-      +'<button class="set-row danger" data-set="signout"><span class="set-ic">'+icon('log-out',18)+'</span><span class="set-label">Sign out</span></button>';
+      +'<div class="set-list plain">'+SETTING_ROWS.map(rowHtml).join('')+'</div>';
     body.querySelector('#setSearch').addEventListener('input',e=>{
       const q=e.target.value.toLowerCase();
-      body.querySelectorAll('.set-list [data-set], .set-row.danger').forEach(b=>{ b.style.display=!q||(b.textContent||'').toLowerCase().includes(q)?'':'none'; });
+      body.querySelectorAll('.set-list [data-set]').forEach(b=>{ b.style.display=!q||(b.textContent||'').toLowerCase().includes(q)?'':'none'; });
     });
     body.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click',()=>{
       const k=b.getAttribute('data-set');
@@ -1543,14 +1573,25 @@ function renderSettingsPage(){
     return;
   }
   if(settingsPageKey==='appearance'){
-    /* Grok's Appearance has exactly ONE control: Theme (Light/Dark/System). */
+    /* ROUND 6: grok's Appearance is ONE rounded card with FOUR rows: Theme
+       (pill showing the current value, default System), Wrap Long Code
+       Blocks (OFF), Reduce motion (OFF), Show suggestions (ON). The deep
+       review's "Theme only" was wrong — grok-spec §9. All four are real. */
     title.textContent='Appearance';
-    const cur=settings.theme||'light';
-    body.innerHTML='<div class="set-list"><button class="set-row" id="themeRow"><span class="set-ic">'+icon('monitor',18)+'</span><span class="set-label">Theme</span><span class="set-value">'+esc(cap(cur))+'</span><span class="chev">'+icon('chevron-right',16)+'</span></button></div>';
+    const cur=settings.theme||'system';
+    body.innerHTML='<div class="set-card">'
+      +'<button class="set-row" id="themeRow"><span class="set-ic">'+icon('monitor',18)+'</span><span class="set-label">Theme</span><span class="theme-pill">'+esc(cap(cur))+' ⌄</span></button>'
+      +toggleRow('wrapCodeSw','Wrap Long Code Blocks','Wrap code that is wider than the screen instead of scrolling it.', !!(settings.interface&&settings.interface.wrapCode))
+      +toggleRow('reduceMotionSw','Reduce motion','Minimize animations and transitions.', !!(settings.interface&&settings.interface.reduceMotion))
+      +toggleRow('showSuggSw','Show suggestions','Starter prompts on new chats and follow-ups under replies.', settings.interface.showSuggestions!==false)
+      +'</div>';
     body.querySelector('#themeRow').addEventListener('click',e=>{
       const r=e.currentTarget.getBoundingClientRect();
       showMenu(Math.max(8,Math.min(r.left,window.innerWidth-200)), r.bottom+4, ['light','dark','system'].map(t=>({label:cap(t)+(cur===t?' ✓':''), onClick:()=>{ settings.theme=t; saveSettings(); applyTheme(); renderSettingsPage(); }})));
     });
+    body.querySelector('#wrapCodeSw').addEventListener('click',e=>{ settings.interface.wrapCode=!settings.interface.wrapCode; saveSettings(); applyTheme(); e.currentTarget.classList.toggle('on', settings.interface.wrapCode); });
+    body.querySelector('#reduceMotionSw').addEventListener('click',e=>{ settings.interface.reduceMotion=!settings.interface.reduceMotion; saveSettings(); applyTheme(); e.currentTarget.classList.toggle('on', settings.interface.reduceMotion); });
+    body.querySelector('#showSuggSw').addEventListener('click',e=>{ settings.interface.showSuggestions=settings.interface.showSuggestions===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.interface.showSuggestions!==false); renderHomeSugg(); });
     return;
   }
   if(settingsPageKey==='behavior'){
@@ -2445,8 +2486,12 @@ function wire(){
   $('#topSearchBtn').addEventListener('click',()=>openPalette());
   $('#paneBtn').addEventListener('click',()=>{ const p=$('#rightPane'); if(p.hidden) openRightPane(); else closeRightPane(); });
   $('#paneClose').addEventListener('click',closeRightPane);
-  $('#bannerClose').addEventListener('click',()=>{ extra.bannerDismissed=true; saveExtra(); $('#appBanner').hidden=true; });
-  $('#bannerOpen').addEventListener('click',()=>{ try{ window.open('https://jepong-devxyz-ai.vercel.app/','_blank'); }catch(e){} });
+  /* ROUND 6: the banner shows on every load; X hides it until reload only
+     (no persistence — grok-spec). "Open" just dismisses it too: you are
+     already in the app, there is no native app to open. */
+  $('#bannerClose').addEventListener('click',()=>{ $('#appBanner').hidden=true; });
+  $('#bannerOpen').addEventListener('click',()=>{ $('#appBanner').hidden=true; });
+  $('#bannerMark').innerHTML=J_MARK;
   $('#topTitle').addEventListener('click',()=>{ const s=curSession(); if(!s) return; topTitleMenu(s); });
   $('#botCardHead').addEventListener('click',()=>{ $('#botCard').classList.toggle('closed'); });
   $('#botCreate').addEventListener('click',()=>{ closeSidebarMobile(); openBotSheet(); });
@@ -2474,12 +2519,15 @@ function wire(){
        Help (submenu) / Upgrade plan / Sign out. */
     const r=e.currentTarget.getBoundingClientRect(); closeSidebarMobile();
     showMenu(Math.max(8,Math.min(r.left,window.innerWidth-230)), r.top-8, [
-      {header:(settings.profileName||'Jepong')+(settings.profileEmail?' · '+settings.profileEmail:'')},
-      {icon:'layout-grid',label:'Dashboard',onClick:()=>{ try{ window.open('https://jepong-devxyz-ai.vercel.app/','_blank'); }catch(err){} }},
+      /* ROUND 6: bold name + "Free on this device" (no fake email — we have
+         no account). Dashboard carries an external-link arrow, not the
+         grid icon. Sign out is BLACK, not red. */
+      {account:true, name:settings.profileName||'Jepong', sub:'Free on this device'},
+      {icon:'external-link',label:'Dashboard',onClick:()=>{ try{ window.open('https://jepong-devxyz-ai.vercel.app/','_blank'); }catch(err){} }},
       {icon:'settings',label:'Settings',onClick:()=>openSettings()},
       {icon:'circle-help',label:'Help',onClick:()=>openHelpMenu()},
       {icon:'rocket',label:'Upgrade plan',onClick:()=>openUpgradeSheet()},
-      {icon:'log-out',label:'Sign out',danger:true,onClick:()=>signOut()}
+      {icon:'log-out',label:'Sign out',onClick:()=>signOut()}
     ], {above:true});
   });
   const input=$('#composerInput');

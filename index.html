@@ -12,7 +12,7 @@
 <div id="app">
   <aside id="sidebar" aria-label="Sidebar">
     <div class="sb-top">
-      <button id="sbClose" class="icon-btn" type="button" aria-label="Close sidebar"><span data-icon="menu" data-size="20"></span></button>
+      <button id="sbClose" class="icon-btn panel-btn" type="button" aria-label="Close sidebar"><span data-icon="panel-left" data-size="20"></span></button>
       <button id="sbSearchIcon" class="icon-btn" type="button" aria-label="Search"><span data-icon="search" data-size="20"></span></button>
       <button id="newChatBtn" class="sb-new" type="button"><span class="sb-new-plus"><span data-icon="plus" data-size="14"></span></span><span>New chat</span></button>
     </div>
@@ -32,21 +32,21 @@
     <div class="sb-bottom">
       <button class="sb-blackfriday" id="sbBlackFriday" type="button"><span data-icon="tag" data-size="16"></span><span>Get Black Friday Offer</span></button>
       <div class="sb-profile-wrap">
-        <button class="sb-profile" id="profileBtn" type="button"><span class="sb-avatar" id="profileAvatar">J</span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span><span class="sb-profile-sub" id="profileEmailLabel">Free plan</span></span></button>
-        <button id="sbConnectApps" class="icon-btn" type="button" aria-label="Connect apps"><span data-icon="layout-grid" data-size="18"></span></button>
+        <button class="sb-profile" id="profileBtn" type="button"><span class="sb-avatar" id="profileAvatar"></span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span></span></button>
+        <button id="sbConnectApps" class="icon-btn circ-btn" type="button" aria-label="Connect apps"><span data-icon="layout-grid" data-size="18"></span></button>
       </div>
     </div>
   </aside>
   <div id="scrim" hidden></div>
 
   <main id="main">
-    <div id="appBanner" class="app-banner" hidden>
-      <div class="app-banner-tx"><span class="app-banner-title">Get the JepongDevxyz AI app</span><span class="app-banner-sub">Faster, more powerful, and ready when you are.</span></div>
-      <button id="bannerOpen" class="app-banner-open" type="button">Open</button>
+    <div id="appBanner" class="app-banner">
       <button id="bannerClose" class="icon-btn sm" type="button" aria-label="Dismiss"><span data-icon="x" data-size="16"></span></button>
+      <span class="app-banner-title">View in the JepongDevxyz AI app</span>
+      <button id="bannerOpen" class="app-banner-open" type="button"><span class="ab-mark" id="bannerMark"></span>Open JepongDevxyz AI</button>
     </div>
     <header id="topbar">
-      <button id="menuBtn" class="icon-btn" aria-label="Open sidebar"><span data-icon="menu" data-size="20"></span></button>
+      <button id="menuBtn" class="icon-btn panel-btn" aria-label="Open sidebar"><span data-icon="panel-left" data-size="20"></span></button>
       <button id="topSearchBtn" class="icon-btn" aria-label="Search"><span data-icon="search" data-size="20"></span></button>
       <div id="topTitle" class="top-title" role="button" tabindex="0" aria-label="Conversation options"></div>
       <button id="paneBtn" class="icon-btn" aria-label="Toggle right pane"><span data-icon="panel-right" data-size="20"></span></button>
@@ -96,11 +96,11 @@
   </div>
 </div>
 
-<!-- Model picker bottom sheet -->
+<!-- Model picker bottom sheet — grok has NO title and NO close button,
+     just the drag handle, then the rows. -->
 <div id="modelSheet" class="sheet" hidden>
   <div class="sheet-card">
     <div class="sheet-grip" aria-hidden="true"></div>
-    <div class="sheet-head"><div class="sheet-title">Models</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div id="modelSheetList" class="sheet-list"></div>
   </div>
 </div>
