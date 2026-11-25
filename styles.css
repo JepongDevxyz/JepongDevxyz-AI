@@ -90,7 +90,7 @@ svg{display:block}
 /* ---------- home ---------- */
 #homeView{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 20px}
 .home-greet{text-align:center}
-.home-greet h1{font-size:28px;line-height:1.25;font-weight:500;margin:0 0 4px;color:var(--muted)}
+.home-greet h1{font-size:28px;line-height:1.25;font-weight:525;margin:0 0 4px;color:var(--ink)}
 .home-greet p{font-size:20px;line-height:1.4;color:var(--ink);margin:0;font-weight:400}
 
 /* ---------- chat ---------- */
@@ -128,17 +128,21 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .code-body{overflow-x:auto;background:var(--surface)}
 .code-body pre{margin:0;background:none;border-radius:0}
 .code-body code{display:block;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.55;white-space:pre;background:none;color:var(--ink)}
-/* Grok-style table card: the table keeps its natural column widths and scrolls
-   horizontally instead of squeezing until words break mid-token. */
+/* Grok-style table card — round 5: the table FITS the viewport width and
+   wraps long cells instead of scrolling with clipped columns. The old
+   width:max-content scrolled horizontally, so at rest the last column read
+   "JavaScrip…" — the round-5 live study ranked that the #1 defect. Grok
+   itself overflows worse; fitting beats grok here and nothing clips.
+   overflow-x:auto stays on the wrapper as a safety net only. */
 .table-wrap{position:relative;overflow-x:auto;margin:0 0 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
 .table-head{display:flex;justify-content:flex-end;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line)}
 .table-head button{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:12.5px;padding:4px 8px;border-radius:8px}
 .table-head button:hover{background:var(--chip);color:var(--ink)}
-.table-wrap table{border-collapse:collapse;width:max-content;min-width:100%;margin:0;font-size:14px}
-.table-wrap th,.table-wrap td{border:1px solid var(--line);padding:7px 10px;text-align:left;word-break:normal;overflow-wrap:normal}
+.table-wrap table{border-collapse:collapse;width:100%;margin:0;font-size:14px}
+.table-wrap th,.table-wrap td{border:1px solid var(--line);padding:7px 10px;text-align:left;overflow-wrap:break-word}
 .table-wrap th:first-child,.table-wrap td:first-child{min-width:140px}
 .table-wrap th{background:var(--chip);font-weight:600}
-.table-wrap td code,.table-wrap th code{white-space:nowrap}
+.table-wrap td code,.table-wrap th code{white-space:normal;overflow-wrap:anywhere}
 .msg-asst table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:14px}
 .msg-asst th,.msg-asst td{border:1px solid var(--line);padding:7px 10px;text-align:left}
 .msg-asst th{background:var(--chip);font-weight:600}
@@ -226,7 +230,11 @@ html[data-theme="dark"] .tk-k{color:#c678dd}html[data-theme="dark"] .tk-s{color:
 .attach-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .attach-bar .att-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:13px}
 .attach-bar .att-chip button{color:var(--muted);display:inline-flex}
-.scroll-bottom{position:absolute;left:50%;transform:translateX(-50%);bottom:118px;width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:20;color:var(--ink)}
+.scroll-bottom{position:absolute;left:50%;transform:translateX(-50%);bottom:118px;width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:20;color:var(--ink);transition:opacity .45s}
+/* Round 5: a floating button always covers whatever sits under it — live it
+   sat on table text ("P↓n"). It fades out after 3s idle and returns on
+   scroll, so the overlap is never persistent. The feature stays. */
+.scroll-bottom.faded{opacity:0;pointer-events:none}
 
 /* ---------- sheets / dialogs ---------- */
 .sheet{position:fixed;inset:0;background:var(--scrim);z-index:80;display:flex;align-items:flex-end;justify-content:center}

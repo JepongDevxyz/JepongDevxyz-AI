@@ -542,14 +542,20 @@ function renderSidebar(){
   if(activeProjectId) items=items.filter(s=>s.projectId===activeProjectId);
   if(searchQuery){ const q=searchQuery.toLowerCase(); items=items.filter(s=>(s.title||'').toLowerCase().includes(q)||(s.messages||[]).some(m=>(m.text||'').toLowerCase().includes(q))); }
   const pinned=items.filter(s=>s.pinned), rest=items.filter(s=>!s.pinned);
+  /* Round 5: two DIFFERENT chats can share one auto-title ("Python Vs
+     JavaScript Comparison" twice, live-proven) and the sidebar shows no
+     distinguisher. Disambiguate the DISPLAY title only — stored titles are
+     untouched — numbering in render order: "Title", "Title (2)", "Title (3)". */
+  const titleCount={}, dispTitle=new Map();
+  [...pinned, ...rest].forEach(s=>{ const t=(s.title||'New chat'); const k=t.toLowerCase(); titleCount[k]=(titleCount[k]||0)+1; dispTitle.set(s.id, titleCount[k]>1? t+' ('+titleCount[k]+')' : t); });
   let html='';
   if(activeProjectId){ const p=projects.find(p=>p.id===activeProjectId); html+='<div class="sb-group">'+esc(p?p.name:'Project')+' · <a href="#" id="clearProj" style="color:var(--accent)">All chats</a></div>'; }
   /* Grok's history is a flat list — no Today / Previous 7 Days / Older
      headings. Pinned chats stay first. "Show more" reveals the rest. */
   if(!searchQuery&&!activeProjectId) html+='<div class="sb-sec-row"><span class="sb-sec">Chats</span><span class="sb-sec-actions"><button class="icon-btn sb-sec-chev'+(collapsedSecs.chats?' closed':'')+'" id="sbChatsChev" type="button" aria-label="Collapse chats">'+icon('chevron-down',16)+'</button><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat">'+icon('plus',16)+'</button></span></div>';
-  html+=pinned.map(itemHtml).join('');
+  html+=pinned.map(s=>itemHtml(s, dispTitle.get(s.id))).join('');
   const shown=(searchQuery||showAllChats)?rest:rest.slice(0,5);
-  html+=shown.map(itemHtml).join('');
+  html+=shown.map(s=>itemHtml(s, dispTitle.get(s.id))).join('');
   if(!searchQuery&&!showAllChats&&rest.length>5) html+='<button class="sb-more" id="sbMore" type="button">Show more</button>';
   if(!items.length) html+='<div class="sb-empty">'+(searchQuery?'No chats match your search.':'No chats yet. Start a new one.')+'</div>';
   list.innerHTML=html;
@@ -558,13 +564,19 @@ function renderSidebar(){
   const more=$('#sbMore'); if(more) more.addEventListener('click',()=>{ showAllChats=true; renderSidebar(); });
   const np=$('#sbNewPlus'); if(np) np.addEventListener('click',()=>newChat());
   const pl=$('#projList');
-  /* Empty Projects section is dead space — hide its header + list until
-     the user creates a project. */
-  const ps=$('#sbProjSec'); if(ps) ps.hidden=!projects.length;
+  /* Round 5: grok shows its Projects header + "New Project" row even with
+     no projects; hiding the whole section left a dead band and no visible
+     way to create the first project from the sidebar. Header always shows;
+     empty list shows one "New Project" row that runs the same create flow
+     as the header + button. */
+  const ps=$('#sbProjSec'); if(ps) ps.hidden=false;
   if(pl){
-    pl.hidden=!projects.length;
-    pl.innerHTML=projects.map(p=>'<button class="sb-item" data-proj="'+p.id+'"><span class="sb-item-title">'+esc(p.name)+'</span></button>').join('');
+    pl.hidden=false;
+    pl.innerHTML=projects.length
+      ? projects.map(p=>'<button class="sb-item" data-proj="'+p.id+'"><span class="sb-item-title">'+esc(p.name)+'</span></button>').join('')
+      : '<button class="sb-item" id="sbNewProjRow" type="button"><span class="sb-item-title">New Project</span></button>';
     pl.querySelectorAll('[data-proj]').forEach(el=>el.addEventListener('click',()=>{ activeProjectId=el.getAttribute('data-proj'); renderSidebar(); toast('Showing project chats'); }));
+    const nr=$('#sbNewProjRow'); if(nr) nr.addEventListener('click',()=>{ const b=$('#sbNewProj'); if(b) b.click(); });
   }
   const cp=$('#clearProj'); if(cp) cp.addEventListener('click',e=>{ e.preventDefault(); activeProjectId=null; renderSidebar(); });
   list.querySelectorAll('.sb-item').forEach(el=>{
@@ -574,8 +586,8 @@ function renderSidebar(){
   });
   hydrateIcons(list);
 }
-function itemHtml(s){
-  return '<button class="sb-item'+(s.id===currentId?' active':'')+'" data-id="'+s.id+'"><span class="sb-item-title">'+esc(s.title||'New chat')+'</span><span class="sb-item-menu" role="button" aria-label="Chat options">'+icon('ellipsis',16)+'</span></button>';
+function itemHtml(s, displayTitle){
+  return '<button class="sb-item'+(s.id===currentId?' active':'')+'" data-id="'+s.id+'"><span class="sb-item-title">'+esc(displayTitle||s.title||'New chat')+'</span><span class="sb-item-menu" role="button" aria-label="Chat options">'+icon('ellipsis',16)+'</span></button>';
 }
 function sessionMenuItems(s){
   const id=s.id;
@@ -926,13 +938,21 @@ async function regenerate(s,m){
   renderMessages();
   await streamInto(s,userMsg||{text:''},m,[]);
 }
+let scrollBtnFadeTimer=null;
 function updateScrollBtn(){
   /* Grok's home has no scroll button — show it only inside a chat, and
-     only once the user has scrolled up from the bottom. */
+     only once the user has scrolled up from the bottom. Round 5: it fades
+     out after 3s idle so it never sits on message text persistently, and
+     returns on the next scroll. */
   const cv=$('#chatView'); if(!cv) return;
   const dist=cv.scrollHeight-cv.scrollTop-cv.clientHeight;
   const hv=$('#homeView'); const onHome=hv&&!hv.hidden;
-  $('#scrollBottom').hidden=!(curSession()&&!onHome&&dist>240);
+  const btn=$('#scrollBottom');
+  const show=!!(curSession()&&!onHome&&dist>240);
+  btn.hidden=!show;
+  if(scrollBtnFadeTimer){ clearTimeout(scrollBtnFadeTimer); scrollBtnFadeTimer=null; }
+  if(show){ btn.classList.remove('faded'); scrollBtnFadeTimer=setTimeout(()=>{ btn.classList.add('faded'); },3000); }
+  else btn.classList.remove('faded');
 }
 
 /* ---------- composer / send / streaming ---------- */
@@ -1094,7 +1114,13 @@ async function generateTitle(sessionId){
     }
   }catch(e){}
   const t=titleCase(text);
-  if(t&&t.length>1){ s.title=t; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); const cur=curSession(); if(cur&&cur.id===s.id) $('#topTitle').innerHTML='<span class="top-logo">'+J_MARK+'</span><span>'+esc(t)+'</span>'; }
+  if(t&&t.length>1){
+    /* Round 5: never mint a title another chat already has — the model
+       gives the same Title Case title for same-topic chats, which is how
+       the sidebar ended up with two identical rows. Suffix " 2", " 3"... */
+    let unique=t, n=2;
+    while(sessions.some(x=>x.id!==s.id&&(x.title||'').toLowerCase()===unique.toLowerCase())){ unique=t+' '+n; n++; }
+    s.title=unique; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); const cur=curSession(); if(cur&&cur.id===s.id) $('#topTitle').innerHTML='<span class="top-logo">'+J_MARK+'</span><span>'+esc(unique)+'</span>'; }
 }
 async function requestFollowups(sessionId,mid){
   /* Grok shows two follow-up pills under a reply. Ours are generated by the
