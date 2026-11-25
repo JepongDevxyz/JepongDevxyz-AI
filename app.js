@@ -75,7 +75,48 @@ clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
 'presentation':'<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/><path d="M7 17h10"/>',
 sheet:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/>',
 link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
-archive:'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>'
+archive:'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
+flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+unlock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+stethoscope:'<path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>',
+hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+umbrella:'<path d="M22 12a10.06 10.06 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/>',
+leaf:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+bug:'<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6Z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>',
+'flask-conical':'<path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/>',
+plane:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+car:'<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+video:'<path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>',
+music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+headphones:'<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',
+microscope:'<path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22v-4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4"/><path d="M14 13.536V11a2 2 0 0 1 .336-1.104l1.76-2.933a1 1 0 0 0 .177-.538V4"/><path d="M6 14a2 2 0 0 0 2 2h10"/><path d="M6 14h4a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H6"/><path d="M6 16a2 2 0 0 0 2 2h4"/>',
+'sticky-note':'<path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"/><path d="M15 3v6a2 2 0 0 0 2 2h6"/>',
+scale:'<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+film:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
+palette:'<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+cpu:'<rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/>',
+calculator:'<rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>',
+laptop:'<path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/>',
+briefcase:'<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+'clipboard-list':'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+building:'<rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>',
+flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+database:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',
+shirt:'<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>',
+gem:'<path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/>',
+gamepad:'<line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>',
+'chef-hat':'<path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 9.18 0A4 4 0 0 1 18 13.87V21H6Z"/><path d="M6 17h12"/>',
+'dollar-sign':'<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+compass:'<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+sparkles:'<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>',
+key:'<path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+bookmark:'<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>'
 };
 const J_MARK='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9h22"/><path d="M29 9v21a9 9 0 0 1-18 0v-3"/></svg>';
 function icon(name,size){ size=size||18; const p=ICONS[name]||ICONS.info; return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>'; }
@@ -128,13 +169,13 @@ const defaultSettings=()=>({
   responseLang:{code:'auto', label:'Auto'},
   behavior:{ctrlEnter:false, autoScroll:true},
   notifications:{browser:false, updates:'Off'},
-  data:{improveModel:true, allowShare:true},
+  data:{improveModel:true, personalizeX:true, allowShare:true},
   plan:'Free',
   interface:{titleAuto:true, autoCopy:false, pasteAsFile:true, wrapCode:false, reduceMotion:false, showSuggestions:true},
   personalization:{nickname:'', about:'', style:'Default', custom:'', enableNew:true, refMemory:true, refHistory:true, savedMemory:''},
   advanced:{webScraping:true, imageSearch:true, webSearchAdv:true, imageGeneration:true, codeInterpreter:true, retrieveMemory:true, imageEditing:true, updateMemory:true, localEnlarge:true},
   cookies:{analytics:false, personalization:true},
-  voice:{voiceURI:'', name:'', lang:'', rate:1, pitch:1, voiceMode:false, micDeviceId:'', personality:'Assistant', dictation:'Tidy up'}
+  voice:{voiceURI:'', name:'', lang:'', rate:1, pitch:1, voiceMode:false, micDeviceId:'', personality:'Assistant', dictation:'Tidy up', grokVoice:'Ara'}
 });
 let settings=Object.assign(defaultSettings(), loadJSON(SET_KEY,{}));
 settings.interface=Object.assign(defaultSettings().interface, settings.interface||{});
@@ -155,6 +196,9 @@ let projects=loadJSON(PROJ_KEY,[]); if(!Array.isArray(projects)) projects=[];
 let extra=loadJSON(EXTRA_KEY,{feedback:[],reports:[]}); if(!extra||typeof extra!=='object') extra={feedback:[],reports:[]};
 if(!extra.usage) extra.usage={chat:0, image:0, voice:0};
 if(!Array.isArray(extra.trash)) extra.trash=[];
+/* Grok: "Deleted conversations are permanently removed after 30 days." —
+   purge trash older than 30 days on load so that statement stays true. */
+if(extra.trash.length){ const before=extra.trash.length; extra.trash=extra.trash.filter(t=>(Date.now()-(t.deletedAt||0))<30*86400000); if(extra.trash.length!==before) saveExtra(); }
 if(!Array.isArray(extra.automations)) extra.automations=[];
 if(!Array.isArray(extra.sharedLinks)) extra.sharedLinks=[];
 if(!Array.isArray(extra.skills)) extra.skills=[];
@@ -322,6 +366,7 @@ function showMenu(x,y,items,opts){
   items.forEach(it=>{
     if(it.header){ const d=document.createElement('div'); d.className='menu-head'; d.textContent=it.header; pop.appendChild(d); return; }
     if(it.account){ const d=document.createElement('div'); d.className='menu-account'; d.innerHTML='<strong>'+esc(it.name||'')+'</strong><span>'+esc(it.sub||'')+'</span>'; pop.appendChild(d); return; }
+    if(it.divider){ const d=document.createElement('div'); d.className='menu-divider'; pop.appendChild(d); return; }
     if(it.band){ const b=document.createElement('button'); b.className='menu-band';
       b.innerHTML='<span class="menu-band-tx"><span class="ub-title">'+esc(it.title||'')+'</span><span class="ub-sub">'+esc(it.sub||'')+'</span></span><span class="ub-pill">'+esc(it.pill||'Upgrade')+'</span>';
       b.addEventListener('click',()=>{ closeMenu(); it.onClick&&it.onClick(); }); pop.appendChild(b); return; }
@@ -579,24 +624,27 @@ function renderSidebar(){
   const seenIds=new Set(); items=items.filter(s=>{ if(seenIds.has(s.id)) return false; seenIds.add(s.id); return true; });
   if(activeProjectId) items=items.filter(s=>s.projectId===activeProjectId);
   const pinned=items.filter(s=>s.pinned), rest=items.filter(s=>!s.pinned);
-  /* Round 5: two DIFFERENT chats can share one auto-title — disambiguate
-     the DISPLAY title only, numbering in render order. */
-  const titleCount={}, dispTitle=new Map();
-  [...pinned, ...rest].forEach(s=>{ const t=(s.title||'New chat'); const k=t.toLowerCase(); titleCount[k]=(titleCount[k]||0)+1; dispTitle.set(s.id, titleCount[k]>1? t+' ('+titleCount[k]+')' : t); });
+  /* Pass 2: grok shows raw titles — two near-identical titles sit side by
+     side with NO "(2)" suffix. The round-5 numbering is removed. */
   let html='';
   if(activeProjectId){ const p=projects.find(p=>p.id===activeProjectId); html+='<div class="sb-group">'+esc(p?p.name:'Project')+' · <a href="#" id="clearProj" style="color:var(--accent)">All chats</a></div>'; }
-  html+=pinned.map(s=>itemHtml(s, dispTitle.get(s.id))).join('');
+  html+=pinned.map(s=>itemHtml(s, s.title)).join('');
   const shown=showAllChats?rest:rest.slice(0,5);
-  html+=shown.map(s=>itemHtml(s, dispTitle.get(s.id))).join('');
-  if(!showAllChats&&rest.length>5) html+='<button class="sb-more" id="sbMore" type="button">Show more</button>';
+  html+=shown.map(s=>itemHtml(s, s.title)).join('');
+  if(!showAllChats&&rest.length>5) html+='<button class="sb-more" id="sbMore" type="button">Show more '+icon('chevron-down',14)+'</button>';
   if(!items.length) html+='<div class="sb-empty">'+(activeProjectId?'No chats in this project yet.':'No chats yet. Start a new one.')+'</div>';
   list.innerHTML=html;
   list.classList.toggle('collapsed', !!collapsedSecs.chats);
+  /* Pass 2: the Chats/Projects headers have collapse chevrons — rotate
+     them closed when their section is collapsed. */
+  const pc=$('#sbProjChev'); if(pc) pc.classList.toggle('closed', !!collapsedSecs.projects);
+  const cc=$('#sbChatsChev'); if(cc) cc.classList.toggle('closed', !!collapsedSecs.chats);
   const more=$('#sbMore'); if(more) more.addEventListener('click',()=>{ showAllChats=true; renderSidebar(); });
   const pl=$('#projList');
   /* Grok shows its Projects header + "New Project" row even with no
      projects; the header is static HTML now, the list always renders. */
   if(pl){
+    pl.style.display=collapsedSecs.projects?'none':'';
     pl.innerHTML=projects.length
       ? projects.map(p=>'<button class="sb-item" data-proj="'+p.id+'"><span class="sb-item-title">'+esc(p.name)+'</span></button>').join('')
       : '<button class="sb-item" id="sbNewProjRow" type="button"><span class="sb-item-title">New Project</span></button>';
@@ -740,10 +788,20 @@ function renderAll(){
   const tt=$('#topTitle');
   const label=hasChat?(s.title||'New chat'):'JepongDevxyz AI';
   tt.classList.toggle('chat-title', hasChat);
+  /* Pass 4: grok shows the Private badge on HOME only — never in a normal
+     chat top bar. Private chats keep it (unobserved on grok; it is the
+     state indicator + exit control there). The badge slot is only reserved
+     when the badge is actually present. */
+  const showBadge=!hasChat||temporary;
+  tt.classList.toggle('has-badge', showBadge);
   tt.innerHTML='<span class="top-title-tx">'+(hasChat?'':'<span class="top-smiley">'+icon('smile',18)+'</span>')+'<span>'+esc(label)+'</span></span>'
-    +'<button type="button" class="private-badge'+(temporary?' on':'')+'" id="topPrivateBadge" aria-label="Private chat" aria-pressed="'+(temporary?'true':'false')+'"><span class="pb-ring"></span><span class="pb-tx">Private</span></button>';
+    +(showBadge?'<button type="button" class="private-badge'+(temporary?' on':'')+'" id="topPrivateBadge" aria-label="Private chat" aria-pressed="'+(temporary?'true':'false')+'"><span class="pb-ring"></span><span class="pb-tx">Private</span></button>':'');
   const badge=$('#topPrivateBadge');
   if(badge) badge.addEventListener('click',e=>{ e.stopPropagation(); setPrivate(!temporary); });
+  /* Pass 4: the chat top bar has a ••• Conversation Actions button next to
+     the pane toggle — the same 9-item menu as tapping the title. Home has
+     no such button. */
+  const cab=$('#convActionsBtn'); if(cab) cab.hidden=!hasChat;
   /* ROUND 6: the banner shows on every fresh load — dismiss does NOT
      persist (grok-spec); X hides it until reload only. */
   const banner=$('#appBanner'); if(banner) banner.hidden=false;
@@ -794,12 +852,12 @@ function renderMessages(){
          right-aligned (grok-spec §10). The Copy/Edit row is hidden until
          the bubble is tapped — grok shows no toolbar under the bubble
          until interacted with. Delete is gone per the rebuild order. */
-      html+='<div class="msg user" data-mid="'+m.id+'"><div class="msg-user-text">'
+      html+='<div class="msg user" data-mid="'+m.id+'"><div class="msg-user-row"><div class="msg-user-actions">'
+        +'<button type="button" class="icon-btn" data-u-act="edit" data-mid="'+m.id+'" aria-label="Edit message">'+icon('pencil',15)+'</button>'
+        +'<button type="button" class="icon-btn" data-u-act="copy" data-mid="'+m.id+'" aria-label="Copy message">'+icon('copy',15)+'</button>'
+        +'</div><div class="msg-user-text">'
         +((m.attachments||[]).map(a=>'<span class="att-chip">'+esc(a.name)+'</span>').join(''))
-        +esc(m.text)+'</div><div class="msg-user-actions">'
-        +'<button type="button" class="icon-btn" data-u-act="copy" data-mid="'+m.id+'" aria-label="Copy">'+icon('copy',15)+'</button>'
-        +'<button type="button" class="icon-btn" data-u-act="edit" data-mid="'+m.id+'" aria-label="Edit">'+icon('pencil',15)+'</button>'
-        +'</div></div>';
+        +esc(m.text)+'</div></div></div>';
     } else {
       html+=assistantHtml(s,m);
     }
@@ -831,12 +889,15 @@ function assistantHtml(s,m){
      step lines, ever. Work notes are still stripped from the text by
      absorbWorkNotes; they simply never render. */
   const hasTimes=!!(m.streamStartedAt||m.streamEndedAt);
-  if(hasTimes||m.thoughtStopped||m.pending){
-    const live=!!m.pending;
-    const t0=m.streamStartedAt||m.createdAt||Date.now();
-    const t1=live?Date.now():(m.streamEndedAt||m.createdAt||t0);
-    const secs=Math.max(0,Math.round((t1-t0)/1000));
-    const label=m.thoughtStopped?'Stopped':(live?('Working for '+secs+'s'):((hasTimes)?('Thought for '+secs+'s'):'Thought'));
+  const live=!!m.pending;
+  const t0=m.streamStartedAt||m.createdAt||Date.now();
+  const t1=live?Date.now():(m.streamEndedAt||m.createdAt||t0);
+  const secs=Math.max(0,Math.round((t1-t0)/1000));
+  /* Pass 4: grok shows NO thinking row for instant answers — it does not
+     show "Thought for 0s". Only live streams, stopped runs, and replies
+     that actually took >=1s get a row. */
+  if(live||m.thoughtStopped||(hasTimes&&secs>=1)){
+    const label=m.thoughtStopped?'Stopped':(live?('Working for '+secs+'s'):('Thought for '+secs+'s'));
     h+='<div class="think-row" role="button">'+(live?'<span class="spin"></span>':'')+'<span class="think-label">'+esc(label)+'</span><span class="think-chev">'+icon('chevron-right',13)+'</span></div>';
     h+='<div class="think-divider" hidden></div>';
   }
@@ -1205,8 +1266,13 @@ let vmOpen=false, vmRecog=null, vmListening=false, vmSpeaking=false, vmMuted=fal
 let vmStream=null, vmAnalyser=null, vmAudioCtx=null, vmRaf=0, vmState='listening';
 const VM_SPEEDS=[{v:0.5,l:'0.5×'},{v:0.75,l:'0.75×'},{v:0.9,l:'0.9×'},{v:1,l:'Normal'},{v:1.1,l:'1.1×'},{v:1.25,l:'1.25×'},{v:1.5,l:'1.5×'},{v:2,l:'2×'}];
 const VM_PERSONALITIES=['Custom…','Assistant','Storyteller','Kids Story Time','Kids Trivia Game','Meditation','Conspiracy'];
+/* Grok's 30 voice names, exactly (pass 3) — Ara selected by default.
+   These are grok's server voices; on this device the spoken audio still
+   uses the device TTS engine (see voiceLabel) — the name is the preference
+   shown and stored, the engine is honest about what it can do. */
+const GROK_VOICES=['Ara','Eve','Leo','Rex','Sal','Gork (18+)','Carina','Zagan','Helix','Orion','Luna','Iris','Altair','Zenith','Perseus','Helios','Lux','Kepler','Rigel','Cosmo','Celeste','Ursa','Sirius','Lumen','Castor','Naksh','Atlas','Aurora','Liora','Claudia'];
 function vmVoiceTitle(){ const e=resolveVoiceEntry(); return e?e.title:'Device default'; }
-function vmPersonalityLabel(){ const s=settings.personalization.style||'Default'; if(s==='Default') return 'Assistant'; if(s==='Custom') return 'Custom…'; return s; }
+function vmPersonalityLabel(){ return settings.voice.personality||'Assistant'; }
 function vmSpeedLabel(){ const r=settings.voice.rate||1; const hit=VM_SPEEDS.find(x=>x.v===r); return hit?hit.l:'Normal'; }
 function vmUpdateSel(){ const el=$('#vmVoiceLabel'); if(el) el.textContent=vmVoiceTitle()+' · '+vmPersonalityLabel(); }
 function vmSetState(state, transcript){
@@ -1352,15 +1418,17 @@ async function vmListMics(){
 }
 function vmPersonalityMenu(anchor){
   const r=anchor.getBoundingClientRect();
+  /* The voice persona lives in settings.voice.personality (the Behavior
+     row and vmPersonalityStyle both use it). Writing it into
+     personalization.style would pollute the response style instead. */
   showMenu(r.left, r.bottom+4, VM_PERSONALITIES.map(p=>({icon:'check', label:p+(vmPersonalityLabel()===p?' ✓':''), onClick:async()=>{
     if(p==='Custom…'){
       const cur=settings.personalization.custom||'';
       const next=await promptDialog('Custom personality','Custom instruction', cur);
       if(next===null) return;
-      settings.personalization.custom=next.trim(); settings.personalization.style='Custom';
-    } else {
-      settings.personalization.style=(p==='Assistant'?'Default':p);
+      settings.personalization.custom=next.trim();
     }
+    settings.voice.personality=p;
     saveSettings(); vmUpdateSel(); openVoiceSheet();
   }})));
 }
@@ -1444,12 +1512,12 @@ function pickFile(kind){
 
 /* ---------- Connect Apps catalog (grok inventory J, exact names/descriptions) ---------- */
 const CONNECT_APPS=[
- {name:'Gmail', desc:'Your inbox, supercharged by Grok.', cat:'Recommended', color:'#d93025'},
+ {name:'Gmail', desc:'Your inbox, supercharged by JepongDevxyz AI.', cat:'Recommended', color:'#d93025'},
  {name:'Google Drive', desc:'Search and summarize your files in Google Drive.', cat:'Recommended', color:'#0f9d58'},
- {name:'Google Calendar', desc:'Let Grok know your schedule.', cat:'Recommended', color:'#4285f4'},
+ {name:'Google Calendar', desc:'Let JepongDevxyz AI know your schedule.', cat:'Recommended', color:'#4285f4'},
  {name:'GitHub', desc:'Build & review code with your repos.', cat:'Recommended', color:'#24292f'},
  {name:'Finance', desc:'Real-time financial data from Yahoo Finance.', cat:'Recommended', color:'#6e6e6a'},
- {name:'Notion', desc:'Make Notion your source of truth for Grok.', cat:'Recommended', color:'#111110'},
+ {name:'Notion', desc:'Make Notion your source of truth for JepongDevxyz AI.', cat:'Recommended', color:'#111110'},
  {name:'X Ads', desc:'Ads insights, campaigns and creatives.', cat:'Advertising', color:'#111110'},
  {name:'Google Cloud BigQuery', desc:'Ask questions of your data in BigQuery.', cat:'Analytics', color:'#4285f4'},
  {name:'Expensify', desc:'Expense reports, receipts, approvals, and reimbursements.', cat:'Apps', color:'#03a99d'},
@@ -1460,11 +1528,16 @@ const CONNECT_APPS=[
  {name:'Mixpanel', desc:'Product analytics and insights from Mixpanel.', cat:'Developer', color:'#7856ff'},
  {name:'Netlify', desc:'Build, deploy and manage your websites.', cat:'Developer', color:'#00ad9f'},
  {name:'Vercel', desc:'Ship code and run Next.js apps.', cat:'Developer', color:'#111110'},
+ {name:'GitHub', desc:'Build & review code with your repos.', cat:'Developer', color:'#24292f'},
  {name:'Bigdata.com', desc:'Financial data and research.', cat:'Finance', color:'#6e6e6a'},
  {name:'Coinbase', desc:'Crypto prices and portfolio.', cat:'Finance', color:'#0052ff'},
  {name:'Daloopa', desc:'Financial data and models.', cat:'Finance', color:'#6e6e6a'},
  {name:'Finary', desc:'Track your wealth in one place.', cat:'Finance', color:'#6e6e6a'},
  {name:'IBKR', desc:'Interactive Brokers trading data.', cat:'Finance', color:'#d50000'},
+ {name:'Gmail', desc:'Your inbox, supercharged by JepongDevxyz AI.', cat:'Google Workspace', color:'#d93025'},
+ {name:'Google Calendar', desc:'Let JepongDevxyz AI know your schedule.', cat:'Google Workspace', color:'#4285f4'},
+ {name:'Google Drive', desc:'Search and summarize your files in Google Drive.', cat:'Google Workspace', color:'#0f9d58'},
+ {name:'Stripe', desc:'Accept, process, and manage payments.', cat:'Payments', color:'#635bff'},
  {name:'Outlook', desc:'Your email and calendar from Microsoft.', cat:'Productivity', color:'#0078d4'},
  {name:'Outlook Calendar', desc:'Your Microsoft calendar.', cat:'Productivity', color:'#0078d4'},
  {name:'Asana', desc:'Manage your projects and tasks.', cat:'Productivity', color:'#f06a6a'},
@@ -1475,8 +1548,7 @@ const CONNECT_APPS=[
  {name:'Meltwater', desc:'Media monitoring and social listening.', cat:'Sales', color:'#6e6e6a'},
  {name:'Buffer', desc:'Schedule and publish social posts.', cat:'Social Media', color:'#231f20'},
  {name:'Metricool', desc:'Social media analytics and scheduling.', cat:'Social Media', color:'#6e6e6a'},
- {name:'Box', desc:'Store files and collaborate in Box.', cat:'Storage', color:'#0061d5'},
- {name:'Stripe', desc:'Accept, process, and manage payments.', cat:'Payments', color:'#635bff'}
+ {name:'Box', desc:'Store files and collaborate in Box.', cat:'Storage', color:'#0061d5'}
 ];
 /* ---------- Automations catalog (grok inventory J) ---------- */
 const AUTOMATIONS=[
@@ -1514,9 +1586,9 @@ const SETTING_ROWS=[
 ];
 function cap(s){ return s? s[0].toUpperCase()+s.slice(1):s; }
 function voiceLabel(){
-  const e=resolveVoiceEntry();
-  if(e) return e.title;
-  return 'Device default';
+  /* Grok's voice picker is its own 30-name list (Ara default) — the device
+     TTS engine is separate and keeps its own voice selection. */
+  return settings.voice.grokVoice||'Ara';
 }
 function openSettings(key){
   settingsPageKey=key||'list';
@@ -1617,7 +1689,7 @@ function renderSettingsPage(){
     const vLabel=voiceLabel();
     body.innerHTML='<div class="set-subhead">Sending</div><div class="set-card">'
       +toggleRow('behCtrlSw','Require Ctrl+Enter to send','Press Ctrl+Enter to send a message.', !!(settings.behavior&&settings.behavior.ctrlEnter))
-      +toggleRow('behScrollSw','Auto-Scroll','Scroll to the newest reply automatically.', !(settings.behavior&&settings.behavior.autoScroll===false))
+      +toggleRow('behScrollSw','Auto-Scroll','Follow each reply to the bottom as it streams. Turn off to keep your message at the top.', !(settings.behavior&&settings.behavior.autoScroll===false))
       +'</div>'
       +'<div class="set-subhead">Voice</div><div class="set-list">'
       +'<button class="set-row" id="behVoiceRow"><span class="set-ic">'+icon('volume-2',18)+'</span><span class="set-label">Voice</span><span class="set-value">'+esc(vLabel)+'</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
@@ -1629,10 +1701,9 @@ function renderSettingsPage(){
     body.querySelector('#behScrollSw').addEventListener('click',e=>{ settings.behavior.autoScroll=settings.behavior.autoScroll===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.behavior.autoScroll!==false); });
     body.querySelector('#behVoiceRow').addEventListener('click',e=>{
       const r=e.currentTarget.getBoundingClientRect();
-      const cat=voiceCatalog(); const sel=resolveVoiceEntry();
-      const items=[{label:'Device default'+(!settings.voice.voiceURI?' ✓':''), onClick:()=>{ settings.voice.voiceURI=''; settings.voice.name=''; saveSettings(); renderSettingsPage(); }}];
-      cat.forEach(c=>items.push({label:c.title+' — '+c.sub+((sel&&sel.uri===c.uri)?' ✓':''), onClick:()=>{ settings.voice.voiceURI=c.uri; settings.voice.name=c.name; saveSettings(); renderSettingsPage(); if(c.uri) speak('Hello, this is a preview of the selected voice.', c.uri); }}));
-      showMenu(Math.max(8,Math.min(r.left,window.innerWidth-320)), r.bottom+4, items);
+      /* Grok's voice picker is its own 30-name list (Ara default). The
+         device TTS engine keeps its own voice, chosen in the voice sheet. */
+      showMenu(Math.max(8,Math.min(r.left,window.innerWidth-320)), r.bottom+4, GROK_VOICES.map(v=>({label:v+((settings.voice.grokVoice||'Ara')===v?' ✓':''), onClick:()=>{ settings.voice.grokVoice=v; saveSettings(); renderSettingsPage(); toast('Voice updated'); }})));
     });
     body.querySelector('#behSpeedRow').addEventListener('click',e=>{
       const r=e.currentTarget.getBoundingClientRect();
@@ -1654,7 +1725,12 @@ function renderSettingsPage(){
     });
     body.querySelector('#behDictRow').addEventListener('click',e=>{
       const r=e.currentTarget.getBoundingClientRect();
-      showMenu(Math.max(8,Math.min(r.left,window.innerWidth-220)), r.bottom+4, ['No refinement','Tidy up','Fully refine'].map(d=>({label:d+((settings.voice.dictation||'Tidy up')===d?' ✓':''), onClick:()=>{ settings.voice.dictation=d; saveSettings(); renderSettingsPage(); toast('Dictation refinement updated'); }})));
+      const dictOpts=[
+        {label:'No refinement', sub:'Exact transcription with no changes'},
+        {label:'Tidy up', sub:'Fix grammar, filler words, and punctuation'},
+        {label:'Fully refine', sub:'Rewrite for clarity and conciseness'}
+      ];
+      showMenu(Math.max(8,Math.min(r.left,window.innerWidth-220)), r.bottom+4, dictOpts.map(d=>({label:d.label+((settings.voice.dictation||'Tidy up')===d.label?' ✓':''), sub:d.sub, onClick:()=>{ settings.voice.dictation=d.label; saveSettings(); renderSettingsPage(); toast('Dictation refinement updated'); }})));
     });
     return;
   }
@@ -1702,7 +1778,7 @@ function renderSettingsPage(){
   }
   if(settingsPageKey==='connectors'){
     title.textContent='Connect Apps';
-    body.innerHTML='<p class="set-note">'+extra.connectRequested.length+' requested · 0 connected — connections need an app account; requests are saved on this device.</p>'
+    body.innerHTML='<div class="set-subhead">Your apps</div><p class="set-note">'+(extra.connectRequested.length?extra.connectRequested.length+' requested · ':'')+'0 connected — connections need an app account; requests are saved on this device.</p>'
       +'<div class="conn-search"><span>'+icon('search',16)+'</span><input id="connSearch" type="text" placeholder="Search apps" autocomplete="off"></div>'
       +'<div class="conn-chips" id="connChips"></div>'
       +'<div id="connList"></div>'
@@ -1754,10 +1830,11 @@ function renderSettingsPage(){
     title.textContent='Skills';
     const personal=extra.skills||[];
     body.innerHTML='<div class="set-subhead">Personal</div>'
+      +'<p class="set-note">Teach JepongDevxyz AI a repeatable task it follows whenever a request matches.</p>'
       +(personal.length?personal.map(s2=>'<div class="skill-row"><span class="skill-ic">'+icon('zap',18)+'</span><span class="skill-name">'+esc(s2.name)+'</span><button type="button" class="skill-on'+(s2.on?' on':'')+'" data-skill-toggle="'+s2.id+'">'+(s2.on?'On':'Off')+'</button><button type="button" class="mini-btn danger" data-skill-del="'+s2.id+'">Delete</button></div>').join(''):'<div class="empty-dash">No personal skills yet</div>')
       +'<button id="newSkillBtn" class="btn-primary" type="button">New Skill</button>'
       +'<div class="set-subhead">Built-in</div>'
-      +SKILL_BUILTINS.map(s2=>'<button class="skill-row" data-builtin-skill="'+s2.ext+'" type="button"><span class="skill-ic">'+icon(s2.icon,18)+'</span><span class="skill-name">'+esc(s2.name)+'</span><span class="skill-on on">On</span></button>').join('');
+      +SKILL_BUILTINS.map(s2=>'<button class="skill-row" data-builtin-skill="'+s2.ext+'" type="button"><span class="skill-ic">'+icon(s2.icon,18)+'</span><span class="skill-tx"><span class="skill-name">'+esc(s2.name)+'</span><span class="skill-desc">'+esc(s2.desc)+'</span></span><span class="skill-on on">On</span></button>').join('');
     body.querySelector('#newSkillBtn').addEventListener('click',()=>newPersonalSkill());
     body.querySelectorAll('[data-skill-toggle]').forEach(b=>b.addEventListener('click',()=>{
       const s2=extra.skills.find(x=>x.id===b.getAttribute('data-skill-toggle')); if(!s2) return;
@@ -1790,7 +1867,7 @@ function renderSettingsPage(){
       Object.keys(groups).forEach(cat=>{
         html+='<div class="set-subhead">'+esc(cat==='Featured'?'Featured':cat)+'</div>'+groups[cat].map(a=>{
           const saved=mine.some(x=>x.name===a.name);
-          return '<div class="auto-card"><span class="auto-ic" style="background:'+a.color+'">'+icon('clock',18)+'</span><span class="auto-tx"><span class="auto-name">'+esc(a.name)+'</span><span class="auto-desc">'+esc(a.desc)+'</span></span><button type="button" class="mini-btn" data-auto-add="'+esc(a.name)+'" '+(saved?'disabled':'')+'>'+(saved?'Added':'Add')+'</button></div>';
+          return '<div class="auto-card"><span class="auto-ic" style="background:'+a.color+'">'+icon('clock',18)+'</span><span class="auto-tx"><span class="auto-name">'+esc(a.name)+'</span><span class="auto-desc">'+esc(a.desc)+'</span></span><button type="button" class="mini-btn" data-auto-add="'+esc(a.name)+'" '+(saved?'disabled':'')+'>'+(saved?'Added':'Add')+'</button>'+(a.name==='Custom'?'<button type="button" class="mini-btn" data-auto-custom="1">Add custom automation</button>':'')+'</div>';
         }).join('');
       });
       list.innerHTML=html||'<div class="src-empty">No automations in this category.</div>';
@@ -1800,6 +1877,13 @@ function renderSettingsPage(){
         const tpl=AUTOMATIONS.find(x=>x.name===name); if(!tpl) return;
         extra.automations.push({name:tpl.name, cat:tpl.cat, at:Date.now()}); saveExtra();
         toast(name+' saved on this device — automations do not run yet (no server to run them)');
+        renderAuto();
+      }));
+      list.querySelectorAll('[data-auto-custom]').forEach(b=>b.addEventListener('click',async()=>{
+        const name=await promptDialog('Add custom automation','Automation name','');
+        if(name===null||!name.trim()) return;
+        extra.automations.push({name:name.trim(), cat:'Custom', custom:true, at:Date.now()}); saveExtra();
+        toast(name.trim()+' saved on this device — automations do not run yet (no server to run them)');
         renderAuto();
       }));
     };
@@ -1812,9 +1896,10 @@ function renderSettingsPage(){
     title.textContent='Data Controls';
     const used=fmtBytes(libraryBytes());
     body.innerHTML='<div class="set-subhead">Personalization</div><div class="set-card">'
-      +toggleRow('dataImproveSw','Improve the Model','Let replies improve from how you use the app.', settings.advanced.updateMemory!==false)
-      +toggleRow('dataHistSw','Personalize With Conversation History','Let replies use what you talked about before.', settings.personalization.refHistory!==false)
-      +'</div><p class="set-note">These settings apply on this device.</p>'
+      +toggleRow('dataImproveSw','Improve the Model','By allowing your data to be used for training our models, you help enhance your own experience and improve the quality of the model for all users. We take measures to ensure your privacy is protected throughout the process.', settings.advanced.updateMemory!==false)
+      +toggleRow('dataXSw','Personalize JepongDevxyz AI Using 𝕏','Allow your 𝕏 data to be used for personalizing and enhancing your JepongDevxyz AI experience. This data includes: 𝕏 user profile, 𝕏 account information and location, 𝕏 settings, 𝕏 preferences, posts viewable on your 𝕏 account.', settings.data.personalizeX!==false)
+      +toggleRow('dataHistSw','Personalize With Conversation History','Allow JepongDevxyz AI to remember details from your previous conversations. Private chats are never stored.', settings.personalization.refHistory!==false)
+      +'</div><p class="set-note">These settings apply to your JepongDevxyz AI account across all devices.</p>'
       +'<div class="set-subhead">Sharing</div><div class="set-card">'
       +toggleRow('dataShareSw','Allow Chat Link Sharing','Let chats be shared as links.', settings.data.allowShare!==false)
       +'</div>'
@@ -1828,17 +1913,19 @@ function renderSettingsPage(){
       +'<button class="set-row" data-data-act="export"><span class="set-ic">'+icon('download',18)+'</span><span class="set-label">Export Account Data</span></button>'
       +'<button class="set-row danger" data-data-act="deleteAccount"><span class="set-ic">'+icon('trash-2',18)+'</span><span class="set-label">Delete Account</span></button>'
       +'</div>'
+      +'<p class="set-note">Deleted conversations are permanently removed after 30 days.</p>'
       +'<div class="set-subhead">Browsing Data</div><div class="set-list">'
       +'<button class="set-row" data-data-act="clearCache"><span class="set-ic">'+icon('trash-2',18)+'</span><span class="set-label">Clear Cache</span></button>'
       +'</div>'
       +'<div class="set-subhead">Legal</div><div class="set-list">'
-      +'<button class="set-row" data-data-view="terms"><span class="set-label">Terms</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
-      +'<button class="set-row" data-data-view="privacy"><span class="set-label">Privacy</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
-      +'<button class="set-row" data-data-view="acceptable"><span class="set-label">Acceptable Use</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
+      +'<button class="set-row" data-data-view="terms"><span class="set-label">Terms of Service</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
+      +'<button class="set-row" data-data-view="privacy"><span class="set-label">Privacy Policy</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
+      +'<button class="set-row" data-data-view="acceptable"><span class="set-label">Acceptable Use Policy</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
       +'<button class="set-row" data-data-view="cookiesPage"><span class="set-label">Cookie Policy</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
       +'<button class="set-row" data-data-view="cookies"><span class="set-label">Cookie Settings</span><span class="set-value">Manage cookie settings</span><span class="chev">'+icon('chevron-right',16)+'</span></button>'
       +'</div>';
     body.querySelector('#dataImproveSw').addEventListener('click',e=>{ settings.advanced.updateMemory=settings.advanced.updateMemory===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.advanced.updateMemory!==false); });
+    body.querySelector('#dataXSw').addEventListener('click',e=>{ settings.data.personalizeX=settings.data.personalizeX===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.data.personalizeX!==false); });
     body.querySelector('#dataHistSw').addEventListener('click',e=>{ settings.personalization.refHistory=settings.personalization.refHistory===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.personalization.refHistory!==false); });
     body.querySelector('#dataShareSw').addEventListener('click',e=>{ settings.data.allowShare=settings.data.allowShare===false?true:false; saveSettings(); e.currentTarget.classList.toggle('on', settings.data.allowShare!==false); });
     body.querySelectorAll('[data-data-view]').forEach(b=>b.addEventListener('click',()=>{ const k=b.getAttribute('data-data-view'); $('#settingsPage').hidden=true; openInfoPage(k); }));
@@ -1918,14 +2005,22 @@ function openRightPane(){
   const p=$('#rightPane'); p.hidden=false; renderPaneFiles();
 }
 function closeRightPane(){ const p=$('#rightPane'); if(p) p.hidden=true; }
+function paneEmptyHtml(){
+  /* Pass 4: grok's empty pane is EXACTLY two rows — "App preview" and
+     "Open a file… Ctrl O" — no heading, no explanatory sentence. */
+  return '<div class="pane-empty-rows"><button class="pane-empty-row" type="button" id="paneAppPreview">App preview</button><button class="pane-empty-row" type="button" id="paneOpenFile">Open a file… <span class="pane-kbd">Ctrl O</span></button></div>';
+}
+function wirePaneEmpty(){
+  const ap=$('#paneAppPreview'); if(ap) ap.addEventListener('click',()=>openLibrary('apps'));
+  const of=$('#paneOpenFile'); if(of) of.addEventListener('click',()=>$('#libFileInput').click());
+}
 function renderPaneFiles(){
   const body=$('#paneBody'); const s=curSession();
   const files=[];
   if(s) s.messages.forEach(m=>{ (m.attachments||[]).forEach(a=>files.push({name:a.name, kind:a.kind||'file'})); if(m.image) files.push({name:'Generated image', kind:'image', image:m.image}); });
   library.forEach(f=>files.push({name:f.name, kind:f.kind, lib:f}));
-  $('#paneTitle').textContent='App preview';
   if(!files.length){
-    body.innerHTML='<div class="pane-empty">Open a file…<br><br>Files you attach and images you generate will appear here.</div>';
+    body.innerHTML=paneEmptyHtml(); wirePaneEmpty();
     return;
   }
   body.innerHTML=files.map((f,i)=>'<button class="pane-file" data-pane-file="'+i+'" type="button"><span class="pane-file-ic">'+icon(f.kind==='image'?'image':'file',18)+'</span><span>'+esc(f.name)+'</span></button>').join('');
@@ -1938,7 +2033,6 @@ function renderPaneFiles(){
 }
 function openFileInPane(f){
   const body=$('#paneBody');
-  $('#paneTitle').textContent=f.name;
   openRightPane();
   if(f.kind==='image'&&f.data){
     body.innerHTML='<img src="data:'+esc(f.mimeType||'image/png')+';base64,'+esc(f.data)+'" alt="'+esc(f.name)+'" style="max-width:100%;border-radius:12px">';
@@ -1961,7 +2055,6 @@ function openFileInPane(f){
 function openTableInPane(table){
   /* Grok's "Open as file": the table opens in the right pane. */
   const body=$('#paneBody');
-  $('#paneTitle').textContent='Table';
   openRightPane();
   body.innerHTML='<div class="pane-table-wrap">'+table.outerHTML+'</div>';
   const dl=document.createElement('button'); dl.className='btn-primary'; dl.type='button'; dl.textContent='Download as .md';
@@ -2038,6 +2131,9 @@ function libraryImages(){
 }
 function renderLibrary(){
   document.querySelectorAll('#libTabs .tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-lib-tab')===libTab));
+  /* Grok's top-right control changes per tab: Upload files on All/Media/
+     Files, "New project" on Projects, "Create app" on Apps. */
+  const up=$('#libraryUpload'); if(up) up.textContent=libTab==='projects'?'New project':libTab==='apps'?'Create app':'Upload files';
   const q=(($('#libSearch').value||'').trim().toLowerCase());
   const body=$('#libBody');
   const match=f=>!q||(f.name||'').toLowerCase().includes(q);
@@ -2052,15 +2148,16 @@ function renderLibrary(){
     html=imgs.length?imgs.map(f=>f.image?'<img class="lib-img" src="'+esc(f.image)+'" alt="Generated image">':fileRow(f)).join(''):empty('image','No media yet','Upload images, videos, or audio to see them here.');
   } else if(libTab==='files'){
     const items=library.filter(f=>f.kind!=='image').filter(match);
-    html=items.length?items.map(fileRow).join(''):empty('file','No files yet','Upload files to keep them within reach.');
+    html=items.length?items.map(fileRow).join(''):empty('file','No files yet','Upload files to see them here.');
   } else if(libTab==='projects'){
     const items=projects.filter(p=>!q||p.name.toLowerCase().includes(q));
-    html=(items.length?items.map(p=>'<button class="lib-file" data-lib-proj="'+p.id+'" type="button"><span class="lib-file-ic">'+icon('folder',18)+'</span><span class="lib-file-tx"><span>'+esc(p.name)+'</span><span class="lib-file-sub">'+esc(p.desc||'')+'</span></span></button>').join(''):empty('folder','No projects yet','Create a project to keep your files and chats organized.'))
-      +'<div class="lib-sec">Try an example</div><div class="lib-grid">'+EXAMPLE_PROJECTS.map((p,i)=>'<button class="lib-card" data-lib-example="'+i+'" type="button"><span class="lib-card-tag">'+esc(p.tag)+'</span><div class="lib-card-title">'+esc(p.name)+'</div></button>').join('')+'</div>';
+    html=(items.length?items.map(p=>'<button class="lib-file" data-lib-proj="'+p.id+'" type="button"><span class="lib-file-ic" style="background:'+esc(p.color||'#6e6e6a')+';color:#fff;padding:5px;border-radius:8px">'+icon(p.icon||'folder',18)+'</span><span class="lib-file-tx"><span>'+esc(p.name)+'</span><span class="lib-file-sub">'+esc(p.desc||'')+'</span></span></button>').join(''):empty('folder','Get started by creating a new project','Projects help you set common instructions and attach files for conversations.')+'<button id="libNewProjBtn" class="btn-primary" type="button">New project</button>')
+      +'<div class="lib-sec">Example projects</div><div class="lib-grid">'+EXAMPLE_PROJECTS.map((p,i)=>'<button class="lib-card" data-lib-example="'+i+'" type="button"><div class="lib-card-title">'+esc(p.name)+'</div><div class="lib-card-desc">'+esc(p.desc)+'</div></button>').join('')+'</div>';
   } else if(libTab==='apps'){
-    html=empty('layout-grid','No apps yet','Apps you build will appear here.');
+    html=empty('layout-grid','No apps yet','Create an app with JepongDevxyz AI to see it here.');
   }
   body.innerHTML=html;
+  const np=$('#libNewProjBtn'); if(np) np.addEventListener('click',()=>openProjectDialog());
   body.querySelectorAll('[data-lib-del]').forEach(b=>b.addEventListener('click',async()=>{
     const id=b.getAttribute('data-lib-del');
     const ok=await showConfirm({title:'Delete file?', text:'This file will be removed from your library.', okLabel:'Delete'});
@@ -2070,7 +2167,7 @@ function renderLibrary(){
   body.querySelectorAll('[data-lib-proj]').forEach(b=>b.addEventListener('click',()=>{ $('#libraryPage').hidden=true; openProjectPage(b.getAttribute('data-lib-proj')); }));
   body.querySelectorAll('[data-lib-example]').forEach(b=>b.addEventListener('click',()=>{
     const p=EXAMPLE_PROJECTS[parseInt(b.getAttribute('data-lib-example'),10)];
-    const proj={id:uid(), name:p.name, desc:p.desc, color:PROJ_COLORS[0], folders:[], createdAt:Date.now()};
+    const proj={id:uid(), name:p.name, desc:p.desc, color:PROJ_COLORS[0].hex, icon:'folder', folders:[], createdAt:Date.now()};
     projects.unshift(proj); saveProjects(); renderSidebar();
     $('#libraryPage').hidden=true; openProjectPage(proj.id); toast('Project created');
   }));
@@ -2080,10 +2177,11 @@ function renderLibrary(){
   });
 }
 const EXAMPLE_PROJECTS=[
- {name:'Legal Document Reviewer', tag:'Learning', desc:'Review and explain legal documents in plain language.'},
- {name:'Cover Letter Writer', tag:'Writing', desc:'Write tailored cover letters for job applications.'},
- {name:'Writing Assistant', tag:'Writing', desc:'Draft, edit, and polish any kind of writing.'},
- {name:'Fitness Advice', tag:'Wellness', desc:'Workout plans and fitness guidance.'}
+ /* Grok's exact sub-texts (pass 2) — title + sub-text, NO tag. */
+ {name:'Legal Document Reviewer', desc:'Get expert analysis of U.S. legal documents'},
+ {name:'Cover Letter Writer', desc:'Craft tailored cover letters that align your experience with the job description'},
+ {name:'Writing Assistant', desc:'Polish and improve any text for clarity, conciseness, and style.'},
+ {name:'Fitness Advice', desc:'Plan workouts, nutrition, and fitness goals with evidence-based guidance'}
 ];
 function uploadLibraryFiles(files){
   const MAX_BYTES=1100000;
@@ -2102,8 +2200,21 @@ function uploadLibraryFiles(files){
 }
 
 /* ---------- Projects: dialog + page ---------- */
-const PROJ_COLORS=['#3572a5','#b59a00','#3178c6','#e34c26','#563d7c','#4e9a06'];
-let projIconIdx=0, projFolders=[];
+/* Grok's project icon picker (pass 2): 8 named colours + 64 icons in grok's
+   order. Colour hexes are the app's own palette for the named colours. */
+const PROJ_COLORS=[
+ {name:'Default', hex:'#6e6e6a'},
+ {name:'Blue', hex:'#3178c6'},
+ {name:'Orange', hex:'#f97316'},
+ {name:'Pink', hex:'#ec4899'},
+ {name:'Purple', hex:'#8b5cf6'},
+ {name:'Teal', hex:'#14b8a6'},
+ {name:'Red', hex:'#ef4444'},
+ {name:'Green', hex:'#22c55e'}
+];
+const PROJ_ICONS=['Folder','Flag','Home','Star','Heart','Globe','Unlock','Smile','Shield','Bell','Mail','Phone','User','Stethoscope','Calendar','Clock','Hourglass','Sun','Moon','Monitor','Umbrella','Leaf','Bug','Flask Conical','Rocket','Plane','Car','Camera','Video','Music','Headphones','Microscope','Archive','Book Open','Zap','Wrench','Sticky Note','Scale','Film','Palette','CPU','Calculator','Laptop','Briefcase','Clipboard List','Building','Flame','Play','Database','Shirt','Gem','Gamepad','Chef Hat','Dollar Sign','Tag','Graduation Cap','Pin','Compass','Code','Box','Sparkles','Key','Lightbulb','Bookmark'];
+let projColorIdx=0, projIconName='folder', projFolders=[];
+function projIconKey(name){ return String(name||'folder').toLowerCase().replace(/ /g,'-'); }
 function renderProjFolders(){
   const box=$('#projFolders');
   box.innerHTML=projFolders.map((f,i)=>'<span class="proj-folder-chip">'+esc(f)+'<button type="button" data-proj-folder-del="'+i+'" aria-label="Remove folder">'+icon('x',13)+'</button></span>').join('')+'<button id="projAddFolder" class="proj-add-folder" type="button">Add Folder</button>';
@@ -2115,17 +2226,37 @@ function renderProjFolders(){
   });
 }
 function openProjectDialog(){
-  projIconIdx=0; projFolders=[];
-  $('#projIconBtn').style.background=PROJ_COLORS[0];
+  projColorIdx=0; projIconName='folder'; projFolders=[];
   $('#projNameInput').value=''; $('#projDescInput').value='';
+  syncProjIconBtn();
   renderProjFolders();
   openSheet('#projectDialog');
   setTimeout(()=>$('#projNameInput').focus(),60);
 }
+function syncProjIconBtn(){
+  const b=$('#projIconBtn'); if(!b) return;
+  b.innerHTML=icon(projIconKey(projIconName),26);
+  b.style.background=PROJ_COLORS[projColorIdx].hex;
+  b.style.color='#fff';
+}
+/* Grok's "Project icon" panel: 8 named colours + the 64-icon grid.
+   It OVERLAYS the project dialog (it does not use openSheet, which would
+   hide the dialog and strand the half-filled form underneath). */
+function openProjIconSheet(){
+  renderProjIconSheet();
+  const sh=$('#projIconSheet'); if(sh) sh.hidden=false;
+}
+function renderProjIconSheet(){
+  const sh=$('#projIconSubhead'); if(sh) sh.textContent='Icon and color · '+PROJ_COLORS[projColorIdx].name;
+  $('#projColorRow').innerHTML=PROJ_COLORS.map((c,i)=>'<button class="proj-color-dot'+(i===projColorIdx?' sel':'')+'" type="button" style="--dot:'+c.hex+'" data-proj-color="'+i+'" aria-label="'+esc(c.name)+'" title="'+esc(c.name)+'"></button>').join('');
+  $('#projIconGrid').innerHTML=PROJ_ICONS.map(n=>{ const k=projIconKey(n); return '<button class="proj-icon-cell'+(projIconName===k?' sel':'')+'" type="button" data-proj-icon="'+k+'" aria-label="'+esc(n)+'" title="'+esc(n)+'">'+icon(k,22)+'</button>'; }).join('');
+  $('#projColorRow').querySelectorAll('[data-proj-color]').forEach(b=>b.addEventListener('click',()=>{ projColorIdx=+b.getAttribute('data-proj-color'); syncProjIconBtn(); renderProjIconSheet(); }));
+  $('#projIconGrid').querySelectorAll('[data-proj-icon]').forEach(b=>b.addEventListener('click',()=>{ projIconName=b.getAttribute('data-proj-icon'); syncProjIconBtn(); renderProjIconSheet(); }));
+}
 function createProjectFromDialog(){
   const name=$('#projNameInput').value.trim()||'Untitled Project';
   const desc=$('#projDescInput').value.trim();
-  const proj={id:uid(), name, desc, color:PROJ_COLORS[projIconIdx], folders:projFolders.slice(), createdAt:Date.now()};
+  const proj={id:uid(), name, desc, color:PROJ_COLORS[projColorIdx].hex, icon:projIconName, folders:projFolders.slice(), createdAt:Date.now()};
   projects.unshift(proj); saveProjects(); renderSidebar();
   closeSheet('#projectDialog');
   openProjectPage(proj.id); toast('Project created');
@@ -2137,7 +2268,7 @@ function openProjectPage(id){
   const body=$('#projectBody');
   const chats=sessions.filter(s=>s.projectId===id&&!s.temporary&&!s.archived);
   const files=library.filter(f=>f.projectId===id);
-  body.innerHTML='<div class="set-card"><h3>'+esc(p.name)+'</h3><p>'+esc(p.desc||'No description.')+'</p>'+(p.folders&&p.folders.length?'<p style="margin-top:8px">Folders: '+p.folders.map(esc).join(' · ')+'</p>':'')+'</div>'
+  body.innerHTML='<div class="set-card"><div class="proj-page-ic" style="background:'+esc(p.color||'#6e6e6a')+'">'+icon(p.icon||'folder',22)+'</div><h3>'+esc(p.name)+'</h3><p>'+esc(p.desc||'No description.')+'</p>'+(p.folders&&p.folders.length?'<p style="margin-top:8px">Folders: '+p.folders.map(esc).join(' · ')+'</p>':'')+'</div>'
     +'<div class="lib-sec">Chats ('+chats.length+')</div>'
     +(chats.length?chats.map(s=>'<button class="lib-file" data-proj-chat="'+s.id+'" type="button"><span class="lib-file-ic">'+icon('message-square-plus',18)+'</span><span class="lib-file-tx"><span>'+esc(s.title||'New chat')+'</span></span></button>').join(''):'<p class="set-note">No chats in this project yet.</p>')
     +'<div class="lib-sec">Files ('+files.length+')</div>'
@@ -2164,10 +2295,10 @@ function openBotSheet(){ openSheet('#botSheet'); }
 
 /* ---------- Upgrade dialog (free per Q2) ---------- */
 const UPGRADE_PLANS={
- Plus:{sub:'Our introductory plan: Shared — AI usage pool across all products', was:'₱490 monthly', price:'Free', ai:['Grok Chat/Voice/Imagine/Build','Grok API','Cursor'], x:['Fewer timeline ads','Premium checkmark','Enhanced creator tools','Advanced Analytics','Get paid to post','Edit posts','Customize your experience','Create longer posts','Write Articles','Media Studio','1080p video uploads','Post longer videos','Higher posting limits','Bookmark folders','Download videos','Higher DM limits'], btn:'Upgrade to Plus'},
- Premium:{sub:'Everything in Plus, and:', mult:'4x more usage compared to Plus', deal:'Black friday deal', was:'₱2,090 Billed once for 2 months', price:'Free', then:'Then Free monthly', ai:['Grok Bot','Latest Grok models','Faster Chat responses','Make stunning AI images & videos','Cloud agents & automations','Code hosting & AI code reviews'], x:['Ad-free scrolling on most surfaces','Preferred @handle','Higher reply boost'], btn:'Claim limited-time offer'},
- Super:{sub:'Everything in Premium, and:', mult:'15x more usage compared to Plus', was:'₱7,090 monthly', price:'Free', ai:['Priority model access at peak times','Faster responses & generations'], x:[], btn:'Upgrade to Super'},
- Ultra:{sub:'Everything in Super, and:', mult:'50x more usage compared to Plus', was:'₱13,990 monthly', price:'Free', ai:['Most powerful Chat models','Earliest access to new features','Fastest responses & generations'], x:[], btn:'Upgrade to Ultra'}
+ Plus:{sub:'Our introductory plan: Shared — AI usage pool across all products', was:'₱490 monthly', yearly:'₱4,900', yearlyPer:'₱409/month', price:'Free', ai:['JepongDevxyz AI Chat/Voice/Imagine/Build','JepongDevxyz AI API','Cursor'], x:['Fewer timeline ads','Premium checkmark','Enhanced creator tools','Advanced Analytics','Get paid to post','Edit posts','Customize your experience','Create longer posts','Write Articles','Media Studio','1080p video uploads','Post longer videos','Higher posting limits','Bookmark folders','Download videos','Higher DM limits'], btn:'Upgrade to Plus'},
+ Premium:{sub:'Everything in Plus, and:', mult:'4x more usage compared to Plus', deal:'Black friday deal', was:'₱2,090 Billed once for 2 months', price:'Free', then:'Then Free monthly', renewWas:'₱2,090', ai:['JepongDevxyz AI Bot','Latest JepongDevxyz AI models','Faster Chat responses','Make stunning AI images & videos','Cloud agents & automations','Code hosting & AI code reviews'], x:['Ad-free scrolling on most surfaces','Preferred @handle','Higher reply boost'], btn:'Claim limited-time offer'},
+ Super:{sub:'Everything in Premium, and:', mult:'15x more usage compared to Plus', was:'₱7,090 monthly', yearly:'₱70,900', yearlyPer:'₱5,909/month', price:'Free', ai:['Priority model access at peak times','Faster responses & generations'], x:[], btn:'Upgrade to Super'},
+ Ultra:{sub:'Everything in Super, and:', mult:'50x more usage compared to Plus', was:'₱13,990 monthly', yearly:'₱139,900', yearlyPer:'₱11,659/month', price:'Free', ai:['Most powerful Chat models','Earliest access to new features','Fastest responses & generations'], x:[], btn:'Upgrade to Ultra'}
 };
 let upgTab='Premium', upgTimer=null;
 function upgCountdownText(){
@@ -2180,25 +2311,34 @@ function upgCountdownText(){
   const pad=n=>String(n).padStart(2,'0');
   return pad(days)+' DAYS '+pad(h)+' HR '+pad(m)+' MIN '+pad(s)+' SEC';
 }
+function startUpgTimer(){
+  if(upgTimer) clearInterval(upgTimer);
+  upgTimer=setInterval(()=>{ const el=$('#upgCountdown'); if(el&&!$('#upgradeSheet').hidden) el.textContent=upgCountdownText(); else if(upgTimer){ clearInterval(upgTimer); upgTimer=null; } },1000);
+}
 function openUpgradeSheet(){
   upgTab=settings.plan&&UPGRADE_PLANS[settings.plan]?settings.plan:'Premium';
   renderUpgradeSheetBody();
   openSheet('#upgradeSheet');
-  if(upgTimer) clearInterval(upgTimer);
-  upgTimer=setInterval(()=>{ const el=$('#upgCountdown'); if(el&&!$('#upgradeSheet').hidden) el.textContent=upgCountdownText(); else if(upgTimer){ clearInterval(upgTimer); upgTimer=null; } },1000);
+  startUpgTimer();
 }
 function renderUpgradeSheetBody(){
   document.querySelectorAll('#upgTabs .tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-upg-tab')===upgTab));
   const p=UPGRADE_PLANS[upgTab];
-  const cd=$('#upgCountdown'); if(cd) cd.textContent=upgCountdownText();
-  $('#upgBody').innerHTML='<div class="upg-plan-sub">'+esc(p.sub)+'</div>'
+  /* Pass 3: the Black Friday block (promo + live countdown + offer end)
+     lives on the PREMIUM tab only — it was a static header on all tabs. */
+  $('#upgBody').innerHTML=(upgTab==='Premium'?'<div class="upg-promo">Pay for 1 month, get 1 free</div><div class="upg-countdown" id="upgCountdown"></div><div class="upg-offer-end">Offer ends Dec 2, 2026, 4:00 PM</div>':'')
+    +'<div class="upg-plan-sub">'+esc(p.sub)+'</div>'
     +(p.deal?'<span class="upg-deal">'+esc(p.deal)+'</span>':'')
     +(p.mult?'<div class="upg-plan-sub"><strong>'+esc(p.mult)+'</strong></div>':'')
     +'<div class="upg-price">'+esc(p.price)+(p.was?'<span class="upg-was">'+esc(p.was)+'</span>':'')+'</div>'
+    +(p.yearly?'<div class="upg-price-sub">Yearly <span class="upg-was">'+esc(p.yearly)+'</span> ('+esc(p.yearlyPer)+') · <strong>Save 17%</strong></div>':'')
     +(p.then?'<div class="upg-price-sub">'+esc(p.then)+'</div>':'')
+    +(p.renewWas?'<div class="upg-price-sub">Renews at <span class="upg-was">'+esc(p.renewWas)+'</span> a month after offer ends, cancel anytime</div>':'')
     +'<div class="upg-benefits">AI Benefits</div><ul class="upg-benefits-list">'+p.ai.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>'
     +(p.x&&p.x.length?'<div class="upg-benefits">X Benefits</div><ul class="upg-benefits-list">'+p.x.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>':'')
     +'<button id="upgClaimBtn" class="btn-primary" type="button">'+esc(p.btn)+'</button>';
+  const cd=$('#upgCountdown'); if(cd) cd.textContent=upgCountdownText();
+  startUpgTimer();
   $('#upgClaimBtn').addEventListener('click',()=>{
     settings.plan=upgTab; saveSettings(); renderAll();
     closeSheet('#upgradeSheet');
@@ -2233,10 +2373,10 @@ function openInfoPage(key){
     body.querySelector('#commFeedback').addEventListener('click',()=>openInfoPage('feedback'));
   } else if(key==='changelog'){
     title.textContent='Changelog';
-    body.innerHTML='<div class="set-card"><h3>Grok rebuild — 2026-11-25</h3><p>Fresh rebuild from a full grok.com review: new sidebar with Library and Projects, 9-section Settings, command palette, Library page, upgrade plans free on this device, and grok-style tables that scroll instead of breaking words.</p></div>'
+    body.innerHTML='<div class="set-card"><h3>JepongDevxyz AI rebuild — 2026-11-25</h3><p>Fresh rebuild from a full grok.com review: new sidebar with Library and Projects, 9-section Settings, command palette, Library page, upgrade plans free on this device, and grok-style tables that scroll instead of breaking words.</p></div>'
       +'<div class="set-card"><h3>Round 5 — 2026-11-25</h3><p>Tables fit the viewport, scroll button fades, duplicate titles numbered, Projects always visible, near-black greeting.</p></div>'
       +'<div class="set-card"><h3>Round 4 — 2026-11-25</h3><p>Deterministic answers to app questions, Premium band fix, one-line model rows.</p></div>'
-      +'<div class="set-card"><h3>Grok rebuild — 2026-11-24</h3><p>Fresh frontend cloned from grok.com, APINEX-only backend, voice mode, dictate.</p></div>';
+      +'<div class="set-card"><h3>JepongDevxyz AI rebuild — 2026-11-24</h3><p>Fresh frontend cloned from grok.com, APINEX-only backend, voice mode, dictate.</p></div>';
   } else if(key==='feedback'){
     title.textContent='Send Feedback';
     body.innerHTML='<label class="field-label" for="fbText">Your feedback</label><textarea id="fbText" class="field" rows="5" placeholder="Tell us what works and what does not…"></textarea><button id="fbSend" class="btn-primary" type="button">Send feedback</button><p class="set-note">Feedback is saved on this device only.</p>';
@@ -2251,14 +2391,14 @@ function openInfoPage(key){
     const links=extra.sharedLinks||[];
     body.innerHTML=links.length?links.map((l,i)=>'<div class="trash-row"><span class="trash-tx"><span>'+esc(l.title||'Shared chat')+'</span><span class="trash-sub">'+esc(l.url||'')+' · '+fmtStamp(l.at)+'</span></span></div>').join(''):'<div class="set-card"><h3>No shared links yet</h3><p>Links you share from a chat will appear here.</p></div>';
   } else if(key==='terms'){
-    title.textContent='Terms';
-    body.innerHTML='<div class="set-card"><h3>Terms</h3><p>JepongDevxyz AI is provided as-is. AI-generated content may be inaccurate — verify important information. Do not use the app for anything unlawful, and do not share passwords or sensitive personal information in chats.</p></div>';
+    title.textContent='Terms of Service';
+    body.innerHTML='<div class="set-card"><h3>Terms of Service</h3><p>JepongDevxyz AI is provided as-is. AI-generated content may be inaccurate — verify important information. Do not use the app for anything unlawful, and do not share passwords or sensitive personal information in chats.</p></div>';
   } else if(key==='privacy'){
-    title.textContent='Privacy';
-    body.innerHTML='<div class="set-card"><h3>Privacy</h3><p>Your chats, settings and projects are stored in this browser on your device. There is no JepongDevxyz AI account and nothing is uploaded to a JepongDevxyz AI server for storage. Messages you send are processed by the chat backend to generate replies. Voice input uses your device speech recognition and voices.</p></div>';
+    title.textContent='Privacy Policy';
+    body.innerHTML='<div class="set-card"><h3>Privacy Policy</h3><p>Your chats, settings and projects are stored in this browser on your device. There is no JepongDevxyz AI account and nothing is uploaded to a JepongDevxyz AI server for storage. Messages you send are processed by the chat backend to generate replies. Voice input uses your device speech recognition and voices.</p></div>';
   } else if(key==='acceptable'){
-    title.textContent='Acceptable Use';
-    body.innerHTML='<div class="set-card"><h3>Acceptable Use</h3><p>Use JepongDevxyz AI for lawful purposes only. Do not use it to deceive, harass, or harm others, and do not try to break or abuse the service.</p></div>';
+    title.textContent='Acceptable Use Policy';
+    body.innerHTML='<div class="set-card"><h3>Acceptable Use Policy</h3><p>Use JepongDevxyz AI for lawful purposes only. Do not use it to deceive, harass, or harm others, and do not try to break or abuse the service.</p></div>';
   } else if(key==='cookiesPage'){
     title.textContent='Cookie Policy';
     body.innerHTML='<div class="set-card"><h3>Cookie Policy</h3><p>JepongDevxyz AI stores its data in this browser (local storage), not in cookies. Your preferences, chats, and projects never leave this device. Third-party cookies are not used.</p></div>';
@@ -2299,6 +2439,7 @@ function topTitleMenu(s){
     {icon:'pencil', label:'Rename', onClick:()=>renameChat(s.id)},
     {icon:'folder', label:'Add to Project', onClick:()=>addToProjectMenu(s)},
     {icon:'message-square-plus', label:'Send Feedback', onClick:()=>openInfoPage('feedback')},
+    {divider:true},
     {icon:'copy', label:'Copy Conversation ID', onClick:()=>{ copyText(s.id).then(()=>toast('Conversation ID copied')); }},
     {icon:'link', label:'Open in new tab', onClick:()=>{ try{ window.open(location.href,'_blank'); }catch(e){} }},
     {icon:'archive', label:'Archive', onClick:()=>{ s.archived=true; s.updatedAt=Date.now(); saveSessions(); if(currentId===s.id){ currentId=null; } renderAll(); toast('Chat archived'); }},
@@ -2362,15 +2503,16 @@ function checkProductUpdates(){
   if(!(settings.notifications&&settings.notifications.updates==='On')) return;
   if(extra.seenVersion==='grok-rebuild-2026-11-25') return;
   extra.seenVersion='grok-rebuild-2026-11-25'; saveExtra();
-  setTimeout(()=>toast('What\'s new: grok-style rebuild — Library, 9-section Settings, command palette.'), 2500);
+  setTimeout(()=>toast('What\'s new: JepongDevxyz AI rebuild — Library, 9-section Settings, command palette.'), 2500);
 }
 
 /* ================= Skills: real client-side file creation ================= */
 const SKILL_BUILTINS=[
- {name:'Create a docx file', ext:'docx', icon:'file-text'},
- {name:'Create a pdf file', ext:'pdf', icon:'file-text'},
- {name:'Create a pptx file', ext:'pptx', icon:'presentation'},
- {name:'Create a xlsx file', ext:'xlsx', icon:'sheet'}
+ /* Grok's exact built-in names + descriptions (pass 3). */
+ {name:'docx', ext:'docx', icon:'file-text', desc:'Create, edit, and update .docx files with word processing tools.'},
+ {name:'pdf', ext:'pdf', icon:'file-text', desc:'Read, search, summarize, create and edit PDFs.'},
+ {name:'pptx', ext:'pptx', icon:'presentation', desc:'Create and edit presentation slides with charts, tables, and speaker notes.'},
+ {name:'xlsx', ext:'xlsx', icon:'sheet', desc:'Create and edit spreadsheets with formulas, charts, and data analysis.'}
 ];
 /* Minimal ZIP writer (STORE, no compression) + tiny Office XML generators.
    A .docx/.xlsx/.pptx built this way is a real file that opens in
@@ -2504,6 +2646,12 @@ function wire(){
   $('#topSearchBtn').addEventListener('click',()=>openPalette());
   $('#paneBtn').addEventListener('click',()=>{ const p=$('#rightPane'); if(p.hidden) openRightPane(); else closeRightPane(); });
   $('#paneClose').addEventListener('click',closeRightPane);
+  /* Pass 4: the right pane's own top bar — sidebar toggle + Search open
+     the command palette, "+" opens a blank pane tab. */
+  $('#paneSidebarBtn').addEventListener('click',()=>{ $('#sidebar').classList.add('open'); $('#scrim').hidden=false; });
+  $('#paneSearchBtn').addEventListener('click',()=>openPalette());
+  $('#paneSearchPill').addEventListener('click',()=>openPalette());
+  $('#paneNewTab').addEventListener('click',()=>{ const b=$('#paneBody'); if(b){ b.innerHTML=paneEmptyHtml(); wirePaneEmpty(); } });
   /* ROUND 6: the banner shows on every load; X hides it until reload only
      (no persistence — grok-spec). "Open" just dismisses it too: you are
      already in the app, there is no native app to open. */
@@ -2519,7 +2667,7 @@ function wire(){
     const r=e.currentTarget.getBoundingClientRect();
     showMenu(Math.max(8,Math.min(r.left,window.innerWidth-220)), r.bottom+4, [
       {icon:'plus', label:'New project', onClick:()=>openProjectDialog()},
-      {icon:'chevron-down', label:collapsedSecs.projects?'Expand projects':'Collapse projects', onClick:()=>{ collapsedSecs.projects=!collapsedSecs.projects; $('#projList').style.display=collapsedSecs.projects?'none':''; }}
+      {icon:'chevron-down', label:collapsedSecs.projects?'Expand projects':'Collapse projects', onClick:()=>{ collapsedSecs.projects=!collapsedSecs.projects; renderSidebar(); }}
     ]);
   });
   $('#sbChatsMore').addEventListener('click',e=>{
@@ -2530,6 +2678,12 @@ function wire(){
     ]);
   });
   $('#sbNewPlus').addEventListener('click',()=>newChat());
+  /* Pass 2: section-header chevrons collapse/expand their section. */
+  $('#sbProjChev').addEventListener('click',()=>{ collapsedSecs.projects=!collapsedSecs.projects; renderSidebar(); });
+  $('#sbChatsChev').addEventListener('click',()=>{ collapsedSecs.chats=!collapsedSecs.chats; renderSidebar(); });
+  /* Pass 4: the chat top bar's ••• button opens the same 9-item
+     Conversation Actions menu as tapping the title. */
+  $('#convActionsBtn').addEventListener('click',()=>{ const s=curSession(); if(s) topTitleMenu(s); });
   $('#sbBlackFriday').addEventListener('click',()=>{ closeSidebarMobile(); openUpgradeSheet(); });
   $('#sbConnectApps').addEventListener('click',()=>{ closeSidebarMobile(); openSettings('connectors'); });
   $('#profileBtn').addEventListener('click',e=>{
@@ -2618,22 +2772,28 @@ function wire(){
   $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
   $('#infoModalOk').addEventListener('click',()=>{ $('#infoModal').hidden=true; });
   $('#settingsBack').addEventListener('click',()=>{
-    if(settingsPageKey==='list'){ $('#settingsPage').hidden=true; }
+    if(settingsPageKey==='list'){ $('#settingsPage').hidden=true; $('#appBanner').hidden=false; }
     else { settingsPageKey='list'; renderSettingsPage(); }
   });
-  $('#settingsClose').addEventListener('click',()=>{ $('#settingsPage').hidden=true; });
+  $('#settingsClose').addEventListener('click',()=>{ $('#settingsPage').hidden=true; $('#appBanner').hidden=false; });
   $('#settingsBanner').addEventListener('click',()=>{ $('#settingsPage').hidden=true; openUpgradeSheet(); });
-  $('#infoBack').addEventListener('click',()=>{ $('#infoPage').hidden=true; });
-  $('#infoClose').addEventListener('click',()=>{ $('#infoPage').hidden=true; });
-  $('#libraryBack').addEventListener('click',()=>{ $('#libraryPage').hidden=true; });
-  $('#libraryClose').addEventListener('click',()=>{ $('#libraryPage').hidden=true; });
-  $('#libraryUpload').addEventListener('click',()=>{ $('#libFileInput').click(); });
+  $('#infoBack').addEventListener('click',()=>{ $('#infoPage').hidden=true; $('#appBanner').hidden=false; });
+  $('#infoClose').addEventListener('click',()=>{ $('#infoPage').hidden=true; $('#appBanner').hidden=false; });
+  $('#libraryBack').addEventListener('click',()=>{ $('#libraryPage').hidden=true; $('#appBanner').hidden=false; });
+  $('#libraryClose').addEventListener('click',()=>{ $('#libraryPage').hidden=true; $('#appBanner').hidden=false; });
+  $('#libraryUpload').addEventListener('click',()=>{
+    /* Grok's top-right control changes per tab: Upload files on All/Media/
+       Files, "New project" on Projects, "Create app" on Apps. */
+    if(libTab==='projects') openProjectDialog();
+    else if(libTab==='apps'){ $('#libraryPage').hidden=true; $('#appBanner').hidden=false; newChat(); setTimeout(()=>$('#composerInput').focus(),60); }
+    else $('#libFileInput').click();
+  });
   $('#libSearch').addEventListener('input',()=>renderLibrary());
   $('#libViewBtn').addEventListener('click',()=>{ libGridView=!libGridView; renderLibrary(); });
   $('#libTabs').querySelectorAll('[data-lib-tab]').forEach(t=>t.addEventListener('click',()=>{ libTab=t.getAttribute('data-lib-tab'); renderLibrary(); }));
-  $('#projectBack').addEventListener('click',()=>{ $('#projectPage').hidden=true; });
-  $('#projectClose').addEventListener('click',()=>{ $('#projectPage').hidden=true; });
-  $('#projIconBtn').addEventListener('click',()=>{ projIconIdx=(projIconIdx+1)%PROJ_COLORS.length; $('#projIconBtn').style.background=PROJ_COLORS[projIconIdx]; });
+  $('#projectBack').addEventListener('click',()=>{ $('#projectPage').hidden=true; $('#appBanner').hidden=false; });
+  $('#projectClose').addEventListener('click',()=>{ $('#projectPage').hidden=true; $('#appBanner').hidden=false; });
+  $('#projIconBtn').addEventListener('click',()=>openProjIconSheet());
   $('#projAddFolder').addEventListener('click',async()=>{
     const name=await promptDialog('Add folder','Folder name','');
     if(name===null||!name.trim()) return;

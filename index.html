@@ -24,9 +24,9 @@
         </div>
       </div>
       <button class="sb-row sb-lib" id="sbLibraryRow" type="button"><span data-icon="layout-grid" data-size="18"></span><span>Library</span></button>
-      <div class="sb-sec-row" id="sbProjSec"><span class="sb-sec">Projects</span><span class="sb-sec-actions"><button class="icon-btn" id="sbProjMore" type="button" aria-label="Project options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></span></div>
+      <div class="sb-sec-row" id="sbProjSec"><button class="icon-btn sb-sec-chev" id="sbProjChev" type="button" aria-label="Collapse projects"><span data-icon="chevron-down" data-size="16"></span></button><span class="sb-sec">Projects</span><span class="sb-sec-actions"><button class="icon-btn" id="sbProjMore" type="button" aria-label="Project options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></span></div>
       <div id="projList" class="sb-list"></div>
-      <div class="sb-sec-row" id="sbChatsSec"><span class="sb-sec">Chats</span><span class="sb-sec-actions"><button class="icon-btn" id="sbChatsMore" type="button" aria-label="Chat options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat"><span data-icon="plus" data-size="16"></span></button></span></div>
+      <div class="sb-sec-row" id="sbChatsSec"><button class="icon-btn sb-sec-chev" id="sbChatsChev" type="button" aria-label="Collapse chats"><span data-icon="chevron-down" data-size="16"></span></button><span class="sb-sec">Chats</span><span class="sb-sec-actions"><button class="icon-btn" id="sbChatsMore" type="button" aria-label="Chat options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat"><span data-icon="plus" data-size="16"></span></button></span></div>
       <div id="chatList" class="sb-list"></div>
     </div>
     <div class="sb-bottom">
@@ -49,6 +49,7 @@
       <button id="menuBtn" class="icon-btn panel-btn" aria-label="Open sidebar"><span data-icon="panel-left" data-size="20"></span></button>
       <button id="topSearchBtn" class="icon-btn" aria-label="Search"><span data-icon="search" data-size="20"></span></button>
       <div id="topTitle" class="top-title" role="button" tabindex="0" aria-label="Conversation options"></div>
+      <button id="convActionsBtn" class="icon-btn" type="button" aria-label="Conversation actions" hidden><span data-icon="ellipsis" data-size="20"></span></button>
       <button id="paneBtn" class="icon-btn" aria-label="Toggle right pane"><span data-icon="panel-right" data-size="20"></span></button>
     </header>
 
@@ -82,9 +83,11 @@
   </main>
 </div>
 
-<!-- Right pane (App preview / files) -->
+<!-- Right pane (App preview / files) — grok's pane chrome: sidebar-toggle +
+     Search, centre "Search or type an action" pill, "+" New tab pill,
+     Hide pane icon. Body shows file previews when a file is open. -->
 <div id="rightPane" class="right-pane" hidden>
-  <header class="pane-head"><span class="pane-title" id="paneTitle">App preview</span><button id="paneClose" class="icon-btn" type="button" aria-label="Hide pane"><span data-icon="x" data-size="18"></span></button></header>
+  <header class="pane-head"><button id="paneSidebarBtn" class="icon-btn" type="button" aria-label="Toggle sidebar"><span data-icon="panel-left" data-size="20"></span></button><button id="paneSearchBtn" class="icon-btn" type="button" aria-label="Search"><span data-icon="search" data-size="20"></span></button><button id="paneSearchPill" class="pane-search-pill" type="button"><span>Search or type an action</span></button><button id="paneNewTab" class="pane-newtab" type="button" aria-label="New tab"><span data-icon="plus" data-size="16"></span></button><button id="paneClose" class="icon-btn" type="button" aria-label="Hide pane"><span data-icon="panel-right" data-size="20"></span></button></header>
   <div id="paneBody" class="pane-body"></div>
 </div>
 
@@ -142,7 +145,7 @@
 <div id="paletteSheet" class="sheet" hidden>
   <div class="sheet-card">
     <div class="sheet-grip" aria-hidden="true"></div>
-    <div class="palette-top"><span data-icon="search" data-size="18"></span><input id="paletteInput" type="text" placeholder="Search library" autocomplete="off" aria-label="Search or type an action"><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div class="palette-top"><span data-icon="search" data-size="18"></span><input id="paletteInput" type="text" placeholder="Search or type an action" autocomplete="off" aria-label="Search or type an action"><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div class="tabs" id="paletteTabs"><button class="tab active" data-pal-tab="all">All</button><button class="tab" data-pal-tab="imagine">Imagine</button><button class="tab" data-pal-tab="apps">Apps</button><button class="tab" data-pal-tab="automations">Automations</button><button class="tab" data-pal-tab="files">Files</button></div>
     <div id="paletteResults" class="palette-results"></div>
   </div>
@@ -178,17 +181,28 @@
   </div>
 </div>
 
+<!-- Project icon picker — grok's "Project icon" panel: 8 named colours +
+     64-icon grid. The dialog's folder button opens this sheet. -->
+<div id="projIconSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head"><div class="sheet-title">Project icon</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
+    <div class="set-subhead" id="projIconSubhead">Icon and color</div>
+    <div id="projColorRow" class="proj-color-row"></div>
+    <div id="projIconGrid" class="proj-icon-grid"></div>
+  </div>
+</div>
+
 <!-- Upgrade dialog -->
 <div id="upgradeSheet" class="sheet" hidden>
   <div class="sheet-card">
     <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">The Ultimate AI Subscription</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="upg-promo">Pay for 1 month, get 1 free</div>
-    <div class="upg-countdown" id="upgCountdown"></div>
-    <div class="upg-offer-end">Offer ends Dec 2, 2026, 4:00 PM</div>
-    <div class="tabs" id="upgTabs"><button class="tab" data-upg-tab="Plus">Plus</button><button class="tab active" data-upg-tab="Premium">Premium</button><button class="tab" data-upg-tab="Super">Super</button><button class="tab" data-upg-tab="Ultra">Ultra</button></div>
+    <div class="upg-sub">Save big this Black Friday</div>
+    <div class="tabs" id="upgTabs"><button class="tab" data-upg-tab="Plus">Plus</button><button class="tab active" data-upg-tab="Premium">Premium <span class="upg-tab-badge">Black friday deal</span></button><button class="tab" data-upg-tab="Super">Super</button><button class="tab" data-upg-tab="Ultra">Ultra</button></div>
     <div id="upgBody" class="upg-body"></div>
-    <p class="set-note">Prices include taxes. Free on this device — no payment is taken. Cancel anytime.</p>
+    <p class="set-note">Prices shown do not include applicable taxes or fees. 3rd party models in Cursor are not included. New subscriptions auto-renew until you cancel. Cancel anytime, at least 24 hours prior to renewal to avoid additional charges. Prices subject to change. Manage your subscription through the platform you subscribed on.</p>
+    <p class="set-note">Free on this device — no payment is taken.</p>
   </div>
 </div>
 

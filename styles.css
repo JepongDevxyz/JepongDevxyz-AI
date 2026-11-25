@@ -47,7 +47,7 @@ svg{display:block}
 /* ROUND 6: grok's sidebar panel icon (rectangle + vertical line) inside a
    light-grey rounded square — top bar AND sidebar top-left. */
 .panel-btn{background:var(--chip);border-radius:10px}
-.sb-new{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;font-size:14.5px;font-weight:600;text-align:left;background:var(--chip);border:0;flex:1;margin-left:4px}
+.sb-new{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;font-size:14.5px;font-weight:600;text-align:left;background:var(--surface);border:1px solid var(--line);flex:1;margin-left:4px}
 .sb-new:hover{background:var(--line)}
 .sb-scroll{flex:1;min-height:0;overflow-y:auto;padding:2px 8px}
 /* ROUND 6: grok's bot section is two plain rows — no border, no divider. */
@@ -97,7 +97,8 @@ svg{display:block}
 .sb-profile:hover{background:var(--chip)}
 /* ROUND 6: grey silhouette avatar (not a black "J" circle); name is one
    line only — the "Free plan" second line is gone (see index.html). */
-.sb-avatar{width:30px;height:30px;border-radius:50%;background:var(--chip);color:var(--muted);display:flex;align-items:center;justify-content:center;flex:none}
+.sb-avatar{width:30px;height:30px;border-radius:50%;background:#7d8ea6;color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+html[data-theme="dark"] .sb-avatar{background:#5b6b80;color:#e8e8e6}
 .sb-avatar svg{width:20px;height:20px}
 /* ROUND 6: the Connect-apps grid icon sits in a circular bordered button. */
 .circ-btn{border:1px solid var(--line)}
@@ -128,12 +129,13 @@ svg{display:block}
 #messages{max-width:768px;margin:0 auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:18px}
 .msg{display:flex;flex-direction:column;gap:6px}
 .msg.user{align-items:flex-end}
+.msg-user-row{display:flex;align-items:flex-end;gap:6px;max-width:88%}
 /* ROUND 6: grok's user message IS a light-grey rounded bubble, right-
    aligned, black text (grok-spec §10; the deep review's "no bubble" was
    wrong). The Copy/Edit row is hidden until the bubble is tapped. */
-.msg-user-text{text-align:left;max-width:88%;white-space:pre-wrap;word-break:break-word;font-size:15.5px;line-height:1.6;background:var(--bubble);color:var(--ink);border-radius:18px;padding:10px 14px;cursor:pointer}
+.msg-user-text{text-align:left;max-width:100%;min-width:0;white-space:pre-wrap;word-break:break-word;font-size:15.5px;line-height:1.6;background:var(--bubble);color:var(--ink);border-radius:18px;padding:10px 14px;cursor:pointer}
 .msg-user-text .att-chip{display:inline-block;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12.5px;margin:0 4px 4px 0}
-.msg-user-actions{display:none;gap:2px}
+.msg-user-actions{display:none;gap:2px;flex:none}
 .msg.user.show-actions .msg-user-actions{display:flex}
 .msg-user-actions .icon-btn{width:30px;height:30px;color:var(--muted)}
 .msg-asst{font-size:15.5px;line-height:1.65;word-break:break-word}
@@ -364,6 +366,7 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
 .plan-card li{margin:3px 0}
 .usage-num{font-size:26px;font-weight:700}
 .menu-pop{position:fixed;z-index:90;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:4px;min-width:190px;max-width:min(340px,calc(100vw - 16px))}
+.menu-divider{height:1px;background:var(--line);margin:5px 8px}
 .menu-pop button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:8px;font-size:14px;text-align:left}
 .menu-pop button:hover{background:var(--chip)}
 .menu-pop button.danger{color:var(--danger)}
@@ -497,7 +500,7 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
    with the container edge at 125% scale — 0px of margin — so any further
    font inflation clipped the word while getBoundingClientRect still
    reported the full rect (why the round-6 check could not see it). */
-.top-title .top-title-tx{max-width:calc(100% - 100px)}
+.top-title.has-badge .top-title-tx{max-width:calc(100% - 100px)}
 
 /* ---------- bottom sheets: drag grip ---------- */
 .sheet-grip{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
@@ -513,7 +516,13 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
 /* ---------- right pane ---------- */
 .right-pane{position:fixed;top:0;right:0;bottom:0;width:min(420px,94vw);background:var(--surface);border-left:1px solid var(--line);z-index:65;display:flex;flex-direction:column;box-shadow:var(--shadow)}
 .pane-head{flex:none;height:52px;display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--line)}
-.pane-title{flex:1;font-size:16px;font-weight:700}
+.pane-search-pill{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;background:var(--chip);border:0;border-radius:999px;padding:7px 12px;font-size:13.5px;color:var(--muted)}
+.pane-search-pill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pane-newtab{display:inline-flex;align-items:center;justify-content:center;background:var(--chip);border:0;border-radius:999px;padding:6px 10px;color:var(--ink);flex:none}
+.pane-empty-rows{display:flex;flex-direction:column}
+.pane-empty-row{display:flex;align-items:center;gap:8px;width:100%;padding:13px 4px;font-size:15px;text-align:left;border-bottom:1px solid var(--line)}
+.pane-empty-row:last-child{border-bottom:0}
+.pane-kbd{margin-left:auto;font-size:12px;color:var(--muted);background:var(--chip);border-radius:6px;padding:2px 7px;flex:none}
 .pane-body{flex:1;overflow-y:auto;padding:14px 16px}
 .pane-empty{color:var(--muted);font-size:14px;text-align:center;padding:40px 16px}
 .pane-file{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border-radius:12px;text-align:left;font-size:14.5px}
@@ -553,6 +562,14 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
 /* ---------- new project dialog ---------- */
 .proj-icon-wrap{display:flex;justify-content:center;margin:8px 0 4px}
 .proj-icon{width:64px;height:64px;border-radius:16px;background:var(--chip);color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.proj-color-row{display:flex;gap:10px;flex-wrap:wrap;padding:10px 4px}
+.proj-color-dot{width:28px;height:28px;border-radius:50%;background:var(--dot);border:2px solid transparent;flex:none;padding:0}
+.proj-color-dot.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.proj-icon-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:4px 0 8px}
+.proj-icon-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:10px;color:var(--ink);padding:0}
+.proj-icon-cell:hover{background:var(--chip)}
+.proj-icon-cell.sel{background:var(--chip);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.proj-page-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:8px}
 .proj-name{width:100%;border:0;outline:0;background:none;text-align:center;font-size:20px;font-weight:700;padding:8px 0}
 .proj-desc{width:100%;border:0;outline:0;background:none;resize:none;text-align:center;font-size:14.5px;color:var(--muted);padding:4px 0 10px}
 .proj-folders{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
@@ -564,6 +581,10 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
 .upg-promo{font-size:15px;font-weight:700;text-align:center;margin:4px 0 2px}
 .upg-countdown{font-size:15px;font-weight:700;text-align:center;letter-spacing:.5px}
 .upg-offer-end{font-size:13px;color:var(--muted);text-align:center;margin-bottom:8px}
+.upg-sub{font-size:14px;color:var(--muted);text-align:center;margin:2px 0 6px}
+.upg-tab-badge{font-size:10px;font-weight:700;background:var(--black-btn);color:var(--black-btn-ink);border-radius:999px;padding:2px 7px;white-space:nowrap}
+#upgTabs{overflow-x:auto;scrollbar-width:none}
+#upgTabs .tab{flex:none;display:inline-flex;align-items:center;gap:4px}
 .upg-body{padding:6px 0}
 .upg-plan-sub{font-size:14px;color:var(--muted);margin:2px 0 10px}
 .upg-deal{display:inline-block;background:var(--black-btn);color:var(--black-btn-ink);font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;margin-bottom:8px}
@@ -596,8 +617,8 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
 .lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 0}
 .lib-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left}
 .lib-card:hover{background:var(--chip)}
-.lib-card .lib-card-tag{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.lib-card .lib-card-title{font-size:14.5px;font-weight:700;margin-top:6px;line-height:1.35}
+.lib-card .lib-card-title{font-size:14.5px;font-weight:700;line-height:1.35}
+.lib-card .lib-card-desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.4}
 .lib-sec{font-size:13px;font-weight:700;margin:14px 0 6px}
 .lib-img{width:100%;border-radius:12px;display:block;margin:4px 0}
 
@@ -623,6 +644,9 @@ html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{an
 .skill-row{display:flex;align-items:center;gap:12px;width:100%;padding:13px 4px;border-bottom:1px solid var(--line);text-align:left}
 .skill-row .skill-ic{color:var(--muted);flex:none;display:inline-flex}
 .skill-row .skill-name{flex:1;font-size:15px}
+.skill-row .skill-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left}
+.skill-row .skill-tx .skill-name{flex:none}
+.skill-row .skill-desc{font-size:12.5px;color:var(--muted);line-height:1.35}
 .skill-on{flex:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--muted)}
 .skill-on.on{color:var(--ink)}
 .empty-dash{border:1.5px dashed var(--line);border-radius:14px;padding:26px 14px;text-align:center;color:var(--muted);font-size:14px;margin:10px 0}
