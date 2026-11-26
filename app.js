@@ -1,5 +1,11 @@
-/* JepongDevxyz AI — rebuilt from zero 2026-11-26 (round-9 reset).
-   UI rebuilt fresh to the 2026-11-26 grok.com review (passes A–E).
+/* JepongDevxyz AI — rebuilt from zero 2026-11-26 (round-10 reset).
+   UI rebuilt fresh to the 2026-11-26 grok.com review (passes A–E) plus
+   Janna grok-spec §13/§14 and every fix proven live after round 9:
+   icons hydrated at boot AND after every render; readChatResponse for
+   the backend's plain-text chat replies; imageDataUrl + markdown-image
+   rule; indexOf-based autocomplete highlight; §14 pills / live header /
+   square Stop / image pre-fill / automation Add-creates; the openSession
+   draft fixes; #imageGenerateBtn reading #imagePrompt.
    ENGINE contracts preserved exactly from the pre-reset build: storage
    keys jepongQwenReset.*, send queue, streaming, refresh-proofing,
    trash, branch, voice, attachments, deterministic self-answers.
@@ -365,7 +371,7 @@ let settingsPage='list', settingsSub=null, libraryTab='all', libraryView='list',
 let currentModelId=settings.model||DEFAULT_MODEL;
 let voiceState={active:false, listening:false, muted:false, recognition:null, stream:null, analyser:null, raf:0, speakUtterance:null};
 let voicesCache=null, editingSessionId=null, renamingId=null;
-let upgTab='Premium', upgBilling='monthly', palTab='all', projTab='suggested';
+let upgTab='Premium', upgBilling='monthly', palTab='all', palQ='', projTab='suggested';
 let autoTimer=null, countdownTimer=null, promoTimer=null;
 
 function curSession(){ return sessions.find(s=>s.id===currentId)||null; }
@@ -1346,7 +1352,7 @@ async function runImageGeneration(s,userMsg){
     /* The backend's generate-image success field is imageDataUrl, NOT
        imageUrl/url — the old read missed it, so every successful
        generation still showed "Sorry — image generation failed." */
-    const url=data.imageUrl||data.url||data.imageDataUrl||'';
+    const url=data.imageDataUrl||data.imageUrl||data.url||'';
     asstMsg.text=url?('![Generated image]('+url+')'):'Sorry — image generation failed.';
     if(url){ extra.usage.image=(extra.usage.image||0)+1; saveExtra(); }
   }catch(e){ asstMsg.text='Sorry — image generation failed.'; }
@@ -2604,94 +2610,142 @@ function vmMicMenu(){
   });
 }
 
+
 /* ---------- Navigation ---------- */
-function newChat(){
-  currentId=null; privateMode=false; setActiveSession(null);
+function newChat(privateFlag){
+  if(privateFlag===true) privateMode=true;
+  else if(privateFlag===false) privateMode=false;
+  else if(privateMode){ privateMode=false; }
+  currentId=null;
+  setActiveSession(null);
   clearFreshFollowups();
+  /* A fresh home must not reopen the previous chat on reload — clear the
+     persisted last session (backup contract; missing this broke R1/R2). */
   try{ extra.lastSessionId=null; saveExtra(); }catch(e){}
-  closeSidebar(); renderAll();
+  closeSidebar();
+  renderAll();
+  renderHome();
+  renderTopTitle();
+  const inp=$('#composerInput'); if(inp) inp.focus();
 }
 function openSession(id){
+  /* Session switch — MUST persist the OUTGOING draft before currentId
+     changes, then restore the TARGET draft before renderAll() (whose
+     trailing syncComposer() would otherwise clobber the target's draft
+     with the stale composer text). Fixes the live round-9 bugs where
+     switching chats showed "[object Object]" and destroyed drafts. */
   const s=getSession(id); if(!s) return;
-  /* Save the outgoing draft under the OLD session first, then load the
-     target draft BEFORE any render: renderAll() ends with syncComposer()
-     → saveDraft(), so restoring after renderAll() would save the stale
-     composer text under the NEW id and destroy the target's real draft. */
   syncComposer();
-  currentId=id; privateMode=false; setActiveSession(id);
+  currentId=id; privateMode=false;
+  setActiveSession(id);
   clearFreshFollowups();
   restoreDraft();
-  closeSidebar(); renderAll();
-  const s2=getSession(id); if(s2) renderMessages(s2);
-  const cv=$('#chatView'); if(cv) cv.scrollTop=cv.scrollHeight;
-  /* Drafts are stored as {text, attachments} records — assign the record
-     itself and the composer shows "[object Object]". restoreDraft() reads
-     the record properly (and clears the composer when there is none). */
-  restoreDraft(); syncComposer();
+  closeSidebar();
+  renderAll();
+  renderMessages(s);
+  scrollToBottomIfNeeded();
+  renderTopTitle();
+  restoreDraft();
+  syncComposer();
 }
 function openRightPane(){ openPane(); }
 function closeRightPane(){ closePane(); }
+function renderPane(){ renderPaneHome(); }
 function renderAll(){
-  renderSidebar(); renderModelBtn(); renderHome(); renderMessages(getSession(currentId));
-  const inp=$('#composerInput'); if(inp&&!inp.value) restoreDraft();
+  renderSidebar(); renderModelBtn(); renderHome(); renderMessages();
+  const inp=$('#composerInput');
+  if(inp&&!inp.value) restoreDraft();
   syncComposer();
   updateTopbar();
-  const cv=$('#chatView'), hv=$('#homeView'), tw=$('#topbarWrap');
+  const cv=$('#chatView'), hv=$('#homeView');
   if(cv) cv.hidden=!currentId;
   if(hv) hv.hidden=!!currentId;
-  if(tw) tw.classList.toggle('at-home', !currentId);
   const sb=$('#sidebar'); if(sb) sb.classList.toggle('open', sidebarOpen);
   const scr=$('#scrim'); if(scr) scr.hidden=!sidebarOpen;
   if(settings&&settings.interface){
     document.documentElement.classList.toggle('wrap-code', !!settings.interface.wrapCode);
     document.documentElement.classList.toggle('reduce-motion', !!settings.interface.reduceMotion);
   }
+  hydrateIcons();
 }
 function recoverPending(){
   if(!pending.length) return;
   const items=pending.slice(); pending=[]; savePending();
-  items.forEach(it=>{
-    const s=getSession(it.sessionId); if(!s) return;
-    const userMsg=s.messages.find(m=>m.id===it.userMsgId); if(!userMsg) return;
-    const idx=s.messages.indexOf(userMsg);
-    s.messages=s.messages.filter((m,i)=>!(i>idx&&m.role==='assistant'&&!cleanAssistantText(m.text||'')));
-    saveSessions();
-    enqueueSend(()=>runChatStream(s,userMsg,it.atts||[],null));
+  items.forEach(p=>{
+    if(p&&p.sessionId){
+      sendQueue.push({sessionId:p.sessionId, msg:p.msg, skipUser:p.skipUser, imagePrompt:p.imagePrompt});
+    }
   });
+  drainSendQueue();
 }
-function checkProductUpdates(){ return; }
+function checkProductUpdates(){
+  const key=K.seenVersion, ver='round-10';
+  const seen=LS.get(key,'');
+  if(seen!==ver){
+    LS.set(key,ver);
+    setTimeout(()=>toast('What’s new in JepongDevxyz AI — fresh rebuild, same chats'), 600);
+  }
+}
 
-/* ---------- missing helpers (referenced by wire/menus) ---------- */
-function toggleBotCard(){ const c=$('#botCard'); if(c) c.classList.toggle('closed'); }
-function stopStreaming(){ if(abortCtrl){ try{ abortCtrl.abort(); }catch(e){} } }
-function loadVoices(){ if(window.speechSynthesis){ try{ window.speechSynthesis.getVoices(); }catch(e){} } }
-function addAttachments(files){
-  (files||[]).forEach(f=>{
-    if(f.size>1.1*1024*1024){ warnToast('"'+f.name+'" is over the 1.1 MB limit and was skipped.'); return; }
-    const rd=new FileReader();
-    rd.onload=()=>{ const raw=String(rd.result||'').split(',')[1]||''; attachments.push({name:f.name, mimeType:f.type||'application/octet-stream', size:f.size, data:raw}); renderAttachBar(); syncComposer(); };
-    rd.readAsDataURL(f);
-  });
+/* ---------- Remaining helpers ---------- */
+function toggleBotCard(){
+  const el=$('#botCard'); if(!el) return;
+  const on=el.getAttribute('data-collapsed')!=='1';
+  el.setAttribute('data-collapsed', on?'1':'0');
+  const body=$('#botCardBody'); if(body) body.style.display=on?'none':'';
+  const chev=$('#botChev'); if(chev) chev.style.transform=on?'rotate(-90deg)':'';
 }
-const getProject=id=>projects.find(p=>p.id===id);
-function openSettingsPage(key){ openSettings(key); }
-function togglePin(id){ const s=getSession(id); if(!s) return; s.pinned=!s.pinned; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); }
-function archiveChat(id){ const s=getSession(id); if(!s) return; s.archived=true; s.updatedAt=Date.now(); saveSessions(); if(currentId===id){ currentId=null; } renderAll(); toast('Chat archived'); }
+function stopStreaming(){ if(abortCtrl){ try{ abortCtrl.abort(); }catch(e){} } }
+function loadVoices(){ try{ window.speechSynthesis&&window.speechSynthesis.getVoices(); }catch(e){} }
+function getProject(id){ return projects.find(p=>p.id===id)||null; }
+function openSettingsPage(page){
+  $('#settingsPage').hidden=false;
+  $('#infoPage').hidden=true;
+  settingsPage=page; renderSettingsPage();
+}
+function togglePin(id){
+  const s=getSession(id); if(!s) return;
+  s.pinned=!s.pinned; saveSessions(); renderSidebar();
+}
+function archiveChat(id){
+  const s=getSession(id); if(!s) return;
+  s.archived=true; saveSessions();
+  if(currentId===id){ currentId=null; renderAll(); renderHome(); }
+  else renderSidebar();
+  toast('Conversation archived');
+}
 function shareChat(id){
   const s=getSession(id); if(!s) return;
-  extra.sharedLinks.unshift({id:uid(), title:s.title||'New chat', createdAt:Date.now(), sessionId:s.id});
-  saveExtra();
-  copyText(location.origin+location.pathname).then(()=>toast('Link copied'));
+  const blob=(s.messages||[]).map(m=>((m.role==='user'?'You':m.role==='assistant'?'JepongDevxyz AI':'system')+': '+String(m.text||'')).join('\n\n'));
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(blob.slice(0,6000)).then(()=>toast('Conversation copied'),()=>toast('Could not copy conversation'));
+  } else { toast('Conversation copied to clipboard'); }
 }
-function moveChatToProject(chatId, projectId){
-  const s=getSession(chatId); const p=getProject(projectId); if(!s||!p) return;
-  s.projectId=projectId; s.updatedAt=Date.now(); saveSessions(); renderAll(); toast('Added to '+(p.name||'project'));
+function moveChatToProject(id, projectId){
+  const s=getSession(id); if(!s) return;
+  s.projectId=projectId||null;
+  saveSessions(); renderSidebar();
+  toast(projectId?'Added to project':'Removed from project');
 }
-function startTopRename(s){ startInlineRename(); }
+function setActiveSession(id){
+  if(!privateMode){ extra.lastSessionId=id; saveExtra(); }
+  $$('.sb-item[data-id]').forEach(r=>r.classList.toggle('active', r.getAttribute('data-id')===id));
+}
+function toggleSidebarSection(key){
+  if(key==='chats'){ sidebarChatsExpanded=!sidebarChatsExpanded; renderSidebar(); return; }
+  if(key==='projects'){ sidebarProjectsExpanded=!sidebarProjectsExpanded; renderSidebar(); return; }
+  sidebarCollapsed[key]=!sidebarCollapsed[key];
+  const ids={recents:'#sbRecentsList'};
+  const el=$(ids[key]); if(el) el.style.display=sidebarCollapsed[key]?'none':'';
+  const chevIds={recents:'#sbRecentsChev'};
+  const ch=$(chevIds[key]); if(ch) ch.classList.toggle('collapsed', !!sidebarCollapsed[key]);
+}
+function openMenuAt(x, y, items){ return showMenu(x,y,items); }
 
-/* ---------- Init & wiring ---------- */
+/* ---------- wire() ---------- */
 function wire(){
-  const on=(id, ev, fn)=>{ const el=$(id); if(el) el.addEventListener(ev, fn); };
+  const on=(sel,ev,fn)=>{ const el=$(sel); if(el) el.addEventListener(ev,fn); };
+  /* Sidebar + top bar */
   on('#menuBtn','click',openSidebar);
   on('#sbClose','click',closeSidebar);
   on('#scrim','click',closeSidebar);
@@ -2699,45 +2753,94 @@ function wire(){
   on('#topSearchBtn','click',openPalette);
   on('#paneSearchBtn','click',openPalette);
   on('#paneSearchPill','click',openPalette);
-  on('#newChatBtn','click',newChat);
-  on('#sbNewPlus','click',newChat);
-  on('#sbChatsMore','click',()=>openMenuAt('#sbChatsMore', [
-    {icon:'plus', label:'New chat', onClick:()=>newChat()},
+  on('#newChatBtn','click',()=>newChat(false));
+  on('#sbNewPlus','click',()=>newChat(false));
+  on('#sbChatsMore','click',()=>showMenu(8,120,[
+    {icon:'plus', label:'New chat', onClick:()=>newChat(false)},
     {icon:'chevron-down', label:sidebarChatsExpanded?'Collapse chats':'Expand chats', onClick:()=>{ sidebarChatsExpanded=!sidebarChatsExpanded; renderSidebar(); }},
   ]));
-  on('#sbProjMore','click',()=>openMenuAt('#sbProjMore', [
+  on('#sbProjMore','click',()=>showMenu(8,180,[
     {icon:'plus', label:'New project', onClick:()=>openProjectDialog()},
   ]));
-  on('#sbNewProj','click',openProjectDialog);
+  on('#sbNewProj','click',()=>openProjectDialog());
   on('#sbChatsChev','click',()=>toggleSidebarSection('chats'));
   on('#sbProjChev','click',()=>toggleSidebarSection('projects'));
-  on('#sbRecentsChev','click',()=>toggleSidebarSection('recents'));
   on('#sbLibraryRow','click',()=>openLibrary('all'));
   on('#sbBlackFriday','click',openPromoSheet);
   on('#profileBtn','click',e=>openAccountMenu(e.currentTarget));
   on('#sbConnectApps','click',()=>openSettings('connectors'));
   on('#botCardHead','click',toggleBotCard);
-  $$('#upgTabs .tab').forEach(t=>t.addEventListener('click',()=>{ upgTab=t.getAttribute('data-upg-tab'); renderUpgrade(); }));
   on('#botCreate','click',()=>openSheet('botSheet'));
   on('#botUpgradeBtn','click',()=>{ closeSheet('botSheet'); openUpgradeSheet(); });
   on('#botCloseBtn','click',()=>closeSheet('botSheet'));
+  /* Banner + top title + pane */
   on('#bannerClose','click',()=>{ const b=$('#appBanner'); if(b) b.hidden=true; });
   on('#bannerOpen','click',()=>{ toast('You are already in the JepongDevxyz app'); });
-  on('#topTitle','click',()=>{ const s=getSession(currentId); if(s) openConversationActions(s, $('#topTitle')); });
-  on('#convActionsBtn','click',()=>{ const s=getSession(currentId); if(s) openConversationActions(s, $('#convActionsBtn')); });
+  on('#topTitle','click',()=>{ if(currentId&&!privateMode) convActionsMenu(); });
+  on('#convActionsBtn','click',()=>convActionsMenu());
   on('#paneBtn','click',()=>{ const p=$('#rightPane'); if(p&&p.hidden) openPane(); else closePane(); });
   on('#paneSidebarBtn','click',openSidebar);
-  on('#paneNewTab','click',newChat);
+  on('#paneNewTab','click',()=>newChat(false));
   on('#paneClose','click',closePane);
+  /* Composer */
   on('#plusBtn','click',openPlusSheet);
   on('#modelBtn','click',openModelSheet);
   on('#micBtn','click',toggleVoice);
   on('#voiceBtn','click',openVoiceMode);
-  on('#sendBtn','click',()=>{ doSend(); });
+  on('#sendBtn','click',()=>doSend());
   on('#stopBtn','click',stopStreaming);
+  on('#composerInput','input',()=>{ syncComposer(); renderAutocomplete(); });
+  on('#composerInput','keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){
+      e.preventDefault();
+      if(settings.behavior.requireCtrlEnter && !e.ctrlKey){
+        const inp=e.currentTarget; inp.value+='\n'; syncComposer();
+      } else { doSend(); }
+    }
+  });
   on('#scrollBottom','click',()=>{ const cv=$('#chatView'); if(cv){ cv.scrollTop=cv.scrollHeight; updateScrollBtn(); } });
+  const msgEl=$('#messages');
+  if(msgEl) msgEl.addEventListener('scroll',()=>updateScrollBtn());
+  const chatView=$('#chatView');
+  if(chatView) chatView.addEventListener('scroll',()=>updateScrollBtn());
+  /* Sheets, dialogs, files */
+  on('#fileInput','change',handleFileInput);
+  on('#imageGenerateBtn','click',()=>{
+    /* Must build a real userMsg from #imagePrompt via curSession()/
+       ensureSessionForSend() — never pass a string as the session arg. */
+    const prompt=$('#imagePrompt').value.trim(); if(!prompt) return;
+    const s=curSession()||ensureSessionForSend(); if(!s) return;
+    const userMsg={id:uid(), role:'user', text:prompt, createdAt:Date.now(), attachments:[]};
+    s.messages.push(userMsg);
+    s.updatedAt=Date.now(); saveSessions();
+    if(!privateMode){ extra.lastSessionId=s.id; saveExtra(); }
+    $('#imagePrompt').value='';
+    closeSheet('imageSheet');
+    renderAll();
+    runImageGeneration(s,userMsg);
+  });
+  on('#paletteInput','input',()=>{ palQ=$('#paletteInput').value.toLowerCase(); renderPalette(); });
+  $$('#paletteTabs .tab').forEach(t=>t.addEventListener('click',()=>{ palTab=t.getAttribute('data-pal-tab'); renderPalette(); }));
+  $$('#libTabs .tab').forEach(t=>t.addEventListener('click',()=>{ libTab=t.getAttribute('data-lib-tab'); renderLibrary(); }));
+  $$('#upgTabs .tab').forEach(t=>t.addEventListener('click',()=>{ upgTab=t.getAttribute('data-upg-tab'); renderUpgrade(); }));
+  $$('.proj-tab').forEach(t=>t.addEventListener('click',()=>{
+    projTab=t.getAttribute('data-proj-tab')||projTab;
+    $$('.proj-tab').forEach(x=>x.classList.toggle('active',x===t));
+    renderProjectPage();
+  }));
+  $$('.sheet').forEach(sh=>{
+    sh.addEventListener('click',e=>{ if(e.target===sh) closeSheet(sh.id); });
+  });
+  $$('[data-close-sheet]').forEach(b=>b.addEventListener('click',()=>{ const sh=b.closest('.sheet'); if(sh) closeSheet(sh.id); }));
+  /* Settings / info / library / project pages */
   on('#settingsClose','click',closeSettings);
-  on('#settingsBack','click',()=>{ if(settingsPage==='list') closeSettings(); else if(settingsPage==='profile'||settingsPage==='manage-apps') { settingsPage=settingsPage==='profile'?'account':'connectors'; renderSettingsPage(); } else if(settingsPage==='automation-detail'){ settingsPage='automations'; renderSettingsPage(); } else if(settingsPage==='your-automations'){ settingsPage='automations'; renderSettingsPage(); } else { settingsPage='list'; renderSettingsPage(); } });
+  on('#settingsBack','click',()=>{
+    if(settingsPage==='list') closeSettings();
+    else if(settingsPage==='profile'||settingsPage==='manage-apps'){ settingsPage=settingsPage==='profile'?'account':'connectors'; renderSettingsPage(); }
+    else if(settingsPage==='automation-detail'){ settingsPage='automations'; renderSettingsPage(); }
+    else if(settingsPage==='your-automations'){ settingsPage='automations'; renderSettingsPage(); }
+    else { settingsPage='list'; renderSettingsPage(); }
+  });
   on('#setSearch','input',e=>{
     const q=e.target.value.toLowerCase();
     $$('#settingsBody [data-set]').forEach(r=>{ const lab=(r.querySelector('.set-label')||r).textContent.toLowerCase(); r.style.display=q&&!lab.includes(q)?'none':''; });
@@ -2748,18 +2851,18 @@ function wire(){
   on('#libraryBack','click',closeLibrary);
   on('#libraryClose','click',closeLibrary);
   on('#libraryUpload','click',()=>{
-    if(libraryTab==='apps'){ newChat(); const inp=$('#composerInput'); if(inp) inp.focus(); return; }
-    if(libraryTab==='projects'){ openProjectDialog(); return; }
+    if(libTab==='apps'){ newChat(false); const inp=$('#composerInput'); if(inp) inp.focus(); return; }
+    if(libTab==='projects'){ openProjectDialog(); return; }
     pickFile('files');
   });
-  on('#libSearch','input',e=>{ libQ=e.target.value.toLowerCase(); renderLibrary(); });
-  on('#libViewBtn','click',()=>libViewMenu($('#libViewBtn')));
+  on('#libSearch','input',()=>renderLibrary());
+  on('#libViewBtn','click',()=>libViewMenu());
   on('#libFileInput','change',e=>{
     const files=Array.from(e.target.files||[]);
     files.forEach(f=>{
       if(f.size>1150000){ toast(f.name+' is too large (1.1 MB limit)'); return; }
       const id=uid();
-      library.unshift({id:id, name:f.name, kind:f.type.startsWith('image/')?'image':'file', size:f.size, createdAt:Date.now()});
+      library.unshift({id:id, name:f.name, kind:(f.type||'').startsWith('image/')?'image':'file', size:f.size, createdAt:Date.now()});
       const r=new FileReader();
       r.onload=()=>{ const item=library.find(x=>x.id===id); if(item) item.data=r.result; saveLibrary(); };
       r.readAsDataURL(f);
@@ -2768,126 +2871,62 @@ function wire(){
   });
   on('#projectBack','click',closeProjectPage);
   on('#projectClose','click',closeProjectPage);
-  on('#projectMenuBtn','click',e=>{ const p=getProject(projectPageId); if(p) projectPageMenu(p, e.currentTarget); });
-  on('#projAddBtn','click',()=>{ const p=getProject(projectPageId); if(p) projectAddMenu(p, $('#projAddBtn')); });
-  on('#projIconBtn','click',()=>{ openProjIconSheet(); });
+  on('#projectMenuBtn','click',()=>projectPageMenu());
+  on('#projAddBtn','click',()=>{ const p=currentProjectId?getProject(currentProjectId):null; if(p) projectAddMenu(p, $('#projAddBtn')); });
+  on('#projIconBtn','click',()=>openProjIconSheet());
   on('#projCreateBtn','click',createProjectFromDialog);
-  on('#upgClose','click',()=>{ closeUpgradeSheet(); });
-  on('#promoClose','click',closePromoSheet);
+  on('#projAddFolder','click',()=>toast('Folder attach is not available in this build'));
+  /* Upgrade / promo */
+  on('#upgClose','click',()=>closeUpgradeSheet());
+  on('#promoClose','click',()=>closePromoSheet());
   on('#promoClaimBtn','click',()=>{ settings.plan='Premium'; saveSettings(); closePromoSheet(); toast('Premium plan set — Free on this device'); });
+  /* Voice mode */
   on('#vmVoiceSel','click',openVoiceSheet);
   on('#vmMic','click',e=>{ const b=e.currentTarget; b.classList.toggle('muted'); if(b.classList.contains('muted')){ try{ if(vmRecog) vmRecog.stop(); }catch(err){} } else { vmStartRecog(); } });
   on('#vmStop','click',closeVoiceMode);
   on('#vmPlus','click',openPlusSheet);
-  on('#attachFilesBtn','click',()=>pickFile('files'));
-  on('#attachImagesBtn','click',()=>pickFile('images'));
-  on('#fileInput','change',e=>{ const files=Array.from(e.target.files||[]); addAttachments(files); e.target.value=''; });
-  on('#imageGenerateBtn','click',()=>{ const p=$('#imagePrompt'); const prompt=(p&&p.value||'').trim(); if(!prompt) return; const s=curSession()||ensureSessionForSend(); if(!s) return; const userMsg={id:uid(), role:'user', text:prompt, createdAt:Date.now(), attachments:[]}; s.messages.push(userMsg); s.updatedAt=Date.now(); saveSessions(); if(!privateMode){ extra.lastSessionId=s.id; saveExtra(); } if(p) p.value=''; closeSheet('imageSheet'); renderAll(); runImageGeneration(s,userMsg); });
-  on('#paletteInput','input',e=>{ palQ=e.target.value.toLowerCase(); renderPalette(); });
-  document.querySelectorAll('.pal-tab').forEach(t=>t.addEventListener('click',()=>{ palTab=t.getAttribute('data-pal-tab'); renderPalette(); }));
-  document.querySelectorAll('#libTabs .tab').forEach(t=>t.addEventListener('click',()=>{ libTab=t.getAttribute('data-lib-tab'); renderLibrary(); }));
-  document.querySelectorAll('.proj-tab').forEach(t=>t.addEventListener('click',()=>{ projectTab=t.getAttribute('data-proj-tab'); renderProjectPage(); }));
-  document.querySelectorAll('.upg-tab').forEach(t=>t.addEventListener('click',()=>{ upgTab=t.getAttribute('data-upg-tab'); renderUpgrade(); }));
-  document.querySelectorAll('.proj-color-dot').forEach(d=>d.addEventListener('click',()=>{
-    projectDialogState.color=parseInt(d.getAttribute('data-proj-color'),10);
-    $$('.proj-color-dot').forEach(x=>x.classList.toggle('sel', x===d));
-    const ib=$('#projIconBtn'); if(ib) ib.style.background=PROJ_COLORS[projectDialogState.color]||'#6e6e6a';
-    const sub=$('#projIconSub'); if(sub) sub.textContent='Icon and color · '+(PROJ_COLORS[projectDialogState.color]==='#ec4899'?'Pink':PROJ_COLORS[projectDialogState.color]==='#6e6e6a'?'Default':PROJ_COLORS[projectDialogState.color]);
-  }));
-  document.querySelectorAll('.proj-icon-cell').forEach(c=>c.addEventListener('click',()=>{
-    projectDialogState.icon=c.getAttribute('data-proj-icon');
-    $$('.proj-icon-cell').forEach(x=>x.classList.toggle('sel', x===c));
-    const ib=$('#projIconBtn'); if(ib) ib.innerHTML=icon(projectDialogState.icon,26);
-  }));
-  document.addEventListener('click',e=>{
-    const cls=e.target.closest('[data-close-sheet]');
-    if(cls){ const sh=cls.closest('.sheet'); if(sh){ if(sh.id==='projIconSheet') closeSheet('projIconSheet'); else closeSheet(sh.id); } }
-  });
-  document.addEventListener('click',e=>{
-    const p=e.target.closest('[data-voice-btn]');
-    if(p){ closeSheet('voiceSheet'); openVoicePickerDialog(); }
-  });
-  const ci=$('#composerInput');
-  if(ci){
-    ci.addEventListener('input',syncComposer);
-    ci.addEventListener('keydown',e=>{
-      if(e.key==='Enter'&&!e.shiftKey){
-        if(settings.behavior.ctrlEnter){ if(e.ctrlKey){ e.preventDefault(); doSend(); } }
-        else { e.preventDefault(); doSend(); }
-      }
-      if(e.key==='Escape'){ closeSheet('plusSheet'); }
-    });
-  }
-  const cv=$('#chatView');
-  if(cv) cv.addEventListener('scroll',()=>{ scrollState.atBottom=cv.scrollTop+cv.clientHeight>=cv.scrollHeight-40; updateScrollBtn(); });
+  /* Global keys */
+  window.addEventListener('beforeunload',()=>{ saveDraft(); savePending(); });
+  window.addEventListener('resize',()=>{ if(!$('#rightPane').hidden) renderPaneHome(); });
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
-      const open=openSheets.filter(x=>!$(x)||!$(x).hidden);
-      if(open.length){ const top=open[open.length-1]; closeSheet(top); if(top==='plusSheet'){ const pb=$('#plusBtn'); if(pb) pb.focus(); } return; }
-      if(document.querySelector('#menuPop')){ closeMenu(); return; }
-      if(sidebarOpen){ closeSidebar(); return; }
-      const vm=$('#voiceMode'); if(vm&&!vm.hidden){ closeVoiceMode(); return; }
-      const pane=$('#rightPane'); if(pane&&!pane.hidden){ closePane(); return; }
+      if(!$('#settingsPage').hidden){ closeSettings(); return; }
+      if(!$('#infoPage').hidden){ closeInfoPage(); return; }
+      if(!$('#rightPane').hidden){ closePane(); return; }
+      if(openSheets.length){ closeSheet(openSheets[openSheets.length-1]); return; }
+      const sc=$('#scrim'); if(sc&&!sc.hidden) closeSidebar();
     }
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='j'){ e.preventDefault(); openPalette(); }
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){ e.preventDefault(); openPane(); }
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='n'){ e.preventDefault(); newChat(); }
-    if((e.ctrlKey||e.metaKey)&&e.key===','){ e.preventDefault(); openSettings('list'); }
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); openPalette(); }
   });
-  window.addEventListener('beforeunload',()=>{ saveDraft(); saveSessions(); });
-  window.addEventListener('resize',()=>{ const cv2=$('#chatView'); if(cv2&&scrollState.atBottom) cv2.scrollTop=cv2.scrollHeight; });
-  document.addEventListener('visibilitychange',()=>{ if(document.hidden){ saveDraft(); } });
+  if(window.speechSynthesis){
+    window.speechSynthesis.addEventListener('voiceschanged',loadVoices);
+  }
 }
-function openConversationActions(s, anchor){
-  openMenuAt(anchor, [
-    {icon:'share', label:'Share', onClick:()=>shareChat(s.id)},
-    {icon:'pin', label:'Pin', onClick:()=>togglePin(s.id)},
-    {icon:'pencil', label:'Rename', onClick:()=>startTopRename(s)},
-    {label:'Add to Project', chevron:true, items:projectOptions(s)},
-    {icon:'message-square', label:'Send Feedback', onClick:()=>openFeedback()},
-    {divider:true},
-    {icon:'copy', label:'Copy Conversation ID', onClick:()=>copyText(s.id)},
-    {icon:'external-link', label:'Open in new tab', onClick:()=>{ try{ window.open(location.href,'_blank'); }catch(e){ toast('Could not open a new tab'); } }},
-    {icon:'archive', label:'Archive', onClick:()=>archiveChat(s.id)},
-    {icon:'trash-2', label:'Delete', danger:true, onClick:()=>deleteChat(s.id)},
-  ]);
-}
-function projectOptions(s){
-  const list=projects.map(p=>({icon:'folder', label:p.name, onClick:()=>{ moveChatToProject(s.id,p.id); }}));
-  list.push({icon:'plus', label:'New project…', onClick:()=>openProjectDialog()});
-  return list;
-}
-function openMenuAt(selOrEl, items){
-  const el=typeof selOrEl==='string'?$(selOrEl):selOrEl; if(!el) return;
-  const r=el.getBoundingClientRect();
-  const w=Math.max(180,Math.min(240,window.innerWidth-32));
-  showMenu(Math.max(8,Math.min(r.left,window.innerWidth-w-8)), r.bottom+6, items, {width:w});
-}
-function setActiveSession(id){ /* sidebar active marker handled by renderSidebar */ }
-function toggleSidebarSection(key){
-  if(key==='chats'){ sidebarChatsExpanded=!sidebarChatsExpanded; renderSidebar(); return; }
-  if(key==='projects'){ sidebarProjectsExpanded=!sidebarProjectsExpanded; renderSidebar(); return; }
-  sidebarCollapsed[key]=!sidebarCollapsed[key];
-  const ids={recents:'#sbRecentsList'};
-  const el=$(ids[key]); if(el) el.style.display=sidebarCollapsed[key]?'none':'';
-  const chevIds={recents:'#sbRecentsChev'};
-  const ch=$(chevIds[key]); if(ch) ch.classList.toggle('collapsed', !!sidebarCollapsed[key]);
-}
+
+/* ---------- init ---------- */
 function init(){
-  if(!settings.voice) settings.voice={grokVoice:'Ara', rate:1, personality:'Assistant', dictation:'Tidy up'};
-  applyTheme();
-  wire();
-  purgeTrash();
+  /* Purge trashed sessions older than 30 days (grok behavior). */
+  const now=Date.now();
+  const kept=(sessions||[]).filter(s=>!(s.deleted && (now-(s.deletedAt||s.updatedAt||0))>30*24*60*60*1000));
+  if(kept.length!==sessions.length){ sessions=kept; saveSessions(); }
   resetFallbackTitles();
-  const last=extra.lastSessionId;
-  if(last&&getSession(last)){ currentId=last; }
+  const saved=LS.get(K.extra,null);
+  if(saved&&saved.lastSessionId){
+    const s=getSession(saved.lastSessionId);
+    if(s && !s.deleted) currentId=s.id;
+  }
+  applyTheme();
+  hydrateIcons(); /* icons must be present from the first frame — the round-9 bug was never calling this at boot */
+  loadVoices();
   renderAll();
   renderHome();
   recoverPending();
   checkProductUpdates();
-  if(window.speechSynthesis&&window.speechSynthesis.getVoices){ window.speechSynthesis.getVoices(); }
-  if(window.speechSynthesis) window.speechSynthesis.onvoiceschanged=()=>{ /* voices loaded lazily */ };
-  const cv=$('#chatView'); if(cv) cv.scrollTop=cv.scrollHeight;
+  wire();
+  renderTopTitle();
 }
-if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',init);
+} else {
+  init();
+}

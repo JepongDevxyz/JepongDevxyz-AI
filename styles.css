@@ -1,4 +1,4 @@
-/* JepongDevxyz AI — rebuilt from zero 2026-11-26 (round-9 reset).
+/* JepongDevxyz AI — rebuilt from zero 2026-11-26 (round-10 reset).
    Light default; dark theme via [data-theme]. All UI colors are CSS
    variables — no hardcoded colors in component rules. Motion: plain
    ease, <=200ms everywhere; the only fade is the Delete dialog. */
@@ -525,7 +525,7 @@ html[data-theme="dark"] .composer{box-shadow:0 2px 10px rgba(0,0,0,.4)}
   #menuBtn{display:none}
 }
 
-/* ---------- round-9 appendix: classes used by app.js ---------- */
+/* ---------- round-10 appendix: classes used by app.js ---------- */
 html.wrap-code .code-body code{white-space:pre-wrap;word-break:break-word}
 html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{animation:none!important;transition:none!important}
 .menu-divider{height:1px;background:var(--line);margin:5px 6px}
