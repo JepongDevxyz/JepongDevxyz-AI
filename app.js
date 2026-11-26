@@ -807,8 +807,9 @@ function inlineMd(s){
   /* Markdown images MUST come before links: without this rule
      "![alt](url)" degraded to a literal "!" + a link (seen live
      2026-11-26 — the "!" marker before the image link). data: URLs
-     (what runImageGeneration emits) and https: URLs both render. */
-  h=h.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,'<img src="$2" alt="$1" style="max-width:100%;border-radius:12px">');
+     (what runImageGeneration emits) and https: URLs both render.
+     The optional space covers the model's "! [alt](url)" form. */
+  h=h.replace(/![ ]*\[([^\]]*)\]\(([^)\s]+)\)/g,'<img src="$2" alt="$1" style="max-width:100%;border-radius:12px">');
   h=h.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
   h=h.replace(/(?<!["'=])((?:https?:\/\/)[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
   return h;
@@ -1051,7 +1052,7 @@ function asstMoreMenu(m,mid){
     {icon:'volume-2', label:'Read aloud', onClick:()=>readAloud(m)},
     {icon:'download', label:'Export to PDF', onClick:()=>{ try{ window.print(); }catch(e){ toast('Print is not available'); } }},
     {icon:'rotate-ccw', label:'Regenerate', onClick:()=>{ const s2=curSession(); if(s2) regenerate(s2,m); }},
-    {icon:'image', label:'Create image', onClick:()=>{ const s=curSession(); if(!s) return; const userMsg={id:uid(), role:'user', text:String(m.text||'').slice(0,500), createdAt:Date.now(), attachments:[]}; s.messages.push(userMsg); saveSessions(); runImageGeneration(s,userMsg); }},
+    {icon:'image', label:'Create image', onClick:()=>{ const s=curSession(); if(!s) return; /* The reply may itself BE image markdown — push its alt text as the prompt, not the raw "! [..](..)" source (live 2026-11-26: the user bubble showed the raw markdown). */ const raw=String(m.text||'').replace(/![ ]*\[(.*?)\]\([^)\s]+\)/g,'$1').trim(); const userMsg={id:uid(), role:'user', text:raw.slice(0,500), createdAt:Date.now(), attachments:[]}; s.messages.push(userMsg); saveSessions(); runImageGeneration(s,userMsg); }},
     {icon:'flag', label:'Report message', onClick:()=>{ extra.reports.push({id:uid(), mid:mid, at:Date.now()}); saveExtra(); toast('Thanks — your report was sent'); }},
     {icon:'trash-2', label:'Delete', danger:true, onClick:async()=>{ const ok=await showConfirm({title:'Delete message?', text:'This answer will be deleted.', okLabel:'Delete'}); if(!ok) return; const s=curSession(); if(!s) return; s.messages=s.messages.filter(x=>x.id!==mid); s.updatedAt=Date.now(); saveSessions(); renderMessages(); }},
   ]);
