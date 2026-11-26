@@ -12,51 +12,39 @@
 <div id="app">
   <aside id="sidebar" aria-label="Sidebar">
     <div class="sb-top">
-      <button id="sbClose" class="icon-btn panel-btn" type="button" aria-label="Close sidebar"><span data-icon="panel-left" data-size="20"></span></button>
-      <button id="sbSearchIcon" class="icon-btn" type="button" aria-label="Search"><span data-icon="search" data-size="20"></span></button>
-      <button id="newChatBtn" class="sb-new" type="button"><span class="sb-new-plus"><span data-icon="plus" data-size="14"></span></span><span>New chat</span></button>
+      <div class="sb-search"><span data-icon="search" data-size="16"></span><input id="chatSearch" type="text" placeholder="Search conversations" autocomplete="off"><button id="chatSearchClear" class="icon-btn sm" hidden aria-label="Clear search"><span data-icon="x" data-size="14"></span></button></div>
+      <button id="newChatBtn" class="sb-new"><span class="sb-new-plus"><span data-icon="plus" data-size="14"></span></span><span>New chat</span></button>
     </div>
-    <div class="sb-scroll">
-      <div class="bot-card" id="botCard">
-        <button class="bot-card-head" id="botCardHead" type="button"><span class="bot-smiley" data-icon="smile" data-size="18"></span><span class="bot-card-name">JepongDevxyz AI</span><span class="bot-chev" id="botChev"><span data-icon="chevron-down" data-size="16"></span></span></button>
-        <div class="bot-card-body" id="botCardBody">
-          <button class="sb-row" id="botCreate" type="button"><span data-icon="plus" data-size="18"></span><span>Create a bot</span></button>
-        </div>
-      </div>
-      <button class="sb-row sb-lib" id="sbLibraryRow" type="button"><span data-icon="library" data-size="18"></span><span>Library</span></button>
-      <div class="sb-sec-row" id="sbProjSec"><button class="icon-btn sb-sec-chev" id="sbProjChev" type="button" aria-label="Collapse projects"><span data-icon="chevron-down" data-size="16"></span></button><span class="sb-sec">Projects</span><span class="sb-sec-actions"><button class="icon-btn" id="sbProjMore" type="button" aria-label="Project options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></span></div>
-      <div id="projList" class="sb-list"></div>
-      <div class="sb-sec-row" id="sbChatsSec"><button class="icon-btn sb-sec-chev" id="sbChatsChev" type="button" aria-label="Collapse chats"><span data-icon="chevron-down" data-size="16"></span></button><span class="sb-sec">Chats</span><span class="sb-sec-actions"><button class="icon-btn" id="sbChatsMore" type="button" aria-label="Chat options"><span data-icon="ellipsis" data-size="16"></span></button><button class="icon-btn" id="sbNewPlus" type="button" aria-label="New chat"><span data-icon="plus" data-size="16"></span></button></span></div>
-      <div id="chatList" class="sb-list"></div>
+    <div id="chatList" class="sb-list"></div>
+    <div class="sb-sec-row" id="sbProjSec"><span class="sb-sec">Projects</span><span class="sb-sec-actions"><button class="icon-btn sb-sec-chev" id="sbProjChev" type="button" aria-label="Collapse projects"><span data-icon="chevron-down" data-size="16"></span></button><button class="icon-btn" id="sbNewProj" type="button" aria-label="New project"><span data-icon="plus" data-size="16"></span></button></span></div>
+    <div id="projList" class="sb-list"></div>
+    <div class="sb-explore">
+      <div class="sb-sec">Explore</div>
+      <button class="sb-row" data-explore="help"><span data-icon="circle-help" data-size="18"></span><span>Help</span></button>
+      <button class="sb-row" data-explore="projects"><span data-icon="folder" data-size="18"></span><span>Projects</span></button>
+      <button class="sb-row" data-explore="invite"><span data-icon="user-plus" data-size="18"></span><span>Invite</span></button>
     </div>
     <div class="sb-bottom">
-      <button class="sb-blackfriday" id="sbBlackFriday" type="button"><span data-icon="clock" data-size="16"></span><span>Get Black Friday Offer</span></button>
-      <div class="sb-profile-wrap">
-        <button class="sb-profile" id="profileBtn" type="button"><span class="sb-avatar" id="profileAvatar"></span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span></span></button>
-        <button id="sbConnectApps" class="icon-btn circ-btn" type="button" aria-label="Connect apps"><span data-icon="layout-grid" data-size="18"></span></button>
-      </div>
+      <button class="sb-upgrade" id="sbUpgradeBtn" data-explore="upgrade"><span data-icon="rocket" data-size="16"></span><span>Upgrade to Premium</span></button>
+      <button class="sb-row" data-explore="settings"><span data-icon="settings" data-size="18"></span><span>Settings</span></button>
+      <button class="sb-profile" id="profileBtn"><span class="sb-avatar" id="profileAvatar">J</span><span class="sb-profile-meta"><span id="profileNameLabel">Jepong</span><span class="sb-profile-sub" id="profileEmailLabel">Free plan</span></span></button>
     </div>
   </aside>
   <div id="scrim" hidden></div>
 
   <main id="main">
-    <div id="appBanner" class="app-banner">
-      <button id="bannerClose" class="icon-btn sm" type="button" aria-label="Dismiss"><span data-icon="x" data-size="16"></span></button>
-      <span class="app-banner-title">View in the JepongDevxyz app</span>
-      <button id="bannerOpen" class="app-banner-open" type="button"><span class="ab-mark" id="bannerMark"></span>Open</button>
-    </div>
     <header id="topbar">
-      <button id="menuBtn" class="icon-btn panel-btn" aria-label="Open sidebar"><span data-icon="panel-left" data-size="20"></span></button>
-      <button id="topSearchBtn" class="icon-btn" aria-label="Search"><span data-icon="search" data-size="20"></span></button>
-      <div id="topTitle" class="top-title" role="button" tabindex="0" aria-label="Conversation options"></div>
-      <button id="convActionsBtn" class="icon-btn" type="button" aria-label="Conversation actions" hidden><span data-icon="ellipsis" data-size="20"></span></button>
-      <button id="paneBtn" class="icon-btn" aria-label="Toggle right pane"><span data-icon="panel-right" data-size="20"></span></button>
+      <button id="menuBtn" class="icon-btn" aria-label="Open sidebar"><span data-icon="menu" data-size="20"></span></button>
+      <div id="topTitle" class="top-title" role="button" tabindex="0" aria-label="Conversation options">JepongDevxyz AI</div>
+      <button id="privateBtn" class="icon-btn" aria-label="Private chat" aria-pressed="false"><span data-icon="lock" data-size="18"></span></button>
+      <button id="topSearchBtn" class="icon-btn" aria-label="Search chats"><span data-icon="search" data-size="20"></span></button>
+      <button id="topNewBtn" class="icon-btn" aria-label="New chat"><span data-icon="square-pen" data-size="20"></span></button>
     </header>
 
     <div id="homeView">
       <div class="home-greet">
-        <h1 id="greetLine1">What's on the agenda today?</h1>
-        <p id="greetLine2" hidden>How can I help?</p>
+        <h1 id="greetLine1">Good morning, Jepong</h1>
+        <p id="greetLine2">How can I help?</p>
       </div>
     </div>
 
@@ -65,7 +53,6 @@
     </div>
 
     <div id="composerDock">
-      <div id="autoComplete" class="auto-complete" hidden></div>
       <div id="attachBar" class="attach-bar" hidden></div>
       <div id="composer" class="composer">
         <button id="plusBtn" class="plus-btn" type="button" aria-label="Attachments"><span data-icon="plus" data-size="18"></span></button>
@@ -76,41 +63,15 @@
         <button id="sendBtn" class="send-btn" type="button" aria-label="Send" disabled><span data-icon="arrow-up" data-size="18"></span></button>
         <button id="stopBtn" class="send-btn stop" type="button" aria-label="Stop" hidden><span class="stop-sq"></span></button>
       </div>
-      <div id="privateNote" class="private-note" hidden><span class="pn-ring" aria-hidden="true"></span><span>This chat won't appear in your history and will not be used to train models.</span></div>
       <div id="homeSugg" class="home-sugg" hidden></div>
     </div>
     <button id="scrollBottom" class="scroll-bottom" type="button" aria-label="Scroll to bottom" hidden><span data-icon="arrow-down" data-size="16"></span></button>
   </main>
 </div>
 
-<!-- Right pane -->
-<div id="rightPane" class="right-pane" hidden>
-  <header class="pane-head"><button id="paneSidebarBtn" class="icon-btn" type="button" aria-label="Toggle sidebar"><span data-icon="panel-left" data-size="20"></span></button><button id="paneSearchBtn" class="icon-btn" type="button" aria-label="Search"><span data-icon="search" data-size="20"></span></button><button id="paneSearchPill" class="pane-search-pill" type="button"><span>Search or type an action</span></button><button id="paneNewTab" class="pane-newtab" type="button" aria-label="New tab"><span data-icon="plus" data-size="16"></span></button><button id="paneClose" class="icon-btn" type="button" aria-label="Hide pane"><span data-icon="panel-right" data-size="20"></span></button></header>
-  <div id="paneBody" class="pane-body"></div>
-</div>
-
-<!-- Plus menu bottom sheet -->
-<div id="plusSheet" class="sheet" hidden>
-  <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <div class="sheet-head"><div class="sheet-title">Attachments</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div id="plusSheetList" class="sheet-list"></div>
-  </div>
-</div>
-
-<!-- Model picker bottom sheet — grok has NO title and NO close button,
-     just the drag handle, then the rows. -->
-<div id="modelSheet" class="sheet" hidden>
-  <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <div id="modelSheetList" class="sheet-list"></div>
-  </div>
-</div>
-
 <!-- Attachments sheet -->
 <div id="attachSheet" class="sheet" hidden>
   <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Attachments</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div class="sheet-row" id="attachState">No file selected</div>
     <button class="sheet-list-btn" data-attach="camera"><span data-icon="camera" data-size="18"></span><span>Camera</span></button>
@@ -122,7 +83,6 @@
 <!-- Image prompt sheet -->
 <div id="imageSheet" class="sheet" hidden>
   <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Create Image</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <label class="field-label" for="imagePrompt">Image prompt</label>
     <textarea id="imagePrompt" rows="3" placeholder="Describe the image you want…"></textarea>
@@ -133,142 +93,36 @@
 <!-- Sources dialog -->
 <div id="sourcesDialog" class="sheet" hidden>
   <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Sources</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div id="sourcesList" class="sources-list"></div>
-  </div>
-</div>
-
-<!-- Command palette -->
-<div id="paletteSheet" class="sheet" hidden>
-  <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <div class="palette-head"><span class="palette-title">Command palette</span><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="palette-top"><span data-icon="search" data-size="18"></span><input id="paletteInput" type="text" placeholder="Search or type an action" autocomplete="off" aria-label="Search or type an action"><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="tabs" id="paletteTabs"><button class="tab active" data-pal-tab="all">All</button><button class="tab" data-pal-tab="imagine">Imagine</button><button class="tab" data-pal-tab="apps">Apps</button><button class="tab" data-pal-tab="automations">Automations</button><button class="tab" data-pal-tab="files">Files</button></div>
-    <div id="paletteResults" class="palette-results"></div>
-  </div>
-</div>
-
-<!-- Bot promo sheet (pass E: "+ Create a bot" is a promo/paywall, not a form) -->
-<div id="botSheet" class="sheet" hidden>
-  <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <div class="sheet-head"><div class="sheet-title">Meet JepongDevxyz AI Bot, your personal assistant for life and work.</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="bot-bubbles"><span class="bot-bubble">Book dinner for 2 at 7pm</span><span class="bot-bubble">Plan the trip from this post</span><span class="bot-bubble">On it.</span><span class="bot-bubble">Inbox sorted overnight</span><span class="bot-bubble">Clean up my inbox</span><span class="bot-bubble">Saved you $321 on flights</span></div>
-    <ul class="bot-points">
-      <li>Shops for you, books dinners, plans trips</li>
-      <li>Handles your inbox &amp; errands while you sleep</li>
-      <li>Saves you time &amp; money every week</li>
-    </ul>
-    <p class="set-note">The bot works with your chats, files, and projects on this device. Connecting email, drive, and calendar needs an app account — this app runs on your device only.</p>
-    <button id="botUpgradeBtn" class="btn-primary" type="button">Upgrade to Premium</button>
-    <button id="botCloseBtn" class="btn-ghost" type="button">Close</button>
-  </div>
-</div>
-
-<!-- New Project dialog — grok's visible top shows ONLY the X; the
-     "New Project" heading is kept for the accessibility tree only. -->
-<div id="projectDialog" class="sheet" hidden>
-  <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <h2 class="visually-hidden" id="projDialogTitle">New Project</h2>
-    <div class="sheet-head sheet-head-xonly"><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="proj-icon-wrap"><button id="projIconBtn" class="proj-icon" type="button" aria-label="Project icon color"><span data-icon="folder" data-size="26"></span></button><span class="proj-icon-label">Choose an icon and color</span></div>
-    <input id="projNameInput" class="proj-name" type="text" placeholder="Untitled Project" maxlength="60" autocomplete="off" aria-label="Project name">
-    <textarea id="projDescInput" class="proj-desc" rows="2" placeholder="What's this project about?"></textarea>
-    <div class="proj-folders" id="projFolders"><button id="projAddFolder" class="proj-add-folder" type="button">Add Folder</button></div>
-    <button id="projCreateBtn" class="btn-primary" type="button">Create</button>
-  </div>
-</div>
-
-<!-- Project icon picker — grok's "Project icon" panel: 8 named colours +
-     64-icon grid. -->
-<div id="projIconSheet" class="sheet" hidden>
-  <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <div class="sheet-head"><div class="sheet-title">Project icon</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="set-subhead" id="projIconSubhead">Icon and color</div>
-    <div id="projColorRow" class="proj-color-row"></div>
-    <div id="projIconGrid" class="proj-icon-grid"></div>
-  </div>
-</div>
-
-<!-- Upgrade dialog — full-screen on phone width, ✕ at TOP LEFT (pass C). -->
-<div id="upgradeSheet" class="sheet sheet-full" hidden>
-  <div class="sheet-card sheet-card-full">
-    <div class="upg-top"><button class="icon-btn" id="upgClose" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="sheet-title upg-title">The Ultimate AI Subscription</div>
-    <div class="upg-sub">Save big this Black Friday</div>
-    <div class="tabs" id="upgTabs"><button class="tab" data-upg-tab="Plus">Plus</button><button class="tab active" data-upg-tab="Premium">Premium <span class="upg-tab-badge"><span data-icon="clock" data-size="10"></span>Black friday deal</span></button><button class="tab" data-upg-tab="Super">Super</button><button class="tab" data-upg-tab="Ultra">Ultra</button></div>
-    <div id="upgBody" class="upg-body"></div>
-    <p class="set-note">Prices shown do not include applicable taxes or fees. 3rd party models in Cursor are not included. New subscriptions auto-renew until you cancel. Cancel anytime, at least 24 hours prior to renewal to avoid additional charges. Prices subject to change. Manage your subscription through the platform you subscribed on.</p>
-    <p class="set-note">Free on this device — no payment is taken.</p>
-  </div>
-</div>
-
-<!-- Black Friday promo dialog (pass E: the sidebar pill opens its OWN
-     promo dialog, not the Upgrade dialog). -->
-<div id="promoSheet" class="sheet sheet-full" hidden>
-  <div class="sheet-card sheet-card-full">
-    <div class="upg-top"><button class="icon-btn" id="promoClose" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
-    <div class="sheet-title upg-title">Shop with Bot</div>
-    <div class="upg-sub">Pay for 1 month, get 1 free</div>
-    <div class="upg-countdown" id="promoCountdown"></div>
-    <div class="promo-body">
-      <p>Limited time offer ends Dec 2, 2026, 4:00 PM</p>
-      <p>Premium <span class="upg-was">₱2,090</span> /2 months — Free on this device</p>
-      <p>Renews at <span class="upg-was">₱2,090</span>/month on Jan 26, 2027. Cancel anytime.</p>
-      <p>Only available for new Premium subscribers. Existing subscribers can upgrade to Premium+.</p>
-    </div>
-    <button id="promoClaimBtn" class="btn-primary" type="button">Get 2 months for <span class="upg-was">₱2,090</span> Free</button>
-  </div>
-</div>
-
-<!-- Library page layer -->
-<div id="libraryPage" class="page-layer" hidden>
-  <header class="page-head"><button id="libraryBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="libraryTitle">Library</h2><button id="libraryUpload" class="btn-ghost" type="button">Upload files</button><button id="libraryClose" class="icon-btn" aria-label="Close library"><span data-icon="x" data-size="18"></span></button></header>
-  <div class="page-body">
-    <div class="set-search"><span data-icon="search" data-size="16"></span><input id="libSearch" type="text" placeholder="Search" autocomplete="off"><button id="libViewBtn" class="icon-btn sm" type="button" aria-label="View options"><span data-icon="sliders" data-size="16"></span></button></div>
-    <div class="tabs" id="libTabs"><button class="tab active" data-lib-tab="all">All</button><button class="tab" data-lib-tab="media">Media</button><button class="tab" data-lib-tab="projects">Projects</button><button class="tab" data-lib-tab="apps">Apps</button><button class="tab" data-lib-tab="files">Files</button></div>
-    <div id="libBody" class="lib-body"></div>
-  </div>
-</div>
-
-<!-- Project page layer -->
-<div id="projectPage" class="page-layer" hidden>
-  <header class="page-head"><button id="projectBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="projectTitle">Project</h2><button id="projectMenuBtn" class="icon-btn" aria-label="Project options"><span data-icon="ellipsis" data-size="18"></span></button><button id="projectClose" class="icon-btn" aria-label="Close project"><span data-icon="x" data-size="18"></span></button></header>
-  <div class="page-body">
-    <div class="proj-tabs" id="projectTabs"><button class="tab active" data-proj-tab="suggested">Suggested</button><button class="tab" data-proj-tab="instructions">Instructions</button><button class="tab" data-proj-tab="automations">Automations</button><button class="tab" data-proj-tab="files">Files</button><button class="proj-add" id="projAddBtn" type="button" aria-label="Add to project"><span data-icon="plus" data-size="16"></span></button></div>
-    <div id="projectBody" class="proj-body"></div>
+    <div class="tabs"><button class="tab active" data-src-tab="web">Web</button><button class="tab" data-src-tab="images">Images</button></div>
+    <div id="sourcesWeb" class="sources-list"></div>
+    <div id="sourcesImages" class="sources-list" hidden></div>
   </div>
 </div>
 
 <!-- Settings page layer -->
 <div id="settingsPage" class="page-layer" hidden>
   <header class="page-head"><button id="settingsBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="settingsTitle">Settings</h2><button id="settingsClose" class="icon-btn" aria-label="Close settings"><span data-icon="x" data-size="18"></span></button></header>
-  <div class="set-search-wrap"><div class="set-search"><span data-icon="search" data-size="16"></span><input id="setSearch" type="text" placeholder="Search" autocomplete="off" aria-label="Search settings"></div></div>
   <div id="settingsBody" class="page-body"></div>
-  <button id="settingsBanner" class="settings-banner" type="button"><span><span class="ub-title">Get 50% off Premium</span><span class="ub-sub">Free on this device</span></span><span class="ub-pill">Upgrade</span></button>
 </div>
 
-<!-- Generic page layer (FAQ / Changelog / Feedback / Shared Links / Legal / Archived / Deleted) -->
+<!-- Generic page layer (Help / Projects / Upgrade / Privacy / Terms) -->
 <div id="infoPage" class="page-layer" hidden>
   <header class="page-head"><button id="infoBack" class="icon-btn" aria-label="Back"><span data-icon="arrow-left" data-size="18"></span></button><h2 id="infoTitle">Page</h2><button id="infoClose" class="icon-btn" aria-label="Close"><span data-icon="x" data-size="18"></span></button></header>
   <div id="infoBody" class="page-body"></div>
 </div>
 
-<!-- Confirm dialog — centred modal; Delete is stacked above Cancel (pass D). -->
-<div id="confirmModal" class="sheet sheet-modal" hidden>
+<!-- Confirm dialog -->
+<div id="confirmModal" class="sheet" hidden>
   <div class="sheet-card dialog-card">
     <div class="dialog-title" id="confirmTitle">Are you sure?</div>
     <p class="dialog-text" id="confirmText"></p>
-    <div class="dialog-actions dialog-actions-stacked"><button id="confirmOk" class="btn-danger" type="button">Delete</button><button id="confirmCancel" class="btn-ghost" type="button">Cancel</button></div>
+    <div class="dialog-actions"><button id="confirmCancel" class="btn-ghost" type="button">Cancel</button><button id="confirmOk" class="btn-danger" type="button">Delete</button></div>
   </div>
 </div>
 
 <!-- Generic info dialog -->
-<div id="infoModal" class="sheet sheet-modal" hidden>
+<div id="infoModal" class="sheet" hidden>
   <div class="sheet-card dialog-card">
     <div class="dialog-title" id="infoModalTitle">Notice</div>
     <p class="dialog-text" id="infoModalText"></p>
@@ -276,7 +130,7 @@
   </div>
 </div>
 
-<!-- Voice mode layer -->
+<!-- Voice mode layer (Grok-style: full Listening state) -->
 <div id="voiceMode" class="voice-layer" hidden>
   <div class="vm-status">
     <div class="vm-dots auto" id="vmDots" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
@@ -297,7 +151,6 @@
 <!-- Voice settings sheet (opened from the voice-mode bar) -->
 <div id="voiceSheet" class="sheet" hidden>
   <div class="sheet-card">
-    <div class="sheet-grip" aria-hidden="true"></div>
     <div class="sheet-head"><div class="sheet-title">Voice</div><button class="icon-btn" data-close-sheet aria-label="Close"><span data-icon="x" data-size="18"></span></button></div>
     <div id="voiceSheetList" class="set-list"></div>
     <button class="set-row" id="vsPersonalityRow" type="button"><span class="set-label">Personality</span><span class="vs-pill" id="vsPersonality">Assistant<span data-icon="chevron-down" data-size="14"></span></span></button>
@@ -309,7 +162,6 @@
 <div id="toast" role="status" hidden></div>
 <div id="warnStack" class="warn-stack" aria-live="polite"></div>
 <input type="file" id="fileInput" hidden>
-<input type="file" id="libFileInput" hidden>
 <script src="app.js"></script>
 </body>
 </html>
