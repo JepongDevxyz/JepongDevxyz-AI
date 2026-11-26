@@ -6265,7 +6265,7 @@ async function generateImage(body={},requestSignal=null){
     for(const account of accounts){
       try{
         const url=`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account.accountId)}/ai/run/${PET_IMAGE_MODEL}`;
-        const res=await fetch(url,{method:'POST',headers:{'Authorization':`Bearer ${account.apiToken}`,'Content-Type':'application/json','Accept':'application/json,image/jpeg,image/png,*/*'},body:JSON.stringify({prompt,seed,steps:8}),signal:requestSignal||AbortSignal.timeout(65000)});
+        const res=await fetch(url,{method:'POST',headers:{'Authorization':`Bearer ${account.apiToken}`,'Content-Type':'application/json','Accept':'application/json,image/jpeg,image/png,*/*'},body:JSON.stringify({prompt,steps:8}),signal:requestSignal||AbortSignal.timeout(65000)});
         if(res.ok){
           const contentType=(res.headers.get('content-type')||'').toLowerCase();
           if(contentType.startsWith('image/')){
@@ -6302,6 +6302,24 @@ async function generateImage(body={},requestSignal=null){
   }
 
   if(!accounts.length&&!pollinationsKey)return json({error:'No image generator is configured.',detail:'Configure Cloudflare Workers AI credentials or POLLINATIONS_API_KEY.'},503);
+  /* Keyless rescue: the public Pollinations endpoint needs no key.
+     Without it, a Cloudflare failure leaves NO working path when no
+     POLLINATIONS_API_KEY is configured — the live 2026-11-26 502. */
+  if(!pollinationsKey){
+    try{
+      const url=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}&nologo=true`;
+      const res=await fetch(url,{headers:{'Accept':'image/*'},signal:requestSignal||AbortSignal.timeout(65000)});
+      if(res.ok){
+        const contentType=(res.headers.get('content-type')||'image/jpeg').split(';')[0];
+        const bytes=new Uint8Array(await res.arrayBuffer());
+        if(bytes.length)return json({ok:true,imageDataUrl:`data:${contentType};base64,${bytesToBase64(bytes)}`,provider:'Pollinations',model:'flux'});
+      }else errors.push(`Pollinations (keyless) HTTP ${res.status}: ${(await res.text().catch(()=>'' )).slice(0,220)}`);
+    }catch(e){
+      if(requestSignal?.aborted)return json({error:'Image generation cancelled.',code:'cancelled'},499);
+      errors.push(`Pollinations (keyless): ${String(e?.message||e).slice(0,220)}`);
+    }
+  }
+
   return json({error:'Image generation is temporarily unavailable.',detail:errors.slice(0,3).join(' | ').slice(0,700)},502);
 }
 
