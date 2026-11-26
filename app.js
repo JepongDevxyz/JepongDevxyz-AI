@@ -621,8 +621,18 @@ function renderAutocomplete(){
   const head=document.createElement('div'); head.className='ac-head'; head.textContent='Prompt suggestions'; box.appendChild(head);
   rows.slice(0,3).forEach(r=>{
     const b=document.createElement('button'); b.type='button';
-    const pre=document.createElement('span'); pre.className='ac-prefix'; pre.textContent=v; b.appendChild(pre);
-    b.appendChild(document.createTextNode(r.slice(v.length)));
+    /* The typed text is shown in the lighter prefix style WHERE it
+       actually occurs in the row — the old code blindly sliced the
+       first v.length chars off the row, so typing "draft check 12345"
+       rendered the garbled "draft check 12345heck 12345". */
+    const idx=r.toLowerCase().indexOf(v.toLowerCase());
+    if(idx>=0){
+      if(idx>0) b.appendChild(document.createTextNode(r.slice(0,idx)));
+      const pre=document.createElement('span'); pre.className='ac-prefix'; pre.textContent=r.slice(idx,idx+v.length); b.appendChild(pre);
+      b.appendChild(document.createTextNode(r.slice(idx+v.length)));
+    }else{
+      b.appendChild(document.createTextNode(r));
+    }
     b.addEventListener('click',()=>{ inp.value=r; inp.dispatchEvent(new Event('input',{bubbles:true})); box.hidden=true; inp.focus(); });
     box.appendChild(b);
   });
@@ -794,6 +804,11 @@ function inlineMd(s){
   h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
   h=h.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   h=h.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  /* Markdown images MUST come before links: without this rule
+     "![alt](url)" degraded to a literal "!" + a link (seen live
+     2026-11-26 — the "!" marker before the image link). data: URLs
+     (what runImageGeneration emits) and https: URLs both render. */
+  h=h.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,'<img src="$2" alt="$1" style="max-width:100%;border-radius:12px">');
   h=h.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
   h=h.replace(/(?<!["'=])((?:https?:\/\/)[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
   return h;
@@ -1178,7 +1193,7 @@ async function runChatStream(s,userMsg,atts,styleOverride){
       }
       if(buf.trim()) handleBlock(buf);
     } else {
-      const data=await res.json();
+      const data=await readChatResponse(res);
       const t=data.reply||data.text||data.message||'';
       gotAny=!!t;
       fullText=cleanAssistantText(t);
@@ -1211,6 +1226,18 @@ async function runChatStream(s,userMsg,atts,styleOverride){
   if(!privateMode){ extra.usage.chat=(extra.usage.chat||0)+1; saveExtra(); }
 }
 function clearFreshFollowups(){ freshFollowups={}; lastFreshReplyId=null; }
+async function readChatResponse(res){
+  /* The backend's non-stream chat path returns the reply as PLAIN TEXT
+     (passthroughHeaders sets Content-Type: text/plain) — NOT JSON.
+     The old code called res.json() here, which throws on a text body and
+     silently killed follow-up pills AND title generation live (the rig
+     mocked JSON, so it never caught it — proven by two live curls
+     2026-11-26, both HTTP 200 text/plain). Read the body once as text;
+     parse JSON when it actually is JSON, otherwise use the raw text. */
+  const raw=await res.text();
+  try{ const d=JSON.parse(raw); if(d&&typeof d==='object') return d; }catch(_){}
+  return {reply:raw};
+}
 async function requestFollowups(s,asstMsg){
   /* §14: grok shows follow-up pills under FRESH replies only (never under
      re-opened old threads or after reload). The pills come from the model,
@@ -1223,7 +1250,7 @@ async function requestFollowups(s,asstMsg){
   if(!s||!asstMsg||asstMsg.stopped) return;
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Suggest 2 short follow-up questions IN THIS APP for the user to ask next, based on this conversation. The app can: answer questions, write text/code, translate, do math, explain its own features/models, discuss an attached file/image. Never suggest directions, weather, maps, locations, news, or anything needing live data, an account, or tools the app does not have. Reply with only the 2 questions, one per line, no numbering, no quotes, no preamble.', history:historyFor(s,asstMsg.id), provider:settings.provider||'apinex', model:currentModelId, mode:'general', autoFallback:true})});
-    const data=await res.json();
+    const data=await readChatResponse(res);
     const t=cleanAssistantText(data.reply||data.text||'');
     const qs=t.split('\n').map(x=>x.trim().replace(/^[\d\-•·.)\s]+/,'').replace(/^["'“”]+|["'“”]+$/g,'')).filter(x=>x.length>3&&x.length<140&&!/(follow-up|here are|below are)/i.test(x)&&!x.includes('http')&&!x.includes('|')&&!x.startsWith('#')&&!x.startsWith('```')).slice(0,2);
     if(qs.length<1) return;
@@ -1301,7 +1328,7 @@ async function generateTitle(s){
   if(!firstUser) return;
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Write a 3-6 word Title Case title for this conversation. Reply with only the title, no quotes: '+(firstUser.text||'').slice(0,300), history:[], provider:settings.provider||'apinex', model:DEFAULT_MODEL, mode:'general', autoFallback:true})});
-    const data=await res.json();
+    const data=await readChatResponse(res);
     const t=cleanAssistantText(data.reply||data.text||'').replace(/^["']|["']$/g,'').trim();
     if(t&&t.length<=60){ s.title=t; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); renderTopTitle(); }
   }catch(e){ /* title stays as-is */ }
@@ -1315,7 +1342,10 @@ async function runImageGeneration(s,userMsg){
   try{
     const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:prompt, history:historyFor(s,userMsg.id), action:'generate-image', provider:settings.provider||'apinex', model:currentModelId, mode:'general', autoFallback:true})});
     const data=await res.json();
-    const url=data.imageUrl||data.url||'';
+    /* The backend's generate-image success field is imageDataUrl, NOT
+       imageUrl/url — the old read missed it, so every successful
+       generation still showed "Sorry — image generation failed." */
+    const url=data.imageUrl||data.url||data.imageDataUrl||'';
     asstMsg.text=url?('![Generated image]('+url+')'):'Sorry — image generation failed.';
     if(url){ extra.usage.image=(extra.usage.image||0)+1; saveExtra(); }
   }catch(e){ asstMsg.text='Sorry — image generation failed.'; }
