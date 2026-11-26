@@ -199,7 +199,7 @@ const CONNECT_APPS=[
  {name:'X Ads', cat:'Advertising', color:'#111110', desc:'Advertising'},
  {name:'Google Cloud BigQuery', cat:'Analytics', color:'#4285f4', desc:'Analytics'},
  {name:'Expensify', cat:'Apps', color:'#03a99d', desc:'Apps'},
- {name:'Paypal', cat:'Apps', color:'#003087', desc:'Apps'},
+ {name:'Paypal', cat:'Apps', color:'#003087', desc:'Look up transactions and activity.'},
  {name:'Zapier', cat:'Apps', color:'#ff4a00', desc:'Apps'},
  {name:'Datadog', cat:'Developer', color:'#632ca6', desc:'Developer'},
  {name:'Excalidraw', cat:'Developer', color:'#6965db', desc:'Developer'},
@@ -358,6 +358,7 @@ function purgeTrash(){ const now=Date.now(), cut=30*24*3600*1000; const before=e
 let currentId=null, privateMode=false, streaming=false, abortCtrl=null, currentProjectId=null;
 let scrollState={atBottom:true};
 let attachments=[], sendQueue=[], draining=false, currentThinking=null, lastScrollAt=0;
+let freshFollowups={}, lastFreshReplyId=null; /* §14: follow-up pills are EPHEMERAL — in-memory only, never saved; only the reply generated in this session shows them. */
 let sidebarChatsExpanded=true, sidebarProjectsExpanded=true, sidebarShowAll=false;
 let sidebarOpen=false, sidebarCollapsed={};
 let settingsPage='list', settingsSub=null, libraryTab='all', libraryView='list', librarySort='newest';
@@ -604,7 +605,10 @@ function renderHome(){
   });
 }
 function suggestionAction(label){
-  if(label==='Create an image'){ openSheet('imageSheet'); setTimeout(()=>{ const p=$('#imagePrompt'); if(p) p.focus(); },80); return; }
+  /* §14: "Create an image" does NOT send and does NOT open the image
+     sheet — it pre-fills the composer with "Create an image of " and
+     focuses it with the caret at the end. All other suggestions send. */
+  if(label==='Create an image'){ const inp=$('#composerInput'); inp.value='Create an image of '; inp.dispatchEvent(new Event('input',{bubbles:true})); inp.focus(); const len=inp.value.length; try{ inp.setSelectionRange(len,len); }catch(e){} return; }
   const inp=$('#composerInput'); inp.value=label; inp.dispatchEvent(new Event('input',{bubbles:true})); inp.focus();
 }
 const AUTO_TOPICS=['help with writing','help with coding','help with planning','help with research','help with email','help with learning'];
@@ -636,7 +640,11 @@ function syncComposer(){
   inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,180)+'px';
   const has=composerHasText()||attachments.length>0;
   const send=$('#sendBtn'), stop=$('#stopBtn'), voice=$('#voiceBtn'), mic=$('#micBtn');
-  if(streaming){ send.hidden=!has; send.disabled=!has; stop.hidden=false; voice.hidden=true; mic.hidden=true; }
+  /* §14: while streaming the Send button is GONE — replaced by the square
+     Stop. + / mic / model / voice stay visible; there is no queue
+     placeholder or queue input. Typed text stays in the composer (doSend
+     refuses while streaming) until the user taps Send after the run ends. */
+  if(streaming){ send.hidden=true; send.disabled=true; stop.hidden=false; voice.hidden=privateMode; mic.hidden=false; }
   else if(privateMode){ voice.hidden=true; send.hidden=false; send.disabled=!has; stop.hidden=true; mic.hidden=false; }
   else { stop.hidden=true; send.hidden=!has; send.disabled=!has; voice.hidden=has; mic.hidden=false; }
   /* Private mode: grey up-arrow Send (no circle) while the composer is
@@ -917,6 +925,22 @@ function renderMessages(){
         foot.appendChild(bar); footHas=true;
       }
       if(footHas) div.appendChild(foot);
+      /* §14: follow-up pills under the FRESH reply only — right-aligned,
+         stacked one per line, blue play-triangle on hover/focus. Ephemeral:
+         freshFollowups lives in memory only, so re-opened threads and
+         post-reload renders never show them. Tapping a pill sends it. */
+      const fups=freshFollowups[m.id];
+      if(fups&&fups.length&&lastFreshReplyId===m.id){
+        const fu=document.createElement('div'); fu.className='followups';
+        fups.forEach(q=>{
+          const b=document.createElement('button'); b.type='button'; b.className='follow-pill';
+          const tri=document.createElement('span'); tri.className='follow-tri'; tri.innerHTML=icon('play',10); b.appendChild(tri);
+          b.appendChild(document.createTextNode(q));
+          b.addEventListener('click',()=>{ sendMessage(q); });
+          fu.appendChild(b);
+        });
+        div.appendChild(fu);
+      }
       wrap.appendChild(div);
     }
   });
@@ -1070,6 +1094,7 @@ function doSend(){
   const inp=$('#composerInput');
   const text=(inp.value||'').trim();
   if(!text&&!attachments.length) return Promise.resolve();
+  if(streaming) return Promise.resolve(); /* §14: no queue — typed text stays in the composer until the stream ends and the user taps Send. Only explicitly-sent messages use sendQueue. */
   const atts=attachments.slice(); attachments=[]; renderAttachBar();
   inp.value=''; syncComposer();
   const s=ensureSessionForSend();
@@ -1088,6 +1113,7 @@ function doSend(){
 async function runChatStream(s,userMsg,atts,styleOverride){
   const start=Date.now();
   streaming=true; abortCtrl=new AbortController();
+  clearFreshFollowups(); /* a new reply begins — the previous reply's pills go away */
   const asstMsg={id:uid(), role:'assistant', text:'', createdAt:Date.now(), thinkMs:null, stopped:false, deterministic:false, pending:true};
   s.messages.push(asstMsg); saveSessions();
   const thinkRow=showLiveThinking(s,asstMsg);
@@ -1177,34 +1203,64 @@ async function runChatStream(s,userMsg,atts,styleOverride){
   s.updatedAt=Date.now(); saveSessions();
   removeLiveThinking();
   renderMessages(); scrollToBottomIfNeeded(); syncComposer();
+  if(fullText&&!errMsg&&!asstMsg.stopped) requestFollowups(s,asstMsg); /* §14: pills under this fresh reply only */
   if(s.titleAutoPending!==false&&!s.titleRequested&&settings.interface.titleAuto!==false){
     s.titleRequested=true; saveSessions();
     generateTitle(s);
   }
   if(!privateMode){ extra.usage.chat=(extra.usage.chat||0)+1; saveExtra(); }
 }
+function clearFreshFollowups(){ freshFollowups={}; lastFreshReplyId=null; }
+async function requestFollowups(s,asstMsg){
+  /* §14: grok shows follow-up pills under FRESH replies only (never under
+     re-opened old threads or after reload). The pills come from the model,
+     never invented here: a separate short request (the backend's self-answer
+     detector skips prompts starting "Suggest 2 short", so this reaches the
+     model). The prompt is constrained to things THIS app can actually do —
+     no directions/weather/maps/news/live-data suggestions. Fire-and-forget:
+     pills appear when the call lands, nothing blocks on it. */
+  if(!settings.interface.showSuggestions) return;
+  if(!s||!asstMsg||asstMsg.stopped) return;
+  try{
+    const res=await fetch('/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Suggest 2 short follow-up questions IN THIS APP for the user to ask next, based on this conversation. The app can: answer questions, write text/code, translate, do math, explain its own features/models, discuss an attached file/image. Never suggest directions, weather, maps, locations, news, or anything needing live data, an account, or tools the app does not have. Reply with only the 2 questions, one per line, no numbering, no quotes, no preamble.', history:historyFor(s,asstMsg.id), provider:settings.provider||'apinex', model:currentModelId, mode:'general', autoFallback:true})});
+    const data=await res.json();
+    const t=cleanAssistantText(data.reply||data.text||'');
+    const qs=t.split('\n').map(x=>x.trim().replace(/^[\d\-•·.)\s]+/,'').replace(/^["'“”]+|["'“”]+$/g,'')).filter(x=>x.length>3&&x.length<140&&!/(follow-up|here are|below are)/i.test(x)&&!x.includes('http')&&!x.includes('|')&&!x.startsWith('#')&&!x.startsWith('```')).slice(0,2);
+    if(qs.length<1) return;
+    if(s.id!==currentId) return;
+    const cur=curSession(); if(!cur||cur.id!==s.id) return;
+    const lastAsst=[...s.messages].reverse().find(m=>m.role==='assistant');
+    if(!lastAsst||lastAsst.id!==asstMsg.id) return;
+    freshFollowups[asstMsg.id]=qs; lastFreshReplyId=asstMsg.id;
+    renderMessages();
+  }catch(e){ /* no pills on failure — silent, never an error state */ }
+}
 function showLiveThinking(s,asstMsg){
+  /* §14: while a reply runs, grok shows "Thinking" + ONE step line
+     "Planning next moves" with a dotted spinner — NO seconds, NO
+     "Working for Ns" timer. Streamed work steps replace the step line
+     as they arrive (updateLiveThinking); the status stays "Thinking". */
   const wrap=$('#messages');
   const div=document.createElement('div'); div.className='msg asst'; div.id='liveThink';
-  const tr=document.createElement('div'); tr.className='think-row';
-  const sp=document.createElement('span'); sp.className='spin'; tr.appendChild(sp);
-  const lab=document.createElement('span'); lab.className='think-label'; lab.textContent='Working for 0s'; tr.appendChild(lab);
+  const tr=document.createElement('div'); tr.className='think-row live';
+  const sp=document.createElement('span'); sp.className='spin-dots'; sp.innerHTML='<i></i><i></i><i></i>'; tr.appendChild(sp);
+  const tx=document.createElement('span'); tx.className='think-tx';
+  const st=document.createElement('span'); st.className='think-status'; st.textContent='Thinking'; tx.appendChild(st);
+  const step=document.createElement('span'); step.className='think-step'; step.textContent='Planning next moves'; tx.appendChild(step);
+  tr.appendChild(tx);
   div.appendChild(tr);
   /* The live row carries its own collapsed divider, like a completed row —
      grok shows a divider only, never step lines, even mid-stream. */
   const dv=document.createElement('div'); dv.className='think-divider'; dv.hidden=true; div.appendChild(dv); wrap.appendChild(div);
-  const t0=Date.now();
-  const timer=setInterval(()=>{ const el=wrap.querySelector('#liveThink .think-label'); if(el) el.textContent='Working for '+Math.floor((Date.now()-t0)/1000)+'s'; else clearInterval(timer); },1000);
-  div.dataset.timer=timer;
   scrollToBottomIfNeeded();
   return div;
 }
 function updateLiveThinking(row,label){
   if(!row) return;
-  const lab=row.querySelector('.think-label'); if(lab) lab.textContent=label;
+  const step=row.querySelector('.think-step'); if(step) step.textContent=label;
 }
 function removeLiveThinking(){
-  const el=$('#liveThink'); if(el){ const t=el.dataset.timer; if(t) clearInterval(parseInt(t,10)); el.remove(); }
+  const el=$('#liveThink'); if(el) el.remove();
 }
 function effortValue(){
   const m=settings.responseMode||'Auto';
@@ -2157,8 +2213,12 @@ function renderAutomationsPage(body){
       const name=b.getAttribute('data-auto-add');
       const tpl=AUTOMATIONS.find(x=>x.name===name); if(!tpl) return;
       if(!extra.automations.some(x=>x.name===name)){
+        /* §14 grok semantics: "Add" CREATES the automation immediately
+           (default Daily 7:30 am) and opens its detail — Cancel on the
+           detail only navigates back and does NOT delete it. */
         extra.automations.push({name:tpl.name, cat:tpl.cat, sched:tpl.sched||'Daily at 7:30 am', instructions:tpl.instructions||'', at:Date.now()});
         saveExtra();
+        toast('Automation created — '+name);
       }
       openAutomationDetail(name);
     }));
@@ -2171,6 +2231,14 @@ function renderAutomationsPage(body){
   renderAuto();
 }
 function newAutomation(){
+  /* §14 grok semantics: the Custom card's "Add" also CREATES immediately
+     ("My Automation", default Daily 7:30 am) and opens the editor — Cancel
+     only navigates back, it does not delete. Save updates the created one. */
+  if(!extra.automations.some(x=>x.name==='My Automation')){
+    extra.automations.push({name:'My Automation', cat:'News', sched:'Daily at 7:30 am', instructions:'', at:Date.now()});
+    saveExtra();
+  }
+  toast('Automation created — My Automation');
   settingsSub={name:'My Automation', sched:'Daily at 7:30 am', instructions:'', isNew:true};
   settingsPage='automation-detail'; renderSettingsPage();
 }
@@ -2508,17 +2576,27 @@ function vmMicMenu(){
 /* ---------- Navigation ---------- */
 function newChat(){
   currentId=null; privateMode=false; setActiveSession(null);
+  clearFreshFollowups();
   try{ extra.lastSessionId=null; saveExtra(); }catch(e){}
   closeSidebar(); renderAll();
 }
 function openSession(id){
   const s=getSession(id); if(!s) return;
+  /* Save the outgoing draft under the OLD session first, then load the
+     target draft BEFORE any render: renderAll() ends with syncComposer()
+     → saveDraft(), so restoring after renderAll() would save the stale
+     composer text under the NEW id and destroy the target's real draft. */
+  syncComposer();
   currentId=id; privateMode=false; setActiveSession(id);
+  clearFreshFollowups();
+  restoreDraft();
   closeSidebar(); renderAll();
   const s2=getSession(id); if(s2) renderMessages(s2);
   const cv=$('#chatView'); if(cv) cv.scrollTop=cv.scrollHeight;
-  const inp=$('#composerInput');
-  if(inp){ inp.value=drafts[id]||''; syncComposer(); }
+  /* Drafts are stored as {text, attachments} records — assign the record
+     itself and the composer shows "[object Object]". restoreDraft() reads
+     the record properly (and clears the composer when there is none). */
+  restoreDraft(); syncComposer();
 }
 function openRightPane(){ openPane(); }
 function closeRightPane(){ closePane(); }
@@ -2673,7 +2751,7 @@ function wire(){
   on('#attachFilesBtn','click',()=>pickFile('files'));
   on('#attachImagesBtn','click',()=>pickFile('images'));
   on('#fileInput','change',e=>{ const files=Array.from(e.target.files||[]); addAttachments(files); e.target.value=''; });
-  on('#imageGenerateBtn','click',()=>{ const inp=$('#composerInput'); if(inp&&inp.value.trim()){ runImageGeneration(inp.value.trim()); closeSheet('imageSheet'); } });
+  on('#imageGenerateBtn','click',()=>{ const p=$('#imagePrompt'); const prompt=(p&&p.value||'').trim(); if(!prompt) return; const s=curSession()||ensureSessionForSend(); if(!s) return; const userMsg={id:uid(), role:'user', text:prompt, createdAt:Date.now(), attachments:[]}; s.messages.push(userMsg); s.updatedAt=Date.now(); saveSessions(); if(!privateMode){ extra.lastSessionId=s.id; saveExtra(); } if(p) p.value=''; closeSheet('imageSheet'); renderAll(); runImageGeneration(s,userMsg); });
   on('#paletteInput','input',e=>{ palQ=e.target.value.toLowerCase(); renderPalette(); });
   document.querySelectorAll('.pal-tab').forEach(t=>t.addEventListener('click',()=>{ palTab=t.getAttribute('data-pal-tab'); renderPalette(); }));
   document.querySelectorAll('#libTabs .tab').forEach(t=>t.addEventListener('click',()=>{ libTab=t.getAttribute('data-lib-tab'); renderLibrary(); }));

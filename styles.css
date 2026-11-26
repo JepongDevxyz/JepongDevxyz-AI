@@ -176,6 +176,21 @@ html[data-theme="dark"] .tk-k{color:#a78bfa}html[data-theme="dark"] .tk-s{color:
 .think-row .spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--muted);border-radius:50%;animation:spin 1s linear infinite;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .think-row .think-label{flex:1}
+/* §14 live header: "Thinking" status + "Planning next moves" step, dotted spinner, no timer. */
+.think-row.live{cursor:default}
+.think-tx{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+.think-status{color:var(--ink);font-weight:600;font-size:14px;line-height:1.35}
+.think-step{color:var(--muted);font-size:13px;line-height:1.35}
+.spin-dots{display:inline-flex;gap:3px;align-items:center;flex:none;height:15px}
+.spin-dots i{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:dotpulse 1.2s ease-in-out infinite}
+.spin-dots i:nth-child(2){animation-delay:.2s}
+.spin-dots i:nth-child(3){animation-delay:.4s}
+@keyframes dotpulse{0%,60%,100%{opacity:.3}30%{opacity:1}}
+/* §14 follow-up pills: right-aligned, stacked one per line; blue play-triangle on hover/focus only. */
+.followups{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin:8px 0 2px}
+.follow-pill{display:inline-flex;align-items:center;gap:6px;max-width:100%;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:7px 12px;font-size:13.5px;line-height:1.35;color:var(--ink);text-align:right;cursor:pointer}
+.follow-pill .follow-tri{display:none;color:#1d9bf0;flex:none}
+.follow-pill:hover .follow-tri,.follow-pill:focus-visible .follow-tri{display:inline-flex}
 .think-divider{border-top:1px solid var(--line);margin:2px 0 6px}
 .action-bar,.msg-actions{display:flex;align-items:center;gap:2px;margin-top:2px}
 .action-bar .icon-btn,.msg-actions .icon-btn{width:30px;height:30px;color:var(--muted)}
@@ -214,7 +229,7 @@ html[data-theme="dark"] .composer{box-shadow:0 2px 10px rgba(0,0,0,.4)}
 .send-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center;flex:none}
 .send-btn.private-send,.send-btn.private-send:disabled{background:none;color:var(--muted);border-radius:8px}
 .send-btn:disabled{background:var(--send-disabled);color:var(--muted)}
-.send-btn.stop{background:var(--chip);color:var(--ink)}
+.send-btn.stop{background:var(--ink);color:var(--bg);border-radius:8px} /* §14: BLACK SQUARE Stop while streaming (light square in dark — --ink inverts) */
 .stop-sq{width:12px;height:12px;background:currentColor;border-radius:2px}
 .attach-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .att{display:flex;align-items:center;gap:6px;background:var(--chip);border-radius:999px;padding:5px 6px 5px 10px;font-size:13px;max-width:100%}
