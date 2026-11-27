@@ -53,7 +53,7 @@ svg{display:block}
 .top-logo{width:20px;height:20px;flex:none;color:var(--ink);display:inline-flex}
 .top-logo svg{width:20px;height:20px}
 .top-title span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#chatList.collapsed .sb-item,#chatList.collapsed .sb-more,#projList.collapsed .sb-item{display:none}
+#chatList.collapsed .sb-item,#chatList.collapsed .sb-more,#projList.collapsed .sb-item,#archList.collapsed .sb-item{display:none}
 .sb-sec-chev.closed svg{transform:rotate(-90deg)}
 .sb-upgrade{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:999px;font-size:14px;font-weight:600;text-align:left;background:var(--surface);border:1px solid var(--line);width:100%;margin:2px 0 6px}
 .sb-upgrade:hover{background:var(--chip-active)}

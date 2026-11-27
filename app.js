@@ -37,6 +37,7 @@ ellipsis:'<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle 
 'trash-2':'<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
 pencil:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
 'git-branch':'<line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
+archive:'<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
 download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
 check:'<path d="M20 6 9 17l-5-5"/>',
 lock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
@@ -227,7 +228,7 @@ function trackRequest(kind){ try{ extra.usage[kind]=(extra.usage[kind]||0)+1; sa
 let currentId=null, temporary=false;
 let activeProjectId=null;
 let searchQuery='';
-let collapsedSecs={chats:false,projects:false}; /* sidebar section collapse (Grok parity) */
+let collapsedSecs={chats:false,projects:false,archived:false}; /* sidebar section collapse (Grok parity) */
 let attachments=[];
 let streaming=false, aborter=null;
 let stickToBottom=true;
@@ -536,18 +537,24 @@ let showAllChats=false; /* sidebar "Show more" state (Grok parity) */
 function renderSidebar(){
   const list=$('#chatList');
   /* Private chats never appear in history — in-memory only, gone on refresh. */
-  let items=sessions.filter(s=>!s.temporary);
+  let items=sessions.filter(s=>!s.temporary&&!s.archived);
   /* Dedupe by id — a session must never render twice, whatever the array holds. */
   const seenIds=new Set(); items=items.filter(s=>{ if(seenIds.has(s.id)) return false; seenIds.add(s.id); return true; });
   if(activeProjectId) items=items.filter(s=>s.projectId===activeProjectId);
   if(searchQuery){ const q=searchQuery.toLowerCase(); items=items.filter(s=>(s.title||'').toLowerCase().includes(q)||(s.messages||[]).some(m=>(m.text||'').toLowerCase().includes(q))); }
+  /* Archived chats live in their own sidebar section below — never in the
+     normal Chats list. The same search filter applies so a search still
+     finds them, in their own section. */
+  let archived=sessions.filter(s=>!s.temporary&&s.archived);
+  archived=archived.filter(s=>{ if(seenIds.has(s.id)) return false; seenIds.add(s.id); return true; });
+  if(searchQuery){ const q=searchQuery.toLowerCase(); archived=archived.filter(s=>(s.title||'').toLowerCase().includes(q)||(s.messages||[]).some(m=>(m.text||'').toLowerCase().includes(q))); }
   const pinned=items.filter(s=>s.pinned), rest=items.filter(s=>!s.pinned);
   /* Round 5: two DIFFERENT chats can share one auto-title ("Python Vs
      JavaScript Comparison" twice, live-proven) and the sidebar shows no
      distinguisher. Disambiguate the DISPLAY title only — stored titles are
      untouched — numbering in render order: "Title", "Title (2)", "Title (3)". */
   const titleCount={}, dispTitle=new Map();
-  [...pinned, ...rest].forEach(s=>{ const t=(s.title||'New chat'); const k=t.toLowerCase(); titleCount[k]=(titleCount[k]||0)+1; dispTitle.set(s.id, titleCount[k]>1? t+' ('+titleCount[k]+')' : t); });
+  [...pinned, ...rest, ...archived].forEach(s=>{ const t=(s.title||'New chat'); const k=t.toLowerCase(); titleCount[k]=(titleCount[k]||0)+1; dispTitle.set(s.id, titleCount[k]>1? t+' ('+titleCount[k]+')' : t); });
   let html='';
   if(activeProjectId){ const p=projects.find(p=>p.id===activeProjectId); html+='<div class="sb-group">'+esc(p?p.name:'Project')+' · <a href="#" id="clearProj" style="color:var(--accent)">All chats</a></div>'; }
   /* Grok's history is a flat list — no Today / Previous 7 Days / Older
@@ -563,6 +570,23 @@ function renderSidebar(){
   const cc=$('#sbChatsChev'); if(cc) cc.addEventListener('click',()=>{ collapsedSecs.chats=!collapsedSecs.chats; renderSidebar(); });
   const more=$('#sbMore'); if(more) more.addEventListener('click',()=>{ showAllChats=true; renderSidebar(); });
   const np=$('#sbNewPlus'); if(np) np.addEventListener('click',()=>newChat());
+  /* Archived section: its own header + rows in #archList (below the Chats
+     list, above Projects). Hidden entirely when there is nothing archived.
+     Rows use the same itemHtml as Chats — name + "…" menu, click to open. */
+  const al=$('#archList'), as=$('#sbArchSec');
+  if(al&&as){
+    const hasArch=archived.length>0;
+    as.hidden=!hasArch; al.hidden=!hasArch;
+    al.innerHTML=hasArch?archived.map(s=>itemHtml(s, dispTitle.get(s.id))).join(''):'';
+    al.classList.toggle('collapsed', !!collapsedSecs.archived);
+    const ac=$('#sbArchChev'); if(ac) ac.classList.toggle('closed', !!collapsedSecs.archived);
+    al.querySelectorAll('.sb-item').forEach(el=>{
+      el.addEventListener('click',e=>{ if(e.target.closest('.sb-item-menu')) return; openSession(el.dataset.id); });
+      const menuBtn=el.querySelector('.sb-item-menu');
+      if(menuBtn) menuBtn.addEventListener('click',e=>{ e.stopPropagation(); chatItemMenu(el.dataset.id, menuBtn); });
+    });
+    hydrateIcons(al);
+  }
   const pl=$('#projList');
   /* Round 5: grok shows its Projects header + "New Project" row even with
      no projects; hiding the whole section left a dead band and no visible
@@ -599,12 +623,13 @@ function sessionMenuItems(s){
     {icon:'copy', label:'Copy conversation ID', onClick:()=>{ copyText(id).then(()=>toast('Conversation ID copied')); }},
     {icon:'pencil', label:'Rename', onClick:()=>renameChat(id)},
     ...projItems,
+    ...(!s.temporary?[{icon:'archive', label:s.archived?'Unarchive':'Archive', onClick:()=>setArchived(id, !s.archived)}]:[]),
     {icon:'trash-2', label:'Delete', danger:true, onClick:()=>deleteChat(id)}
   ];
 }
 function branchSession(id){
   const s=getSession(id); if(!s) return;
-  const copy={id:uid(), title:(s.title||'New chat')+' (branch)', createdAt:Date.now(), updatedAt:Date.now(), messages:JSON.parse(JSON.stringify(s.messages)), titleAutoPending:false, titleRequested:true, projectId:s.projectId||null, temporary:!!s.temporary};
+  const copy={id:uid(), title:(s.title||'New chat')+' (branch)', createdAt:Date.now(), updatedAt:Date.now(), messages:JSON.parse(JSON.stringify(s.messages)), titleAutoPending:false, titleRequested:true, projectId:s.projectId||null, temporary:!!s.temporary, archived:false};
   sessions.unshift(copy); saveSessions(); openSession(copy.id); toast('Branched into a new chat');
 }
 function chatItemMenu(id,anchor){
@@ -617,6 +642,16 @@ async function renameChat(id){
   const name=await promptDialog('Rename chat','Chat name', s.title||'');
   if(name===null) return;
   s.title=name.trim()||s.title; s.updatedAt=Date.now(); saveSessions(); renderSidebar(); renderAll();
+}
+function setArchived(id, on){
+  /* Archive = a flag on the session (like `temporary`), never a delete:
+     messages stay intact, the chat just leaves the normal Chats list for
+     the Archived section. Archiving the open chat returns to home. */
+  const s=getSession(id); if(!s) return;
+  s.archived=!!on; s.updatedAt=Date.now(); saveSessions();
+  if(on&&currentId===id){ currentId=null; try{ extra.lastSessionId=null; saveExtra(); }catch(e){} }
+  renderAll();
+  toast(on?'Chat archived':'Chat unarchived');
 }
 async function deleteChat(id){
   const s=getSession(id); if(!s) return;
@@ -1711,6 +1746,7 @@ function wire(){
     ], {above:true});
   });
   $('#sbProjChev').addEventListener('click',()=>{ collapsedSecs.projects=!collapsedSecs.projects; $('#projList').classList.toggle('collapsed', collapsedSecs.projects); $('#sbProjChev').classList.toggle('closed', collapsedSecs.projects); });
+  $('#sbArchChev').addEventListener('click',()=>{ collapsedSecs.archived=!collapsedSecs.archived; $('#archList').classList.toggle('collapsed', collapsedSecs.archived); $('#sbArchChev').classList.toggle('closed', collapsedSecs.archived); });
   $('#chatSearch').addEventListener('input',e=>{ searchQuery=e.target.value; $('#chatSearchClear').hidden=!searchQuery; renderSidebar(); });
   $('#chatSearchClear').addEventListener('click',()=>{ $('#chatSearch').value=''; searchQuery=''; $('#chatSearchClear').hidden=true; renderSidebar(); });
   document.querySelectorAll('[data-explore]').forEach(b=>b.addEventListener('click',()=>{
@@ -1803,7 +1839,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   /* Refresh-proofing: reopen the chat she was in (with its draft), then
      resume any reply that was still streaming or queued when she refreshed.
      Nothing is lost on reload. */
-  if(extra.lastSessionId&&getSession(extra.lastSessionId)){ openSession(extra.lastSessionId); }
+  /* An archived chat never reopens on refresh — it stays archived until
+     the user unarchives it from the Archived section. */
+  const lastSess=extra.lastSessionId&&getSession(extra.lastSessionId);
+  if(lastSess&&!lastSess.archived){ openSession(extra.lastSessionId); }
   else restoreDraft();
   recoverPending();
 });
